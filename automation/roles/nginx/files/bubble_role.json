@@ -1,0 +1,12 @@
+{
+  "name": "nginx-0.0.1",
+  "priority": 500,
+  "template": true,
+  "config": [
+    {"name": "server_name", "value": "[[node.fqdn]]"},
+    {"name": "letsencrypt_email", "value": "[[configuration.letsencryptEmail]]"},
+    {"name": "ssl_port", "value": "[[configuration.nginxPort]]"},
+    {"name": "admin_port", "value": "[[node.adminPort]]"}
+  ],
+  "tgzB64": ""
+}

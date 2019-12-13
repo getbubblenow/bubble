@@ -1,0 +1,313 @@
+[
+  {
+    "comment": "view self",
+    "request": {"uri": "me"},
+    "response": {
+      "check": [{"condition": "json.getName() != null"}]
+    }
+  },
+
+  {
+    "comment": "view ansible roles, expect none",
+    "request": {"uri": "roles"},
+    "response": {
+      "check": [{"condition": "json.length == 0"}]
+    }
+  },
+
+  {
+    "comment": "view ansible roles, expect none",
+    "request": {"uri": "me/roles"},
+    "response": {
+      "check": [{"condition": "json.length == 0"}]
+    }
+  },
+
+  {
+    "comment": "add common role",
+    "request": {
+      "uri": "me/roles",
+      "method": "put",
+      "entity": {
+        "name": "common-0.0.1",
+        "template": true,
+        "tgzB64": "H4sIABVygl0AA+3STU7DMBAF4Kx7itllQyFu4kbqDTgAK4TQyHV/aOxEtoPa2+MkIEpFRRctqOJ9GzsZe2zpWdXG1PYuuaQsKqXsRlHKbH/8kIhc5lKUk0wWSSYmshAJyYve6l3rAzui5KW2HFZsj637qX6l1JB/YL/xl3oFp+Y/LeVElF3+cTpF/r/hS/6G1/Z2Z6ozn9EFPC2Ko/kXuTjIX+ZFnlB25nt865/nPybLRs/ooZlz0NSw2vBS+xERN2EWB6K2Lz0rVqu4cBeLo89dS8fzU7cNf/sdB33ubUyhqmh4jeRDu1js9xpWPVJqQ5PeUOp5ocfO9NO20e517WvXfWnDyo9tve1Lymltu9k28LpKiZ76bvGsENs1Tnttw5HL/nUwAAAAAAAAAAAAAAAAAAAAACd6A0DA1oIAKAAA"
+      }
+    }
+  },
+
+  {
+    "comment": "add firewall role",
+    "request": {
+      "uri": "me/roles",
+      "method": "put",
+      "entity": {
+        "name": "firewall-0.0.1",
+        "template": true,
+        "tgzB64": "H4sIAFGvgV0AA+2U32/aMBDHeeavuDde2pKEBCYeJtGSiUpVhwrTHqYJucY0aR07sk0r/vtdwg8NNBomhU3T7vNi5Xy6+359jhepEW9MynbjfHhIL4qK1e9F3s/rlobfiTqR3wu8APP8jheFDYjOqGnH0jpmABrPWjGXMHUsr2r/H2Wxnb9j9sWe5xacPP8g8P2oi/MPA8+n+f8JDuafsVRdrTJZa49iwN0wPDb/IOz1DuYfdbtBA7xaVRzhP5//JSiWiT7cKjwHKSFhr+JJzJsALHd9XGCT8A1am73WBbTS3LFHKexlLoxNrRPKteB7mY51HObnRliMlqFlPsfYjDOe4M5K2GZz2/eTXNoEeIL3DlO3ZdeNyyhKux9/mZaBRZG8LgDwKLjODssNpNRvUBhZGJ2B1JzJ6rqpmqXKCbNgHGtIXQafl1mOBW9u4vE6C9tl6Ohok3cEGSHxAObA1ByELbSkNsFvrpUS3KVa2WqV3G2ONp5MB9d3t5NRPLx4iO8G03h4kuLTVLxjYzIZVcvMjXaaa9kHx/MyMsdmKf492GCWa4N6gmDf0X38dX13VlgqY44nVYY4F7kDJUpRpzsYTafjeix88OqzUKj6PQ+TekyEYadeF5NTbFzjH/MC4lWYlUtS9QRCWlFtaC1i+PB5vC9haHSOd3q/1i8bW3zAdl3ALGX5kOA/IPGUdk9amfUR2sLx9jbYLpOvXsOD0n/7+SYIgiAIgiAIgiAIgiAIgiAIgiAIgtjxA2StsVQAKAAA"
+      }
+    }
+  },
+
+  {
+    "comment": "add bubble role",
+    "request": {
+      "uri": "me/roles",
+      "method": "put",
+      "entity": {
+        "name": "bubble-0.0.1",
+        "template": true,
+        "config": [
+          {"name": "ansible_python_interpreter", "value": "/usr/bin/python3"},
+          {"name": "upstream_bubble", "value": "{{configuration.thisNode.uuid}}"},
+          {"name": "bubble_version", "value": "{{configuration.version}}"},
+          {"name": "bubble_host", "value": "{{node.fqdn}}"}
+        ],
+        "tgzB64": "H4sIAFGvgV0AA+1Yy27bOhD1Wl8xyF24F6ithy0LEJBFnHjhNm0Du0FRFIUgS2wkRxIFkkpqBPn3O5TkZ5LazcPpRXm8oEnOkHM45JCjSTGZJERvvCQMhGPbsjQd21gt52iYHbvTc2zL6aKcadmW0QD7Ra2qUXDhM4DGlGa+iPzsIblt/f9TTCr//4gTwl9qF+zqf8c2u5bVQ/93eqap/L8PrPmfFzlhVzGnzKva2wHNfjx5DungXrf7oP87jlX5v4tuN8yGYeHPaYDxDPy24i/3v/YtZ/SC+albefy7xkVIC+El9EJuCjgEPaIp0euNUhUtlGijhBQmjG0RRolSOKBp6mfhIS9CCq0Cqm6Y+DyCVgAHesGZPokzfepf+diSr48WFIyRTNTV9hTdVv/luGsJa/fL2ris/FKVZFcH2muv/J+BeoEESfPEFy9zB+we/62OZXYw/ndtQ8X/veCO/5dHpD21nmeObfEfr/sN//ecnqHi/z5AfuaUCTg7758Oj73+0XjgnY+Gh5EQOXd1/eamjrFeRLmA21utVjg/G38eDY4+eP3zfv90cIiCRc4FI35avx2k8GuzU9iG+fn3+eUf8P63eo5Zvf+7HRX/94E1/6d+nLVnafLMc2yJ/x3Dcjb8b3fMror/+0ALMj8lLgwzXIckgU85yd6dvAfThHejAbyJiB9iasj/BXy5AyNhzDUAPxcuFlArf4MmRb1peNkyzdaUkdZcrfkWmqVSE76XCjiLQI2cEY4P8rKpyENs8wI/iLBnRrimbVq1TExBZqQgkw3UDWg+q+zgLHDh/vS17A8JFy7oRAQrSa4uu9uhviq8mPoYrzJB5jlKgSkGDiSLVeJVb9kgkxtk5G5ooGkRSRKcWyY2MtWpGmccn1wVW1mXyYq7lrNsWsLnAx+dDQETHB7TDMJYziFXo7Iqxy3q3peDecuLfK6L17NUodcZclplcsFoka+1pDREOwzbMFZ9iJOTQFA2u+uv2tTyq8JdPx2gMTHSb2MNzThY9dCOpuvzIaTaI6h0SyrXsYg8OQyvrGvBTWXhMsV8WxvWbMLtkueYiCKHSzJ7KsUn0uj9mkZTD8mVnhVJ0lzwaFcPNu+k7w0+Ho++nn0efvrovR98lQR31h4NTobjewZYrNAXFi9PDyYT8yM7TzRW1mot43jMXlgO8JhtsDD5NM4uof5SsDhhgoKICNCMwDWBKd4WEFebnIRrR6+k8lsn7x6W9ew706hPYoKWa9o/GJ7lZSZWIgWSW8a7QCQPBK96nFofmb32taSgoKCgoKCgoKCgoKCgoPCM+A8jUqzfACgAAA=="
+      }
+    }
+  },
+
+  {
+    "comment": "view clouds, expect none",
+    "request": {"uri": "me/clouds"},
+    "response": {
+      "check": [{"condition": "json.length == 0"}]
+    }
+  },
+
+  {
+    "comment": "create a compute cloud service",
+    "request": {
+      "uri": "me/clouds",
+      "method": "put",
+      "entity": {
+        "name": "TestCompute",
+        "type": "compute",
+        "driverClass": "bubble.cloud.compute.vultr.VultrDriver",
+        "driverConfig": {
+          "regions": [{"name": "New Jersey", "city": "Newark, NJ", "country": "US"}],
+          "sizes": [{"name": "small", "type": "small", "internalName": "1024 MB RAM,25 GB SSD,1.00 TB BW"}],
+          "config": [
+            {"name": "os", "value": "Ubuntu 18.04 x64"}
+          ]
+        },
+        "credentials": {
+          "params": [
+            {"name": "API-Key", "value": "{{VULTR_API_KEY}}"}
+          ]
+        },
+        "template": true
+      }
+    }
+  },
+
+  {
+    "comment": "create a DNS cloud service",
+    "request": {
+      "uri": "me/clouds",
+      "method": "put",
+      "entity": {
+        "name": "TestDns",
+        "type": "dns",
+        "driverClass": "bubble.cloud.dns.godaddy.GoDaddyDnsDriver",
+        "driverConfig": {},
+        "template": true
+      }
+    }
+  },
+
+  {
+    "comment": "create a domain using that DNS service",
+    "request": {
+      "uri": "me/domains",
+      "method": "put",
+      "entity": {
+        "name": "{{defaultDomain}}",
+        "dnsService": "TestDns",
+        "template": true,
+        "roles": ["common-0.0.1", "firewall-0.0.1", "bubble-0.0.1"]
+      }
+    }
+  },
+
+  {
+    "comment": "create a network within that domain, this triggers initialization of our first node",
+    "request": {
+      "uri": "me/networks",
+      "method": "put",
+      "entity": {
+        "name": "internal",
+        "domain": "{{defaultDomain}}"
+      }
+    },
+    "response": {
+      "check": [
+        {"condition": "json.getName() == 'internal'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "create another account",
+    "request": {
+      "uri": "users",
+      "method": "put",
+      "entity": {
+        "name": "test_user",
+        "password": "password"
+      }
+    }
+  },
+
+  {
+    "comment": "login as new user",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "test_user",
+        "password": "password"
+      }
+    },
+    "response": {
+      "store": "testAccount",
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "create a network within that domain, fails because user has no account limits",
+    "request": {
+      "uri": "me/networks",
+      "method": "put",
+      "entity": {
+        "name": "test1",
+        "domain": "{{defaultDomain}}"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.accountLimit.unset')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "in rootSession, set account spendLimit",
+    "request": {
+      "session": "rootSession",
+      "uri": "users/test_user",
+      "entity": {
+        "spendLimit": 20
+      }
+    },
+    "response": {
+      "check": [
+        {"condition": "json.getSpendLimit() == 20"}
+      ]
+    }
+  },
+
+  {
+    "comment": "relogin as new user to refresh limit",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "test_user",
+        "password": "password"
+      }
+    },
+    "response": {
+      "store": "testAccount",
+      "sessionName": "userSession",
+      "session": "token",
+      "check": [
+        {"condition": "json.getSpendLimit() == 20"}
+      ]
+    }
+  },
+
+  {
+    "comment": "in userSession, create a network within that domain, now succeeds",
+    "request": {
+      "session": "userSession",
+      "uri": "me/networks",
+      "method": "put",
+      "entity": {
+        "name": "test1",
+        "domain": "{{defaultDomain}}"
+      }
+    },
+    "response": {
+      "store": "testNetwork"
+    }
+  },
+
+  {
+    "comment": "list available compute regions->sizes",
+    "request": { "uri": "clouds?type=compute" },
+    "response": {
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].getDriver().getRegions().size() == 1"},
+        {"condition": "json[0].getDriver().getSizes().size() == 1"}
+      ]
+    }
+  },
+
+  // starts the network -- adds two nodes and hostnames: ns1, ns2, my
+  // returns activation token and link to check
+  {
+    "comment": "add nodes to the network",
+    "request": {
+      "uri": "me/networks/test1/nodes",
+      "method": "put",
+      "entity": {
+        "cloud": "TestCompute",
+        "region": "New Jersey",
+        "size": "small",
+        "count": 2
+      }
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length == 2"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 300s",
+    "comment": "wait for a bit, then check dns",
+    "request": {
+      "uri": "dns?name=ns1.test1.{{defaultDomain}}"
+    },
+    "response": {
+      "raw": true,
+      "check": [
+        {"condition": "response.json != null"}
+      ]
+    }
+  },
+
+  // destroy the network, will tear-down all nodes
+  {
+    "request": {
+      "uri": "me/networks/test1",
+      "method": "delete"
+    }
+  },
+
+  {
+    "before": "sleep 10s",
+    "comment": "wait for a bit, then check dns, record should be gone",
+    "request": {
+      "uri": "dns?name=ns1.test1.{{defaultDomain}}"
+    },
+    "response": { "status": 404 }
+  }
+]

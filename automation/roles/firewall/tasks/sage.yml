@@ -1,0 +1,95 @@
+- name: Allow all from local
+  iptables:
+    chain: INPUT
+    in_interface: lo
+    jump: ACCEPT
+    comment: Allow all from local
+  become: yes
+
+- name: Allow related and established connections
+  iptables:
+    chain: INPUT
+    ctstate: ESTABLISHED,RELATED
+    jump: ACCEPT
+    comment: Allow related and established connections
+  become: yes
+
+- include: port_redirect.yml
+    public_port="53"
+    private_port="{{ dns_port }}"
+    service_name="DNS"
+    allow_udp="yes"
+  when: fw_enable_dns
+
+- name: Allow SSH
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 22
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new SSH connections
+  become: yes
+  when: fw_enable_ssh
+
+- name: Allow HTTP
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 80
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new HTTP connections
+  become: yes
+  when: fw_enable_http
+
+- name: Allow HTTPS
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 443
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new HTTPS connections
+  become: yes
+  when: fw_enable_http
+
+- name: Allow admin HTTPS on port {{ ssl_port }}
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ ssl_port }}"
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new admin HTTPS connections
+  when: fw_enable_admin
+  become: yes
+
+- name: Drop everything else
+  iptables:
+    chain: INPUT
+    jump: DROP
+    comment: Drop anything else
+  become: yes
+
+- name: Creates /etc/iptables directory
+  file:
+    path: /etc/iptables
+    state: directory
+
+- name: save iptables v4 rules
+  shell: iptables-save > /etc/iptables/rules.v4
+  become: yes
+
+- name: save iptables v6 rules
+  shell: ip6tables-save > /etc/iptables/rules.v6
+  become: yes
+
+- supervisorctl:
+    name: bubble_peer_manager
+    state: restarted
+  when: fw_enable_admin

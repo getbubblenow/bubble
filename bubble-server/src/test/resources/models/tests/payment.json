@@ -1,0 +1,39 @@
+[
+  {
+    "comment": "list plans, review pricing",
+
+  },
+
+  {
+    "comment": "list promos available"
+  },
+
+  {
+    "comment": "successfully purchase plan + promo with credit card",
+    "before": "stripe-credit-card-token enabled",
+    "request": {
+      "uri": "cart/purchase",
+      "entity": {
+        "paymentInfo": [{  // change to NameAndValue
+          "name": "my_credit_card",
+          "method": "credit_card",
+          "values": {
+            "token": "{{stripeToken}}"
+          }
+        }],
+        // add adjustments here
+        "plan": "{{plan.uuid}}",
+        "price": "{{plan.price}}"
+      }
+    },
+    "response": {
+      "store": "billingEvent",
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].success.true"},
+        {"condition": "json[0].purchasedItems.length == 1"},
+        {"condition": "json[0].purchasedItems[0].purchase.get('policyState') == 'issued'"}
+      ]
+    }
+  }
+]

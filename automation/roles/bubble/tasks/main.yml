@@ -1,0 +1,135 @@
+- name: Install OpenJDK 11 JRE (headless), redis, uuid and jq
+  apt:
+    name: [ 'openjdk-11-jre-headless', 'redis', 'uuid', 'jq' ]
+    state: present
+    update_cache: yes
+
+- import_tasks: postgresql.yml
+
+- name: Create bubble user
+  user:
+    name: bubble
+    comment: bubble user
+    shell: /bin/bash
+    system: yes
+    home: /home/bubble
+
+- name: Creates bubble API version dir
+  file:
+    path: /home/bubble/bubble_{{ bubble_version }}
+    owner: bubble
+    group: bubble
+    mode: 0555
+    state: directory
+
+- name: Creates bubble logs dir
+  file:
+    path: /home/bubble/logs
+    owner: bubble
+    group: root
+    mode: 0770
+    state: directory
+
+- name: Creates bubble ansible archives dir
+  file:
+    path: /home/bubble/role_tgz
+    owner: bubble
+    group: root
+    mode: 0770
+    state: directory
+
+- name: Install bubble jar
+  copy:
+    src: "{{ item }}"
+    dest: /home/bubble/bubble_{{ bubble_version }}/{{ item }}
+    owner: bubble
+    group: bubble
+    mode: 0444
+  with_items:
+    - bubble.jar
+
+- name: Install bubble self_node.json, sage_node.json and sage_key.json
+  copy:
+    src: "{{ item }}"
+    dest: /home/bubble/{{ item }}
+    owner: bubble
+    group: bubble
+    mode: 0600
+  with_items:
+    - self_node.json
+    - sage_node.json
+    - sage_key.json
+
+- name: Install helper scripts
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    owner: root
+    group: root
+    mode: 0555
+  with_items:
+    - "bsql.sh"
+    - "random_password.sh"
+    - "init_roles.sh"
+
+- name: Install standard bubble scripts
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/local/bin/"
+    owner: root
+    group: root
+    mode: 0555
+  with_fileglob:
+    - "scripts/*"
+
+- name: Install helper template scripts
+  template:
+    src: "{{ item.src }}"
+    dest: "/usr/local/bin/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0555
+  with_items:
+    - { src: "full_reset_db.sh.j2", dest: "full_reset_db.sh" }
+    - { src: "snapshot_ansible.sh.j2", dest: "snapshot_ansible.sh" }
+
+- name: Generate keys
+  shell: random_password.sh /home/bubble/{{ item.file }} bubble {{ item.group }}
+  with_items:
+    - { file: '.BUBBLE_REDIS_ENCRYPTION_KEY', group: root }
+    - { file: '.BUBBLE_DB_ENCRYPTION_KEY',    group: postgres }  # postgres user needs access to DB key
+    - { file: '.BUBBLE_PG_PASSWORD',          group: postgres }  # postgres user needs access to DB password
+
+- name: Write DB key
+  shell: echo -n "{{ db_key }}" > /home/bubble/.BUBBLE_DB_ENCRYPTION_KEY
+
+- name: Copy ansible role archives
+  copy:
+    src: 'role_tgz/'
+    dest: '/home/bubble/role_tgz/'
+    owner: bubble
+    group: bubble
+    mode: 0400
+
+- name: Write bubble env file
+  template:
+    src: bubble.env.j2
+    dest: /home/bubble/bubble_{{ bubble_version }}/bubble.env
+    owner: bubble
+    group: bubble
+    mode: 0400
+
+- name: Link current version to the one we just installed
+  file:
+    src: /home/bubble/bubble_{{ bubble_version }}
+    dest: /home/bubble/current
+    owner: bubble
+    group: bubble
+    state: link
+
+- name: Initialize local storage with role archive
+  shell: init_roles.sh
+
+- import_tasks: postgresql_data.yml
+
+- import_tasks: restore.yml

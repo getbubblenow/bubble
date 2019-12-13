@@ -1,0 +1,11 @@
+{
+  "name": "bubble_finalizer-0.0.1",
+  "priority": 9999999,
+  "template": true,
+  "config": [
+    {"name": "restore_key", "value": "[[restoreKey]]"},
+    {"name": "install_type", "value": "[[installType]]"}
+  ],
+  "optionalConfigNames": ["restore_key"],
+  "tgzB64": ""
+}

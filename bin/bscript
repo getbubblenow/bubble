@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# Run a local JSON API script against a remote API server
+#
+# Usage:
+#
+#     run-script script-file [options] [args]
+#
+#   script-file    : a JSON API script
+#   options        : script options, see bubble.main.BubbleScriptOptions (and parent classes) for more info
+#   args           : a JSON object representing arguments to the script.
+#
+# Environment variables
+#
+#   BUBBLE_API     : which API to use. Default is local (http://127.0.0.1:PORT, where PORT is found in .bubble.env)
+#   BUBBLE_USER    : account to use. Default is root
+#   BUBBLE_PASS    : password for account. Default is root
+#   BUBBLE_INCLUDE : path to look for JSON include files. default value is to assume we are being run from
+#                      bubble repo, bubble-models repo, or bubble-client and use include files from minimal model.
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+BUBBLE_SERVER=$(cd $(dirname ${0})/.. && pwd)
+
+CANDIDATE_INCLUDES="
+${BUBBLE_SERVER}/src/test/resources/models/minimal/tests
+${BUBBLE_SERVER}/resources/models/minimal/tests
+${SCRIPT_DIR}/models/minimal/tests
+"
+
+if [[ -z "${BUBBLE_INCLUDE}" ]] ; then
+  for include in ${CANDIDATE_INCLUDES} ; do
+    if [[ -d ${include} ]] ; then
+      BUBBLE_INCLUDE="$(cd ${include} && pwd)"
+      break
+    fi
+  done
+fi
+if [[ ! -z "${BUBBLE_INCLUDE}" ]] ; then
+  BUBBLE_INCLUDE="-I ${BUBBLE_INCLUDE}"
+fi
+
+SCRIPT=${1:?no JSON script provided}
+shift
+ARGS=$(quote_args "$@")
+
+exec ${SCRIPT_DIR}/bubble script -H ${BUBBLE_INCLUDE} ${ARGS} ${SCRIPT}

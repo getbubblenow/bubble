@@ -1,0 +1,15 @@
+[
+  {
+    "comment": "try to proxy a website, no rules should be applied",
+    "request": {
+      "uri": "p/kyuss.org"
+    },
+    "response": {
+      "raw": true,
+      "check": [
+        {"condition":  "response.header('Content-Type').startsWith('text/html')"}
+      ]
+    }
+  }
+
+]

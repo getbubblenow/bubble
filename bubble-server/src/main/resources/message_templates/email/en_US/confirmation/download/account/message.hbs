@@ -1,0 +1,13 @@
+Hello {{account.name}},
+
+The download request for the account named '{{account.name}}' on {{network.networkDomain}} has been confirmed
+
+The request was made on {{format_epoch message.request.ctime 'MMM dd, YYYY' network.timezone}} at {{format_epoch message.request.ctime 'hh:mm a, ZZZ' network.timezone}}.
+
+An approval was received via {{contact.type}} from {{contact.info}} {{#if contact.nick}}({{contact.nick}}){{/if}} on {{format_epoch message.ctime 'MMM dd, YYYY' network.timezone}} at {{format_epoch message.ctime 'hh:mm a, ZZZ' network.timezone}}.
+
+Follow this link to download your account data:
+
+  {{configuration.publicUriBase}}/me/download/{{message.requestId}}
+
+Thank you for using Bubble!

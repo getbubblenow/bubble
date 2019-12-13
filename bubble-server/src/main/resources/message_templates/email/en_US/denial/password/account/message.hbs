@@ -1,0 +1,9 @@
+Hello {{account.name}},
+
+The reset password request for the account named '{{account.name}}' on {{network.networkDomain}} has been canceled.
+
+The request was made on {{format_epoch message.ctime 'MMM dd, YYYY' network.timezone}} at {{format_epoch message.ctime 'hh:mm a, ZZZ' network.timezone}} from IP address {{message.remoteHost}}.
+
+The request was canceled via {{contact.type}} from {{contact.info}} {{#if contact.nick}}({{contact.nick}}){{/if}} on {{format_epoch message.ctime 'MMM dd, YYYY' network.timezone}} at {{format_epoch message.ctime 'hh:mm a, ZZZ' network.timezone}}.
+
+Thank you for using Bubble!

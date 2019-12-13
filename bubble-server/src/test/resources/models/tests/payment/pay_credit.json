@@ -1,0 +1,175 @@
+[
+  {
+    "comment": "create a user account",
+    "request": {
+      "uri": "users",
+      "method": "put",
+      "entity": {
+        "name": "test_user",
+        "password": "password",
+        "contact": {"type": "email", "info": "test-user@example.com"}
+      }
+    }
+  },
+
+  {
+    "before": "sleep 22s",  // wait for account objects to be created
+    "comment": "login as new user",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "test_user",
+        "password": "password"
+      }
+    },
+    "response": {
+      "store": "testAccount",
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "get payment methods, so we can get the stripe public key to tokenize a credit card",
+    "request": { "uri": "paymentMethods" },
+    "response": {
+      "store": "paymentMethods"
+    },
+    "after": "stripe_tokenize_card"
+  },
+
+  {
+    "comment": "add plan, using 'credit' payment method but with an invalid card token",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "bubble",
+        "footprint": "US",
+        "paymentMethod": {
+          "paymentMethodType": "credit",
+          "paymentInfo": "invalid_token"
+        }
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.paymentInfo.invalid')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "add plan, using 'credit' payment method with a valid card token, but email has not been verified",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "bubble",
+        "footprint": "US",
+        "paymentMethod": {
+          "paymentMethodType": "credit",
+          "paymentInfo": "{{stripeToken}}"
+        }
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.paymentInfo.verifiedEmailRequired')"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "as root, check email inbox for verification message",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/test-user@example.com?type=request&action=verify&target=account"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "approve email verification request",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{emailInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    }
+  },
+
+  {
+    "comment": "add plan, using 'credit' payment method with a valid card token, creates a stripe customer",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "bubble",
+        "footprint": "US",
+        "paymentMethod": {
+          "paymentMethodType": "credit",
+          "paymentInfo": "{{stripeToken}}"
+        }
+      }
+    },
+    "response": {
+      "store": "accountPlan"
+    }
+  },
+
+  {
+    "comment": "verify account payment methods, should be one",
+    "request": { "uri": "me/paymentMethods" },
+    "response": {
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].getPaymentMethodType().name() == 'credit'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify account plans, should be one",
+    "request": { "uri": "me/plans" },
+    "response": {
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].getName() == accountPlan.getName()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify account plan payment info",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/paymentMethod" },
+    "response": {
+      "check": [
+        {"condition": "json.getPaymentMethodType().name() == 'credit'"},
+        {"condition": "json.getMaskedPaymentInfo() == 'XXXX-XXXX-XXXX-4242'"}
+      ]
+    }
+  }
+]

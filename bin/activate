@@ -1,0 +1,84 @@
+#!/bin/bash
+#
+# Initial activation of a bubble server
+#
+# Usage:  activate [domain] [dns] [storage]
+#
+#   domain     : a domain name. Must be listed in bubble-server/src/test/resources/models/system/bubbleDomain.json
+#                default value is bubblev.org
+#   dns        : name of a CloudService of type 'dns'. Must be listed in bubble-server/src/test/resources/models/system/cloudService.json
+#                default is GoDaddyDns
+#   storage    : name of a CloudService of type 'storage'. Must be listed in cloudService.json
+#                default is S3_US_Standard
+#
+# Environment variables
+#
+#   BUBBLE_API     : which API to use. Default is local (http://127.0.0.1:PORT, where PORT is found in .bubble.env)
+#   BUBBLE_USER    : account to use. Default is root
+#   BUBBLE_PASS    : password for account. Default is root
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+if [[ -z "${BUBBLE_JAR}" ]] ; then
+  die "BUBBLE_JAR env var not set and no jar file found"
+fi
+
+MODELS_DIR="${SCRIPT_DIR}/../bubble-server/src/test/resources/models/system"
+if [[ ! -d ${MODELS_DIR} ]] ; then
+  die "Models directory not found: ${MODELS_DIR}"
+fi
+
+ENV_FILE="${HOME}/.bubble.env"
+if [[ ! -f ${ENV_FILE} ]] ; then
+  die "env file not found: ${ENV_FILE}"
+fi
+
+# Source env vars
+. ${ENV_FILE}
+
+DOMAIN=${1:-bubblev.org}
+DOMAINS_FILE="${MODELS_DIR}/bubbleDomain.json"
+DOMAIN_JSON=$(cat ${DOMAINS_FILE} | sed -e 's,// .*,,g' | grep -v "_subst" | java -cp ${BUBBLE_JAR} bubble.main.BubbleMain handlebars | jq ".[] | select(.name==\"${DOMAIN}\")")
+if [[ -z "${DOMAIN_JSON}" ]] ; then
+  die "Domain ${DOMAIN} not found in ${DOMAINS_FILE}"
+fi
+
+DNS_CLOUD=${2:-GoDaddyDns}
+CLOUDS_FILE="${MODELS_DIR}/cloudService.json"
+DNS_JSON=$(cat ${CLOUDS_FILE} | sed -e 's,// .*,,g' | grep -v "_subst" | java -cp ${BUBBLE_JAR} bubble.main.BubbleMain handlebars | jq ".[] | select(.name==\"${DNS_CLOUD}\")")
+if [[ -z "${DNS_JSON}" ]] ; then
+  die "DNS CloudService ${DNS_CLOUD} not found in ${CLOUDS_FILE}"
+fi
+CLOUD_TYPE="$(echo ${DNS_JSON} | jq -r .type)"
+if [[ -z "${CLOUD_TYPE}" ]] ; then
+  die "DNS service ${DNS_CLOUD} has no type"
+fi
+if [[ "${CLOUD_TYPE}" != 'dns' ]] ; then
+  die "DNS service ${DNS_CLOUD} has wrong type (${CLOUD_TYPE}), expected: dns"
+fi
+
+STORAGE_CLOUD=${2:-S3_US_Standard}
+STORAGE_JSON=$(cat ${CLOUDS_FILE} | sed -e 's,// .*,,g' | grep -v "_subst" | java -cp ${BUBBLE_JAR} bubble.main.BubbleMain handlebars | jq ".[] | select(.name==\"${STORAGE_CLOUD}\")")
+if [[ -z "${STORAGE_JSON}" ]] ; then
+  die "Storage CloudService ${STORAGE_CLOUD} not found in ${CLOUDS_FILE}"
+fi
+CLOUD_TYPE="$(echo ${STORAGE_JSON} | jq -r .type)"
+if [[ -z "${CLOUD_TYPE}" ]] ; then
+  die "Storage service ${DNS_CLOUD} has no type"
+fi
+if [[ "${CLOUD_TYPE}" != 'storage' ]] ; then
+  die "Storage service ${DNS_CLOUD} has wrong type (${CLOUD_TYPE}), expected: storage"
+fi
+
+exec ${SCRIPT_DIR}/bput auth/activate - --no-login <<EOF
+{
+    "name": "${BUBBLE_USER}",
+    "password": "${BUBBLE_PASS}",
+    "networkName": "$(hostname -s)",
+    "domain": ${DOMAIN_JSON},
+    "dns": ${DNS_JSON},
+    "storage": ${STORAGE_JSON}
+}
+EOF

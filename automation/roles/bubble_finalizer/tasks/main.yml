@@ -1,0 +1,40 @@
+- name: Snapshot ansible roles
+  shell: snapshot_ansible.sh
+
+- name: Touch first-time setup file
+  shell: su - bubble bash -c "if [[ ! -f /home/bubble/first_time_marker ]] ; then echo -n install > /home/bubble/first_time_marker ; fi"
+  when: restore_key is not defined
+
+- name: Touch first-time setup file (restore)
+  shell: su - bubble bash -c "if [[ ! -f /home/bubble/first_time_marker ]] ; then echo -n restore > /home/bubble/first_time_marker ; fi"
+  when: restore_key is defined
+
+- name: Install mitmproxy CA cert in local CA store
+  shell: install_cert.sh /home/mitmproxy/.mitmproxy/bubble-ca-cert.pem 600
+  when: install_type == 'node'
+
+- name: Install copy_certs_to_bubble.sh helper
+  copy:
+    src: "copy_certs_to_bubble.sh"
+    dest: /usr/local/bin/copy_certs_to_bubble.sh
+    owner: bubble
+    group: root
+    mode: 0550
+  when: install_type == 'node'
+
+- name: Install mitmproxy public certs in bubble dir
+  shell: /usr/local/bin/copy_certs_to_bubble.sh
+  when: install_type == 'node'
+
+- name: Install bubble supervisor conf file
+  copy:
+    src: supervisor_bubble.conf
+    dest: /etc/supervisor/conf.d/bubble.conf
+
+# We cannot receive notifications until nginx is running, so start bubble API as the very last step
+- name: Ensure bubble is started
+  supervisorctl:
+    name: '{{ item }}'
+    state: restarted
+  with_items:
+    - bubble

@@ -1,0 +1,192 @@
+[
+  {
+    "_subst": true,
+    "name": "S3_US_Standard",
+    "type": "storage",
+    "driverClass": "bubble.cloud.storage.s3.S3StorageDriver",
+    "driverConfig": {
+      "region": "US_EAST_1",
+      "bucket": "dev.bubblev.org",
+      "prefix": "2019-11",
+      "listFetchSize": 100
+    },
+    "credentials": {
+      "params": [
+        {"name": "AWS_ACCESS_KEY_ID", "value": "{{AWS_ACCESS_KEY_ID}}"},
+        {"name": "AWS_SECRET_KEY", "value": "{{AWS_SECRET_KEY}}"}
+      ]
+    },
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "LocalStorage",
+    "type": "storage",
+    "driverClass": "bubble.cloud.storage.local.LocalStorageDriver",
+    "driverConfig": { "baseDir": "{{LOCALSTORAGE_BASE_DIR}}" },
+    "template": false
+  },
+
+  {
+    "_subst": true,
+    "name": "GoogleGeoCoder",
+    "type": "geoCode",
+    "driverClass": "bubble.cloud.geoCode.google.GoogleGeoCodeDriver",
+    "credentials": { "params": [ {"name": "apiKey", "value": "{{GOOGLE_API_KEY}}"} ] },
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "TOTPAuthenticator",
+    "type": "authenticator",
+    "driverClass": "bubble.cloud.authenticator.TOTPAuthenticatorDriver",
+    "template": true
+  },
+
+  {
+    "name": "MaxMind",
+    "type": "geoLocation",
+    "driverClass": "bubble.cloud.geoLocation.maxmind.MaxMindDriver",
+    "driverConfig": {
+      "url": "https://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz",
+      "file": "GeoLite2-City_[\\d]+/GeoLite2-City\\.mmdb"
+    },
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "SmtpServer",
+    "type": "email",
+    "driverClass": "{{BUBBLE_SMTP_DRIVER}}",
+    "driverConfig": {
+      "tlsEnabled": true,
+      "templatePath": "message_templates/email"
+    },
+    "credentials": {
+      "params": [
+        {"name": "user", "value": "{{BUBBLE_SMTP_USER}}"},
+        {"name": "password", "value": "{{BUBBLE_SMTP_PASS}}"},
+        {"name": "host", "value": "{{BUBBLE_SMTP_SERVER}}"},
+        {"name": "port", "value": "{{BUBBLE_SMTP_PORT}}"}
+      ]
+    },
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "TwilioSms",
+    "type": "sms",
+    "driverClass": "{{BUBBLE_SMS_DRIVER}}",
+    "driverConfig": {
+      "templatePath": "message_templates/sms"
+    },
+    "credentials": {
+      "params": [
+        {"name": "accountSID", "value": "{{TWILIO_ACCOUNT_SID}}"},
+        {"name": "authToken", "value": "{{TWILIO_AUTH_TOKEN}}"},
+        {"name": "fromPhoneNumber", "value": "{{TWILIO_FROM_PHONE_NUMBER}}"}
+      ]
+    },
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "GoogleGeoTime",
+    "type": "geoTime",
+    "driverClass": "bubble.cloud.geoTime.google.GoogleGeoTimeDriver",
+    "credentials": {  "params": [ {"name": "apiKey", "value": "{{GOOGLE_API_KEY}}"} ] },
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "VultrCompute",
+    "type": "compute",
+    "driverClass": "bubble.cloud.compute.vultr.VultrDriver",
+    "driverConfig": {
+      "regions": [{
+        "name": "Vultr - New Jersey",
+        "internalName": "New Jersey",
+        "location": {"city": "Newark", "country": "US", "region": "NJ", "lat": "40.72", "lon": "-74.17"}
+      }, {
+        "name": "Vultr - Atlanta",
+        "internalName": "Atlanta",
+        "location": {"city": "Atlanta", "country": "US", "region": "GA", "lat": "33.755", "lon": "-84.39"}
+      }, {
+        "name": "Vultr - Chicago",
+        "internalName": "Chicago",
+        "location": {"city": "Chicago", "country": "US", "region": "IL", "lat": "41.881944", "lon": "-87.627778"}
+      }, {
+        "name": "Vultr - San Jose",
+        "internalName": "Silicon Valley",
+        "location": {"city": "San Jose", "country": "US", "region": "CA", "lat": "37.333333", "lon": "-121.9"}
+      }, {
+        "name": "Vultr - London",
+        "internalName": "London",
+        "location": {"city": "London", "country": "GB", "region": "London", "lat": "51.507222", "lon": "-0.1275"}
+      }, {
+        "name": "Vultr - Paris",
+        "internalName": "Paris",
+        "location": {"city": "Paris", "country": "FR", "region": "Ile-de-Paris", "lat": "48.8567", "lon": "2.3508"}
+      }],
+      "sizes": [
+        {"name": "small", "type": "small", "internalName": "1024 MB RAM,25 GB SSD,1.00 TB BW"},
+        {"name": "medium", "type": "medium", "internalName": "4096 MB RAM,80 GB SSD,3.00 TB BW"},
+        {"name": "large", "type": "large", "internalName": "8192 MB RAM,160 GB SSD,4.00 TB BW"}
+      ],
+      "config": [{"name": "os", "value": "Ubuntu 18.04 x64"}]
+    },
+    "credentials": {
+      "params": [
+        {"name": "API-Key", "value": "{{VULTR_API_KEY}}"}
+      ]
+    },
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "InviteCode",
+    "type": "payment",
+    "driverClass": "bubble.cloud.payment.code.CodePaymentDriver",
+    "driverConfig": {},
+    "credentials": {},
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "StripePayments",
+    "type": "payment",
+    "driverClass": "bubble.cloud.payment.stripe.StripePaymentDriver",
+    "driverConfig": {
+      "publicApiKey": "{{STRIPE_PUBLIC_API_KEY}}"
+    },
+    "credentials": {
+      "params": [ {"name": "secretApiKey", "value": "{{STRIPE_SECRET_API_KEY}}"} ]
+    },
+    "template": true
+  },
+
+  // keep this as the last entry. ActivatedBubbleModelTestBase uses the last entry in this file as the DNS
+  // for the initial domain
+  {
+    "_subst": true,
+    "name": "GoDaddyDns",
+    "type": "dns",
+    "driverClass": "bubble.cloud.dns.godaddy.GoDaddyDnsDriver",
+    "driverConfig": {},
+    "credentials": {
+      "params": [
+        {"name": "GODADDY_API_KEY", "value": "{{GODADDY_API_KEY}}"},
+        {"name": "GODADDY_API_SECRET", "value": "{{GODADDY_API_SECRET}}"}
+      ]
+    },
+    "template": true
+  }
+]

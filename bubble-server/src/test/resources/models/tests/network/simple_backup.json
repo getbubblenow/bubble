@@ -1,0 +1,71 @@
+[
+  {
+    "comment": "add file to storage",
+    "request": {
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/storage/write/test_file_{{rand 10}}.txt",
+      "headers": { "Content-Type": "multipart/form-data" },
+      "entity": {"file": "data:this is a test file: {{rand 20}}"}
+    },
+    "response": {
+      "store": "fileMeta"
+    }
+  },
+
+  {
+    "comment": "backup network",
+    "request": {
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/backups/test_backup",
+      "method": "put"
+    },
+    "response": {
+      "store": "backup"
+    }
+  },
+
+  {
+    "before": "await_url me/networks/{{serverConfig.thisNetwork.uuid}}/backups/test_backup?status=backup_completed 10m 30s",
+    "comment": "find completed backup",
+    "request": {
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/backups/test_backup"
+    },
+    "response": {
+      "store": "backup",
+      "check": [
+        {"condition": "json.getStatus().name() == 'backup_completed'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "list backups, should be just one",
+    "request": {
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/backups"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].getLabel() == 'test_backup'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "delete backup",
+    "request": {
+      "method": "delete",
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/backups/test_backup"
+    }
+  },
+
+  {
+    "comment": "list backups, should be just one",
+    "request": {
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/backups"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length == 0"}
+      ]
+    }
+  }
+]

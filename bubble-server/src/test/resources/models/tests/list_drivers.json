@@ -1,0 +1,68 @@
+[
+  {
+    "comment": "list drivers",
+    "request": { "uri": "me/drivers" },
+    "response": {
+      "store": "myDrivers",
+      "check": [
+        {"condition": "json.length == 2"},
+        {"condition": "_find(json, function (d) { return d.getName() == 'UserBlocker'; }).getDescriptor().getLabels().length == 3"},
+        {"condition": "_find(json, function (d) { return d.getName() == 'TrafficAnalytics'; }).getDescriptor().getLabels().length == 2"}
+      ]
+    }
+  },
+
+  {
+    "comment": "list all drivers",
+    "request": { "uri": "drivers" },
+    "response": {
+      "store": "allDrivers",
+      "check": [
+        {"condition": "json.length == 2"},
+        {"condition": "_find(json, function (d) { return d.getName() == 'UserBlocker'; }).getDescriptor().getLabels().length == 3"},
+        {"condition": "_find(json, function (d) { return d.getName() == 'TrafficAnalytics'; }).getDescriptor().getLabels().length == 2"}
+      ]
+    }
+  },
+
+  {
+    "comment": "view a single driver",
+    "request": { "uri": "me/drivers/{{find myDrivers 'name' 'UserBlocker' 'driverClass'}}" },
+    "response": {
+      "check": [
+        {"condition": "json.getName() == 'UserBlocker'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "view a single public driver",
+    "request": { "uri": "drivers/{{find allDrivers 'name' 'TrafficAnalytics' 'uuid'}}" },
+    "response": {
+      "check": [
+        {"condition": "json.getName() == 'TrafficAnalytics'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "list data for a user driver",
+    "request": { "uri": "me/apps/UserBlocker/data" },
+    "response": {
+      "check": [
+        {"condition": "json.length == 2"}
+      ]
+    }
+  },
+
+  {
+    "comment": "list data for a public driver",
+    "request": { "uri": "apps/UserBlocker/data" },
+    "response": {
+      "check": [
+        {"condition": "json.length == 2"}
+      ]
+    }
+  }
+
+]

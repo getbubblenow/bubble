@@ -1,0 +1,108 @@
+[
+  {
+    "comment": "declare default parameters for new_account test part",
+    "include": "_defaults",
+    "params": {
+      "username": "user-{{rand 10}}",
+      "password": "foobar1!",
+      "email": "user-{{rand 5}}@example.com",
+      "userSessionName": "userSession",
+      "userVar": "userAccount",
+      "verifyEmail": "false"
+    }
+  },
+
+  {
+    "comment": "as root, create a new account",
+    "request": {
+      "uri": "users",
+      "method": "put",
+      "entity": {
+        "name": "<<username>>",
+        "password": "<<password>>",
+        "contact": {"type": "email", "info": "<<email>>"}
+      }
+    },
+    "response": {
+      "store": "<<userVar>>"
+    }
+  },
+
+  {
+    "before": "sleep 24s",
+    "comment": "as root, check inbox, verify welcome message sent",
+    "request": {
+      "uri": "debug/inbox/email/{{<<userVar>>.policy.firstEmail}}?action=welcome"
+    },
+    "response": {
+      "store": "userInbox",
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'notice'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'welcome'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "new session, log in as user",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "<<username>>",
+        "password": "<<password>>"
+      }
+    },
+    "response": {
+      "sessionName": "<<userSessionName>>",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "look up self",
+    "request": { "uri": "me" },
+    "response": { "store": "user" }
+  },
+
+  {
+    "onlyIf": "<<verifyEmail>>",
+    "before": "sleep 1s",
+    "comment": "as root, check inbox for initial email verification message",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/{{user.policy.firstEmail}}?action=verify"
+    },
+    "response": {
+      "store": "userInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "onlyIf": "<<verifyEmail>>",
+    "comment": "as user, approve initial email verification request",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    },
+    "response": {
+      "sessionName": "<<userSessionName>>",
+      "session": "token"
+    }
+  },
+
+  {
+    "onlyIf": "<<verifyEmail>>",
+    "comment": "re-look up self",
+    "request": { "uri": "me" },
+    "response": { "store": "user" }
+  }
+]

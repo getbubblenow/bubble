@@ -1,0 +1,198 @@
+[
+  {
+    "comment": "activate service, create account, login",
+    "include": "new_account",
+    "params": {
+      "password": "foobar1!"
+    }
+  },
+
+  {
+    "comment": "look up account policy",
+    "request": { "uri": "users/{{userAccount.name}}/policy" },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, verify site data was populated via templates",
+    "before": "sleep 5s",
+    "request": { "uri":  "me/apps/UserBlocker/data" },
+    "response": { "check": [ {"condition":  "json.length > 0"} ] }
+  },
+
+  {
+    "comment": "as user, verify data a second way",
+    "request": { "uri":  "users/{{userAccount.name}}/apps/UserBlocker/sites/HackerNews/data" },
+    "response": { "check": [ {"condition":  "json.length > 0"} ] }
+  },
+
+  {
+    "comment": "as root, verify we see new user's site data that was populated via templates",
+    "request": {
+      "session": "rootSession",
+      "uri":  "users/{{userAccount.name}}/apps/UserBlocker/data"
+    },
+    "response": { "check": [ {"condition":  "json.length > 0"} ] }
+  },
+
+  {
+    "comment": "as root, verify the data a second way",
+    "request": { "uri":  "users/{{userAccount.name}}/apps/UserBlocker/sites/HackerNews/data" },
+    "response": { "check": [ {"condition":  "json.length > 0"} ] }
+  },
+
+  {
+    "comment": "as user, request deletion of the user (self-delete)",
+    "request": {
+      "session": "userSession",
+      "uri": "users/{{userAccount.name}}/request",
+      "method": "delete"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.getMessageType().name() == 'request'"},
+        {"condition": "json.getAction().name() == 'delete'"},
+        {"condition": "json.getTarget().name() == 'account'"},
+        {"condition": "json.getAccount() == '{{user.uuid}}'"},
+        {"condition": "json.getName() == '{{user.uuid}}'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as root, check inbox, verify message sent. read confirmation token",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/{{policy.firstEmail}}?action=delete"
+    },
+    "response": {
+      "store": "userInbox",
+      "check": [
+        {"condition": "json.length > 0"},
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'delete'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, deny deletion",
+    "request": {
+      "session": "userSession",
+      "uri": "me/deny/{{userInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.getMessageType().name() == 'denial'"},
+        {"condition": "json.getAction().name() == 'delete'"},
+        {"condition": "json.getTarget().name() == 'account'"},
+        {"condition": "json.getAccount() == '{{user.uuid}}'"},
+        {"condition": "json.getName() == '{{user.uuid}}'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, try to approve deletion, fails because token was already used",
+    "request": {
+      "uri": "me/approve/{{userInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    },
+    "response": {
+      "status": 404
+    }
+  },
+
+  {
+    "comment": "as user, re-request deletion of the user (self-delete)",
+    "request": {
+      "uri": "users/{{userAccount.name}}/request",
+      "method": "delete"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.getMessageType().name() == 'request'"},
+        {"condition": "json.getAction().name() == 'delete'"},
+        {"condition": "json.getTarget().name() == 'account'"},
+        {"condition": "json.getAccount() == '{{user.uuid}}'"},
+        {"condition": "json.getName() == '{{user.uuid}}'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as root, re-check inbox, verify message sent. read confirmation token",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/{{policy.firstEmail}}?action=delete"
+    },
+    "response": {
+      "store": "userInbox",
+      "check": [
+        {"condition": "json.length > 0"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, approve deletion",
+    "request": {
+      "session": "userSession",
+      "uri": "me/approve/{{userInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.getMessageType().name() == 'confirmation'"},
+        {"condition": "json.getAction().name() == 'delete'"},
+        {"condition": "json.getTarget().name() == 'account'"},
+        {"condition": "json.getAccount() == '{{user.uuid}}'"},
+        {"condition": "json.getName() == '{{user.uuid}}'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as root, verify no more site data found",
+    "request": {
+      "session": "rootSession",
+      "uri":  "users/{{userAccount.name}}/apps/UserBlocker/data"
+    },
+    "response": { "status": 404 }
+  },
+
+  {
+    "comment": "as root, verify user not found",
+    "request": {
+      "session": "rootSession",
+      "uri":  "users/{{userAccount.name}}"
+    },
+    "response": { "status": 404 }
+  },
+
+  {
+    "comment": "new session, verify user can no longer log in",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!"
+      }
+    },
+    "response": {
+      "status": 404,
+      "check": [
+        {"condition": "json.get('resource') == '{{userAccount.name}}'"}
+      ]
+    }
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "name": "TrafficAnalytics",
+  "driverClass": "bubble.rule.analytics.TrafficAnalytics",
+  "description": "A traffic analytics driver, keeps count of the number of requests made to various domains over time",
+  "icon": "base64-encoded-256x256-png-goes-here",
+  "labels": [
+    {"name": "all_data", "value": "Analytics for all Sites"},
+    {"name": "site_data", "value": "Analytics for a Site"}
+  ]
+}

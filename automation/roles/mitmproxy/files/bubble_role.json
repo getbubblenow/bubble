@@ -1,0 +1,12 @@
+{
+  "name": "mitmproxy-0.0.1",
+  "priority": 600,
+  "template": true,
+  "install": "node",
+  "config": [
+    {"name": "admin_port", "value": "[[node.adminPort]]"},
+    {"name": "bubble_network", "value": "[[node.network]]"},
+    {"name": "mitm_port", "value": "[[configuration.mitmPort]]"}
+  ],
+  "tgzB64": ""
+}

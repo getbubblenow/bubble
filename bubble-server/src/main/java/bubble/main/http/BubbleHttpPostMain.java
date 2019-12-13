@@ -1,0 +1,29 @@
+package bubble.main.http;
+
+import org.cobbzilla.util.http.HttpMethods;
+import org.cobbzilla.util.io.FileUtil;
+import org.cobbzilla.wizard.util.RestResponse;
+
+import java.io.File;
+
+import static org.cobbzilla.util.http.HttpContentTypes.MULTIPART_FORM_DATA;
+import static org.cobbzilla.util.io.FileUtil.toFileOrDie;
+
+public class BubbleHttpPostMain extends BubbleHttpMain<BubbleHttpEntityOptions> {
+
+    public static void main (String[] args) { main(BubbleHttpPostMain.class, args); }
+
+    @Override protected String getMethod() { return HttpMethods.POST; }
+
+    @Override protected RestResponse request(String url) throws Exception {
+        final BubbleHttpEntityOptions options = getOptions();
+        if (options.getContentType().equalsIgnoreCase(MULTIPART_FORM_DATA)) {
+            final File temp = FileUtil.temp(".tmp");
+            toFileOrDie(temp, options.getRequestJson());
+            return getApiClient().doPost(url, temp);
+        } else {
+            return getApiClient().post(url, options.getRequestJson(), options.contentType());
+        }
+    }
+
+}

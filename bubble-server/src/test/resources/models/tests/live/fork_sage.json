@@ -1,0 +1,45 @@
+[
+  {
+    "comment": "fork the system",
+    "include": "fork",
+    "params": {
+      "network": "staging-{{rand 5}}"
+    }
+  },
+
+  {
+    "comment": "try /me endpoint on new node. should fail with 403 Forbidden since we have not authenticated",
+    "connection": { "name": "newNetworkConnection" },
+    "request": { "uri": "me" },
+    "response": {
+      "status": 403
+    }
+  },
+
+  {
+    "comment": "login",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "root",
+        "password": "password"
+      }
+    },
+    "response": {
+      "store": "nnRootAccount",
+      "sessionName": "nnRootSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "After login on new node, /me endpoint works",
+    "request": { "uri": "me" },
+    "response": {
+      "check": [
+        {"condition": "json.getName() == 'root'"}
+      ]
+    }
+  }
+]

@@ -1,0 +1,53 @@
+#!/bin/bash
+#
+# Drop the various temporary databases that sometimes get left around by the tests
+# Do not run this command while tests are running
+#
+# Usage:
+#
+#   cleanup_bubble_databases [db-match] [fg]
+#
+# db-match    all databases that contain this string will be dropped. default is "bubble_"
+# foreground  normally a forked shell is used for each "dropdb" command; if the last argument is "fg" then we'll use the current shell
+#
+# Note: if you specify db-match "bubble", this would normally include the default bubble database, but it will be
+# specifically excluded by this script, to avoid dropping a real database with real data in it.
+#
+# To drop the "bubble" database, you must drop it directly with dropdb.
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+
+DB_MATCH="${1:-bubble_}"
+DB_USER="$(whoami)"
+FORK_DROP=1
+
+if [[ "${2:-fork}" = "fg" ]] ; then
+  FORK_DROP=0
+fi
+if [[ ${FORK_DROP} -eq 1 ]] ; then
+  set -m
+fi
+
+DATABASE_COUNT="$(echo "select datname from pg_database" | psql -qt -U ${DB_USER} template1 | grep ${DB_MATCH} | wc -l | tr -d ' ')"
+
+if [[ ${DATABASE_COUNT} -gt 0 ]] ; then
+  echo "Cleaning up ${DATABASE_COUNT} databases..."
+
+  DATABASES="$(echo "select datname from pg_database" | psql -qt -U ${DB_USER} template1 | grep ${DB_MATCH} | tr -d ' ')"
+  if [[ ! -z "${DATABASES}" ]] ; then
+    for db in ${DATABASES} ; do
+      if [[ "${db}" == "bubble" ]] ; then
+        echo "Not dropping bubble default database"
+      else
+        if [[ "${FORK_DROP}" -eq 1 ]] ; then
+          dropdb -U ${DB_USER} ${db} &
+        else
+          dropdb -U ${DB_USER} ${db} || echo "Error dropping database: ${db}"
+        fi
+      fi
+    done
+  fi
+else
+  echo "No databases whose name contains \"${DB_MATCH}\" to clean up"
+fi

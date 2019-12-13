@@ -1,0 +1,164 @@
+[
+  {
+    "comment": "create an account",
+    "include": "new_account",
+    "params": {
+      "name": "test-user-{{rand 5}}",
+      "password": "password1!"
+    }
+  },
+
+  {
+    "comment": "as root, list devices for user account, there should be none",
+    "request": {
+      "session": "rootSession",
+      "uri": "users/{{userAccount.name}}/devices"
+    },
+    "response": {
+      "store": "userDevices",
+      "check": [
+        {"condition": "json.length == 0"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as root, add a device to account",
+    "request": {
+      "uri": "users/{{userAccount.name}}/devices",
+      "method": "put",
+      "entity": {
+        "name": "root-added-device"
+      }
+    },
+    "response": {
+      "store": "device"
+    }
+  },
+
+  {
+    "comment": "as root, list devices for user account",
+    "request": { "uri": "users/{{userAccount.name}}/devices" },
+    "response": {
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].getName() == 'root-added-device'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as root, get specific device for user account",
+    "request": { "uri": "users/{{userAccount.name}}/devices/root-added-device" },
+    "response": {
+      "check": [
+        {"condition": "json.getName() == 'root-added-device'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as root, get specific device by uuid for user account",
+    "request": { "uri": "users/{{userAccount.name}}/devices/{{device.uuid}}" },
+    "response": {
+      "check": [
+        {"condition": "json.getName() == 'root-added-device'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "rename the device",
+    "request": {
+      "uri": "users/{{userAccount.name}}/devices/{{device.uuid}}",
+      "data": "device",
+      "entity": { "name": "root-renamed-device" }
+    }
+  },
+
+  {
+    "comment": "as user, list devices",
+    "request": {
+      "session": "userSession",
+      "uri": "me/devices"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].getName() == 'root-renamed-device'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "add a device as user",
+    "request": {
+      "uri": "me/devices",
+      "method": "put",
+      "entity": {
+        "name": "user-added-device"
+      }
+    },
+    "response": {
+      "store": "userDevice"
+    }
+  },
+
+  {
+    "comment": "as user, list devices again, should see second device",
+    "request": { "uri": "me/devices" },
+    "response": {
+      "check": [
+        {"condition": "json.length == 2"},
+        {"condition": "json[0].getName() == 'root-renamed-device'"},
+        {"condition": "json[1].getName() == 'user-added-device'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, try to get vpn config. should return 404 but not 403",
+    "request": { "uri": "me/devices/user-added-device/vpn/vpn.conf" },
+    "response": {
+      "status": 404
+    }
+  },
+
+  {
+    "comment": "as user, remove root-renamed-device",
+    "request": {
+      "uri": "me/devices/root-renamed-device",
+      "method": "delete"
+    }
+  },
+
+  {
+    "comment": "as user, list devices yet again, should see recently added device",
+    "request": { "uri": "me/devices" },
+    "response": {
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].getName() == 'user-added-device'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as root, remove device",
+    "request": {
+      "session": "rootSession",
+      "uri": "users/{{userAccount.name}}/devices/user-added-device",
+      "method": "delete"
+    }
+  },
+
+  {
+    "comment": "list devices as root, should be none at the end",
+    "request": { "uri": "users/{{userAccount.name}}/devices" },
+    "response": {
+      "check": [
+        {"condition": "json.length == 0"}
+      ]
+    }
+  }
+]

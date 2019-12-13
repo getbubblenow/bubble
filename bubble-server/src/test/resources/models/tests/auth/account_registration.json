@@ -1,0 +1,211 @@
+[
+  {
+    "comment": "new session, register a user account",
+    "request": {
+      "session": "new",
+      "uri": "auth/register",
+      "entity": {
+        "name": "foobar1",
+        "password": "password1!",
+        "contact": { "type": "email", "info": "user-{{rand 5}}@example.com" }
+      }
+    },
+    "response": {
+      "sessionName": "user1session",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "view current user",
+    "request": { "uri": "me" },
+    "response": {
+      "check": [ {"condition": "json.getName() == 'foobar1'"} ]
+    }
+  },
+
+  {
+    "comment": "log out user",
+    "request": {
+      "session": "user1session",
+      "uri": "auth/logout"
+    }
+  },
+
+  {
+    "comment": "login as foobar1, works",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "foobar1",
+        "password": "password1!"
+      }
+    },
+    "response": {
+      "sessionName": "user1session2",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "view current user",
+    "request": { "uri":  "me" },
+    "response": {
+      "store": "user1",
+      "check": [ {"condition": "json.getName() == 'foobar1'"} ]
+    }
+  },
+
+  {
+    "comment": "back to root session, list network tags",
+    "request": {
+      "session": "rootSession",
+      "uri": "me/networks/{{configuration.thisNetwork.uuid}}/tags"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.hasTag('allowRegistration')"},
+        {"condition": "json.getTag('allowRegistration') == 'true'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "disable account registration",
+    "request": {
+      "uri": "me/networks/{{configuration.thisNetwork.uuid}}/tags/allowRegistration",
+      "entity": { "value": "false" }
+    }
+  },
+
+  {
+    "comment": "re-list network tags, see updated value for allowRegistration",
+    "request": {
+      "session": "rootSession",
+      "uri": "me/networks/{{configuration.thisNetwork.uuid}}/tags"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.hasTag('allowRegistration')"},
+        {"condition": "json.getTag('allowRegistration') == 'false'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "in user session, try to re-enable registrations. fails.",
+    "request": {
+      "session": "user1session",
+      "uri": "me/networks/{{configuration.thisNetwork.uuid}}/tags"
+    },
+    "response": { "status": 403 }
+  },
+
+  {
+    "comment": "fetch the user account created earlier",
+    "request": {
+      "session": "rootSession",
+      "uri": "users/{{user1.uuid}}"
+    },
+    "response": {
+      "check": [ {"condition": "json.getSuspended() == false"} ]
+    }
+  },
+
+  {
+    "comment": "suspend the user account created earlier",
+    "request": {
+      "session": "rootSession",
+      "uri": "users/{{user1.uuid}}",
+      "data": "user1",
+      "entity": {
+        "suspended": true
+      }
+    }
+  },
+
+  {
+    "comment": "new session, try to register a user account, fails",
+    "request": {
+      "session": "new",
+      "uri": "auth/register",
+      "entity": {
+        "name": "foobar1",
+        "password": "password1!"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [ {"condition": "json.has('err.registration.disabled')"} ]
+    }
+  },
+
+
+  {
+    "comment": "new session, try to login to previously registered user account, fails",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "foobar1",
+        "password": "password1!"
+      }
+    },
+    "response": {
+      "status":  422,
+      "check": [ {"condition": "json.has('err.account.suspended')"} ]
+    }
+  },
+
+
+  {
+    "comment": "as root, re-enable registration",
+    "request": {
+      "session": "rootSession",
+      "uri": "me/networks/{{configuration.thisNetwork.uuid}}/tags/allowRegistration",
+      "entity": { "value": "true" }
+    }
+  },
+
+  {
+    "comment": "new session, register new user, fails because username is already used",
+    "request": {
+      "session": "new",
+      "uri": "auth/register",
+      "entity": {
+        "name": "foobar1",
+        "password": "password1!"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [ {"condition": "json.has('err.name.registered')"} ]
+    }
+  },
+
+  {
+    "comment": "new session, register new user with fresh username, succeeds",
+    "request": {
+      "session": "new",
+      "uri": "auth/register",
+      "entity": {
+        "name": "foobar2",
+        "password": "password2!",
+        "contact": { "type": "email", "info": "user2-{{rand 5}}@example.com" }
+      }
+    },
+    "response": {
+      "sessionName": "user2session",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "view new user",
+    "request": { "uri": "me" },
+    "response": {
+      "check": [ {"condition": "json.getName() == 'foobar2'"} ]
+    }
+  }
+]

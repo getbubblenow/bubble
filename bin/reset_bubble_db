@@ -1,0 +1,47 @@
+#!/bin/bash
+#
+# Reset the local "bubble" database
+#
+# Usage:  reset_bubble_db [debug]
+#
+#  debug   : set this to 'debug' to enable debugging
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+DEBUG=${1}
+if [[ ! -z "${DEBUG}" && "${DEBUG}" == "debug" ]] ; then
+  DEBUG=1
+else
+  DEBUG=0
+fi
+
+BUBBLE_SERVER="$(cd ${SCRIPT_DIR}/../bubble-server && pwd)"
+if [[ ! -d "${BUBBLE_SERVER}" ]] ; then
+  die "bubble-server dir not found: ${BUBBLE_SERVER}"
+fi
+
+BUBBLE_TARGET=${BUBBLE_SERVER}/target
+META_DIR="${BUBBLE_TARGET}/classes/META-INF/bubble/"
+mkdir -p ${META_DIR} || die "Error creating META-INF dir: ${META_DIR}"
+
+SQL_DIR="${BUBBLE_SERVER}/target/classes/META-INF/"
+if [[ ! -d "${SQL_DIR}" ]] ; then
+  die "config dir not found: ${SQL_DIR}"
+fi
+SQL_DIR="$(cd ${SQL_DIR} && pwd)"
+
+if [[ ${DEBUG} -eq 1 ]] ; then
+  cd ${SCRIPT_DIR}/.. && \
+    mvn -Dmaven.surefire.debug="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005 -Xnoagent -Djava.compiler=NONE" \
+       -Dtest=bubble.test.DbInit -Ddb.dump=${SQL_DIR}/bubble.sql test \
+    || exit 1
+else
+  cd ${SCRIPT_DIR}/.. && \
+    mvn -Dtest=bubble.test.DbInit -Ddb.dump=${SQL_DIR}/bubble.sql test || exit 1
+fi
+
+dropdb bubble ; createdb bubble && cat ${SQL_DIR}/bubble.sql | psql bubble
+echo "Successfully initialized DB schema from:"
+echo ${SQL_DIR}/bubble.sql

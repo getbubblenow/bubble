@@ -1,0 +1,42 @@
+[
+  {
+    "comment": "lookup sage node by fqdn",
+    "connection": { "name": "default" },
+    "request": {
+      "uri": "me/nodes/{{sageFqdn}}"
+    },
+    "response": {
+      "store": "sageNode"
+    }
+  },
+
+  {
+    "comment": "using default connection, stop sage network",
+    "request": {
+      "uri": "me/networks/{{sageNode.network}}/actions/stop",
+      "method": "post"
+    }
+  },
+
+  {
+    "before": "sleep 30s",
+    "comment": "verify network is stopped",
+    "request": {
+      "uri": "me/networks/{{sageNode.network}}"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.getState().name() == 'stopped'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "delete sage network",
+    "request": {
+      "uri": "me/networks/{{sageNode.network}}",
+      "method": "delete"
+    },
+    "after": "verify_unreachable https://{{sageFqdn}}:{{serverConfig.nginxPort}}/api/me"
+  }
+]

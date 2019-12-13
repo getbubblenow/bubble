@@ -1,0 +1,15 @@
+- name: Disable default site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Create default site
+  template: src=site.conf.j2 dest=/etc/nginx/sites-available/{{ server_name }}.conf
+
+- name: Symlink default site to site-enabled
+  file:
+    src: /etc/nginx/sites-available/{{ server_name }}.conf
+    dest: /etc/nginx/sites-enabled/{{ server_name }}.conf
+    owner: root
+    group: root
+    state: link

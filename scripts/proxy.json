@@ -1,0 +1,17 @@
+[
+  {
+    "comment": "declare default parameters for proxy script part",
+    "include": "_defaults",
+    "params": {
+      "URL": "<<<URL>>>",
+      "OUTFILE": "<<<OUTFILE>>>"
+    }
+  },
+
+  {
+    "comment": "try proxy to <<<URL>>>",
+    "request": { "uri": "p/<<<URL>>>" },
+    "response": { "raw": <<RAW>> },
+    "after": "save-download-to-file <<OUTFILE>>"
+  }
+]

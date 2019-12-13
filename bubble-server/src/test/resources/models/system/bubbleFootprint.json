@@ -1,0 +1,21 @@
+[
+  {
+    "name": "Worldwide",
+    "description": "No restrictions, run anywhere",
+    "template": true
+  },
+
+  {
+    "name": "US",
+    "description": "Only run in the United States",
+    "template": true,
+    "allowedCountries": ["US"]
+  },
+
+  {
+    "name": "EU",
+    "description": "Only run in the European Union",
+    "template": true,
+    "allowedCountries": ["AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "UK", "GB"]
+  }
+]

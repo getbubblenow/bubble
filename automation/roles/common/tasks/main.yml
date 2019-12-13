@@ -1,0 +1,36 @@
+- name: Set hostname to {{ hostname }}
+  hostname:
+    name: '{{ hostname }}'
+
+- name: Update packages
+  apt:
+    update_cache: yes
+
+- name: Remove ufw
+  apt:
+    name: ufw
+    state: absent
+    update_cache: yes
+
+- name: Upgrade packages
+  apt:
+    update_cache: yes
+    upgrade: yes
+
+- name: Install common packages
+  apt:
+    name: [ 'ntp', 'unzip', 'safe-rm', 'supervisor', 'emacs-nox', 'screen', 'xtail', 'fail2ban' ]
+    state: present
+    update_cache: yes
+
+- name: Install screenrc file
+  copy:
+    src: dot-screenrc
+    dest: /root/.screenrc
+
+- name: Start common services
+  service:
+    name: '{{ item }}'
+    state: restarted
+  with_items:
+    - fail2ban

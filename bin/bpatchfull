@@ -1,0 +1,55 @@
+#!/bin/bash
+#
+# Usage:
+#
+#     bpatchfull hostname [norestart]
+#
+#  hostname  : the hostname of the bubble node to update
+#              Usually you will have an entry in ~/.ssh/config to set the username and ssh key
+#  norestart : If present, do not restart the API server after updating the jar file
+#
+# Patch the bubble.jar on a remote node.
+# This script updates the entire jar file, and takes a lot longer than bpatch
+#
+# You install the JDK on the remote node first: apt install openjdk-11-jdk-headless
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+HOST=${1:?no host provided}
+NO_RESTART=${2}
+
+BUBBLE_SERVER_DIR="${SCRIPT_DIR}/../bubble-server"
+if [[ ! -d "${BUBBLE_SERVER_DIR}" ]] ; then
+  die "bubble-server dir not found: ${BUBBLE_SERVER_DIR}"
+fi
+cd ${BUBBLE_SERVER_DIR}
+
+ANY_JAR=$(find "./target" -type f -name "bubble*.jar" | head -1 | wc -l | tr -d ' ')
+if [[ ${ANY_JAR} -eq 0 ]] ; then
+  ANY_CHANGES=1
+else
+  ANY_CHANGES=$(find "./src/main" -type f -newer "$(find "./target" -type f -name "bubble*.jar" | head -1)" | wc -l | tr -d ' ')
+fi
+if [[ ${ANY_CHANGES} -eq 0 ]] ; then
+  echo "No changes, not repackaging jar"
+  scp ./target/bubble*.jar ${HOST}:/tmp/bubble.jar || die "Error copying file to remote host ${HOST}"
+else
+  if [[ ${ANY_JAR} -eq 0 ]] ; then
+    echo "No bubble jar file found, rebuilding"
+  else
+    echo "Files changed, rebuilding bubble jar: "
+    find "./src/main" -type f -newer "$(find "./target" -type f -name "bubble*.jar" | head -1)"
+  fi
+  mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error packaging jar"
+  scp ./target/bubble*.jar ${HOST}:/tmp/bubble.jar || die "Error copying file to remote host ${HOST}"
+fi
+
+if [[ ! -z "${NO_RESTART}" && "${NO_RESTART}" == "norestart" ]] ; then
+  echo "Patching but not restarting..."
+  ssh ${HOST} "cat /tmp/bubble.jar > ~bubble/current/bubble.jar"
+else
+  echo "Patching and restarting..."
+  ssh ${HOST} "cat /tmp/bubble.jar > ~bubble/current/bubble.jar && supervisorctl restart bubble"
+fi

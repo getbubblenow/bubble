@@ -1,0 +1,16 @@
+#!/bin/bash
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+if [[ -z "${BUBBLE_DB_ENCRYPTION_KEY}" ]] ; then
+  if [[ -f "${HOME}/.BUBBLE_DB_ENCRYPTION_KEY" ]] ; then
+    BUBBLE_DB_ENCRYPTION_KEY=$(cat ${HOME}/.BUBBLE_DB_ENCRYPTION_KEY)
+  elif [[ -f "/home/bubble/.BUBBLE_DB_ENCRYPTION_KEY" ]] ; then
+    BUBBLE_DB_ENCRYPTION_KEY=$(cat /home/bubble/.BUBBLE_DB_ENCRYPTION_KEY)
+  else
+    die "BUBBLE_DB_ENCRYPTION_KEY env var not defined, and no .BUBBLE_DB_ENCRYPTION_KEY file found"
+  fi
+fi
+
+BUBBLE_DB_ENCRYPTION_KEY=${BUBBLE_DB_ENCRYPTION_KEY} exec ${SCRIPT_DIR}/bubble crypt -f decrypt "${@}"

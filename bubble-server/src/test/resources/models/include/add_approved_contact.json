@@ -1,0 +1,120 @@
+[
+  {
+    "comment": "declare default parameters for add_approved_contact test part",
+    "include": "_defaults",
+    "params": {
+      "username": "_required",
+      "userSession": "_required",
+      "rootSession": "rootSession",
+      "contactType": "email",
+      "contactInfo": "_required",
+      "contactLookup": "_required",
+      "authFactor": "required",
+      "policyVar": "policy",
+      "userConnection": "default",
+      "rootConnection": "default"
+    }
+  },
+
+  {
+    "comment": "does a contact already exist with type <<contactType>> and info <<contactInfo>> ?",
+    "connection": {"name": "<<userConnection>>"},
+    "request": {
+      "session": "<<userSession>>",
+      "uri": "users/<<username>>/policy/contacts/<<contactType>>/<<contactInfo>>"
+    },
+    "response": {
+      "store": "existingContact",
+      "okStatus": [200, 404]
+    }
+  },
+
+  {
+    "comment": "add <<contactType>> contact for user <<username>>",
+    "unless": "existingContact.getInfo() == '<<contactInfo>>'",
+    "request": {
+      "session": "<<userSession>>",
+      "uri": "users/<<username>>/policy/contacts",
+      "entity": {
+        "type": "<<contactType>>",
+        "info": "<<contactInfo>>"
+      }
+    },
+    "response": {
+      "store": "<<policyVar>>",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length >= 1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "resend verification message for <<contactType>>/<<contactInfo>> for user <<username>>",
+    "onlyIf": "existingContact.getInfo() == '<<contactInfo>>'",
+    "request": {
+      "session": "<<userSession>>",
+      "uri": "users/<<username>>/policy/contacts/verify",
+      "entity": {
+        "type": "<<contactType>>",
+        "info": "<<contactInfo>>"
+      }
+    },
+    "response": {
+      "store": "<<policyVar>>",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length >= 1"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "as root, check <<contactType>> inbox for verification message",
+    "connection": {"name": "<<rootConnection>>"},
+    "request": {
+      "session": "<<rootSession>>",
+      "uri": "debug/inbox/<<contactType>>/<<contactLookup>>?type=request&action=verify&target=account"
+    },
+    "response": {
+      "store": "<<contactType>>Inbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "approve <<contactType>> verification request",
+    "connection": {"name": "<<userConnection>>"},
+    "request": {
+      "session": "<<userSession>>",
+      "uri": "auth/approve/{{<<contactType>>Inbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    }
+  },
+
+  {
+    "comment": "set authFactor=<<authFactor>> on new <<contactType>> contact for user <<username>>",
+    "onlyIf": "'<<authFactor>>' != 'not_required'",
+    "request": {
+      "session": "<<userSession>>",
+      "uri": "users/<<username>>/policy/contacts",
+      "entity": {
+        "type": "<<contactType>>",
+        "info": "<<contactInfo>>",
+        "authFactor": "<<authFactor>>"
+      }
+    },
+    "response": {
+      "store": "<<policyVar>>",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length >= 1"}
+      ]
+    }
+  }
+]

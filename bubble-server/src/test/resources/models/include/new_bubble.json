@@ -1,0 +1,201 @@
+[
+  {
+    "comment": "declare default parameters for new_bubble test part",
+    "include": "_defaults",
+    "params": {
+      "rootUsername": "root",
+      "rootPassword": "password",
+      "sageFqdn": "_required",
+      "sageConnectionVar": "sageConnection",
+      "username": "user-<<rand 5>>",
+      "password": "<<rand 10>>",
+      "userSessionVar": "userSession",
+      "network": "_required",
+      "email": "user-<<rand 5>>@example.com",
+      "domain": "{{defaultDomain}}",
+      "locale": "en_US",
+      "timezone": "EST",
+      "plan": "bubble",
+      "footprint": "Worldwide",
+      "networkVar": "bubbleNetwork",
+      "compute": "VultrCompute",
+      "region": "New Jersey",
+      "bubbleConnectionVar": "bubbleConnection",
+      "bubbleUserSessionVar": "bubbleUserSession",
+      "bubbleUserVar": "bubbleUserAccount"
+    }
+  },
+
+  {
+    "comment": "login as root on sage: <<sageFqdn>>",
+    "connection": {
+      "name": "<<sageConnectionVar>>",
+      "baseUri": "https://<<sageFqdn>>:{{serverConfig.nginxPort}}/api"
+    },
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "<<rootUsername>>",
+        "password": "<<rootPassword>>"
+      }
+    },
+    "response": {
+      "store": "rootAccount",
+      "sessionName": "rootSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "does a user exist with username <<username>> ?",
+    "request": {
+      "uri": "users/<<username>>"
+    },
+    "response": {
+      "okStatus": [ 200, 404 ],
+      "store": "userAccount"
+    }
+  },
+
+  {
+    "comment": "create user on sage if not exist: <<username>>",
+    "unless": "userAccount.getName() != null",
+    "request": {
+      "method": "put",
+      "uri": "users",
+      "entity": {
+        "name": "<<username>>",
+        "password": "<<password>>",
+        "contact": {"type": "email", "info": "<<email>>"}
+      }
+    },
+    "response": {
+      "store": "userAccount"
+    }
+  },
+
+  {
+    "comment": "login as user on sage: <<username>>",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "<<username>>",
+        "password": "<<password>>"
+      }
+    },
+    "response": {
+      "store": "userAccount",
+      "sessionName": "<<userSessionVar>>",
+      "session": "token"
+    }
+  },
+
+  {
+    "before": "sleep 24s",
+    "comment": "add plan",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "<<network>>",
+        "domain": "<<domain>>",
+        "locale": "<<locale>>",
+        "timezone": "<<timezone>>",
+        "plan": "<<plan>>",
+        "footprint": "<<footprint>>"
+      }
+    },
+    "response": {
+      "store": "plan"
+    }
+  },
+
+  {
+    "comment": "start the network. sets up the first node, which does the rest",
+    "request": {
+      "uri": "me/networks/<<network>>/actions/start?cloud=<<urlEncode compute>>&region=<<urlEncode region>>",
+      "method": "post"
+    },
+    "response": {
+      "store": "<<networkVar>>"
+    }
+  },
+
+  {
+    "before": "await_url me/networks/<<network>>/dns/find?type=A&name=.<<network>>.<<domain>> 40m 10s await_json.length > 0",
+    "comment": "list DNS for the network, should now see a DNS A record for new instance",
+    "request": {
+      "uri": "me/networks/<<network>>/dns/find?type=A&name=.<<network>>.<<domain>>"
+    },
+    "response": {
+      "store": "dnsRecords",
+      "check": [
+        {"condition": "json.length == 1"}
+      ]
+    }
+  },
+
+  {
+    "before": "await_url .bubble 40m 20s",
+    "comment": "call API of deployed node, ensure it is running",
+    "connection": {
+      "name": "<<bubbleConnectionVar>>",
+      "baseUri": "https://{{<<networkVar>>.host}}.<<network>>.<<domain>>:{{serverConfig.nginxPort}}/api"
+    },
+    "request": { "uri" : ".bubble" },
+    "response": {
+      "raw": true,
+      "check": [
+        {"condition": "response.json == 'you are ok. the magic is ok too.'"}
+      ]
+    }
+  },
+
+//  {
+//    "comment": "verify new node has said hello, and requested another node",
+//    "connection": { "name": "<<sageFqdn>>_connection" },
+//    "request": {
+//      "session": "rootSession",
+//      "uri": "me/notifications/inbox"
+//    },
+//    "response": {
+//      "check": [
+//        {"condition": "json.length >= 2"},
+//        {"condition": "_find(json, function (n) { n.getType().name() == 'upstream_hello' }) != null"},
+//        {"condition": "_find(json, function (n) { n.getType().name() == 'new_node' }) != null"}
+//      ]
+//    }
+//  },
+
+  {
+    "comment": "login to deployed node",
+    "connection": { "name": "<<bubbleConnectionVar>>" },
+    "request": {
+      "session": "new",
+      "uri" : "auth/login",
+      "entity": {
+        "name": "<<username>>",
+        "password": "<<password>>"
+      }
+    },
+    "response": {
+      "store": "<<bubbleUserVar>>",
+      "sessionName": "<<bubbleUserSessionVar>>",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "read account record from node, initial user should be an admin",
+    "request": { "uri": "me" },
+    "response": {
+      "store": "<<bubbleUserVar>>",
+      "check": [
+        {"condition": "json.getName() == '<<username>>'"},
+        {"condition": "json.admin() == true"}
+      ]
+    }
+  }
+]

@@ -1,0 +1,232 @@
+[
+  {
+    "comment": "add email contact for root user",
+    "include": "add_approved_contact",
+    "params": {
+      "username": "root",
+      "userSession": "rootSession",
+      "contactInfo": "root@example.com",
+      "contactLookup": "root@example.com"
+    }
+  },
+
+  {
+    "comment": "store a file in S3, ensures that keys exist and work",
+    "request": {
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/storage/write/test_file_{{rand 10}}.txt",
+      "headers": { "Content-Type": "multipart/form-data" },
+      "entity": {"file": "data:this is a test file: {{rand 20}}"}
+    },
+    "response": {
+      "store": "fileMeta"
+    }
+  },
+
+  {
+    "comment": "request network keys",
+    "request": { "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys" }
+  },
+
+  {
+    "before": "sleep 3s",
+    "comment": "check email inbox, expect network keys request",
+    "request": {
+      "uri": "debug/inbox/email/root@example.com?action=password"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "json.length >= 1"},
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'password'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'network'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "approve key request",
+    "request": {
+      "uri": "auth/approve/{{emailInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    }
+  },
+
+  {
+    "before": "sleep 3s",
+    "comment": "check email inbox for key request confirmation",
+    "request": {
+      "uri": "debug/inbox/email/root@example.com?type=confirmation&action=password&target=network"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "json.length >= 1"},
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'confirmation'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'password'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'network'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "use confirmation token in email to retrieve network keys",
+    "request": {
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{emailInbox.[0].ctx.message.requestId}}"
+    },
+    "response": {
+      "store": "networkKeys",
+      "check": [
+        {"condition": "json.getKeys().length >= 1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "try to retrieve keys again, fails because it's a one-time operation",
+    "request": {
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{emailInbox.[0].ctx.message.requestId}}"
+    },
+    "response": {
+      "status": 404
+    }
+  },
+
+  {
+    "comment": "add sms as required for node operations",
+    "include": "add_approved_contact",
+    "params": {
+      "username": "root",
+      "userSession": "rootSession",
+      "contactType": "sms",
+      "contactInfo": "US:800-555-1212",
+      "contactLookup": "+18005551212"
+    }
+  },
+
+  {
+    "comment": "request network keys again",
+    "request": { "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys" }
+  },
+
+  {
+    "before": "sleep 3s",
+    "comment": "check SMS inbox, expect network keys request",
+    "request": {
+      "uri": "debug/inbox/sms/+18005551212?action=password"
+    },
+    "response": {
+      "store": "smsInbox",
+      "check": [
+        {"condition": "json.length >= 1"},
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'password'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'network'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "approve 2nd key request via SMS",
+    "request": {
+      "uri": "auth/approve/{{smsInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    }
+  },
+
+  {
+    "before": "sleep 3s",
+    "comment": "check sms inbox for key request confirmation, not found because email approval is also required",
+    "request": {
+      "uri": "debug/inbox/sms/+18005551212?type=confirmation&action=password&target=network"
+    },
+    "response": {
+      "store": "smsInbox",
+      "check": [
+        {"condition": "json.length == 0"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 3s",
+    "comment": "check (2nd time) email for key request",
+    "request": {
+      "uri": "debug/inbox/email/root@example.com?type=request&action=password&target=network"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "json.length >= 1"},
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'password'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'network'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "approve 2nd key request via email",
+    "request": {
+      "uri": "auth/approve/{{emailInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    }
+  },
+
+  {
+    "before": "sleep 3s",
+    "comment": "check sms inbox for key request confirmation",
+    "request": {
+      "uri": "debug/inbox/sms/+18005551212?type=confirmation&action=password&target=network"
+    },
+    "response": {
+      "store": "smsInbox",
+      "check": [
+        {"condition": "json.length >= 1"},
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'confirmation'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'password'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'network'"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 3s",
+    "comment": "check email inbox again for key request confirmation",
+    "request": {
+      "uri": "debug/inbox/email/root@example.com?type=confirmation&action=password&target=network"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "json.length >= 1"},
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'confirmation'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'password'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'network'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "use confirmation token in email to retrieve network keys",
+    "request": {
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{emailInbox.[0].ctx.message.requestId}}"
+    },
+    "response": {
+      "store": "networkKeys",
+      "check": [
+        {"condition": "json.getKeys().length >= 1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "try to retrieve keys again, fails because it's a one-time operation",
+    "request": {
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{smsInbox.[0].ctx.message.requestId}}"
+    },
+    "response": {
+      "status": 404
+    }
+  }
+]

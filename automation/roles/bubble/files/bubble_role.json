@@ -1,0 +1,30 @@
+{
+  "name": "bubble-0.0.1",
+  "priority": 300,
+  "template": true,
+  "config": [
+    {"name": "ansible_python_interpreter", "value": "/usr/bin/python3"},
+    {"name": "node_uuid", "value": "[[node.uuid]]"},
+    {"name": "network_uuid", "value": "[[node.network]]"},
+    {"name": "admin_port", "value": "[[node.adminPort]]"},
+    {"name": "ssl_port", "value": "[[configuration.nginxPort]]"},
+    {"name": "sage_node", "value": "[[sageNode]]"},
+    {"name": "install_type", "value": "[[installType]]"},
+    {"name": "default_locale", "value": "[[network.locale]]"},
+    {"name": "bubble_version", "value": "[[configuration.version]]"},
+    {"name": "bubble_host", "value": "[[node.fqdn]]"},
+    {"name": "admin_user", "value": "[[node.user]]"},
+    {"name": "db_encoding", "value": "UTF-8"},
+    {"name": "db_locale", "value": "en_US"},
+    {"name": "db_user", "value": "bubble"},
+    {"name": "db_name", "value": "bubble"},
+    {"name": "db_key", "value": "[[dbEncryptionKey]]"},
+    {"name": "letsencrypt_email", "value": "[[configuration.letsencryptEmail]]"},
+    {"name": "is_fork", "value": "[[fork]]"},
+    {"name": "restore_key", "value": "[[restoreKey]]"},
+    {"name": "restore_timeout", "value": "[[restoreTimeoutSeconds]]"},
+    {"name": "test_mode", "value": "[[testMode]]"}
+  ],
+  "optionalConfigNames": ["restore_key", "restore_timeout"],
+  "tgzB64": ""
+}

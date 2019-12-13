@@ -1,0 +1,8 @@
+[{
+  "name": "UserBlocker",
+  "children": {
+    "AppData": [
+      {"matcher": "LocalHNCommentMatcher", "site": "HackerNews", "key": "user2", "data": "true", "template": true}
+    ]
+  }
+}]

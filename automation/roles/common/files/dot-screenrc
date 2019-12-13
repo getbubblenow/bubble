@@ -1,0 +1,24 @@
+bindkey -d ^J command
+bind "\011" windows
+escape ^Jj
+defescape ^Jj
+bind o focus
+bind , prev
+bind . next
+bind k remove
+
+bind u focus down
+bind i focus up
+bind t focus top
+bind b focus bottom
+
+vbell off
+
+# hardstatus on
+# hardstatus alwayslastline
+
+defscrollback 50000
+
+# Make it a login shell -- needed for rvm (Ruby)
+shell -${SHELL}
+term xterm-256color

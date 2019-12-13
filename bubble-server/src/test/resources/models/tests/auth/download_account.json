@@ -1,0 +1,99 @@
+[
+  {
+    "comment": "activate service, create account, login",
+    "include": "new_account",
+    "params": {
+      "username": "testuser",
+      "password": "foobar1!",
+      "email": "testuser@example.com",
+      "verifyEmail": "true",
+      "userSessionName": "userSession"
+    }
+  },
+
+  {
+    "comment": "look up account policy",
+    "request": { "uri": "users/{{userAccount.name}}/policy" },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "request download of account data",
+    "request": { "uri":  "me/download", "method": "post" }
+  },
+
+  {
+    "before": "sleep 10s",  // give the AccountDownloadService some time to assemble the data
+    "comment": "as root, check email inbox for download request message",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/testuser@example.com?type=request&action=download"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'download'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "approve download request",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{emailInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    }
+  },
+
+  {
+    "before": "sleep 3s",
+    "comment": "as root, check email inbox for download confirmation",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/testuser@example.com?type=confirmation&action=download"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'confirmation'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'download'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "download account data",
+    "request": {
+      "session": "userSession",
+      "uri": "me/download/{{emailInbox.[0].ctx.message.requestId}}",
+      "method": "post"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.size() > 5"},
+        {"condition": "json.get('Account')[0] != null"},
+        {"condition": "json.get('AccountPolicy')[0] != null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "try to download account data again, not found",
+    "request": {
+      "session": "userSession",
+      "uri": "me/download/{{emailInbox.[0].ctx.message.requestId}}",
+      "method": "post"
+    },
+    "response": { "status": 404 }
+  }
+]

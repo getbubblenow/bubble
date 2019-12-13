@@ -1,0 +1,55 @@
+#!/bin/bash
+#
+# Create a new user and start a network for that user
+#
+# Usage:  create_user_and_network <json-file>
+#
+#   json-file     : a JSON file containing specs for the new user and network
+#
+# The default values are:
+#
+#    {
+#      "rootUsername": "root",
+#      "rootPassword": "password",
+#      "sageFqdn": "_required",
+#      "nginxPort": "1443",
+#      "username": "user-<<rand 5>>",
+#      "password": "<<rand 10>>",
+#      "network": "test-net-{{rand 5}}",
+#      "email": "user-<<rand 5>>@example.com",
+#      "domain": "bubblev.org",
+#      "locale": "en_US",
+#      "lang": "en",
+#      "timezone": "EST",
+#      "plan": "bubble pro",
+#      "footprint": "Worldwide, excluding OFAC",
+#      "compute": "VultrCompute",
+#      "region": "New Jersey"
+#    }
+#
+# The required fields above have a value of "_required". A minimal example would be:
+#
+#    {
+#      "sageFqdn": "api-XXXXX.staging.bubblev.org"
+#    }
+#
+# This would add a user with a random name user-{{rand 5}} with a random password and random @example.com email address,
+# and a randomly named network with the name test-net-{{rand 5}}
+#
+# Environment variables
+#
+#   BUBBLE_API     : which API to use. Default is local (http://127.0.0.1:PORT, where PORT is found in .bubble.env)
+#   BUBBLE_USER    : account to use. Default is root
+#   BUBBLE_PASS    : password for account. Default is root
+#   BUBBLE_SCRIPTS : location of run.sh script. Default is to assume it is in the same directory containing this script
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+JSON="${1:?no json provided}"
+if [[ ! -f "${JSON}" ]] ; then
+  die "json file not found: ${JSON}"
+fi
+
+cat "${JSON}" | exec ${SCRIPT_DIR}/bscript debug ${SCRIPT_DIR}/../scripts/create_user_and_network.json --no-login --vars -

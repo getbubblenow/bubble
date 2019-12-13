@@ -1,0 +1,104 @@
+- sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    sysctl_set: yes
+
+- sysctl:
+    name: net.ipv4.conf.all.forwarding
+    value: 1
+    sysctl_set: yes
+
+- sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: 1
+    sysctl_set: yes
+
+- name: "Allow {{ service_name }} over TCP"
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ public_port }}"
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new TCP {{ service_name }} connections
+  become: yes
+
+- name: "Allow {{ service_name }} over TCP on private port"
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ private_port }}"
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new TCP {{ service_name }} connections on private port
+  become: yes
+
+- name: "Allow {{ service_name }} over UDP"
+  iptables:
+    chain: INPUT
+    protocol: udp
+    destination_port: "{{ public_port }}"
+    jump: ACCEPT
+    comment: Accept new UDP {{ service_name }} connections
+  when: allow_udp is defined
+  become: yes
+
+- name: "Allow {{ service_name }} over UDP on private port"
+  iptables:
+    chain: INPUT
+    protocol: udp
+    destination_port: "{{ private_port }}"
+    jump: ACCEPT
+    comment: Accept new UDP {{ service_name }} connections on private port
+  when: allow_udp is defined
+  become: yes
+
+- name: "Redirect {{ service_name }} TCP port"
+  iptables:
+    chain: PREROUTING
+    table: nat
+    protocol: tcp
+    destination_port: "{{ public_port }}"
+    jump: REDIRECT
+    to_ports: "{{ private_port }}"
+    comment: Redirect {{ service_name }} TCP connections
+  become: yes
+
+- name: Redirect {{ service_name }} UDP port
+  iptables:
+    chain: PREROUTING
+    table: nat
+    protocol: udp
+    destination_port: "{{ public_port }}"
+    jump: REDIRECT
+    to_ports: "{{ private_port }}"
+    comment: Redirect {{ service_name }} UDP connections
+  when: allow_udp is defined
+  become: yes
+
+- name: "Redirect local {{ service_name }} TCP port"
+  iptables:
+    chain: OUTPUT
+    table: nat
+    protocol: tcp
+    destination_port: "{{ public_port }}"
+    destination: 127.0.0.1
+    jump: REDIRECT
+    to_ports: "{{ private_port }}"
+    comment: Redirect local {{ service_name }} TCP connections
+  become: yes
+
+- name: "Redirect local {{ service_name }} UDP port"
+  iptables:
+    chain: OUTPUT
+    table: nat
+    protocol: udp
+    destination_port: "{{ public_port }}"
+    destination: 127.0.0.1
+    jump: REDIRECT
+    to_ports: "{{ private_port }}"
+    comment: Redirect local {{ service_name }} UDP connections
+  when: allow_udp is defined
+  become: yes

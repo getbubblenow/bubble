@@ -1,0 +1,16 @@
+*.iml
+.idea
+tmp
+logs
+dependency-reduced-pom.xml
+*.log
+*~
+target/surefire
+target/surefire-reports
+target/classes
+target/test-classes
+target/maven-archiver
+target
+.DS_Store
+
+.BUBBLE*

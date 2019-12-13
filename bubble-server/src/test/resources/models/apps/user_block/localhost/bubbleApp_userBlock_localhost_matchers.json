@@ -1,0 +1,22 @@
+[
+  {
+    "name": "UserBlocker",
+    "children": {
+      "AppMatcher": [{
+        "name": "LocalCommentMatcher",
+        "site": "HackerNews",
+        "template": true,
+        "fqdn": "127.0.0.1",
+        "urlRegex": "web_mock/simple_comments.html",
+        "rule": "local_user_blocker"
+      }, {
+        "name": "LocalHNCommentMatcher",
+        "site": "HackerNews",
+        "template": true,
+        "fqdn": "127.0.0.1",
+        "urlRegex": "web_mock/news.ycombinator.com/item_id_\\d+\\.html",
+        "rule": "hn_user_blocker"
+      }]
+    }
+  }
+]

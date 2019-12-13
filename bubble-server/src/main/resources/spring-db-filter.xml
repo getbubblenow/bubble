@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+                http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+                http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <context:annotation-config/>
+
+    <aop:config proxy-target-class="true"/>
+    <tx:annotation-driven/>
+
+    <!-- DB-related beans (dataSource, sessionFactory, hibernateTemplate, etc) -->
+    <context:component-scan base-package="org.cobbzilla.wizard.spring.config.rdbms"/>
+
+    <!-- RedisService -->
+    <context:component-scan base-package="org.cobbzilla.wizard.cache.redis"/>
+
+    <!-- only load the model, DAOs and mocks of certain services -->
+    <context:component-scan base-package="bubble.model"/>
+    <context:component-scan base-package="bubble.dao">
+        <context:exclude-filter type="regex" expression="bubble.dao.SessionDAO"/>
+    </context:component-scan>
+    <context:component-scan base-package="bubble.service_dbfilter"/>
+
+</beans>

@@ -1,0 +1,15 @@
+
+- name: Install restore helper scripts
+  copy:
+    src: '{{ item }}'
+    dest: "/usr/local/bin/{{ item }}"
+    owner: root
+    group: postgres
+    mode: 0550
+  with_items:
+    - "bubble_restore_monitor.sh"
+  when: restore_key is defined
+
+- name: Start restore monitor
+  shell: bash -c 'nohup /usr/local/bin/bubble_restore_monitor.sh {{ admin_port }} {{ restore_timeout }} > /dev/null &'
+  when: restore_key is defined

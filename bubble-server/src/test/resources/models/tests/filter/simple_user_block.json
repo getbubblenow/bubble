@@ -1,0 +1,26 @@
+[
+  {
+    "comment": "try proxy to simple comment page, expect rules invoked and comments blocked",
+    "request": {
+      "uri": "p/127.0.0.1:{{serverConfig.http.port}}/web_mock/simple_comments.html"
+    },
+    "response": {
+      "raw": true,
+      "check": [
+        {"condition":  "response.header('Content-Type').startsWith('text/html')"},
+
+        // this user is not blocked
+        {"condition":  "response.xpath('//p[@class=\\'user\\' and ./text()=\\'user1\\']') != null"},
+
+        // this user is blocked
+        {"condition":  "response.xpath('//p[@class=\\'user\\' and ./text()=\\'user2\\']') == null"},
+
+        // this user is not blocked, but all their comments on this page are underneath a blocked user (user2)
+        {"condition":  "response.xpath('//p[@class=\\'user\\' and ./text()=\\'user5\\']') == null"},
+
+        // ensure controls appear
+        {"condition":  "response.contains('<!-- UserBlocker Was Here -->')"}
+      ]
+    }
+  }
+]

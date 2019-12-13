@@ -1,0 +1,27 @@
+[
+  {
+    "comment": "try proxy to HN, expect rules invoked",
+    "request": {
+      "uri": "p/127.0.0.1:{{serverConfig.http.port}}/web_mock/news.ycombinator.com/item_id_20783006.html"
+    },
+    "response": {
+      "raw": true,
+      "store": "hn_response",
+      "check": [
+        {"condition":  "response.header('Content-Type').startsWith('text/html')"},
+
+        // this user is not blocked
+        {"condition":  "response.xpath(\"//a[@class='hnuser' and text()='pixelmonkey']\") != null"},
+
+        // this user is blocked
+        {"condition":  "response.xpath(\"//a[@class='hnuser' and text()='rvz']\") == null"},
+
+        // this user is not blocked, but all their comments on this page are underneath a blocked user (rvz)
+        {"condition":  "response.xpath(\"//a[@class='hnuser' and text()='smt88']\") == null"},
+
+        // ensure controls appear for unblocked user
+        {"condition":  "true // -- todo"}
+      ]
+    }
+  }
+]

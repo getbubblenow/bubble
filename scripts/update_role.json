@@ -1,0 +1,33 @@
+[
+  {
+    "comment": "define new role",
+    "request": {
+      "uri": "roles",
+      "method": "put",
+      "entityJson": "<<escaped_json role>>"
+    },
+    "response": {
+      "store": "newRole"
+    }
+  },
+
+  {
+    "comment": "update default roles for domain",
+    "request": {
+      "uri": "domains/<<domain>>/roles/<<update_role>>",
+      "method": "post",
+      "entityJson": "<<escaped_json role>>"
+    }
+  },
+
+  {
+    "comment": "list roles for domain, verify old role is gone and new role is present",
+    "request": { "uri": "domains/<<domain>>/roles" },
+    "response": {
+      "check": [
+        {"condition": "_find(json, function(roleName) { return roleName == '<<role.name>>'; }) != null "},
+        {"condition": "_find(json, function(roleName) { return roleName == '<<update_role>>'; }) == null "}
+      ]
+    }
+  }
+]

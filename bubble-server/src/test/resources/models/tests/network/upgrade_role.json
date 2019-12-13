@@ -1,0 +1,106 @@
+[
+  {
+    "comment": "list default roles",
+    "request": { "uri": "roles" },
+    "response": {
+      "check": [
+        {"condition": "json.length > 1"},
+        {"condition": "_find(json, function (role) { return role.getName() == 'common-0.0.1' }) != null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "find common-0.0.1",
+    "request": { "uri": "roles/common-0.0.1" },
+    "response": {
+      "store": "currentRole",
+      "check": [
+        {"condition": "json.getName() == 'common-0.0.1'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "define upgraded role with incremented version",
+    "request": {
+      "uri": "roles",
+      "method": "put",
+      "data": "currentRole",
+      "entity": {
+        "name": "common-0.0.2",
+        "tgzB64": "H4sIAEudqF0AA+3SSwrCMBRA0SwlK9D8Xrqe0Im/pGDrwN3bYgUFRQqtULxn8gYJ5MFN3eTclK1akulVIsO0lZjn+aCsF3HWRueiMtaJr5SWRbcaXdounbVWh6akbpfKp3vfzleqvvfvUntsl/oFk/r70Pf3MXr6/8JL/5z2ZXPNp5nfGALHECb0F++M0mbmPd768/4AAAAAAAAAAAAAAABYtxtsUndbACgAAA=="
+      }
+    },
+    "response": {
+      "store": "newRole"
+    }
+  },
+
+  {
+    "comment": "list roles for domain, still has old version",
+    "request": { "uri": "domains/{{defaultDomain}}" },
+    "response": {
+      "store": "domain",
+      "check": [
+        {"condition": "_find(json.getRoles(), function(roleName) { return roleName == 'common-0.0.1'; }) != null "},
+        {"condition": "_find(json.getRoles(), function(roleName) { return roleName == 'common-0.0.2'; }) == null "}
+      ]
+    }
+  },
+
+  {
+    "comment": "list roles for domain using roles endpoint, still has old version",
+    "request": { "uri": "domains/{{defaultDomain}}/roles" },
+    "response": {
+      "store": "domain",
+      "check": [
+        {"condition": "_find(json, function(roleName) { return roleName == 'common-0.0.1'; }) != null "},
+        {"condition": "_find(json, function(roleName) { return roleName == 'common-0.0.2'; }) == null "}
+      ]
+    }
+  },
+
+  {
+    "comment": "find old role for domain, still there",
+    "request": { "uri": "domains/{{defaultDomain}}/roles/common-0.0.1" }
+  },
+
+  {
+    "comment": "find new role for domain, not found",
+    "request": { "uri": "domains/{{defaultDomain}}/roles/common-0.0.2" },
+    "response": { "status": 404 }
+  },
+
+  {
+    "comment": "update default roles for domain",
+    "request": {
+      "uri": "domains/{{defaultDomain}}/roles/common-0.0.2",
+      "method": "post",
+      "data": "newRole"
+    }
+  },
+
+  {
+    "comment": "list roles for domain, now has new version",
+    "request": { "uri": "domains/{{defaultDomain}}/roles" },
+    "response": {
+      "store": "domain",
+      "check": [
+        {"condition": "_find(json, function(roleName) { return roleName == 'common-0.0.1'; }) == null "},
+        {"condition": "_find(json, function(roleName) { return roleName == 'common-0.0.2'; }) != null "}
+      ]
+    }
+  },
+
+  {
+    "comment": "list roles for domain, do not find old version",
+    "request": { "uri": "domains/{{defaultDomain}}/roles/common-0.0.1" },
+    "response": { "status": 404 }
+  },
+
+  {
+    "comment": "list roles for domain, do not find new version",
+    "request": { "uri": "domains/{{defaultDomain}}/roles/common-0.0.2" }
+  }
+]

@@ -1,0 +1,44 @@
+[
+  {
+    "_subst": true,
+    "name": "MockCompute",
+    "type": "compute",
+    "driverClass": "bubble.cloud.compute.mock.MockComputeDriver",
+    "driverConfig": {},
+    "credentials": {},
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "FreePlay",
+    "type": "payment",
+    "driverClass": "bubble.cloud.payment.free.FreePaymentDriver",
+    "driverConfig": {},
+    "credentials": {},
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "InviteCode",
+    "type": "payment",
+    "driverClass": "bubble.cloud.payment.code.CodePaymentDriver",
+    "driverConfig": {},
+    "credentials": {},
+    "template": true,
+    "children": {
+      "CloudServiceData": [
+        {
+          "_subst": true,
+          "key": "special_invite_token",
+          "dataJson": {
+            "token": "special_invite_token",
+            "expiration": "{{timestamp 'now,33d'}}"
+          }
+        }
+      ]
+    }
+  }
+
+]

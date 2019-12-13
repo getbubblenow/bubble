@@ -1,0 +1,24 @@
+[{
+  "name": "UserBlocker",
+  "children": {
+    "AppRule": [{
+      "name": "local_user_blocker",
+      "driver": "UserBlocker",
+      "template": true,
+      "config": {
+        "blockedCommentCheck": "parseInt(current.get('width')) > parseInt(blocked.get('width'))",
+        "blockedCommentReplacement": "{{{chunkStartRegex}}}<td>[comment by {{blockedUser}} has been blocked]</td></tr>",
+        "commentDecorator": {
+          "regex": "class='comm'",
+          "insert": "<!-- UserBlocker Was Here -->"
+        },
+        "chunkStartRegex": "<tr\\s+class='comm'>",
+        "chunkEndRegex": "</tr>",
+        "chunkProperties": [
+          {"name": "userId", "value": "<p\\s+class='user'>\\s*(.+?)\\s*</p>"},
+          {"name": "width", "value": "<img\\s+src='spacer.gif'\\s+width=\"(\\d+?)\"[^>]*>"}
+        ]
+      }
+    }]
+  }
+}]

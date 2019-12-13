@@ -1,0 +1,160 @@
+[
+  {
+    "comment": "create a user account",
+    "request": {
+      "uri": "users",
+      "method": "put",
+      "entity": {
+        "name": "test_user",
+        "password": "password",
+        "contact": {"type": "email", "info": "test-user@example.com"}
+      }
+    }
+  },
+
+  {
+    "before": "sleep 22s",  // wait for account objects to be created
+    "comment": "login as new user",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "test_user",
+        "password": "password"
+      }
+    },
+    "response": {
+      "store": "testAccount",
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "add plan, fails because we have not supplied payment information",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "bubble",
+        "footprint": "US"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.paymentMethod.required')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "add plan, using incomplete payment method",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "bubble",
+        "footprint": "US",
+        "paymentMethod": {
+          "paymentInfo": "free"
+        }
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.paymentMethodType.required')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "add plan, using 'free' payment method but with no payment info",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "bubble",
+        "footprint": "US",
+        "paymentMethod": {
+          "paymentMethodType": "free"
+        }
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.paymentInfo.required')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "add plan, using 'free' payment method",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "bubble",
+        "footprint": "US",
+        "paymentMethod": {
+          "paymentMethodType": "free",
+          "paymentInfo": "free"
+        }
+      }
+    },
+    "response": {
+      "store": "accountPlan"
+    }
+  },
+
+  {
+    "comment": "verify account payment methods, should be one",
+    "request": { "uri": "me/paymentMethods" },
+    "response": {
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].getPaymentMethodType().name() == 'free'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify account plans, should be one",
+    "request": { "uri": "me/plans" },
+    "response": {
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].getName() == accountPlan.getName()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify account plan payment info",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/paymentMethod" },
+    "response": {
+      "check": [
+        {"condition": "json.getPaymentMethodType().name() == 'free'"},
+        {"condition": "json.getMaskedPaymentInfo() == 'XXXXXXXX'"}
+      ]
+    }
+  }
+]

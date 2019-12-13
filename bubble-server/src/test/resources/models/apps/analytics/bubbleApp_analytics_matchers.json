@@ -1,0 +1,13 @@
+[{
+  "name": "TrafficAnalytics",
+  "children": {
+    "AppMatcher": [{
+      "name": "TrafficAnalyticsMatcher",
+      "template": true,
+      "site": "All_Sites",
+      "fqdn": "*",
+      "urlRegex": ".*",
+      "rule": "traffic_analytics"
+    }]
+  }
+}]

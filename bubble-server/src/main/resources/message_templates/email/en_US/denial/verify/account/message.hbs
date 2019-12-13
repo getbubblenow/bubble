@@ -1,0 +1,9 @@
+Hello {{account.name}},
+
+Contact information for your account named '{{account.name}}' on {{network.networkDomain}} has been denied and removed:
+
+{{contact.type}} - {{contact.info}} {{#if contact.nick}}({{contact.nick}}){{/if}}
+
+Verification was denied on {{format_epoch message.ctime 'MMM dd, YYYY' network.timezone}} at {{format_epoch message.ctime 'hh:mm a, ZZZ' network.timezone}}.
+
+Thank you for using Bubble!

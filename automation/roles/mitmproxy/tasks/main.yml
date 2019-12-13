@@ -1,0 +1,88 @@
+- name: Install python3, pip, virtualenv and required dependencies
+  apt:
+    name: [ 'python3-pip', 'python3-venv', 'libc6-dev', 'libpython3-dev', 'g++', 'libffi-dev' ]
+    state: present
+    update_cache: yes
+
+- name: Install supervisor conf file
+  template:
+    src: supervisor_mitmproxy.conf.j2
+    dest: /etc/supervisor/conf.d/mitmproxy.conf
+    owner: root
+    group: root
+    mode: 0400
+
+- name: Create mitmproxy user
+  user:
+    name: mitmproxy
+    comment: mitmdump user
+    shell: /bin/bash
+    system: yes
+    home: /home/mitmproxy
+
+- name: Creates mitmproxy dir
+  file:
+    path: /home/mitmproxy/mitmproxy
+    owner: mitmproxy
+    group: mitmproxy
+    mode: 0755
+    state: directory
+
+- name: Unzip mitmproxy.zip
+  unarchive:
+    src: mitmproxy.zip
+    dest: /home/mitmproxy/mitmproxy
+
+- name: Copy mitmdump files
+  copy:
+    src: "{{ item }}"
+    dest: "/home/mitmproxy/mitmproxy/{{ item }}"
+    owner: mitmproxy
+    group: mitmproxy
+    mode: 0500
+  with_items:
+    - bubble_api.py
+    - dns_spoofing.py
+    - bubble_modify.py
+    - run_mitmdump.sh
+
+- name: Set ownership of mitmproxy files
+  shell: chown -R mitmproxy /home/mitmproxy/mitmproxy
+
+- name: Install cert helper scripts
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    owner: root
+    group: root
+    mode: 0500
+  with_items:
+    - install_cert.sh
+    - reuse_bubble_mitm_certs.sh
+
+- name: Reuse bubble mitm certs if available
+  shell: reuse_bubble_mitm_certs.sh
+
+- name: Copy bubble_config.py to /home/mitmproxy/mitmproxy
+  template:
+    src: bubble_config.py.j2
+    dest: /home/mitmproxy/mitmproxy/bubble_config.py
+    owner: mitmproxy
+    group: mitmproxy
+    mode: 0500
+
+- name: Fix missing symlink for libstdc++
+  file:
+    src: /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+    dest: /usr/lib/x86_64-linux-gnu/libstdc++.so
+    owner: root
+    group: root
+    state: link
+
+- name: restart supervisord
+  service:
+    name: supervisor
+    enabled: yes
+    state: restarted
+
+- import_tasks: route.yml

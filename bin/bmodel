@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# Write a model to a bubble server
+#
+# Usage:  model [-u/--update-all] model-file
+#
+#   -u or --update : if present, every entity that is not otherwise created will be updated
+#   model-file     : a manifest.json file or a single model JSON file
+#
+# Environment variables
+#
+#   BUBBLE_API     : which API to use. Default is local (http://127.0.0.1:PORT, where PORT is found in .bubble.env)
+#   BUBBLE_USER    : account to use. Default is root
+#   BUBBLE_PASS    : password for account. Default is root
+#   BUBBLE_SCRIPTS : location of run.sh script. Default is to assume it is in the same directory containing this script
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+UPDATE_OPT=""
+if [[ ! -z "${1}" && ( "${1}" == "-u" || "${1}" == "--update-all" ) ]] ; then
+  UPDATE_OPT="--update-all"
+  shift
+fi
+
+MODEL="${1:?no manifest or model file specified}"
+shift
+
+is_manifest="$(basename ${MODEL} | grep "manifest" | wc -c | tr -d ' ')"
+if [[ ${is_manifest} -gt 0 ]] ; then
+  MODEL_OPT="-m"
+else
+  MODEL_OPT="-f"
+fi
+
+${SCRIPT_DIR}/bubble model ${UPDATE_OPT} ${MODEL_OPT} "${MODEL}"
+

@@ -1,0 +1,13 @@
+[{
+  "name": "UserBlocker",
+  "children": {
+    "AppMatcher": [{
+      "name": "HNCommentMatcher",
+      "site": "HackerNews",
+      "template": true,
+      "fqdn": "news.ycombinator.com",
+      "urlRegex": "/item\\?id=\\d+",
+      "rule": "hn_user_blocker"
+    }]
+  }
+}]

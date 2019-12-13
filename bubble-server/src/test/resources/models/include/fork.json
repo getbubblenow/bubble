@@ -1,0 +1,85 @@
+[
+  {
+    "comment": "declare default parameters for fork test part",
+    "include": "_defaults",
+    "params": {
+      "rootUsername": "root",
+      "rootPassword": "password",
+      "username": "user-<<rand 5>>",
+      "password": "<<rand 10>>",
+      "email": "user-<<rand 5>>@example.com",
+      "planVar": "plan",
+      "hostname": "api-<<rand 5>>",
+      "network": "_required",
+      "domain": "{{defaultDomain}}",
+      "locale": "en_US",
+      "timezone": "EST",
+      "plan": "bubble",
+      "networkVar": "newNetwork",
+      "networkConnectionVar": "newNetworkConnection",
+      "footprint": "Worldwide",
+      "compute": "VultrCompute",
+      "region": "Atlanta"
+    }
+  },
+
+  {
+    "comment": "add plan",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "<<network>>",
+        "domain": "<<domain>>",
+        "locale": "<<locale>>",
+        "timezone": "<<timezone>>",
+        "plan": "<<plan>>",
+        "footprint": "<<footprint>>"
+      }
+    },
+    "response": {
+      "store": "<<planVar>>"
+    }
+  },
+
+  {
+    "comment": "fork the system; sets up the first node, which does the rest",
+    "request": {
+      "uri": "me/networks/<<network>>/actions/fork/<<hostname>>.<<network>>.<<domain>>?cloud=<<urlEncode compute>>&region=<<urlEncode region>>",
+      "method": "put"
+    },
+    "response": {
+      "store": "<<networkVar>>"
+    }
+  },
+
+  {
+    "before": "await_url me/networks/<<network>>/dns/find?type=A&name=<<hostname>>.<<network>>.<<domain>> 30m 10s await_json.length > 0",
+    "comment": "list DNS for the forked network, should now see a DNS A record for new instance",
+    "request": {
+      "uri": "me/networks/<<network>>/dns/find?type=A&name=<<hostname>>.<<network>>.<<domain>>"
+    },
+    "response": {
+      "store": "dnsRecords",
+      "check": [
+        {"condition": "json.length == 1"}
+      ]
+    }
+  },
+
+  {
+    "before": "await_url https://<<hostname>>.<<network>>.<<domain>>:{{serverConfig.nginxPort}}/api/.bubble 40m 20s",
+    "comment": "call API of deployed node, ensure it is running",
+    "connection": {
+      "name": "<<networkConnectionVar>>",
+      "baseUri": "https://<<hostname>>.<<network>>.<<domain>>:{{serverConfig.nginxPort}}/api"
+    },
+    "request": { "uri" : ".bubble" },
+    "response": {
+      "raw": true,
+      "check": [
+        {"condition": "response.json == 'you are ok. the magic is ok too.'"}
+      ]
+    }
+  }
+]

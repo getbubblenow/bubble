@@ -1,0 +1,16 @@
+- name: Install PostgreSQL
+  apt:
+    name: [ 'postgresql-10', 'libpq-dev', 'python-psycopg2' ]
+    state: present
+    update_cache: yes
+
+- name: Install PostgreSQL files
+  copy:
+    src: "{{ item }}"
+    dest: /etc/postgresql/10/main/
+    owner: postgres
+    group: postgres
+    mode: 0400
+  with_items:
+    - postgresql.conf
+    - pg_hba.conf

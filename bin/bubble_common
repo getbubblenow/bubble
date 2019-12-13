@@ -1,0 +1,105 @@
+#!/bin/bash
+
+function die {
+  if [[ -z "${SCRIPT}" ]] ; then
+    echo 1>&2 "${1}"
+  else
+    echo 1>&2 "${SCRIPT}: ${1}"
+  fi
+  exit 1
+}
+
+function handle_help_request () {
+
+  if [[ -z "${2}" ]] ; then
+    return
+  fi
+
+  if [[ ${2} == "-h" || ${2} == "--help" ]] ; then
+    while IFS='' read -r line || [[ -n "$line" ]]; do
+      if [[ ${line} =~ ^#.* ]] ; then
+        if [[ ! ${line} =~ ^#!/bin/bash.* ]] ; then
+          echo "${line}"
+        fi
+      else
+        break
+      fi
+    done < "${1}"
+    exit 1
+  fi
+
+}
+
+function make_temp () {
+  prefix="${1}"
+  suffix="${2}"
+  echo "$(mktemp ${prefix}.XXXXXXXX${suffix})"
+}
+
+function make_temp_dir () {
+  prefix="${1}"
+  suffix="${2}"
+  echo "$(mktemp -d ${prefix}.XXXXXXXX${suffix})"
+}
+
+function quote_args () {
+    args=""
+    for i in "$@"; do
+      if [[ "$i" =~ \ |\' ]] ; then
+        i="${i//\\/\\\\}"
+        args="$args \"${i//\"/\\\"}\""
+      else
+        args="$args ${i}"
+      fi
+    done
+    echo -n ${args}
+}
+
+handle_help_request ${0} ${1}
+
+# Ensure we can find run.sh
+if [[ -z "${BUBBLE_SCRIPTS}" ]] ; then
+  RUN_SH="$(find $(cd $(dirname ${0}) && pwd) -type f -name "run.sh" | head -1)"
+  if [[ -z "${RUN_SH}" ]] ; then
+    RUN_SH="$(find . -type f -name "run.sh" | head -1)"
+  fi
+  if [[ -z "${RUN_SH}" ]] ; then
+    die "run.sh script not found. Set BUBBLE_SCRIPTS to be the directory containing run.sh"
+  fi
+  BUBBLE_SCRIPTS="$(dirname "${RUN_SH}")"
+elif [[ ! -f "${BUBBLE_SCRIPTS}/run.sh" ]] ; then
+  die "run.sh script not found in BUBBLE_SCRIPTS dir (${BUBBLE_SCRIPTS})"
+fi
+
+if [[ -z "${BUBBLE_PASS}" ]] ; then
+  if [[ ! -z "${REQUIRE_BUBBLE_PASS}" ]] ; then
+    die "No BUBBLE_PASS env var defined"
+  fi
+  BUBBLE_PASS=password
+fi
+if [[ -z "${BUBBLE_USER}" ]] ; then
+  if [[ ! -z "${REQUIRE_BUBBLE_USER}" ]] ; then
+    die "No BUBBLE_USER env var defined"
+  fi
+  BUBBLE_USER=root
+fi
+
+if [[ -z "${BUBBLE_JAR}" ]] ; then
+  if [[ -f "${HOME}/current/bubble.jar" ]] ; then
+    BUBBLE_JAR="${HOME}/current/bubble.jar"
+  elif [[ -f "/home/bubble/current/bubble.jar" ]] ; then
+    BUBBLE_JAR="/home/bubble/current/bubble.jar"
+  else
+    BUBBLE_JAR="$(find ${BUBBLE_SCRIPTS}/../bubble-server/target -type f -name bubble*.jar | head -1)"
+  fi
+fi
+
+# Check to see if we are on the PATH, if not suggest that we could be
+BUBBLE_BIN="$(cd $(dirname ${0}) && pwd)"
+if [[ -z "${BUBBLE_SKIP_PATH_WARNING}" && -z "$(which $(basename ${0}))" ]] ; then
+  echo 1>&2 "Note: ${BUBBLE_BIN} is not on your PATH. To make things easier, add it to your PATH:"
+  echo 1>&2 ""
+  echo 1>&2 "export PATH=\${PATH}:${BUBBLE_BIN}"
+  echo 1>&2 ""
+  export BUBBLE_SKIP_PATH_WARNING=1
+fi

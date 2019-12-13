@@ -1,0 +1,30 @@
+#!/bin/bash
+#
+# Unlock a new bubble
+#
+# Usage:
+#
+#     bunlock unlock-key
+#
+#   unlock-key : the unlock key for the new bubble
+#
+# Environment variables
+#
+#   BUBBLE_API     : which API to use. Default is local (http://127.0.0.1:PORT, where PORT is found in .bubble.env)
+#   BUBBLE_USER    : account to use. Default is root
+#   BUBBLE_PASS    : password for account. Default is root
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+
+REQUIRE_BUBBLE_USER=1
+REQUIRE_BUBBLE_PASS=1
+. ${SCRIPT_DIR}/bubble_common
+
+if [[ -z "${BUBBLE_API}" ]] ; then
+  die "No BUBBLE_API env var defined"
+fi
+UNLOCK_KEY=${1:?no unlock-key provided}
+
+echo "{\"name\":\"${BUBBLE_USER}\",\"password\":\"${BUBBLE_PASS}\"}" | \
+  ${SCRIPT_DIR}/bpost 'auth/login?k='"${UNLOCK_KEY}"'' - --no-login

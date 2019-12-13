@@ -1,0 +1,23 @@
+[
+  {
+    "comment": "create new account and network",
+    "include": "new_bubble",
+    "params": {
+      "sageFqdn": "<<sageFqdn>>",
+      "username": "<<username>>",
+      "password": "<<password>>",
+      "email": "<<email>>",
+      "network": "<<network>>",
+      "rootUsername": "<<rootUsername>>",
+      "rootPassword": "<<rootPassword>>",
+      "domain": "<<domain>>",
+      "locale": "<<locale>>",
+      "lang": "<<lang>>",
+      "timezone": "<<timezone>>",
+      "plan": "<<plan>>",
+      "footprint": "<<footprint>>",
+      "compute": "<<compute>>",
+      "region": "<<region>>"
+    }
+  }
+]

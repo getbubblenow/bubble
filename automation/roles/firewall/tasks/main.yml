@@ -1,0 +1,118 @@
+- name: Install firewall packages
+  apt:
+    name: [ 'haveged', 'iptables-persistent', 'netfilter-persistent', 'autossh' ]
+    state: present
+    update_cache: yes
+
+- name: Flush iptables
+  iptables:
+    flush: true
+  become: yes
+
+- name: Flush INPUT chain
+  iptables:
+    chain: INPUT
+    flush: yes
+  become: yes
+
+- name: Flush OUTPUT chain
+  iptables:
+    chain: OUTPUT
+    flush: yes
+  become: yes
+
+- name: Flush iptables nat table
+  iptables:
+    flush: yes
+    table: nat
+  become: yes
+
+- name: Flush iptables mangle table
+  iptables:
+    flush: true
+    table: mangle
+  become: yes
+
+- name: Flush iptables raw table
+  iptables:
+    flush: true
+    table: raw
+  become: yes
+
+- name: Flush OUTPUT chain NAT table
+  iptables:
+    chain: OUTPUT
+    table: nat
+    flush: yes
+  become: yes
+
+- name: Flush FORWARD chain
+  iptables:
+    chain: FORWARD
+    flush: yes
+  become: yes
+
+- name: Flush PREROUTING chain NAT Table
+  iptables:
+    chain: PREROUTING
+    table: nat
+    flush: yes
+  become: yes
+
+- name: Delete ufw chains
+  command: "bash -c 'iptables -F {{ item }} && iptables -X {{ item }} || echo \"chain not found: {{ item }}\"'"
+  with_items:
+    - ufw-after-forward
+    - ufw-after-input
+    - ufw-after-logging-forward
+    - ufw-after-logging-input
+    - ufw-after-logging-output
+    - ufw-after-output
+    - ufw-before-forward
+    - ufw-before-input
+    - ufw-before-logging-forward
+    - ufw-before-logging-input
+    - ufw-before-logging-output
+    - ufw-before-output
+    - ufw-reject-forward
+    - ufw-reject-input
+    - ufw-reject-output
+    - ufw-track-forward
+    - ufw-track-input
+    - ufw-track-output
+
+- name: Install port manager
+  copy:
+    src: bubble_peer_manager.py
+    dest: /usr/local/bin/bubble_peer_manager.py
+    owner: root
+    group: root
+    mode: 0555
+  when: fw_enable_admin
+
+- name: Install supervisor conf file for port manager
+  copy:
+    src: supervisor_bubble_peer_manager.conf
+    dest: /etc/supervisor/conf.d/bubble_peer_manager.conf
+  when: fw_enable_admin
+
+- include: sage.yml
+  when: install_type == 'sage'
+
+- name: Creates /etc/iptables directory
+  file:
+    path: /etc/iptables
+    state: directory
+
+- name: save iptables v4 rules
+  shell: iptables-save > /etc/iptables/rules.v4
+  become: yes
+
+- name: save iptables v6 rules
+  shell: ip6tables-save > /etc/iptables/rules.v6
+  become: yes
+
+- supervisorctl:
+    name: bubble_peer_manager
+    state: restarted
+  when: fw_enable_admin

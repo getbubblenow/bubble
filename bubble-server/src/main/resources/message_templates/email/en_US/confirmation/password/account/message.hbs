@@ -1,0 +1,9 @@
+Hello {{account.name}},
+
+The password for the account named '{{account.name}}' on {{network.networkDomain}} has been reset.
+
+The password reset request was made on {{format_epoch message.request.ctime 'MMM dd, YYYY' network.timezone}} at {{format_epoch message.request.ctime 'hh:mm a, ZZZ' network.timezone}}.
+
+An approval was received via {{contact.type}} from {{contact.info}} {{#if contact.nick}}({{contact.nick}}){{/if}} on {{format_epoch message.ctime 'MMM dd, YYYY' network.timezone}} at {{format_epoch message.ctime 'hh:mm a, ZZZ' network.timezone}}.
+
+Thank you for using Bubble!

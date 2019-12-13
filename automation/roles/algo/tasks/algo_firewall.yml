@@ -1,0 +1,89 @@
+# Insert additional firewall rules to allow required services to function
+- name: Allow HTTP
+  iptables:
+    chain: INPUT
+    action: insert
+    rule_num: 5
+    protocol: tcp
+    destination_port: 80
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new HTTP connections
+  become: yes
+
+- name: Allow HTTPS
+  iptables:
+    chain: INPUT
+    action: insert
+    rule_num: 6
+    protocol: tcp
+    destination_port: 443
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new HTTPS connections
+  become: yes
+
+- name: Allow admin HTTPS on port {{ ssl_port }}
+  iptables:
+    chain: INPUT
+    action: insert
+    rule_num: 7
+    protocol: tcp
+    destination_port: "{{ ssl_port }}"
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new admin SSL connections
+  become: yes
+
+- name: "Allow DNS over TCP on private port"
+  iptables:
+    chain: INPUT
+    action: insert
+    rule_num: 8
+    protocol: tcp
+    destination_port: "{{ dns_port }}"
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new TCP DNS connections on private port
+  become: yes
+
+- name: "Allow DNS over UDP on private port"
+  iptables:
+    chain: INPUT
+    action: insert
+    rule_num: 9
+    protocol: udp
+    destination_port: "{{ dns_port }}"
+    jump: ACCEPT
+    comment: Accept new UDP DNS connections on private port
+  become: yes
+
+- name: "Redirect DNS TCP port"
+  iptables:
+    chain: PREROUTING
+    table: nat
+    action: insert
+    rule_num: 1
+    protocol: tcp
+    destination_port: "53"
+    jump: REDIRECT
+    to_ports: "{{ dns_port }}"
+    comment: Redirect DNS TCP connections
+  become: yes
+
+- name: "Redirect DNS UDP port"
+  iptables:
+    chain: PREROUTING
+    table: nat
+    action: insert
+    rule_num: 2
+    protocol: udp
+    destination_port: "53"
+    jump: REDIRECT
+    to_ports: "{{ dns_port }}"
+    comment: Redirect DNS UDP connections
+  become: yes

@@ -1,0 +1,718 @@
+[
+  {
+    "comment": "activate service, create account, login",
+    "include": "new_account",
+    "params": {
+      "password": "foobar1!"
+    }
+  },
+
+  {
+    "comment": "look up account policy, check that email is not an authFactor and not verified",
+    "request": { "uri": "users/{{userAccount.name}}/policy" },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 1"},
+        {"condition": "!json.getAccountContacts()[0].authFactor()"},
+        {"condition": "!json.getAccountContacts()[0].verified()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "set email to be required auth factor, fails because it is not verified",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts",
+      "entity": {
+        "type": "email",
+        "info": "{{policy.firstEmail}}",
+        "authFactor": "required"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.contact.unverified')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "resend verification message for email",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts/verify",
+      "entity": {
+        "type": "email",
+        "info": "{{policy.firstEmail}}"
+      }
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "as root, check inbox (1st) for email verification message",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/{{policy.firstEmail}}?action=verify"
+    },
+    "response": {
+      "store": "userInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, approve email verification request",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    },
+    "response": {
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "look up account policy, check that email is not an authFactor and but IS now verified",
+    "request": { "uri": "users/{{userAccount.name}}/policy" },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 1"},
+        {"condition": "!json.getAccountContacts()[0].authFactor()"},
+        {"condition": "json.getAccountContacts()[0].verified()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "set email to be required auth factor",
+    "request": {
+      "session": "userSession",
+      "uri": "users/{{userAccount.name}}/policy/contacts",
+      "entity": {
+        "type": "email",
+        "info": "{{policy.firstEmail}}",
+        "authFactor": "required"
+      }
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 1"},
+        {"condition": "json.getAccountContacts()[0].requiredAuthFactor()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "log out (1st)",
+    "request": { "uri": "auth/logout" }
+  },
+
+  {
+    "comment": "new session, login (2nd) as user, receive MFA info",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!"
+      }
+    },
+    "response": {
+      "check": [
+        {"condition": "json.getMultifactorAuth() != null"},
+        {"condition": "json.getMultifactorAuth().length == 1"},
+        {"condition": "json.getMultifactorAuth()[0].getInfo().indexOf('***') != -1"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "as root, check inbox (2nd), verify login request message sent",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/{{policy.firstEmail}}?action=login"
+    },
+    "response": {
+      "store": "userInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'login'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, approve login request",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    },
+    "response": {
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "add an authenticator auth factor",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts",
+      "entity": {
+        "type": "authenticator"
+      }
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 2"},
+        {"condition": "json.getAccountContacts()[0].requiredAuthFactor()"},
+        {"condition": "json.getAccountContacts()[1].requiredAuthFactor()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "log out (2nd)",
+    "request": { "uri": "auth/logout" }
+  },
+
+  {
+    "comment": "new session, login (3rd) as user, receive MFA info",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!"
+      }
+    },
+    "response": {
+      "check": [
+        {"condition": "json.getMultifactorAuth() != null"},
+        {"condition": "json.getMultifactorAuth().length == 2"},
+        {"condition": "json.getMultifactorAuth()[0].getInfo().indexOf('***') != -1"},
+        {"condition": "json.getMultifactorAuth()[1].getInfo().indexOf('***') != -1"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "as root, check inbox (3rd), verify login request message sent",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/{{policy.firstEmail}}?action=login"
+    },
+    "response": {
+      "store": "userInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'login'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, approve email request, still not logged in",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    },
+    "response": {
+      "store": "remainingApprovals",
+      "check": [
+        {"condition": "json.getUuid() == null"},
+        {"condition": "json.getMultifactorAuth() != null"},
+        {"condition": "json.getMultifactorAuth().length == 1"},
+        {"condition": "json.getMultifactorAuth()[0].getInfo().indexOf('***') != -1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "approve (1st) authenticator request, logged in",
+    "request": {
+      "uri": "auth/authenticator",
+      "entity": {
+        "account": "{{userAccount.name}}",
+        "token": "{{authenticator_token policy.authenticator.info}}"
+      }
+    },
+    "response": {
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "remove email as required auth factor",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts/email/{{policy.firstEmail}}",
+      "method": "delete"
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 1"},
+        {"condition": "json.getAccountContacts()[0].requiredAuthFactor()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "add SMS authentication as sufficient, fails because it is not verified",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts",
+      "entity": {
+        "type": "sms",
+        "info": "US:800-555-1212",
+        "authFactor": "sufficient"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.contact.unverified')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "add SMS authenticator as not_required, OK",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts",
+      "entity": {
+        "type": "sms",
+        "info": "US:800-555-1212"
+      }
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 2"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "as root, check inbox (4th) for sms verification message",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/sms/+18005551212?action=verify"
+    },
+    "response": {
+      "store": "smsInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, approve SMS verification request",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{smsInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    },
+    "response": {
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "look up account policy, check that SMS is not an authFactor and but IS now verified",
+    "request": { "uri": "users/{{userAccount.name}}/policy" },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 2"},
+        {"condition": "json.getAccountContacts()[1].getType().name() == 'sms'"},
+        {"condition": "!json.getAccountContacts()[1].authFactor()"},
+        {"condition": "json.getAccountContacts()[1].verified()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "set sms to be sufficient auth factor",
+    "request": {
+      "session": "userSession",
+      "uri": "users/{{userAccount.name}}/policy/contacts",
+      "entity": {
+        "type": "sms",
+        "info": "{{policy.firstSms}}",
+        "authFactor": "sufficient"
+      }
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 2"},
+        {"condition": "json.getAccountContacts()[1].sufficientAuthFactor()"},
+        {"condition": "json.getAccountContacts()[1].getType().name() == 'sms'"}
+      ]
+    }
+  },
+
+
+  {
+    "comment": "log out (3nd)",
+    "request": { "uri": "auth/logout" }
+  },
+
+  {
+    "comment": "new session, login (4th) as user, receive MFA info",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!"
+      }
+    },
+    "response": {
+      "check": [
+        {"condition": "json.getMultifactorAuth() != null"},
+        {"condition": "json.getMultifactorAuth().length == 2"},
+        {"condition": "json.getMultifactorAuth()[0].getInfo().indexOf('***') != -1"},
+        {"condition": "json.getMultifactorAuth()[1].getInfo().indexOf('***') != -1"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "as root, check SMS inbox (5th), verify login request message sent",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/sms/+18005551212?action=login"
+    },
+    "response": {
+      "store": "smsInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'login'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "approve SMS request, not yet logged in because we have a required authenticator",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{smsInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    },
+    "response": {
+      "store": "remainingApprovals",
+      "check": [
+        {"condition": "json.getUuid() == null"},
+        {"condition": "json.getMultifactorAuth() != null"},
+        {"condition": "json.getMultifactorAuth().length == 1"},
+        {"condition": "json.getMultifactorAuth()[0].getInfo().indexOf('***') != -1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "approve (2nd) authenticator request, logged in",
+    "request": {
+      "uri": "auth/authenticator",
+      "entity": {
+        "account": "{{userAccount.name}}",
+        "token": "{{authenticator_token policy.authenticator.info}}"
+      }
+    },
+    "response": {
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "remove authenticator",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts/authenticator",
+      "method": "delete"
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "add another email contact, sends another verify request",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts",
+      "entity": {
+        "type": "email",
+        "info": "foo@example.com"
+      }
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 2"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "as root, check inbox (6th) for email verification message",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/foo@example.com?action=verify"
+    },
+    "response": {
+      "store": "userInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, approve email verification request",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    },
+    "response": {
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "update email contact, set authFactor to sufficient",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts",
+      "entity": {
+        "type": "email",
+        "info": "foo@example.com",
+        "authFactor": "sufficient"
+      }
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 2"}
+      ]
+    }
+  },
+
+  {
+    "comment": "log out (4nd)",
+    "request": { "uri": "auth/logout" }
+  },
+
+  {
+    "comment": "new session, login (5th) as user, receive MFA info",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!"
+      }
+    },
+    "response": {
+      "check": [
+        {"condition": "json.getMultifactorAuth() != null"},
+        {"condition": "json.getMultifactorAuth().length == 2"},
+        {"condition": "json.getMultifactorAuth()[0].getInfo().indexOf('***') != -1"},
+        {"condition": "json.getMultifactorAuth()[1].getInfo().indexOf('***') != -1"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "as root, check inbox (7th), verify login request message sent",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/{{policy.firstEmail}}?action=login"
+    },
+    "response": {
+      "store": "userInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'login'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "approve via email, logged in",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    },
+    "response": {
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "disable email MFA",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts",
+      "entity": {
+        "type": "email",
+        "info": "foo@example.com",
+        "authFactor": "not_required"
+      }
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 2"}
+      ]
+    }
+  },
+
+  {
+    "comment": "disable sms MFA",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts",
+      "entity": {
+        "type": "sms",
+        "info": "US:800-555-1212",
+        "authFactor": "not_required"
+      }
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 2"}
+      ]
+    }
+  },
+
+  {
+    "comment": "log out (5nd)",
+    "request": { "uri": "auth/logout" }
+  },
+
+  {
+    "comment": "new session, login (6th) as user, works fine with no MFA enabled",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!"
+      }
+    },
+    "response": {
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "add a THIRD email contact, sends another verify request",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts",
+      "entity": {
+        "type": "email",
+        "info": "bar@example.com"
+      }
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 3"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "as root, check inbox (8th) for email verification message",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/bar@example.com?action=verify"
+    },
+    "response": {
+      "store": "userInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, DENY email verification request",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/deny/{{userInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "look up account policy again, email that was denied has been removed",
+    "request": { "uri": "users/{{userAccount.name}}/policy" },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 2"},
+        {"condition": "!json.getAccountContacts()[0].getInfo() != 'bar@example.com'"},
+        {"condition": "!json.getAccountContacts()[1].getInfo() != 'bar@example.com'"}
+      ]
+    }
+  }
+]

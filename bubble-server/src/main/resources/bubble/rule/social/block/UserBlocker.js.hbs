@@ -1,0 +1,88 @@
+var {{uniq}}_STATE = {
+    controls: null,
+    activeComment: null
+};
+function {{uniq}}_offset(el) {
+    var rect = el.getBoundingClientRect(),
+        scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
+        scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    return { top: rect.top + scrollTop, left: rect.left + scrollLeft }
+}
+
+function {{uniq}}_blockUser(userid) {
+  return function(event) {
+    var req = new XMLHttpRequest();
+    req.onreadystatechange = function() {
+      if (this.readyState == 4){
+        console.log('blockUser action completed: '+this.responseText);
+      }
+    }
+    req.open('GET', '{{blockActionUrl}}?key='+userid+'&value=true', true);
+    req.send();
+  }
+}
+
+function {{uniq}}_controlsOn(event) {
+{{#if debug}}
+    console.log("bubbleControlsOn invoked");
+{{/if}}
+    element = event.target;
+    if ({{uniq}}_STATE.activeComment != null && {{uniq}}_STATE.activeComment === element) {
+{{#if debug}}
+        console.log('bubbleControlsOn: same element, returning');
+{{/if}}
+        return;
+    }
+    {{uniq}}_STATE.activeComment = element;
+
+    var pos = {{uniq}}_offset(element);
+    var controlStyle = 'position: absolute; display: block; top: '+pos.top+'; left: '+pos.left;
+    console.log('bubbleControlsOn: controlStyle='+controlStyle+' for element: '+element);
+
+    userid = element{{userid}};
+    console.log('detected userid: '+userid);
+
+    {{uniq}}_STATE.controls = document.createElement("img");
+    {{uniq}}_STATE.controls.src = '{{blockControlUrl}}';
+    {{uniq}}_STATE.controls.alt = 'Block Comments From This User';
+    {{uniq}}_STATE.controls.height = 32;
+    {{uniq}}_STATE.controls.style = controlStyle;
+    {{uniq}}_STATE.controls.addEventListener("click", {{uniq}}_blockUser(userid));
+
+    element.appendChild({{uniq}}_STATE.controls);
+{{#if debug}}
+    console.log('inserted controls ' + {{uniq}}_STATE.controls + ' before element: ' + element);
+{{/if}}
+}
+function {{uniq}}_controlsOff(event) {
+{{#if debug}}
+    console.log("bubbleControlsOff invoked");
+{{/if}}
+    if ({{uniq}}_STATE.controls == null) {
+{{#if debug}}
+        console.log("bubbleControlsOff: controls was null, returning");
+{{/if}}
+        return;
+    }
+    var rc = {{uniq}}_STATE.activeComment.removeChild({{uniq}}_STATE.controls);
+{{#if debug}}
+    console.log('removed: '+rc);
+{{/if}}
+    {{uniq}}_STATE.activeComment = null;
+}
+
+var {{uniq}}_xPathResult = document.evaluate("{{{xpath}}}", document, null, XPathResult.ANY_TYPE, null);
+var {{uniq}}_elements = [];
+var {{uniq}}_element = {{uniq}}_xPathResult.iterateNext();
+while ({{uniq}}_element != null) {
+    {{uniq}}_elements.push({{uniq}}_element);
+    {{uniq}}_element = {{uniq}}_xPathResult.iterateNext();
+}
+{{#if debug}}
+console.log('found '+{{uniq}}_elements.length+' comments to decorate');
+{{/if}}
+for (var {{uniq}}_i=0; {{uniq}}_i < {{uniq}}_elements.length; {{uniq}}_i++) {
+    {{uniq}}_element = {{uniq}}_elements[{{uniq}}_i];
+    {{uniq}}_element.addEventListener("mouseenter", {{uniq}}_controlsOn);
+    {{uniq}}_element.addEventListener("mouseleave", {{uniq}}_controlsOff);
+}

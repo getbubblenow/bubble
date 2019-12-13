@@ -1,0 +1,68 @@
+- name: Install OpenSSL, nginx and software-properties-common
+  apt:
+    name: [ 'openssl', 'nginx', 'software-properties-common' ]
+    state: present
+    update_cache: yes
+
+- name: Enable Ubuntu universe repositories
+  apt_repository:
+    repo: "{{ item }}"
+    state: present
+  loop:
+    - "deb http://archive.ubuntu.com/ubuntu/ bionic universe"
+    - "deb http://archive.ubuntu.com/ubuntu/ bionic-updates universe"
+    - "deb http://security.ubuntu.com/ubuntu/ bionic-security universe"
+
+- name: Enable ppa:certbot/certbot repository
+  apt_repository:
+    repo: ppa:certbot/certbot
+    state: present
+
+- name: Update packages after adding new repositories
+  apt:
+    update_cache: yes
+
+- name: Install certbot
+  apt:
+    name: [ 'certbot' ]
+    state: present
+    update_cache: yes
+
+- name: Ensure nginx can read cert files
+  file:
+    dest: /etc/letsencrypt
+    group: www-data
+    recurse: yes
+
+- name: Ensure nginx is stopped
+  service:
+    name: nginx
+    state: stopped
+
+- name: Install init_certbot script
+  copy:
+    src: init_certbot.sh
+    dest: /usr/local/bin/init_certbot.sh
+    owner: root
+    group: root
+    mode: 0555
+
+- name: Init certbot
+  shell: init_certbot.sh {{ letsencrypt_email }} {{ server_name }}
+
+# see https://weakdh.org/sysadmin.html
+- name: Create a strong dhparam.pem
+  shell: openssl dhparam -out /etc/nginx/dhparams.pem 2048
+  args:
+    creates: /etc/nginx/dhparams.pem
+
+- name: Create dhparam nginx conf
+  template: src=stronger_dhparams.conf dest=/etc/nginx/conf.d/stronger_dhparams.conf
+
+- include: site.yml
+- meta: flush_handlers # nginx has to be restarted right now if it has to
+
+- name: Ensure nginx is restarted
+  service:
+    name: nginx
+    state: restarted

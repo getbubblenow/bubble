@@ -1,0 +1,65 @@
+# Things in {{CURLIES}} will be read from the process environment when the server starts up.
+# Supply this in a bubble.env file when starting the server.
+
+serverName: bubble-api
+
+#publicUriBase: https://127.0.0.1
+publicUriBase: {{PUBLIC_BASE_URI}}
+
+bubbleJar: {{BUBBLE_JAR}}
+defaultLocale: {{BUBBLE_DEFAULT_LOCALE}}
+testMode: {{#if BUBBLE_TEST_MODE}}{{BUBBLE_TEST_MODE}}{{else}}false{{/if}}
+
+database:
+  driver: org.postgresql.Driver
+  url: jdbc:postgresql://127.0.0.1:5432/bubble
+  user: bubble
+  password: '{{#if BUBBLE_PG_PASSWORD}}{{BUBBLE_PG_PASSWORD}}{{else}}{{key_file '.BUBBLE_PG_PASSWORD'}}{{/if}}'
+
+  encryptionEnabled: true
+  encryptionKey: '{{#if BUBBLE_DB_ENCRYPTION_KEY}}{{BUBBLE_DB_ENCRYPTION_KEY}}{{else}}{{key_file '.BUBBLE_DB_ENCRYPTION_KEY'}}{{/if}}'
+  encryptorPoolSize: 50
+
+  migrationEnabled: true
+
+  hibernate:
+    entityPackages:
+    - bubble.model
+    - org.cobbzilla.wizard.model.crypto   # for encrypted column support
+    - org.cobbzilla.wizard.model.json     # for JSONB column support
+    dialect: org.cobbzilla.wizard.model.json.JSONBPostgreSQLDialect
+    showSql: true
+    hbm2ddlAuto: validate
+    validationMode: ddl
+
+staticAssets:
+  baseUri: /
+  assetRoot: site/
+  utilPaths:
+    INDEX_PATH: /index.html
+    INDEX_ALIASES: /:/index.php
+
+http:
+  port: {{#if BUBBLE_SERVER_PORT}}{{BUBBLE_SERVER_PORT}}{{else}}8090{{/if}}
+  baseUri: /api
+
+jersey:
+  resourcePackages:
+   - bubble.resources
+   - org.cobbzilla.wizard.server
+   - org.cobbzilla.wizard.filters
+  providerPackages:
+   - org.cobbzilla.wizard.exceptionmappers
+  requestFilters: [ bubble.auth.BubbleAuthFilter ]
+  responseFilters:
+   - org.cobbzilla.wizard.filters.ScrubbableScrubber
+   - org.cobbzilla.wizard.filters.EntityTypeHeaderResponseFilter
+
+redis:
+  key: '{{#if BUBBLE_REDIS_ENCRYPTION_KEY}}{{BUBBLE_REDIS_ENCRYPTION_KEY}}{{else}}{{key_file '.BUBBLE_REDIS_ENCRYPTION_KEY'}}{{/if}}'
+  prefix: bubble_
+
+letsencryptEmail: {{LETSENCRYPT_EMAIL}}
+localStorageDir: {{LOCALSTORAGE_BASE_DIR}}
+
+disallowedCountries: {{DISALLOWED_COUNTRIES}}

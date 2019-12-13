@@ -1,0 +1,5 @@
+package bubble.notify.authenticator;
+
+import bubble.notify.ReceivedNotificationHandlerBase;
+
+public class NotificationHandler_authenticator_driver_response extends ReceivedNotificationHandlerBase {}

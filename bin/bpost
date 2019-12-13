@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# Run an HTTP POST against the API
+#
+# Usage:
+#
+#     bpost path [file] [options]
+#
+#   path     : an API path
+#   file     : a JSON file to POST. To read from stdin, specify the file as -
+#   options  : bscript options, see bubble.main.BubbleScriptOptions (and parent classes) for more info
+#
+# Environment variables
+#
+#   BUBBLE_ENTITY  : the filename that contains the JSON to send in the POST. If empty, entity is read from stdin
+#   BUBBLE_API     : which API to use. Default is local (http://127.0.0.1:PORT, where PORT is found in .bubble.env)
+#   BUBBLE_USER    : account to use. Default is root
+#   BUBBLE_PASS    : password for account. Default is root
+#   BUBBLE_INCLUDE : path to look for JSON include files. default value is to assume we are being run from
+#                      bubble repo, bubble-models repo, or bubble-client and use include files from minimal model.
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+URL="${1:?no URL provided}"
+shift
+
+REQUEST_JSON="${1}"
+if [[ -z "${REQUEST_JSON}" ]] ; then
+  die "No request JSON file specified. Use - to read from stdin"
+fi
+if [[ "${REQUEST_JSON}" == "-" ]] ; then
+  echo 1>&2 "Reading request JSON from stdin"
+
+elif [[ ! -f "${REQUEST_JSON}" && "${REQUEST_JSON}" != /dev/null ]]  ; then
+  die "Request JSON file does not exist: ${REQUEST_JSON}"
+fi
+shift
+
+if [[ "${REQUEST_JSON}" == "-" ]] ; then
+  exec ${SCRIPT_DIR}/bubble post -U ${URL} ${@}
+else
+  cat ${REQUEST_JSON} | exec ${SCRIPT_DIR}/bubble post -U ${URL} ${@}
+fi

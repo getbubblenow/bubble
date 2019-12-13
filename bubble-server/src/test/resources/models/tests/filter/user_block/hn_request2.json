@@ -1,0 +1,35 @@
+[
+  {
+    "comment": "reload HN, expect more blocked users",
+    "request": {
+      "uri": "p/https/news.ycombinator.com/item?id=20783006"
+    },
+    "response": {
+      "raw": true,
+      "check": [
+        {"condition":  "response.header('Content-Type').startsWith('text/html')"},
+
+        // this user is still not blocked
+        {"condition":  "response.xpath('//a[@class=\\'hnuser\\' and ./text()=\\'pixelmonkey\\']') != null"},
+
+        // this user is still blocked
+        {"condition":  "response.xpath('//a[@class=\\'hnuser\\' and ./text()=\\'rvz\\']') == null"},
+
+        // this user is still not blocked, but all their comments on this page are underneath a blocked user (rvz)
+        {"condition":  "response.xpath('//a[@class=\\'hnuser\\' and ./text()=\\'smt88\\']') == null"},
+
+        // this user is newly blocked
+        {"condition":  "response.xpath('//a[@class=\\'hnuser\\' and ./text()=\\'electricEmu\\']') == null"},
+
+        // this user is still not blocked, but all their comments on this page are underneath the newly blocked user
+        {"condition":  "response.xpath('//a[@class=\\'hnuser\\' and ./text()=\\'lukeschlather\\']') == null"},
+
+        // unblocked user, parent comment of blocked user, should be visible
+        {"condition":  "response.xpath('//a[@class=\\'hnuser\\' and ./text()=\\'djsumdog\\']') != null"},
+
+        // ensure controls appear for unblocked user
+        {"condition":  "true // -- todo"}
+      ]
+    }
+  }
+]

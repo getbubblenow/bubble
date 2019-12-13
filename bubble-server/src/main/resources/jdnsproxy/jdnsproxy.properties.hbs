@@ -1,0 +1,14 @@
+# location of our API server
+host: 127.0.0.1
+port: {{apiPort}}
+path: /api/dns
+
+# how long to cache things
+decisionTtl: 3600
+dnsTtl: 3600
+
+recordsFile={{{records}}}
+
+listeners=tcp://127.0.0.1:{{dnsPort}} udp://127.0.0.1:{{dnsPort}} {{#if vpnIps}}{{#each vpnIps}}tcp://{{this}}:{{dnsPort}} udp://{{this}}:{{dnsPort}} {{/each}}{{/if}}
+
+resolvers=tcp://1.1.1.1:53 tcp://8.8.8.8:53

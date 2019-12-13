@@ -1,0 +1,29 @@
+[
+  {
+    "comment": "Defaults for fake_filter test part",
+    "include": "_defaults",
+    "params": {
+      "fqdn": "_required",
+      "uri": "/",
+      "userAgent": "Test-User-Agent 1.0.0",
+      "remoteAddr": "127.0.0.1",
+      "jsCheck": "true"
+    }
+  },
+
+  {
+    "comment": "make request to <<fqdn>><<uri>>",
+    "request": {
+      "uri":"filter/matchers",
+      "entity": {
+        "fqdn": "<<fqdn>>",
+        "uri": "<<uri>>",
+        "userAgent": "<<userAgent>>",
+        "remoteAddr": "<<remoteAddr>>"
+      }
+    },
+    "response": {
+      "check": [ {"condition": "<<jsCheck>>"} ]
+    }
+  }
+]

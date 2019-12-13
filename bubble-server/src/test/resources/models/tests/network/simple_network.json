@@ -1,0 +1,364 @@
+[
+  {
+    "comment": "view self",
+    "request": {"uri": "me"},
+    "response": {
+      "check": [{"condition": "json.getName() != null"}]
+    }
+  },
+
+  {
+    "comment": "create another account",
+    "request": {
+      "uri": "users",
+      "method": "put",
+      "entity": {
+        "name": "test_user",
+        "password": "password",
+        "contact": {"type": "email", "info": "test-user@example.com"}
+      }
+    }
+  },
+
+  {
+    "before": "sleep 22s",  // wait for account objects to be created
+    "comment": "login as new user",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "test_user",
+        "password": "password"
+      }
+    },
+    "response": {
+      "store": "testAccount",
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "create a network, fails because we didn't go through a plan",
+    "request": {
+      "uri": "me/networks",
+      "method": "put",
+      "entity": {
+        "name": "test1",
+        "domain": "{{defaultDomain}}"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.cannotCreate')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "list plans",
+    "request": { "uri": "plans" },
+    "response": {
+      "store": "plans",
+      "check": [
+        {"condition": "json.length > 0"}
+      ]
+    }
+  },
+
+  {
+    "comment": "list available compute regions->sizes",
+    "request": { "uri": "clouds?type=compute" },
+    "response": {
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].getDriver().getRegions().size() >= 3"},
+        {"condition": "json[0].getDriver().getSizes().size() >= 1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "detect locale",
+    "request": {
+      "uri": "me/detect/locale",
+      "headers": {
+        "Accept-Language": "en-US,en;q=0.5",  // fwiw, this is what firefox sends
+        "X-Forwarded-For": "128.252.99.67"    // this IP has long been associated with Washington University in St. Louis
+      }
+    },
+    "response": {
+      "store": "detected_locales",
+      "check": [
+        {"condition": "json.size() >= 2"},
+        {"condition": "json.containsKey('Accept-Language')"},
+        {"condition": "json.get('Accept-Language') == 'en_US'"},
+        {"condition": "json.containsKey('geolocation_0')"},
+        {"condition": "json.get('geolocation_0') == 'en_US'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "detect timezone",
+    "request": {
+      "uri": "me/detect/timezone",
+      "headers": { "X-Forwarded-For": "128.252.99.67" }
+    },
+    "response": {
+      "store": "detected_timezone",
+      "check": [
+        {"condition": "json.getTimeZoneId() == 'America/Chicago'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "add plan",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "{{detected_locales.geolocation_0}}",
+        "timezone": "{{detected_timezone.timeZoneId}}",
+        "plan": "{{find plans 'name' 'bubble' 'uuid'}}",
+        "footprint": "US"
+      }
+    },
+    "response": {
+      "store": "plan"
+    }
+  },
+
+  {
+    "comment": "ask which regions we should start our nodes in. Ensure everything in our footprint is in the US",
+    "request": {
+      "uri": "me/networks/{{plan.name}}/closest",
+      "headers": { "X-Forwarded-For": "128.252.99.67" }
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length > 1"},
+        {"condition": "_find(json, function (region) { region.getLocation().getCountry() != 'US' }) == null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "list DNS for the network, should be empty",
+    "request": {
+      "uri": "me/networks/{{plan.name}}/dns/find?type=A&name=%5C.{{plan.name}}%5C.{{{url_encoded_escaped_regex defaultDomain}}}"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length == 0"}
+      ]
+    }
+  },
+
+  {
+    "comment": "start the network. sets up the first node, which does the rest",
+    "request": {
+      "uri": "me/networks/{{plan.name}}/actions/start",
+      "headers": { "X-Forwarded-For": "128.252.99.67" },
+      "method": "post"
+    },
+    "response": {
+      "store": "nn"
+    }
+  },
+
+  {
+    "before": "await_url https://{{nn.fqdn}}:{{serverConfig.nginxPort}}/api/.bubble 40m 20s",
+    "comment": "list DNS for the network, should now see a DNS A record for new instance",
+    "request": {
+      "uri": "me/networks/{{plan.name}}/dns/find?type=A&name={{{url_encoded_escaped_regex nn.fqdn}}}"
+    },
+    "response": {
+      "store": "dnsRecords",
+      "check": [
+        {"condition": "dnsRecords.length == 1"},
+        {"condition": "dnsRecords[0].getType().name() == 'A'"},
+        {"condition": "dnsRecords[0].getFqdn() == '{{nn.fqdn}}'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "dig hostname via DNS",
+    "connection": { "name": "default" },
+    "request": {
+      "uri": "me/networks/{{plan.name}}/dns/dig?type=A&name={{{nn.fqdn}}}"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].getType().name() == 'A'"},
+        {"condition": "json[0].getFqdn() == '{{nn.fqdn}}'"}
+      ]
+    }
+  },
+
+  {
+    "before": "await_url debug/inbox/email/test-user@example.com?type=request&action=verify&target=network 10m 10s await_json.length > 0",
+    "comment": "check debug mailbox for unlockKey",
+    "connection": {
+      "name": "bubbleConnection",
+      "baseUri": "https://{{nn.fqdn}}:{{serverConfig.nginxPort}}/api"
+    },
+    "request": {
+      "uri": "debug/inbox/email/test-user@example.com?type=request&action=verify&target=network"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "json.length == 1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "try to login before unlocking new bubble, get error",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "test_user",
+        "password": "password"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.account.locked')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "unlock new bubble by logging in with unlockKey",
+    "request": {
+      "session": "new",
+      "uri": "auth/login?k={{emailInbox.[0].ctx.message.data}}",
+      "entity": {
+        "name": "test_user",
+        "password": "password"
+      }
+    },
+    "response": {
+      "store": "bubbleAccount",
+      "sessionName": "bubbleSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "lookup self, ensure email matches",
+    "request": { "uri": "me" },
+    "response": {
+      "check": [
+        {"condition": "json.getName() == 'test_user'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "add a device for bubble admin user",
+    "request": {
+      "uri": "me/devices",
+      "method": "put",
+      "entity": { "name": "first-device" }
+    },
+    "response": {
+      "store": "adminDevice"
+    }
+  },
+
+  {
+    "comment": "download VPN config for bubble admin user",
+    "request": { "uri": "me/devices/first-device/vpn/vpn.conf" },
+    "response": {
+      "raw": true,
+      "check": [
+        {"condition": "response.bytesAsString().indexOf('PrivateKey = ') != -1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "create a new account on the new bubble",
+    "request": {
+      "uri": "users",
+      "method": "put",
+      "entity": {
+        "name": "bubble_user",
+        "password": "password1!",
+        "contact": {"type": "email", "info": "bubble-user@example.com"}
+      }
+    }
+  },
+
+  {
+    "before": "sleep 22s",  // wait for account objects to be created
+    "comment": "login as new bubble user",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "bubble_user",
+        "password": "password1!"
+      }
+    },
+    "response": {
+      "store": "bubbleAccount",
+      "sessionName": "bubbleUserSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "add a device for regular bubble user",
+    "request": {
+      "uri": "me/devices",
+      "method": "put",
+      "entity": { "name": "user-device" }
+    },
+    "response": {
+      "store": "userDevice"
+    }
+  },
+
+  {
+    "comment": "download VPN config for new user",
+    "request": { "uri": "me/devices/{{userDevice.uuid}}/vpn/vpn.conf" },
+    "response": {
+      "raw": true,
+      "check": [
+        {"condition": "response.bytesAsString().indexOf('PrivateKey = ') != -1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "stop the network, will tear-down all nodes",
+    "connection": { "name": "default" },
+    "request": {
+      "uri": "me/networks/{{plan.name}}/actions/stop",
+      "method": "post"
+    }
+  },
+
+  {
+    "before": "sleep 10s",
+    "comment": "destroy the network",
+    "request": {
+      "uri": "me/networks/{{plan.name}}",
+      "method": "delete"
+    },
+    "after": "verify_unreachable https://{{nn.fqdn}}:{{serverConfig.nginxPort}}/api/.bubble"
+  }
+
+]

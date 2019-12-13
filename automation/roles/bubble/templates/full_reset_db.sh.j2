@@ -1,0 +1,19 @@
+#!/bin/bash
+
+function die {
+  echo 1>&2 "${1}"
+  exit 1
+}
+
+if [[ $(whoami) == "root" ]] ; then
+  su - postgres ${0} ${@}
+  exit $?
+fi
+
+if [[ $(whoami) != "postgres" ]] ; then
+  die "${0} : must be run as postgres user"
+fi
+
+cd ~bubble/sql \
+  && init_bubble_db.sh {{ db_name }} {{ db_user }} {{ is_fork }} {{ install_type }} ${1} \
+  || die "error reinitializing database"

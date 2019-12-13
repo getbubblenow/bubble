@@ -1,0 +1,57 @@
+[
+  {
+    "comment": "verify cannot activate twice",
+    "request": {
+      "session": "new",
+      "method": "put",
+      "uri": "auth/activate",
+      "entity": {
+        "name": "root2",
+        "password": "pass"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.activation.alreadyDone')"},
+        {"condition": "json.length == 1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "login",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "root",
+        "password": "password"
+      }
+    },
+    "response": {
+      "sessionName": "rootSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "read self",
+    "request": { "uri": "me" },
+    "response": {
+      "check": [ {"condition":  "json.getName() == 'root'"} ]
+    }
+  },
+
+  {
+    "comment": "logout",
+    "request": { "uri": "auth/logout" }
+  },
+
+  {
+    "comment": "verify cannot read self after logout",
+    "request": { "uri": "me" },
+    "response": { "status": 403 }
+  }
+
+]
