@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 public class PaymentNotification extends SynchronousNotification {
 
     @Getter @Setter private String cloud;
+    @Getter @Setter private String planUuid;
     @Getter @Setter private String accountPlanUuid;
     @Getter @Setter private String paymentMethodUuid;
     @Getter @Setter private String billUuid;

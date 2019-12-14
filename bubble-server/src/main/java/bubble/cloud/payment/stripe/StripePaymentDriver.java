@@ -14,6 +14,7 @@ import com.stripe.model.Customer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.cache.redis.RedisService;
+import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
@@ -123,9 +124,8 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
     }
 
     @Override public boolean authorize(BubblePlan plan,
-                                       AccountPlan accountPlan,
                                        AccountPaymentMethod paymentMethod) {
-        final String accountPlanUuid = accountPlan.getUuid();
+        final String planUuid = plan.getUuid();
         final String paymentMethodUuid = paymentMethod.getUuid();
 
         final Charge charge;
@@ -136,10 +136,10 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
             chargeParams.put("currency", plan.getCurrency().toLowerCase());
             chargeParams.put("customer", paymentMethod.getPaymentInfo());
             chargeParams.put("description", plan.chargeDescription());
-            chargeParams.put("statement_description", plan.chargeDescription());
+            chargeParams.put("statement_descriptor", plan.chargeDescription());
             chargeParams.put("capture", false);
             final String chargeJson = json(chargeParams, COMPACT_MAPPER);
-            final String authCacheKey = getAuthCacheKey(accountPlanUuid, paymentMethodUuid);
+            final String authCacheKey = getAuthCacheKey(planUuid, paymentMethodUuid);
             final String chargeId = authCache.get(authCacheKey);
             if (chargeId != null) {
                 log.warn("authorize: already authorized: "+authCacheKey);
@@ -149,7 +149,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
                 charge = Charge.create(chargeParams);
             }
             if (charge.getStatus() == null) {
-                final String msg = "authorize: no status returned for Charge, accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid;
+                final String msg = "authorize: no status returned for Charge, plan=" + planUuid + " with paymentMethod=" + paymentMethodUuid;
                 log.error(msg);
                 throw invalidEx("err.purchase.cardUnknownError", msg);
             } else {
@@ -165,29 +165,32 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
                         return true;
 
                     case "pending":
-                        msg = "authorize: status='pending' (expected 'succeeded'), accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid;
+                        msg = "authorize: status='pending' (expected 'succeeded'), plan=" + planUuid + " with paymentMethod=" + paymentMethodUuid;
                         log.error(msg);
                         throw invalidEx("err.purchase.chargePendingError", msg);
 
                     default:
-                        msg = "authorize: status='" + charge.getStatus() + "' (expected 'succeeded'), accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid;
+                        msg = "authorize: status='" + charge.getStatus() + "' (expected 'succeeded'), plan=" + planUuid + " with paymentMethod=" + paymentMethodUuid;
                         log.error(msg);
                         throw invalidEx("err.purchase.chargeFailedError", msg);
                 }
             }
         } catch (CardException e) {
             // The card has been declined
-            final String msg = "authorize: CardException for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + ": requestId=" + e.getRequestId() + ", code="+e.getCode()+", declineCode="+e.getDeclineCode()+", error=" + e.toString();
+            final String msg = "authorize: CardException for plan=" + planUuid + " with paymentMethod=" + paymentMethodUuid + ": requestId=" + e.getRequestId() + ", code="+e.getCode()+", declineCode="+e.getDeclineCode()+", error=" + e.toString();
             log.error(msg);
             throw invalidEx("err.purchase.cardError", msg);
 
         } catch (StripeException e) {
-            final String msg = "authorize: "+e.getClass().getSimpleName()+" for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + ": requestId=" + e.getRequestId() + ", code="+e.getCode()+", error=" + e.toString();
+            final String msg = "authorize: " + e.getClass().getSimpleName() + " for plan=" + planUuid + " with paymentMethod=" + paymentMethodUuid + ": requestId=" + e.getRequestId() + ", code=" + e.getCode() + ", error=" + e.toString();
             log.error(msg);
             throw invalidEx("err.purchase.cardProcessingError", msg);
 
+        } catch (SimpleViolationException e) {
+            throw e;
+
         } catch (Exception e) {
-            final String msg = "authorize: "+e.getClass().getSimpleName()+" for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + ": error=" + e.toString();
+            final String msg = "authorize: "+e.getClass().getSimpleName()+" for plan=" + planUuid + " with paymentMethod=" + paymentMethodUuid + ": error=" + e.toString();
             log.error(msg);
             throw invalidEx("err.purchase.cardUnknownError", msg);
         }
@@ -206,7 +209,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
         final RedisService authCache = getAuthCache();
         final RedisService chargeCache = getChargeCache();
 
-        final String authCacheKey = getAuthCacheKey(accountPlanUuid, paymentMethodUuid);
+        final String authCacheKey = getAuthCacheKey(plan.getUuid(), paymentMethodUuid);
         try {
             final String charged = chargeCache.get(billUuid);
             if (charged != null) {

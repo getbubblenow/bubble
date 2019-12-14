@@ -161,7 +161,7 @@
   },
 
   {
-    "before": "sleep 5s",
+    "before": "sleep 15s",
     "comment": "verify account plans, should be one",
     "request": { "uri": "me/plans" },
     "response": {

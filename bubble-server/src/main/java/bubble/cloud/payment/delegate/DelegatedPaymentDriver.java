@@ -52,12 +52,12 @@ public class DelegatedPaymentDriver extends DelegatedCloudServiceDriverBase impl
                 new PaymentMethodClaimNotification(cloud.getName(), planPaymentMethod));
     }
 
-    @Override public boolean authorize(BubblePlan plan, AccountPlan accountPlan, AccountPaymentMethod paymentMethod) {
+    @Override public boolean authorize(BubblePlan plan, AccountPaymentMethod paymentMethod) {
         final BubbleNode delegate = getDelegateNode();
         final PaymentResult result = notificationService.notifySync(delegate, payment_driver_authorize,
                 new PaymentNotification()
                         .setCloud(cloud.getName())
-                        .setAccountPlanUuid(accountPlan.getUuid())
+                        .setPlanUuid(plan.getUuid())
                         .setPaymentMethodUuid(paymentMethod.getUuid()));
         return processResult(result);
     }

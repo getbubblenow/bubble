@@ -60,7 +60,7 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         return bill;
     }
 
-    @Override public boolean authorize(BubblePlan plan, AccountPlan accountPlan, AccountPaymentMethod paymentMethod) {
+    @Override public boolean authorize(BubblePlan plan, AccountPaymentMethod paymentMethod) {
         return true;
     }
 

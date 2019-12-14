@@ -36,7 +36,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
         final PaymentServiceDriver paymentDriver = paymentService.getPaymentDriver(configuration);
         if (paymentDriver.getPaymentMethodType().requiresAuth()) {
             final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
-            paymentDriver.authorize(plan, accountPlan, accountPlan.getPaymentMethod());
+            paymentDriver.authorize(plan, accountPlan.getPaymentMethod());
         }
 
         return super.preCreate(accountPlan);

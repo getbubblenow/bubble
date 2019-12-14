@@ -17,7 +17,7 @@ public interface PaymentServiceDriver {
     default PaymentValidationResult claim(AccountPaymentMethod paymentMethod) { return notSupported("claim"); }
     default PaymentValidationResult claim(AccountPlanPaymentMethod planPaymentMethod) { return notSupported("claim"); }
 
-    boolean authorize(BubblePlan plan, AccountPlan accountPlan, AccountPaymentMethod paymentMethod);
+    boolean authorize(BubblePlan plan, AccountPaymentMethod paymentMethod);
 
     boolean purchase(String accountPlanUuid, String paymentMethodUuid, String billUuid);
 
