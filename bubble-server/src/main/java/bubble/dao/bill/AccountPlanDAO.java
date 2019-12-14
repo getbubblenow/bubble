@@ -9,6 +9,7 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNetworkState;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
+import bubble.service.bill.RefundService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -22,11 +23,11 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @Repository
 public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
 
-    @Autowired private AccountPlanPaymentMethodDAO accountPlanPaymentMethodDAO;
     @Autowired private BubblePlanDAO planDAO;
     @Autowired private BillDAO billDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
+    @Autowired private RefundService refundService;
     @Autowired private BubbleConfiguration configuration;
 
     public AccountPlan findByAccountAndNetwork(String accountUuid, String networkUuid) {
@@ -37,50 +38,54 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
         return findByFields("account", account, "deleted", false);
     }
 
+    public List<AccountPlan> findByAccountAndPaymentMethodAndNotDeleted(String account, String paymentMethod) {
+        return findByFields("account", account, "paymentMethod", paymentMethod, "deleted", false);
+    }
+
     @Override public Object preCreate(AccountPlan accountPlan) {
-        if (!accountPlan.hasPaymentMethod()) throw invalidEx("err.paymentMethod.required");
+        if (configuration.paymentsEnabled()) {
+            if (!accountPlan.hasPaymentMethodObject()) throw invalidEx("err.paymentMethod.required");
+            if (!accountPlan.getPaymentMethodObject().hasUuid()) throw invalidEx("err.paymentMethod.required");
 
-        final CloudService paymentService = cloudDAO.findByUuid(accountPlan.getPaymentMethod().getCloud());
-        if (paymentService == null) throw invalidEx("err.paymentService.notFound");
+            final CloudService paymentService = cloudDAO.findByUuid(accountPlan.getPaymentMethodObject().getCloud());
+            if (paymentService == null) throw invalidEx("err.paymentService.notFound");
 
-        final PaymentServiceDriver paymentDriver = paymentService.getPaymentDriver(configuration);
-        if (paymentDriver.getPaymentMethodType().requiresAuth()) {
-            final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
-            paymentDriver.authorize(plan, accountPlan.getPaymentMethod());
+            final PaymentServiceDriver paymentDriver = paymentService.getPaymentDriver(configuration);
+            if (paymentDriver.getPaymentMethodType().requiresAuth()) {
+                final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
+                paymentDriver.authorize(plan, accountPlan.getPaymentMethodObject());
+            }
+            accountPlan.setPaymentMethod(accountPlan.getPaymentMethodObject().getUuid());
         }
-
         return super.preCreate(accountPlan);
     }
 
     @Override public AccountPlan postCreate(AccountPlan accountPlan, Object context) {
-        final String accountPlanUuid = accountPlan.getUuid();
-        final String paymentMethodUuid = accountPlan.getPaymentMethod().getUuid();
-        accountPlanPaymentMethodDAO.create(new AccountPlanPaymentMethod()
-                .setAccount(accountPlan.getAccount())
-                .setAccountPlan(accountPlanUuid)
-                .setPaymentMethod(paymentMethodUuid));
+        if (configuration.paymentsEnabled()) {
+            final String accountPlanUuid = accountPlan.getUuid();
+            final String paymentMethodUuid = accountPlan.getPaymentMethodObject().getUuid();
+            final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
+            final Bill bill = billDAO.create(new Bill()
+                    .setAccount(accountPlan.getAccount())
+                    .setPlan(plan.getUuid())
+                    .setAccountPlan(accountPlanUuid)
+                    .setPrice(plan.getPrice())
+                    .setCurrency(plan.getCurrency())
+                    .setPeriod(plan.getPeriod().currentPeriod())
+                    .setQuantity(1L)
+                    .setType(BillItemType.compute)
+                    .setStatus(BillStatus.unpaid));
+            final String billUuid = bill.getUuid();
 
-        final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
-        final Bill bill = billDAO.create(new Bill()
-                .setAccount(accountPlan.getAccount())
-                .setPlan(plan.getUuid())
-                .setAccountPlan(accountPlanUuid)
-                .setPrice(plan.getPrice())
-                .setCurrency(plan.getCurrency())
-                .setPeriod(plan.getPeriod().currentPeriod())
-                .setQuantity(1L)
-                .setType(BillItemType.compute)
-                .setStatus(BillStatus.unpaid));
-        final String billUuid = bill.getUuid();
+            final CloudService paymentService = cloudDAO.findByUuid(accountPlan.getPaymentMethodObject().getCloud());
+            if (paymentService == null) throw invalidEx("err.paymentService.notFound");
 
-        final CloudService paymentService = cloudDAO.findByUuid(accountPlan.getPaymentMethod().getCloud());
-        if (paymentService == null) throw invalidEx("err.paymentService.notFound");
-
-        final PaymentServiceDriver paymentDriver = paymentService.getPaymentDriver(configuration);
-        background(() -> {
-            sleep(SECONDS.toMillis(3), "AccountPlanDAO.postCreate: waiting to finalize purchase");
-            paymentDriver.purchase(accountPlanUuid, paymentMethodUuid, billUuid);
-        });
+            final PaymentServiceDriver paymentDriver = paymentService.getPaymentDriver(configuration);
+            background(() -> {
+                sleep(SECONDS.toMillis(3), "AccountPlanDAO.postCreate: waiting to finalize purchase");
+                paymentDriver.purchase(accountPlanUuid, paymentMethodUuid, billUuid);
+            });
+        }
         return super.postCreate(accountPlan, context);
     }
 
@@ -93,6 +98,9 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
             throw invalidEx("err.accountPlan.stopNetworkBeforeDeleting");
         }
         update(accountPlan.setDeleted(true).setEnabled(false));
+        if (configuration.paymentsEnabled()) {
+            refundService.processRefunds();
+        }
     }
 
     @Override public void forceDelete(String uuid) { super.delete(uuid); }

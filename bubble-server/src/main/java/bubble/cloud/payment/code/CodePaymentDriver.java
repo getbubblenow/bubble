@@ -55,32 +55,31 @@ public class CodePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
         return new PaymentValidationResult(accountPaymentMethod);
     }
 
-    @Override public synchronized PaymentValidationResult claim(AccountPlanPaymentMethod planPaymentMethod) {
+    @Override public synchronized PaymentValidationResult claim(AccountPlan accountPlan) {
         final CloudServiceDAO cloudDAO = configuration.getBean(CloudServiceDAO.class);
         final AccountPaymentMethodDAO paymentMethodDAO = configuration.getBean(AccountPaymentMethodDAO.class);
-        final AccountPaymentMethod accountPaymentMethod = paymentMethodDAO.findByUuid(planPaymentMethod.getPaymentMethod());
-        if (accountPaymentMethod == null) return new PaymentValidationResult("err.purchase.paymentMethodNotFound");
-        final CloudService paymentCloud = cloudDAO.findByUuid(accountPaymentMethod.getCloud());
-        final CodePaymentToken cpToken = readToken(configuration, accountPaymentMethod, new ValidationResult(), paymentCloud);
+        final AccountPaymentMethod paymentMethod = paymentMethodDAO.findByUuid(accountPlan.getPaymentMethod());
+        final CloudService paymentCloud = cloudDAO.findByUuid(paymentMethod.getCloud());
+        final CodePaymentToken cpToken = readToken(configuration, paymentMethod, new ValidationResult(), paymentCloud);
         if (cpToken == null) return new PaymentValidationResult("err.purchase.tokenNotFound");
 
         if (cpToken.hasAccountPaymentMethod()) {
-            if (!cpToken.getAccountPaymentMethod().equals(accountPaymentMethod.getUuid())) {
+            if (!cpToken.getAccountPaymentMethod().equals(paymentMethod.getUuid())) {
                 // already claimed
                 return new PaymentValidationResult("err.purchase.tokenUsed");
             }
         }
-        if (cpToken.hasAccountPlanPaymentMethod()) {
-            if (!cpToken.getAccountPlanPaymentMethod().equals(planPaymentMethod.getUuid())) {
+        if (cpToken.hasAccountPlan()) {
+            if (!cpToken.getAccountPlan().equals(accountPlan.getUuid())) {
                 return new PaymentValidationResult("err.purchase.tokenUsed");
             }
         } else {
             final CloudServiceDataDAO dataDAO = configuration.getBean(CloudServiceDataDAO.class);
-            cpToken.setAccountPaymentMethod(accountPaymentMethod.getUuid());
-            cpToken.setAccountPlanPaymentMethod(planPaymentMethod.getUuid());
+            cpToken.setAccountPaymentMethod(paymentMethod.getUuid());
+            cpToken.setAccountPlan(accountPlan.getUuid());
             dataDAO.update(cpToken.getCloudServiceData().setData(json(cpToken)));
         }
-        return new PaymentValidationResult(accountPaymentMethod);
+        return new PaymentValidationResult(paymentMethod);
     }
 
     public static final int MAX_UNMASKED_LENGTH = 4;
@@ -137,11 +136,10 @@ public class CodePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
         return null;
     }
 
-    @Override protected void charge(BubblePlan plan,
-                                    AccountPlan accountPlan,
-                                    AccountPaymentMethod paymentMethod,
-                                    AccountPlanPaymentMethod planPaymentMethod,
-                                    Bill bill) {
+    @Override protected String charge(BubblePlan plan,
+                                      AccountPlan accountPlan,
+                                      AccountPaymentMethod paymentMethod,
+                                      Bill bill) {
         // is the token valid?
         final CloudServiceData csData = dataDAO.findByCloudAndKey(cloud.getUuid(), paymentMethod.getPaymentInfo());
         if (csData == null) throw invalidEx("err.purchase.tokenNotFound");
@@ -153,9 +151,21 @@ public class CodePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
             throw invalidEx("err.purchase.tokenInvalid");
         }
         if (cpToken.expired()) throw invalidEx("err.purchase.tokenExpired");
-        if (!cpToken.hasPaymentMethod(planPaymentMethod.getUuid())) {
+        if (!cpToken.hasPaymentMethod(accountPlan.getUuid())) {
             throw invalidEx("err.purchase.tokenInvalid");
         }
+        return cpToken.getToken();
+    }
+
+    public static final String INFO_CODE = "code";
+
+    @Override protected String refund(AccountPlan accountPlan,
+                                      AccountPayment payment,
+                                      AccountPaymentMethod paymentMethod,
+                                      Bill bill,
+                                      long refundAmount) {
+        log.warn("refund: refunds not supported for "+getClass().getSimpleName()+": accountPlan="+accountPlan.getUuid());
+        return INFO_CODE;
     }
 
 }

@@ -39,6 +39,13 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     @ECIndex @Enumerated(EnumType.STRING)
     @Column(nullable=false, length=20)
     @Getter @Setter private BillStatus status = BillStatus.unpaid;
+    public boolean paid() { return status == BillStatus.paid; }
+    public boolean unpaid() { return !paid(); }
+
+    @ECForeignKey(entity=AccountPayment.class)
+    @Column(length=UUID_MAXLEN)
+    @Getter @Setter private String payment;
+    public boolean hasPayment () { return payment != null; }
 
     @ECIndex @Enumerated(EnumType.STRING)
     @Column(nullable=false, updatable=false, length=20)
@@ -50,11 +57,15 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
     @Getter @Setter private Long quantity = 0L;
 
-    @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
+    @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
     @Getter @Setter private Long price = 0L;
 
     @ECIndex @Column(nullable=false, updatable=false, length=10)
     @Getter @Setter private String currency;
+
+    @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+(ENC_LONG)+")")
+    @Getter @Setter private Long refundedAmount = 0L;
+    public boolean hasRefundedAmount () { return refundedAmount != null && refundedAmount > 0L; }
 
     @JsonIgnore @Transient public long getTotal() { return big(quantity).multiply(big(price)).longValue(); }
 

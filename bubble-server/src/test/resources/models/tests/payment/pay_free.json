@@ -73,7 +73,7 @@
         "timezone": "EST",
         "plan": "{{plans.[0].name}}",
         "footprint": "US",
-        "paymentMethod": {
+        "paymentMethodObject": {
           "paymentInfo": "free"
         }
       }
@@ -98,7 +98,7 @@
         "timezone": "EST",
         "plan": "{{plans.[0].name}}",
         "footprint": "US",
-        "paymentMethod": {
+        "paymentMethodObject": {
           "paymentMethodType": "free"
         }
       }
@@ -123,7 +123,7 @@
         "timezone": "EST",
         "plan": "{{plans.[0].name}}",
         "footprint": "US",
-        "paymentMethod": {
+        "paymentMethodObject": {
           "paymentMethodType": "free",
           "paymentInfo": "free"
         }
@@ -223,8 +223,8 @@
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
-        {"condition": "json[0].getPaymentObject().getAmount() === {{plans.[0].price}}"},
-        {"condition": "json[0].getPaymentObject().getStatus().name() === 'success'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'success'"},
         {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getBillObject().getAccountPlan() === '{{accountPlan.uuid}}'"},
         {"condition": "json[0].getBillObject().getQuantity() === 1"},

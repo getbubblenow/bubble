@@ -5,7 +5,6 @@ import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.AccountPlan;
-import bubble.model.bill.AccountPlanPaymentMethod;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +20,6 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 public class AccountPaymentMethodDAO extends AccountOwnedEntityDAO<AccountPaymentMethod> {
 
     @Autowired private AccountPlanDAO accountPlanDAO;
-    @Autowired private AccountPlanPaymentMethodDAO planPaymentMethodDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleConfiguration configuration;
 
@@ -40,17 +38,9 @@ public class AccountPaymentMethodDAO extends AccountOwnedEntityDAO<AccountPaymen
         if (pm == null) return;
 
         // ensure payment method is not in use by any account plan
-        final List<AccountPlan> plans = accountPlanDAO.findByAccount(pm.getAccount());
-        for (AccountPlan plan : plans) {
-            if (plan.deleted()) continue;
-            final AccountPlanPaymentMethod planPaymentMethod = planPaymentMethodDAO.findCurrentMethodForPlan(plan.getUuid());
-            if (planPaymentMethod == null) {
-                log.warn("delete: no AccountPlanPaymentMethod found for plan: "+plan.getUuid());
-                continue;
-            }
-            if (planPaymentMethod.getPaymentMethod().equals(pm.getUuid())) {
-                throw invalidEx("err.paymentMethod.cannotDeleteInUse");
-            }
+        final List<AccountPlan> plans = accountPlanDAO.findByAccountAndPaymentMethodAndNotDeleted(pm.getAccount(), pm.getUuid());
+        if (!plans.isEmpty()) {
+            throw invalidEx("err.paymentMethod.cannotDeleteInUse");
         }
 
         update(pm.setDeleted(true).setPaymentInfo("deleted_"+now()));

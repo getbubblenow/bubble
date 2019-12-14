@@ -1,8 +1,6 @@
 package bubble.resources.bill;
 
 import bubble.dao.bill.AccountPaymentMethodDAO;
-import bubble.dao.bill.AccountPlanDAO;
-import bubble.dao.bill.AccountPlanPaymentMethodDAO;
 import bubble.model.account.Account;
 import bubble.model.bill.AccountPaymentMethod;
 import bubble.resources.account.AccountOwnedResource;
@@ -26,8 +24,6 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 public class AccountPaymentMethodsResource extends AccountOwnedResource<AccountPaymentMethod, AccountPaymentMethodDAO> {
 
     @Autowired private BubbleConfiguration configuration;
-    @Autowired private AccountPlanDAO accountPlanDAO;
-    @Autowired private AccountPlanPaymentMethodDAO planPaymentMethodDAO;
 
     public AccountPaymentMethodsResource(Account account) { super(account); }
 

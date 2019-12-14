@@ -17,14 +17,14 @@ public class CodePaymentToken {
     @Getter @Setter private String accountPaymentMethod;
     public boolean hasAccountPaymentMethod() { return accountPaymentMethod != null; }
 
-    @Getter @Setter private String accountPlanPaymentMethod;
-    public boolean hasAccountPlanPaymentMethod() { return accountPlanPaymentMethod != null; }
+    @Getter @Setter private String accountPlan;
+    public boolean hasAccountPlan() { return accountPlan != null; }
 
     @Getter @Setter private Long expiration;
     public boolean expired() { return expiration != null && now() > expiration; }
 
-    public boolean hasPaymentMethod(String planPaymentMethod) {
-        return accountPlanPaymentMethod != null && accountPlanPaymentMethod.equals(planPaymentMethod);
+    public boolean hasPaymentMethod(String accountPlan) {
+        return this.accountPlan != null && this.accountPlan.equals(accountPlan);
     }
 
     @JsonIgnore @Getter @Setter private CloudServiceData cloudServiceData;

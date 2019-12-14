@@ -27,8 +27,8 @@ public class NotificationHandler_payment_driver_claim extends DelegatedNotificat
         final PaymentServiceDriver paymentDriver = paymentService.getPaymentDriver(configuration);
 
         final PaymentValidationResult result;
-        if (notification.hasPlanPaymentMethod()) {
-            result = paymentDriver.claim(notification.getPlanPaymentMethod());
+        if (notification.hasAccountPlan()) {
+            result = paymentDriver.claim(notification.getAccountPlan());
         } else {
             result = paymentDriver.claim(notification.getPaymentMethod());
         }

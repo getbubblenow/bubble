@@ -99,6 +99,9 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     @Getter @Setter private String defaultLocale = "en_US";
     @Getter @Setter private LegalInfo legal = new LegalInfo();
 
+    @Getter @Setter private Boolean paymentsEnabled = false;
+    public boolean paymentsEnabled() { return paymentsEnabled != null && paymentsEnabled; }
+
     @Override @JsonIgnore public Handlebars getHandlebars() { return BubbleHandlebars.instance.getHandlebars(); }
 
     public ApiClientBase newApiClient() { return new BubbleApiClient(new ApiConnectionInfo(getLoopbackApiBase())); }

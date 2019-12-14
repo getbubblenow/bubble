@@ -7,8 +7,6 @@ import bubble.model.bill.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.List;
-
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
@@ -19,10 +17,19 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
     @Autowired protected AccountPlanDAO accountPlanDAO;
     @Autowired protected BubblePlanDAO planDAO;
     @Autowired protected AccountPaymentMethodDAO paymentMethodDAO;
-    @Autowired protected AccountPlanPaymentMethodDAO planPaymentMethodDAO;
     @Autowired protected BillDAO billDAO;
     @Autowired protected AccountPaymentDAO accountPaymentDAO;
-    @Autowired protected AccountPlanPaymentDAO accountPlanPaymentDAO;
+
+    protected abstract String charge(BubblePlan plan,
+                                     AccountPlan accountPlan,
+                                     AccountPaymentMethod paymentMethod,
+                                     Bill bill);
+
+    protected abstract String refund(AccountPlan accountPlan,
+                                     AccountPayment payment,
+                                     AccountPaymentMethod paymentMethod,
+                                     Bill bill,
+                                     long refundAmount);
 
     public AccountPlan getAccountPlan(String accountPlanUuid) {
         final AccountPlan accountPlan = accountPlanDAO.findByUuid(accountPlanUuid);
@@ -44,13 +51,6 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         return paymentMethod;
     }
 
-    public AccountPlanPaymentMethod getPlanPaymentMethod(String accountPlanUuid, String paymentMethodUuid) {
-        final AccountPlanPaymentMethod planPaymentMethod = planPaymentMethodDAO.findCurrentMethodForPlan(accountPlanUuid);
-        if (planPaymentMethod == null) throw invalidEx("err.purchase.paymentMethodNotSet");
-        if (!planPaymentMethod.getPaymentMethod().equals(paymentMethodUuid)) throw invalidEx("err.purchase.paymentMethodMismatch");
-        return planPaymentMethod;
-    }
-
     public Bill getBill(String billUuid, long purchaseAmount, String currency, AccountPlan accountPlan) {
         final Bill bill = billDAO.findByUuid(billUuid);
         if (bill == null) throw invalidEx("err.purchase.billNotFound");
@@ -70,119 +70,164 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         final BubblePlan plan = getBubblePlan(accountPlan);
         final AccountPaymentMethod paymentMethod = getPaymentMethod(accountPlan, paymentMethodUuid);
         final Bill bill = getBill(billUuid, plan.getPrice(), plan.getCurrency(), accountPlan);
-        final AccountPlanPaymentMethod planPaymentMethod = getPlanPaymentMethod(accountPlanUuid, paymentMethodUuid);
 
         if (!paymentMethod.getAccount().equals(accountPlan.getAccount()) || !paymentMethod.getAccount().equals(bill.getAccount())) {
             throw invalidEx("err.purchase.billNotFound");
         }
 
         // has this already been paid?
-        final AccountPlanPayment existing = accountPlanPaymentDAO.findByBill(billUuid);
-        if (existing != null) {
-            log.warn("purchase: existing AccountPlanPayment found (returning true): "+existing.getUuid());
+        if (bill.paid()) {
+            log.warn("purchase: existing Bill was already paid (returning true): " + bill.getUuid());
             return true;
         }
 
-        final AccountPlanPayment priorPayment = findPriorPayment(plan, paymentMethod, bill);
-        if (priorPayment != null) {
-            billDAO.update(bill.setPrice(0L).setStatus(BillStatus.paid));
-            accountPlanPaymentDAO.create(new AccountPlanPayment()
+        if (bill.hasPayment()) {
+            final AccountPayment existing = accountPaymentDAO.findByUuid(bill.getPayment());
+            if (existing != null) {
+                log.warn("purchase: existing AccountPayment found (returning true): " + existing.getUuid());
+                return true;
+            }
+        }
+
+        final String chargeInfo;
+        try {
+            chargeInfo = charge(plan, accountPlan, paymentMethod, bill);
+        } catch (RuntimeException e) {
+            // record failed payment, rethrow
+            accountPaymentDAO.create(new AccountPayment()
                     .setAccount(accountPlan.getAccount())
                     .setPlan(accountPlan.getPlan())
                     .setAccountPlan(accountPlan.getUuid())
-                    .setPayment(priorPayment.getPayment())
-                    .setPaymentMethod(priorPayment.getPaymentMethod())
-                    .setPlanPaymentMethod(planPaymentMethod.getUuid())
+                    .setPaymentMethod(paymentMethod.getUuid())
                     .setBill(bill.getUuid())
-                    .setPeriod(bill.getPeriod())
-                    .setAmount(0L)
-                    .setCurrency(bill.getCurrency()));
-
-        } else {
-            try {
-                charge(plan, accountPlan, paymentMethod, planPaymentMethod, bill);
-            } catch (RuntimeException e) {
-                // record failed payment, rethrow
-                accountPaymentDAO.create(new AccountPayment()
-                        .setAccount(accountPlan.getAccount())
-                        .setPlan(accountPlan.getPlan())
-                        .setAccountPlan(accountPlan.getUuid())
-                        .setPaymentMethod(paymentMethod.getUuid())
-                        .setAmount(bill.getTotal())
-                        .setCurrency(bill.getCurrency())
-                        .setStatus(AccountPaymentStatus.failure)
-                        .setError(e)
-                        .setInfo(paymentMethod.getPaymentInfo()));
-                throw e;
-            }
-            recordPayment(bill, accountPlan, paymentMethod, planPaymentMethod);
+                    .setAmount(bill.getTotal())
+                    .setCurrency(bill.getCurrency())
+                    .setStatus(AccountPaymentStatus.failure)
+                    .setError(e)
+                    .setInfo(paymentMethod.getPaymentInfo()));
+            throw e;
         }
-        accountPlanDAO.update(accountPlan.setEnabled(true));
+        recordPayment(bill, accountPlan, paymentMethod, chargeInfo);
         return true;
     }
 
-    public AccountPlanPayment findPriorPayment(BubblePlan plan, AccountPaymentMethod paymentMethod, Bill bill) {
-        // is there a previous AccountPlanPayment where:
-        //  - it has a price that is the same or more expensive than the BubblePlan being purchased now
-        //  - it has a price in the same currency as the BubblePlan being purchased now
-        //  - it has the same AccountPaymentMethod
-        //  - it is for the current period
-        //  - the corresponding AccountPlan has been deleted
-        // if so we can re-use that payment and do not need to charge anything now
-        final List<AccountPlanPayment> priorSimilarPayments = accountPlanPaymentDAO.findByAccountPaymentMethodAndPeriodAndCurrency(
-                paymentMethod.getUuid(),
-                bill.getPeriod(),
-                plan.getCurrency());
-        for (AccountPlanPayment app : priorSimilarPayments) {
-            final AccountPlan ap = accountPlanDAO.findByUuid(app.getAccountPlan());
-            if (ap != null && ap.deleted() && app.getAmount() >= plan.getPrice()) {
-                return app;
-            }
-        }
-        return null;
-    }
-
-    protected abstract void charge(BubblePlan plan,
-                                   AccountPlan accountPlan,
-                                   AccountPaymentMethod paymentMethod,
-                                   AccountPlanPaymentMethod planPaymentMethod,
-                                   Bill bill);
-
-    @Override public boolean refund(String accountPlanUuid, String paymentMethodUuid, String billUuid, long refundAmount) {
-        log.error("refund: not yet supported: accountPlanUuid="+accountPlanUuid+", paymentMethodUuid="+paymentMethodUuid+", billUuid="+billUuid);
-        return false;
-    }
-
-    public AccountPlanPayment recordPayment(Bill bill,
-                                            AccountPlan accountPlan,
-                                            AccountPaymentMethod paymentMethod,
-                                            AccountPlanPaymentMethod planPaymentMethod) {
-        // mark the bill as paid
-        billDAO.update(bill.setStatus(BillStatus.paid));
-
-        // create the payment
-        final AccountPayment payment = accountPaymentDAO.create(new AccountPayment()
+    public AccountPayment recordPayment(Bill bill,
+                                        AccountPlan accountPlan,
+                                        AccountPaymentMethod paymentMethod,
+                                        String chargeInfo) {
+        // record the payment
+        final AccountPayment accountPayment = accountPaymentDAO.create(new AccountPayment()
+                .setType(AccountPaymentType.payment)
                 .setAccount(accountPlan.getAccount())
                 .setPlan(accountPlan.getPlan())
                 .setAccountPlan(accountPlan.getUuid())
                 .setPaymentMethod(paymentMethod.getUuid())
+                .setBill(bill.getUuid())
                 .setAmount(bill.getTotal())
                 .setCurrency(bill.getCurrency())
                 .setStatus(AccountPaymentStatus.success)
-                .setInfo(paymentMethod.getPaymentInfo()));
+                .setInfo(chargeInfo));
 
-        // associate the payment to the bill
-        return accountPlanPaymentDAO.create(new AccountPlanPayment()
+        // mark the bill as paid, enable the plan
+        billDAO.update(bill.setPayment(accountPayment.getUuid()).setStatus(BillStatus.paid));
+        accountPlanDAO.update(accountPlan.setEnabled(true));
+        return accountPayment;
+    }
+
+    @Override public boolean refund(String accountPlanUuid) {
+        final AccountPlan accountPlan = accountPlanDAO.findByUuid(accountPlanUuid);
+        if (accountPlan == null) {
+            log.warn("refund: accountPlan not found: "+accountPlanUuid);
+            throw invalidEx("err.accountPlan.notFound");
+        }
+
+        // Find most recent Bill
+        final Bill bill = billDAO.findMostRecentBillForAccountPlan(accountPlanUuid);
+        if (bill == null) {
+            log.warn("refund: no recent bill found for accountPlan: "+accountPlanUuid);
+            throw invalidEx("err.refund.billNotFound");
+        }
+
+        // Was the recent bill paid?
+        if (bill.unpaid()) {
+            if (bill.hasPayment()) {
+                // should never happen
+                throw invalidEx("err.refund.unpaidBillHasPayment");
+            }
+            log.warn("refund: not refunding unpaid bill ("+bill.getUuid()+") accountPlan: "+accountPlanUuid);
+            return false;
+        }
+
+        // What payment was used to pay the bill?
+        final AccountPayment payment = accountPaymentDAO.findByUuid(bill.getPayment());
+        if (payment == null) {
+            log.warn("refund: AccountPlanPayment not found for paid bill ("+bill.getUuid()+") accountPlan: "+accountPlanUuid);
+            throw invalidEx("err.refund.paymentNotFound");
+        }
+
+        // Is the payment method associated with the bill still active?
+        final AccountPaymentMethod paymentMethod = paymentMethodDAO.findByUuid(payment.getPaymentMethod());
+        if (paymentMethod == null || paymentMethod.deleted()) {
+            log.warn("refund: cannot refund: AccountPaymentMethod not found or deleted for paid bill ("+bill.getUuid()+") accountPlan: "+accountPlanUuid);
+            throw invalidEx("err.refund.paymentMethodNotFound");
+        }
+
+        // Find the plan
+        final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
+        if (plan == null) {
+            log.warn("refund: BubblePlan not found ("+accountPlan.getPlan()+") for accountPlan: "+accountPlanUuid);
+            throw invalidEx("err.refund.planNotFound");
+        }
+
+        // Determine how much to refund
+        final long refundAmount = plan.getPeriod().calculateRefund(accountPlan.getCtime(), bill.getPeriod(), bill.getTotal());
+
+        final String refundInfo;
+        try {
+            refundInfo = refund(accountPlan, payment, paymentMethod, bill, refundAmount);
+        } catch (RuntimeException e) {
+            // record failed payment, rethrow
+            accountPaymentDAO.create(new AccountPayment()
+                    .setType(AccountPaymentType.refund)
+                    .setAccount(accountPlan.getAccount())
+                    .setPlan(accountPlan.getPlan())
+                    .setAccountPlan(accountPlan.getUuid())
+                    .setPaymentMethod(paymentMethod.getUuid())
+                    .setBill(bill.getUuid())
+                    .setAmount(bill.getTotal())
+                    .setCurrency(bill.getCurrency())
+                    .setStatus(AccountPaymentStatus.failure)
+                    .setError(e)
+                    .setInfo(paymentMethod.getPaymentInfo()));
+            throw e;
+        }
+        recordRefund(bill, accountPlan, paymentMethod, refundAmount, refundInfo);
+        return true;
+    }
+
+    private void recordRefund(Bill bill,
+                              AccountPlan accountPlan,
+                              AccountPaymentMethod paymentMethod,
+                              long refundAmount,
+                              String refundInfo) {
+        // record the payment
+        final AccountPayment accountPayment = accountPaymentDAO.create(new AccountPayment()
+                .setType(AccountPaymentType.payment)
                 .setAccount(accountPlan.getAccount())
                 .setPlan(accountPlan.getPlan())
                 .setAccountPlan(accountPlan.getUuid())
-                .setPayment(payment.getUuid())
                 .setPaymentMethod(paymentMethod.getUuid())
-                .setPlanPaymentMethod(planPaymentMethod.getUuid())
                 .setBill(bill.getUuid())
-                .setPeriod(bill.getPeriod())
-                .setAmount(bill.getTotal())
-                .setCurrency(bill.getCurrency()));
+                .setAmount(refundAmount)
+                .setCurrency(bill.getCurrency())
+                .setStatus(AccountPaymentStatus.success)
+                .setInfo(refundInfo));
+
+        // update bill
+        billDAO.update(bill.setRefundedAmount(refundAmount));
+
+        // close the plan
+        accountPlanDAO.update(accountPlan.setClosed(true));
     }
 
 }

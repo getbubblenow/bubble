@@ -4,7 +4,6 @@ import bubble.cloud.CloudServiceType;
 import bubble.cloud.geoLocation.GeoLocation;
 import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.AccountPlanDAO;
-import bubble.dao.bill.AccountPlanPaymentMethodDAO;
 import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.BubbleFootprintDAO;
@@ -13,7 +12,6 @@ import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.AccountPlan;
-import bubble.model.bill.AccountPlanPaymentMethod;
 import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.*;
 import bubble.resources.account.AccountOwnedResource;
@@ -44,8 +42,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     @Autowired private BubblePlanDAO planDAO;
     @Autowired private BubbleFootprintDAO footprintDAO;
     @Autowired private CloudServiceDAO cloudDAO;
-    @Autowired private AccountPaymentMethodDAO accountPaymentMethodDAO;
-    @Autowired private AccountPlanPaymentMethodDAO accountPlanPaymentMethodDAO;
+    @Autowired private AccountPaymentMethodDAO paymentMethodDAO;
     @Autowired private BubbleConfiguration configuration;
 
     public AccountPlansResource(Account account) { super(account); }
@@ -119,33 +116,38 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         }
 
         AccountPaymentMethod paymentMethod = null;
-        if (!request.hasPaymentMethod()) {
-            result.addViolation("err.paymentMethod.required");
-        } else {
-            if (request.getPaymentMethod().hasUuid()) {
-                paymentMethod = accountPaymentMethodDAO.findByUuid(request.getPaymentMethod().getUuid());
-                if (paymentMethod == null) result.addViolation("err.purchase.paymentMethodNotFound");
+        if (configuration.paymentsEnabled()) {
+            if (!request.hasPaymentMethodObject()) {
+                result.addViolation("err.paymentMethod.required");
             } else {
-                paymentMethod = request.getPaymentMethod();
-            }
-            if (paymentMethod != null) {
-                paymentMethod.setAccount(caller.getUuid()).validate(result, configuration);
+                if (request.getPaymentMethodObject().hasUuid()) {
+                    paymentMethod = paymentMethodDAO.findByUuid(request.getPaymentMethodObject().getUuid());
+                    if (paymentMethod == null) result.addViolation("err.purchase.paymentMethodNotFound");
+                } else {
+                    paymentMethod = request.getPaymentMethodObject();
+                }
+                if (paymentMethod != null) {
+                    paymentMethod.setAccount(caller.getUuid()).validate(result, configuration);
+                }
             }
         }
-
         if (result.isInvalid()) throw invalidEx(result);
 
         if (domain != null && plan != null && storage != null) {
             final BubbleNetwork newNetwork = networkDAO.create(request.bubbleNetwork(caller, domain, plan, storage));
             request.setNetwork(newNetwork.getUuid());
         }
-        if (paymentMethod != null && !paymentMethod.hasUuid()) {
-            final AccountPaymentMethod paymentMethodToCreate = new AccountPaymentMethod(request.getPaymentMethod()).setAccount(request.getAccount());
-            final AccountPaymentMethod paymentMethodCreated = accountPaymentMethodDAO.create(paymentMethodToCreate);
-            request.setPaymentMethod(paymentMethodCreated);
-        } else {
-            request.setPaymentMethod(paymentMethod);
+
+        if (configuration.paymentsEnabled()) {
+            if (paymentMethod != null && !paymentMethod.hasUuid()) {
+                final AccountPaymentMethod paymentMethodToCreate = new AccountPaymentMethod(request.getPaymentMethodObject()).setAccount(request.getAccount());
+                final AccountPaymentMethod paymentMethodCreated = paymentMethodDAO.create(paymentMethodToCreate);
+                request.setPaymentMethodObject(paymentMethodCreated);
+            } else {
+                request.setPaymentMethodObject(paymentMethod);
+            }
         }
+
         return request;
     }
 
@@ -179,23 +181,20 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     }
 
     @Path("/{id}"+EP_PAYMENTS)
-    public AccountPlanPaymentsResource getPayments(@Context ContainerRequest ctx,
-                                                   @PathParam("id") String id) {
+    public AccountPaymentsResource getPayments(@Context ContainerRequest ctx,
+                                               @PathParam("id") String id) {
         final AccountPlan plan = find(ctx, id);
         if (plan == null) throw notFoundEx(id);
-        return configuration.subResource(AccountPlanPaymentsResource.class, account, plan);
+        return configuration.subResource(AccountPaymentsResource.class, account, plan);
     }
 
     @GET @Path("/{id}"+EP_PAYMENT_METHOD)
     public Response getPaymentMethod(@Context ContainerRequest ctx,
                                      @PathParam("id") String id) {
-        final AccountPlan plan = find(ctx, id);
-        if (plan == null) return notFound(id);
+        final AccountPlan accountPlan = find(ctx, id);
+        if (accountPlan == null) return notFound(id);
 
-        final AccountPlanPaymentMethod planPaymentMethod = accountPlanPaymentMethodDAO.findCurrentMethodForPlan(plan.getUuid());
-        if (planPaymentMethod == null) return notFound();
-
-        final AccountPaymentMethod paymentMethod = accountPaymentMethodDAO.findByUuid(planPaymentMethod.getPaymentMethod());
+        final AccountPaymentMethod paymentMethod = paymentMethodDAO.findByUuid(accountPlan.getPaymentMethod());
         return paymentMethod == null ? notFound() : ok(paymentMethod);
     }
 

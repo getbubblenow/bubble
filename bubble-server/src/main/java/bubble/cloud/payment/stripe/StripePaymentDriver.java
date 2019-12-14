@@ -1,16 +1,17 @@
 package bubble.cloud.payment.stripe;
 
 import bubble.cloud.payment.PaymentDriverBase;
-import bubble.notify.payment.PaymentValidationResult;
 import bubble.dao.account.AccountPolicyDAO;
 import bubble.model.account.AccountPolicy;
 import bubble.model.bill.*;
+import bubble.notify.payment.PaymentValidationResult;
 import com.stripe.Stripe;
 import com.stripe.exception.CardException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Card;
 import com.stripe.model.Charge;
 import com.stripe.model.Customer;
+import com.stripe.model.Refund;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.cache.redis.RedisService;
@@ -20,10 +21,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static java.lang.Boolean.TRUE;
+import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.HOURS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
@@ -37,15 +38,16 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
 
     private static final String PARAM_SECRET_API_KEY = "secretApiKey";
 
-    public static final long AUTH_CACHE_DURATION = TimeUnit.DAYS.toSeconds(7);
-    public static final long CHARGE_CACHE_DURATION = TimeUnit.HOURS.toSeconds(24);
-    private static final Object lock = new Object();
+    public static final long AUTH_CACHE_DURATION = DAYS.toSeconds(7);
+    public static final long CHARGE_CACHE_DURATION = HOURS.toSeconds(24);
+    public static final long REFUND_CACHE_DURATION = DAYS.toSeconds(7);
 
     @Autowired private AccountPolicyDAO policyDAO;
 
     @Autowired private RedisService redisService;
     @Getter(lazy=true) private final RedisService authCache = redisService.prefixNamespace(getClass().getSimpleName()+"_auth");
     @Getter(lazy=true) private final RedisService chargeCache = redisService.prefixNamespace(getClass().getSimpleName()+"_charge");
+    @Getter(lazy=true) private final RedisService refundCache = redisService.prefixNamespace(getClass().getSimpleName()+"_refund");
 
     private static final AtomicReference<String> setupDone = new AtomicReference<>(null);
 
@@ -145,9 +147,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
                 log.warn("authorize: already authorized: "+authCacheKey);
                 return true;
             }
-            synchronized (lock) {
-                charge = Charge.create(chargeParams);
-            }
+            charge = Charge.create(chargeParams);
             if (charge.getStatus() == null) {
                 final String msg = "authorize: no status returned for Charge, plan=" + planUuid + " with paymentMethod=" + paymentMethodUuid;
                 log.error(msg);
@@ -196,11 +196,10 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
         }
     }
 
-    @Override protected void charge(BubblePlan plan,
-                                    AccountPlan accountPlan,
-                                    AccountPaymentMethod paymentMethod,
-                                    AccountPlanPaymentMethod planPaymentMethod,
-                                    Bill bill) {
+    @Override protected String charge(BubblePlan plan,
+                                      AccountPlan accountPlan,
+                                      AccountPaymentMethod paymentMethod,
+                                      Bill bill) {
         final String accountPlanUuid = accountPlan.getUuid();
         final String paymentMethodUuid = paymentMethod.getUuid();
         final String billUuid = bill.getUuid();
@@ -215,7 +214,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
             if (charged != null) {
                 // already charged, nothing to do
                 log.info("charge: already charged: "+charged);
-                return;
+                return charged;
             }
 
             final String chargeId = authCache.get(authCacheKey);
@@ -234,9 +233,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
                 throw invalidEx("err.purchase.underReview", msg);
             }
             final Charge captured;
-            synchronized (lock) {
-                captured = charge.capture();
-            }
+            captured = charge.capture();
             if (captured.getStatus() == null) {
                 final String msg = "charge: no status returned for Charge, accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid;
                 log.error(msg);
@@ -246,8 +243,8 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
                 switch (captured.getStatus()) {
                     case "succeeded":
                         log.info("charge: charge successful: "+authCacheKey);
-                        chargeCache.set(billUuid, TRUE.toString(), "EX", CHARGE_CACHE_DURATION);
-                        return;
+                        chargeCache.set(billUuid, captured.getId(), "EX", CHARGE_CACHE_DURATION);
+                        return captured.getId();
 
                     case "pending":
                         msg = "charge: status='pending' (expected 'succeeded'), accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid;
@@ -267,6 +264,9 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
             log.error(msg);
             throw invalidEx("err.purchase.cardError", msg);
 
+        } catch (SimpleViolationException e) {
+            throw e;
+
         } catch (StripeException e) {
             final String msg = "charge: "+e.getClass().getSimpleName()+" for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid + ": requestId=" + e.getRequestId() + ", code="+e.getCode()+", error=" + e.toString();
             log.error(msg);
@@ -279,4 +279,66 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
         }
     }
 
+    @Override protected String refund(AccountPlan accountPlan,
+                                       AccountPayment payment,
+                                       AccountPaymentMethod paymentMethod,
+                                       Bill bill,
+                                       long refundAmount) {
+
+        final String accountPlanUuid = accountPlan.getUuid();
+        final String paymentMethodUuid = paymentMethod.getUuid();
+        final String billUuid = bill.getUuid();
+
+        final Map<String, Object> refundParams = new LinkedHashMap<>();;
+        final Refund refund;
+        final RedisService refundCache = getRefundCache();
+        try {
+            final String refunded = refundCache.get(billUuid);
+            if (refunded != null) {
+                // already refunded, nothing to do
+                log.info("refund: already refunded: "+refunded);
+                return refunded;
+            }
+
+            refundParams.put("charge", payment.getInfo());
+            refundParams.put("amount", refundAmount);
+            refund = Refund.create(refundParams);
+            if (refund.getStatus() == null) {
+                final String msg = "refund: no status returned for Charge, accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid;
+                log.error(msg);
+                throw invalidEx("err.refund.unknownError", msg);
+            } else {
+                final String msg;
+                switch (refund.getStatus()) {
+                    case "succeeded":
+                        log.info("refund: refund of "+refundAmount+" successful for bill: "+billUuid);
+                        refundCache.set(billUuid, refund.getId(), "EX", REFUND_CACHE_DURATION);
+                        return refund.getId();
+
+                    case "pending":
+                        msg = "refund: status='pending' (expected 'succeeded'), accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid;
+                        log.error(msg);
+                        throw invalidEx("err.refund.refundPendingError", msg);
+
+                    default:
+                        msg = "refund: status='"+refund.getStatus()+"' (expected 'succeeded'), accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid;
+                        log.error(msg);
+                        throw invalidEx("err.refund.refundFailedError", msg);
+                }
+            }
+
+        } catch (StripeException e) {
+            final String msg = "refund: "+e.getClass().getSimpleName()+" for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid + ": requestId=" + e.getRequestId() + ", code="+e.getCode()+", error=" + e.toString();
+            log.error(msg);
+            throw invalidEx("err.refund.processingError", msg);
+
+        } catch (SimpleViolationException e) {
+            throw e;
+
+        } catch (Exception e) {
+            final String msg = "refund: "+e.getClass().getSimpleName()+" for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid + ": error=" + e.toString();
+            log.error(msg);
+            throw invalidEx("err.refund.unknownError", msg);
+        }
+    }
 }

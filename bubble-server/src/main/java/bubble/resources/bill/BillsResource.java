@@ -39,11 +39,11 @@ public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
     }
 
     @Path("/{id}"+EP_PAYMENTS)
-    public AccountPlanPaymentsResource getPayments(@Context ContainerRequest ctx,
+    public AccountPaymentsResource getPayments(@Context ContainerRequest ctx,
                                                @PathParam("id") String id) {
         final Bill bill = super.find(ctx, id);
         if (bill == null) throw notFoundEx(id);
-        return configuration.subResource(AccountPlanPaymentsResource.class, account, bill);
+        return configuration.subResource(AccountPaymentsResource.class, account, bill);
     }
 
 }

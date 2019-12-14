@@ -51,7 +51,7 @@
         "timezone": "EST",
         "plan": "{{plans.[0].name}}",
         "footprint": "US",
-        "paymentMethod": {
+        "paymentMethodObject": {
           "paymentMethodType": "code",
           "paymentInfo": "wrong_code"
         }
@@ -77,7 +77,7 @@
         "timezone": "EST",
         "plan": "{{plans.[0].name}}",
         "footprint": "US",
-        "paymentMethod": {
+        "paymentMethodObject": {
           "paymentMethodType": "code",
           "paymentInfo": "special_invite_token"
         }
@@ -133,7 +133,7 @@
         "timezone": "EST",
         "plan": "{{plans.[0].name}}",
         "footprint": "US",
-        "paymentMethod": {
+        "paymentMethodObject": {
           "paymentMethodType": "code",
           "paymentInfo": "special_invite_token"
         }
@@ -145,5 +145,21 @@
         {"condition": "json.has('err.purchase.tokenUsed')"}
       ]
     }
+  },
+
+  {
+    "comment": "check payments for plan, expect one failed payment"
+  },
+
+  {
+    "comment": "pay for plan with a different code, succeeds"
+  },
+
+  {
+    "comment": "check payments for plan, expect two payments, one failed, the second successful"
+  },
+
+  {
+    "comment": "try to add plan with expired code, expect error"
   }
 ]

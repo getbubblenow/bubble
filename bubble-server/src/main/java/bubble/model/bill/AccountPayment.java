@@ -13,10 +13,7 @@ import org.cobbzilla.wizard.validation.MultiViolationException;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
+import javax.persistence.*;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.errorString;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
@@ -41,6 +38,13 @@ public class AccountPayment extends IdentifiableBase implements HasAccountNoName
     @ECForeignKey(entity=AccountPlan.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String accountPlan;
+
+    @ECForeignKey(entity=Bill.class)
+    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
+    @Getter @Setter private String bill;
+
+    @Enumerated(EnumType.STRING) @Column(nullable=false, updatable=false, length=20)
+    @Getter @Setter private AccountPaymentType type;
 
     @Enumerated(EnumType.STRING) @Column(nullable=false, length=20)
     @Getter @Setter private AccountPaymentStatus status;
@@ -69,5 +73,7 @@ public class AccountPayment extends IdentifiableBase implements HasAccountNoName
 
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100000+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String info;
+
+    @Transient @Getter @Setter private transient Bill billObject;
 
 }

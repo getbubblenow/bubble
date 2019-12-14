@@ -68,3 +68,4 @@ localStorageDir: {{LOCALSTORAGE_BASE_DIR}}
 
 # US OFAC list
 disallowedCountries: [IR, KP, SY, SD, CU, VE]
+paymentsEnabled: {{BUBBLE_PAYMENTS_ENABLED}}

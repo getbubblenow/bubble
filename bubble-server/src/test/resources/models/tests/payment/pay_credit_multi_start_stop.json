@@ -324,11 +324,141 @@
         {"condition": "json.getTotal() === 0"}
       ]
     }
+  },
+
+  {
+    "comment": "add a third plan, this one will require a second payment since two plans are now active",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "{{plans.[0].name}}",
+        "footprint": "US",
+        "paymentMethod": {
+          "uuid": "{{savedPaymentMethod.uuid}}"
+        }
+      }
+    },
+    "response": {
+      "store": "accountPlan3"
+    }
+  },
+
+  {
+    "before": "sleep 15s",
+    "comment": "verify we still have only one payment method",
+    "request": { "uri": "me/paymentMethods" },
+    "response": {
+      "check": [ {"condition": "json.length === 1"} ]
+    }
+  },
+
+  {
+    "comment": "verify account plan payment info is same as used before",
+    "request": { "uri": "me/plans/{{accountPlan2.uuid}}/paymentMethod" },
+    "response": {
+      "check": [
+        {"condition": "json.getPaymentMethodType().name() === 'credit'"},
+        {"condition": "json.getMaskedPaymentInfo() === 'XXXX-XXXX-XXXX-4242'"},
+        {"condition": "json.getUuid() === '{{savedPaymentMethod.uuid}}'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify we now have three bills",
+    "request": { "uri": "me/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 3"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify bill exists for new service, and price is NOT zero",
+    "request": { "uri": "me/plans/{{accountPlan3.uuid}}/bills" },
+    "response": {
+      "store": "plan2bills",
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan3.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify we have now made two successful payments",
+    "request": { "uri": "me/payments" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 2"},
+        {"condition": "json[0].getStatus().name() === 'success'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[1].getStatus().name() === 'success'"},
+        {"condition": "json[1].getAmount() === {{plans.[0].price}}"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify payment exists via plan and is successful, and price was NOT zero",
+    "request": { "uri": "me/plans/{{accountPlan3.uuid}}/payments" },
+    "response": {
+      "store": "plan3payments",
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan3.uuid}}'"},
+        {"condition": "json[0].getPaymentObject().getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getPaymentObject().getStatus().name() === 'success'"},
+        {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getBillObject().getAccountPlan() === '{{accountPlan3.uuid}}'"},
+        {"condition": "json[0].getBillObject().getQuantity() === 1"},
+        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify successful payment has paid for the third bill (with non-zero total)",
+    "request": { "uri": "me/plans/{{accountPlan3.uuid}}/payments/{{plan3payments.[0].uuid}}/bill" },
+    "response": {
+      "check": [
+        {"condition": "json.getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json.getAccountPlan() === '{{accountPlan3.uuid}}'"},
+        {"condition": "json.getQuantity() === 1"},
+        {"condition": "json.getPrice() === {{plans.[0].price}}"},
+        {"condition": "json.getTotal() === {{plans.[0].price}}"}
+      ]
+    }
+  },
+
+  {
+    "comment": "delete third network",
+    "request": {
+      "method": "delete",
+      "uri": "me/networks/{{accountPlan3.network}}"
+    }
+  },
+
+  {
+    "comment": "delete third plan",
+    "request": {
+      "method": "delete",
+      "uri": "me/plans/{{accountPlan3.uuid}}"
+    }
   }
-
-  // todo: add a third plan, this one will require a second payment since two plans are now active
-
-  // todo: remove third plan. now only one plan is active
 
   // todo: fast-forward 32 days, trigger BillGenerator
 

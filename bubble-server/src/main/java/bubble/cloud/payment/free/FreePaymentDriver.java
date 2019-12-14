@@ -4,10 +4,13 @@ import bubble.cloud.payment.DefaultPaymentDriverConfig;
 import bubble.cloud.payment.PaymentDriverBase;
 import bubble.notify.payment.PaymentValidationResult;
 import bubble.model.bill.*;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class FreePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverConfig> {
 
     public static final String FREE_MASK = "X".repeat(8);
+    public static final String INFO_FREE = "free";
 
     @Override public PaymentMethodType getPaymentMethodType() { return PaymentMethodType.free; }
 
@@ -18,12 +21,18 @@ public class FreePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
         return new PaymentValidationResult(paymentMethod.setMaskedPaymentInfo(FREE_MASK));
     }
 
-    @Override protected void charge(BubblePlan plan,
+    @Override protected String charge(BubblePlan plan,
                                     AccountPlan accountPlan,
                                     AccountPaymentMethod paymentMethod,
-                                    AccountPlanPaymentMethod planPaymentMethod,
                                     Bill bill) {
-        // noop for free payment driver
+        return INFO_FREE;
     }
 
+    @Override protected String refund(AccountPlan accountPlan,
+                                      AccountPayment payment,
+                                      AccountPaymentMethod paymentMethod,
+                                      Bill bill,
+                                      long refundAmount) {
+        return INFO_FREE;
+    }
 }

@@ -15,11 +15,12 @@ public interface PaymentServiceDriver {
     PaymentValidationResult validate(AccountPaymentMethod paymentMethod);
 
     default PaymentValidationResult claim(AccountPaymentMethod paymentMethod) { return notSupported("claim"); }
-    default PaymentValidationResult claim(AccountPlanPaymentMethod planPaymentMethod) { return notSupported("claim"); }
+    default PaymentValidationResult claim(AccountPlan accountPlan) { return notSupported("claim"); }
 
     boolean authorize(BubblePlan plan, AccountPaymentMethod paymentMethod);
 
     boolean purchase(String accountPlanUuid, String paymentMethodUuid, String billUuid);
 
-    boolean refund(String accountPlanUuid, String paymentMethodUuid, String billUuid, long refundAmount);
+    boolean refund(String accountPlanUuid);
+
 }

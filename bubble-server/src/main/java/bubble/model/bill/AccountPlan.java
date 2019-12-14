@@ -32,7 +32,7 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
 
     public static final String[] CREATE_FIELDS = {
             "name", "description", "locale", "timezone", "domain", "network", "plan", "footprint",
-            "paymentMethod", "savedPaymentMethod"
+            "paymentMethod", "paymentMethodObject"
     };
 
     @SuppressWarnings("unused")
@@ -51,6 +51,10 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String plan;
 
+    @ECForeignKey(entity=AccountPaymentMethod.class)
+    @Column(updatable=false, length=UUID_MAXLEN)
+    @Getter @Setter private String paymentMethod;
+
     @ECForeignKey(entity=BubbleDomain.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String domain;
@@ -67,6 +71,11 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Getter @Setter private Boolean deleted = false;
     public boolean deleted() { return deleted != null && deleted; }
     public boolean notDeleted() { return !deleted(); }
+
+    @Column(nullable=false)
+    @Getter @Setter private Boolean closed = false;
+    public boolean closed() { return closed != null && closed; }
+    public boolean notClosed() { return !closed(); }
 
     @ECIndex(unique=true) @Column(length=UUID_MAXLEN)
     @Getter @Setter private String deletedNetwork;
@@ -85,8 +94,8 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Transient @Getter @Setter private transient String footprint = null;
     public boolean hasFootprint () { return footprint != null; }
 
-    @Transient @Getter @Setter private transient AccountPaymentMethod paymentMethod = null;
-    public boolean hasPaymentMethod () { return paymentMethod != null; }
+    @Transient @Getter @Setter private transient AccountPaymentMethod paymentMethodObject = null;
+    public boolean hasPaymentMethodObject () { return paymentMethodObject != null; }
 
     public BubbleNetwork bubbleNetwork(Account account,
                                        BubbleDomain domain,

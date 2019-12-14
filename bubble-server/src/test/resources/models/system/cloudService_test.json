@@ -36,6 +36,20 @@
             "token": "special_invite_token",
             "expiration": "{{timestamp 'now,33d'}}"
           }
+        }, {
+          "_subst": true,
+          "key": "another_invite_token",
+          "dataJson": {
+            "token": "another_invite_token",
+            "expiration": "{{timestamp 'now,33d'}}"
+          }
+        }, {
+          "_subst": true,
+          "key": "expired_invite_token",
+          "dataJson": {
+            "token": "expired_invite_token",
+            "expiration": "{{timestamp 'now'}}"
+          }
         }
       ]
     }
