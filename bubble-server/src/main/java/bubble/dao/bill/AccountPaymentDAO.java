@@ -2,12 +2,16 @@ package bubble.dao.bill;
 
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.model.bill.AccountPayment;
+import org.hibernate.criterion.Order;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
 public class AccountPaymentDAO extends AccountOwnedEntityDAO<AccountPayment> {
+
+    // newest first
+    @Override public Order getDefaultSortOrder() { return Order.desc("ctime"); }
 
     public List<AccountPayment> findByAccountAndPlan(String accountUuid, String accountPlanUuid) {
         return findByFields("account", accountUuid, "plan", accountPlanUuid);

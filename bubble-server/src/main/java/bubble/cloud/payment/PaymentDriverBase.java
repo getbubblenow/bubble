@@ -95,6 +95,7 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         } catch (RuntimeException e) {
             // record failed payment, rethrow
             accountPaymentDAO.create(new AccountPayment()
+                    .setType(AccountPaymentType.payment)
                     .setAccount(accountPlan.getAccount())
                     .setPlan(accountPlan.getPlan())
                     .setAccountPlan(accountPlan.getUuid())
@@ -212,7 +213,7 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
                               String refundInfo) {
         // record the payment
         final AccountPayment accountPayment = accountPaymentDAO.create(new AccountPayment()
-                .setType(AccountPaymentType.payment)
+                .setType(AccountPaymentType.refund)
                 .setAccount(accountPlan.getAccount())
                 .setPlan(accountPlan.getPlan())
                 .setAccountPlan(accountPlan.getUuid())

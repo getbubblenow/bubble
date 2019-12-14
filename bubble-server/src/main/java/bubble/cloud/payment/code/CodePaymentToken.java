@@ -23,7 +23,7 @@ public class CodePaymentToken {
     @Getter @Setter private Long expiration;
     public boolean expired() { return expiration != null && now() > expiration; }
 
-    public boolean hasPaymentMethod(String accountPlan) {
+    public boolean hasAccountPlan(String accountPlan) {
         return this.accountPlan != null && this.accountPlan.equals(accountPlan);
     }
 

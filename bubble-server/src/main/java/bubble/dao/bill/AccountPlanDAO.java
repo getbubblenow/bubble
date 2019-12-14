@@ -8,6 +8,7 @@ import bubble.model.bill.*;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNetworkState;
 import bubble.model.cloud.CloudService;
+import bubble.notify.payment.PaymentValidationResult;
 import bubble.server.BubbleConfiguration;
 import bubble.service.bill.RefundService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,10 +48,18 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
             if (!accountPlan.hasPaymentMethodObject()) throw invalidEx("err.paymentMethod.required");
             if (!accountPlan.getPaymentMethodObject().hasUuid()) throw invalidEx("err.paymentMethod.required");
 
+            if (accountPlan.getPaymentMethod() == null) {
+                accountPlan.setPaymentMethod(accountPlan.getPaymentMethodObject().getUuid());
+            }
+
             final CloudService paymentService = cloudDAO.findByUuid(accountPlan.getPaymentMethodObject().getCloud());
             if (paymentService == null) throw invalidEx("err.paymentService.notFound");
 
             final PaymentServiceDriver paymentDriver = paymentService.getPaymentDriver(configuration);
+            if (paymentDriver.getPaymentMethodType().requiresClaim()) {
+                final PaymentValidationResult result = paymentDriver.claim(accountPlan);
+                if (result.hasErrors()) throw invalidEx(result.violationsList());
+            }
             if (paymentDriver.getPaymentMethodType().requiresAuth()) {
                 final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
                 paymentDriver.authorize(plan, accountPlan.getPaymentMethodObject());

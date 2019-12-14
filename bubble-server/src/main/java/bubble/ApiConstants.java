@@ -122,6 +122,7 @@ public class ApiConstants {
     public static final String EP_PAYMENT_METHODS = PAYMENT_METHODS_ENDPOINT;
     public static final String EP_PAYMENT = "/payment";
     public static final String EP_PAYMENTS = "/payments";
+    public static final String EP_PAY = "/pay";
     public static final String EP_BILL = "/bill";
     public static final String EP_BILLS = "/bills";
     public static final String EP_CLOSEST = "/closest";

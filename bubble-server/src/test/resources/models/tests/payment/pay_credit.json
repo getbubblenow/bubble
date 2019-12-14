@@ -60,7 +60,7 @@
         "timezone": "EST",
         "plan": "{{plans.[0].name}}",
         "footprint": "US",
-        "paymentMethod": {
+        "paymentMethodObject": {
           "paymentMethodType": "credit",
           "paymentInfo": "invalid_token"
         }
@@ -86,7 +86,7 @@
         "timezone": "EST",
         "plan": "{{plans.[0].name}}",
         "footprint": "US",
-        "paymentMethod": {
+        "paymentMethodObject": {
           "paymentMethodType": "credit",
           "paymentInfo": "{{stripeToken}}"
         }
@@ -138,7 +138,7 @@
         "timezone": "EST",
         "plan": "{{plans.[0].name}}",
         "footprint": "US",
-        "paymentMethod": {
+        "paymentMethodObject": {
           "paymentMethodType": "credit",
           "paymentInfo": "{{stripeToken}}"
         }

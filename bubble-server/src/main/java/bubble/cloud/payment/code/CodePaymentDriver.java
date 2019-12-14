@@ -151,7 +151,7 @@ public class CodePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
             throw invalidEx("err.purchase.tokenInvalid");
         }
         if (cpToken.expired()) throw invalidEx("err.purchase.tokenExpired");
-        if (!cpToken.hasPaymentMethod(accountPlan.getUuid())) {
+        if (!cpToken.hasAccountPlan(accountPlan.getUuid())) {
             throw invalidEx("err.purchase.tokenInvalid");
         }
         return cpToken.getToken();
