@@ -8,9 +8,7 @@ public class NotificationHandler_payment_driver_purchase extends NotificationHan
         return paymentService.getPaymentDriver(configuration).purchase(
                 paymentNotification.getAccountPlanUuid(),
                 paymentNotification.getPaymentMethodUuid(),
-                paymentNotification.getBillUuid(),
-                paymentNotification.getPurchaseAmount(),
-                paymentNotification.getCurrency()
+                paymentNotification.getBillUuid()
         );
     }
 

@@ -1,12 +1,8 @@
 package bubble.cloud.payment.stripe;
 
 import bubble.cloud.payment.PaymentDriverBase;
-import bubble.cloud.payment.PaymentValidationResult;
+import bubble.notify.payment.PaymentValidationResult;
 import bubble.dao.account.AccountPolicyDAO;
-import bubble.dao.bill.AccountPaymentMethodDAO;
-import bubble.dao.bill.AccountPlanDAO;
-import bubble.dao.bill.BillDAO;
-import bubble.dao.bill.BubblePlanDAO;
 import bubble.model.account.AccountPolicy;
 import bubble.model.bill.*;
 import com.stripe.Stripe;
@@ -26,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.lang.Boolean.TRUE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
@@ -39,17 +36,15 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
 
     private static final String PARAM_SECRET_API_KEY = "secretApiKey";
 
+    public static final long AUTH_CACHE_DURATION = TimeUnit.DAYS.toSeconds(7);
     public static final long CHARGE_CACHE_DURATION = TimeUnit.HOURS.toSeconds(24);
     private static final Object lock = new Object();
 
-    @Autowired private AccountPlanDAO accountPlanDAO;
-    @Autowired private AccountPaymentMethodDAO paymentMethodDAO;
-    @Autowired private BillDAO billDAO;
-    @Autowired private BubblePlanDAO planDAO;
     @Autowired private AccountPolicyDAO policyDAO;
 
     @Autowired private RedisService redisService;
-    @Getter(lazy=true) private final RedisService chargeCache = redisService.prefixNamespace(getClass().getSimpleName());
+    @Getter(lazy=true) private final RedisService authCache = redisService.prefixNamespace(getClass().getSimpleName()+"_auth");
+    @Getter(lazy=true) private final RedisService chargeCache = redisService.prefixNamespace(getClass().getSimpleName()+"_charge");
 
     private static final AtomicReference<String> setupDone = new AtomicReference<>(null);
 
@@ -123,67 +118,141 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
         return new PaymentValidationResult(accountPaymentMethod);
     }
 
-    @Override public boolean purchase(String accountPlanUuid, String paymentMethodUuid, String billUuid,
-                                      int purchaseAmount, String currency) {
-        final AccountPlan accountPlan = accountPlanDAO.findByUuid(accountPlanUuid);
-        if (accountPlan == null) throw invalidEx("err.purchase.planNotFound");
+    public String getAuthCacheKey(String accountPlanUuid, String paymentMethodUuid) {
+        return accountPlanUuid+":"+paymentMethodUuid;
+    }
 
-        final Bill bill = billDAO.findByUuid(billUuid);
-        if (bill == null) throw invalidEx("err.purchase.billNotFound");
-
-        final AccountPaymentMethod paymentMethod = paymentMethodDAO.findByUuid(paymentMethodUuid);
-        if (paymentMethod == null) throw invalidEx("err.paymentMethod.required");
-
-        if (!paymentMethod.getAccount().equals(accountPlan.getAccount()) || !paymentMethod.getAccount().equals(bill.getAccount())) {
-            throw invalidEx("err.purchase.billNotFound");
-        }
-
-        final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
-        if (plan == null) throw invalidEx("err.purchase.planNotFound");
+    @Override public boolean authorize(BubblePlan plan,
+                                       AccountPlan accountPlan,
+                                       AccountPaymentMethod paymentMethod) {
+        final String accountPlanUuid = accountPlan.getUuid();
+        final String paymentMethodUuid = paymentMethod.getUuid();
 
         final Charge charge;
         final Map<String, Object> chargeParams = new LinkedHashMap<>();;
-        final RedisService cache = getChargeCache();
+        final RedisService authCache = getAuthCache();
         try {
-            chargeParams.put("amount", purchaseAmount); // Amount in cents
-            chargeParams.put("currency", currency.toLowerCase());
+            chargeParams.put("amount", plan.getPrice()); // Amount in cents
+            chargeParams.put("currency", plan.getCurrency().toLowerCase());
             chargeParams.put("customer", paymentMethod.getPaymentInfo());
             chargeParams.put("description", plan.chargeDescription());
             chargeParams.put("statement_description", plan.chargeDescription());
+            chargeParams.put("capture", false);
             final String chargeJson = json(chargeParams, COMPACT_MAPPER);
-            final String cached = cache.get(billUuid);
-            if (cached != null) {
-                try {
-                    charge = json(chargeJson, Charge.class);
-                } catch (Exception e) {
-                    final String msg = "purchase: error parsing cached charge: " + e;
-                    log.error(msg);
-                    throw invalidEx("err.purchase.cardUnknownError", msg);
-                }
-            } else {
-                synchronized (lock) {
-                    charge = Charge.create(chargeParams);
-                }
+            final String authCacheKey = getAuthCacheKey(accountPlanUuid, paymentMethodUuid);
+            final String chargeId = authCache.get(authCacheKey);
+            if (chargeId != null) {
+                log.warn("authorize: already authorized: "+authCacheKey);
+                return true;
+            }
+            synchronized (lock) {
+                charge = Charge.create(chargeParams);
             }
             if (charge.getStatus() == null) {
-                final String msg = "purchase: no status returned for Charge, accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid;
+                final String msg = "authorize: no status returned for Charge, accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid;
                 log.error(msg);
                 throw invalidEx("err.purchase.cardUnknownError", msg);
             } else {
                 final String msg;
                 switch (charge.getStatus()) {
                     case "succeeded":
-                        log.info("purchase: charge successful: chargeId="+charge.getId()+", charge="+chargeJson);
-                        cache.set(billUuid, json(charge), "EX", CHARGE_CACHE_DURATION);
+                        if (charge.getReview() != null) {
+                            log.info("authorize: successful but is under review: charge=" + chargeJson);
+                        } else {
+                            log.info("authorize: successful: charge=" + chargeJson);
+                        }
+                        authCache.set(authCacheKey, charge.getId(), "EX", AUTH_CACHE_DURATION);
                         return true;
 
                     case "pending":
-                        msg = "purchase: status='pending' (expected 'succeeded'), chargeId="+charge.getId()+", accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid;
+                        msg = "authorize: status='pending' (expected 'succeeded'), accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid;
                         log.error(msg);
                         throw invalidEx("err.purchase.chargePendingError", msg);
 
                     default:
-                        msg = "purchase: status='"+charge.getStatus()+"' (expected 'succeeded'), chargeId="+charge.getId()+", accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid;
+                        msg = "authorize: status='" + charge.getStatus() + "' (expected 'succeeded'), accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid;
+                        log.error(msg);
+                        throw invalidEx("err.purchase.chargeFailedError", msg);
+                }
+            }
+        } catch (CardException e) {
+            // The card has been declined
+            final String msg = "authorize: CardException for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + ": requestId=" + e.getRequestId() + ", code="+e.getCode()+", declineCode="+e.getDeclineCode()+", error=" + e.toString();
+            log.error(msg);
+            throw invalidEx("err.purchase.cardError", msg);
+
+        } catch (StripeException e) {
+            final String msg = "authorize: "+e.getClass().getSimpleName()+" for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + ": requestId=" + e.getRequestId() + ", code="+e.getCode()+", error=" + e.toString();
+            log.error(msg);
+            throw invalidEx("err.purchase.cardProcessingError", msg);
+
+        } catch (Exception e) {
+            final String msg = "authorize: "+e.getClass().getSimpleName()+" for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + ": error=" + e.toString();
+            log.error(msg);
+            throw invalidEx("err.purchase.cardUnknownError", msg);
+        }
+    }
+
+    @Override protected void charge(BubblePlan plan,
+                                    AccountPlan accountPlan,
+                                    AccountPaymentMethod paymentMethod,
+                                    AccountPlanPaymentMethod planPaymentMethod,
+                                    Bill bill) {
+        final String accountPlanUuid = accountPlan.getUuid();
+        final String paymentMethodUuid = paymentMethod.getUuid();
+        final String billUuid = bill.getUuid();
+
+        final Charge charge;
+        final RedisService authCache = getAuthCache();
+        final RedisService chargeCache = getChargeCache();
+
+        final String authCacheKey = getAuthCacheKey(accountPlanUuid, paymentMethodUuid);
+        try {
+            final String charged = chargeCache.get(billUuid);
+            if (charged != null) {
+                // already charged, nothing to do
+                log.info("charge: already charged: "+charged);
+                return;
+            }
+
+            final String chargeId = authCache.get(authCacheKey);
+            if (chargeId == null) throw invalidEx("err.purchase.authNotFound");
+
+            try {
+                charge = Charge.retrieve(chargeId);
+            } catch (Exception e) {
+                final String msg = "charge: error retrieving charge: " + e;
+                log.error(msg);
+                throw invalidEx("err.purchase.cardUnknownError", msg);
+            }
+            if (charge.getReview() != null) {
+                final String msg = "charge: charge "+chargeId+" still under review: " + charge.getReview();
+                log.error(msg);
+                throw invalidEx("err.purchase.underReview", msg);
+            }
+            final Charge captured;
+            synchronized (lock) {
+                captured = charge.capture();
+            }
+            if (captured.getStatus() == null) {
+                final String msg = "charge: no status returned for Charge, accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid;
+                log.error(msg);
+                throw invalidEx("err.purchase.cardUnknownError", msg);
+            } else {
+                final String msg;
+                switch (captured.getStatus()) {
+                    case "succeeded":
+                        log.info("charge: charge successful: "+authCacheKey);
+                        chargeCache.set(billUuid, TRUE.toString(), "EX", CHARGE_CACHE_DURATION);
+                        return;
+
+                    case "pending":
+                        msg = "charge: status='pending' (expected 'succeeded'), accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid;
+                        log.error(msg);
+                        throw invalidEx("err.purchase.chargePendingError", msg);
+
+                    default:
+                        msg = "charge: status='"+charge.getStatus()+"' (expected 'succeeded'), accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid;
                         log.error(msg);
                         throw invalidEx("err.purchase.chargeFailedError", msg);
                 }
@@ -191,26 +260,20 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
 
         } catch (CardException e) {
             // The card has been declined
-            final String msg = "purchase: CardException for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid + ": requestId=" + e.getRequestId() + ", code="+e.getCode()+", declineCode="+e.getDeclineCode()+", error=" + e.toString();
+            final String msg = "charge: CardException for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid + ": requestId=" + e.getRequestId() + ", code="+e.getCode()+", declineCode="+e.getDeclineCode()+", error=" + e.toString();
             log.error(msg);
             throw invalidEx("err.purchase.cardError", msg);
 
         } catch (StripeException e) {
-            final String msg = "purchase: "+e.getClass().getSimpleName()+" for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid + ": requestId=" + e.getRequestId() + ", code="+e.getCode()+", error=" + e.toString();
+            final String msg = "charge: "+e.getClass().getSimpleName()+" for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid + ": requestId=" + e.getRequestId() + ", code="+e.getCode()+", error=" + e.toString();
             log.error(msg);
             throw invalidEx("err.purchase.cardProcessingError", msg);
 
         } catch (Exception e) {
-            final String msg = "purchase: "+e.getClass().getSimpleName()+" for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid + ": error=" + e.toString();
+            final String msg = "charge: "+e.getClass().getSimpleName()+" for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid + ": error=" + e.toString();
             log.error(msg);
             throw invalidEx("err.purchase.cardUnknownError", msg);
         }
-    }
-
-    @Override public boolean refund(String accountPlanUuid, String paymentMethodUuid, String billUuid,
-                                    int refundAmount, String currency) {
-        log.error("refund: not yet supported: accountPlanUuid="+accountPlanUuid+", paymentMethodUuid="+paymentMethodUuid+", billUuid="+billUuid);
-        return false;
     }
 
 }

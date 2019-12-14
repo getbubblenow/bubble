@@ -9,8 +9,7 @@ public class NotificationHandler_payment_driver_refund extends NotificationHandl
                 paymentNotification.getAccountPlanUuid(),
                 paymentNotification.getPaymentMethodUuid(),
                 paymentNotification.getBillUuid(),
-                paymentNotification.getPurchaseAmount(),
-                paymentNotification.getCurrency()
+                paymentNotification.getAmount()
         );
     }
 

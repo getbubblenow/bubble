@@ -10,6 +10,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 @NoArgsConstructor @Accessors(chain=true)
 public class NewNodeNotification {
 
+    @Getter @Setter private String account;
     @Getter @Setter private String host;
     @Getter @Setter private String network;
     @Getter @Setter private String domain;

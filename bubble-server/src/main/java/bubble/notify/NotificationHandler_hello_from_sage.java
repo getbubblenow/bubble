@@ -107,6 +107,7 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
                             final CloudService cloud = closestNotUs.getCloud();
 
                             final NewNodeNotification newNodeRequest = new NewNodeNotification()
+                                    .setAccount(network.getAccount())
                                     .setNetwork(network.getUuid())
                                     .setDomain(network.getDomain())
                                     .setCloud(cloud.getUuid())

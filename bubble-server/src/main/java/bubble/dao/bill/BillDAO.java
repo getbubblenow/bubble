@@ -9,8 +9,8 @@ import java.util.List;
 @Repository
 public class BillDAO extends AccountOwnedEntityDAO<Bill> {
 
-    public List<Bill> findByAccountAndPlan(String accountUuid, String accountPlanUuid) {
-        return findByFields("account", accountUuid, "plan", accountPlanUuid);
+    public List<Bill> findByAccountAndAccountPlan(String accountUuid, String accountPlanUuid) {
+        return findByFields("account", accountUuid, "accountPlan", accountPlanUuid);
     }
 
 }

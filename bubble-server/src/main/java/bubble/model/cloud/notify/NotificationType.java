@@ -5,9 +5,10 @@ import bubble.cloud.compute.ComputeNodeSize;
 import bubble.cloud.geoCode.GeoCodeResult;
 import bubble.cloud.geoLocation.GeoLocation;
 import bubble.cloud.geoTime.GeoTimeZone;
-import bubble.cloud.payment.PaymentValidationResult;
 import bubble.model.cloud.BubbleNode;
 import bubble.notify.ReceivedNotificationHandler;
+import bubble.notify.payment.PaymentResult;
+import bubble.notify.payment.PaymentValidationResult;
 import bubble.notify.storage.StorageResult;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -89,8 +90,9 @@ public enum NotificationType {
     // delegated payment driver notifications
     payment_driver_validate (PaymentValidationResult.class),
     payment_driver_claim (PaymentValidationResult.class),
-    payment_driver_purchase (Boolean.class),
-    payment_driver_refund (Boolean.class),
+    payment_driver_authorize (PaymentResult.class),
+    payment_driver_purchase (PaymentResult.class),
+    payment_driver_refund (PaymentResult.class),
     payment_driver_response (true);
 
     private String packageName = "bubble.notify";

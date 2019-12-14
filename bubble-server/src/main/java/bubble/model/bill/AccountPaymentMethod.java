@@ -2,7 +2,7 @@ package bubble.model.bill;
 
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.payment.PaymentServiceDriver;
-import bubble.cloud.payment.PaymentValidationResult;
+import bubble.notify.payment.PaymentValidationResult;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccountNoName;

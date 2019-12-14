@@ -1,9 +1,7 @@
 package bubble.notify.payment;
 
-import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.CloudServiceDAO;
-import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.model.cloud.notify.ReceivedNotification;
@@ -17,7 +15,6 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 public abstract class NotificationHandler_payment_driver extends DelegatedNotificationHandlerBase {
 
     @Autowired protected BubbleNodeDAO nodeDAO;
-    @Autowired protected AccountPaymentMethodDAO paymentMethodDAO;
     @Autowired protected CloudServiceDAO cloudDAO;
 
     @Override public void handleNotification(ReceivedNotification n) {
@@ -25,12 +22,18 @@ public abstract class NotificationHandler_payment_driver extends DelegatedNotifi
         if (sender == null) die("sender not found: "+n.getFromNode());
 
         final PaymentNotification paymentNotification = json(n.getPayloadJson(), PaymentNotification.class);
-        final AccountPaymentMethod paymentMethod = paymentMethodDAO.findByUuid(paymentNotification.getPaymentMethodUuid());
-
-        final CloudService paymentService = cloudDAO.findByAccountAndName(configuration.getThisNode().getAccount(), paymentMethod.getCloud());
-        final boolean success = handlePaymentRequest(paymentNotification, paymentService);
-
-        notifySender(payment_driver_response, n.getNotificationId(), sender, success);
+        final CloudService paymentService = cloudDAO.findByAccountAndName(configuration.getThisNode().getAccount(), paymentNotification.getCloud());
+        PaymentResult result;
+        try {
+            if (handlePaymentRequest(paymentNotification, paymentService)) {
+                result = PaymentResult.SUCCESS;
+            } else {
+                result = PaymentResult.FAILURE;
+            }
+        } catch (Exception e) {
+            result = PaymentResult.exception(e);
+        }
+        notifySender(payment_driver_response, n.getNotificationId(), sender, result);
     }
 
     protected abstract boolean handlePaymentRequest(PaymentNotification paymentNotification,

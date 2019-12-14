@@ -1,0 +1,332 @@
+[
+  {
+    "comment": "create a user account",
+    "request": {
+      "uri": "users",
+      "method": "put",
+      "entity": {
+        "name": "test_user",
+        "password": "password",
+        "contact": {"type": "email", "info": "test-user@example.com"}
+      }
+    }
+  },
+
+  {
+    "before": "sleep 22s",  // wait for account objects to be created
+    "comment": "login as new user",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "test_user",
+        "password": "password"
+      }
+    },
+    "response": {
+      "store": "testAccount",
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "get payment methods, tokenize a credit card",
+    "request": { "uri": "paymentMethods" },
+    "response": {
+      "store": "paymentMethods"
+    },
+    "after": "stripe_tokenize_card"
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "as root, check email inbox for verification message",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/test-user@example.com?type=request&action=verify&target=account"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' === 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' === 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' === 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "approve email verification request",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{emailInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    }
+  },
+
+  {
+    "comment": "get plans",
+    "request": { "uri": "plans" },
+    "response": {
+      "store": "plans",
+      "check": [{"condition": "json.length >= 1"}]
+    }
+  },
+
+  {
+    "comment": "add plan, using 'credit' payment method with a valid card token, creates a stripe customer",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "{{plans.[0].name}}",
+        "footprint": "US",
+        "paymentMethod": {
+          "paymentMethodType": "credit",
+          "paymentInfo": "{{stripeToken}}"
+        }
+      }
+    },
+    "response": {
+      "store": "accountPlan"
+    }
+  },
+
+  {
+    "comment": "verify account payment methods, should be one",
+    "request": { "uri": "me/paymentMethods" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPaymentMethodType().name() === 'credit'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify account plans, should be one",
+    "request": { "uri": "me/plans" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getName() === accountPlan.getName()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify account plan payment info",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/paymentMethod" },
+    "response": {
+      "store": "savedPaymentMethods",
+      "check": [
+        {"condition": "json.getPaymentMethodType().name() === 'credit'"},
+        {"condition": "json.getMaskedPaymentInfo() === 'XXXX-XXXX-XXXX-4242'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify bill exists for new service with correct price and has been paid",
+    "request": { "uri": "me/bills" },
+    "response": {
+      "store": "bills",
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify successful payment exists for new service",
+    "request": { "uri": "me/payments" },
+    "response": {
+      "store": "payments",
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getAmount() === '{{plans.[0].price}}'"},
+        {"condition": "json[0].getStatus().name() === 'success'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify successful payment has paid for the bill above",
+    "request": { "uri": "me/payments/{{payments.[0].uuid}}/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getUuid() === '{{bills.[0].uuid}}'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "delete plan",
+    "request": {
+      "method": "delete",
+      "uri": "me/plans/{{accountPlan.uuid}}"
+    }
+  },
+
+  {
+    "comment": "verify no plans exist",
+    "request": { "uri": "me/plans" },
+    "response": {
+      "check": [ {"condition": "json.length === 0"} ]
+    }
+  },
+
+  {
+    "comment": "add a second plan, using saved payment method",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net2-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "{{plans.[0].name}}",
+        "footprint": "US",
+        "paymentMethod": {
+          "paymentMethodType": "credit",
+          "uuid": "{{savedPaymentMethods.[0].uuid}}"
+        }
+      }
+    },
+    "response": {
+      "store": "accountPlan2"
+    }
+  },
+
+  {
+    "comment": "verify we still have only one payment method",
+    "request": { "uri": "me/paymentMethods" },
+    "response": {
+      "check": [ {"condition": "json.length === 1"} ]
+    }
+  },
+
+  {
+    "comment": "verify account plan payment info is same as used before",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/paymentMethod" },
+    "response": {
+      "check": [
+        {"condition": "json.getPaymentMethodType().name() === 'credit'"},
+        {"condition": "json.getMaskedPaymentInfo() === 'XXXX-XXXX-XXXX-4242'"},
+        {"condition": "json.getUuid() === '{{savedPaymentMethods.[0].uuid}}'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify we now have two bills",
+    "request": { "uri": "me/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 2"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify bill exists for new service, but price is zero",
+    "request": { "uri": "me/plans/{{accountPlan2.uuid}}/bills" },
+    "response": {
+      "store": "plan2bills",
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{accountPlan2.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === 0"},
+        {"condition": "json[0].getTotal() === 0"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify we have made two successful payments (but one of them will be zero)",
+    "request": { "uri": "me/payments" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 2"},
+        {"condition": "json[0].getStatus().name() === 'success'"},
+        {"condition": "json[1].getStatus().name() === 'success'"},
+        {"condition": "_find(json, function (p) { if (p.getAmount() === {{plans.[0].price}}) return p; }) != null"},
+        {"condition": "_find(json, function (p) { if (p.getAmount() === 0) return p; }) != null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "find payments made on second plan",
+    "request": { "uri": "me/plans/{{accountPlan2.uuid}}/payments" },
+    "response": {
+      "store": "plan2payments",
+      "check": [
+        {"condition": "json.length === 1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify successful payment has paid for the second bill (with zero total)",
+    "request": { "uri": "me/plans/{{accountPlan2.uuid}}/payments/{{plan2payments.[0].uuid}}/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{accountPlan2.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === 0"},
+        {"condition": "json[0].getTotal() === 0"}
+      ]
+    }
+  }
+
+  // todo: add a third plan, this one will require a second payment since two plans are now active
+
+  // todo: remove third plan. now only one plan is active
+
+  // todo: fast-forward 32 days, trigger BillGenerator
+
+  // todo: verify a new Bill exists for accountPlan2, and payment has been made successfully
+
+  // todo: set mock such that charging the card fails
+
+  // todo: fast-forward 32 days, trigger BillGenerator
+
+  // todo: verify a new Bill exists for accountPlan2 and Bill remains 'unpaid', and AccountPayment failed
+
+  // todo: verify payment reminder messages have been sent
+
+  // todo: fast-forward 1 day, trigger BillGenerator
+
+  // todo: verify a new Bill exists for accountPlan2 and Bill remains 'unpaid', and AccountPayment failed
+
+  // todo: verify payment reminder messages have been sent
+
+  // todo: fast-forward 3 days, trigger BillGenerator.
+
+  // todo: verify a new Bill exists for accountPlan2 and Bill remains 'unpaid', and AccountPayment failed
+
+  // todo: verify network associated with plan has been stopped
+
+  // todo: try to start network, fails due to non-payment
+
+  // todo: submit payment
+
+  // todo: start network, succeeds
+
+]

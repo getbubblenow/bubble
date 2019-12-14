@@ -58,6 +58,10 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Column(length=UUID_MAXLEN)
     @Getter @Setter private String network;
 
+    @Column(nullable=false)
+    @Getter @Setter private Boolean enabled = false;
+    public boolean enabled() { return enabled != null && enabled; }
+
     @ECIndex(unique=true) @Column(length=UUID_MAXLEN)
     @Getter @Setter private String deletedNetwork;
     public boolean deleted() { return deletedNetwork != null; }

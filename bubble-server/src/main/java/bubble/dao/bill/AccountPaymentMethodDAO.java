@@ -1,6 +1,6 @@
 package bubble.dao.bill;
 
-import bubble.cloud.payment.PaymentValidationResult;
+import bubble.notify.payment.PaymentValidationResult;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.bill.AccountPaymentMethod;

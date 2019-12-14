@@ -1,4 +1,4 @@
-package bubble.cloud.payment;
+package bubble.notify.payment;
 
 import bubble.model.bill.AccountPaymentMethod;
 import lombok.Getter;
@@ -19,6 +19,7 @@ public class PaymentValidationResult {
     @Getter @Setter private AccountPaymentMethod paymentMethod;
 
     @Getter @Setter private ConstraintViolationBean[] violations;
+    public boolean hasViolations() { return !empty(violations); }
     public List<ConstraintViolationBean> violationsList() { return Arrays.asList(violations); }
 
     public PaymentValidationResult(AccountPaymentMethod paymentMethod) { this.paymentMethod = paymentMethod; }

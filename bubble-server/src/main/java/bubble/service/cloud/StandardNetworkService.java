@@ -125,8 +125,14 @@ public class StandardNetworkService implements NetworkService {
             final BubbleDomain domain = domainDAO.findByUuid(network.getDomain());
             final Account account = accountDAO.findByUuid(network.getAccount());
 
-            // enforce network size limit, if this is an automated request
             final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(account.getUuid(), network.getUuid());
+
+            // ensure AccountPlan has been paid for
+            if (!accountPlan.enabled()) {
+                return die("newNode: accountPlan is not enabled: "+accountPlan.getUuid());
+            }
+
+            // enforce network size limit, if this is an automated request
             final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
             final List<BubbleNode> peers = nodeDAO.findByAccountAndNetwork(account.getUuid(), network.getUuid());
             if (peers.size() >= plan.getNodesIncluded() && nn.automated()) {
@@ -425,6 +431,7 @@ public class StandardNetworkService implements NetworkService {
             final CloudAndRegion cloudAndRegion = geoService.selectCloudAndRegion(network, netLocation);
             final String host = network.fork() ? network.getForkHost() : newNodeHostname();
             final NewNodeNotification newNodeRequest = new NewNodeNotification()
+                    .setAccount(network.getAccount())
                     .setNetwork(network.getUuid())
                     .setDomain(network.getDomain())
                     .setFork(network.fork())
@@ -475,6 +482,7 @@ public class StandardNetworkService implements NetworkService {
             final String restoreKey = randomAlphanumeric(RESTORE_KEY_LEN).toUpperCase();
             restoreService.registerRestore(restoreKey, new NetworkKeys());
             final NewNodeNotification newNodeRequest = new NewNodeNotification()
+                    .setAccount(network.getAccount())
                     .setNetwork(network.getUuid())
                     .setDomain(network.getDomain())
                     .setRestoreKey(restoreKey)
@@ -499,6 +507,9 @@ public class StandardNetworkService implements NetworkService {
     }
 
     public void backgroundNewNode(NewNodeNotification newNodeRequest, final String existingLock) {
+        final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(newNodeRequest.getAccount(), newNodeRequest.getNetwork());
+        if (accountPlan == null) throw invalidEx("err.accountPlan.notFound");
+        if (!accountPlan.enabled()) throw invalidEx("err.accountPlan.disabled");
         final AtomicReference<String> lock = new AtomicReference<>(existingLock);
         daemon(new NodeLauncher(newNodeRequest, lock, this));
     }

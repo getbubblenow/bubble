@@ -1,6 +1,5 @@
 package bubble.notify.payment;
 
-import bubble.cloud.payment.PaymentValidationResult;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.cloud.BubbleNode;

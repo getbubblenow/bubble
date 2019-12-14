@@ -3,20 +3,16 @@ package bubble.cloud.payment.delegate;
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.DelegatedCloudServiceDriverBase;
 import bubble.cloud.payment.PaymentServiceDriver;
-import bubble.cloud.payment.PaymentValidationResult;
+import bubble.notify.payment.*;
 import bubble.dao.cloud.CloudServiceDAO;
-import bubble.model.bill.AccountPaymentMethod;
-import bubble.model.bill.AccountPlanPaymentMethod;
-import bubble.model.bill.PaymentMethodType;
+import bubble.model.bill.*;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
-import bubble.notify.payment.PaymentMethodClaimNotification;
-import bubble.notify.payment.PaymentMethodValidationNotification;
-import bubble.notify.payment.PaymentNotification;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static bubble.model.cloud.notify.NotificationType.*;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
@@ -41,39 +37,66 @@ public class DelegatedPaymentDriver extends DelegatedCloudServiceDriverBase impl
     @Override public PaymentValidationResult validate(AccountPaymentMethod paymentMethod) {
         final BubbleNode delegate = getDelegateNode();
         return notificationService.notifySync(delegate, payment_driver_validate,
-                new PaymentMethodValidationNotification(paymentMethod, cloud.getName()));
+                new PaymentMethodValidationNotification(cloud.getName(), paymentMethod));
     }
 
     @Override public PaymentValidationResult claim(AccountPaymentMethod paymentMethod) {
         final BubbleNode delegate = getDelegateNode();
         return notificationService.notifySync(delegate, payment_driver_claim,
-                new PaymentMethodClaimNotification(paymentMethod, cloud.getName()));
+                new PaymentMethodClaimNotification(cloud.getName(), paymentMethod));
     }
 
     @Override public PaymentValidationResult claim(AccountPlanPaymentMethod planPaymentMethod) {
         final BubbleNode delegate = getDelegateNode();
         return notificationService.notifySync(delegate, payment_driver_claim,
-                new PaymentMethodClaimNotification(planPaymentMethod, cloud.getName()));
+                new PaymentMethodClaimNotification(cloud.getName(), planPaymentMethod));
+    }
+
+    @Override public boolean authorize(BubblePlan plan, AccountPlan accountPlan, AccountPaymentMethod paymentMethod) {
+        final BubbleNode delegate = getDelegateNode();
+        final PaymentResult result = notificationService.notifySync(delegate, payment_driver_authorize,
+                new PaymentNotification()
+                        .setCloud(cloud.getName())
+                        .setAccountPlanUuid(accountPlan.getUuid())
+                        .setPaymentMethodUuid(paymentMethod.getUuid()));
+        return processResult(result);
     }
 
     @Override public boolean purchase(String accountPlanUuid,
                                       String paymentMethodUuid,
-                                      String billUuid,
-                                      int purchaseAmount,
-                                      String currency) {
+                                      String billUuid) {
         final BubbleNode delegate = getDelegateNode();
-        return notificationService.notifySync(delegate, payment_driver_purchase,
-                new PaymentNotification(accountPlanUuid, paymentMethodUuid, billUuid, purchaseAmount, currency));
+        final PaymentResult result = notificationService.notifySync(delegate, payment_driver_purchase,
+                new PaymentNotification()
+                        .setCloud(cloud.getName())
+                        .setAccountPlanUuid(accountPlanUuid)
+                        .setPaymentMethodUuid(paymentMethodUuid)
+                        .setBillUuid(billUuid));
+        return processResult(result);
     }
 
     @Override public boolean refund(String accountPlanUuid,
                                     String paymentMethodUuid,
                                     String billUuid,
-                                    int refundAmount,
-                                    String currency) {
+                                    long refundAmount) {
         final BubbleNode delegate = getDelegateNode();
-        return notificationService.notifySync(delegate, payment_driver_refund,
-                new PaymentNotification(accountPlanUuid, paymentMethodUuid, billUuid, refundAmount, currency));
+        final PaymentResult result = notificationService.notifySync(delegate, payment_driver_refund,
+                new PaymentNotification()
+                        .setCloud(cloud.getName())
+                        .setAccountPlanUuid(accountPlanUuid)
+                        .setPaymentMethodUuid(paymentMethodUuid)
+                        .setBillUuid(billUuid)
+                        .setAmount(refundAmount));
+        return processResult(result);
+    }
+
+    public boolean processResult(PaymentResult result) {
+        if (result.success()) return true;
+        if (result.hasViolations()) {
+            throw invalidEx(result.violationList());
+        }
+        if (result.hasError()) return die("authorize: "+result.getError());
+        return false;
     }
 
 }

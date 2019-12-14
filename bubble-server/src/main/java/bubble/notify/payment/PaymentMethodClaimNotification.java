@@ -19,12 +19,12 @@ public class PaymentMethodClaimNotification extends SynchronousNotification {
 
     @Getter @Setter private String cloud;
 
-    public PaymentMethodClaimNotification(AccountPaymentMethod paymentMethod, String cloud) {
+    public PaymentMethodClaimNotification(String cloud, AccountPaymentMethod paymentMethod) {
         this.paymentMethod = paymentMethod;
         this.cloud = cloud;
     }
 
-    public PaymentMethodClaimNotification(AccountPlanPaymentMethod planPaymentMethod, String cloud) {
+    public PaymentMethodClaimNotification(String cloud, AccountPlanPaymentMethod planPaymentMethod) {
         this.planPaymentMethod = planPaymentMethod;
         this.cloud = cloud;
     }

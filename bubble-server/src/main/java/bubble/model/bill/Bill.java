@@ -16,8 +16,8 @@ import javax.persistence.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.big;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 
-@ECType(root=true) @ECTypeURIs(listFields={"name", "type", "quantity", "price", "period"})
-@ECTypeFields(list={"name", "type", "quantity", "price", "period"})
+@ECType(root=true) @ECTypeURIs(listFields={"name", "status", "type", "quantity", "price", "period"})
+@ECTypeFields(list={"name", "Status", "type", "quantity", "price", "period"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "plan", "type", "period"})
@@ -28,22 +28,30 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECForeignKey(entity=AccountPlan.class)
+    @ECForeignKey(entity=BubblePlan.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String plan;
+
+    @ECForeignKey(entity=AccountPlan.class)
+    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
+    @Getter @Setter private String accountPlan;
+
+    @ECIndex @Enumerated(EnumType.STRING)
+    @Column(nullable=false, length=20)
+    @Getter @Setter private BillStatus status = BillStatus.unpaid;
 
     @ECIndex @Enumerated(EnumType.STRING)
     @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private BillItemType type;
 
-    @Column(nullable=false, updatable=false, length=10)
+    @Column(nullable=false, updatable=false, length=50)
     @ECIndex @Getter @Setter private String period;
 
     @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
     @Getter @Setter private Long quantity = 0L;
 
-    @Type(type=ENCRYPTED_INTEGER) @Column(updatable=false, columnDefinition="varchar("+(ENC_INT)+") NOT NULL")
-    @Getter @Setter private Integer price = 0;
+    @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
+    @Getter @Setter private Long price = 0L;
 
     @ECIndex @Column(nullable=false, updatable=false, length=10)
     @Getter @Setter private String currency;

@@ -5,9 +5,8 @@ import bubble.model.account.Account;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
-import bubble.resources.account.AccountOwnedResource;
+import bubble.resources.account.ReadOnlyAccountOwnedResource;
 import lombok.extern.slf4j.Slf4j;
-import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 
 import java.util.List;
@@ -15,7 +14,7 @@ import java.util.List;
 import static org.cobbzilla.wizard.resources.ResourceUtil.forbiddenEx;
 
 @Slf4j
-public class NodesResource extends AccountOwnedResource<BubbleNode, BubbleNodeDAO> {
+public class NodesResource extends ReadOnlyAccountOwnedResource<BubbleNode, BubbleNodeDAO> {
 
     private BubbleNetwork network;
     private BubbleDomain domain;
@@ -58,21 +57,6 @@ public class NodesResource extends AccountOwnedResource<BubbleNode, BubbleNodeDA
         if (account != null && node != null && !node.getAccount().equals(account.getUuid())) return null;
         if (domain != null && node != null && !node.getDomain().equals(domain.getUuid())) return null;
         return node;
-    }
-
-    @Override protected boolean canCreate(Request req, ContainerRequest ctx, Account caller, BubbleNode request) {
-        // creation is done via starting or expanding the BubbleNetwork
-        return false;
-    }
-
-    @Override protected boolean canUpdate(ContainerRequest ctx, Account caller, BubbleNode found, BubbleNode request) {
-        // network creates first node, then nodes update themselves
-        return false;
-    }
-
-    @Override protected boolean canDelete(ContainerRequest ctx, Account caller, BubbleNode found) {
-        // deletion is done via stopping or shrinking the network
-        return false;
     }
 
     // these should never get called

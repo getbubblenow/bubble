@@ -31,7 +31,16 @@
   },
 
   {
-    "comment": "get payment methods, so we can get the stripe public key to tokenize a credit card",
+    "comment": "get plans",
+    "request": { "uri": "plans" },
+    "response": {
+      "store": "plans",
+      "check": [{"condition": "json.length >= 1"}]
+    }
+  },
+
+  {
+    "comment": "get payment methods, tokenize a credit card",
     "request": { "uri": "paymentMethods" },
     "response": {
       "store": "paymentMethods"
@@ -49,7 +58,7 @@
         "domain": "{{defaultDomain}}",
         "locale": "en_US",
         "timezone": "EST",
-        "plan": "bubble",
+        "plan": "{{plans.[0].name}}",
         "footprint": "US",
         "paymentMethod": {
           "paymentMethodType": "credit",
@@ -75,7 +84,7 @@
         "domain": "{{defaultDomain}}",
         "locale": "en_US",
         "timezone": "EST",
-        "plan": "bubble",
+        "plan": "{{plans.[0].name}}",
         "footprint": "US",
         "paymentMethod": {
           "paymentMethodType": "credit",
@@ -127,7 +136,7 @@
         "domain": "{{defaultDomain}}",
         "locale": "en_US",
         "timezone": "EST",
-        "plan": "bubble",
+        "plan": "{{plans.[0].name}}",
         "footprint": "US",
         "paymentMethod": {
           "paymentMethodType": "credit",
@@ -152,12 +161,14 @@
   },
 
   {
+    "before": "sleep 5s",
     "comment": "verify account plans, should be one",
     "request": { "uri": "me/plans" },
     "response": {
       "check": [
         {"condition": "json.length == 1"},
-        {"condition": "json[0].getName() == accountPlan.getName()"}
+        {"condition": "json[0].getName() == accountPlan.getName()"},
+        {"condition": "json[0].enabled()"}
       ]
     }
   },

@@ -2,9 +2,8 @@ package bubble.cloud.payment.free;
 
 import bubble.cloud.payment.DefaultPaymentDriverConfig;
 import bubble.cloud.payment.PaymentDriverBase;
-import bubble.cloud.payment.PaymentValidationResult;
-import bubble.model.bill.AccountPaymentMethod;
-import bubble.model.bill.PaymentMethodType;
+import bubble.notify.payment.PaymentValidationResult;
+import bubble.model.bill.*;
 
 public class FreePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverConfig> {
 
@@ -19,14 +18,12 @@ public class FreePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
         return new PaymentValidationResult(paymentMethod.setMaskedPaymentInfo(FREE_MASK));
     }
 
-    @Override public boolean purchase(String accountPlanUuid, String paymentMethodUuid, String billUuid,
-                                      int purchaseAmount, String currency) {
-        return true;
-    }
-
-    @Override public boolean refund(String accountPlanUuid, String paymentMethodUuid, String billUuid,
-                                    int refundAmount, String currency) {
-        return true;
+    @Override protected void charge(BubblePlan plan,
+                                    AccountPlan accountPlan,
+                                    AccountPaymentMethod paymentMethod,
+                                    AccountPlanPaymentMethod planPaymentMethod,
+                                    Bill bill) {
+        // noop for free payment driver
     }
 
 }

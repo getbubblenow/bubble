@@ -73,7 +73,7 @@ public class BubblePlan extends IdentifiableBase implements HasAccount {
     public boolean enabled () { return enabled == null || enabled; }
 
     @ECIndex @Column(nullable=false)
-    @Getter @Setter private Integer price;
+    @Getter @Setter private Long price;
 
     @ECIndex @Column(nullable=false, length=10)
     @Getter @Setter private String currency = "USD";

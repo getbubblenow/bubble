@@ -62,11 +62,11 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     }
 
     @Path("/{id}"+EP_PAYMENTS)
-    public AccountPaymentsResource getPayments(@Context ContainerRequest ctx,
+    public AccountPlanPaymentsResource getPayments(@Context ContainerRequest ctx,
                                                @PathParam("id") String id) {
         final AccountPlan plan = find(ctx, id);
         if (plan == null) throw notFoundEx(id);
-        return configuration.subResource(AccountPaymentsResource.class, account, plan);
+        return configuration.subResource(AccountPlanPaymentsResource.class, account, plan);
     }
 
     @GET @Path("/{id}"+EP_PAYMENT_METHOD)

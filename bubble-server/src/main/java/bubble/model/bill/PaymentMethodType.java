@@ -6,9 +6,10 @@ import static bubble.ApiConstants.enumFromString;
 
 public enum PaymentMethodType {
 
-    credit, paypal, code, free;
+    credit, code, free;
 
     public boolean requiresClaim() { return this == code; }
+    public boolean requiresAuth() { return this == credit; }
 
     @JsonCreator public static PaymentMethodType fromString(String v) { return enumFromString(PaymentMethodType.class, v); }
 

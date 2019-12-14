@@ -2,7 +2,7 @@ package bubble.cloud.payment.code;
 
 import bubble.cloud.payment.DefaultPaymentDriverConfig;
 import bubble.cloud.payment.PaymentDriverBase;
-import bubble.cloud.payment.PaymentValidationResult;
+import bubble.notify.payment.PaymentValidationResult;
 import bubble.dao.bill.*;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.dao.cloud.CloudServiceDataDAO;
@@ -21,12 +21,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @Slf4j
 public class CodePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverConfig> {
 
-    @Autowired private AccountPlanDAO accountPlanDAO;
-    @Autowired private AccountPaymentMethodDAO paymentMethodDAO;
-    @Autowired private AccountPlanPaymentMethodDAO planPaymentMethodDAO;
     @Autowired private CloudServiceDataDAO dataDAO;
-    @Autowired private BillDAO billDAO;
-    @Autowired private AccountPaymentDAO accountPaymentDAO;
 
     @Override public PaymentMethodType getPaymentMethodType() { return PaymentMethodType.code; }
 
@@ -96,71 +91,6 @@ public class CodePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
         return "X".repeat(12) + info.substring(maskLength);
     }
 
-    @Override public boolean purchase(String accountPlanUuid, String paymentMethodUuid, String billUuid,
-                                      int purchaseAmount, String currency) {
-        // is the account plan valid?
-        final AccountPlan accountPlan = accountPlanDAO.findByUuid(accountPlanUuid);
-        if (accountPlan == null) throw invalidEx("err.purchase.planNotFound");
-
-        // is the payment method valid?
-        final AccountPaymentMethod paymentMethod = paymentMethodDAO.findByUuid(paymentMethodUuid);
-        if (paymentMethod == null) throw invalidEx("err.purchase.paymentMethodNotFound");
-        if (!paymentMethod.getAccount().equals(accountPlan.getAccount())) throw invalidEx("err.purchase.accountMismatch");
-        if (paymentMethod.getPaymentMethodType() != getPaymentMethodType()) throw invalidEx("err.purchase.paymentMethodMismatch");
-
-        // is the plan payment method correct?
-        final AccountPlanPaymentMethod planPaymentMethod = planPaymentMethodDAO.findCurrentMethodForPlan(accountPlanUuid);
-        if (planPaymentMethod == null) throw invalidEx("err.purchase.paymentMethodNotSet");
-        if (!planPaymentMethod.getPaymentMethod().equals(paymentMethodUuid)) throw invalidEx("err.purchase.paymentMethodMismatch");
-
-        // is the bill valid?
-        final Bill bill = billDAO.findByUuid(billUuid);
-        if (bill == null) throw invalidEx("err.purchase.billNotFound");
-        if (!bill.getAccount().equals(accountPlan.getAccount())) throw invalidEx("err.purchase.accountMismatch");
-        if (bill.getTotal() != purchaseAmount) throw invalidEx("err.purchase.amountMismatch");
-        if (!bill.getCurrency().equals(currency)) throw invalidEx("err.purchase.currencyMismatch");
-
-        // is the token valid?
-        final CloudServiceData csData = dataDAO.findByCloudAndKey(cloud.getUuid(), paymentMethod.getPaymentInfo());
-        if (csData == null) throw invalidEx("err.purchase.tokenNotFound");
-
-        final CodePaymentToken cpToken;
-        try {
-            cpToken = json(csData.getData(), CodePaymentToken.class);
-        } catch (Exception e) {
-            throw invalidEx("err.purchase.tokenInvalid");
-        }
-        if (cpToken.expired()) throw invalidEx("err.purchase.tokenExpired");
-        if (!cpToken.hasPaymentMethod(planPaymentMethod.getUuid())) {
-            throw invalidEx("err.purchase.tokenInvalid");
-        }
-
-//        // create the bill
-//        final Bill bill = billDAO.create(new Bill()
-//                .setAccount(accountPlan.getAccount())
-//                .setPlan(accountPlan.getUuid())
-//                .setType(BillItemType.compute)
-//                .setQuantity(1L)
-//                .setPrice(purchaseAmount)
-//                .setCurrency(currency));
-
-        // pay the bill
-        accountPaymentDAO.create(new AccountPayment()
-                .setAccount(accountPlan.getAccount())
-                .setPlan(accountPlan.getUuid())
-                .setPaymentMethod(planPaymentMethod.getUuid())
-                .setBill(bill.getUuid())
-                .setInfo(paymentMethod.getPaymentInfo()));
-
-        return true;
-    }
-
-    @Override public boolean refund(String accountPlanUuid, String paymentMethodUuid, String billUuid,
-                                    int refundAmount, String currency) {
-        // no refunds, since there are no charges made
-        return false;
-    }
-
     public static CodePaymentToken readToken(BubbleConfiguration configuration,
                                              AccountPaymentMethod accountPaymentMethod,
                                              ValidationResult result,
@@ -206,4 +136,26 @@ public class CodePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
         }
         return null;
     }
+
+    @Override protected void charge(BubblePlan plan,
+                                    AccountPlan accountPlan,
+                                    AccountPaymentMethod paymentMethod,
+                                    AccountPlanPaymentMethod planPaymentMethod,
+                                    Bill bill) {
+        // is the token valid?
+        final CloudServiceData csData = dataDAO.findByCloudAndKey(cloud.getUuid(), paymentMethod.getPaymentInfo());
+        if (csData == null) throw invalidEx("err.purchase.tokenNotFound");
+
+        final CodePaymentToken cpToken;
+        try {
+            cpToken = json(csData.getData(), CodePaymentToken.class);
+        } catch (Exception e) {
+            throw invalidEx("err.purchase.tokenInvalid");
+        }
+        if (cpToken.expired()) throw invalidEx("err.purchase.tokenExpired");
+        if (!cpToken.hasPaymentMethod(planPaymentMethod.getUuid())) {
+            throw invalidEx("err.purchase.tokenInvalid");
+        }
+    }
+
 }

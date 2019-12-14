@@ -11,7 +11,7 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor @AllArgsConstructor @Accessors(chain=true)
 public class PaymentMethodValidationNotification extends SynchronousNotification {
 
-    @Getter @Setter private AccountPaymentMethod paymentMethod;
     @Getter @Setter private String cloud;
+    @Getter @Setter private AccountPaymentMethod paymentMethod;
 
 }

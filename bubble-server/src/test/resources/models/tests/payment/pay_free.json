@@ -31,6 +31,15 @@
   },
 
   {
+    "comment": "get plans",
+    "request": { "uri": "plans" },
+    "response": {
+      "store": "plans",
+      "check": [{"condition": "json.length >= 1"}]
+    }
+  },
+
+  {
     "comment": "add plan, fails because we have not supplied payment information",
     "request": {
       "uri": "me/plans",
@@ -40,7 +49,7 @@
         "domain": "{{defaultDomain}}",
         "locale": "en_US",
         "timezone": "EST",
-        "plan": "bubble",
+        "plan": "{{plans.[0].name}}",
         "footprint": "US"
       }
     },
@@ -62,7 +71,7 @@
         "domain": "{{defaultDomain}}",
         "locale": "en_US",
         "timezone": "EST",
-        "plan": "bubble",
+        "plan": "{{plans.[0].name}}",
         "footprint": "US",
         "paymentMethod": {
           "paymentInfo": "free"
@@ -87,7 +96,7 @@
         "domain": "{{defaultDomain}}",
         "locale": "en_US",
         "timezone": "EST",
-        "plan": "bubble",
+        "plan": "{{plans.[0].name}}",
         "footprint": "US",
         "paymentMethod": {
           "paymentMethodType": "free"
@@ -112,7 +121,7 @@
         "domain": "{{defaultDomain}}",
         "locale": "en_US",
         "timezone": "EST",
-        "plan": "bubble",
+        "plan": "{{plans.[0].name}}",
         "footprint": "US",
         "paymentMethod": {
           "paymentMethodType": "free",
@@ -130,19 +139,21 @@
     "request": { "uri": "me/paymentMethods" },
     "response": {
       "check": [
-        {"condition": "json.length == 1"},
-        {"condition": "json[0].getPaymentMethodType().name() == 'free'"}
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPaymentMethodType().name() === 'free'"}
       ]
     }
   },
 
   {
-    "comment": "verify account plans, should be one",
+    "before": "sleep 15s",
+    "comment": "verify account plans, should be one, verify enabled",
     "request": { "uri": "me/plans" },
     "response": {
       "check": [
-        {"condition": "json.length == 1"},
-        {"condition": "json[0].getName() == accountPlan.getName()"}
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getName() === accountPlan.getName()"},
+        {"condition": "json[0].enabled()"}
       ]
     }
   },
@@ -152,8 +163,74 @@
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/paymentMethod" },
     "response": {
       "check": [
-        {"condition": "json.getPaymentMethodType().name() == 'free'"},
-        {"condition": "json.getMaskedPaymentInfo() == 'XXXXXXXX'"}
+        {"condition": "json.getPaymentMethodType().name() === 'free'"},
+        {"condition": "json.getMaskedPaymentInfo() === 'XXXXXXXX'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify bill exists and is paid",
+    "request": { "uri": "me/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify bill exists via plan and is paid",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify payment exists and is successful",
+    "request": { "uri": "me/payments" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'success'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify payment exists via plan and is successful",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/payments" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getPaymentObject().getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getPaymentObject().getStatus().name() === 'success'"},
+        {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getBillObject().getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getBillObject().getQuantity() === 1"},
+        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
       ]
     }
   }
