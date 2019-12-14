@@ -6,8 +6,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-import static org.hibernate.criterion.Restrictions.*;
-
 @Repository
 public class AccountPlanPaymentDAO extends AccountOwnedEntityDAO<AccountPlanPayment> {
 
@@ -17,16 +15,14 @@ public class AccountPlanPaymentDAO extends AccountOwnedEntityDAO<AccountPlanPaym
         return findByUniqueFields("planPaymentMethod", planPaymentMethod, "bill", billUuid);
     }
 
-    public List<AccountPlanPayment> findByAccountPaymentMethodAndPeriodAndPriceAndCurrency(String paymentMethodUuid,
-                                                                                           String billPeriod,
-                                                                                           Long price,
-                                                                                           String currency) {
-        return list(criteria().add(and(
-                eq("paymentMethod", paymentMethodUuid),
-                eq("period", billPeriod),
-                eq("currency", currency),
-                ge("amount", price)
-        )));
+    public List<AccountPlanPayment> findByAccountPayment(String accountPayment) {
+        return findByField("payment", accountPayment);
+    }
+
+    public List<AccountPlanPayment> findByAccountPaymentMethodAndPeriodAndCurrency(String paymentMethodUuid,
+                                                                                   String billPeriod,
+                                                                                   String currency) {
+        return findByFields("paymentMethod", paymentMethodUuid, "period", billPeriod, "currency", currency);
     }
 
     public List<AccountPlanPayment> findByAccountAndBill(String accountUuid, String billUuid) {
@@ -40,4 +36,5 @@ public class AccountPlanPaymentDAO extends AccountOwnedEntityDAO<AccountPlanPaym
     public List<AccountPlanPayment> findByAccountAndAccountPlanAndBill(String accountUuid, String accountPlanUuid, String billUuid) {
         return findByFields("account", accountUuid, "accountPlan", accountPlanUuid, "bill", billUuid);
     }
+
 }

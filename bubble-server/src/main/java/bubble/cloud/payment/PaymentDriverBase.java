@@ -85,7 +85,7 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
 
         final AccountPlanPayment priorPayment = findPriorPayment(plan, paymentMethod, bill);
         if (priorPayment != null) {
-            billDAO.update(bill.setStatus(BillStatus.paid));
+            billDAO.update(bill.setPrice(0L).setStatus(BillStatus.paid));
             accountPlanPaymentDAO.create(new AccountPlanPayment()
                     .setAccount(accountPlan.getAccount())
                     .setPlan(accountPlan.getPlan())
@@ -129,14 +129,15 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         //  - it is for the current period
         //  - the corresponding AccountPlan has been deleted
         // if so we can re-use that payment and do not need to charge anything now
-        final List<AccountPlanPayment> priorSimilarPayments = accountPlanPaymentDAO.findByAccountPaymentMethodAndPeriodAndPriceAndCurrency(
+        final List<AccountPlanPayment> priorSimilarPayments = accountPlanPaymentDAO.findByAccountPaymentMethodAndPeriodAndCurrency(
                 paymentMethod.getUuid(),
                 bill.getPeriod(),
-                plan.getPrice(),
                 plan.getCurrency());
         for (AccountPlanPayment app : priorSimilarPayments) {
             final AccountPlan ap = accountPlanDAO.findByUuid(app.getAccountPlan());
-            if (ap != null && ap.deleted()) return app;
+            if (ap != null && ap.deleted() && app.getAmount() >= plan.getPrice()) {
+                return app;
+            }
         }
         return null;
     }

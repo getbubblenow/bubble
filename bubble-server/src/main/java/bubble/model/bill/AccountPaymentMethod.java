@@ -23,10 +23,7 @@ import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
+import javax.persistence.*;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;

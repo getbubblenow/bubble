@@ -98,6 +98,7 @@
   },
 
   {
+    "before": "sleep 15s",
     "comment": "verify account payment methods, should be one",
     "request": { "uri": "me/paymentMethods" },
     "response": {
@@ -114,7 +115,8 @@
     "response": {
       "check": [
         {"condition": "json.length === 1"},
-        {"condition": "json[0].getName() === accountPlan.getName()"}
+        {"condition": "json[0].getName() === accountPlan.getName()"},
+        {"condition": "json[0].enabled()"}
       ]
     }
   },
@@ -123,7 +125,7 @@
     "comment": "verify account plan payment info",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/paymentMethod" },
     "response": {
-      "store": "savedPaymentMethods",
+      "store": "savedPaymentMethod",
       "check": [
         {"condition": "json.getPaymentMethodType().name() === 'credit'"},
         {"condition": "json.getMaskedPaymentInfo() === 'XXXX-XXXX-XXXX-4242'"}
@@ -138,7 +140,7 @@
       "store": "bills",
       "check": [
         {"condition": "json.length === 1"},
-        {"condition": "json[0].getPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
         {"condition": "json[0].getQuantity() === 1"},
         {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
@@ -154,8 +156,8 @@
       "store": "payments",
       "check": [
         {"condition": "json.length === 1"},
-        {"condition": "json[0].getPlan() === '{{accountPlan.uuid}}'"},
-        {"condition": "json[0].getAmount() === '{{plans.[0].price}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'success'"}
       ]
     }
@@ -169,6 +171,26 @@
         {"condition": "json.length === 1"},
         {"condition": "json[0].getUuid() === '{{bills.[0].uuid}}'"}
       ]
+    }
+  },
+
+  {
+    "comment": "try to delete plan, must stop network first",
+    "request": {
+      "method": "delete",
+      "uri": "me/plans/{{accountPlan.uuid}}"
+    },
+    "response": {
+      "status": 422,
+      "check": [{"condition": "json.has('err.accountPlan.stopNetworkBeforeDeleting')"}]
+    }
+  },
+
+  {
+    "comment": "delete network",
+    "request": {
+      "method": "delete",
+      "uri": "me/networks/{{accountPlan.network}}"
     }
   },
 
@@ -201,8 +223,7 @@
         "plan": "{{plans.[0].name}}",
         "footprint": "US",
         "paymentMethod": {
-          "paymentMethodType": "credit",
-          "uuid": "{{savedPaymentMethods.[0].uuid}}"
+          "uuid": "{{savedPaymentMethod.uuid}}"
         }
       }
     },
@@ -212,6 +233,7 @@
   },
 
   {
+    "before": "sleep 15s",
     "comment": "verify we still have only one payment method",
     "request": { "uri": "me/paymentMethods" },
     "response": {
@@ -221,12 +243,12 @@
 
   {
     "comment": "verify account plan payment info is same as used before",
-    "request": { "uri": "me/plans/{{accountPlan.uuid}}/paymentMethod" },
+    "request": { "uri": "me/plans/{{accountPlan2.uuid}}/paymentMethod" },
     "response": {
       "check": [
         {"condition": "json.getPaymentMethodType().name() === 'credit'"},
         {"condition": "json.getMaskedPaymentInfo() === 'XXXX-XXXX-XXXX-4242'"},
-        {"condition": "json.getUuid() === '{{savedPaymentMethods.[0].uuid}}'"}
+        {"condition": "json.getUuid() === '{{savedPaymentMethod.uuid}}'"}
       ]
     }
   },
@@ -248,7 +270,8 @@
       "store": "plan2bills",
       "check": [
         {"condition": "json.length === 1"},
-        {"condition": "json[0].getPlan() === '{{accountPlan2.uuid}}'"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan2.uuid}}'"},
         {"condition": "json[0].getQuantity() === 1"},
         {"condition": "json[0].getPrice() === 0"},
         {"condition": "json[0].getTotal() === 0"}
@@ -257,40 +280,48 @@
   },
 
   {
-    "comment": "verify we have made two successful payments (but one of them will be zero)",
+    "comment": "verify we have still only made one successful payment",
     "request": { "uri": "me/payments" },
     "response": {
       "check": [
-        {"condition": "json.length === 2"},
+        {"condition": "json.length === 1"},
         {"condition": "json[0].getStatus().name() === 'success'"},
-        {"condition": "json[1].getStatus().name() === 'success'"},
-        {"condition": "_find(json, function (p) { if (p.getAmount() === {{plans.[0].price}}) return p; }) != null"},
-        {"condition": "_find(json, function (p) { if (p.getAmount() === 0) return p; }) != null"}
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"}
       ]
     }
   },
 
   {
-    "comment": "find payments made on second plan",
+    "comment": "verify payment exists via plan and is successful, and price was zero",
     "request": { "uri": "me/plans/{{accountPlan2.uuid}}/payments" },
     "response": {
       "store": "plan2payments",
       "check": [
-        {"condition": "json.length === 1"}
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan2.uuid}}'"},
+        {"condition": "json[0].getPaymentObject().getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getPaymentObject().getStatus().name() === 'success'"},
+        {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getBillObject().getAccountPlan() === '{{accountPlan2.uuid}}'"},
+        {"condition": "json[0].getBillObject().getQuantity() === 1"},
+        {"condition": "json[0].getBillObject().getPrice() === 0"},
+        {"condition": "json[0].getBillObject().getTotal() === 0"},
+        {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
       ]
     }
   },
 
   {
     "comment": "verify successful payment has paid for the second bill (with zero total)",
-    "request": { "uri": "me/plans/{{accountPlan2.uuid}}/payments/{{plan2payments.[0].uuid}}/bills" },
+    "request": { "uri": "me/plans/{{accountPlan2.uuid}}/payments/{{plan2payments.[0].uuid}}/bill" },
     "response": {
       "check": [
-        {"condition": "json.length === 1"},
-        {"condition": "json[0].getPlan() === '{{accountPlan2.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === 0"},
-        {"condition": "json[0].getTotal() === 0"}
+        {"condition": "json.getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json.getAccountPlan() === '{{accountPlan2.uuid}}'"},
+        {"condition": "json.getQuantity() === 1"},
+        {"condition": "json.getPrice() === 0"},
+        {"condition": "json.getTotal() === 0"}
       ]
     }
   }

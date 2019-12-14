@@ -31,7 +31,8 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 public class AccountPlan extends IdentifiableBase implements HasAccount {
 
     public static final String[] CREATE_FIELDS = {
-            "name", "description", "locale", "timezone", "domain", "network", "plan", "footprint", "paymentMethod"
+            "name", "description", "locale", "timezone", "domain", "network", "plan", "footprint",
+            "paymentMethod", "savedPaymentMethod"
     };
 
     @SuppressWarnings("unused")
@@ -62,9 +63,14 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Getter @Setter private Boolean enabled = false;
     public boolean enabled() { return enabled != null && enabled; }
 
+    @Column(nullable=false)
+    @Getter @Setter private Boolean deleted = false;
+    public boolean deleted() { return deleted != null && deleted; }
+    public boolean notDeleted() { return !deleted(); }
+
     @ECIndex(unique=true) @Column(length=UUID_MAXLEN)
     @Getter @Setter private String deletedNetwork;
-    public boolean deleted() { return deletedNetwork != null; }
+    public boolean hasDeletedNetwork() { return deletedNetwork != null; }
 
     // Fields below are used when creating a new plan, to also create the network associated with it
     @Size(max=10000, message="err.description.length")

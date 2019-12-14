@@ -50,7 +50,7 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
     @Getter @Setter private Long quantity = 0L;
 
-    @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
+    @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
     @Getter @Setter private Long price = 0L;
 
     @ECIndex @Column(nullable=false, updatable=false, length=10)

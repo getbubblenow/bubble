@@ -3,7 +3,10 @@ package bubble.dao.cloud;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.model.bill.AccountPlan;
-import bubble.model.cloud.*;
+import bubble.model.cloud.BubbleDomain;
+import bubble.model.cloud.BubbleNetwork;
+import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.NetworkService;
@@ -15,8 +18,6 @@ import org.springframework.stereotype.Repository;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Repository @Slf4j
 public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
@@ -64,12 +65,11 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
 
     public void delete(String uuid, boolean force) {
         final BubbleNetwork network = findByUuid(uuid);
-        if (network.getState() != BubbleNetworkState.stopped) {
-            if (force) {
-                networkService.stopNetwork(network);
-            } else {
-                throw invalidEx("err.network.cannotDelete", "stop network before deleting");
-            }
+        if (network == null) return;
+        try {
+            networkService.stopNetwork(network);
+        } catch (Exception e) {
+            log.warn("delete("+uuid+"): error stopping network: "+e);
         }
         try {
             if (force) {
@@ -104,11 +104,10 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
         if (accountPlan == null) {
             log.warn("delete("+uuid+"): AccountPlan not found");
         } else {
-            if (force) {
-                accountPlanDAO.delete(accountPlan.getUuid());
-            } else {
-                accountPlanDAO.update(accountPlan.setNetwork(null).setDeletedNetwork(network.getUuid()));
-            }
+            accountPlanDAO.update(accountPlan
+                    .setEnabled(false)
+                    .setNetwork(null)
+                    .setDeletedNetwork(network.getUuid()));
         }
 
         if (force) {

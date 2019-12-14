@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
@@ -75,7 +76,7 @@ public class AccountPlanPaymentsResource extends ReadOnlyAccountOwnedResource<Ac
         return planPayment;
     }
 
-    @Path("/{id}"+EP_PAYMENT)
+    @GET @Path("/{id}"+EP_PAYMENT)
     public Response getPayment(@Context ContainerRequest ctx,
                                @PathParam("id") String id) {
         final AccountPlanPayment planPayment = super.find(ctx, id);
@@ -84,7 +85,7 @@ public class AccountPlanPaymentsResource extends ReadOnlyAccountOwnedResource<Ac
         return payment == null ? notFound(id) : ok(payment);
     }
 
-    @Path("/{id}"+EP_BILL)
+    @GET @Path("/{id}"+EP_BILL)
     public Response getBill(@Context ContainerRequest ctx,
                             @PathParam("id") String id) {
         final AccountPlanPayment planPayment = super.find(ctx, id);

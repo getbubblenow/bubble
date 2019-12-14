@@ -15,10 +15,7 @@ import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.AccountPlanPaymentMethod;
 import bubble.model.bill.BubblePlan;
-import bubble.model.cloud.BubbleDomain;
-import bubble.model.cloud.BubbleFootprint;
-import bubble.model.cloud.BubbleNetwork;
-import bubble.model.cloud.CloudService;
+import bubble.model.cloud.*;
 import bubble.resources.account.AccountOwnedResource;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
@@ -53,33 +50,13 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
 
     public AccountPlansResource(Account account) { super(account); }
 
-    @Path("/{id}"+EP_BILLS)
-    public BillsResource getBills(@Context ContainerRequest ctx,
-                                  @PathParam("id") String id) {
-        final AccountPlan plan = find(ctx, id);
-        if (plan == null) throw notFoundEx(id);
-        return configuration.subResource(BillsResource.class, account, plan);
+    @Override protected AccountPlan find(ContainerRequest ctx, String id) {
+        final AccountPlan accountPlan = super.find(ctx, id);
+        return accountPlan == null || accountPlan.deleted() ? null : accountPlan;
     }
 
-    @Path("/{id}"+EP_PAYMENTS)
-    public AccountPlanPaymentsResource getPayments(@Context ContainerRequest ctx,
-                                               @PathParam("id") String id) {
-        final AccountPlan plan = find(ctx, id);
-        if (plan == null) throw notFoundEx(id);
-        return configuration.subResource(AccountPlanPaymentsResource.class, account, plan);
-    }
-
-    @GET @Path("/{id}"+EP_PAYMENT_METHOD)
-    public Response getPaymentMethod(@Context ContainerRequest ctx,
-                                     @PathParam("id") String id) {
-        final AccountPlan plan = find(ctx, id);
-        if (plan == null) return notFound(id);
-
-        final AccountPlanPaymentMethod planPaymentMethod = accountPlanPaymentMethodDAO.findCurrentMethodForPlan(plan.getUuid());
-        if (planPaymentMethod == null) return notFound();
-
-        final AccountPaymentMethod paymentMethod = accountPaymentMethodDAO.findByUuid(planPaymentMethod.getPaymentMethod());
-        return paymentMethod == null ? notFound() : ok(paymentMethod);
+    @Override protected List<AccountPlan> list(ContainerRequest ctx) {
+        return getDao().findByAccountAndNotDeleted(account.getUuid());
     }
 
     @Override protected boolean canCreate(Request req, ContainerRequest ctx, Account caller, AccountPlan request) {
@@ -166,6 +143,8 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             final AccountPaymentMethod paymentMethodToCreate = new AccountPaymentMethod(request.getPaymentMethod()).setAccount(request.getAccount());
             final AccountPaymentMethod paymentMethodCreated = accountPaymentMethodDAO.create(paymentMethodToCreate);
             request.setPaymentMethod(paymentMethodCreated);
+        } else {
+            request.setPaymentMethod(paymentMethod);
         }
         return request;
     }
@@ -189,6 +168,35 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             result.addViolation("err.storage.unavailable");
             return null;
         }
+    }
+
+    @Path("/{id}"+EP_BILLS)
+    public BillsResource getBills(@Context ContainerRequest ctx,
+                                  @PathParam("id") String id) {
+        final AccountPlan plan = find(ctx, id);
+        if (plan == null) throw notFoundEx(id);
+        return configuration.subResource(BillsResource.class, account, plan);
+    }
+
+    @Path("/{id}"+EP_PAYMENTS)
+    public AccountPlanPaymentsResource getPayments(@Context ContainerRequest ctx,
+                                                   @PathParam("id") String id) {
+        final AccountPlan plan = find(ctx, id);
+        if (plan == null) throw notFoundEx(id);
+        return configuration.subResource(AccountPlanPaymentsResource.class, account, plan);
+    }
+
+    @GET @Path("/{id}"+EP_PAYMENT_METHOD)
+    public Response getPaymentMethod(@Context ContainerRequest ctx,
+                                     @PathParam("id") String id) {
+        final AccountPlan plan = find(ctx, id);
+        if (plan == null) return notFound(id);
+
+        final AccountPlanPaymentMethod planPaymentMethod = accountPlanPaymentMethodDAO.findCurrentMethodForPlan(plan.getUuid());
+        if (planPaymentMethod == null) return notFound();
+
+        final AccountPaymentMethod paymentMethod = accountPaymentMethodDAO.findByUuid(planPaymentMethod.getPaymentMethod());
+        return paymentMethod == null ? notFound() : ok(paymentMethod);
     }
 
 }

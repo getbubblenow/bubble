@@ -2,12 +2,17 @@ package bubble.dao.bill;
 
 import bubble.cloud.payment.PaymentServiceDriver;
 import bubble.dao.account.AccountOwnedEntityDAO;
+import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.bill.*;
+import bubble.model.cloud.BubbleNetwork;
+import bubble.model.cloud.BubbleNetworkState;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.background;
@@ -21,10 +26,15 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
     @Autowired private BubblePlanDAO planDAO;
     @Autowired private BillDAO billDAO;
     @Autowired private CloudServiceDAO cloudDAO;
+    @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private BubbleConfiguration configuration;
 
     public AccountPlan findByAccountAndNetwork(String accountUuid, String networkUuid) {
         return findByUniqueFields("account", accountUuid, "network", networkUuid);
+    }
+
+    public List<AccountPlan> findByAccountAndNotDeleted(String account) {
+        return findByFields("account", account, "deleted", false);
     }
 
     @Override public Object preCreate(AccountPlan accountPlan) {
@@ -73,5 +83,18 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
         });
         return super.postCreate(accountPlan, context);
     }
+
+    @Override public void delete(String uuid) {
+        final AccountPlan accountPlan = findByUuid(uuid);
+        if (accountPlan == null) return;
+
+        final BubbleNetwork network = networkDAO.findByUuid(accountPlan.getNetwork());
+        if (network != null && network.getState() != BubbleNetworkState.stopped) {
+            throw invalidEx("err.accountPlan.stopNetworkBeforeDeleting");
+        }
+        update(accountPlan.setDeleted(true).setEnabled(false));
+    }
+
+    @Override public void forceDelete(String uuid) { super.delete(uuid); }
 
 }
