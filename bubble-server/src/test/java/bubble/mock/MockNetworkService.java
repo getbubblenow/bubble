@@ -60,6 +60,9 @@ public class MockNetworkService extends StandardNetworkService {
     @Override public boolean stopNetwork(BubbleNetwork network) {
         network.setState(BubbleNetworkState.stopped);
         networkDAO.update(network);
+        for (BubbleNode node : nodeDAO.findByNetwork(network.getUuid())) {
+            nodeDAO.forceDelete(node.getUuid());
+        }
         return true;
     }
 
