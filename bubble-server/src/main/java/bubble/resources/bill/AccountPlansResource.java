@@ -47,11 +47,6 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
 
     public AccountPlansResource(Account account) { super(account); }
 
-    @Override protected AccountPlan find(ContainerRequest ctx, String id) {
-        final AccountPlan accountPlan = super.find(ctx, id);
-        return accountPlan == null || accountPlan.deleted() ? null : accountPlan;
-    }
-
     @Override protected List<AccountPlan> list(ContainerRequest ctx) {
         return getDao().findByAccountAndNotDeleted(account.getUuid());
     }

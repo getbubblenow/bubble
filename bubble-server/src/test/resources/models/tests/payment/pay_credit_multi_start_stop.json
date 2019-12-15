@@ -86,7 +86,7 @@
         "timezone": "EST",
         "plan": "{{plans.[0].name}}",
         "footprint": "US",
-        "paymentMethod": {
+        "paymentMethodObject": {
           "paymentMethodType": "credit",
           "paymentInfo": "{{stripeToken}}"
         }
@@ -158,6 +158,7 @@
         {"condition": "json.length === 1"},
         {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
         {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getType().name() === 'payment'"},
         {"condition": "json[0].getStatus().name() === 'success'"}
       ]
     }
@@ -165,11 +166,13 @@
 
   {
     "comment": "verify successful payment has paid for the bill above",
-    "request": { "uri": "me/payments/{{payments.[0].uuid}}/bills" },
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
     "response": {
       "check": [
         {"condition": "json.length === 1"},
-        {"condition": "json[0].getUuid() === '{{bills.[0].uuid}}'"}
+        {"condition": "json[0].getUuid() === '{{bills.[0].uuid}}'"},
+        {"condition": "json[0].getStatus().name() === 'paid'"},
+        {"condition": "json[0].getRefundedAmount() === 0"}
       ]
     }
   },
@@ -203,6 +206,45 @@
   },
 
   {
+    "before": "sleep 15s",
+    "comment": "verify refund payment has been processed",
+    "request": { "uri": "me/payments" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 2"},
+        {"condition": "json[0].getBill() === '{{bills.[0].uuid}}'"},
+        {"condition": "json[0].getType().name() === 'refund'"},
+        {"condition": "json[0].getStatus().name() === 'success'"},
+        {"condition": "json[0].getAmount() > 0"},
+        {"condition": "json[0].getAmount() < {{bills.[0].total}}"},
+        // not sure if current month has 28, 29, 30 or 31 days, so let's make some reasonable bounds
+        // we should only have a refund for all but one day
+        {"condition": "json[0].getAmount() > bills[0].getTotal() - (bills[0].getTotal() / (bills[0].daysInPeriod() - 1))"},
+        {"condition": "json[0].getAmount() <= bills[0].getTotal() - (bills[0].getTotal() / bills[0].daysInPeriod())"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify refund is reflected on the original bill",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getUuid() === '{{bills.[0].uuid}}'"},
+        {"condition": "json[0].getStatus().name() === 'paid'"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getRefundedAmount() > 0"},
+        {"condition": "json[0].getRefundedAmount() < {{bills.[0].total}}"},
+        // not sure if current month has 28, 29, 30 or 31 days, so let's make some reasonable bounds
+        // we should only have a refund for all but one day
+        {"condition": "json[0].getRefundedAmount() > bills[0].getTotal() - (bills[0].getTotal() / (bills[0].daysInPeriod() - 1))"},
+        {"condition": "json[0].getRefundedAmount() <= bills[0].getTotal() - (bills[0].getTotal() / bills[0].daysInPeriod())"}
+      ]
+    }
+  },
+
+  {
     "comment": "verify no plans exist",
     "request": { "uri": "me/plans" },
     "response": {
@@ -222,7 +264,7 @@
         "timezone": "EST",
         "plan": "{{plans.[0].name}}",
         "footprint": "US",
-        "paymentMethod": {
+        "paymentMethodObject": {
           "uuid": "{{savedPaymentMethod.uuid}}"
         }
       }
@@ -264,7 +306,7 @@
   },
 
   {
-    "comment": "verify bill exists for new service, but price is zero",
+    "comment": "verify bill exists for new service",
     "request": { "uri": "me/plans/{{accountPlan2.uuid}}/bills" },
     "response": {
       "store": "plan2bills",
@@ -273,122 +315,6 @@
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{accountPlan2.uuid}}'"},
         {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === 0"},
-        {"condition": "json[0].getTotal() === 0"}
-      ]
-    }
-  },
-
-  {
-    "comment": "verify we have still only made one successful payment",
-    "request": { "uri": "me/payments" },
-    "response": {
-      "check": [
-        {"condition": "json.length === 1"},
-        {"condition": "json[0].getStatus().name() === 'success'"},
-        {"condition": "json[0].getAmount() === {{plans.[0].price}}"}
-      ]
-    }
-  },
-
-  {
-    "comment": "verify payment exists via plan and is successful, and price was zero",
-    "request": { "uri": "me/plans/{{accountPlan2.uuid}}/payments" },
-    "response": {
-      "store": "plan2payments",
-      "check": [
-        {"condition": "json.length === 1"},
-        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
-        {"condition": "json[0].getAccountPlan() === '{{accountPlan2.uuid}}'"},
-        {"condition": "json[0].getPaymentObject().getAmount() === {{plans.[0].price}}"},
-        {"condition": "json[0].getPaymentObject().getStatus().name() === 'success'"},
-        {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
-        {"condition": "json[0].getBillObject().getAccountPlan() === '{{accountPlan2.uuid}}'"},
-        {"condition": "json[0].getBillObject().getQuantity() === 1"},
-        {"condition": "json[0].getBillObject().getPrice() === 0"},
-        {"condition": "json[0].getBillObject().getTotal() === 0"},
-        {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
-      ]
-    }
-  },
-
-  {
-    "comment": "verify successful payment has paid for the second bill (with zero total)",
-    "request": { "uri": "me/plans/{{accountPlan2.uuid}}/payments/{{plan2payments.[0].uuid}}/bill" },
-    "response": {
-      "check": [
-        {"condition": "json.getPlan() === '{{plans.[0].uuid}}'"},
-        {"condition": "json.getAccountPlan() === '{{accountPlan2.uuid}}'"},
-        {"condition": "json.getQuantity() === 1"},
-        {"condition": "json.getPrice() === 0"},
-        {"condition": "json.getTotal() === 0"}
-      ]
-    }
-  },
-
-  {
-    "comment": "add a third plan, this one will require a second payment since two plans are now active",
-    "request": {
-      "uri": "me/plans",
-      "method": "put",
-      "entity": {
-        "name": "test-net-{{rand 5}}",
-        "domain": "{{defaultDomain}}",
-        "locale": "en_US",
-        "timezone": "EST",
-        "plan": "{{plans.[0].name}}",
-        "footprint": "US",
-        "paymentMethod": {
-          "uuid": "{{savedPaymentMethod.uuid}}"
-        }
-      }
-    },
-    "response": {
-      "store": "accountPlan3"
-    }
-  },
-
-  {
-    "before": "sleep 15s",
-    "comment": "verify we still have only one payment method",
-    "request": { "uri": "me/paymentMethods" },
-    "response": {
-      "check": [ {"condition": "json.length === 1"} ]
-    }
-  },
-
-  {
-    "comment": "verify account plan payment info is same as used before",
-    "request": { "uri": "me/plans/{{accountPlan2.uuid}}/paymentMethod" },
-    "response": {
-      "check": [
-        {"condition": "json.getPaymentMethodType().name() === 'credit'"},
-        {"condition": "json.getMaskedPaymentInfo() === 'XXXX-XXXX-XXXX-4242'"},
-        {"condition": "json.getUuid() === '{{savedPaymentMethod.uuid}}'"}
-      ]
-    }
-  },
-
-  {
-    "comment": "verify we now have three bills",
-    "request": { "uri": "me/bills" },
-    "response": {
-      "check": [
-        {"condition": "json.length === 3"}
-      ]
-    }
-  },
-
-  {
-    "comment": "verify bill exists for new service, and price is NOT zero",
-    "request": { "uri": "me/plans/{{accountPlan3.uuid}}/bills" },
-    "response": {
-      "store": "plan2bills",
-      "check": [
-        {"condition": "json.length === 1"},
-        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
-        {"condition": "json[0].getAccountPlan() === '{{accountPlan3.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
         {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"}
       ]
@@ -396,67 +322,36 @@
   },
 
   {
-    "comment": "verify we have now made two successful payments",
+    "comment": "verify we have now made two successful payments (plus one refund)",
     "request": { "uri": "me/payments" },
     "response": {
       "check": [
-        {"condition": "json.length === 2"},
+        {"condition": "json.length === 3"},
         {"condition": "json[0].getStatus().name() === 'success'"},
-        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
-        {"condition": "json[1].getStatus().name() === 'success'"},
-        {"condition": "json[1].getAmount() === {{plans.[0].price}}"}
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan2.uuid}}'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"}
       ]
     }
   },
 
   {
-    "comment": "verify payment exists via plan and is successful, and price was NOT zero",
-    "request": { "uri": "me/plans/{{accountPlan3.uuid}}/payments" },
+    "comment": "verify payment exists via plan and is successful",
+    "request": { "uri": "me/plans/{{accountPlan2.uuid}}/payments" },
     "response": {
-      "store": "plan3payments",
+      "store": "plan2payments",
       "check": [
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
-        {"condition": "json[0].getAccountPlan() === '{{accountPlan3.uuid}}'"},
-        {"condition": "json[0].getPaymentObject().getAmount() === {{plans.[0].price}}"},
-        {"condition": "json[0].getPaymentObject().getStatus().name() === 'success'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan2.uuid}}'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'success'"},
         {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
-        {"condition": "json[0].getBillObject().getAccountPlan() === '{{accountPlan3.uuid}}'"},
+        {"condition": "json[0].getBillObject().getAccountPlan() === '{{accountPlan2.uuid}}'"},
         {"condition": "json[0].getBillObject().getQuantity() === 1"},
         {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
       ]
-    }
-  },
-
-  {
-    "comment": "verify successful payment has paid for the third bill (with non-zero total)",
-    "request": { "uri": "me/plans/{{accountPlan3.uuid}}/payments/{{plan3payments.[0].uuid}}/bill" },
-    "response": {
-      "check": [
-        {"condition": "json.getPlan() === '{{plans.[0].uuid}}'"},
-        {"condition": "json.getAccountPlan() === '{{accountPlan3.uuid}}'"},
-        {"condition": "json.getQuantity() === 1"},
-        {"condition": "json.getPrice() === {{plans.[0].price}}"},
-        {"condition": "json.getTotal() === {{plans.[0].price}}"}
-      ]
-    }
-  },
-
-  {
-    "comment": "delete third network",
-    "request": {
-      "method": "delete",
-      "uri": "me/networks/{{accountPlan3.network}}"
-    }
-  },
-
-  {
-    "comment": "delete third plan",
-    "request": {
-      "method": "delete",
-      "uri": "me/plans/{{accountPlan3.uuid}}"
     }
   }
 

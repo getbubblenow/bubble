@@ -7,6 +7,8 @@ import bubble.model.bill.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
+
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
@@ -60,7 +62,7 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         return bill;
     }
 
-    @Override public boolean authorize(BubblePlan plan, AccountPaymentMethod paymentMethod) {
+    @Override public boolean authorize(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod) {
         return true;
     }
 
@@ -131,7 +133,14 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
 
         // mark the bill as paid, enable the plan
         billDAO.update(bill.setPayment(accountPayment.getUuid()).setStatus(BillStatus.paid));
-        accountPlanDAO.update(accountPlan.setEnabled(true));
+
+        // if there are no unpaid bills, we can (re-)enable the plan
+        final List<Bill> unpaidBills = billDAO.findUnpaidByAccountPlan(accountPlan.getUuid());
+        if (unpaidBills.isEmpty()) {
+            accountPlanDAO.update(accountPlan.setEnabled(true));
+        } else {
+            accountPlanDAO.update(accountPlan.setEnabled(false));
+        }
         return accountPayment;
     }
 
@@ -181,7 +190,11 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         }
 
         // Determine how much to refund
-        final long refundAmount = plan.getPeriod().calculateRefund(accountPlan.getCtime(), bill.getPeriod(), bill.getTotal());
+        final long refundAmount = plan.getPeriod().calculateRefund(bill, accountPlan);
+        if (refundAmount == 0) {
+            log.warn("refund: no refund to issue, refundAmount == 0");
+            return true;
+        }
 
         final String refundInfo;
         try {

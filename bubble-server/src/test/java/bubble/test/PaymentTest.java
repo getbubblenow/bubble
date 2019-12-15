@@ -1,6 +1,7 @@
 package bubble.test;
 
 import bubble.server.BubbleConfiguration;
+import bubble.service.bill.RefundService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.server.RestServer;
 import org.junit.Test;
@@ -16,6 +17,12 @@ public class PaymentTest extends ActivatedBubbleModelTestBase {
         configuration.setSpringContextPath("classpath:/spring-mock-network.xml");
         configuration.getStaticAssets().setLocalOverride(null);
         super.beforeStart(server);
+    }
+
+    @Override public void onStart(RestServer<BubbleConfiguration> server) {
+        final BubbleConfiguration configuration = server.getConfiguration();
+        configuration.getBean(RefundService.class).start(); // ensure RefundService is always started
+        super.onStart(server);
     }
 
     @Test public void testFreePayment () throws Exception { modelTest("payment/pay_free"); }

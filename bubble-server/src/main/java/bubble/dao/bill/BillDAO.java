@@ -2,6 +2,7 @@ package bubble.dao.bill;
 
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.model.bill.Bill;
+import bubble.model.bill.BillStatus;
 import org.hibernate.criterion.Order;
 import org.springframework.stereotype.Repository;
 
@@ -20,6 +21,10 @@ public class BillDAO extends AccountOwnedEntityDAO<Bill> {
     public Bill findMostRecentBillForAccountPlan(String accountPlanUuid) {
         final List<Bill> bills = findByField("accountPlan", accountPlanUuid);
         return bills.isEmpty() ? null : bills.get(0);
+    }
+
+    public List<Bill> findUnpaidByAccountPlan(String accountPlanUuid) {
+        return findByFields("accountPlan", accountPlanUuid, "status", BillStatus.unpaid);
     }
 
 }

@@ -126,6 +126,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
     }
 
     @Override public boolean authorize(BubblePlan plan,
+                                       String accountPlanUuid,
                                        AccountPaymentMethod paymentMethod) {
         final String planUuid = plan.getUuid();
         final String paymentMethodUuid = paymentMethod.getUuid();
@@ -141,7 +142,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
             chargeParams.put("statement_descriptor", plan.chargeDescription());
             chargeParams.put("capture", false);
             final String chargeJson = json(chargeParams, COMPACT_MAPPER);
-            final String authCacheKey = getAuthCacheKey(planUuid, paymentMethodUuid);
+            final String authCacheKey = getAuthCacheKey(accountPlanUuid, paymentMethodUuid);
             final String chargeId = authCache.get(authCacheKey);
             if (chargeId != null) {
                 log.warn("authorize: already authorized: "+authCacheKey);
@@ -208,7 +209,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
         final RedisService authCache = getAuthCache();
         final RedisService chargeCache = getChargeCache();
 
-        final String authCacheKey = getAuthCacheKey(plan.getUuid(), paymentMethodUuid);
+        final String authCacheKey = getAuthCacheKey(accountPlanUuid, paymentMethodUuid);
         try {
             final String charged = chargeCache.get(billUuid);
             if (charged != null) {

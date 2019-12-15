@@ -30,8 +30,6 @@ import static org.cobbzilla.util.system.CommandShell.loadShellExportsOrDie;
 @Slf4j
 public abstract class BubbleModelTestBase extends ApiModelTestBase<BubbleConfiguration, BubbleServer> {
 
-    public static final String[] SQL_POST_SCRIPTS = {"models/constraints.sql"};
-
     public static final List<RestServerLifecycleListener> TEST_LIFECYCLE_LISTENERS = asList(new RestServerLifecycleListener[] {
             new NodeInitializerListener()
     });

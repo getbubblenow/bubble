@@ -51,8 +51,16 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private BillItemType type;
 
-    @Column(nullable=false, updatable=false, length=50)
+    @Column(nullable=false, updatable=false, length=20)
     @ECIndex @Getter @Setter private String period;
+
+    @Column(nullable=false, updatable=false, length=20)
+    @Getter @Setter private String periodStart;
+
+    @Column(nullable=false, updatable=false, length=20)
+    @Getter @Setter private String periodEnd;
+
+    public int daysInPeriod () { return BillPeriod.daysInPeriod(periodStart, periodEnd); }
 
     @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
     @Getter @Setter private Long quantity = 0L;

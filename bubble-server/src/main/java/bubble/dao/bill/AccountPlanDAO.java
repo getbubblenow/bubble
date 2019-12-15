@@ -18,8 +18,10 @@ import java.util.List;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.background;
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.hibernate.criterion.Restrictions.*;
 
 @Repository
 public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
@@ -36,11 +38,18 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
     }
 
     public List<AccountPlan> findByAccountAndNotDeleted(String account) {
-        return findByFields("account", account, "deleted", false);
+        return findByFields("account", account, "deleted", null);
     }
 
     public List<AccountPlan> findByAccountAndPaymentMethodAndNotDeleted(String account, String paymentMethod) {
-        return findByFields("account", account, "paymentMethod", paymentMethod, "deleted", false);
+        return findByFields("account", account, "paymentMethod", paymentMethod, "deleted", null);
+    }
+
+    public List<AccountPlan> findByDeletedAndNotClosed() {
+        return list(criteria().add(and(
+                isNotNull("deleted"),
+                eq("closed", false)
+        )));
     }
 
     @Override public Object preCreate(AccountPlan accountPlan) {
@@ -62,7 +71,8 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
             }
             if (paymentDriver.getPaymentMethodType().requiresAuth()) {
                 final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
-                paymentDriver.authorize(plan, accountPlan.getPaymentMethodObject());
+                accountPlan.beforeCreate(); // ensure uuid exists
+                paymentDriver.authorize(plan, accountPlan.getUuid(), accountPlan.getPaymentMethodObject());
             }
             accountPlan.setPaymentMethod(accountPlan.getPaymentMethodObject().getUuid());
         }
@@ -81,6 +91,8 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
                     .setPrice(plan.getPrice())
                     .setCurrency(plan.getCurrency())
                     .setPeriod(plan.getPeriod().currentPeriod())
+                    .setPeriodStart(plan.getPeriod().getFirstPeriodStart())
+                    .setPeriodEnd(plan.getPeriod().getFirstPeriodEnd())
                     .setQuantity(1L)
                     .setType(BillItemType.compute)
                     .setStatus(BillStatus.unpaid));
@@ -106,7 +118,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
         if (network != null && network.getState() != BubbleNetworkState.stopped) {
             throw invalidEx("err.accountPlan.stopNetworkBeforeDeleting");
         }
-        update(accountPlan.setDeleted(true).setEnabled(false));
+        update(accountPlan.setDeleted(now()).setEnabled(false));
         if (configuration.paymentsEnabled()) {
             refundService.processRefunds();
         }

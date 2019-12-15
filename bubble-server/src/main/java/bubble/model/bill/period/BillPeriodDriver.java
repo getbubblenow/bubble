@@ -1,11 +1,13 @@
 package bubble.model.bill.period;
 
-import org.joda.time.DateTime;
+import bubble.model.bill.AccountPlan;
+import bubble.model.bill.Bill;
+import org.joda.time.DurationFieldType;
 
 public interface BillPeriodDriver {
 
-    long calculateRefund(long planStart, String period, long total);
+    long calculateRefund(Bill bill, AccountPlan plan);
 
-    DateTime nextPeriod();
+    DurationFieldType getDurationFieldType();
 
 }

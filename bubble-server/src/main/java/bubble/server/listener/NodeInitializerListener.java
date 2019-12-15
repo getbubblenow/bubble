@@ -9,6 +9,7 @@ import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeKey;
 import bubble.server.BubbleConfiguration;
+import bubble.service.bill.RefundService;
 import bubble.service.boot.SageHelloService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.string.StringUtil;
@@ -107,6 +108,12 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
         if (c.hasSageNode() && !c.isSelfSage()) {
             log.info("onStart: starting SageHelloService");
             c.getBean(SageHelloService.class).start();
+        }
+
+        // start RefundService if payments are enabled and this is a SageLauncher
+        if (c.paymentsEnabled() && c.isSageLauncher()) {
+            log.info("onStart: starting RefundService");
+            c.getBean(RefundService.class).start();
         }
 
         return true;

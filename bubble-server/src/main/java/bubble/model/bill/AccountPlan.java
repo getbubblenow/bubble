@@ -38,6 +38,8 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @SuppressWarnings("unused")
     public AccountPlan (AccountPlan other) { copy(this, other, CREATE_FIELDS); }
 
+    @Override public void beforeCreate() { if (!hasUuid()) initUuid(); }
+
     // mirrors network name
     @Size(max=100, message="err.name.length")
     @Column(length=100, nullable=false)
@@ -67,13 +69,12 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Getter @Setter private Boolean enabled = false;
     public boolean enabled() { return enabled != null && enabled; }
 
-    @Column(nullable=false)
-    @Getter @Setter private Boolean deleted = false;
-    public boolean deleted() { return deleted != null && deleted; }
+    @ECIndex @Getter @Setter private Long deleted;
+    public boolean deleted() { return deleted != null; }
     public boolean notDeleted() { return !deleted(); }
 
     @Column(nullable=false)
-    @Getter @Setter private Boolean closed = false;
+    @ECIndex @Getter @Setter private Boolean closed = false;
     public boolean closed() { return closed != null && closed; }
     public boolean notClosed() { return !closed(); }
 
