@@ -2,7 +2,9 @@ package bubble.cloud.compute;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
+@Accessors(chain=true)
 public class ComputeNodeSize {
 
     @Getter @Setter private ComputeNodeSizeType type;

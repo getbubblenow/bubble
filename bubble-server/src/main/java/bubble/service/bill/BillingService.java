@@ -1,20 +1,29 @@
 package bubble.service.bill;
 
 import bubble.cloud.payment.PaymentServiceDriver;
+import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BillDAO;
 import bubble.dao.bill.BubblePlanDAO;
+import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.CloudServiceDAO;
+import bubble.model.account.message.AccountAction;
+import bubble.model.account.message.AccountMessage;
+import bubble.model.account.message.AccountMessageType;
+import bubble.model.account.message.ActionTarget;
 import bubble.model.bill.*;
+import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
+import bubble.service.cloud.NetworkService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.daemon.SimpleDaemon;
+import org.joda.time.DateTime;
+import org.joda.time.Days;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.concurrent.TimeUnit.HOURS;
@@ -25,12 +34,16 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 public class BillingService extends SimpleDaemon {
 
     private static final long BILLING_CHECK_INTERVAL = HOURS.toMillis(6);
+    private static final int MAX_UNPAID_DAYS_BEFORE_STOP = 7;
 
     @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private BubblePlanDAO planDAO;
     @Autowired private BillDAO billDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private AccountPaymentMethodDAO paymentMethodDAO;
+    @Autowired private AccountMessageDAO messageDAO;
+    @Autowired private BubbleNetworkDAO networkDAO;
+    @Autowired private NetworkService networkService;
     @Autowired private BubbleConfiguration configuration;
 
     public void processBilling () { interrupt(); }
@@ -58,12 +71,52 @@ public class BillingService extends SimpleDaemon {
                 continue;
             }
 
+            boolean sendPaymentReminder = false;
             try {
                 if (!payBills(plan, accountPlan, bills)) {
                     log.error("process: payBills returned false for "+bills.size()+" bill(s) for accountPlan "+accountPlan.getUuid());
+                    sendPaymentReminder = true;
                 }
             } catch (Exception e) {
                 log.error("process: error paying "+bills.size()+" bill(s) for accountPlan "+accountPlan.getUuid()+": "+e);
+                sendPaymentReminder = true;
+            }
+
+            if (sendPaymentReminder) {
+                // plan has unpaid bill, try again tomorrow
+                accountPlan.setNextBill(new DateTime(now()).plusDays(1).getMillis());
+                accountPlan.setNextBillDate();
+                accountPlanDAO.update(accountPlan);
+
+                final Bill bill = bills.get(0);
+                final long unpaidStart = plan.getPeriod().periodMillis(bill.getPeriodStart());
+                final int unpaidDays = Days.daysBetween(new DateTime(unpaidStart), new DateTime(now())).getDays();
+                if (unpaidDays > MAX_UNPAID_DAYS_BEFORE_STOP) {
+                    final BubbleNetwork network = networkDAO.findByUuid(accountPlan.getNetwork());
+                    try {
+                        networkService.stopNetwork(network);
+                    } catch (Exception e) {
+                        // todo: notify admin, requires intervention
+                        log.error("process: error stopping network due to non-payment: "+network.getUuid());
+                        continue;
+                    }
+                    messageDAO.create(new AccountMessage()
+                            .setAccount(accountPlan.getAccount())
+                            .setMessageType(AccountMessageType.notice)
+                            .setTarget(ActionTarget.network)
+                            .setAction(AccountAction.payment)
+                            .setName(accountPlan.getUuid())
+                            .setData(accountPlan.getNetwork()));
+
+                } else {
+                    messageDAO.create(new AccountMessage()
+                            .setAccount(accountPlan.getAccount())
+                            .setMessageType(AccountMessageType.request)
+                            .setTarget(ActionTarget.network)
+                            .setAction(AccountAction.payment)
+                            .setName(accountPlan.getUuid())
+                            .setData(accountPlan.getNetwork()));
+                }
             }
         }
     }
@@ -72,8 +125,9 @@ public class BillingService extends SimpleDaemon {
         final Bill recentBill = billDAO.findMostRecentBillForAccountPlan(accountPlan.getUuid());
         if (recentBill == null) return die("billPlan: no recent bill found for accountPlan: "+accountPlan.getUuid());
 
+        // start with any existing unpaid bills
+        final List<Bill> bills = billDAO.findUnpaidByAccountPlan(accountPlan.getUuid());
         final BillPeriod period = plan.getPeriod();
-        final List<Bill> bills = new ArrayList<>();
 
         // create bills for the past, until a bill has a periodEnd beyond the AccountPlan.nextBill date
         Bill bill = recentBill;
@@ -92,7 +146,7 @@ public class BillingService extends SimpleDaemon {
         }
 
         if (bills.size() > 1) {
-            log.warn("billPlan: "+bills.size()+" bills created for accountPlan: "+accountPlan.getUuid());
+            log.warn("billPlan: "+bills.size()+" bills found for accountPlan: "+accountPlan.getUuid());
         }
         return bills;
     }

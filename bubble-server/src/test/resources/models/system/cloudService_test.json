@@ -56,6 +56,17 @@
   },
 
   {
+    "name": "MockGeoLocation",
+    "type": "geoLocation",
+    "driverClass": "bubble.cloud.geoLocation.mock.MockGeoLocationDriver",
+    "driverConfig": {
+      "url": "https://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz",
+      "file": "GeoLite2-City_[\\d]+/GeoLite2-City\\.mmdb"
+    },
+    "template": true
+  },
+
+  {
     "_subst": true,
     "name": "StripePayments",
     "type": "payment",

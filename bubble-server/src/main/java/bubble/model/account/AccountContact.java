@@ -164,6 +164,15 @@ public class AccountContact implements Serializable {
         }
 
         switch (action) {
+            case payment:
+                switch (type) {
+                    case request: case notice:
+                        return target == ActionTarget.network && getType() != CloudServiceType.authenticator;
+                    default:
+                        log.warn("isAllowed(payment): unknown type: "+type+" for message, returning false");
+                        return false;
+                }
+
             case login:
                 switch (type) {
                     case request:

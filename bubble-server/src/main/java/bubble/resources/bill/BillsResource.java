@@ -2,6 +2,7 @@ package bubble.resources.bill;
 
 import bubble.cloud.payment.PaymentServiceDriver;
 import bubble.dao.bill.AccountPaymentMethodDAO;
+import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BillDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
@@ -29,6 +30,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 @Slf4j
 public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
 
+    @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private AccountPaymentMethodDAO paymentMethodDAO;
     @Autowired private CloudServiceDAO cloudDAO;
 
@@ -68,9 +70,14 @@ public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
         if (bill.paid()) return invalid("err.bill.alreadyPaid");
 
         final AccountPaymentMethod payMethodToUse;
-        if (paymentMethod.hasUuid()) {
+        if (paymentMethod == null) {
+            final AccountPlan accountPlan = accountPlanDAO.findByUuid(bill.getAccountPlan());
+            payMethodToUse = paymentMethodDAO.findByUuid(accountPlan.getPaymentMethod());
+
+        } else if (paymentMethod.hasUuid()) {
             payMethodToUse = paymentMethodDAO.findByUuid(paymentMethod.getUuid());
             if (payMethodToUse == null) return invalid("err.paymentMethod.notFound");
+
         } else {
             final ValidationResult result = new ValidationResult();
             paymentMethod.setAccount(getAccountUuid(ctx)).validate(result, configuration);

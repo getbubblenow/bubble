@@ -35,6 +35,8 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
     public static final String STRIPE_TOKENIZE_CARD = "stripe_tokenize_card";
     public static final String CTX_STRIPE_TOKEN = "stripeToken";
 
+    public static final long DEFAULT_BILLING_SLEEP = SECONDS.toMillis(10);
+
     private BubbleConfiguration configuration;
 
     @Override protected Handlebars initHandlebars() { return BubbleHandlebars.instance.getHandlebars(); }
@@ -49,12 +51,15 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
         if (before.startsWith(FAST_FORWARD_AND_BILL)) {
             final List<String> parts = StringUtil.splitAndTrim(before.substring(FAST_FORWARD_AND_BILL.length()), " ");
             final long delta = parseDuration(parts.get(0));
-            final long sleepTime = parts.size() > 1 ? parseDuration(parts.get(1)) : SECONDS.toMillis(20);
+            final long sleepTime = parts.size() > 1 ? parseDuration(parts.get(1)) : DEFAULT_BILLING_SLEEP;
             incrementSystemTimeOffset(delta);
             configuration.getBean(BillingService.class).processBilling();
             sleep(sleepTime, "waiting for BillingService to complete");
 
-        } else if (before.equals(SET_STRIPE_ERROR)) {
+        } else if (before.equals(STRIPE_TOKENIZE_CARD)) {
+            stripTokenizeCard(ctx);
+
+        } else if (before.startsWith(SET_STRIPE_ERROR)) {
             MockStripePaymentDriver.setError(before.substring(SET_STRIPE_ERROR.length()).trim());
 
         } else if (before.equals(UNSET_STRIPE_ERROR)) {
@@ -68,33 +73,9 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
     @Override public void afterScript(String after, Map<String, Object> ctx) throws Exception {
         if (after == null) return;
         if (after.equals(STRIPE_TOKENIZE_CARD)) {
-            // ensure stripe API token is initialized
-            final Account admin = configuration.getBean(AccountDAO.class).findFirstAdmin();
-            final CloudService stripe = configuration.getBean(CloudServiceDAO.class)
-                    .findByAccountAndType(admin.getUuid(), CloudServiceType.payment)
-                    .stream().filter(c -> StripePaymentDriver.class.isAssignableFrom(forName(c.getDriverClass())))
-                    .findFirst().orElse(null);
-            if (stripe == null) {
-                die("afterScript: no cloud found with driverClass=" + StripePaymentDriver.class.getName());
-                return;
-            }
-            stripe.getPaymentDriver(configuration);
+            stripTokenizeCard(ctx);
 
-            final Map<String, Object> tokenParams = new HashMap<>();
-            final Map<String, Object> cardParams = new HashMap<>();
-            cardParams.put("number", "4242424242424242");
-            cardParams.put("exp_month", 10);
-            cardParams.put("exp_year", 2026);
-            cardParams.put("cvc", "222");
-            tokenParams.put("card", cardParams);
-            try {
-                final Token token = Token.create(tokenParams);
-                ctx.put(CTX_STRIPE_TOKEN, token.getId());
-            } catch (Exception e) {
-                die("afterScript: error creating Stripe token: " + e);
-            }
-
-        } else if (after.equals(SET_STRIPE_ERROR)) {
+        } else if (after.startsWith(SET_STRIPE_ERROR)) {
             MockStripePaymentDriver.setError(after.substring(SET_STRIPE_ERROR.length()).trim());
 
         } else if (after.equals(UNSET_STRIPE_ERROR)) {
@@ -102,6 +83,34 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
 
         } else {
             super.afterScript(after, ctx);
+        }
+    }
+
+    public void stripTokenizeCard(Map<String, Object> ctx) {
+        // ensure stripe API token is initialized
+        final Account admin = configuration.getBean(AccountDAO.class).findFirstAdmin();
+        final CloudService stripe = configuration.getBean(CloudServiceDAO.class)
+                .findByAccountAndType(admin.getUuid(), CloudServiceType.payment)
+                .stream().filter(c -> StripePaymentDriver.class.isAssignableFrom(forName(c.getDriverClass())))
+                .findFirst().orElse(null);
+        if (stripe == null) {
+            die("afterScript: no cloud found with driverClass=" + StripePaymentDriver.class.getName());
+            return;
+        }
+        stripe.getPaymentDriver(configuration);
+
+        final Map<String, Object> tokenParams = new HashMap<>();
+        final Map<String, Object> cardParams = new HashMap<>();
+        cardParams.put("number", "4242424242424242");
+        cardParams.put("exp_month", 10);
+        cardParams.put("exp_year", 2026);
+        cardParams.put("cvc", "222");
+        tokenParams.put("card", cardParams);
+        try {
+            final Token token = Token.create(tokenParams);
+            ctx.put(CTX_STRIPE_TOKEN, token.getId());
+        } catch (Exception e) {
+            die("afterScript: error creating Stripe token: " + e);
         }
     }
 

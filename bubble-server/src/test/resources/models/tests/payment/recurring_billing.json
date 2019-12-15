@@ -178,8 +178,28 @@
   },
 
   {
-    "before": "fast_forward_and_bill 33d",
-    "comment": "1st fast-forward: +33 days, verify a new bill exists for accountPlan",
+    "comment": "start the network",
+    "request": {
+      "uri": "me/networks/{{accountPlan.network}}/actions/start",
+      "method": "post"
+    },
+    "response": {
+      "store": "newNetworkNotification"
+    }
+  },
+
+  {
+    "before": "sleep 5s",
+    "comment": "verify the network is running",
+    "request": { "uri": "me/networks/{{accountPlan.network}}" },
+    "response": {
+      "check": [ {"condition": "json.getState().name() == 'running'"} ]
+    }
+  },
+
+  {
+    "before": "fast_forward_and_bill 31d",
+    "comment": "1st fast-forward: +31 days, verify a new bill exists for accountPlan",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
     "response": {
       "check": [
@@ -188,7 +208,8 @@
         {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
         {"condition": "json[0].getQuantity() === 1"},
         {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
-        {"condition": "json[0].getTotal() === {{plans.[0].price}}"}
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
     }
   },
@@ -197,7 +218,6 @@
     "comment": "1st fast-forward: verify a successful payment has been made for the new bill for accountPlan",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/payments" },
     "response": {
-      "store": "plan2payments",
       "check": [
         {"condition": "json.length === 2"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
@@ -215,8 +235,8 @@
   },
 
   {
-    "before": "fast_forward_and_bill 33d",
-    "comment": "2nd fast-forward: fast-forward another +33 days, verify a new bill exists for accountPlan",
+    "before": "fast_forward_and_bill 31d",
+    "comment": "2nd fast-forward: fast-forward another +31 days, verify a new bill exists for accountPlan",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
     "response": {
       "check": [
@@ -225,7 +245,8 @@
         {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
         {"condition": "json[0].getQuantity() === 1"},
         {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
-        {"condition": "json[0].getTotal() === {{plans.[0].price}}"}
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
     }
   },
@@ -234,7 +255,6 @@
     "comment": "2nd fast-forward: verify a successful payment has been made for the new bill for accountPlan",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/payments" },
     "response": {
-      "store": "plan2payments",
       "check": [
         {"condition": "json.length === 3"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
@@ -252,7 +272,7 @@
   },
 
   {
-    "before": "fast_forward_and_bill 66d",
+    "before": "fast_forward_and_bill 62d 20s",
     "comment": "3rd fast-forward: fast-forward even more, +66 days, we have missed a billing cycle, so two new bills should be created",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
     "response": {
@@ -263,11 +283,13 @@
         {"condition": "json[0].getQuantity() === 1"},
         {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'paid'"},
         {"condition": "json[1].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[1].getAccountPlan() === '{{accountPlan.uuid}}'"},
         {"condition": "json[1].getQuantity() === 1"},
         {"condition": "json[1].getPrice() === {{plans.[0].price}}"},
-        {"condition": "json[1].getTotal() === {{plans.[0].price}}"}
+        {"condition": "json[1].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[1].getStatus().name() === 'paid'"}
       ]
     }
   },
@@ -276,7 +298,6 @@
     "comment": "3rd fast-forward: verify a successful payment has been made for all new bills for accountPlan",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/payments" },
     "response": {
-      "store": "plan2payments",
       "check": [
         {"condition": "json.length === 5"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
@@ -302,31 +323,194 @@
       ]
     },
     "after": "set_stripe_error charge"  // set mock so charging the card fails
+  },
+
+  {
+    "before": "fast_forward_and_bill 31d",
+    "comment": "4nd fast-forward: fast-forward another +33 days, verify new bill (unpaid) created",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
+    "response": {
+      "store": "bills",
+      "check": [
+        {"condition": "json.length === 6"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'unpaid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "4th fast-forward: verify payment failed",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/payments" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 6"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'failure'"},
+        {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getBillObject().getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getBillObject().getQuantity() === 1"},
+        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getStatus().name() === 'unpaid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as root, verify payment reminder message has been sent",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/test-user@example.com?type=request&action=payment&target=network"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' === 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' === 'payment'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' === 'network'"}
+      ]
+    }
+  },
+
+  {
+    "before": "fast_forward_and_bill 7d",
+    "comment": "5th fast-forward: fast-forward another +6 days, bill is still unpaid, bubble is stopped",
+    "request": {
+      "session": "userSession",
+      "uri": "me/plans/{{accountPlan.uuid}}/bills"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length === 6"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 10s",
+    "comment": "as root, verify nonpayment message has been sent",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/test-user@example.com?type=notice&action=payment&target=network"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' === 'notice'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' === 'payment'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' === 'network'"}
+      ]
+    }
+  },
+
+  {
+    "before": "sleep 10s",
+    "comment": "verify the network has been stopped",
+    "request": {
+      "session": "userSession",
+      "uri": "me/networks/{{accountPlan.network}}"
+    },
+    "response": {
+      "check": [ {"condition": "json.getState().name() == 'stopped'"} ]
+    }
+  },
+
+  {
+    "comment": "verify plan is no longer enabled",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}" },
+    "response": {
+      "check": [ {"condition": "json.getStatus().disabled()"} ]
+    }
+  },
+
+  {
+    "comment": "try to start network, fails due to non-payment",
+    "request": {
+      "uri": "me/networks/{{accountPlan.network}}/actions/start",
+      "method": "post"
+    },
+    "response": {
+      "status": 422,
+      "check": [ {"condition": "json.has('err.accountPlan.disabled')"} ]
+    }
+  },
+
+  {
+    "before": "stripe_tokenize_card",
+    "comment": "add another payment method",
+    "request": {
+      "uri": "me/paymentMethods",
+      "method": "put",
+      "entity": {
+        "paymentMethodType": "credit",
+        "paymentInfo": "{{stripeToken}}"
+      }
+    },
+    "response": {
+      "store": "newPaymentMethod"
+    }
+  },
+
+  {
+    "comment": "update payment method for plan",
+    "request": {
+      "uri": "me/plans/{{accountPlan.uuid}}",
+      "entity": {
+        "paymentMethodObject": {
+          "uuid": "{{newPaymentMethod.uuid}}"
+        }
+      }
+    }
+  },
+
+  {
+    "comment": "submit payment for unpaid bill",
+    "request": {
+      "uri": "me/plans/{{accountPlan.uuid}}/bills/{{bills.[0].uuid}}/pay",
+      "method": "post"
+    },
+    "response": {
+      "check": [ {"condition": "json.getStatus.name() == 'paid'"} ]
+    }
+  },
+
+  {
+    "comment": "verify plan has been re-enabled",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}" },
+    "response": {
+      "check": [ {"condition": "json.getStatus().enabled()"} ]
+    }
+  },
+
+  {
+    "comment": "start the network, succeeds because accountPlan is now current",
+    "request": {
+      "uri": "me/networks/{{accountPlan.network}}/actions/start",
+      "method": "post"
+    },
+    "response": {
+      "store": "newNetworkNotification"
+    }
+  },
+
+  {
+    "before": "sleep 10s",
+    "comment": "verify the network is running once again",
+    "request": { "uri": "me/networks/{{accountPlan.network}}" },
+    "response": {
+      "check": [ {"condition": "json.getState().name() == 'running'"} ]
+    }
   }
-
-  // todo: set mock such that charging the card fails
-
-  // todo: fast-forward 32 days, trigger BillingService
-
-  // todo: verify a new Bill exists for accountPlan and Bill remains 'unpaid', and AccountPayment failed
-
-  // todo: verify payment reminder messages have been sent
-
-  // todo: fast-forward 1 day, trigger BillingService
-
-  // todo: verify a new Bill exists for accountPlan and Bill remains 'unpaid', and AccountPayment failed
-
-  // todo: verify payment reminder messages have been sent
-
-  // todo: fast-forward 3 days, trigger BillingService.
-
-  // todo: verify a new Bill exists for accountPlan and Bill remains 'unpaid', and AccountPayment failed
-
-  // todo: verify network associated with plan has been stopped
-
-  // todo: try to start network, fails due to non-payment
-
-  // todo: submit payment
-
-  // todo: start network, succeeds
 ]

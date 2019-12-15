@@ -3,7 +3,9 @@ package bubble.cloud;
 import bubble.cloud.geoLocation.GeoLocation;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
+@Accessors(chain=true)
 public class CloudRegion {
 
     @Getter @Setter private String name;

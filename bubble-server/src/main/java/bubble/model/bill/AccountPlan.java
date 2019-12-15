@@ -69,6 +69,7 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Column(nullable=false)
     @Getter @Setter private Boolean enabled = false;
     public boolean enabled() { return enabled != null && enabled; }
+    public boolean disabled() { return !enabled(); }
 
     @Column(nullable=false)
     @ECIndex @Getter @Setter private Long nextBill;

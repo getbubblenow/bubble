@@ -361,11 +361,11 @@ public class StandardNetworkService implements NetworkService {
         return lock;
     }
 
-    boolean confirmLock(String network, String lock) {
+    protected boolean confirmLock(String network, String lock) {
         return getNetworkLocks().confirmLock(network, lock);
     }
 
-    void unlockNetwork(String network, String lock) {
+    protected void unlockNetwork(String network, String lock) {
         log.info("lockNetwork: unlocking "+network);
         getNetworkLocks().unlock(network, lock);
         log.info("lockNetwork: unlocked "+network);
@@ -416,8 +416,8 @@ public class StandardNetworkService implements NetworkService {
             if (!nodeDAO.findByNetwork(network.getUuid()).isEmpty()) {
                 throw invalidEx("err.network.alreadyStarted");
             }
-            if (network.getState() != BubbleNetworkState.created) {
-                throw invalidEx("err.network.notInCreatedState");
+            if (network.getState() != BubbleNetworkState.created && network.getState() != BubbleNetworkState.stopped) {
+                throw invalidEx("err.network.cannotStartInState");
             }
 
             network.setState(BubbleNetworkState.setup);
@@ -509,7 +509,7 @@ public class StandardNetworkService implements NetworkService {
     public void backgroundNewNode(NewNodeNotification newNodeRequest, final String existingLock) {
         final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(newNodeRequest.getAccount(), newNodeRequest.getNetwork());
         if (accountPlan == null) throw invalidEx("err.accountPlan.notFound");
-        if (!accountPlan.enabled()) throw invalidEx("err.accountPlan.disabled");
+        if (accountPlan.disabled()) throw invalidEx("err.accountPlan.disabled");
         final AtomicReference<String> lock = new AtomicReference<>(existingLock);
         daemon(new NodeLauncher(newNodeRequest, lock, this));
     }
@@ -556,7 +556,7 @@ public class StandardNetworkService implements NetworkService {
         return true;
     }
 
-    private CloudService findServiceOrDelegate(String cloudUuid) {
+    protected CloudService findServiceOrDelegate(String cloudUuid) {
         CloudService cloud = cloudDAO.findByUuid(cloudUuid);
         if (!cloud.delegated()) return cloud;
 
