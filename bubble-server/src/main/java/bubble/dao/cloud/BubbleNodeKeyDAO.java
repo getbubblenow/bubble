@@ -1,9 +1,12 @@
 package bubble.dao.cloud;
 
 import bubble.dao.account.AccountOwnedEntityDAO;
+import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeKey;
+import bubble.service.boot.SelfNodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.criterion.Order;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,6 +16,8 @@ import static bubble.model.cloud.BubbleNodeKey.defaultExpiration;
 
 @Repository @Slf4j
 public class BubbleNodeKeyDAO extends AccountOwnedEntityDAO<BubbleNodeKey> {
+
+    @Autowired private SelfNodeService selfNodeService;
 
     @Override public Order getDefaultSortOrder() { return Order.desc("expiration"); }
 
@@ -28,9 +33,19 @@ public class BubbleNodeKeyDAO extends AccountOwnedEntityDAO<BubbleNodeKey> {
     public BubbleNodeKey filterValid(BubbleNodeKey token) { return token != null && token.valid() ? token : null; }
 
     public List<BubbleNodeKey> findByNode(String uuid) {
-        final List<BubbleNodeKey> tokens = findByField("node", uuid);
-        tokens.forEach(t -> { if (!t.valid()) delete(t.getUuid()); });
-        return filterValid(tokens);
+        final List<BubbleNodeKey> keys = findByField("node", uuid);
+        keys.forEach(t -> { if (!t.valid()) delete(t.getUuid()); });
+        final List<BubbleNodeKey> validKeys = filterValid(keys);
+
+        if (validKeys.isEmpty()) {
+            final BubbleNode thisNode = selfNodeService.getThisNode();
+            if (thisNode != null && thisNode.getUuid().equals(uuid)) {
+                // we just deleted the last key for ourselves. create a new one.
+                validKeys.add(create(new BubbleNodeKey(thisNode)));
+            }
+        }
+
+        return validKeys;
     }
 
     @Override public BubbleNodeKey findByUuid(String uuid) { return filterValid(super.findByUuid(uuid)); }

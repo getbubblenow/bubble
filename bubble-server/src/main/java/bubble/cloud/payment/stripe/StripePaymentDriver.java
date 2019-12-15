@@ -245,6 +245,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
                     case "succeeded":
                         log.info("charge: charge successful: "+authCacheKey);
                         chargeCache.set(billUuid, captured.getId(), "EX", CHARGE_CACHE_DURATION);
+                        authCache.del(authCacheKey);
                         return captured.getId();
 
                     case "pending":

@@ -354,35 +354,4 @@
       ]
     }
   }
-
-  // todo: fast-forward 32 days, trigger BillGenerator
-
-  // todo: verify a new Bill exists for accountPlan2, and payment has been made successfully
-
-  // todo: set mock such that charging the card fails
-
-  // todo: fast-forward 32 days, trigger BillGenerator
-
-  // todo: verify a new Bill exists for accountPlan2 and Bill remains 'unpaid', and AccountPayment failed
-
-  // todo: verify payment reminder messages have been sent
-
-  // todo: fast-forward 1 day, trigger BillGenerator
-
-  // todo: verify a new Bill exists for accountPlan2 and Bill remains 'unpaid', and AccountPayment failed
-
-  // todo: verify payment reminder messages have been sent
-
-  // todo: fast-forward 3 days, trigger BillGenerator.
-
-  // todo: verify a new Bill exists for accountPlan2 and Bill remains 'unpaid', and AccountPayment failed
-
-  // todo: verify network associated with plan has been stopped
-
-  // todo: try to start network, fails due to non-payment
-
-  // todo: submit payment
-
-  // todo: start network, succeeds
-
 ]

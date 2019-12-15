@@ -11,7 +11,6 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import static bubble.ApiConstants.enumFromString;
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
 import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM;
 
@@ -33,17 +32,20 @@ public enum BillPeriod {
         return Days.daysBetween(start.withTimeAtStartOfDay(), end.withTimeAtStartOfDay()).getDays();
     }
 
-    public String currentPeriod() { return formatter.print(now()); }
-
     public long calculateRefund(Bill bill, AccountPlan accountPlan) {
         return getDriver().calculateRefund(bill, accountPlan);
     }
 
-    public String getFirstPeriodStart() { return BILL_START_END_FORMAT.print(now()); }
+    public String periodLabel(long t) { return getFormatter().print(t); }
 
-    public String getFirstPeriodEnd() {
+    public String periodStart(long time) { return BILL_START_END_FORMAT.print(new DateTime(time).withTimeAtStartOfDay()); }
+
+    public String periodEnd(long time) {
         final DurationFieldType fieldType = getDriver().getDurationFieldType();
-        return BILL_START_END_FORMAT.print(new DateTime(now()).withTimeAtStartOfDay().withFieldAdded(fieldType, 1));
+        return BILL_START_END_FORMAT.print(new DateTime(time).withTimeAtStartOfDay().withFieldAdded(fieldType, 1));
     }
 
+    public long periodMillis(String period) {
+        return new DateTime(BILL_START_END_FORMAT.parseMillis(period)).withTimeAtStartOfDay().getMillis();
+    }
 }

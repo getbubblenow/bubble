@@ -1,22 +1,31 @@
 package bubble.service.boot;
 
+import bubble.cloud.CloudServiceType;
+import bubble.cloud.storage.local.LocalStorageDriver;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
+import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeKey;
 import bubble.model.cloud.BubbleNodeState;
 import bubble.model.cloud.notify.NotificationReceipt;
 import bubble.model.cloud.notify.NotificationType;
+import bubble.server.BubbleConfiguration;
+import bubble.service.bill.BillingService;
+import bubble.service.bill.RefundService;
 import bubble.service.notify.NotificationService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.cache.AutoRefreshingReference;
+import org.cobbzilla.util.string.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -25,6 +34,7 @@ import static bubble.ApiConstants.NULL_NODE;
 import static bubble.model.cloud.BubbleNode.nodeFromFile;
 import static bubble.model.cloud.BubbleNodeKey.nodeKeyFromFile;
 import static bubble.server.BubbleServer.disableRestoreMode;
+import static bubble.server.BubbleServer.isRestoreMode;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
@@ -47,11 +57,79 @@ public class StandardSelfNodeService implements SelfNodeService {
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
+    @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private NotificationService notificationService;
+    @Autowired private BubbleConfiguration configuration;
 
     private static final AtomicReference<BubbleNode> thisNode = new AtomicReference<>();
     private static final AtomicReference<BubbleNode> sageNode = new AtomicReference<>();
     private static final AtomicBoolean wasRestored = new AtomicBoolean(false);
+
+    @Override public boolean initThisNode(BubbleNode thisNode) {
+        log.info("initThisNode: initializing with thisNode="+thisNode.id());
+        final BubbleConfiguration c = configuration;
+
+        final BubbleNode dbThis = nodeDAO.findByUuid(thisNode.getUuid());
+        if (dbThis == null) return die("initThisNode: self_node not found in database: "+thisNode.getUuid());
+
+        // check database, ip4/ip6 may not have been set for ourselves. let's set them now
+        if (!dbThis.hasIp4()) {
+            log.info("initThisNode: updating ip4 for self_node in database: "+thisNode.id());
+            dbThis.setIp4(thisNode.getIp4());
+        } else if (thisNode.hasIp4() && !dbThis.getIp4().equals(thisNode.getIp4())) {
+            log.warn("initThisNode: self_node ("+thisNode.getIp4()+") and database row ("+dbThis.getIp4()+") have differing ip4 addresses for node "+thisNode.getUuid());
+            dbThis.setIp4(thisNode.getIp4());
+        }
+
+        if (!dbThis.hasIp6()) {
+            log.info("initThisNode: updating ip6 for self_node in database: "+thisNode.id());
+            dbThis.setIp6(thisNode.getIp6());
+        } else if (thisNode.hasIp6() && !dbThis.getIp6().equals(thisNode.getIp6())) {
+            log.warn("initThisNode: self_node ("+thisNode.getIp6()+") and database row ("+dbThis.getIp6()+") have differing ip6 addresses for node "+thisNode.getUuid());
+            dbThis.setIp6(thisNode.getIp6());
+        }
+        nodeDAO.update(dbThis);
+
+        // ensure a token exists so we can call ourselves
+        final List<BubbleNodeKey> keys = nodeKeyDAO.findByNode(thisNode.getUuid());
+        if (BubbleNodeKey.shouldGenerateNewKey(keys)) {
+            nodeKeyDAO.create(new BubbleNodeKey(thisNode));
+        }
+
+        if (!isRestoreMode()) {
+            final String network = thisNode.getNetwork();
+
+            // ensure storage delegates use a network-specific key
+            final List<String> updatedClouds = new ArrayList<>();
+            cloudDAO.findByType(CloudServiceType.storage).stream()
+                    .filter(cloud -> cloud.getCredentials() != null
+                            && cloud.getCredentials().needsNewNetworkKey(network)
+                            && !cloud.getDriverClass().equals(LocalStorageDriver.class.getName()))
+                    .forEach(cloud -> {
+                        cloudDAO.update(cloud.setCredentials(cloud.getCredentials().initNetworkKey(network)));
+                        log.info("onStart: set network-specific key for storage: " + cloud.getName());
+                        updatedClouds.add(cloud.getName() + "/" + cloud.getUuid());
+                    });
+            if (!updatedClouds.isEmpty()) {
+                log.info("onStart: updated network-specific keys for storage clouds: " + StringUtil.toString(updatedClouds));
+            }
+        }
+
+        // start hello sage service, if we have a sage that is not ourselves
+        if (c.hasSageNode() && !c.isSelfSage()) {
+            log.info("onStart: starting SageHelloService");
+            c.getBean(SageHelloService.class).start();
+        }
+
+        // start RefundService if payments are enabled and this is a SageLauncher
+        if (c.paymentsEnabled() && c.isSageLauncher()) {
+            log.info("onStart: starting RefundService");
+            c.getBean(RefundService.class).start();
+            c.getBean(BillingService.class).start();
+        }
+
+        return true;
+    }
 
     public void setActivated(BubbleNode node) {
         // only called by ActivationService on a brand-new instance

@@ -52,7 +52,7 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     @Getter @Setter private BillItemType type;
 
     @Column(nullable=false, updatable=false, length=20)
-    @ECIndex @Getter @Setter private String period;
+    @ECIndex @Getter @Setter private String periodLabel;
 
     @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private String periodStart;

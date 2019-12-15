@@ -4,7 +4,9 @@ import bubble.cloud.payment.PaymentServiceDriver;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.CloudServiceDAO;
-import bubble.model.bill.*;
+import bubble.model.bill.AccountPlan;
+import bubble.model.bill.Bill;
+import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNetworkState;
 import bubble.model.cloud.CloudService;
@@ -52,6 +54,14 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
         )));
     }
 
+    public List<AccountPlan> findBillableAccountPlans(long time) {
+        return list(criteria().add(and(
+                isNull("deleted"),
+                eq("closed", false),
+                le("nextBill", time)
+        )));
+    }
+
     @Override public Object preCreate(AccountPlan accountPlan) {
         if (configuration.paymentsEnabled()) {
             if (!accountPlan.hasPaymentMethodObject()) throw invalidEx("err.paymentMethod.required");
@@ -75,6 +85,10 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
                 paymentDriver.authorize(plan, accountPlan.getUuid(), accountPlan.getPaymentMethodObject());
             }
             accountPlan.setPaymentMethod(accountPlan.getPaymentMethodObject().getUuid());
+            accountPlan.setNextBill(0L); // bill and payment occurs in postCreate, will update this
+            accountPlan.setNextBillDate();
+        } else {
+            accountPlan.setNextBill(Long.MAX_VALUE);
         }
         return super.preCreate(accountPlan);
     }
@@ -84,19 +98,13 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
             final String accountPlanUuid = accountPlan.getUuid();
             final String paymentMethodUuid = accountPlan.getPaymentMethodObject().getUuid();
             final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
-            final Bill bill = billDAO.create(new Bill()
-                    .setAccount(accountPlan.getAccount())
-                    .setPlan(plan.getUuid())
-                    .setAccountPlan(accountPlanUuid)
-                    .setPrice(plan.getPrice())
-                    .setCurrency(plan.getCurrency())
-                    .setPeriod(plan.getPeriod().currentPeriod())
-                    .setPeriodStart(plan.getPeriod().getFirstPeriodStart())
-                    .setPeriodEnd(plan.getPeriod().getFirstPeriodEnd())
-                    .setQuantity(1L)
-                    .setType(BillItemType.compute)
-                    .setStatus(BillStatus.unpaid));
+            final Bill bill = billDAO.createFirstBill(plan, accountPlan);
             final String billUuid = bill.getUuid();
+
+            // set nextBill to be just after the current bill period ends
+            accountPlan.setNextBill(plan.getPeriod().periodMillis(bill.getPeriodEnd()));
+            accountPlan.setNextBillDate();
+            update(accountPlan);
 
             final CloudService paymentService = cloudDAO.findByUuid(accountPlan.getPaymentMethodObject().getCloud());
             if (paymentService == null) throw invalidEx("err.paymentService.notFound");

@@ -1,8 +1,7 @@
 package bubble.dao.bill;
 
 import bubble.dao.account.AccountOwnedEntityDAO;
-import bubble.model.bill.Bill;
-import bubble.model.bill.BillStatus;
+import bubble.model.bill.*;
 import org.hibernate.criterion.Order;
 import org.springframework.stereotype.Repository;
 
@@ -25,6 +24,26 @@ public class BillDAO extends AccountOwnedEntityDAO<Bill> {
 
     public List<Bill> findUnpaidByAccountPlan(String accountPlanUuid) {
         return findByFields("accountPlan", accountPlanUuid, "status", BillStatus.unpaid);
+    }
+
+    public Bill createFirstBill(BubblePlan plan, AccountPlan accountPlan) {
+        return create(newBill(plan, accountPlan, accountPlan.getCtime()));
+    }
+
+    public Bill newBill(BubblePlan plan, AccountPlan accountPlan, long periodStartMillis) {
+        final BillPeriod period = plan.getPeriod();
+        return new Bill()
+                    .setAccount(accountPlan.getAccount())
+                    .setPlan(plan.getUuid())
+                    .setAccountPlan(accountPlan.getUuid())
+                    .setPrice(plan.getPrice())
+                    .setCurrency(plan.getCurrency())
+                    .setPeriodLabel(period.periodLabel(periodStartMillis))
+                    .setPeriodStart(period.periodStart(periodStartMillis))
+                    .setPeriodEnd(period.periodEnd(periodStartMillis))
+                    .setQuantity(1L)
+                    .setType(BillItemType.compute)
+                    .setStatus(BillStatus.unpaid);
     }
 
 }

@@ -53,6 +53,19 @@
         }
       ]
     }
-  }
+  },
 
+  {
+    "_subst": true,
+    "name": "StripePayments",
+    "type": "payment",
+    "driverClass": "bubble.mock.MockStripePaymentDriver",
+    "driverConfig": {
+      "publicApiKey": "{{STRIPE_PUBLIC_API_KEY}}"
+    },
+    "credentials": {
+      "params": [ {"name": "secretApiKey", "value": "{{STRIPE_SECRET_API_KEY}}"} ]
+    },
+    "template": true
+  }
 ]

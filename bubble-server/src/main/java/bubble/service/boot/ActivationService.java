@@ -143,6 +143,8 @@ public class ActivationService {
         }
         domainDAO.update(domain.setRoles(domainRoles));
 
+        selfNodeService.initThisNode(node);
+
         return node;
     }
 

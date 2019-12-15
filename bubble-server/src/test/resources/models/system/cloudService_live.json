@@ -1,6 +1,20 @@
 [
   {
     "_subst": true,
+    "name": "StripePayments",
+    "type": "payment",
+    "driverClass": "bubble.cloud.payment.stripe.StripePaymentDriver",
+    "driverConfig": {
+      "publicApiKey": "{{STRIPE_PUBLIC_API_KEY}}"
+    },
+    "credentials": {
+      "params": [ {"name": "secretApiKey", "value": "{{STRIPE_SECRET_API_KEY}}"} ]
+    },
+    "template": true
+  },
+
+  {
+    "_subst": true,
     "name": "VultrCompute",
     "type": "compute",
     "driverClass": "bubble.cloud.compute.vultr.VultrDriver",

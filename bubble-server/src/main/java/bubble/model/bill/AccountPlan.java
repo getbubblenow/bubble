@@ -17,6 +17,7 @@ import javax.persistence.Entity;
 import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
+import static bubble.model.bill.BillPeriod.BILL_START_END_FORMAT;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
 @ECType(root=true)
@@ -68,6 +69,13 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Column(nullable=false)
     @Getter @Setter private Boolean enabled = false;
     public boolean enabled() { return enabled != null && enabled; }
+
+    @Column(nullable=false)
+    @ECIndex @Getter @Setter private Long nextBill;
+
+    @Column(nullable=false, length=20)
+    @Getter @Setter private String nextBillDate;
+    public AccountPlan setNextBillDate() { return setNextBillDate(BILL_START_END_FORMAT.print(getNextBill())); }
 
     @ECIndex @Getter @Setter private Long deleted;
     public boolean deleted() { return deleted != null; }
