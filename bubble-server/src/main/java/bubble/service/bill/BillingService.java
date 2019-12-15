@@ -92,6 +92,7 @@ public class BillingService extends SimpleDaemon {
                 final long unpaidStart = plan.getPeriod().periodMillis(bill.getPeriodStart());
                 final int unpaidDays = Days.daysBetween(new DateTime(unpaidStart), new DateTime(now())).getDays();
                 if (unpaidDays > MAX_UNPAID_DAYS_BEFORE_STOP) {
+                    accountPlanDAO.update(accountPlan.setEnabled(false));
                     final BubbleNetwork network = networkDAO.findByUuid(accountPlan.getNetwork());
                     try {
                         networkService.stopNetwork(network);

@@ -431,7 +431,7 @@
     "comment": "verify plan is no longer enabled",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}" },
     "response": {
-      "check": [ {"condition": "json.getStatus().disabled()"} ]
+      "check": [ {"condition": "json.disabled()"} ]
     }
   },
 
@@ -490,7 +490,7 @@
     "comment": "verify plan has been re-enabled",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}" },
     "response": {
-      "check": [ {"condition": "json.getStatus().enabled()"} ]
+      "check": [ {"condition": "json.enabled()"} ]
     }
   },
 
