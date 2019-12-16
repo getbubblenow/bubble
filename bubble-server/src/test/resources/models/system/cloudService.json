@@ -142,6 +142,7 @@
     "_subst": true,
     "name": "InviteCode",
     "type": "payment",
+    "priority": 200,
     "driverClass": "bubble.cloud.payment.code.CodePaymentDriver",
     "driverConfig": {},
     "credentials": {},

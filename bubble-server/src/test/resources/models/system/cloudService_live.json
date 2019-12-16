@@ -3,6 +3,7 @@
     "_subst": true,
     "name": "StripePayments",
     "type": "payment",
+    "priority": 100,
     "driverClass": "bubble.cloud.payment.stripe.StripePaymentDriver",
     "driverConfig": {
       "publicApiKey": "{{STRIPE_PUBLIC_API_KEY}}"

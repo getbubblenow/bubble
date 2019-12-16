@@ -53,6 +53,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     public static final String TAG_SAGE_LAUNCHER = "sageLauncher";
     public static final String TAG_SAGE_UUID = "sageUuid";
+    public static final String TAG_PAYMENTS_ENABLED = "paymentsEnabled";
 
     public BubbleConfiguration (BubbleConfiguration other) { copy(this, other); }
 
@@ -152,7 +153,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     @Getter(lazy=true) private final Map<String, Object> publicSystemConfigs = MapBuilder.build(new Object[][] {
             { TAG_ALLOW_REGISTRATION, getThisNetwork().getBooleanTag(TAG_ALLOW_REGISTRATION, false) },
-            { TAG_SAGE_LAUNCHER, isSageLauncher() }
+            { TAG_SAGE_LAUNCHER, isSageLauncher() },
+            { TAG_PAYMENTS_ENABLED, paymentsEnabled() }
     });
 
     @Getter @Setter private String[] disallowedCountries;

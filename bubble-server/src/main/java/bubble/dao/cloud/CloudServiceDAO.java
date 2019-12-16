@@ -29,4 +29,9 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
         return findByUniqueFields("account", accountUuid, "name", name);
     }
 
+    public CloudService findByAccountAndTypeAndId(String accountUuid, CloudServiceType csType, String id) {
+        final CloudService found = findByUniqueFields("account", accountUuid, "type", csType, "enabled", true, "uuid", id);
+        return found != null ? found : findByUniqueFields("account", accountUuid, "type", csType, "enabled", true, "name", id);
+    }
+
 }

@@ -65,7 +65,7 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     };
     @Override public ScrubbableField[] fieldsToScrub() { return SCRUB_FIELDS; }
 
-    public static final String[] UPDATE_FIELDS = {"description", "template", "enabled", "driverConfig"};
+    public static final String[] UPDATE_FIELDS = {"description", "template", "enabled", "driverConfig", "priority"};
     public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "name", "type", "driverClass", "credentials");
 
     public CloudService(CloudService other) { copy(this, other, CREATE_FIELDS); }
