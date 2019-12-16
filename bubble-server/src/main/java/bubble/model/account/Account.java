@@ -1,5 +1,6 @@
 package bubble.model.account;
 
+import bubble.dao.account.AccountInitializer;
 import bubble.model.app.AppData;
 import bubble.model.app.BubbleApp;
 import bubble.model.cloud.*;
@@ -10,6 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.filters.auth.TokenPrincipal;
 import org.cobbzilla.wizard.model.HashedPassword;
@@ -28,9 +30,15 @@ import javax.validation.constraints.Size;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
+import static org.cobbzilla.util.system.Sleep.sleep;
+import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @ECType(root=true) @ECTypeURIs(listFields={"name", "url", "description", "admin", "suspended"}, isDeleteDefined=false)
 @ECTypeFields(list={"name", "url", "description", "admin", "suspended"})
@@ -45,7 +53,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
         @ECTypeChild(type=BubbleNode.class, backref="account"),
         @ECTypeChild(type=SentNotification.class, backref="account")
 })
-@Entity @NoArgsConstructor @Accessors(chain=true)
+@Entity @NoArgsConstructor @Accessors(chain=true) @Slf4j
 public class Account extends IdentifiableBase implements TokenPrincipal {
 
     public static final String[] UPDATE_FIELDS = {"url", "description", "autoUpdatePolicy"};
@@ -120,6 +128,28 @@ public class Account extends IdentifiableBase implements TokenPrincipal {
     public boolean wantsDriverUpdates() { return autoUpdatePolicy != null && autoUpdatePolicy.driverUpdates(); }
     public boolean wantsAppUpdates() { return autoUpdatePolicy != null && autoUpdatePolicy.appUpdates(); }
     public boolean wantsDataUpdates() { return autoUpdatePolicy != null && autoUpdatePolicy.dataUpdates(); }
+
+    public static final long INIT_WAIT_INTERVAL = MILLISECONDS.toMillis(250);
+    public static final long INIT_WAIT_TIMEOUT = SECONDS.toMillis(60);
+
+    @Transient @JsonIgnore @Getter @Setter private transient AccountInitializer accountInitializer;
+    public boolean hasAccountInitializer () { return accountInitializer != null; }
+
+    public Account waitForAccountInit () {
+        if (!hasAccountInitializer()) {
+            log.warn("waitForAccountInit: accountInitializer was not set");
+            return this;
+        }
+        final long start = now();
+        while (!accountInitializer.ready() && now() - start < INIT_WAIT_TIMEOUT) {
+            sleep(INIT_WAIT_INTERVAL, "postCreate: waiting for AccountInitializer.ready");
+        }
+        if (now() - start > INIT_WAIT_TIMEOUT && !accountInitializer.ready()) {
+            throw invalidEx("err.accountInit.timeout");
+        }
+        log.info("waitForAccountInit: ready in "+formatDuration(now() - start));
+        return this;
+    }
 
     @Transient @Getter @Setter private transient String apiToken;
 

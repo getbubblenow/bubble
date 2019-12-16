@@ -1,6 +1,5 @@
 package bubble.resources.account;
 
-import bubble.cloud.geoLocation.GeoLocation;
 import bubble.dao.SessionDAO;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
@@ -20,11 +19,9 @@ import bubble.resources.notify.SentNotificationsResource;
 import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.account.download.AccountDownloadService;
-import bubble.service.cloud.GeoService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.string.LocaleUtil;
 import org.cobbzilla.wizard.auth.ChangePasswordRequest;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.client.script.ApiRunner;
@@ -41,12 +38,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static bubble.ApiConstants.*;
-import static org.apache.http.HttpHeaders.ACCEPT_LANGUAGE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.errorString;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpContentTypes.TEXT_PLAIN;
@@ -62,7 +55,6 @@ public class MeResource {
     @Autowired private AccountDAO accountDAO;
     @Autowired private AccountPolicyDAO policyDAO;
     @Autowired private SessionDAO sessionDAO;
-    @Autowired private GeoService geoService;
     @Autowired private AccountDownloadService downloadService;
     @Autowired private BubbleConfiguration configuration;
 
@@ -73,41 +65,6 @@ public class MeResource {
             return ok(account.setPolicy(policyDAO.findSingleByAccount(account.getUuid())));
         } catch (Exception e) {
             return notFound();
-        }
-    }
-
-    @GET @Path("/detect/locale")
-    public Response detectLocale(@Context Request req,
-                                 @Context ContainerRequest ctx) {
-        final Map<String, String> locales = new HashMap<>();
-
-        final String langHeader = normalizeLangHeader(req);
-        if (langHeader != null) locales.put(ACCEPT_LANGUAGE, langHeader);
-
-        final String remoteHost = getRemoteHost(req);
-        try {
-            final Account caller = userPrincipal(ctx);
-            final GeoLocation loc = geoService.locate(caller.getUuid(), remoteHost);
-            if (loc != null) {
-                final List<String> found = LocaleUtil.getDefaultLocales(loc.getCountry());
-                for (int i=0; i<found.size(); i++) {
-                    locales.put("geolocation_"+i, found.get(i));
-                }
-            }
-        } catch (Exception e) {
-            log.warn("detectLocale: "+e);
-        }
-        return ok(locales);
-    }
-
-    @GET @Path("/detect/timezone")
-    public Response detectTimezone(@Context Request req,
-                                   @Context ContainerRequest ctx) {
-        final String remoteHost = getRemoteHost(req);
-        try {
-            return ok(geoService.getTimeZone(userPrincipal(ctx), remoteHost));
-        } catch (Exception e) {
-            return invalid("err.timezone.unknown", e.getMessage());
         }
     }
 

@@ -84,7 +84,7 @@ public class AccountsResource {
                 .setRemoteHost(getRemoteHost(req))
                 .setVerifyContact(true);
         final Account created = accountDAO.newAccount(req, reg, parent);
-        return ok(created);
+        return ok(created.waitForAccountInit());
     }
 
     @GET @Path("/{id}"+EP_DOWNLOAD)

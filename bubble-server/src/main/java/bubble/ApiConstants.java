@@ -4,6 +4,7 @@ import bubble.model.cloud.BubbleNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
 import org.cobbzilla.util.io.FileUtil;
 import org.glassfish.grizzly.http.server.Request;
@@ -24,8 +25,10 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.network.NetworkUtil.*;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
+@Slf4j
 public class ApiConstants {
 
     @Getter(lazy=true) private static final String bubbleDefaultDomain = initDefaultDomain();
@@ -172,8 +175,13 @@ public class ApiConstants {
     }
 
     public static String getRemoteHost(Request req) {
-        final String remoteHost = req.getHeader("X-Forwarded-For");
-        return remoteHost == null ? req.getRemoteAddr() : remoteHost;
+        final String xff = req.getHeader("X-Forwarded-For");
+        final String remoteHost = xff == null ? req.getRemoteAddr() : xff;
+        if (isPublicIpv4(remoteHost)) return remoteHost;
+        final String publicIp = getFirstPublicIpv4();
+        if (publicIp != null) return publicIp;
+        final String externalIp = getExternalIp();
+        return isPublicIpv4(externalIp) ? externalIp : remoteHost;
     }
 
     public static String getUserAgent(ContainerRequest ctx) { return ctx.getHeaderString(USER_AGENT); }

@@ -1,18 +1,18 @@
 package bubble.dao.account;
 
 import bubble.dao.account.message.AccountMessageDAO;
+import bubble.dao.app.*;
 import bubble.dao.cloud.AnsibleRoleDAO;
 import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.BubbleFootprintDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.dao.device.DeviceDAO;
-import bubble.dao.app.*;
 import bubble.model.account.*;
+import bubble.model.app.*;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudCredentials;
 import bubble.model.cloud.CloudService;
-import bubble.model.app.*;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.dao.AbstractCRUDDAO;
@@ -25,6 +25,7 @@ import javax.transaction.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static bubble.ApiConstants.getRemoteHost;
 import static bubble.model.account.AccountTemplate.copyTemplateObjects;
@@ -86,9 +87,10 @@ public class AccountDAO extends AbstractCRUDDAO<Account> {
             deviceDAO.ensureSpareDevice(accountUuid, thisNode.getNetwork(), true);
         }
 
-        // copy drivers, keep map of old uuid to new driver so we can map rules below
         if (account.hasParent()) {
-            daemon(new AccountInitializer(this, account, messageDAO));
+            final AccountInitializer init = new AccountInitializer(account, this, messageDAO);
+            account.setAccountInitializer(init);
+            daemon(init);
         }
 
         return super.postCreate(account, context);
@@ -103,11 +105,53 @@ public class AccountDAO extends AbstractCRUDDAO<Account> {
         return super.postUpdate(account, context);
     }
 
-    public void copyTemplates(Account account) {
+    public void copyTemplates(Account account, AtomicBoolean ready) {
         final String parent = account.getParent();
-        final Map<String, RuleDriver> drivers = new HashMap<>();
         final String acct = account.getUuid();
 
+        final Map<String, CloudService> clouds = new HashMap<>();
+        copyTemplateObjects(acct, parent, cloudDAO, new AccountTemplate.CopyTemplate<>() {
+            @Override public CloudService preCreate(CloudService parentEntity, CloudService accountEntity) {
+                return accountEntity.setDelegated(parentEntity.getUuid())
+                        .setCredentials(CloudCredentials.delegate(configuration.getThisNode(), configuration))
+                        .setTemplate(false);
+            }
+            @Override public void postCreate(CloudService parentEntity, CloudService accountEntity) {
+                clouds.put(parentEntity.getUuid(), accountEntity);
+            }
+        });
+
+        copyTemplateObjects(acct, parent, footprintDAO);
+
+        //noinspection Convert2Diamond -- compilation breaks with <>
+        copyTemplateObjects(acct, parent, domainDAO, new AccountTemplate.CopyTemplate<BubbleDomain>() {
+            @Override public BubbleDomain preCreate(BubbleDomain parentEntity, BubbleDomain accountEntity) {
+                final CloudService publicDns = findDnsCloudService(parentEntity, parentEntity.getPublicDns());
+                if (publicDns == null) return null;
+                return accountEntity
+                        .setDelegated(parentEntity.getUuid())
+                        .setPublicDns(publicDns.getUuid());
+            }
+
+            public CloudService findDnsCloudService(BubbleDomain parentEntity, String cloudDnsUuid) {
+                final CloudService dns = clouds.get(cloudDnsUuid);
+                if (dns == null) {
+                    log.error("DNS service "+ cloudDnsUuid +" could not be found for domain "+parentEntity.getUuid());
+                    return null;
+                }
+                final CloudService acctPublicDns = cloudDAO.findByAccountAndName(acct, dns.getName());
+                if (acctPublicDns == null) {
+                    log.error("DNS service not found under account "+acct+": "+dns.getName());
+                    return null;
+                }
+                return dns;
+            }
+        });
+        ready.set(true);
+
+        copyTemplateObjects(acct, parent, roleDAO);
+
+        final Map<String, RuleDriver> drivers = new HashMap<>();
         copyTemplateObjects(acct, parent, driverDAO, new AccountTemplate.CopyTemplate<>() {
             @Override public void postCreate(RuleDriver parentEntity, RuleDriver accountEntity) {
                 drivers.put(parentEntity.getUuid(), accountEntity);
@@ -162,46 +206,6 @@ public class AccountDAO extends AbstractCRUDDAO<Account> {
             }
         });
 
-        final Map<String, CloudService> clouds = new HashMap<>();
-
-        copyTemplateObjects(acct, parent, cloudDAO, new AccountTemplate.CopyTemplate<>() {
-            @Override public CloudService preCreate(CloudService parentEntity, CloudService accountEntity) {
-                return accountEntity.setDelegated(parentEntity.getUuid())
-                        .setCredentials(CloudCredentials.delegate(configuration.getThisNode(), configuration))
-                        .setTemplate(false);
-            }
-            @Override public void postCreate(CloudService parentEntity, CloudService accountEntity) {
-                clouds.put(parentEntity.getUuid(), accountEntity);
-            }
-        });
-
-        copyTemplateObjects(acct, parent, roleDAO);
-        copyTemplateObjects(acct, parent, footprintDAO);
-
-        //noinspection Convert2Diamond -- compilation breaks with <>
-        copyTemplateObjects(acct, parent, domainDAO, new AccountTemplate.CopyTemplate<BubbleDomain>() {
-            @Override public BubbleDomain preCreate(BubbleDomain parentEntity, BubbleDomain accountEntity) {
-                final CloudService publicDns = findDnsCloudService(parentEntity, parentEntity.getPublicDns());
-                if (publicDns == null) return null;
-                return accountEntity
-                        .setDelegated(parentEntity.getUuid())
-                        .setPublicDns(publicDns.getUuid());
-            }
-
-            public CloudService findDnsCloudService(BubbleDomain parentEntity, String cloudDnsUuid) {
-                final CloudService dns = clouds.get(cloudDnsUuid);
-                if (dns == null) {
-                    log.error("DNS service "+ cloudDnsUuid +" could not be found for domain "+parentEntity.getUuid());
-                    return null;
-                }
-                final CloudService acctPublicDns = cloudDAO.findByAccountAndName(acct, dns.getName());
-                if (acctPublicDns == null) {
-                    log.error("DNS service not found under account "+acct+": "+dns.getName());
-                    return null;
-                }
-                return dns;
-            }
-        });
         log.info("copyTemplates completed: "+acct);
     }
 

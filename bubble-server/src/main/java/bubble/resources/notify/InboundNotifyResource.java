@@ -13,13 +13,12 @@ import bubble.model.cloud.notify.ReceivedNotification;
 import bubble.model.cloud.notify.SentNotification;
 import bubble.notify.storage.StorageStreamRequest;
 import bubble.server.BubbleConfiguration;
-import bubble.service.notify.NotificationService;
 import bubble.service.backup.RestoreService;
 import bubble.service.cloud.StorageStreamService;
+import bubble.service.notify.NotificationService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.network.NetworkUtil;
 import org.cobbzilla.util.security.RsaMessage;
 import org.cobbzilla.util.string.StringUtil;
 import org.glassfish.grizzly.http.server.Request;
@@ -42,6 +41,8 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_OCTET_STREAM;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.network.NetworkUtil.configuredIpsAndExternalIp;
+import static org.cobbzilla.util.network.NetworkUtil.isLocalHost;
 import static org.cobbzilla.util.string.StringUtil.truncate;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -61,7 +62,7 @@ public class InboundNotifyResource {
     @Autowired private StorageStreamService storageStreamService;
     @Autowired private RestoreService restoreService;
 
-    @Getter(lazy=true) private final Set<String> localIps = NetworkUtil.configuredIps();
+    @Getter(lazy=true) private final Set<String> localIps = configuredIpsAndExternalIp();
 
     @POST
     public Response receiveNotification(@Context Request req,
@@ -150,7 +151,7 @@ public class InboundNotifyResource {
         if (fromKey != null) {
             if (!fromKey.getRemoteHost().equals(remoteHost)) {
                 // if request is from 127.0.0.1, check to see if fromKey is for a local address
-                if (remoteHost.equals("127.0.0.1") && getLocalIps().contains(fromKey.getRemoteHost())) {
+                if (isLocalHost(remoteHost) && getLocalIps().contains(fromKey.getRemoteHost())) {
                     log.debug("findFromKey: request from 127.0.0.1 is OK, key is local: "+fromKey.getRemoteHost()+ " (ips="+ StringUtil.toString(getLocalIps())+")");
                 } else {
                     log.warn("findFromKey: remoteHost for for node " + fromNodeUuid + " (key=" + fromKeyUuid + ", remoteHost=" + fromKey.getRemoteHost() + ") does not match request: " + remoteHost+ " (ips="+ StringUtil.toString(getLocalIps())+")");

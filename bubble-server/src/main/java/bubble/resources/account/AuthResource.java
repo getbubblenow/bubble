@@ -1,5 +1,6 @@
 package bubble.resources.account;
 
+import bubble.cloud.geoLocation.GeoLocation;
 import bubble.dao.SessionDAO;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
@@ -17,12 +18,15 @@ import bubble.service.account.StandardAccountMessageService;
 import bubble.service.backup.RestoreService;
 import bubble.service.boot.ActivationService;
 import bubble.service.boot.SageHelloService;
+import bubble.service.cloud.GeoService;
 import bubble.service.notify.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
+import org.cobbzilla.util.string.LocaleUtil;
 import org.cobbzilla.wizard.auth.LoginRequest;
 import org.cobbzilla.wizard.stream.FileSendableResource;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
+import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -34,7 +38,9 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static bubble.ApiConstants.*;
@@ -44,6 +50,7 @@ import static bubble.model.cloud.BubbleNetwork.TAG_PARENT_ACCOUNT;
 import static bubble.model.cloud.notify.NotificationType.retrieve_backup;
 import static bubble.server.BubbleServer.getRestoreKey;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.http.HttpHeaders.ACCEPT_LANGUAGE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
@@ -66,6 +73,7 @@ public class AuthResource {
     @Autowired private AccountMessageDAO accountMessageDAO;
     @Autowired private StandardAccountMessageService messageService;
     @Autowired private BubbleNodeDAO nodeDAO;
+    @Autowired private GeoService geoService;
     @Autowired private BubbleConfiguration configuration;
 
     @GET @Path(EP_CONFIGS)
@@ -181,7 +189,7 @@ public class AuthResource {
         if (parent == null) return invalid("err.parent.notFound", "Parent account does not exist: "+parentUuid);
 
         final Account account = accountDAO.newAccount(req, request, parent);
-        return ok(account.setToken(sessionDAO.create(account)));
+        return ok(account.waitForAccountInit().setToken(sessionDAO.create(account)));
     }
 
     @POST @Path(EP_LOGIN)
@@ -340,6 +348,48 @@ public class AuthResource {
             sessionDAO.invalidate(found.getApiToken());
         }
         return ok_empty();
+    }
+
+    @GET @Path("/detect/locale")
+    public Response detectLocale(@Context Request req,
+                                 @Context ContainerRequest ctx) {
+        final Map<String, String> locales = new HashMap<>();
+
+        final String langHeader = normalizeLangHeader(req);
+        if (langHeader != null) locales.put(ACCEPT_LANGUAGE, langHeader);
+
+        final String remoteHost = getRemoteHost(req);
+        try {
+            final Account caller = userPrincipal(ctx);
+            final GeoLocation loc = geoService.locate(caller.getUuid(), remoteHost);
+            if (loc != null) {
+                final List<String> found = LocaleUtil.getDefaultLocales(loc.getCountry());
+                for (int i=0; i<found.size(); i++) {
+                    locales.put("geolocation_"+i, found.get(i));
+                }
+            }
+        } catch (SimpleViolationException e) {
+            return invalid(e);
+
+        } catch (Exception e) {
+            log.warn("detectLocale: "+e);
+        }
+        return ok(locales.values());
+    }
+
+    @GET @Path("/detect/timezone")
+    public Response detectTimezone(@Context Request req,
+                                   @Context ContainerRequest ctx) {
+        final String remoteHost = getRemoteHost(req);
+        try {
+            return ok(geoService.getTimeZone(optionalUserPrincipal(ctx), remoteHost));
+
+        } catch (SimpleViolationException e) {
+            return invalid(e);
+
+        } catch (Exception e) {
+            return invalid("err.timezone.unknown", e.getMessage());
+        }
     }
 
 }

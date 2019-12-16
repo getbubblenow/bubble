@@ -8,6 +8,7 @@ import bubble.cloud.geoCode.GeoCodeResult;
 import bubble.cloud.geoCode.GeoCodeServiceDriver;
 import bubble.cloud.geoLocation.GeoLocation;
 import bubble.cloud.geoTime.GeoTimeZone;
+import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.BubbleFootprintDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
@@ -37,6 +38,7 @@ public class GeoService {
     // todo: move to config?
     public static final int LOC_MAX_DISTANCE = 50000;
 
+    @Autowired private AccountDAO accountDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleFootprintDAO footprintDAO;
     @Autowired private BubbleConfiguration configuration;
@@ -112,6 +114,7 @@ public class GeoService {
 
     public GeoTimeZone getTimeZone (Account account, String ip) {
 
+        if (account == null) account = accountDAO.findFirstAdmin();
         final List<CloudService> geoServices = cloudDAO.findByAccountAndType(account.getUuid(), CloudServiceType.geoTime);
         if (geoServices.isEmpty()) throw new SimpleViolationException("err.geoTimeService.notFound");
         geoServices.sort(SORT_PRIORITY);

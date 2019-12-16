@@ -9,6 +9,8 @@ import bubble.model.account.message.ActionTarget;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.system.Sleep.sleep;
@@ -17,11 +19,20 @@ import static org.cobbzilla.util.system.Sleep.sleep;
 public class AccountInitializer implements Runnable {
 
     public static final int MAX_ACCOUNT_INIT_RETRIES = 3;
-    public static final long COPY_WAIT_TIME = SECONDS.toMillis(3);
+    public static final long COPY_WAIT_TIME = SECONDS.toMillis(2);
 
-    private AccountDAO accountDAO;
     private Account account;
+    private AccountDAO accountDAO;
     private AccountMessageDAO messageDAO;
+    private AtomicBoolean ready = new AtomicBoolean(false);
+
+    public AccountInitializer(Account account, AccountDAO accountDAO, AccountMessageDAO messageDAO) {
+        this.account = account;
+        this.accountDAO = accountDAO;
+        this.messageDAO = messageDAO;
+    }
+
+    public boolean ready() { return ready.get(); }
 
     @Override public void run() {
         try {
@@ -30,7 +41,7 @@ public class AccountInitializer implements Runnable {
             for (int i=0; i<MAX_ACCOUNT_INIT_RETRIES; i++) {
                 try {
                     sleep(COPY_WAIT_TIME, "waiting before copyTemplates");
-                    accountDAO.copyTemplates(account);
+                    accountDAO.copyTemplates(account, ready);
 
                     if (account.hasPolicy() && account.getPolicy().hasAccountContacts()) {
                         messageDAO.sendVerifyRequest(account.getRemoteHost(), account, account.getPolicy().getAccountContacts()[0]);
