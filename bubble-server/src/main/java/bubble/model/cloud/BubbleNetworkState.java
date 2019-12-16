@@ -10,4 +10,6 @@ public enum BubbleNetworkState {
 
     @JsonCreator public static BubbleNetworkState fromString(String v) { return enumFromString(BubbleNetworkState.class, v); }
 
+    public boolean canStartNetwork () { return this == created || this == stopped; }
+
 }

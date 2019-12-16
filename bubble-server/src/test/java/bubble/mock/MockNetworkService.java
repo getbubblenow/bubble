@@ -9,11 +9,8 @@ import bubble.model.cloud.*;
 import bubble.notify.NewNodeNotification;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.StandardNetworkService;
-import org.cobbzilla.util.system.CommandResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 
@@ -25,9 +22,9 @@ public class MockNetworkService extends StandardNetworkService {
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private BubbleConfiguration configuration;
 
-    @Override public CommandResult ansibleSetup(String script) throws IOException {
-        return new CommandResult(0, "mock: successful", "");
-    }
+    @Override protected String lockNetwork(String network) { return "lock"; }
+    @Override protected boolean confirmLock(String network, String lock) { return true; }
+    @Override protected void unlockNetwork(String network, String lock) {}
 
     @Override public BubbleNode newNode(NewNodeNotification nn) {
 
@@ -64,6 +61,14 @@ public class MockNetworkService extends StandardNetworkService {
             nodeDAO.forceDelete(node.getUuid());
         }
         return true;
+    }
+
+    @Override public BubbleNode stopNode(BubbleNode node) {
+        return node.setState(BubbleNodeState.stopped);
+    }
+
+    @Override public BubbleNode killNode(BubbleNode node, String message) {
+        return node.setState(BubbleNodeState.stopped);
     }
 
 }

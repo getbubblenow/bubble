@@ -4,6 +4,7 @@ import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccount;
+import bubble.model.account.HasAccountNoName;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
 import org.glassfish.grizzly.http.server.Request;
@@ -134,7 +135,9 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
         final Account caller = checkEditable(ctx);
         final E found = find(ctx, id);
         if (found == null) return notFound(id);
-        if (!canChangeName() && !found.getName().equals(request.getName())) return notFound(id+"/"+request.getName());
+        if (!(found instanceof HasAccountNoName) && !canChangeName() && request.hasName() && !found.getName().equals(request.getName())) {
+            return notFound(id+"/"+request.getName());
+        }
 
         if (!canUpdate(ctx, caller, found, request)) return invalid("err.cannotUpdate", "Update entity not allowed", request.getName());
         found.update(request);

@@ -476,13 +476,14 @@
   },
 
   {
+    "before": "unset_stripe_error",
     "comment": "submit payment for unpaid bill",
     "request": {
       "uri": "me/plans/{{accountPlan.uuid}}/bills/{{bills.[0].uuid}}/pay",
       "method": "post"
     },
     "response": {
-      "check": [ {"condition": "json.getStatus.name() == 'paid'"} ]
+      "check": [ {"condition": "json.getStatus().name() == 'paid'"} ]
     }
   },
 

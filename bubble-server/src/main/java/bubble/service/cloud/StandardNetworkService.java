@@ -29,6 +29,7 @@ import org.cobbzilla.util.system.CommandResult;
 import org.cobbzilla.util.system.CommandShell;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.validation.MultiViolationException;
+import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -354,7 +355,7 @@ public class StandardNetworkService implements NetworkService {
         return node;
     }
 
-    String lockNetwork(String network) {
+    protected String lockNetwork(String network) {
         log.info("lockNetwork: locking "+network);
         final String lock = getNetworkLocks().lock(network, NET_LOCK_TIMEOUT, NET_DEADLOCK_TIMEOUT);
         log.info("lockNetwork: locked "+network);
@@ -408,6 +409,13 @@ public class StandardNetworkService implements NetworkService {
     }
 
     public NewNodeNotification startNetwork(BubbleNetwork network, NetLocation netLocation) {
+
+        if (configuration.paymentsEnabled()) {
+            final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(network.getAccount(), network.getUuid());
+            if (accountPlan == null) throw invalidEx("err.accountPlan.notFound");
+            if (accountPlan.disabled()) throw invalidEx("err.accountPlan.disabled");
+        }
+
         String lock = null;
         try {
             lock = lockNetwork(network.getUuid());
@@ -416,8 +424,8 @@ public class StandardNetworkService implements NetworkService {
             if (!nodeDAO.findByNetwork(network.getUuid()).isEmpty()) {
                 throw invalidEx("err.network.alreadyStarted");
             }
-            if (network.getState() != BubbleNetworkState.created && network.getState() != BubbleNetworkState.stopped) {
-                throw invalidEx("err.network.cannotStartInState");
+            if (!network.getState().canStartNetwork()) {
+                throw invalidEx("err.network.cannotStartInCurrentState");
             }
 
             network.setState(BubbleNetworkState.setup);
@@ -436,7 +444,7 @@ public class StandardNetworkService implements NetworkService {
                     .setDomain(network.getDomain())
                     .setFork(network.fork())
                     .setHost(host)
-                    .setFqdn(host+"."+network.getNetworkDomain())
+                    .setFqdn(host + "." + network.getNetworkDomain())
                     .setCloud(cloudAndRegion.getCloud().getUuid())
                     .setRegion(cloudAndRegion.getRegion().getInternalName())
                     .setLock(lock);
@@ -445,6 +453,9 @@ public class StandardNetworkService implements NetworkService {
             backgroundNewNode(newNodeRequest, lock);
 
             return newNodeRequest;
+
+        } catch (SimpleViolationException e) {
+            throw e;
 
         } catch (Exception e) {
             return die("startNetwork: "+e, e);
@@ -507,9 +518,6 @@ public class StandardNetworkService implements NetworkService {
     }
 
     public void backgroundNewNode(NewNodeNotification newNodeRequest, final String existingLock) {
-        final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(newNodeRequest.getAccount(), newNodeRequest.getNetwork());
-        if (accountPlan == null) throw invalidEx("err.accountPlan.notFound");
-        if (accountPlan.disabled()) throw invalidEx("err.accountPlan.disabled");
         final AtomicReference<String> lock = new AtomicReference<>(existingLock);
         daemon(new NodeLauncher(newNodeRequest, lock, this));
     }

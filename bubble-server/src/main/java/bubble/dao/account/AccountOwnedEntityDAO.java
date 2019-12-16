@@ -2,7 +2,9 @@ package bubble.dao.account;
 
 import bubble.model.account.Account;
 import bubble.model.account.HasAccount;
+import bubble.model.account.HasAccountNoName;
 import bubble.server.BubbleConfiguration;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.dao.AbstractCRUDDAO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import java.io.File;
 import java.util.List;
 
 import static bubble.ApiConstants.HOME_DIR;
+import static org.cobbzilla.util.reflect.ReflectionUtil.getFirstTypeParam;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.hibernate.criterion.Restrictions.eq;
 import static org.hibernate.criterion.Restrictions.or;
@@ -20,11 +23,13 @@ public abstract class AccountOwnedEntityDAO<E extends HasAccount> extends Abstra
 
     @Autowired private BubbleConfiguration configuration;
 
+    @Getter(lazy=true) private final Boolean hasNameField = !HasAccountNoName.class.isAssignableFrom(getFirstTypeParam(getClass()));
+
     public List<E> findByAccount(String accountUuid) { return findByField("account", accountUuid); }
 
     public E findByAccountAndId(String accountUuid, String id) {
         final E found = findByUniqueFields("account", accountUuid, "uuid", id);
-        return found != null ? found : findByUniqueFields("account", accountUuid, getNameField(), id);
+        return found != null || !getHasNameField() ? found : findByUniqueFields("account", accountUuid, getNameField(), id);
     }
 
     protected String getNameField() { return "name"; }

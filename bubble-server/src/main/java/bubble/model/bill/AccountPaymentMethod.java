@@ -73,6 +73,7 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
     @Column(nullable=false)
     @Getter @Setter private Boolean deleted = false;
     public boolean deleted() { return deleted != null && deleted; }
+    public boolean notDeleted() { return !deleted(); }
 
     public ValidationResult validate(ValidationResult result, BubbleConfiguration configuration) {
 

@@ -29,11 +29,11 @@ public class AccountPaymentMethodsResource extends AccountOwnedResource<AccountP
 
     @Override protected AccountPaymentMethod find(ContainerRequest ctx, String id) {
         final AccountPaymentMethod found = super.find(ctx, id);
-        return found.deleted() ? null : found;
+        return found == null || found.deleted() ? null : found;
     }
 
     @Override protected List<AccountPaymentMethod> list(ContainerRequest ctx) {
-        return super.list(ctx).stream().filter(p -> !p.deleted()).collect(Collectors.toList());
+        return super.list(ctx).stream().filter(AccountPaymentMethod::notDeleted).collect(Collectors.toList());
     }
 
     @Override protected AccountPaymentMethod setReferences(ContainerRequest ctx, Account caller, AccountPaymentMethod request) {
