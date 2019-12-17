@@ -54,7 +54,11 @@ public class AllPaymentMethodsResource {
     public Response findPaymentMethod(@Context ContainerRequest ctx,
                                       @PathParam("id") String id) {
         final Account account = userPrincipal(ctx);
-        final CloudService cloud = cloudDAO.findByAccountAndTypeAndId(account.getUuid(), CloudServiceType.payment, id);
+        CloudService cloud = cloudDAO.findByAccountAndTypeAndId(account.getUuid(), CloudServiceType.payment, id);
+        if (cloud == null) {
+            // try to find by driverClass
+            cloud = cloudDAO.findFirstByAccountAndTypeAndDriverClass(account.getUuid(), CloudServiceType.payment, id);
+        }
         if (cloud == null) return notFound(id);
         return ok(new PaymentService(cloud, cloud.getPaymentDriver(configuration).getPaymentMethodType()));
     }

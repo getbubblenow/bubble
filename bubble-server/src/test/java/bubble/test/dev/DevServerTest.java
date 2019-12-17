@@ -11,7 +11,7 @@ import static org.cobbzilla.util.system.Sleep.sleep;
 public class DevServerTest extends ActivatedBubbleModelTestBase {
 
     @Override protected String getModelPrefix() { return "models/"; }
-    @Override protected String getManifest() { return "manifest-all"; }
+    @Override protected String getManifest() { return "manifest-dev"; }
 
     @Override protected boolean useMocks() { return false; }
 

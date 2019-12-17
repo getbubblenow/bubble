@@ -1,10 +1,5 @@
 [
   "system/ruleDriver",
-  "apps/user_block/bubbleApp_userBlock",
-  "apps/user_block/hn/bubbleApp_userBlock_hn",
-  "apps/user_block/hn/bubbleApp_userBlock_hn_matchers",
-  "apps/user_block/hn/bubbleApp_userBlock_hn_data",
-  "apps/user_block/localhost/bubbleApp_userBlock_localhost",
-  "apps/user_block/localhost/bubbleApp_userBlock_localhost_matchers",
-  "apps/user_block/localhost/bubbleApp_userBlock_localhost_data"
+  "manifest-app-user-block",
+  "manifest-app-user-block-localhost"
 ]

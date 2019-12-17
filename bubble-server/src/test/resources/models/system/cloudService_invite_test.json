@@ -1,0 +1,32 @@
+[
+  {
+    "_subst": true,
+    "name": "InviteCode",
+    "children": {
+      "CloudServiceData": [
+        {
+          "_subst": true,
+          "key": "code1",
+          "dataJson": {
+            "token": "code1",
+            "expiration": "{{timestamp 'now,33d'}}"
+          }
+        }, {
+          "_subst": true,
+          "key": "code2",
+          "dataJson": {
+            "token": "code2",
+            "expiration": "{{timestamp 'now,33d'}}"
+          }
+        }, {
+          "_subst": true,
+          "key": "expired",
+          "dataJson": {
+            "token": "expired",
+            "expiration": "{{timestamp 'now'}}"
+          }
+        }
+      ]
+    }
+  }
+]

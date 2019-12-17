@@ -34,4 +34,13 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
         return found != null ? found : findByUniqueFields("account", accountUuid, "type", csType, "enabled", true, "name", id);
     }
 
+    public List<CloudService> findByAccountAndTypeAndDriverClass(String accountUuid, CloudServiceType csType, String driverClass) {
+        return findByFields("account", accountUuid, "type", csType, "enabled", true, "driverClass", driverClass);
+    }
+
+    public CloudService findFirstByAccountAndTypeAndDriverClass(String accountUuid, CloudServiceType csType, String driverClass) {
+        final List<CloudService> found = findByAccountAndTypeAndDriverClass(accountUuid, csType, driverClass);
+        return found.isEmpty() ? null : found.get(0);
+    }
+
 }

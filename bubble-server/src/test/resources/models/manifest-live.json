@@ -5,9 +5,6 @@
   "system/bubblePlan",
   "system/bubbleFootprint",
   "system/ruleDriver",
-  "apps/analytics/bubbleApp_analytics",
-  "apps/analytics/bubbleApp_analytics_matchers",
-  "apps/user_block/bubbleApp_userBlock",
-  "apps/user_block/hn/bubbleApp_userBlock_hn",
-  "apps/user_block/hn/bubbleApp_userBlock_hn_matchers"
+  "manifest-app-user-analytics",
+  "manifest-app-user-block"
 ]
