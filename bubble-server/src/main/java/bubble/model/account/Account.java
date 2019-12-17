@@ -32,6 +32,7 @@ import java.util.List;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.system.Sleep.sleep;
@@ -142,7 +143,13 @@ public class Account extends IdentifiableBase implements TokenPrincipal {
         }
         final long start = now();
         while (!accountInitializer.ready() && now() - start < INIT_WAIT_TIMEOUT) {
-            sleep(INIT_WAIT_INTERVAL, "postCreate: waiting for AccountInitializer.ready");
+            sleep(INIT_WAIT_INTERVAL, "waitForAccountInit: waiting for AccountInitializer.ready");
+            if (accountInitializer.hasError()) break;
+        }
+        if (accountInitializer.hasError()) {
+            final Exception error = accountInitializer.getError();
+            if (error instanceof RuntimeException) throw (RuntimeException) error;
+            return die("waitForAccountInit: "+error);
         }
         if (now() - start > INIT_WAIT_TIMEOUT && !accountInitializer.ready()) {
             throw invalidEx("err.accountInit.timeout");

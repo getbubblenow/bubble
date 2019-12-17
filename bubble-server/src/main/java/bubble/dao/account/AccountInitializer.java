@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
@@ -24,15 +25,19 @@ public class AccountInitializer implements Runnable {
     private Account account;
     private AccountDAO accountDAO;
     private AccountMessageDAO messageDAO;
+
     private AtomicBoolean ready = new AtomicBoolean(false);
+    public boolean ready() { return ready.get(); }
+
+    private AtomicReference<Exception> error = new AtomicReference<>();
+    public Exception getError() { return error.get(); }
+    public boolean hasError () { return getError() != null; }
 
     public AccountInitializer(Account account, AccountDAO accountDAO, AccountMessageDAO messageDAO) {
         this.account = account;
         this.accountDAO = accountDAO;
         this.messageDAO = messageDAO;
     }
-
-    public boolean ready() { return ready.get(); }
 
     @Override public void run() {
         try {
@@ -62,6 +67,7 @@ public class AccountInitializer implements Runnable {
                     .setAction(AccountAction.welcome)
                     .setTarget(ActionTarget.account));
         } catch (Exception e) {
+            error.set(e);
             // todo: send to errbit
             die("error: "+e, e);
         }
