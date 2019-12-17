@@ -5,6 +5,6 @@
   "system/bubblePlan",
   "system/bubbleFootprint",
   "system/ruleDriver",
-  "manifest-app-user-analytics",
+  "manifest-app-analytics",
   "manifest-app-user-block"
 ]
