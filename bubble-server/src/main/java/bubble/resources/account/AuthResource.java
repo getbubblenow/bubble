@@ -38,9 +38,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static bubble.ApiConstants.*;
@@ -50,7 +49,6 @@ import static bubble.model.cloud.BubbleNetwork.TAG_PARENT_ACCOUNT;
 import static bubble.model.cloud.notify.NotificationType.retrieve_backup;
 import static bubble.server.BubbleServer.getRestoreKey;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.apache.http.HttpHeaders.ACCEPT_LANGUAGE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
@@ -353,10 +351,10 @@ public class AuthResource {
     @GET @Path("/detect/locale")
     public Response detectLocale(@Context Request req,
                                  @Context ContainerRequest ctx) {
-        final Map<String, String> locales = new HashMap<>();
+        final List<String> locales = new ArrayList<>();
 
         final String langHeader = normalizeLangHeader(req);
-        if (langHeader != null) locales.put(ACCEPT_LANGUAGE, langHeader);
+        if (langHeader != null) locales.add(langHeader);
 
         final String remoteHost = getRemoteHost(req);
         try {
@@ -365,7 +363,9 @@ public class AuthResource {
             if (loc != null) {
                 final List<String> found = LocaleUtil.getDefaultLocales(loc.getCountry());
                 for (int i=0; i<found.size(); i++) {
-                    locales.put("geolocation_"+i, found.get(i));
+                    if (!locales.contains(found.get(i))) {
+                        locales.add(found.get(i));
+                    }
                 }
             }
         } catch (SimpleViolationException e) {
@@ -374,7 +374,7 @@ public class AuthResource {
         } catch (Exception e) {
             log.warn("detectLocale: "+e);
         }
-        return ok(locales.values());
+        return ok(locales);
     }
 
     @GET @Path("/detect/timezone")

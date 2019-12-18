@@ -14,8 +14,8 @@ public class CodePaymentToken {
 
     @Getter @Setter private String token;
 
-    @Getter @Setter private String accountPaymentMethod;
-    public boolean hasAccountPaymentMethod() { return accountPaymentMethod != null; }
+    @Getter @Setter private String account;
+    public boolean hasAccount() { return account != null; }
 
     @Getter @Setter private String accountPlan;
     public boolean hasAccountPlan() { return accountPlan != null; }

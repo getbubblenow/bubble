@@ -42,14 +42,14 @@ public class CodePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
         final CodePaymentToken cpToken = readToken(configuration, accountPaymentMethod, new ValidationResult(), paymentCloud);
         if (cpToken == null) return new PaymentValidationResult("err.purchase.tokenNotFound");
 
-        if (cpToken.hasAccountPaymentMethod()) {
-            if (!cpToken.getAccountPaymentMethod().equals(accountPaymentMethod.getUuid())) {
+        if (cpToken.hasAccount()) {
+            if (!cpToken.getAccount().equals(accountPaymentMethod.getAccount())) {
                 // already claimed
                 return new PaymentValidationResult("err.purchase.tokenUsed");
             }
         } else {
             final CloudServiceDataDAO dataDAO = configuration.getBean(CloudServiceDataDAO.class);
-            cpToken.setAccountPaymentMethod(accountPaymentMethod.getUuid());
+            cpToken.setAccount(accountPaymentMethod.getAccount());
             dataDAO.update(cpToken.getCloudServiceData().setData(json(cpToken)));
         }
         return new PaymentValidationResult(accountPaymentMethod);
@@ -63,8 +63,8 @@ public class CodePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
         final CodePaymentToken cpToken = readToken(configuration, paymentMethod, new ValidationResult(), paymentCloud);
         if (cpToken == null) return new PaymentValidationResult("err.purchase.tokenNotFound");
 
-        if (cpToken.hasAccountPaymentMethod()) {
-            if (!cpToken.getAccountPaymentMethod().equals(paymentMethod.getUuid())) {
+        if (cpToken.hasAccount()) {
+            if (!cpToken.getAccount().equals(accountPlan.getAccount())) {
                 // already claimed
                 return new PaymentValidationResult("err.purchase.tokenUsed");
             }
@@ -75,7 +75,7 @@ public class CodePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
             }
         } else {
             final CloudServiceDataDAO dataDAO = configuration.getBean(CloudServiceDataDAO.class);
-            cpToken.setAccountPaymentMethod(paymentMethod.getUuid());
+            cpToken.setAccount(accountPlan.getAccount());
             cpToken.setAccountPlan(accountPlan.getUuid());
             dataDAO.update(cpToken.getCloudServiceData().setData(json(cpToken)));
         }

@@ -32,6 +32,10 @@ public class AccountPaymentMethodsResource extends AccountOwnedResource<AccountP
         return found == null || found.deleted() ? null : found;
     }
 
+    @Override protected AccountPaymentMethod findAlternate(ContainerRequest ctx, AccountPaymentMethod request) {
+        return !request.hasPaymentInfo() ? null : getDao().findByAccountAndPaymentInfo(getAccountUuid(ctx), request.getPaymentInfo());
+    }
+
     @Override protected List<AccountPaymentMethod> list(ContainerRequest ctx) {
         return super.list(ctx).stream().filter(AccountPaymentMethod::notDeleted).collect(Collectors.toList());
     }

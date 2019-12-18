@@ -65,6 +65,7 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
 
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100000+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String paymentInfo;
+    public boolean hasPaymentInfo () { return paymentInfo != null; }
 
     public static final String DEFAULT_MASKED_PAYMENT_INFO = "XXXX-".repeat(3)+"XXXX";
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")

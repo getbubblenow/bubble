@@ -23,6 +23,13 @@ public class AccountPaymentMethodDAO extends AccountOwnedEntityDAO<AccountPaymen
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleConfiguration configuration;
 
+    public AccountPaymentMethod findByAccountAndPaymentInfo(String account, String paymentInfo) {
+        return findByAccount(account).stream()
+                .filter(apm -> apm.getPaymentInfo().equals(paymentInfo))
+                .findFirst()
+                .orElse(null);
+    }
+
     @Override public Object preCreate(AccountPaymentMethod paymentMethod) {
         if (paymentMethod.getPaymentMethodType().requiresClaim()) {
             final CloudService paymentService = cloudDAO.findByUuid(paymentMethod.getCloud());

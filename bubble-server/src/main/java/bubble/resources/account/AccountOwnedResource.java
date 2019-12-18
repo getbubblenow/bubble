@@ -111,9 +111,12 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
                            @Context ContainerRequest ctx,
                            E request) {
         final Account caller = checkEditable(ctx);
-        final E found = find(ctx, request.getName());
+        E found = find(ctx, request.getName());
+        if (found == null) {
+            found = findAlternate(ctx, request);
+        }
         if (found != null) {
-            if (!canUpdate(ctx, caller, found, request)) return invalid("err.cannotUpdate", "Update entity not allowed", request.getName());
+            if (!canUpdate(ctx, caller, found, request)) return ok(found);
             found.update(request);
             return ok(getDao().update(found));
         }
@@ -123,6 +126,8 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
         final E toCreate = setReferences(ctx, caller, instantiate(getEntityClass(), request).setAccount(getAccountUuid(ctx)));
         return ok(daoCreate(toCreate));
     }
+
+    protected E findAlternate(ContainerRequest ctx, E request) { return null; }
 
     protected Object daoCreate(E toCreate) { return getDao().create(toCreate); }
 
