@@ -76,7 +76,7 @@ public class Account extends IdentifiableBase implements TokenPrincipal {
     public static String accountField(String table) { return table.equalsIgnoreCase("account") ? "uuid" : "account"; }
 
     @HasValue(message="err.name.required")
-    @ECIndex(unique=true) @Column(length=100, nullable=false)
+    @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=100)
     @Getter @Setter private String name;
 
     private static final List<String> RESERVED_NAMES = Arrays.asList(
@@ -96,8 +96,8 @@ public class Account extends IdentifiableBase implements TokenPrincipal {
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(1024+ENC_PAD)+")")
     @Getter @Setter private String url;
 
-    @Size(max=1000, message="err.description.length")
-    @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(1000+ENC_PAD)+")")
+    @Size(max=10000, message="err.description.length")
+    @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
     @Getter @Setter private Boolean admin = false;
