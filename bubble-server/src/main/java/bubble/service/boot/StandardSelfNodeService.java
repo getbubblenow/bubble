@@ -123,9 +123,9 @@ public class StandardSelfNodeService implements SelfNodeService {
 
         // start RefundService if payments are enabled and this is a SageLauncher
         if (c.paymentsEnabled() && c.isSageLauncher()) {
-            log.info("onStart: starting RefundService");
-            c.getBean(RefundService.class).start();
+            log.info("onStart: starting BillingService and RefundService");
             c.getBean(BillingService.class).start();
+            c.getBean(RefundService.class).start();
         }
 
         return true;
