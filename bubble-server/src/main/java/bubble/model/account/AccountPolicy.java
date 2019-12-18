@@ -13,6 +13,7 @@ import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKey;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
+import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
@@ -20,6 +21,7 @@ import javax.validation.constraints.Size;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static bubble.model.account.AccountContact.contactMatch;
@@ -35,9 +37,16 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 @NoArgsConstructor @Accessors(chain=true)
 public class AccountPolicy extends IdentifiableBase implements HasAccount {
 
+    public static final Long MAX_ACCOUNT_OPERATION_TIMEOUT = TimeUnit.DAYS.toMillis(3);
+    public static final Long MAX_NODE_OPERATION_TIMEOUT = TimeUnit.DAYS.toMillis(3);
+    public static final Long MIN_ACCOUNT_OPERATION_TIMEOUT = MINUTES.toMillis(1);
+    public static final Long MIN_NODE_OPERATION_TIMEOUT = MINUTES.toMillis(1);
+
+    public static final String[] UPDATE_FIELDS = {"deletionPolicy", "nodeOperationTimeout", "accountOperationTimeout"};
+
     public AccountPolicy(AccountPolicy policy) { copy(this, policy); }
 
-    @Override public Identifiable update(Identifiable thing) { copy(this, thing); return this; }
+    @Override public Identifiable update(Identifiable thing) { copy(this, thing, UPDATE_FIELDS); return this; }
 
     @ECForeignKey(entity=Account.class)
     @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
@@ -52,7 +61,7 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
     @Getter @Setter private Long accountOperationTimeout = MINUTES.toMillis(10);
 
     @Enumerated(EnumType.STRING) @Column(length=20, nullable=false)
-    @Getter @Setter private AccountDeletionPolicy deletionPolicy = AccountDeletionPolicy.full_delete;
+    @Getter @Setter private AccountDeletionPolicy deletionPolicy = AccountDeletionPolicy.block_delete;
 
     @JsonIgnore @Transient public boolean isFullDelete () { return deletionPolicy == AccountDeletionPolicy.full_delete; }
     @JsonIgnore @Transient public boolean isBlockDelete () { return deletionPolicy == AccountDeletionPolicy.block_delete; }
@@ -189,5 +198,27 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
             setAccountContacts(contacts);
         }
         return this;
+    }
+
+    public ValidationResult validate() {
+        final ValidationResult result = new ValidationResult();
+        if (deletionPolicy == null) {
+            result.addViolation("err.deletionPolicy.required");
+        }
+        if (accountOperationTimeout == null) {
+            result.addViolation("err.accountOperationTimeout.required");
+        } else if (accountOperationTimeout > MAX_ACCOUNT_OPERATION_TIMEOUT) {
+            result.addViolation("err.accountOperationTimeout.tooLong");
+        } else if (accountOperationTimeout < MIN_ACCOUNT_OPERATION_TIMEOUT) {
+            result.addViolation("err.accountOperationTimeout.tooShort");
+        }
+        if (nodeOperationTimeout == null) {
+            result.addViolation("err.nodeOperationTimeout.required");
+        } else if (nodeOperationTimeout > MAX_NODE_OPERATION_TIMEOUT) {
+            result.addViolation("err.nodeOperationTimeout.tooLong");
+        } else if (nodeOperationTimeout < MIN_NODE_OPERATION_TIMEOUT) {
+            result.addViolation("err.nodeOperationTimeout.tooShort");
+        }
+        return result;
     }
 }
