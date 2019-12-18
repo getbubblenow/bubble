@@ -113,6 +113,11 @@ public class AccountsResource {
         } else {
             c.account.update(request);
         }
+        // check name collision
+        final Account byName = accountDAO.findByName(c.account.getName());
+        if (byName != null && !byName.getUuid().equals(c.account.getUuid())) {
+            return invalid("err.name.registered");
+        }
         return ok(accountDAO.update(c.account));
     }
 
