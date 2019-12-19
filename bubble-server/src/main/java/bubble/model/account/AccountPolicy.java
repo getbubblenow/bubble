@@ -165,6 +165,9 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
     public AccountContact findContact(AccountContact contact) {
         return findContact(contact, getAccountContacts());
     }
+    public AccountContact findContactByUuid(String uuid) {
+        return findContact(new AccountContact().setUuid(uuid), getAccountContacts());
+    }
 
     protected static AccountContact findContact(AccountContact contact, AccountContact[] accountContacts) {
         if (accountContacts == null || accountContacts.length == 0) return null;

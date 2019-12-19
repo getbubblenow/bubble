@@ -71,11 +71,15 @@ public class StandardAccountMessageService implements AccountMessageService {
             log.error(prefix+"no clouds of type " + contact.getType() + " found");
             return false;
         }
+        final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
         for (CloudService cloud : priorityDesc(clouds)) {
             final AuthenticationDriver driver = cloud.getAuthenticationDriver(configuration);
             if (shouldSend(message, contact)) {
                 if (message.getMessageType().hasRequest()) {
                     message.setRequest(messageDAO.findOperationRequest(message));
+                    message.setRequestContact(policy.findContactByUuid(message.getRequest().getContact()));
+                } else {
+                    message.setRequestContact(policy.findContactByUuid(message.getContact()));
                 }
                 if (driver.send(account, message, contact)) {
                     log.info(prefix + "send succeeded with cloud: " + cloud.getName());
@@ -125,7 +129,10 @@ public class StandardAccountMessageService implements AccountMessageService {
         }
         final AccountMessageApprovalStatus approvalStatus = messageDAO.requestApproved(account, approval);
         if (approvalStatus == AccountMessageApprovalStatus.ok_confirmed) {
+            final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
             final AccountMessage confirm = messageDAO.create(new AccountMessage(approval).setMessageType(AccountMessageType.confirmation));
+            approval.setRequest(messageDAO.findOperationRequest(approval));
+            approval.setRequestContact(policy.findContactByUuid(approval.getRequest().getContact()));
             getCompletionHandler(approval).confirm(approval, data);
             return confirm;
         } else if (approvalStatus.ok()) {
@@ -173,7 +180,10 @@ public class StandardAccountMessageService implements AccountMessageService {
         // has it already been denied?
         final List<AccountMessage> denials = messageDAO.findOperationDenials(denial);
         if (!denials.isEmpty()) {
+            final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
             if (denials.size() == 1 && denials.get(0).getUuid().equals(denial.getUuid())) {
+                denial.setRequest(messageDAO.findOperationRequest(denial));
+                denial.setRequestContact(policy.findContactByUuid(denial.getRequest().getContact()));
                 getCompletionHandler(denial).deny(denial);
             }
             return denials.get(0);

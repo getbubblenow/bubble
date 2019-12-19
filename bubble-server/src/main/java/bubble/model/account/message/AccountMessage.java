@@ -1,6 +1,7 @@
 package bubble.model.account.message;
 
 import bubble.model.account.Account;
+import bubble.model.account.AccountContact;
 import bubble.model.account.AccountPolicy;
 import bubble.model.account.HasAccount;
 import lombok.Getter;
@@ -72,6 +73,7 @@ public class AccountMessage extends IdentifiableBase implements HasAccount {
     @Getter @Setter private String data;
 
     @Transient @Getter @Setter private transient AccountMessage request;
+    @Transient @Getter @Setter private transient AccountContact requestContact;
 
     public String templateName(String basename) { return getMessageType()+"/"+ getAction()+"/"+getTarget()+"/"+basename+".hbs"; }
 

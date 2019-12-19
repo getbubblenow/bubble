@@ -8,6 +8,7 @@ import bubble.model.cloud.CloudService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.string.LocaleUtil;
 
 import java.util.Map;
@@ -17,6 +18,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.getFirstTypeParam;
 
+@Slf4j
 public abstract class SmsServiceDriverBase<T extends SmsConfig> implements SmsServiceDriver {
 
     protected T config;

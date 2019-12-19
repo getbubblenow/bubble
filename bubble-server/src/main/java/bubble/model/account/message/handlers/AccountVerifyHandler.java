@@ -16,14 +16,16 @@ public class AccountVerifyHandler implements AccountMessageCompletionHandler {
 
     @Override public void confirm(AccountMessage message, NameAndValue[] data) {
         final AccountPolicy policy = policyDAO.findSingleByAccount(message.getAccount());
-        log.info("confirm: verifying contact "+message.getContact()+" from account "+message.getAccount());
-        policyDAO.update(policy.verifyContact(message.getContact()));
+        final String contact = message.getRequest().getContact();
+        log.info("confirm: verifying contact "+ contact +" from account "+message.getAccount());
+        policyDAO.update(policy.verifyContact(contact));
     }
 
     @Override public void deny(AccountMessage message) {
         final AccountPolicy policy = policyDAO.findSingleByAccount(message.getAccount());
-        log.info("deny: removing contact "+message.getContact()+" from account "+message.getAccount());
-        policy.removeContact(new AccountContact().setUuid(message.getContact()));
+        final String contact = message.getRequest().getContact();
+        log.info("deny: removing contact "+ contact +" from account "+message.getAccount());
+        policy.removeContact(new AccountContact().setUuid(contact));
         policyDAO.update(policy);
     }
 

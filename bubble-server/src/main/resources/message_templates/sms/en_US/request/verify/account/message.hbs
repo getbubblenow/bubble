@@ -1,2 +1,1 @@
-{{network.networkDomain}}: {{#if contact.isSms}}Verification code: {{confirmationToken}}{{else}}{{#if contact.isEmail}}Email added: {{contact.info}}.{{else}}Auth added: {{contact.type}}{{/if}}
-Deny with code: {{confirmationToken}}{{/if}}
+{{network.networkDomain}}: {{#string_compare contact.uuid '==' message.contact}}SMS Phone added: {{contact.info}} - Approve: {{configuration.publicUriBase}}/me/action?approve={{confirmationToken}} - Deny: {{configuration.publicUriBase}}/me/action?deny={{confirmationToken}}{{else}}{{#if message.requestContact.isEmail}}Email added: {{message.requestContact.info}}{{else}}Auth added: {{message.requestContact.type}}{{/if}} - Deny: {{configuration.publicUriBase}}/me/action?deny={{confirmationToken}}{{/string_compare}}
