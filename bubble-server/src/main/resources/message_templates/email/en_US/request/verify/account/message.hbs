@@ -9,16 +9,17 @@ Contact information has been added to your account named '{{account.name}}' on {
 
 If you did not make this request or would like to cancel this request, please click this link:
 
-{{configuration.publicUriBase}}/me/deny?t={{confirmationToken}}
+{{configuration.publicUriBase}}/me/action?deny={{confirmationToken}}
 
 ----------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------
-
+{{#if contact.isEmail}}
 If you DID make this request and are ready to verify this contact information, click the link below.
 
-{{configuration.publicUriBase}}/me/approve?t={{confirmationToken}}
+{{configuration.publicUriBase}}/me/action?approve={{confirmationToken}}
 
 ----------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------
+{{/if}}
 
 Thank you for using Bubble!

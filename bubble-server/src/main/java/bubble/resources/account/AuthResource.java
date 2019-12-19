@@ -259,15 +259,15 @@ public class AuthResource {
         final Account caller = optionalUserPrincipal(ctx);
 
         final AccountMessage approval = messageService.approve(caller, getRemoteHost(req), token, data);
-        if (approval == null) return notFound(token);
+        if (approval == null) return invalid("err.token.invalid");
         final Account account = validateCallerForApproveOrDeny(caller, approval, token);
 
         if (approval.getMessageType() == AccountMessageType.confirmation) {
-            if (account == null) return notFound(approval.getAccount());
+            if (account == null) return invalid("err.token.invalid");
             if (approval.getAction() == AccountAction.login) {
                 return ok(account.setToken(sessionDAO.create(account)));
             } else {
-                return ok();
+                return ok_empty();
             }
         }
 

@@ -1,1 +1,2 @@
-{{network.networkDomain}}: Verification code: {{confirmationToken}}
+{{network.networkDomain}}: {{#if contact.isSms}}Verification code: {{confirmationToken}}{{else}}{{#if contact.isEmail}}Email added: {{contact.info}}.{{else}}Auth added: {{contact.type}}{{/if}}
+Deny with code: {{confirmationToken}}{{/if}}

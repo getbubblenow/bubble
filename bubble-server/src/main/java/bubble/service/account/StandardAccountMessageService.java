@@ -2,8 +2,8 @@ package bubble.service.account;
 
 import bubble.cloud.auth.AuthenticationDriver;
 import bubble.dao.account.AccountDAO;
-import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.account.AccountPolicyDAO;
+import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.AccountContact;
@@ -202,7 +202,7 @@ public class StandardAccountMessageService implements AccountMessageService {
         String json = tokens.get(token);
         if (json == null) {
             log.warn("captureResponse("+type+"): regular token not found: "+token);
-            return null;
+            throw invalidEx("err.token.invalid");
         }
 
         if (NUMERIC_PATTERN.matcher(json).matches()) {
@@ -211,7 +211,7 @@ public class StandardAccountMessageService implements AccountMessageService {
             json = tokens.get(numericToken);
             if (json == null) {
                 log.warn("captureResponse("+type+"): numeric token not found: "+numericToken+" (token="+token+")");
-                return null;
+                throw invalidEx("err.token.invalid");
             }
         }
 
@@ -229,7 +229,7 @@ public class StandardAccountMessageService implements AccountMessageService {
                 .setTarget(amc.getMessage().getTarget());
 
         if (data != null && !getCompletionHandler(toCreate).validate(toCreate, data)) {
-            throw invalidEx("err.request.invalid", type+" request was invalid", json(data));
+            throw invalidEx("err.token.invalid", type+" request was invalid", json(data));
         }
 
         final AccountMessage message = messageDAO.create(toCreate);

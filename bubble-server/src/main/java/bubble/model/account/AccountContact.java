@@ -54,6 +54,8 @@ public class AccountContact implements Serializable {
     @HasValue(message="err.cloudServiceType.required")
     @Getter @Setter private CloudServiceType type;
     @JsonIgnore public boolean isAuthenticator () { return type == CloudServiceType.authenticator; }
+    @JsonIgnore public boolean getIsEmail () { return type == CloudServiceType.email; }
+    @JsonIgnore public boolean getIsSms () { return type == CloudServiceType.sms; }
 
     @Getter @Setter private Boolean verified = null;
     public boolean verified () { return bool(verified); }
