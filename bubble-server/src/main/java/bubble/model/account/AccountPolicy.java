@@ -4,6 +4,7 @@ import bubble.cloud.CloudServiceType;
 import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.ActionTarget;
+import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -77,7 +78,12 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
     @Transient public AccountContact[] getAccountContacts () { return accountContactsJson == null ? null : json(accountContactsJson, AccountContact[].class); }
     public AccountPolicy setAccountContacts(AccountContact[] contacts) { return setAccountContactsJson(contacts == null ? null : json(contacts)); }
 
-    public AccountPolicy setContact(AccountContact c) { setAccountContacts(AccountContact.set(c, getAccountContacts())); return this; }
+    public AccountPolicy setContact(AccountContact c) { return setContact(c, null, null); }
+
+    public AccountPolicy setContact(AccountContact c, Account account, BubbleConfiguration configuration) {
+        setAccountContacts(AccountContact.set(c, getAccountContacts(), account, configuration));
+        return this;
+    }
     public AccountPolicy removeContact(AccountContact c) { setAccountContacts(AccountContact.remove(c, getAccountContacts())); return this; }
 
     public List<AccountContact> getAllowedContacts(AccountMessage message) {

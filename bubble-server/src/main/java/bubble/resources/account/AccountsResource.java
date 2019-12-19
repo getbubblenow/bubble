@@ -156,7 +156,7 @@ public class AccountsResource {
             contact.setInfo(existing.getInfo());
         }
 
-        policyDAO.update(policy.setContact(contact));
+        policyDAO.update(policy.setContact(contact, c.account, configuration));
         final AccountContact added = policy.findContact(contact);
         if (added == null) {
             log.error("setContact: contact not set: "+contact);

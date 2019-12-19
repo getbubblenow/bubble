@@ -160,14 +160,10 @@ public class AuthResource {
         final Account found = optionalUserPrincipal(ctx);
         if (found != null) return invalid("err.register.alreadyLoggedIn", "Cannot register a new account when logged in");
 
-        final ValidationResult errors = new ValidationResult();
-        if (empty(request.getName())) {
-            errors.addViolation("err.name.required");
-        } else if (request.getName().length() < NAME_MIN_LENGTH) {
-            errors.addViolation("err.name.tooShort");
-        } else if (request.getName().length() > NAME_MAX_LENGTH) {
-            errors.addViolation("err.name.tooLong");
-        } else {
+        request.setAdmin(false); // cannot register admins, they must be created
+
+        final ValidationResult errors = request.validateName();
+        if (errors.isValid()) {
             final Account existing = accountDAO.findByName(request.getName());
             if (existing != null) errors.addViolation("err.name.registered", "Name is already registered: ", request.getName());
         }
@@ -288,8 +284,12 @@ public class AuthResource {
         final AccountContact authenticator = policy.getAuthenticator();
         if (authenticator == null) return invalid("err.authenticator.notConfigured");
 
-        final String secret = authenticator.getInfo();
+        final String secret = authenticator.totpInfo().getKey();
         if (G_AUTH.authorize(secret, request.getToken())) {
+            if (request.verify()) {
+                policyDAO.update(policy.verifyContact(policy.getAuthenticator().getUuid()));
+                return ok_empty();
+            }
             final AccountMessage loginRequest = accountMessageDAO.findMostRecentLoginRequest(account.getUuid());
             final AccountMessageContact amc = messageService.accountMessageContact(loginRequest, authenticator);
             final AccountMessage approval = messageService.approve(account, getRemoteHost(req), amc.key());

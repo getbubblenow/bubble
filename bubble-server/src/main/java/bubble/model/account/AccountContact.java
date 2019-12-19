@@ -5,6 +5,7 @@ import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
+import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 import lombok.*;
@@ -51,6 +52,8 @@ public class AccountContact implements Serializable {
     @HasValue(message="err.info.required")
     @Getter @Setter private String info;
 
+    public TotpBean totpInfo () { return !empty(info) && isAuthenticator() ? json(info, TotpBean.class) : null; }
+
     @HasValue(message="err.cloudServiceType.required")
     @Getter @Setter private CloudServiceType type;
     @JsonIgnore public boolean isAuthenticator () { return type == CloudServiceType.authenticator; }
@@ -78,7 +81,7 @@ public class AccountContact implements Serializable {
     public boolean requiredForNetworkUnlock () { return requiredForNetworkUnlock != null && requiredForNetworkUnlock; }
     public boolean requiredForNodeOperations () { return requiredForNodeOperations != null && requiredForNodeOperations; }
 
-    public static AccountContact[] set(AccountContact c, AccountContact[] contacts) {
+    public static AccountContact[] set(AccountContact c, AccountContact[] contacts, Account account, BubbleConfiguration configuration) {
         if (!c.getType().isAuthenticationType()) return die("add: not an authentication type: "+c);
         c.setVerified(null); // 'verified' cannot be updated this way; use AccountPolicy.verifyContact
 
@@ -91,9 +94,6 @@ public class AccountContact implements Serializable {
             if (auth != null && !auth.getUuid().equals(c.getUuid())) {
                 throw invalidEx("err.authenticator.configured", "Only one authenticator can be configured");
             }
-            // authenticator is always a required factor, and is always verified
-            c.setAuthFactor(AuthFactorType.required);
-            c.setVerified(true);
         }
 
         if (!c.hasUuid()) c.initUuid();
@@ -129,19 +129,21 @@ public class AccountContact implements Serializable {
             if (c.hasNick()) checkNickInUse(c, contacts);
 
             // generate secret key if needed
-            if (c.isAuthenticator()) c.setInfo(getTotpInfo());
+            if (c.isAuthenticator()) {
+                if (account == null || configuration == null) {
+                    throw invalidEx("err.authenticator.cannotCreate");
+                }
+                c.setInfo(getTotpInfo(account, configuration));
+            }
 
             return ArrayUtil.append(contacts, c);
         }
         return contacts;
     }
 
-    public static String getTotpInfo() {
-        final Map<String, Object> totpMap = new HashMap<>();
+    public static String getTotpInfo(Account account, BubbleConfiguration configuration) {
         final GoogleAuthenticatorKey creds = G_AUTH.createCredentials();
-        totpMap.put("key", creds.getKey());
-        totpMap.put("backupCodes", creds.getScratchCodes());
-        return json(totpMap, COMPACT_MAPPER);
+        return json(new TotpBean(creds, account, configuration), COMPACT_MAPPER);
     }
 
     private static void checkNickInUse(AccountContact c, AccountContact[] contacts) {

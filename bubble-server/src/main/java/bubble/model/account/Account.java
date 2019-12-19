@@ -20,6 +20,7 @@ import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.cobbzilla.wizard.validation.HasValue;
+import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
@@ -29,11 +30,11 @@ import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
@@ -78,13 +79,16 @@ public class Account extends IdentifiableBase implements TokenPrincipal {
     @HasValue(message="err.name.required")
     @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=100)
     @Getter @Setter private String name;
+    public boolean hasName () { return !empty(name); }
+
+    public static final Pattern VALID_NAME_PATTERN = Pattern.compile("^[A-Za-z][-\\.A-Za-z0-9_]+$");
+    public boolean hasInvalidName() { return hasName() && !VALID_NAME_PATTERN.matcher(getName()).matches(); }
 
     private static final List<String> RESERVED_NAMES = Arrays.asList(
             "root", "postmaster", "hostmaster", "webmaster",
             "ftp", "www", "www-data", "postgres", "ipfs",
             "redis", "nginx", "mitmproxy", "mitmdump", "algo", "algovpn");
-
-    public boolean hasReservedName () { return RESERVED_NAMES.contains(getName()); }
+    public boolean hasReservedName () { return hasName() && RESERVED_NAMES.contains(getName()); }
 
     // make this updatable if we ever want accounts to be able to change parents
     // there might be a lot more involved in that action though (read-only parent objects that will no longer be visible, must be copied in?)
@@ -190,4 +194,23 @@ public class Account extends IdentifiableBase implements TokenPrincipal {
     @Transient @Getter @Setter private transient String remoteHost;
     @Transient @JsonIgnore @Getter @Setter private transient Boolean verifyContact;
 
+    public ValidationResult validateName () {
+        final ValidationResult result = new ValidationResult();
+        if (!hasName()) {
+            result.addViolation("err.name.required");
+        } else {
+            if (getName().length() < NAME_MIN_LENGTH) {
+                result.addViolation("err.name.tooShort");
+            } else if (getName().length() > NAME_MAX_LENGTH) {
+                result.addViolation("err.name.tooLong");
+            }
+            if (!admin() && hasReservedName()) {
+                result.addViolation("err.name.reserved");
+            }
+            if (hasInvalidName()) {
+                result.addViolation("err.name.regexFailed");
+            }
+        }
+        return result;
+    }
 }

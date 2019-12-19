@@ -17,6 +17,7 @@ import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.dao.AbstractCRUDDAO;
 import org.cobbzilla.wizard.model.HashedPassword;
+import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -67,7 +68,9 @@ public class AccountDAO extends AbstractCRUDDAO<Account> {
     }
 
     @Override public Object preCreate(Account account) {
-        if (!account.admin() && account.hasReservedName()) throw invalidEx("err.name.reserved");
+        final ValidationResult result = account.validateName();
+        if (result.isInvalid()) throw invalidEx(result);
+
         if (account.getAutoUpdatePolicy() == null) {
             account.setAutoUpdatePolicy(new AutoUpdatePolicy());
         }

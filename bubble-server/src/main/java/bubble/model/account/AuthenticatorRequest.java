@@ -10,5 +10,7 @@ public class AuthenticatorRequest {
 
     @Getter @Setter private String account;
     @Getter @Setter private int token;
+    @Getter @Setter private Boolean verify;
+    public boolean verify() { return verify != null && verify; }
 
 }
