@@ -147,7 +147,14 @@ public class AccountsResource {
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
 
         final AccountContact existing = policy.findContact(contact);
-        if (existing != null && existing.isAuthenticator()) return invalid("err.authenticator.configured");
+        if (existing != null) {
+            if (existing.isAuthenticator()) return invalid("err.authenticator.configured");
+
+            // if it already exists, these fields cannot be changed
+            contact.setUuid(existing.getUuid());
+            contact.setType(existing.getType());
+            contact.setInfo(existing.getInfo());
+        }
 
         policyDAO.update(policy.setContact(contact));
         final AccountContact added = policy.findContact(contact);

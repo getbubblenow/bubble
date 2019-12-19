@@ -31,8 +31,14 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 public class AccountContact implements Serializable {
 
     public static final int MAX_NICK_LENGTH = 100;
+    public static final String[] UPDATE_EXCLUDE_FIELDS = {"uuid", "type", "info"};
 
     public AccountContact(AccountContact other) { copy(this, other); }
+
+    public AccountContact update(AccountContact other) {
+        copy(this, other, null, UPDATE_EXCLUDE_FIELDS);
+        return this;
+    }
 
     @Getter @Setter private String uuid = randomUUID().toString();
     public boolean hasUuid () { return !empty(uuid); }
@@ -77,11 +83,6 @@ public class AccountContact implements Serializable {
         // validate contact info using type-specific validator
         final List<ConstraintViolationBean> errors = c.getType().validate(c.getInfo());
         if (errors != null && !errors.isEmpty()) throw invalidEx(errors);
-
-        // there must be at least one contact that can be used to unlock the network
-        if (!c.requiredForNetworkUnlock() && (contacts == null || Arrays.stream(contacts).noneMatch(AccountContact::requiredForNetworkUnlock))) {
-            throw invalidEx("err.requiredForNetworkUnlock.atLeastOneNetworkUnlockContactRequired");
-        }
 
         if (c.isAuthenticator()) {
             final AccountContact auth = findAuthenticator(contacts);
