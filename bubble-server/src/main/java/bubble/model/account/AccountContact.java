@@ -30,11 +30,15 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @NoArgsConstructor @Accessors(chain=true) @EqualsAndHashCode(of={"info", "type"}) @ToString @Slf4j
 public class AccountContact implements Serializable {
 
-    @Getter @Setter private String uuid = randomUUID().toString();
-    @Getter @Setter private String nick;
+    public static final int MAX_NICK_LENGTH = 100;
 
     public AccountContact(AccountContact other) { copy(this, other); }
 
+    @Getter @Setter private String uuid = randomUUID().toString();
+    public boolean hasUuid () { return !empty(uuid); }
+    public AccountContact initUuid () { uuid = randomUUID().toString(); return this; }
+
+    @Getter @Setter private String nick;
     public boolean hasNick () { return !empty(nick); }
     public boolean sameNick (String n) { return !empty(nick) && !empty(n) && nick.equals(n); }
 
@@ -89,6 +93,8 @@ public class AccountContact implements Serializable {
             c.setVerified(true);
         }
 
+        if (!c.hasUuid()) c.initUuid();
+
         if (contacts == null) contacts = new AccountContact[0];
         final AccountContact existing = Arrays.stream(contacts).filter(contactMatch(c)).findFirst().orElse(null);
         if (existing != null) {
@@ -100,6 +106,9 @@ public class AccountContact implements Serializable {
             // before updating, if we are changing the nick, ensure no other contact already has the nick
             if (c.hasNick() && ( (existing.hasNick() && !existing.getNick().equals(c.getNick())) || !existing.hasNick() )) {
                 checkNickInUse(c, contacts);
+            }
+            if (c.hasNick() && c.getNick().length() > MAX_NICK_LENGTH) {
+                throw invalidEx("err.nick.tooLong");
             }
             if (c.isAuthenticator()) {
                 // can only change nick on authenticator
