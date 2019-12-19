@@ -18,6 +18,7 @@ import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -30,8 +31,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
-import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
-import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
+import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 
 @Entity @ECType
 @NoArgsConstructor @Accessors(chain=true)
@@ -54,10 +54,10 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
 
     @JsonIgnore @Override public String getName() { return getAccount(); }
 
-    @Column(nullable=false)
+    @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+ENC_LONG+") NOT NULL")
     @Getter @Setter private Long nodeOperationTimeout = MINUTES.toMillis(30);
 
-    @Column(nullable=false)
+    @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+ENC_LONG+") NOT NULL")
     @Getter @Setter private Long accountOperationTimeout = MINUTES.toMillis(10);
 
     @Enumerated(EnumType.STRING) @Column(length=20, nullable=false)
@@ -220,5 +220,16 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
             result.addViolation("err.nodeOperationTimeout.tooShort");
         }
         return result;
+    }
+
+    public AccountPolicy mask() {
+        if (hasAccountContacts()) {
+            final List<AccountContact> scrubbed = new ArrayList<>();
+            for (AccountContact c : getAccountContacts()) {
+                scrubbed.add(c.mask());
+            }
+            setAccountContacts(scrubbed.toArray(new AccountContact[0]));
+        }
+        return this;
     }
 }

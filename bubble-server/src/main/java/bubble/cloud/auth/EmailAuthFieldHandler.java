@@ -28,9 +28,11 @@ public class EmailAuthFieldHandler implements AuthFieldHandler {
 
         String namePart = val.substring(0, atPos);
         if (namePart.length() > UNMASKED_LEN) {
-            namePart = namePart.substring(0, UNMASKED_LEN) + "*".repeat(namePart.length()- UNMASKED_LEN);
+            namePart = namePart.substring(0, UNMASKED_LEN) + "*".repeat(namePart.length() - UNMASKED_LEN);
+        } else if (namePart.length() == 1) {
+            namePart = "**";
         } else {
-            namePart = "*".repeat(namePart.length());
+            namePart = namePart.charAt(0)+"*".repeat(namePart.length());
         }
 
         String hostPart = val.substring(atPos+1);

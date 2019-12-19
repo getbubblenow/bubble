@@ -1,11 +1,12 @@
 package bubble.model.account;
 
 import bubble.cloud.CloudServiceType;
+import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
-import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.ActionTarget;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -15,14 +16,14 @@ import org.cobbzilla.wizard.validation.HasValue;
 import org.cobbzilla.wizard.validation.ValidationResult;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static bubble.ApiConstants.G_AUTH;
 import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
@@ -31,6 +32,9 @@ public class AccountContact implements Serializable {
 
     @Getter @Setter private String uuid = randomUUID().toString();
     @Getter @Setter private String nick;
+
+    public AccountContact(AccountContact other) { copy(this, other); }
+
     public boolean hasNick () { return !empty(nick); }
     public boolean sameNick (String n) { return !empty(nick) && !empty(n) && nick.equals(n); }
 
@@ -71,8 +75,8 @@ public class AccountContact implements Serializable {
         if (errors != null && !errors.isEmpty()) throw invalidEx(errors);
 
         // there must be at least one contact that can be used to unlock the network
-        if (!c.requiredForNetworkUnlock() && Arrays.stream(contacts).noneMatch(AccountContact::requiredForNetworkUnlock)) {
-            throw invalidEx("err.contact.atLeastOneNetworkUnlockContactRequired");
+        if (!c.requiredForNetworkUnlock() && (contacts == null || Arrays.stream(contacts).noneMatch(AccountContact::requiredForNetworkUnlock))) {
+            throw invalidEx("err.requiredForNetworkUnlock.atLeastOneNetworkUnlockContactRequired");
         }
 
         if (c.isAuthenticator()) {
@@ -113,11 +117,19 @@ public class AccountContact implements Serializable {
             if (c.hasNick()) checkNickInUse(c, contacts);
 
             // generate secret key if needed
-            if (c.isAuthenticator()) c.setInfo(G_AUTH.createCredentials().getKey());
+            if (c.isAuthenticator()) c.setInfo(getTotpInfo());
 
             return ArrayUtil.append(contacts, c);
         }
         return contacts;
+    }
+
+    public static String getTotpInfo() {
+        final Map<String, Object> totpMap = new HashMap<>();
+        final GoogleAuthenticatorKey creds = G_AUTH.createCredentials();
+        totpMap.put("key", creds.getKey());
+        totpMap.put("backupCodes", creds.getScratchCodes());
+        return json(totpMap, COMPACT_MAPPER);
     }
 
     private static void checkNickInUse(AccountContact c, AccountContact[] contacts) {
@@ -252,9 +264,7 @@ public class AccountContact implements Serializable {
     }
 
     public AccountContact mask() {
-        return new AccountContact()
-                .setNick(getNick())
-                .setType(getType())
+        return new AccountContact(this)
                 .setInfo(getType().mask(getInfo()));
     }
 

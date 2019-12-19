@@ -120,7 +120,8 @@ public class AccountsResource {
     public Response viewPolicy(@Context ContainerRequest ctx,
                                @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
-        return ok(policyDAO.findSingleByAccount(c.account.getUuid()));
+        final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
+        return policy == null ? notFound(id) : ok(policy.mask());
     }
 
     @POST @Path("/{id}"+EP_POLICY)
@@ -134,7 +135,7 @@ public class AccountsResource {
         } else {
             policy = policyDAO.update((AccountPolicy) policy.update(request));
         }
-        return ok(policy);
+        return ok(policy.mask());
     }
 
     @POST @Path("/{id}"+EP_POLICY+EP_CONTACTS)
@@ -144,7 +145,11 @@ public class AccountsResource {
                                @Valid AccountContact contact) {
         final AccountContext c = new AccountContext(ctx, id);
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
-        final AccountPolicy updated = policyDAO.update(policy.setContact(contact));
+
+        final AccountContact existing = policy.findContact(contact);
+        if (existing != null && existing.isAuthenticator()) return invalid("err.authenticator.configured");
+
+        policyDAO.update(policy.setContact(contact));
         final AccountContact added = policy.findContact(contact);
         if (added == null) {
             log.error("setContact: contact not set: "+contact);
@@ -154,7 +159,7 @@ public class AccountsResource {
             log.info("setContact: contact is new, sending verify message");
             messageDAO.sendVerifyRequest(getRemoteHost(req), c.account, contact);
         }
-        return ok(updated);
+        return ok(added);
     }
 
     @POST @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/verify")
@@ -182,7 +187,7 @@ public class AccountsResource {
         final AccountContext c = new AccountContext(ctx, id);
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
         final AccountContact contact = policy.findContact(new AccountContact().setType(type).setInfo(info));
-        return contact != null ? ok(contact) : notFound(type+"/"+info);
+        return contact != null ? ok(contact.mask()) : notFound(type+"/"+info);
     }
 
     @DELETE @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/{type}/{info}")
@@ -195,19 +200,18 @@ public class AccountsResource {
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
         final AccountContact contact = policy.findContact(new AccountContact().setType(type).setInfo(info));
         if (contact == null) return notFound(type.name()+"/"+info);
-        return ok(policyDAO.update(policy.removeContact(contact)));
+        return ok(policyDAO.update(policy.removeContact(contact)).mask());
     }
 
-    @DELETE @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/{type}")
-    public Response removeAuthenticator(@Context ContainerRequest ctx,
+    @DELETE @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/{uuid}")
+    public Response removeContactByUuid(@Context ContainerRequest ctx,
                                         @PathParam("id") String id,
-                                        @PathParam("type") CloudServiceType type) {
+                                        @PathParam("uuid") String uuid) {
         final AccountContext c = new AccountContext(ctx, id);
-        if (type != CloudServiceType.authenticator) return invalid("err.info.required", "info is required");
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
-        final AccountContact authenticator = policy.getAuthenticator();
-        if (authenticator == null) return notFound(CloudServiceType.authenticator.name());
-        return ok(policyDAO.update(policy.removeContact(authenticator)));
+        final AccountContact found = policy.findContact(new AccountContact().setUuid(uuid));
+        if (found == null) return notFound(uuid);
+        return ok(policyDAO.update(policy.removeContact(found)).mask());
     }
 
     @DELETE @Path("/{id}"+EP_REQUEST)
