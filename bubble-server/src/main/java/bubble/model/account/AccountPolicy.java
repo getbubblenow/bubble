@@ -201,6 +201,7 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
             for (AccountContact c : contacts) {
                 if (c.getUuid().equals(contactUuid)) {
                     c.setVerified(true);
+                    if (c.isAuthenticator()) c.setAuthFactor(AuthFactorType.required);
                     break;
                 }
             }

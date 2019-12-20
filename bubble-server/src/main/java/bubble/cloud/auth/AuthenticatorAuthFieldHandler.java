@@ -1,18 +1,30 @@
 package bubble.cloud.auth;
 
+import bubble.model.account.TotpBean;
+import org.cobbzilla.util.collection.SingletonList;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 
 import java.util.Collections;
 import java.util.List;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortErrorString;
+import static org.cobbzilla.util.json.JsonUtil.json;
+
 public class AuthenticatorAuthFieldHandler implements AuthFieldHandler {
 
     @Override public List<ConstraintViolationBean> validate(String val) {
-        // nothing to validate? or should we validate that the val is a proper secret key?
+        // just ensure it is a valid TotpBean. should always be valid
+        try {
+            final TotpBean bean = json(val, TotpBean.class);
+        } catch (Exception e) {
+            return new SingletonList<>(new ConstraintViolationBean("err.authenticator.invalid", "Not a valid TotpBean: "+val+": "+shortErrorString(e)));
+        }
         return Collections.emptyList();
     }
 
-    // return verbatim, so user can re-add if needed
-    @Override public String mask(String val) { return val; }
+    public static final String MASKED_VALUE = "{\"masked\": true}";
+
+    // we mask with a special value to tell the frontend it has been masked
+    @Override public String mask(String val) { return MASKED_VALUE; }
 
 }
