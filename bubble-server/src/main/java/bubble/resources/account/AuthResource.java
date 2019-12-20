@@ -63,6 +63,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 public class AuthResource {
 
     private static final long NODE_INIT_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
+    private static final String DATA_ACCOUNT_NAME = "account";
 
     @Autowired private AccountDAO accountDAO;
     @Autowired private AccountPolicyDAO policyDAO;
@@ -254,8 +255,18 @@ public class AuthResource {
                             @Context ContainerRequest ctx,
                             @PathParam("token") String token,
                             NameAndValue[] data) {
-        final Account caller = optionalUserPrincipal(ctx);
-
+        Account caller = optionalUserPrincipal(ctx);
+        if (!empty(data)) {
+            final String accountName = NameAndValue.find(data, DATA_ACCOUNT_NAME);
+            final Account account = accountDAO.findById(accountName);
+            if (caller != null && account != null && !caller.getUuid().equals(account.getUuid())) {
+                return invalid("err.token.invalid");
+            }
+            if (caller == null && account == null) {
+                return invalid("err.token.invalid");
+            }
+            caller = account;
+        }
         final AccountMessage approval = messageService.approve(caller, getRemoteHost(req), token, data);
         if (approval == null) return invalid("err.token.invalid");
         final Account account = validateCallerForApproveOrDeny(caller, approval, token);
@@ -280,7 +291,9 @@ public class AuthResource {
         final Account caller = optionalUserPrincipal(ctx);
         final Account account = accountDAO.findById(request.getAccount());
         if (account == null) return notFound(request.getAccount());
-        if (caller != null && !caller.getUuid().equals(account.getUuid())) return forbidden();
+        if (caller != null && !caller.getUuid().equals(account.getUuid())) {
+            return invalid("err.token.invalid");
+        }
 
         final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
         final AccountContact authenticator = policy.getAuthenticator();
@@ -302,7 +315,7 @@ public class AuthResource {
                 return ok(messageService.determineRemainingApprovals(approval));
             }
         } else {
-            return forbidden();
+            return invalid("err.token.invalid");
         }
     }
 

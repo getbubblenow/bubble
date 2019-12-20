@@ -123,7 +123,7 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
         } catch (Exception e) {
             die("onStart: "+e, e);
         }
-        super.onStart(server);
+        if (!hasExistingDb) super.onStart(server);
     }
 
     protected CloudService getNetworkStorage(Map<String, Object> ctx, CloudService[] clouds) {

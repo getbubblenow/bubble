@@ -180,13 +180,15 @@ public class AccountContact implements Serializable {
         final AccountAction action = message.getAction();
         final ActionTarget target = message.getTarget();
 
-        if (!verified()
-                && type == AccountMessageType.request
-                && action != AccountAction.verify
-                && target != ActionTarget.account
-                && getType().isVerifiableAuthenticationType()) {
-            log.warn("isAllowed("+message.getAction()+"): requests to unverified contacts are not allowed, except to verify them");
-            return false;
+        if (!verified()) {
+            if (type == AccountMessageType.request
+                    && action == AccountAction.verify
+                    && target == ActionTarget.account) {
+                log.info("isAllowed(" + message.getAction() + "): allowing request to unverified contacts to verify it");
+            } else {
+                log.info("isAllowed(" + message.getAction() + "): requests to unverified contacts are not allowed, except to verify them");
+                return false;
+            }
         }
 
         switch (action) {

@@ -1,3 +1,1 @@
-{{network.networkDomain}}: Login requested by {{contact.type}}/{{contact.info}} {{#if contact.nick}}({{contact.nick}}){{/if}}
-Approve: {{configuration.publicUriBase}}/action?approve={{confirmationToken}}
-Deny: {{configuration.publicUriBase}}/action?deny={{confirmationToken}}
+{{network.networkDomain}}: Login requested by {{contact.type}}/{{contact.info}} {{#if contact.nick}}({{contact.nick}}){{/if}} Use code to login: {{confirmationToken}} or to deny request: {{configuration.publicUriBase}}/action?deny={{confirmationToken}}
