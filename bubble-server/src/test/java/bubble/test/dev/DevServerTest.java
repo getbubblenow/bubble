@@ -18,6 +18,7 @@ public class DevServerTest extends ActivatedBubbleModelTestBase {
     @Override protected String getDatabaseNameSuffix() { return "dev"; }
     @Override protected boolean dropPreExistingDatabase() { return false; }
     @Override protected boolean allowPreExistingDatabase() { return true; }
+    @Override public boolean doTruncateDb() { return false; }
 
     @Test public void runDevServer () throws Exception {
         log.info("runDevServer: Bubble API server started and model initialized. You may now begin testing.");

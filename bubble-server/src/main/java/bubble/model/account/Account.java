@@ -189,6 +189,7 @@ public class Account extends IdentifiableBase implements TokenPrincipal {
     @Transient @Getter @Setter private transient AccountPolicy policy;
     public boolean hasPolicy() { return policy != null; }
 
+    @Transient @Getter @Setter private transient String loginRequest;
     @Transient @Getter @Setter private transient AccountContact[] multifactorAuth;
 
     @Transient @Getter @Setter private transient String remoteHost;

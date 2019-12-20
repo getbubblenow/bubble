@@ -212,7 +212,7 @@ public class AuthResource {
         if (policy != null) {
             final List<AccountContact> authFactors = policy.getAuthFactors();
             if (!empty(authFactors)) {
-                accountMessageDAO.create(new AccountMessage()
+                final AccountMessage loginRequest = accountMessageDAO.create(new AccountMessage()
                         .setAccount(account.getUuid())
                         .setName(account.getUuid())
                         .setMessageType(AccountMessageType.request)
@@ -221,6 +221,8 @@ public class AuthResource {
                         .setRemoteHost(getRemoteHost(req))
                 );
                 return ok(new Account()
+                        .setName(account.getName())
+                        .setLoginRequest(loginRequest.getUuid())
                         .setMultifactorAuth(authFactors.stream()
                                 .map(AccountContact::mask)
                                 .toArray(AccountContact[]::new)));

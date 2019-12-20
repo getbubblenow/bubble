@@ -9,6 +9,8 @@ import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
 import lombok.Cleanup;
+import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.wizard.api.ValidationException;
 import org.cobbzilla.wizard.auth.LoginRequest;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.client.script.ApiRunner;
@@ -22,8 +24,10 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
+import static bubble.model.account.Account.*;
 import static bubble.service.boot.StandardSelfNodeService.THIS_NODE_FILE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortErrorString;
 import static org.cobbzilla.util.handlebars.HandlebarsUtil.applyReflectively;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
@@ -32,6 +36,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.system.CommandShell.hostname_short;
 import static org.cobbzilla.wizard.model.entityconfig.ModelSetup.scrubSpecial;
 
+@Slf4j
 public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
 
     public static final String ROOT_PASSWORD = "password";
@@ -51,7 +56,7 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
 
     @Override protected void modelTest(final String name, ApiRunner apiRunner) throws Exception {
         getApi().logout();
-        final Account root = getApi().post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(Account.ROOT_USERNAME, ROOT_PASSWORD), Account.class);
+        final Account root = getApi().post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_USERNAME, ROOT_PASSWORD), Account.class);
         getApi().pushToken(root.getToken());
         apiRunner.addNamedSession("rootSession", root.getToken());
         apiRunner.run(include(name));
@@ -83,13 +88,24 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
             if (!dns.getName().equals(domain.getPublicDns())) die("onStart: DNS service mismatch");
 
             @Cleanup final ApiClientBase client = configuration.newApiClient();
-            admin = client.put(AUTH_ENDPOINT + EP_ACTIVATE, new ActivationRequest()
-                    .setName(Account.ROOT_USERNAME)
-                    .setPassword(ROOT_PASSWORD)
-                    .setNetworkName(hostname_short())
-                    .setDns(dns)
-                    .setStorage(storage)
-                    .setDomain(domain), Account.class);
+
+            // if DB already exists, server has already been activated
+            try {
+                admin = client.put(AUTH_ENDPOINT + EP_ACTIVATE, new ActivationRequest()
+                        .setName(ROOT_USERNAME)
+                        .setPassword(ROOT_PASSWORD)
+                        .setNetworkName(hostname_short())
+                        .setDns(dns)
+                        .setStorage(storage)
+                        .setDomain(domain), Account.class);
+            } catch (ValidationException e) {
+                if (e.hasViolations() && e.getViolations().containsKey("err.activation.alreadyDone")) {
+                    log.warn("onStart: activation already done, trying to login: " + shortErrorString(e));
+                    admin = client.post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_USERNAME, ROOT_PASSWORD), Account.class);
+                } else {
+                    throw e;
+                }
+            }
             getApi().setConnectionInfo(client.getConnectionInfo());
             getApi().pushToken(admin.getApiToken());
             getApiRunner().addNamedSession(ROOT_SESSION, admin.getApiToken());
