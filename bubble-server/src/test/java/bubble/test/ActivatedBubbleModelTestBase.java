@@ -44,15 +44,25 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
 
     protected Account admin;
 
+    private boolean hasExistingDb = false;
+
     @Override public boolean doTruncateDb() { return false; }
 
     @Override public void beforeStart(RestServer<BubbleConfiguration> server) {
-        // always start fresh
-        if (THIS_NODE_FILE.exists() && !THIS_NODE_FILE.delete()) {
-            die("beforeStart: error deleting "+abs(THIS_NODE_FILE));
+        // if server hbm2ddl mode is validate, do not delete node file
+        if (server.getConfiguration().dbExists()) {
+            hasExistingDb = true;
+            log.info("beforeStart: not deleting "+abs(THIS_NODE_FILE)+" because DB exists");
+        } else {
+            // start fresh
+            if (THIS_NODE_FILE.exists() && !THIS_NODE_FILE.delete()) {
+                die("beforeStart: error deleting " + abs(THIS_NODE_FILE));
+            }
         }
         super.beforeStart(server);
     }
+
+    @Override protected String[] getSqlPostScripts() { return hasExistingDb ? null : super.getSqlPostScripts(); }
 
     @Override protected void modelTest(final String name, ApiRunner apiRunner) throws Exception {
         getApi().logout();
