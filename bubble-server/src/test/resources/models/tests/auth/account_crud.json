@@ -3,7 +3,9 @@
     "comment": "activate service, create account, login",
     "include": "new_account",
     "params": {
-      "password": "foobar1!"
+      "password": "foobar1!",
+      "email": "user-account-crud@example.com",
+      "verifyEmail": "true"
     }
   },
 
@@ -48,9 +50,39 @@
   },
 
   {
-    "comment": "as user, request deletion of the user (self-delete)",
+    "comment": "as user, read account policy",
     "request": {
       "session": "userSession",
+      "uri": "users/{{userAccount.name}}/policy"
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getDeletionPolicy().name() == 'block_delete'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "set deletion policy to full_delete",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy",
+      "data": "policy",
+      "entity": {
+        "deletionPolicy": "full_delete"
+      }
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getDeletionPolicy().name() == 'full_delete'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, request deletion of the user (self-delete)",
+    "request": {
       "uri": "users/{{userAccount.name}}/request",
       "method": "delete"
     },
@@ -69,7 +101,7 @@
     "comment": "as root, check inbox, verify message sent. read confirmation token",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/{{policy.firstEmail}}?action=delete"
+      "uri": "debug/inbox/email/user-account-crud@example.com?action=delete"
     },
     "response": {
       "store": "userInbox",
@@ -107,7 +139,8 @@
       "method": "post"
     },
     "response": {
-      "status": 404
+      "status": 422,
+      "check": [ {"condition": "json.has('err.token.invalid')"} ]
     }
   },
 
@@ -132,7 +165,7 @@
     "comment": "as root, re-check inbox, verify message sent. read confirmation token",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/{{policy.firstEmail}}?action=delete"
+      "uri": "debug/inbox/email/user-account-crud@example.com?action=delete"
     },
     "response": {
       "store": "userInbox",

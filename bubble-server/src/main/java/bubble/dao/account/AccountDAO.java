@@ -161,51 +161,54 @@ public class AccountDAO extends AbstractCRUDDAO<Account> {
             }
         });
 
+        final Map<String, BubbleApp> apps = new HashMap<>();
         copyTemplateObjects(acct, parent, appDAO, new AccountTemplate.CopyTemplate<>() {
             @Override public void postCreate(BubbleApp parentApp, BubbleApp accountApp) {
-                final Map<String, AppRule> rules = new HashMap<>();
-                final Map<String, AppMatcher> matchers = new HashMap<>();
-                final Map<String, AppSite> sites = new HashMap<>();
-                copyTemplateObjects(acct, parent, siteDAO, new AccountTemplate.CopyTemplate<>() {
-                    @Override public AppSite preCreate(AppSite parentEntity, AppSite accountEntity) {
-                        return accountEntity.setApp(accountApp.getUuid());
-                    }
-                    @Override public void postCreate(AppSite parentEntity, AppSite accountEntity) {
-                        sites.put(parentEntity.getUuid(), accountEntity);
-                    }
-                });
+                apps.put(parentApp.getUuid(), accountApp);
+            }
+        });
 
-                copyTemplateObjects(acct, parent, ruleDAO, new AccountTemplate.CopyTemplate<>() {
-                    @Override public AppRule preCreate(AppRule parentEntity, AppRule accountEntity) {
-                        return accountEntity
-                                .setApp(accountApp.getUuid())
-                                .setDriver(drivers.get(parentEntity.getDriver()).getUuid());
-                    }
-                    @Override public void postCreate(AppRule parentEntity, AppRule accountEntity) {
-                        rules.put(parentEntity.getUuid(), accountEntity);
-                    }
-                });
+        final Map<String, AppSite> sites = new HashMap<>();
+        copyTemplateObjects(acct, parent, siteDAO, new AccountTemplate.CopyTemplate<>() {
+            @Override public AppSite preCreate(AppSite parentEntity, AppSite accountEntity) {
+                return accountEntity.setApp(apps.get(parentEntity.getApp()).getUuid());
+            }
+            @Override public void postCreate(AppSite parentEntity, AppSite accountEntity) {
+                sites.put(parentEntity.getUuid(), accountEntity);
+            }
+        });
 
-                copyTemplateObjects(acct, parent, matchDAO, new AccountTemplate.CopyTemplate<>() {
-                    @Override public AppMatcher preCreate(AppMatcher parentEntity, AppMatcher accountEntity) {
-                        return accountEntity
-                                .setApp(accountApp.getUuid())
-                                .setSite(sites.get(parentEntity.getSite()).getUuid())
-                                .setRule(rules.get(parentEntity.getRule()).getUuid());
-                    }
-                    @Override public void postCreate(AppMatcher parentEntity, AppMatcher accountEntity) {
-                        matchers.put(parentEntity.getUuid(), accountEntity);
-                    }
-                });
+        final Map<String, AppRule> rules = new HashMap<>();
+        copyTemplateObjects(acct, parent, ruleDAO, new AccountTemplate.CopyTemplate<>() {
+            @Override public AppRule preCreate(AppRule parentEntity, AppRule accountEntity) {
+                return accountEntity
+                        .setApp(apps.get(parentEntity.getApp()).getUuid())
+                        .setDriver(drivers.get(parentEntity.getDriver()).getUuid());
+            }
+            @Override public void postCreate(AppRule parentEntity, AppRule accountEntity) {
+                rules.put(parentEntity.getUuid(), accountEntity);
+            }
+        });
 
-                copyTemplateObjects(acct, parent, dataDAO, new AccountTemplate.CopyTemplate<>() {
-                    @Override public AppData preCreate(AppData parentEntity, AppData accountEntity) {
-                        return accountEntity
-                                .setMatcher(matchers.get(parentEntity.getMatcher()).getUuid())
-                                .setSite(sites.get(parentEntity.getSite()).getUuid())
-                                .setApp(accountApp.getUuid());
-                    }
-                });
+        final Map<String, AppMatcher> matchers = new HashMap<>();
+        copyTemplateObjects(acct, parent, matchDAO, new AccountTemplate.CopyTemplate<>() {
+            @Override public AppMatcher preCreate(AppMatcher parentEntity, AppMatcher accountEntity) {
+                return accountEntity
+                        .setApp(apps.get(parentEntity.getApp()).getUuid())
+                        .setSite(sites.get(parentEntity.getSite()).getUuid())
+                        .setRule(rules.get(parentEntity.getRule()).getUuid());
+            }
+            @Override public void postCreate(AppMatcher parentEntity, AppMatcher accountEntity) {
+                matchers.put(parentEntity.getUuid(), accountEntity);
+            }
+        });
+
+        copyTemplateObjects(acct, parent, dataDAO, new AccountTemplate.CopyTemplate<>() {
+            @Override public AppData preCreate(AppData parentEntity, AppData accountEntity) {
+                return accountEntity
+                        .setApp(apps.get(parentEntity.getApp()).getUuid())
+                        .setMatcher(matchers.get(parentEntity.getMatcher()).getUuid())
+                        .setSite(sites.get(parentEntity.getSite()).getUuid());
             }
         });
 

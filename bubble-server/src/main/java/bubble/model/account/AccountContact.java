@@ -17,7 +17,9 @@ import org.cobbzilla.wizard.validation.HasValue;
 import org.cobbzilla.wizard.validation.ValidationResult;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Predicate;
 
 import static bubble.ApiConstants.G_AUTH;
@@ -181,12 +183,13 @@ public class AccountContact implements Serializable {
         final ActionTarget target = message.getTarget();
 
         if (!verified()) {
-            if (type == AccountMessageType.request
-                    && action == AccountAction.verify
-                    && target == ActionTarget.account) {
-                log.info("isAllowed(" + message.getAction() + "): allowing request to unverified contacts to verify it");
+            if ( target == ActionTarget.account && (
+                    (action == AccountAction.verify)  // all verification-related messages are allowed to unverified
+                 || (type == AccountMessageType.notice && action == AccountAction.welcome) // welcome is allowed to unverified
+            ) ) {
+                log.info("isAllowed(" + message.getAction() + "): allowing "+type+" message to unverified contact: "+action);
             } else {
-                log.info("isAllowed(" + message.getAction() + "): requests to unverified contacts are not allowed, except to verify them");
+                log.info("isAllowed(" + message.getAction() + "): "+type+" messages to unverified contacts are not allowed, except for verify/welcome");
                 return false;
             }
         }

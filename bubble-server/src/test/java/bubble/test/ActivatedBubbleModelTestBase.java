@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
-import static bubble.model.account.Account.*;
+import static bubble.model.account.Account.ROOT_USERNAME;
 import static bubble.service.boot.StandardSelfNodeService.THIS_NODE_FILE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortErrorString;
@@ -68,12 +68,16 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
         getApi().logout();
         final Account root = getApi().post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_USERNAME, ROOT_PASSWORD), Account.class);
         getApi().pushToken(root.getToken());
-        apiRunner.addNamedSession("rootSession", root.getToken());
+        apiRunner.addNamedSession(ROOT_SESSION, root.getToken());
         apiRunner.run(include(name));
     }
 
     @Override public void onStart(RestServer<BubbleConfiguration> server) {
+        //noinspection ResultOfMethodCallIgnored -- verifying entity topology has no cycles
+        server.getConfiguration().getEntityClassesReverse();
+
         // Activate the system
+
         try {
             final BubbleConfiguration configuration = server.getConfiguration();
             final Handlebars handlebars = configuration.getHandlebars();

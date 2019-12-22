@@ -89,20 +89,19 @@
     "onlyIf": "<<verifyEmail>>",
     "comment": "as user, approve initial email verification request",
     "request": {
-      "session": "userSession",
+      "session": "new",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "method": "post"
-    },
-    "response": {
-      "sessionName": "<<userSessionName>>",
-      "session": "token"
+      "entity": [{"name": "account", "value": "<<username>>"}]
     }
   },
 
   {
     "onlyIf": "<<verifyEmail>>",
     "comment": "re-look up self",
-    "request": { "uri": "me" },
+    "request": {
+      "session": "<<userSessionName>>",
+      "uri": "me"
+    },
     "response": { "store": "user" }
   }
 ]

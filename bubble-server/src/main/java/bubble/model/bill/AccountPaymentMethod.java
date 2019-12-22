@@ -2,11 +2,11 @@ package bubble.model.bill;
 
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.payment.PaymentServiceDriver;
-import bubble.notify.payment.PaymentValidationResult;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccountNoName;
 import bubble.model.cloud.CloudService;
+import bubble.notify.payment.PaymentValidationResult;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +23,10 @@ import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;

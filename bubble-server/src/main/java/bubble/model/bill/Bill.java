@@ -42,7 +42,7 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     public boolean paid() { return status == BillStatus.paid; }
     public boolean unpaid() { return !paid(); }
 
-    @ECForeignKey(entity=AccountPayment.class)
+    @ECForeignKey(entity=AccountPayment.class, cascade=false)
     @Column(length=UUID_MAXLEN)
     @Getter @Setter private String payment;
     public boolean hasPayment () { return payment != null; }

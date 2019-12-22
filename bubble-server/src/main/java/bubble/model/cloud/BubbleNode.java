@@ -105,7 +105,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         return getNetwork() != null && n.getNetwork() != null && getNetwork().equals(n.getNetwork());
     }
 
-    @ECForeignKey(entity=BubbleNode.class)
+    @ECForeignKey(entity=BubbleNode.class, cascade=false)
     @Column(length=UUID_MAXLEN)
     @Getter @Setter private String sageNode;
     public boolean hasSageNode() { return sageNode != null; }
