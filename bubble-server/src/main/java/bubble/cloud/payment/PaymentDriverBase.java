@@ -83,12 +83,11 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
             return true;
         }
 
-        if (bill.hasPayment()) {
-            final AccountPayment existing = accountPaymentDAO.findByUuid(bill.getPayment());
-            if (existing != null) {
-                log.warn("purchase: existing AccountPayment found (returning true): " + existing.getUuid());
-                return true;
-            }
+        final AccountPayment successfulPayment = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndSuccess(accountPlan.getAccount(), accountPlanUuid, bill.getUuid());
+        if (successfulPayment != null) {
+            log.warn("purchase: successful AccountPayment found (marking Bill "+bill.getUuid()+" as paid and returning true): " + successfulPayment.getUuid());
+            billDAO.update(bill.setStatus(BillStatus.paid));
+            return true;
         }
 
         final String chargeInfo;
@@ -132,7 +131,7 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
                 .setInfo(chargeInfo));
 
         // mark the bill as paid, enable the plan
-        billDAO.update(bill.setPayment(accountPayment.getUuid()).setStatus(BillStatus.paid));
+        billDAO.update(bill.setStatus(BillStatus.paid));
 
         // if there are no unpaid bills, we can (re-)enable the plan
         final List<Bill> unpaidBills = billDAO.findUnpaidByAccountPlan(accountPlan.getUuid());
@@ -159,8 +158,9 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         }
 
         // Was the recent bill paid?
+        final AccountPayment successfulPayment = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndSuccess(accountPlan.getAccount(), accountPlanUuid, bill.getUuid());
         if (bill.unpaid()) {
-            if (bill.hasPayment()) {
+            if (successfulPayment != null) {
                 // should never happen
                 throw invalidEx("err.refund.unpaidBillHasPayment");
             }
@@ -169,14 +169,13 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         }
 
         // What payment was used to pay the bill?
-        final AccountPayment payment = accountPaymentDAO.findByUuid(bill.getPayment());
-        if (payment == null) {
+        if (successfulPayment == null) {
             log.warn("refund: AccountPlanPayment not found for paid bill ("+bill.getUuid()+") accountPlan: "+accountPlanUuid);
             throw invalidEx("err.refund.paymentNotFound");
         }
 
         // Is the payment method associated with the bill still active?
-        final AccountPaymentMethod paymentMethod = paymentMethodDAO.findByUuid(payment.getPaymentMethod());
+        final AccountPaymentMethod paymentMethod = paymentMethodDAO.findByUuid(successfulPayment.getPaymentMethod());
         if (paymentMethod == null || paymentMethod.deleted()) {
             log.warn("refund: cannot refund: AccountPaymentMethod not found or deleted for paid bill ("+bill.getUuid()+") accountPlan: "+accountPlanUuid);
             throw invalidEx("err.refund.paymentMethodNotFound");
@@ -198,7 +197,7 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
 
         final String refundInfo;
         try {
-            refundInfo = refund(accountPlan, payment, paymentMethod, bill, refundAmount);
+            refundInfo = refund(accountPlan, successfulPayment, paymentMethod, bill, refundAmount);
         } catch (RuntimeException e) {
             // record failed payment, rethrow
             accountPaymentDAO.create(new AccountPayment()

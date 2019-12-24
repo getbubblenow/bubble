@@ -5,6 +5,7 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+        DbInit.class,
         AuthTest.class,
         PaymentTest.class,
         S3StorageTest.class,

@@ -16,11 +16,11 @@ import javax.persistence.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.big;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 
-@ECType(root=true) @ECTypeURIs(listFields={"name", "status", "type", "quantity", "price", "period"})
-@ECTypeFields(list={"name", "Status", "type", "quantity", "price", "period"})
+@ECType(root=true) @ECTypeURIs(listFields={"name", "status", "type", "quantity", "price", "periodStart"})
+@ECTypeFields(list={"name", "status", "type", "quantity", "price", "periodStart"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({
-        @ECIndex(unique=true, of={"account", "plan", "type", "period"})
+        @ECIndex(unique=true, of={"account", "plan", "type", "periodStart"})
 })
 public class Bill extends IdentifiableBase implements HasAccountNoName {
 
@@ -41,11 +41,6 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     @Getter @Setter private BillStatus status = BillStatus.unpaid;
     public boolean paid() { return status == BillStatus.paid; }
     public boolean unpaid() { return !paid(); }
-
-    @ECForeignKey(entity=AccountPayment.class, cascade=false)
-    @Column(length=UUID_MAXLEN)
-    @Getter @Setter private String payment;
-    public boolean hasPayment () { return payment != null; }
 
     @ECIndex @Enumerated(EnumType.STRING)
     @Column(nullable=false, updatable=false, length=20)
