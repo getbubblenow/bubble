@@ -45,8 +45,17 @@ public class GeoService {
 
     public GeoLocation locate (String accountUuid, String ip) {
 
-        final List<CloudService> geoServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoLocation);
-        if (geoServices.isEmpty()) throw new SimpleViolationException("err.geoLocateService.notFound");
+        List<CloudService> geoServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoLocation);
+        if (geoServices.isEmpty()) {
+            // try to find using admin
+            final Account admin = accountDAO.findFirstAdmin();
+            if (admin != null && !admin.getUuid().equals(accountUuid)) {
+                geoServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoLocation);
+            }
+        }
+        if (geoServices.isEmpty()) {
+            throw new SimpleViolationException("err.geoLocateService.notFound");
+        }
 
         final List<GeoLocation> resolved = new ArrayList<>();
         geoServices.sort(SORT_PRIORITY);
@@ -115,8 +124,17 @@ public class GeoService {
     public GeoTimeZone getTimeZone (Account account, String ip) {
 
         if (account == null) account = accountDAO.findFirstAdmin();
-        final List<CloudService> geoServices = cloudDAO.findByAccountAndType(account.getUuid(), CloudServiceType.geoTime);
-        if (geoServices.isEmpty()) throw new SimpleViolationException("err.geoTimeService.notFound");
+        List<CloudService> geoServices = cloudDAO.findByAccountAndType(account.getUuid(), CloudServiceType.geoTime);
+        if (geoServices.isEmpty() && !account.admin()) {
+            // try to find using admin
+            final Account admin = accountDAO.findFirstAdmin();
+            if (admin != null && !admin.getUuid().equals(account.getUuid())) {
+                geoServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoTime);
+            }
+        }
+        if (geoServices.isEmpty()) {
+            throw new SimpleViolationException("err.geoTimeService.notFound");
+        }
         geoServices.sort(SORT_PRIORITY);
 
         final GeoLocation location = locate(account.getUuid(), ip);

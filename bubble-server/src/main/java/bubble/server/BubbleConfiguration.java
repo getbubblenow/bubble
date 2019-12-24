@@ -98,6 +98,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     @Getter @Setter private File bubbleJar;
     @Getter @Setter private String defaultLocale = "en_US";
+    @Getter @Setter private String[] allLocales = {defaultLocale};
     @Getter @Setter private LegalInfo legal = new LegalInfo();
 
     @Getter @Setter private Boolean paymentsEnabled = false;

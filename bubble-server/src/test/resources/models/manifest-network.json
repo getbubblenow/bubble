@@ -1,5 +1,6 @@
 [
   "system/cloudService",
+  "system/cloudService_live",
   "system/bubbleDomain",
   "system/bubblePlan",
   "system/bubbleFootprint"

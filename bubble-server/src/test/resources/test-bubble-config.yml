@@ -8,6 +8,7 @@ publicUriBase: {{PUBLIC_BASE_URI}}
 
 bubbleJar: {{BUBBLE_JAR}}
 defaultLocale: {{BUBBLE_DEFAULT_LOCALE}}
+allLocales: {{BUBBLE_ALL_LOCALES}}
 
 database:
   driver: org.postgresql.Driver
