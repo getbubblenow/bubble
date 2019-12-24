@@ -1,6 +1,8 @@
 package bubble.test;
 
 import bubble.model.app.AppData;
+import bubble.server.BubbleConfiguration;
+import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.util.RestResponse;
 import org.junit.Test;
 
@@ -13,6 +15,11 @@ import static org.junit.Assert.assertTrue;
 public class ProxyTest extends ActivatedBubbleModelTestBase {
 
     public static final String MANIFEST_PROXY = "manifest-proxy";
+
+    @Override public void beforeStart(RestServer<BubbleConfiguration> server) {
+        server.getConfiguration().getStaticAssets().setSinglePageApp(null); // disable SPA
+        super.beforeStart(server);
+    }
 
     @Override protected String getModelPrefix() { return "models/"; }
     @Override protected String getManifest() { return MANIFEST_PROXY; }

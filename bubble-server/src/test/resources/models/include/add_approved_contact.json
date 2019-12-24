@@ -41,11 +41,7 @@
       }
     },
     "response": {
-      "store": "<<policyVar>>",
-      "check": [
-        {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length >= 1"}
-      ]
+      "check": [ {"condition": "json.getType().name() == '<<contactType>>'"} ]
     }
   },
 
@@ -109,6 +105,14 @@
         "authFactor": "<<authFactor>>"
       }
     },
+    "response": {
+      "check": [ {"condition": "json.getAuthFactor().name() == '<<authFactor>>'"} ]
+    }
+  },
+
+  {
+    "comment": "reload policy for <<username>>",
+    "request": { "uri": "users/<<username>>/policy" },
     "response": {
       "store": "<<policyVar>>",
       "check": [

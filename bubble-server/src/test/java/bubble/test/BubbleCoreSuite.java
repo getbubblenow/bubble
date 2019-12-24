@@ -7,6 +7,9 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
         AuthTest.class,
         PaymentTest.class,
-        S3StorageTest.class
+        S3StorageTest.class,
+        DriverTest.class,
+        ProxyTest.class,
+        TrafficAnalyticsTest.class
 })
 public class BubbleCoreSuite {}
