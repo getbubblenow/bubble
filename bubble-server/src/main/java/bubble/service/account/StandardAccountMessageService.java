@@ -197,6 +197,7 @@ public class StandardAccountMessageService implements AccountMessageService {
                                           AccountMessageType type) {
         return captureResponse(account, remoteHost, token, type, null);
     }
+
     public AccountMessage captureResponse(Account account,
                                           String remoteHost,
                                           String token,

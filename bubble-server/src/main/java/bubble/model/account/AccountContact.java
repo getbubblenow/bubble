@@ -54,6 +54,7 @@ public class AccountContact implements Serializable {
     @HasValue(message="err.info.required")
     @Getter @Setter private String info;
 
+    @JsonIgnore public String getTotpKey () { return totpInfo().getKey(); }
     public TotpBean totpInfo () { return !empty(info) && isAuthenticator() ? json(info, TotpBean.class) : null; }
 
     @HasValue(message="err.cloudServiceType.required")
@@ -93,7 +94,7 @@ public class AccountContact implements Serializable {
 
         if (c.isAuthenticator()) {
             final AccountContact auth = findAuthenticator(contacts);
-            if (auth != null && !auth.getUuid().equals(c.getUuid())) {
+            if (auth != null && (!c.hasUuid() || !auth.getUuid().equals(c.getUuid()))) {
                 throw invalidEx("err.authenticator.configured", "Only one authenticator can be configured");
             }
         }

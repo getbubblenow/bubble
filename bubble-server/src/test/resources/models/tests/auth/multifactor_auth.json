@@ -3,6 +3,8 @@
     "comment": "activate service, create account, login",
     "include": "new_account",
     "params": {
+      "username": "user-multifactor_auth",
+      "email": "user-multifactor_auth@example.com",
       "password": "foobar1!"
     }
   },
@@ -27,7 +29,7 @@
       "uri": "users/{{userAccount.name}}/policy/contacts",
       "entity": {
         "type": "email",
-        "info": "{{policy.firstEmail}}",
+        "info": "user-multifactor_auth@example.com",
         "authFactor": "required"
       }
     },
@@ -45,7 +47,7 @@
       "uri": "users/{{userAccount.name}}/policy/contacts/verify",
       "entity": {
         "type": "email",
-        "info": "{{policy.firstEmail}}"
+        "info": "user-multifactor_auth@example.com"
       }
     }
   },
@@ -55,7 +57,7 @@
     "comment": "as root, check inbox (1st) for email verification message",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/{{policy.firstEmail}}?action=verify"
+      "uri": "debug/inbox/email/user-multifactor_auth@example.com?action=verify"
     },
     "response": {
       "store": "userInbox",
@@ -72,11 +74,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "method": "post"
-    },
-    "response": {
-      "sessionName": "userSession",
-      "session": "token"
+      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
     }
   },
 
@@ -102,10 +100,22 @@
       "uri": "users/{{userAccount.name}}/policy/contacts",
       "entity": {
         "type": "email",
-        "info": "{{policy.firstEmail}}",
+        "info": "user-multifactor_auth@example.com",
         "authFactor": "required"
       }
     },
+    "response": {
+      "check": [
+        {"condition": "json.getType().name() == 'email'"},
+        {"condition": "json.getInfo() == 'user-multifactor_auth@example.com'"},
+        {"condition": "json.getAuthFactor().name() == 'required'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "re-read policy, verify email is now a required auth factor",
+    "request": { "uri": "users/{{userAccount.name}}/policy" },
     "response": {
       "store": "policy",
       "check": [
@@ -135,6 +145,7 @@
       "check": [
         {"condition": "json.getMultifactorAuth() != null"},
         {"condition": "json.getMultifactorAuth().length == 1"},
+        {"condition": "json.getMultifactorAuth()[0].getType().name() == 'email'"},
         {"condition": "json.getMultifactorAuth()[0].getInfo().indexOf('***') != -1"}
       ]
     }
@@ -145,7 +156,7 @@
     "comment": "as root, check inbox (2nd), verify login request message sent",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/{{policy.firstEmail}}?action=login"
+      "uri": "debug/inbox/email/user-multifactor_auth@example.com?action=login"
     },
     "response": {
       "store": "userInbox",
@@ -162,7 +173,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "method": "post"
+      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
     },
     "response": {
       "sessionName": "userSession",
@@ -178,6 +189,46 @@
         "type": "authenticator"
       }
     },
+    "response": {
+      "store": "authenticator",
+      "check": [
+        {"condition": "json.getType().name() == 'authenticator'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify authenticator",
+    "request": {
+      "uri": "auth/authenticator",
+      "entity": {
+        "account": "{{userAccount.name}}",
+        "token": "{{authenticator_token authenticator.totpKey}}",
+        "verify": true
+      }
+    }
+  },
+
+  {
+    "comment": "set authenticator as required auth factor",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts",
+      "data": "authenticator",
+      "entity": {
+        "authFactor": "required"
+      }
+    },
+    "response": {
+      "store": "authenticator",
+      "check": [
+        {"condition": "json.getType().name() == 'authenticator'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "re-read policy, both contacts are now required auth factors",
+    "request": { "uri": "users/{{userAccount.name}}/policy" },
     "response": {
       "store": "policy",
       "check": [
@@ -209,7 +260,7 @@
         {"condition": "json.getMultifactorAuth() != null"},
         {"condition": "json.getMultifactorAuth().length == 2"},
         {"condition": "json.getMultifactorAuth()[0].getInfo().indexOf('***') != -1"},
-        {"condition": "json.getMultifactorAuth()[1].getInfo().indexOf('***') != -1"}
+        {"condition": "json.getMultifactorAuth()[1].getInfo() == '{\"masked\": true}'"}
       ]
     }
   },
@@ -219,7 +270,7 @@
     "comment": "as root, check inbox (3rd), verify login request message sent",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/{{policy.firstEmail}}?action=login"
+      "uri": "debug/inbox/email/user-multifactor_auth@example.com?action=login"
     },
     "response": {
       "store": "userInbox",
@@ -236,7 +287,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "method": "post"
+      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
     },
     "response": {
       "store": "remainingApprovals",
@@ -244,7 +295,7 @@
         {"condition": "json.getUuid() == null"},
         {"condition": "json.getMultifactorAuth() != null"},
         {"condition": "json.getMultifactorAuth().length == 1"},
-        {"condition": "json.getMultifactorAuth()[0].getInfo().indexOf('***') != -1"}
+        {"condition": "json.getMultifactorAuth()[0].getInfo() == '{\"masked\": true}'"}
       ]
     }
   },
@@ -255,7 +306,7 @@
       "uri": "auth/authenticator",
       "entity": {
         "account": "{{userAccount.name}}",
-        "token": "{{authenticator_token policy.authenticator.info}}"
+        "token": "{{authenticator_token authenticator.totpKey}}"
       }
     },
     "response": {
@@ -265,9 +316,9 @@
   },
 
   {
-    "comment": "remove email as required auth factor",
+    "comment": "remove email from contacts",
     "request": {
-      "uri": "users/{{userAccount.name}}/policy/contacts/email/{{policy.firstEmail}}",
+      "uri": "users/{{userAccount.name}}/policy/contacts/email/user-multifactor_auth@example.com",
       "method": "delete"
     },
     "response": {
@@ -308,10 +359,10 @@
       }
     },
     "response": {
-      "store": "policy",
+      "store": "smsContact",
       "check": [
-        {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 2"}
+        {"condition": "json.getType().name() == 'sms'"},
+        {"condition": "json.getAuthFactor().name() == 'not_required'"}
       ]
     }
   },
@@ -338,11 +389,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{smsInbox.[0].ctx.confirmationToken}}",
-      "method": "post"
-    },
-    "response": {
-      "sessionName": "userSession",
-      "session": "token"
+      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
     }
   },
 
@@ -369,17 +416,14 @@
       "uri": "users/{{userAccount.name}}/policy/contacts",
       "entity": {
         "type": "sms",
-        "info": "{{policy.firstSms}}",
+        "info": "{{smsContact.info}}",
         "authFactor": "sufficient"
       }
     },
     "response": {
-      "store": "policy",
       "check": [
-        {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 2"},
-        {"condition": "json.getAccountContacts()[1].sufficientAuthFactor()"},
-        {"condition": "json.getAccountContacts()[1].getType().name() == 'sms'"}
+        {"condition": "json.getType().name() == 'sms'"},
+        {"condition": "json.getAuthFactor().name() == 'sufficient'"}
       ]
     }
   },
@@ -404,7 +448,7 @@
       "check": [
         {"condition": "json.getMultifactorAuth() != null"},
         {"condition": "json.getMultifactorAuth().length == 2"},
-        {"condition": "json.getMultifactorAuth()[0].getInfo().indexOf('***') != -1"},
+        {"condition": "json.getMultifactorAuth()[0].getInfo() == '{\"masked\": true}'"},
         {"condition": "json.getMultifactorAuth()[1].getInfo().indexOf('***') != -1"}
       ]
     }
@@ -432,7 +476,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{smsInbox.[0].ctx.confirmationToken}}",
-      "method": "post"
+      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
     },
     "response": {
       "store": "remainingApprovals",
@@ -440,7 +484,7 @@
         {"condition": "json.getUuid() == null"},
         {"condition": "json.getMultifactorAuth() != null"},
         {"condition": "json.getMultifactorAuth().length == 1"},
-        {"condition": "json.getMultifactorAuth()[0].getInfo().indexOf('***') != -1"}
+        {"condition": "json.getMultifactorAuth()[0].getInfo() == '{\"masked\": true}'"}
       ]
     }
   },
@@ -451,7 +495,7 @@
       "uri": "auth/authenticator",
       "entity": {
         "account": "{{userAccount.name}}",
-        "token": "{{authenticator_token policy.authenticator.info}}"
+        "token": "{{authenticator_token authenticator.totpKey}}"
       }
     },
     "response": {
@@ -461,7 +505,7 @@
   },
 
   {
-    "comment": "remove authenticator",
+    "comment": "remove authenticator, only SMS remains as contact method",
     "request": {
       "uri": "users/{{userAccount.name}}/policy/contacts/authenticator",
       "method": "delete"
@@ -470,7 +514,8 @@
       "store": "policy",
       "check": [
         {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 1"}
+        {"condition": "json.getAccountContacts().length == 1"},
+        {"condition": "json.getAccountContacts()[0].getType().name() == 'sms'"}
       ]
     }
   },
@@ -485,10 +530,9 @@
       }
     },
     "response": {
-      "store": "policy",
       "check": [
-        {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 2"}
+        {"condition": "json.getType().name() == 'email'"},
+        {"condition": "json.getInfo() == 'foo@example.com'"}
       ]
     }
   },
@@ -515,11 +559,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "method": "post"
-    },
-    "response": {
-      "sessionName": "userSession",
-      "session": "token"
+      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
     }
   },
 
@@ -535,10 +575,9 @@
       }
     },
     "response": {
-      "store": "policy",
       "check": [
-        {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 2"}
+        {"condition": "json.getAuthFactor().name() == 'sufficient'"},
+        {"condition": "json.getInfo() == 'foo@example.com'"}
       ]
     }
   },
@@ -573,7 +612,7 @@
     "comment": "as root, check inbox (7th), verify login request message sent",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/{{policy.firstEmail}}?action=login"
+      "uri": "debug/inbox/email/foo@example.com?type=request&action=login&target=account"
     },
     "response": {
       "store": "userInbox",
@@ -590,7 +629,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "method": "post"
+      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
     },
     "response": {
       "sessionName": "userSession",
@@ -609,10 +648,9 @@
       }
     },
     "response": {
-      "store": "policy",
       "check": [
-        {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 2"}
+        {"condition": "json.getType().name() == 'email'"},
+        {"condition": "json.getAuthFactor().name() == 'not_required'"}
       ]
     }
   },
@@ -623,15 +661,14 @@
       "uri": "users/{{userAccount.name}}/policy/contacts",
       "entity": {
         "type": "sms",
-        "info": "US:800-555-1212",
+        "info": "{{smsContact.info}}",
         "authFactor": "not_required"
       }
     },
     "response": {
-      "store": "policy",
       "check": [
-        {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 2"}
+        {"condition": "json.getType().name() == 'sms'"},
+        {"condition": "json.getAuthFactor().name() == 'not_required'"}
       ]
     }
   },
@@ -669,8 +706,8 @@
     "response": {
       "store": "policy",
       "check": [
-        {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 3"}
+        {"condition": "json.getInfo() == 'bar@example.com'"},
+        {"condition": "json.getType().name() == 'email'"}
       ]
     }
   },

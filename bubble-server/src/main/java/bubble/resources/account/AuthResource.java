@@ -300,7 +300,9 @@ public class AuthResource {
         if (authenticator == null) return invalid("err.authenticator.notConfigured");
 
         final String secret = authenticator.totpInfo().getKey();
-        if (G_AUTH.authorize(secret, request.getToken())) {
+        final Integer code = request.intToken();
+        if (code == null) return invalid("err.token.invalid");
+        if (G_AUTH.authorize(secret, code)) {
             if (request.verify()) {
                 policyDAO.update(policy.verifyContact(policy.getAuthenticator().getUuid()));
                 return ok_empty();

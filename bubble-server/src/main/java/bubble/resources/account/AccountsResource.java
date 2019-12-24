@@ -148,7 +148,9 @@ public class AccountsResource {
 
         final AccountContact existing = policy.findContact(contact);
         if (existing != null) {
-            if (existing.isAuthenticator()) return invalid("err.authenticator.configured");
+            if (existing.isAuthenticator() && (!contact.hasUuid() || !existing.getUuid().equals(contact.getUuid()))) {
+                return invalid("err.authenticator.configured");
+            }
 
             // if it already exists, these fields cannot be changed
             contact.setUuid(existing.getUuid());
@@ -207,6 +209,16 @@ public class AccountsResource {
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
         final AccountContact contact = policy.findContact(new AccountContact().setType(type).setInfo(info));
         if (contact == null) return notFound(type.name()+"/"+info);
+        return ok(policyDAO.update(policy.removeContact(contact)).mask());
+    }
+
+    @DELETE @Path("/{id}"+EP_POLICY+EP_CONTACTS+EP_AUTHENTICATOR)
+    public Response removeAuthenticator(@Context ContainerRequest ctx,
+                                        @PathParam("id") String id) {
+        final AccountContext c = new AccountContext(ctx, id);
+        final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
+        final AccountContact contact = policy.findContact(new AccountContact().setType(CloudServiceType.authenticator));
+        if (contact == null) return notFound(CloudServiceType.authenticator.name());
         return ok(policyDAO.update(policy.removeContact(contact)).mask());
     }
 
