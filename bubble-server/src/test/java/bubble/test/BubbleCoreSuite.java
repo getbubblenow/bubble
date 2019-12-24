@@ -10,6 +10,7 @@ import org.junit.runners.Suite;
         S3StorageTest.class,
         DriverTest.class,
         ProxyTest.class,
-        TrafficAnalyticsTest.class
+        TrafficAnalyticsTest.class,
+        NetworkTest.class
 })
 public class BubbleCoreSuite {}

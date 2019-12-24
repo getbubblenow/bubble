@@ -2,7 +2,7 @@ package bubble.test;
 
 import bubble.server.BubbleConfiguration;
 import bubble.service.bill.BillingService;
-import bubble.service.bill.RefundService;
+import bubble.service.bill.StandardRefundService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.server.RestServer;
 import org.junit.Test;
@@ -22,7 +22,7 @@ public class PaymentTest extends ActivatedBubbleModelTestBase {
 
     @Override public void onStart(RestServer<BubbleConfiguration> server) {
         final BubbleConfiguration configuration = server.getConfiguration();
-        configuration.getBean(RefundService.class).start(); // ensure RefundService is always started
+        configuration.getBean(StandardRefundService.class).start(); // ensure RefundService is always started
         configuration.getBean(BillingService.class).start(); // ensure BillingService is always started
         super.onStart(server);
     }

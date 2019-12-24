@@ -14,7 +14,7 @@ import bubble.model.cloud.notify.NotificationReceipt;
 import bubble.model.cloud.notify.NotificationType;
 import bubble.server.BubbleConfiguration;
 import bubble.service.bill.BillingService;
-import bubble.service.bill.RefundService;
+import bubble.service.bill.StandardRefundService;
 import bubble.service.notify.NotificationService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -125,7 +125,7 @@ public class StandardSelfNodeService implements SelfNodeService {
         if (c.paymentsEnabled() && c.isSageLauncher()) {
             log.info("onStart: starting BillingService and RefundService");
             c.getBean(BillingService.class).start();
-            c.getBean(RefundService.class).start();
+            c.getBean(StandardRefundService.class).start();
         }
 
         return true;

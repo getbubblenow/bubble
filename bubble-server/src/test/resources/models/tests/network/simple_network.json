@@ -122,7 +122,11 @@
         "locale": "{{detected_locales.geolocation_0}}",
         "timezone": "{{detected_timezone.timeZoneId}}",
         "plan": "{{find plans 'name' 'bubble' 'uuid'}}",
-        "footprint": "US"
+        "footprint": "US",
+        "paymentMethodObject": {
+          "paymentMethodType": "code",
+          "paymentInfo": "code1"
+        }
       }
     },
     "response": {

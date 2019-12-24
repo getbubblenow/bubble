@@ -36,7 +36,7 @@ public class RekeyWriterMain extends BaseMain<RekeyOptions> {
         final boolean debugEnabled = log.isDebugEnabled();
         while (true) {
             try {
-                @Cleanup final Socket clientSocket = new Socket("localhost", getOptions().getPort());
+                @Cleanup final Socket clientSocket = new Socket("127.0.0.1", getOptions().getPort());
                 @Cleanup BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 String line;
                 while ((line = inFromServer.readLine()) != null) {

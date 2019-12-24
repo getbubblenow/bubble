@@ -1,6 +1,7 @@
 [
   "system/cloudService",
   "system/cloudService_live",
+  "system/cloudService_invite_test",
   "system/bubbleDomain",
   "system/bubblePlan",
   "system/bubbleFootprint"
