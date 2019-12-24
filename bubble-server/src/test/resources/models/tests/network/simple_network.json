@@ -13,7 +13,7 @@
       "uri": "users",
       "method": "put",
       "entity": {
-        "name": "test_user",
+        "name": "test_user_simple_net",
         "password": "password",
         "contact": {"type": "email", "info": "test-user@example.com"}
       }
@@ -27,7 +27,7 @@
       "session": "new",
       "uri": "auth/login",
       "entity": {
-        "name": "test_user",
+        "name": "test_user_simple_net",
         "password": "password"
       }
     },
@@ -223,7 +223,7 @@
       "session": "new",
       "uri": "auth/login",
       "entity": {
-        "name": "test_user",
+        "name": "test_user_simple_net",
         "password": "password"
       }
     },
@@ -241,7 +241,7 @@
       "session": "new",
       "uri": "auth/login?k={{emailInbox.[0].ctx.message.data}}",
       "entity": {
-        "name": "test_user",
+        "name": "test_user_simple_net",
         "password": "password"
       }
     },
@@ -257,7 +257,7 @@
     "request": { "uri": "me" },
     "response": {
       "check": [
-        {"condition": "json.getName() == 'test_user'"}
+        {"condition": "json.getName() == 'test_user_simple_net'"}
       ]
     }
   },
