@@ -21,6 +21,7 @@ public class RekeyDatabaseOptions extends BaseMainOptions {
     public static final String LONGOPT_DB_PASS= "--db-password";
     @Option(name=OPT_DB_PASS, aliases=LONGOPT_DB_PASS, usage=USAGE_DB_PASS, required=true)
     @Getter @Setter private String dbPass;
+    public String getDbPassValue () { return keyValue(getDbPass(), "dbPass"); }
 
     public static final String USAGE_FROM_DB = "Database to read from";
     public static final String OPT_FROM_DB = "-F";
@@ -33,6 +34,7 @@ public class RekeyDatabaseOptions extends BaseMainOptions {
     public static final String LONGOPT_FROM_KEY= "--from-key";
     @Option(name=OPT_FROM_KEY, aliases=LONGOPT_FROM_KEY, usage=USAGE_FROM_KEY, required=true)
     @Getter @Setter private String fromKey;
+    public String getFromKeyValue () { return keyValue(getFromKey(), "fromKey"); }
 
     public static final String USAGE_TO_DB = "Database to write to";
     public static final String OPT_TO_DB = "-T";
@@ -45,6 +47,7 @@ public class RekeyDatabaseOptions extends BaseMainOptions {
     public static final String LONGOPT_TO_KEY= "--to-key";
     @Option(name=OPT_TO_KEY, aliases=LONGOPT_TO_KEY, usage=USAGE_TO_KEY, required=true)
     @Getter @Setter private String toKey;
+    public String getToKeyValue () { return keyValue(getToKey(), "toKey"); }
 
     public static final String USAGE_PORT = "Port to communicate on";
     public static final String OPT_PORT = "-p";

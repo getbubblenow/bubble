@@ -30,6 +30,7 @@ public class RekeyOptions extends BaseMainOptions {
     public static final String LONGOPT_DB_PASS = "--db-password";
     @Option(name=OPT_DB_PASS, aliases=LONGOPT_DB_PASS, usage=USAGE_DB_PASS)
     @Getter @Setter private String dbPass;
+    public String getDbPassValue () { return keyValue(getDbPass(), "dbPass"); }
 
     public static final String USAGE_KEY = "Key to use";
     public static final String OPT_KEY = "-K";
@@ -44,7 +45,7 @@ public class RekeyOptions extends BaseMainOptions {
     @Getter @Setter private int port;
 
     public RestServerHarness<BubbleConfiguration, BubbleDbFilterServer> getServer() {
-        return BubbleConfiguration.dbFilterServer(getDatabase(), getDbUser(), getDbPass(), getKey());
+        return BubbleConfiguration.dbFilterServer(getDatabase(), getDbUser(), getDbPassValue(), getKey());
     }
 
 }

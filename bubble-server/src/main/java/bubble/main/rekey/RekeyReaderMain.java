@@ -1,9 +1,9 @@
 package bubble.main.rekey;
 
-import bubble.service.dbfilter.EndOfEntityStream;
-import bubble.service.dbfilter.FullEntityIterator;
 import bubble.server.BubbleConfiguration;
 import bubble.server.BubbleDbFilterServer;
+import bubble.service.dbfilter.EndOfEntityStream;
+import bubble.service.dbfilter.FullEntityIterator;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.main.BaseMain;
@@ -15,11 +15,25 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 public class RekeyReaderMain extends BaseMain<RekeyOptions> {
 
     public static void main (String[] args) { main(RekeyReaderMain.class, args); }
+
+    private final AtomicReference<Map<String, String>> env = new AtomicReference<>(null);
+    public Map<String, String> getEnv() { return env.get() == null ? System.getenv() : env.get(); }
+    public RekeyReaderMain setEnv(Map<String, String> env) { this.env.set(env); return this; }
+
+    @Override protected RekeyOptions initOptions() {
+        if (env.get() == null) return super.initOptions();
+        final Map<String, String> envMap = env.get();
+        return new RekeyOptions() {
+            @Override public Map<String, String> getEnv() { return envMap; }
+        };
+    }
 
     @Override protected void run() throws Exception {
 

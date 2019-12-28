@@ -22,7 +22,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPOutputStream;
 
@@ -31,12 +33,16 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.abs;
+import static org.cobbzilla.wizard.server.config.PgRestServerConfiguration.ENV_PGPASSWORD;
 
 @Service @Slf4j
 public class DatabaseFilterService {
 
     public static final long DB_FILTER_TIMEOUT = SECONDS.toMillis(60);
     public static final long THREAD_KILL_TIMEOUT = SECONDS.toMillis(10);
+
+    public static final String ENV_OLD_DB_KEY = "OLD_DB_KEY";
+    public static final String ENV_NEW_DB_KEY = "NEW_DB_KEY";
 
     @Autowired private BubbleConfiguration configuration;
 
@@ -71,13 +77,17 @@ public class DatabaseFilterService {
             log.info("copyDatabase: copying/filtering data into new database: "+dbName);
             final int port = PortPicker.pickOrDie();
 
+            final Map<String, String> env = new HashMap<>(configuration.pgEnv());
+            env.put(ENV_OLD_DB_KEY, dbConfig.getEncryptionKey());
+            env.put(ENV_NEW_DB_KEY, newKey);
+
             // start a RekeyReader to send objects to RekeyWriter.
             // the RekeyReader will run in-process and receive objects from this method, instead of doing its own queries
             final RekeyOptions readerOptions = new RekeyOptions()
                     .setDatabase(dbConfig.getDatabaseName())
                     .setDbUser(dbUser)
                     .setDbPass(dbPass)
-                    .setKey(dbConfig.getEncryptionKey())
+                    .setKey("@" + ENV_OLD_DB_KEY)
                     .setPort(port);
             reader = new RekeyReaderMain() {
                 @Override public RekeyOptions getOptions() { return readerOptions; }
@@ -86,20 +96,20 @@ public class DatabaseFilterService {
                             ? new FullEntityIterator(configuration)
                             : new FilteredEntityIterator(configuration, account, node);
                 }
-            }.runInBackground();
+            }.setEnv(env).runInBackground();
 
             // start a RekeyWriter to pull objects from RekeyReader
             final AtomicReference<CommandResult> writeResult = new AtomicReference<>();
             final RekeyDatabaseOptions writerOptions = new RekeyDatabaseOptions()
                     .setDbUser(dbUser)
-                    .setDbPass(dbPass)
+                    .setDbPass("@" + ENV_PGPASSWORD)
                     .setFromDb("_ignored_")
                     .setFromKey("_ignored_")
                     .setToDb(dbName)
-                    .setToKey(newKey)
+                    .setToKey("@" + ENV_NEW_DB_KEY)
                     .setPort(port)
                     .setJar(abs(configuration.getBubbleJar()));
-            writer = RekeyDatabaseMain.runWriter(writerOptions, writeResult);
+            writer = RekeyDatabaseMain.runWriter(writerOptions, writeResult, env);
 
             reader.join(DB_FILTER_TIMEOUT);
             writer.join(DB_FILTER_TIMEOUT);
@@ -130,12 +140,12 @@ public class DatabaseFilterService {
         } finally {
             if (reader != null) stopThread(reader, node, "reader");
             if (writer != null) stopThread(writer, node, "writer");
-//            try {
-//                final CommandResult dropdb = pgExec("dropdb", dbName);
-//                if (!dropdb.isZeroExitStatus()) log.warn("copyDatabase: error dropping database: "+dropdb);
-//            } catch (Exception e) {
-//                log.warn("copyDatabase: error dropping database: "+dbName+": "+e);
-//            }
+            try {
+                final CommandResult dropdb = pgExec("dropdb", dbName);
+                if (!dropdb.isZeroExitStatus()) log.warn("copyDatabase: error dropping database: "+dropdb);
+            } catch (Exception e) {
+                log.warn("copyDatabase: error dropping database: "+dbName+": "+e);
+            }
             log.info("copyDatabase: retaining database: "+dbName);
         }
     }
