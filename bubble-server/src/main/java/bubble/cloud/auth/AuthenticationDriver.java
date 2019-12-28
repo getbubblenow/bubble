@@ -13,15 +13,19 @@ import bubble.model.cloud.BubbleNode;
 import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAccountMessageService;
 import com.github.jknack.handlebars.Handlebars;
+import org.apache.commons.collections4.map.SingletonMap;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 
 public interface AuthenticationDriver extends CloudServiceDriver {
+
+    String CTX_LOCALE = "locale";
 
     default BubbleConfiguration getConfiguration() { return die("getConfiguration: not implemented!"); }
     default String getTemplatePath() { return die("getTemplatePath: not implemented!"); }
@@ -96,7 +100,8 @@ public interface AuthenticationDriver extends CloudServiceDriver {
     }
 
     static String loadTemplate(String templatePath, String templateName, String locale, BubbleConfiguration configuration) {
-        final String path = templatePath + "/" + locale + "/" + templateName;
+        final Handlebars handlebars = configuration.getHandlebars();
+        final String path = localePath(locale, templatePath, handlebars) + "/" + templateName;
         try {
             return stream2string(path);
         } catch (Exception e) {
@@ -104,13 +109,21 @@ public interface AuthenticationDriver extends CloudServiceDriver {
             if (locale.equals(defaultLocale)) {
                 return die("loadTemplate: no default template found: "+path);
             }
-            final String defaultPath = templatePath + "/"+ defaultLocale +"/" + templateName;
+            final String defaultPath = localePath(defaultLocale, templatePath, handlebars) + "/" + templateName;
             try {
                 return stream2string(defaultPath);
             } catch (Exception e2) {
                 return die("loadTemplate: no default template found: "+defaultPath);
             }
         }
+    }
+
+    Map<String, String> _localePaths = new ConcurrentHashMap<>();
+
+    static String localePath(final String locale, String templatePath, Handlebars hbs) {
+        final String key = locale+":"+templatePath;
+        return _localePaths.computeIfAbsent(key,
+                k -> HandlebarsUtil.apply(hbs, templatePath, new SingletonMap<>(CTX_LOCALE, locale)));
     }
 
 }

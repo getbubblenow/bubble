@@ -30,7 +30,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 @Service @Slf4j
 public class MessagesResource {
 
-    public static final String MESSAGE_RESOURCE_BASE = "message_templates/server/";
+    public static final String MESSAGE_RESOURCE_PATH = "/server/";
     public static final String RESOURCE_MESSAGES_PROPS = "ResourceMessages.properties";
 
     public static final String[] PRE_AUTH_MESSAGE_GROUPS = {"pre_auth", "countries", "timezones"};
@@ -74,7 +74,7 @@ public class MessagesResource {
         final String cacheKey = locale+"/"+group+"/"+format;
         if (!messageCache.containsKey(cacheKey)) {
             final Properties props = new Properties();
-            props.load(new BufferedReader(new InputStreamReader(loadResourceAsStream(MESSAGE_RESOURCE_BASE + locale + "/" + group + "/" + RESOURCE_MESSAGES_PROPS), UTF8cs)));
+            props.load(new BufferedReader(new InputStreamReader(loadResourceAsStream(MESSAGE_RESOURCE_BASE + locale + MESSAGE_RESOURCE_PATH + group + "/" + RESOURCE_MESSAGES_PROPS), UTF8cs)));
             final Map<String, String> messages = new LinkedHashMap<>();
             props.forEach((key, value) -> messages.put(format.format(key.toString()), value.toString()));
             messageCache.put(cacheKey, messages);

@@ -52,7 +52,7 @@
     "driverClass": "{{BUBBLE_SMTP_DRIVER}}",
     "driverConfig": {
       "tlsEnabled": true,
-      "templatePath": "message_templates/email"
+      "templatePath": "message_templates/{{locale}}/email"
     },
     "credentials": {
       "params": [
@@ -71,7 +71,7 @@
     "type": "sms",
     "driverClass": "{{BUBBLE_SMS_DRIVER}}",
     "driverConfig": {
-      "templatePath": "message_templates/sms"
+      "templatePath": "message_templates/{{locale}}/sms"
     },
     "credentials": {
       "params": [

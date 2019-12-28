@@ -8,7 +8,6 @@ publicUriBase: {{PUBLIC_BASE_URI}}
 
 bubbleJar: {{BUBBLE_JAR}}
 defaultLocale: {{BUBBLE_DEFAULT_LOCALE}}
-allLocales: {{BUBBLE_ALL_LOCALES}}
 testMode: {{#if BUBBLE_TEST_MODE}}{{BUBBLE_TEST_MODE}}{{else}}false{{/if}}
 
 database:

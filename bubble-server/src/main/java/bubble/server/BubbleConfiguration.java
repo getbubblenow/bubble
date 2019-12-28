@@ -14,10 +14,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.map.DefaultedMap;
+import org.apache.commons.lang.ArrayUtils;
 import org.cobbzilla.util.collection.MapBuilder;
 import org.cobbzilla.util.handlebars.HasHandlebars;
 import org.cobbzilla.util.http.ApiConnectionInfo;
 import org.cobbzilla.util.io.FileUtil;
+import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.cache.redis.HasRedisConfiguration;
 import org.cobbzilla.wizard.cache.redis.RedisConfiguration;
 import org.cobbzilla.wizard.client.ApiClientBase;
@@ -28,14 +30,17 @@ import org.cobbzilla.wizard.server.config.PgRestServerConfiguration;
 import org.cobbzilla.wizard.server.config.RecaptchaConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.beans.Transient;
 import java.io.File;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
-import static bubble.ApiConstants.HOME_DIR;
-import static bubble.ApiConstants.META_PROP_BUBBLE_VERSION;
+import static bubble.ApiConstants.*;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static bubble.server.BubbleServer.getConfigurationSource;
 import static java.util.Collections.emptyMap;
@@ -97,8 +102,26 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     @Getter @Setter private String localStorageDir = HOME_DIR + "/.bubble_local_storage";
 
     @Getter @Setter private File bubbleJar;
+
     @Getter @Setter private String defaultLocale = "en_US";
-    @Getter @Setter private String[] allLocales = {defaultLocale};
+    @Getter private final String[] allLocales = initAllLocales();
+    private String[] initAllLocales() {
+        try {
+            final PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(getClass().getClassLoader());
+            final Resource[] resources = resolver.getResources("classpath:/"+MESSAGE_RESOURCE_BASE+"*");
+            final String[] locales = Arrays.stream(resources).map(Resource::getFilename).collect(Collectors.toList()).toArray(StringUtil.EMPTY_ARRAY);
+            if (locales.length == 0) {
+                return die("initAllLocales: defaultLocale "+defaultLocale+" not found, because NO locales were found");
+            }
+            if (!ArrayUtils.contains(locales, defaultLocale)) {
+                return die("initAllLocales: defaultLocale "+defaultLocale+" not found among locales: "+ ArrayUtils.toString(locales));
+            }
+            return locales;
+        } catch (Exception e) {
+            return die("initAllLocales: error loading locales: "+e);
+        }
+    }
+
     @Getter @Setter private LegalInfo legal = new LegalInfo();
 
     @Getter @Setter private Boolean paymentsEnabled = false;
