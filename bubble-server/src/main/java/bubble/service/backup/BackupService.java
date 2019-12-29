@@ -82,6 +82,10 @@ public class BackupService extends SimpleDaemon {
     @Override protected void init() throws Exception { backupCleanerService.start(); }
 
     @Override protected void process() {
+        if (configuration.testMode()) {
+            log.info("backup: test mode enabled, not backing up");
+            return;
+        }
         if (isRestoreMode()) {
             log.info("backup: restore mode is active, not backing up");
             return;
