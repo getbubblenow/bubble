@@ -73,6 +73,7 @@ public class NodeProgressMeterConstants {
                 if (percent == null) return die("getStandardTicks: "+f.getName()+" entry missing from STANDARD_TICKS");
                 ticks.add(new NodeProgressMeterTick()
                         .setAccount(nn.getAccount())
+                        .setNetwork(nn.getNetwork())
                         .setPattern(value)
                         .setMatch(exact)
                         .setMessageKey(f.getName().toLowerCase())
@@ -105,7 +106,9 @@ public class NodeProgressMeterConstants {
     public static List<NodeProgressMeterTick> getInstallTicks(NewNodeNotification nn) {
         final NodeProgressMeterTick[] installTicks = json(stream2string(TICKS_JSON), NodeProgressMeterTick[].class);
         for (NodeProgressMeterTick tick : installTicks) {
-            tick.setAccount(nn.getAccount()).setMessageKey(INSTALL_TICK_PREFIX + tick.getMessageKey());
+            tick.setNetwork(nn.getNetwork())
+                    .setAccount(nn.getAccount())
+                    .setMessageKey(INSTALL_TICK_PREFIX + tick.getMessageKey());
         }
         return asList(installTicks);
     }

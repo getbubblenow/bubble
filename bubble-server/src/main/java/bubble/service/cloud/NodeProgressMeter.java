@@ -86,6 +86,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     private NodeProgressMeterTick newTick(String messageKey, String line) {
         return new NodeProgressMeterTick()
                 .setAccount(nn.getAccount())
+                .setNetwork(nn.getNetwork())
                 .setMessageKey(messageKey)
                 .setDetails(line);
     }
@@ -156,6 +157,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
         closed.set(true);
         background(this::close);
         _setCurrentTick(new NodeProgressMeterTick()
+                .setNetwork(nn.getNetwork())
                 .setAccount(nn.getAccount())
                 .setMessageKey(METER_COMPLETED)
                 .setPercent(100));

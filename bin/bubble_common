@@ -90,8 +90,11 @@ if [[ -z "${BUBBLE_JAR}" ]] ; then
   elif [[ -f "/home/bubble/current/bubble.jar" ]] ; then
     BUBBLE_JAR="/home/bubble/current/bubble.jar"
   else
-    BUBBLE_JAR="$(find ${BUBBLE_SCRIPTS}/../bubble-server/target -type f -name bubble*.jar | head -1)"
+    BUBBLE_JAR="$(find ${BUBBLE_SCRIPTS}/../bubble-server/target -type f -name "bubble*.jar" | head -1)"
   fi
+fi
+if [[ -z "${BUBBLE_JAR}" ]] ; then
+  echo 1>&2 "warning: bubble jar could not be located"
 fi
 
 # Check to see if we are on the PATH, if not suggest that we could be

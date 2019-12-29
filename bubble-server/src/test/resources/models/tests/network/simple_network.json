@@ -169,11 +169,12 @@
     },
     "response": {
       "store": "nn"
-    }
+    },
+    "after": "await_url me/status 40m 20s await_json.length > 0 && await_json[0].getPercent() == 100"
   },
 
   {
-    "before": "await_url https://{{nn.fqdn}}:{{serverConfig.nginxPort}}/api/.bubble 40m 20s",
+    "before": "await_url https://{{nn.fqdn}}:{{serverConfig.nginxPort}}/api/.bubble 10m 20s",
     "comment": "list DNS for the network, should now see a DNS A record for new instance",
     "request": {
       "uri": "me/networks/{{plan.name}}/dns/find?type=A&name={{{url_encoded_escaped_regex nn.fqdn}}}"

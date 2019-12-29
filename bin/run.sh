@@ -55,7 +55,9 @@ if [[ -z "${BUBBLE_ENV}" ]] ; then
   fi
 fi
 if [[ -f ${BUBBLE_ENV} ]] ; then
-  echo 1>&2 "Loading env: ${BUBBLE_ENV}"
+  if [[ -z "${BUBBLE_QUIET}" || ${BUBBLE_QUIET} != 1 ]] ; then
+    echo 1>&2 "Loading env: ${BUBBLE_ENV}"
+  fi
   . ${BUBBLE_ENV}
 fi
 

@@ -39,7 +39,7 @@ fi
 shift
 
 if [[ "${REQUEST_JSON}" == "-" ]] ; then
-  exec ${SCRIPT_DIR}/bubble put -U ${URL} ${@}
+  BUBBLE_QUIET=1 ${SCRIPT_DIR}/bubble put -U ${URL} ${@}
 else
-  cat ${REQUEST_JSON} | exec ${SCRIPT_DIR}/bubble put -U ${URL} ${@}
+  cat ${REQUEST_JSON} | BUBBLE_QUIET=1 ${SCRIPT_DIR}/bubble put -U ${URL} ${@}
 fi

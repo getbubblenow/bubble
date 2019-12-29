@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# Run an HTTP DELETE against the API
+# Run an HTTP GET against the API, then print out the "name" attribute only
 #
 # Usage:
 #
-#     bdelete path [options]
+#     bgetn path [options]
 #
 #   path     : an API path
 #   options  : bscript options, see bubble.main.BubbleScriptOptions (and parent classes) for more info
@@ -24,4 +24,12 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 URL="${1:?no URL provided}"
 shift
 
-BUBBLE_QUIET=1 ${SCRIPT_DIR}/bubble delete -U ${URL} ${@}
+JSON="$(BUBBLE_QUIET=1 ${SCRIPT_DIR}/bubble get -U ${URL} ${@})"
+if [[ ${JSON} = \{* ]] ; then
+  echo "${JSON}" | jq -r .name
+elif [[ "${JSON}" = \[* ]] ; then
+  echo "${JSON}" | jq -r .[].name
+else
+  echo "not sure what to do with JSON:"
+  echo "${JSON}"
+fi

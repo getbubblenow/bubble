@@ -25,4 +25,4 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 URL="${1:?no URL provided}"
 shift
 
-cat /dev/null | exec ${SCRIPT_DIR}/bubble put -U ${URL} ${@}
+cat /dev/null | BUBBLE_QUIET=1 ${SCRIPT_DIR}/bubble put -U ${URL} ${@}

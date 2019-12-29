@@ -22,6 +22,9 @@ public class NodeProgressMeterTick {
     @Getter @Setter private String account;
     public boolean hasAccount() { return !empty(account); }
 
+    @Getter @Setter private String network;
+    public boolean hasNetwork() { return !empty(network); }
+
     @Getter @Setter private String pattern;
     @JsonIgnore @Getter(lazy=true) private final Pattern _pattern = Pattern.compile(getPattern());
 
