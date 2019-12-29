@@ -6,7 +6,6 @@
   "config": [
     {"name": "server_name", "value": "[[node.fqdn]]"},
     {"name": "endpoint", "value": "[[node.ip4]]"},
-    {"name": "dns_port", "value": "[[configuration.dnsPort]]"},
     {"name": "ssl_port", "value": "[[configuration.nginxPort]]"}
   ],
   "tgzB64": ""

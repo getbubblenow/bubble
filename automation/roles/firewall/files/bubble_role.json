@@ -5,7 +5,6 @@
   "config": [
     {"name": "ssl_port", "value": "[[configuration.nginxPort]]"},
     {"name": "admin_port", "value": "[[node.adminPort]]"},
-    {"name": "dns_port", "value": "[[configuration.dnsPort]]"},
     {"name": "install_type", "value": "[[installType]]"}
   ],
   "tgzB64": ""

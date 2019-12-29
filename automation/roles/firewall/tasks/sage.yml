@@ -14,13 +14,6 @@
     comment: Allow related and established connections
   become: yes
 
-- include: port_redirect.yml
-    public_port="53"
-    private_port="{{ dns_port }}"
-    service_name="DNS"
-    allow_udp="yes"
-  when: fw_enable_dns
-
 - name: Allow SSH
   iptables:
     chain: INPUT
