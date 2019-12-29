@@ -263,7 +263,7 @@ public class InboundNotifyResource {
 
         final String remoteHost = getRemoteHost(req);
         if (!fromNode.hasSameIp(remoteHost)) {
-            if (remoteHost.equals("127.0.0.1") && getLocalIps().contains(fromNode.getIp4()) || getLocalIps().contains(fromNode.getIp6())) {
+            if (getLocalIps().contains(fromNode.getIp4()) || getLocalIps().contains(fromNode.getIp6())) {
                 log.debug("readStorage: local request, allowed");
             } else {
                 log.error("readStorage (" + token + "): fromNode (" + fromNode.id() + ") does not match remoteHost: " + remoteHost);

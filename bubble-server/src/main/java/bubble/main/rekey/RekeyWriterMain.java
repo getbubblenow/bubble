@@ -28,7 +28,10 @@ public class RekeyWriterMain extends BaseMain<RekeyOptions> {
 
     @Override protected void run() throws Exception {
 
-        final RestServerHarness<BubbleConfiguration, BubbleDbFilterServer> toHarness = getOptions().getServer();
+        final RekeyOptions options = getOptions();
+        // log.info("run: options=\n"+json(options));
+
+        final RestServerHarness<BubbleConfiguration, BubbleDbFilterServer> toHarness = options.getServer();
         final BubbleConfiguration toConfig = toHarness.getConfiguration();
 
         IdentifiableBase.getEnforceNullUuidOnCreate().set(false);
@@ -36,7 +39,7 @@ public class RekeyWriterMain extends BaseMain<RekeyOptions> {
         final boolean debugEnabled = log.isDebugEnabled();
         while (true) {
             try {
-                @Cleanup final Socket clientSocket = new Socket("127.0.0.1", getOptions().getPort());
+                @Cleanup final Socket clientSocket = new Socket("127.0.0.1", options.getPort());
                 @Cleanup BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 String line;
                 while ((line = inFromServer.readLine()) != null) {

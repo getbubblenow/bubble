@@ -21,32 +21,20 @@ public class RekeyDatabaseMain extends BaseMain<RekeyDatabaseOptions> {
 
     public static void main (String[] args) { main(RekeyDatabaseMain.class, args); }
 
-    private final AtomicReference<Map<String, String>> env = new AtomicReference<>(null);
-    public Map<String, String> getEnv() { return env.get() == null ? System.getenv() : env.get(); }
-    public RekeyDatabaseMain setEnv(Map<String, String> env) { this.env.set(env); return this; }
-
-    @Override protected RekeyDatabaseOptions initOptions() {
-        if (env.get() == null) return super.initOptions();
-        final Map<String, String> envMap = env.get();
-        return new RekeyDatabaseOptions() {
-            @Override public Map<String, String> getEnv() { return envMap; }
-        };
-    }
-
     @Override protected void run() throws Exception {
         final RekeyDatabaseOptions options = getOptions();
 
         final AtomicReference<CommandResult> readResult = new AtomicReference<>();
         final Thread reader = background(() -> {
             try {
-                readResult.set(CommandShell.exec(readerCommand(options, getEnv())));
+                readResult.set(CommandShell.exec(readerCommand(options, options.getEnv())));
             } catch (Exception e) {
                 die("READ ERROR: " + e);
             }
         });
 
         final AtomicReference<CommandResult> writeResult = new AtomicReference<>();
-        final Thread writer = runWriter(options, writeResult, getEnv());
+        final Thread writer = runWriter(options, writeResult, options.getEnv());
 
         reader.join(MINUTES.toMillis(10));
         writer.join(MINUTES.toMillis(10));
@@ -71,12 +59,12 @@ public class RekeyDatabaseMain extends BaseMain<RekeyDatabaseOptions> {
     }
 
     public static Command readerCommand(RekeyDatabaseOptions options, Map<String, String> env) {
-        return getCommand(getJava(), RekeyReaderMain.class, options, options.getFromDb(), options.getFromKeyValue(), options.getReaderDebugPort())
+        return getCommand(getJava(), RekeyReaderMain.class, options, options.getFromDb(), options.getFromKey(), options.getReaderDebugPort())
                 .setEnv(env);
     }
 
     public static Command writerCommand(RekeyDatabaseOptions options, Map<String, String> env) {
-        return getCommand(getJava(), RekeyWriterMain.class, options, options.getToDb(), options.getToKeyValue(), options.getWriterDebugPort())
+        return getCommand(getJava(), RekeyWriterMain.class, options, options.getToDb(), options.getToKey(), options.getWriterDebugPort())
                 .setEnv(env);
     }
 

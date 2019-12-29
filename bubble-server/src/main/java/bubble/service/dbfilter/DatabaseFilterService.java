@@ -83,7 +83,9 @@ public class DatabaseFilterService {
 
             // start a RekeyReader to send objects to RekeyWriter.
             // the RekeyReader will run in-process and receive objects from this method, instead of doing its own queries
-            final RekeyOptions readerOptions = new RekeyOptions()
+            final RekeyOptions readerOptions = new RekeyOptions() {
+                @Override public Map<String, String> getEnv() { return env; }
+            }
                     .setDatabase(dbConfig.getDatabaseName())
                     .setDbUser(dbUser)
                     .setDbPass(dbPass)
@@ -96,7 +98,7 @@ public class DatabaseFilterService {
                             ? new FullEntityIterator(configuration)
                             : new FilteredEntityIterator(configuration, account, node);
                 }
-            }.setEnv(env).runInBackground();
+            }.runInBackground();
 
             // start a RekeyWriter to pull objects from RekeyReader
             final AtomicReference<CommandResult> writeResult = new AtomicReference<>();

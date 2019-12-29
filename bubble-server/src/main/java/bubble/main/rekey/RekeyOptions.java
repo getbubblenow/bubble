@@ -2,6 +2,7 @@ package bubble.main.rekey;
 
 import bubble.server.BubbleConfiguration;
 import bubble.server.BubbleDbFilterServer;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -37,6 +38,7 @@ public class RekeyOptions extends BaseMainOptions {
     public static final String LONGOPT_KEY = "--key";
     @Option(name=OPT_KEY, aliases=LONGOPT_KEY, usage=USAGE_KEY, required=true)
     @Getter @Setter private String key;
+    public String getKeyValue () { return keyValue(getKey(), "key"); }
 
     public static final String USAGE_PORT = "Port to communicate on";
     public static final String OPT_PORT = "-p";
@@ -44,8 +46,8 @@ public class RekeyOptions extends BaseMainOptions {
     @Option(name=OPT_PORT, aliases=LONGOPT_PORT, usage=USAGE_PORT, required=true)
     @Getter @Setter private int port;
 
-    public RestServerHarness<BubbleConfiguration, BubbleDbFilterServer> getServer() {
-        return BubbleConfiguration.dbFilterServer(getDatabase(), getDbUser(), getDbPassValue(), getKey());
+    @JsonIgnore public RestServerHarness<BubbleConfiguration, BubbleDbFilterServer> getServer() {
+        return BubbleConfiguration.dbFilterServer(getDatabase(), getDbUser(), getDbPassValue(), getKeyValue());
     }
 
 }
