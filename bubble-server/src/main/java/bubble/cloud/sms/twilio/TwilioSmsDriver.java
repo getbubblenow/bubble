@@ -16,7 +16,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
 public class TwilioSmsDriver extends SmsServiceDriverBase<TwilioSmsConfig> {
 
-    private static final String PARAM_ACCOUNT_SID= "accountSID";
+    private static final String PARAM_ACCOUNT_SID = "accountSID";
     private static final String PARAM_AUTH_TOKEN = "authToken";
     private static final String PARAM_FROM_PHONE_NUMBER = "fromPhoneNumber";
 

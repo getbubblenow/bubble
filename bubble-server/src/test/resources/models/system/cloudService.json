@@ -7,7 +7,7 @@
     "driverConfig": {
       "region": "US_EAST_1",
       "bucket": "dev.bubblev.org",
-      "prefix": "2019-11",
+      "prefix": "2020-01",
       "listFetchSize": 100
     },
     "credentials": {
