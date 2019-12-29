@@ -182,7 +182,8 @@
     "params": {
       "username": "{{testAccount.name}}",
       "userSession": "userSession",
-      "contactInfo": "test-user@example.com"
+      "contactInfo": "test-user@example.com",
+      "contactLookup": "test-user@example.com"
     }
   },
 
