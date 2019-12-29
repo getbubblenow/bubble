@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.system.CommandShell.execScript;
-import static org.cobbzilla.util.system.CommandShell.loadShellExportsOrDie;
 
 public class GenerateAlgoConfMain extends BaseMain<GenerateAlgoConfOptions> {
 
@@ -41,7 +40,6 @@ public class GenerateAlgoConfMain extends BaseMain<GenerateAlgoConfOptions> {
         final String configTemplateData = FileUtil.toStringOrDie(configTemplate);
         final Map<String, Object> ctx = new HashMap<>();
         ctx.put("bubbleUsers", loadDevices());
-        ctx.put("dnsPort", loadDnsPort());
         final String configData = HandlebarsUtil.apply(BubbleHandlebars.instance.getHandlebars(), configTemplateData, ctx, '<', '>');
         FileUtil.toFileOrDie(config, configData);
         out("wrote config: "+abs(config));
@@ -60,13 +58,6 @@ public class GenerateAlgoConfMain extends BaseMain<GenerateAlgoConfOptions> {
         } catch (Exception e) {
             return die("loadDevices: "+e);
         }
-    }
-
-    private String loadDnsPort() {
-        final Map<String, String> exports = loadShellExportsOrDie("/home/bubble/current/bubble.env");
-        final String dnsPort = exports.get("BUBBLE_DNS_PORT");
-        if (empty(dnsPort)) return die("loadDnsPort: no BUBBLE_DNS_PORT defined");
-        return dnsPort.trim();
     }
 
 }
