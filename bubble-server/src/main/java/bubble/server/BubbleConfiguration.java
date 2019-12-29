@@ -19,6 +19,7 @@ import org.cobbzilla.util.collection.MapBuilder;
 import org.cobbzilla.util.handlebars.HasHandlebars;
 import org.cobbzilla.util.http.ApiConnectionInfo;
 import org.cobbzilla.util.io.FileUtil;
+import org.cobbzilla.util.io.FilenameRegexFilter;
 import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.cache.redis.HasRedisConfiguration;
 import org.cobbzilla.wizard.cache.redis.RedisConfiguration;
@@ -59,6 +60,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_SAGE_LAUNCHER = "sageLauncher";
     public static final String TAG_SAGE_UUID = "sageUuid";
     public static final String TAG_PAYMENTS_ENABLED = "paymentsEnabled";
+
+    public static final String DEFAULT_LOCALE = "en_US";
 
     public BubbleConfiguration (BubbleConfiguration other) { copy(this, other); }
 
@@ -101,9 +104,32 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     @Getter @Setter private String letsencryptEmail;
     @Getter @Setter private String localStorageDir = HOME_DIR + "/.bubble_local_storage";
 
-    @Getter @Setter private File bubbleJar;
+    @Setter private File bubbleJar;
+    public File getBubbleJar () {
+        if (bubbleJar != null) return bubbleJar;
+        try {
+            final File jar = new File(BubbleServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            if (jar.getName().equals("classes")) {
+                // Look for jar in directory above classes
+                final File[] jarFile = jar.getParentFile().listFiles(new FilenameRegexFilter("bubble-server-\\d+\\.\\d+\\.\\d+[-\\w]*.jar"));
+                if (jarFile == null || jarFile.length == 0) return die("no matching jar files found");
+                if (jarFile.length > 1) return die("multiple matching jar files found: "+ArrayUtils.toString(jarFile));
+                bubbleJar = jarFile[0];
+            }
+        } catch (Exception e) {
+            return die("getBubbleJar: bubbleJar not set in config, and could not be determined at runtime: "+e);
+        }
+        return bubbleJar;
+    }
 
-    @Getter @Setter private String defaultLocale = "en_US";
+    @Setter private String defaultLocale = DEFAULT_LOCALE;
+    public String getDefaultLocale () {
+        if (!empty(defaultLocale)) return defaultLocale;
+        final String[] allLocales = getAllLocales();
+        if (ArrayUtils.contains(allLocales, DEFAULT_LOCALE)) return DEFAULT_LOCALE;
+        return allLocales[0];
+    }
+
     @Getter private final String[] allLocales = initAllLocales();
     private String[] initAllLocales() {
         try {

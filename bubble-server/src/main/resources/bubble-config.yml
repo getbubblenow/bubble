@@ -1,12 +1,11 @@
-# Things in {{CURLIES}} will be read from the process environment when the server starts up.
-# Supply this in a bubble.env file when starting the server.
+# Things in {{CURLIES}} will be read from the process environment.
+# Values are typically set in ${HOME}/.bubble.env
 
 serverName: bubble-api
 
 #publicUriBase: https://127.0.0.1
 publicUriBase: {{PUBLIC_BASE_URI}}
 
-bubbleJar: {{BUBBLE_JAR}}
 defaultLocale: {{BUBBLE_DEFAULT_LOCALE}}
 testMode: {{#if BUBBLE_TEST_MODE}}{{BUBBLE_TEST_MODE}}{{else}}false{{/if}}
 
@@ -14,10 +13,10 @@ database:
   driver: org.postgresql.Driver
   url: jdbc:postgresql://127.0.0.1:5432/bubble
   user: bubble
-  password: '{{#if BUBBLE_PG_PASSWORD}}{{BUBBLE_PG_PASSWORD}}{{else}}{{key_file '.BUBBLE_PG_PASSWORD'}}{{/if}}'
+  password: '{{#exists BUBBLE_PG_PASSWORD}}{{BUBBLE_PG_PASSWORD}}{{else}}{{key_file '.BUBBLE_PG_PASSWORD'}}{{/exists}}'
 
   encryptionEnabled: true
-  encryptionKey: '{{#if BUBBLE_DB_ENCRYPTION_KEY}}{{BUBBLE_DB_ENCRYPTION_KEY}}{{else}}{{key_file '.BUBBLE_DB_ENCRYPTION_KEY'}}{{/if}}'
+  encryptionKey: '{{#exists BUBBLE_DB_ENCRYPTION_KEY}}{{BUBBLE_DB_ENCRYPTION_KEY}}{{else}}{{key_file '.BUBBLE_DB_ENCRYPTION_KEY'}}{{/exists}}'
   encryptorPoolSize: 50
 
   migrationEnabled: true
@@ -28,7 +27,7 @@ database:
     - org.cobbzilla.wizard.model.crypto   # for encrypted column support
     - org.cobbzilla.wizard.model.json     # for JSONB column support
     dialect: org.cobbzilla.wizard.model.json.JSONBPostgreSQLDialect
-    showSql: true
+    showSql: {{#exists BUBBLE_SHOW_SQL}}{{BUBBLE_SHOW_SQL}}{{else}}false{{/exists}}
     hbm2ddlAuto: validate
     validationMode: ddl
 
@@ -40,7 +39,7 @@ staticAssets:
     INDEX_ALIASES: /:/index.php
 
 http:
-  port: {{#if BUBBLE_SERVER_PORT}}{{BUBBLE_SERVER_PORT}}{{else}}8090{{/if}}
+  port: {{#exists BUBBLE_SERVER_PORT}}{{BUBBLE_SERVER_PORT}}{{else}}8090{{/exists}}
   baseUri: /api
 
 jersey:
@@ -56,7 +55,7 @@ jersey:
    - org.cobbzilla.wizard.filters.EntityTypeHeaderResponseFilter
 
 redis:
-  key: '{{#if BUBBLE_REDIS_ENCRYPTION_KEY}}{{BUBBLE_REDIS_ENCRYPTION_KEY}}{{else}}{{key_file '.BUBBLE_REDIS_ENCRYPTION_KEY'}}{{/if}}'
+  key: '{{#exists BUBBLE_REDIS_ENCRYPTION_KEY}}{{BUBBLE_REDIS_ENCRYPTION_KEY}}{{else}}{{key_file '.BUBBLE_REDIS_ENCRYPTION_KEY'}}{{/exists}}'
   prefix: bubble_
 
 letsencryptEmail: {{LETSENCRYPT_EMAIL}}

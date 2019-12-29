@@ -1,6 +1,7 @@
 package bubble.test;
 
 import bubble.dao.app.BubbleAppDAO;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
 import java.io.File;
@@ -8,6 +9,7 @@ import java.io.File;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.junit.Assert.assertEquals;
 
+@Slf4j
 public class DbInit extends BubbleModelTestBase {
 
     @Override protected String getModelPrefix() { return "models/"; }
