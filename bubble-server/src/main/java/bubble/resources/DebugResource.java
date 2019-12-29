@@ -42,8 +42,8 @@ public class DebugResource {
                           @QueryParam("action") AccountAction action,
                           @QueryParam("target") ActionTarget target) {
 
-        final Account account = configuration.isTestMode() ? optionalUserPrincipal(ctx) : userPrincipal(ctx);
-        if (!configuration.isTestMode() && !account.admin()) return forbidden();
+        final Account account = configuration.testMode() ? optionalUserPrincipal(ctx) : userPrincipal(ctx);
+        if (!configuration.testMode() && !account.admin()) return forbidden();
 
         final Map<String, ArrayList<RenderedMessage>> spool;
         switch (type) {

@@ -20,6 +20,7 @@ import org.cobbzilla.util.handlebars.HasHandlebars;
 import org.cobbzilla.util.http.ApiConnectionInfo;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.FilenameRegexFilter;
+import org.cobbzilla.util.io.JarLister;
 import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.cache.redis.HasRedisConfiguration;
 import org.cobbzilla.wizard.cache.redis.RedisConfiguration;
@@ -48,6 +49,7 @@ import static java.util.Collections.emptyMap;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.handlebars.HandlebarsUtil.registerUtilityHelpers;
+import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
@@ -109,12 +111,16 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         if (bubbleJar != null) return bubbleJar;
         try {
             final File jar = new File(BubbleServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            if (jar.getName().equals("classes")) {
+            if (jar.getName().endsWith(".jar")) {
+                bubbleJar = jar;
+            } else if (jar.getName().equals("classes")) {
                 // Look for jar in directory above classes
                 final File[] jarFile = jar.getParentFile().listFiles(new FilenameRegexFilter("bubble-server-\\d+\\.\\d+\\.\\d+[-\\w]*.jar"));
                 if (jarFile == null || jarFile.length == 0) return die("no matching jar files found");
                 if (jarFile.length > 1) return die("multiple matching jar files found: "+ArrayUtils.toString(jarFile));
                 bubbleJar = jarFile[0];
+            } else {
+                return die("getBubbleJar: invalid/unsupported jar location detected: "+abs(jar));
             }
         } catch (Exception e) {
             return die("getBubbleJar: bubbleJar not set in config, and could not be determined at runtime: "+e);
@@ -130,12 +136,20 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         return allLocales[0];
     }
 
-    @Getter private final String[] allLocales = initAllLocales();
+    @Getter(lazy=true) private final String[] allLocales = initAllLocales();
     private String[] initAllLocales() {
         try {
             final PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(getClass().getClassLoader());
-            final Resource[] resources = resolver.getResources("classpath:/"+MESSAGE_RESOURCE_BASE+"*");
-            final String[] locales = Arrays.stream(resources).map(Resource::getFilename).collect(Collectors.toList()).toArray(StringUtil.EMPTY_ARRAY);
+            final Resource[] resources = resolver.getResources("classpath*:/"+MESSAGE_RESOURCE_BASE+"*");
+            final String[] locales;
+            if (resources.length == 0) {
+                // read from jar file
+                locales = new JarLister(getBubbleJar(), "^"+MESSAGE_RESOURCE_BASE+"[\\w]{2}(_[\\w]{2})?/$", name -> name.substring(MESSAGE_RESOURCE_BASE.length()).replace("/", ""))
+                        .list().toArray(StringUtil.EMPTY_ARRAY);
+            } else {
+                locales = Arrays.stream(resources).map(Resource::getFilename).collect(Collectors.toList()).toArray(StringUtil.EMPTY_ARRAY);
+            }
+            final String defaultLocale = !empty(this.defaultLocale) ? this.defaultLocale : DEFAULT_LOCALE;
             if (locales.length == 0) {
                 return die("initAllLocales: defaultLocale "+defaultLocale+" not found, because NO locales were found");
             }

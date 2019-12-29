@@ -43,13 +43,13 @@ public class BubbleAuthFilter extends AuthFilter<Account> {
     @Override protected String getAuthTokenHeader() { return SESSION_HEADER; }
 
     @Override protected Set<String> getSkipAuthPaths() {
-        if (configuration.isTestMode()) return SKIP_AUTH_TEST;
+        if (configuration.testMode()) return SKIP_AUTH_TEST;
         return isRestoreMode() ? SKIP_AUTH_RESTORE : SKIP_AUTH_PATHS;
     }
 
     @Override protected Set<String> getSkipAuthPrefixes() {
         if (!accountDAO.activated()) return SKIP_ALL_AUTH;
-        if (configuration.isTestMode()) return SKIP_AUTH_TEST;
+        if (configuration.testMode()) return SKIP_AUTH_TEST;
         if (isRestoreMode()) return SKIP_AUTH_RESTORE;
         return SKIP_AUTH_PREFIXES;
     }

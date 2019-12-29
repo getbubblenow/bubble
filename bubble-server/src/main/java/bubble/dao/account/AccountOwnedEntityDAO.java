@@ -42,7 +42,7 @@ public abstract class AccountOwnedEntityDAO<E extends HasAccount> extends Abstra
     public File getFile(String cloudServiceUuid, String key) {
         final String sha = sha256_hex(key);
         final String pathMiddle;
-        if (configuration.isTestMode()) {
+        if (configuration.testMode()) {
             // keep in well known place that won't change across runs. but keys must now be unique across services
             pathMiddle = "_test_";
         } else {

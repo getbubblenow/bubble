@@ -6,8 +6,8 @@ serverName: bubble-api
 #publicUriBase: https://127.0.0.1
 publicUriBase: {{PUBLIC_BASE_URI}}
 
-defaultLocale: {{BUBBLE_DEFAULT_LOCALE}}
-testMode: {{#if BUBBLE_TEST_MODE}}{{BUBBLE_TEST_MODE}}{{else}}false{{/if}}
+defaultLocale: {{#exists BUBBLE_DEFAULT_LOCALE}}{{BUBBLE_DEFAULT_LOCALE}}{{else}}en_US{{/exists}}
+testMode: {{#exists BUBBLE_TEST_MODE}}{{BUBBLE_TEST_MODE}}{{else}}false{{/exists}}
 
 database:
   driver: org.postgresql.Driver

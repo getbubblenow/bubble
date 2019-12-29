@@ -149,7 +149,7 @@ public class ActivationService {
     }
 
     public String loadDefaultRoles() {
-        if (configuration.isTestMode()) {
+        if (configuration.testMode()) {
             final File roleFile = new File("target/classes/"+DEFAULT_ROLES);
             final String rolesJson = toStringOrDie(roleFile);
             if (rolesJson == null || !rolesJson.contains(STORAGE_PREFIX)) execScript("../bin/prep_bubble_jar");
