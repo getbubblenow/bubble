@@ -3,6 +3,7 @@ package bubble.service.cloud;
 import bubble.model.account.Account;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.AnsibleRole;
+import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.server.BubbleConfiguration;
 import bubble.service.dbfilter.DatabaseFilterService;
@@ -41,6 +42,7 @@ public class AnsiblePrepService {
     public Map<String, Object> prepAnsible(TempDir automation,
                                            File bubbleFilesDir,
                                            Account account,
+                                           BubbleNetwork network,
                                            BubbleNode node,
                                            List<AnsibleRole> roles,
                                            ValidationResult errors,
@@ -66,6 +68,7 @@ public class AnsiblePrepService {
             ctx.put("restoreKey", restoreKey);
             ctx.put("restoreTimeoutSeconds", RESTORE_MONITOR_SCRIPT_TIMEOUT_SECONDS);
         }
+        ctx.put("network", network);
         ctx.put("node", node);
         ctx.put("roles", installRoles.stream().map(AnsibleRole::getRoleName).collect(Collectors.toList()));
         ctx.put("testMode", Boolean.FALSE.toString());

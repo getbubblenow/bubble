@@ -18,6 +18,7 @@ import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
 import static bubble.model.bill.BillPeriod.BILL_START_END_FORMAT;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
 @ECType(root=true)
@@ -96,13 +97,13 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Transient @Getter @Setter private transient String description;
 
     @Transient @Getter @Setter private transient String locale = null;
-    public boolean hasLocale () { return locale != null; }
+    public boolean hasLocale () { return !empty(locale); }
 
     @Transient @Getter @Setter private transient String timezone = null;
-    public boolean hasTimezone () { return timezone != null; }
+    public boolean hasTimezone () { return !empty(timezone); }
 
     @Transient @Getter @Setter private transient String footprint = null;
-    public boolean hasFootprint () { return footprint != null; }
+    public boolean hasFootprint () { return !empty(footprint); }
 
     @Transient @Getter @Setter private transient AccountPaymentMethod paymentMethodObject = null;
     public boolean hasPaymentMethodObject () { return paymentMethodObject != null; }

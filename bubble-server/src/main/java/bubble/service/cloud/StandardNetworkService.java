@@ -204,7 +204,7 @@ public class StandardNetworkService implements NetworkService {
 
             // Prepare ansible roles
             // We must wait until after server is started, because some roles require ip4 in vars
-            final Map<String, Object> ctx = ansiblePrep.prepAnsible(automation, bubbleFilesDir, account, node, roles, errors, roleTgzDir, nn.fork(), nn.getRestoreKey());
+            final Map<String, Object> ctx = ansiblePrep.prepAnsible(automation, bubbleFilesDir, account, network, node, roles, errors, roleTgzDir, nn.fork(), nn.getRestoreKey());
             if (errors.isInvalid()) throw new MultiViolationException(errors.getViolationBeans());
 
             // Create DNS A and AAAA records for node

@@ -119,7 +119,7 @@
       "entity": {
         "name": "test-net-{{rand 5}}",
         "domain": "{{defaultDomain}}",
-        "locale": "{{detected_locales.geolocation_0}}",
+        "locale": "{{detected_locales.[0]}}",
         "timezone": "{{detected_timezone.timeZoneId}}",
         "plan": "{{find plans 'name' 'bubble' 'uuid'}}",
         "footprint": "US",
