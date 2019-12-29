@@ -203,32 +203,36 @@ public class AuthResource {
         }
         if (account.suspended()) return invalid("err.account.suspended");
 
+        boolean isUnlock = false;
         if (account.locked()) {
             if (empty(unlockKey)) return invalid("err.account.locked");
             if (!unlockKey.equals(configuration.getUnlockKey())) return invalid("err.account.locked");
             // unlock all accounts
+            isUnlock = true;
             log.info("Unlock key was valid, unlocking accounts");
             accountDAO.findAll().forEach(a -> accountDAO.update(a.setLocked(false)));
         }
 
-        final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
-        if (policy != null) {
-            final List<AccountContact> authFactors = policy.getAuthFactors();
-            if (!empty(authFactors)) {
-                final AccountMessage loginRequest = accountMessageDAO.create(new AccountMessage()
-                        .setAccount(account.getUuid())
-                        .setName(account.getUuid())
-                        .setMessageType(AccountMessageType.request)
-                        .setAction(AccountAction.login)
-                        .setTarget(ActionTarget.account)
-                        .setRemoteHost(getRemoteHost(req))
-                );
-                return ok(new Account()
-                        .setName(account.getName())
-                        .setLoginRequest(loginRequest.getUuid())
-                        .setMultifactorAuth(authFactors.stream()
-                                .map(AccountContact::mask)
-                                .toArray(AccountContact[]::new)));
+        if (!isUnlock) {
+            final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
+            if (policy != null) {
+                final List<AccountContact> authFactors = policy.getAuthFactors();
+                if (!empty(authFactors)) {
+                    final AccountMessage loginRequest = accountMessageDAO.create(new AccountMessage()
+                            .setAccount(account.getUuid())
+                            .setName(account.getUuid())
+                            .setMessageType(AccountMessageType.request)
+                            .setAction(AccountAction.login)
+                            .setTarget(ActionTarget.account)
+                            .setRemoteHost(getRemoteHost(req))
+                    );
+                    return ok(new Account()
+                            .setName(account.getName())
+                            .setLoginRequest(loginRequest.getUuid())
+                            .setMultifactorAuth(authFactors.stream()
+                                    .map(AccountContact::mask)
+                                    .toArray(AccountContact[]::new)));
+                }
             }
         }
 
