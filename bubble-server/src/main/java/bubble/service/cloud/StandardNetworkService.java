@@ -4,10 +4,12 @@ import bubble.cloud.CloudAndRegion;
 import bubble.cloud.compute.ComputeServiceDriver;
 import bubble.cloud.dns.DnsServiceDriver;
 import bubble.dao.account.AccountDAO;
+import bubble.dao.account.AccountPolicyDAO;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.*;
 import bubble.model.account.Account;
+import bubble.model.account.AccountPolicy;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.*;
@@ -99,6 +101,7 @@ public class StandardNetworkService implements NetworkService {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AnsibleRoleDAO roleDAO;
     @Autowired private AccountPlanDAO accountPlanDAO;
+    @Autowired private AccountPolicyDAO policyDAO;
     @Autowired private BubblePlanDAO planDAO;
 
     @Autowired private NotificationService notificationService;
@@ -462,6 +465,10 @@ public class StandardNetworkService implements NetworkService {
             final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(network.getAccount(), network.getUuid());
             if (accountPlan == null) throw invalidEx("err.accountPlan.notFound");
             if (accountPlan.disabled()) throw invalidEx("err.accountPlan.disabled");
+        }
+        final AccountPolicy policy = policyDAO.findSingleByAccount(network.getAccount());
+        if (!policy.hasVerifiedAccountContacts()) {
+            throw invalidEx("err.accountPlan.noVerifiedContacts");
         }
 
         String lock = null;

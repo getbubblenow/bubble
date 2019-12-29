@@ -17,6 +17,9 @@
         "password": "password",
         "contact": {"type": "email", "info": "test-user@example.com"}
       }
+    },
+    "response": {
+      "store": "testAccount"
     }
   },
 
@@ -27,7 +30,7 @@
       "session": "new",
       "uri": "auth/login",
       "entity": {
-        "name": "test_user_simple_net",
+        "name": "{{testAccount.name}}",
         "password": "password"
       }
     },
@@ -161,6 +164,29 @@
   },
 
   {
+    "comment": "start the network. fails because we have not verified any information",
+    "request": {
+      "uri": "me/networks/{{plan.name}}/actions/start",
+      "headers": { "X-Forwarded-For": "128.252.99.67" },
+      "method": "post"
+    },
+    "response": {
+      "status": 422,
+      "check": [ {"condition": "json.has('err.accountPlan.noVerifiedContacts')"}]
+    }
+  },
+
+  {
+    "comment": "verify the account's email address",
+    "include": "add_approved_contact",
+    "params": {
+      "username": "{{testAccount.name}}",
+      "userSession": "userSession",
+      "contactInfo": "test-user@example.com"
+    }
+  },
+
+  {
     "comment": "start the network. sets up the first node, which does the rest",
     "request": {
       "uri": "me/networks/{{plan.name}}/actions/start",
@@ -228,7 +254,7 @@
       "session": "new",
       "uri": "auth/login",
       "entity": {
-        "name": "test_user_simple_net",
+        "name": "{{testAccount.name}}",
         "password": "password"
       }
     },
@@ -246,7 +272,7 @@
       "session": "new",
       "uri": "auth/login?k={{emailInbox.[0].ctx.message.data}}",
       "entity": {
-        "name": "test_user_simple_net",
+        "name": "{{testAccount.name}}",
         "password": "password"
       }
     },
@@ -262,7 +288,7 @@
     "request": { "uri": "me" },
     "response": {
       "check": [
-        {"condition": "json.getName() == 'test_user_simple_net'"}
+        {"condition": "json.getName() == '{{testAccount.name}}'"}
       ]
     }
   },
