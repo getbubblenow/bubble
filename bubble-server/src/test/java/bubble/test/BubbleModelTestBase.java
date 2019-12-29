@@ -13,6 +13,7 @@ import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.client.script.ApiRunner;
 import org.cobbzilla.wizard.client.script.ApiRunnerListener;
 import org.cobbzilla.wizard.client.script.ApiScriptIncludeHandler;
+import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListener;
 import org.cobbzilla.wizard.server.config.factory.StreamConfigurationSource;
 import org.cobbzilla.wizardtest.resources.ApiModelTestBase;
@@ -36,6 +37,13 @@ public abstract class BubbleModelTestBase extends ApiModelTestBase<BubbleConfigu
 
     // disable model cache for all tests
     @Override public File permCacheDir() { return null; }
+
+    @Override public void beforeStart(RestServer<BubbleConfiguration> server) {
+        server.getConfiguration().setBackupsEnabled(backupsEnabled());
+        super.beforeStart(server);
+    }
+
+    public boolean backupsEnabled() { return false; }
 
     @Getter(lazy=true) private final ApiClientBase _api = new TestBubbleApiClient(getConfiguration());
     @Override public ApiClientBase getApi() { return get_api(); }

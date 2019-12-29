@@ -1,5 +1,6 @@
 package bubble.service.cloud;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
@@ -7,34 +8,35 @@ import lombok.experimental.Accessors;
 
 import java.util.regex.Pattern;
 
+import static bubble.ApiConstants.enumFromString;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+
 @Accessors(chain=true)
 public class NodeProgressMeterTick {
 
+    public enum TickMatchType {
+        exact, prefix, regex;
+        @JsonCreator public static TickMatchType fromString(String v) { return enumFromString(TickMatchType.class, v); }
+    }
+
     @Getter @Setter private String account;
+    public boolean hasAccount() { return !empty(account); }
 
     @Getter @Setter private String pattern;
     @JsonIgnore @Getter(lazy=true) private final Pattern _pattern = Pattern.compile(getPattern());
 
-    @Getter @Setter private Boolean exact;
-    public boolean exact() { return exact != null && exact; }
-
-    @Getter @Setter private Boolean standard;
-    public boolean standard() { return standard != null && standard; }
+    @Getter @Setter private TickMatchType match;
+    public TickMatchType match() { return match != null ? match : TickMatchType.regex; }
 
     @Getter @Setter private Integer percent;
-
-    public NodeProgressMeterTick relativizePercent(int lastStandardPercent) {
-        setPercent(Math.round(((float) lastStandardPercent) + (100f - lastStandardPercent) * getPercent() / 100f));
-        return this;
-    }
-
     @Getter @Setter private String messageKey;
     @Getter @Setter private String details;
 
     public boolean matches(String line) {
-        return exact()
-                ? line.trim().equals(getPattern().trim())
-                : get_pattern().matcher(line).matches();
+        switch (match()) {
+            case exact:          return line.trim().equals(getPattern().trim());
+            case prefix:         return line.trim().startsWith(getPattern().trim());
+            case regex: default: return get_pattern().matcher(line).matches();
+        }
     }
-
 }

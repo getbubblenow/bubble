@@ -1,5 +1,24 @@
 [
-  { "percent": 10, "messageKey": "meter_tick_apt_install", "pattern": "some pattern installing apt packages" },
-  { "percent": 30, "messageKey": "meter_tick_db_setup", "pattern": "some pattern setting up database" },
-  { "percent": 99, "messageKey": "meter_tick_starting_bubble_api_server", "pattern": "some pattern starting api" }
+{ "percent": 15,"messageKey":"apt_update",    "match": "prefix", "pattern":"Get:1 http://security.ubuntu.com/ubuntu bionic-security InRelease" },
+{ "percent": 16,"messageKey":"apt_upgrade",    "match": "exact", "pattern":"Calculating upgrade..." },
+{ "percent": 18,"messageKey":"lib_ssl",       "match": "prefix", "pattern":"Setting up libssl1.1:amd64" },
+{ "percent": 22,"messageKey":"apt_install_done","match":"exact", "pattern":"Installation finished. No error reported." },
+{ "percent": 25,"messageKey":"pip_install",     "match":"exact", "pattern":"python3 set to manually installed." },
+{ "percent": 28,"messageKey":"pyyaml_pycparser","match":"exact", "pattern":"Successfully built ansible PyYAML pycparser" },
+{ "percent": 29,"messageKey":"playbook_start",              "pattern":"PLAY \\[[\\w\\s]+] *{5,}" },
+{ "percent": 30,"messageKey":"role_common",                 "pattern":"TASK \\[common : [\\w\\s]+] *{5,}" },
+{ "percent": 35,"messageKey":"role_common_packages",        "pattern":"TASK \\[common : Install common packages] *{5,}" },
+{ "percent": 38,"messageKey":"role_firewall",               "pattern":"TASK \\[firewall : [\\w\\s]+] *{5,}" },
+{ "percent": 40,"messageKey":"role_bubble",                 "pattern":"TASK \\[bubble : [\\w\\s]+] *{5,}" },
+{ "percent": 44,"messageKey":"role_bubble_jar",             "pattern":"TASK \\[bubble : Install bubble jar] *{5,}" },
+{ "percent": 48,"messageKey":"role_bubble_db",              "pattern":"TASK \\[bubble : Populate database] *{5,}" },
+{ "percent": 51,"messageKey":"role_bubble_restore",         "pattern":"TASK \\[bubble : Install restore helper scripts] *{5,}" },
+{ "percent": 52,"messageKey":"role_bubble_algo",            "pattern":"TASK \\[bubble : Run algo playbook to install algo] *{5,}" },
+{ "percent": 76,"messageKey":"role_nginx",                  "pattern":"TASK \\[nginx : [\\w\\s]+] *{5,}" },
+{ "percent": 81,"messageKey":"role_nginx_certbot",          "pattern":"TASK \\[nginx : Init certbot] *{5,}" },
+{ "percent": 91,"messageKey":"role_mitmproxy",              "pattern":"TASK \\[mitmproxy : [\\w\\s]+] *{5,}" },
+{ "percent": 94,"messageKey":"role_bubble_finalizer",       "pattern":"TASK \\[bubble_finalizer : [\\w\\s]+] *{5,}" },
+{ "percent": 98,"messageKey":"role_bubble_finalizer_touch", "pattern":"TASK \\[bubble_finalizer : Touch first-time setup file] *{5,}" },
+{ "percent": 99,"messageKey":"role_bubble_finalizer_start", "pattern":"TASK \\[bubble_finalizer : Ensure bubble is started] *{5,}" },
+{"percent": 100,"messageKey":"install_complete",            "pattern":"PLAY RECAP *{5,}" }
 ]

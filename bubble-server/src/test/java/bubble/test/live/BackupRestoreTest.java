@@ -13,6 +13,8 @@ public class BackupRestoreTest extends LiveTestBase {
     }
     @Override protected boolean shouldStopSage() { return false; }
 
+    @Override public boolean backupsEnabled() { return true; }
+
     @Test public void testBackupAndRestore () throws Exception { modelTest("live/backup_and_restore"); }
 
 }

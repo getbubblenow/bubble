@@ -23,6 +23,7 @@ import bubble.resources.notify.ReceivedNotificationsResource;
 import bubble.resources.notify.SentNotificationsResource;
 import bubble.server.BubbleConfiguration;
 import bubble.service.account.download.AccountDownloadService;
+import bubble.service.cloud.StandardNetworkService;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -114,6 +115,16 @@ public class AccountsResource {
             c.account.update(request);
         }
         return ok(accountDAO.update(c.account));
+    }
+
+    @Autowired private StandardNetworkService networkService;
+
+    @GET @Path("/{id}"+EP_STATUS)
+    public Response listLaunchStatuses(@Context Request req,
+                                       @Context ContainerRequest ctx,
+                                       @PathParam("id") String id) {
+        final AccountContext c = new AccountContext(ctx, id);
+        return ok(networkService.listLaunchStatuses(c.account.getUuid()));
     }
 
     @GET @Path("/{id}"+EP_POLICY)

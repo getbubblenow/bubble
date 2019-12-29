@@ -3,7 +3,6 @@ package bubble.service.cloud;
 import bubble.notify.NewNodeNotification;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 
 import java.io.*;
@@ -12,12 +11,10 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static bubble.service.cloud.NodeProgressMeterConstants.*;
-import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
-import static org.cobbzilla.util.daemon.ZillaRuntime.terminate;
-import static org.cobbzilla.util.io.StreamUtil.stream2string;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.closeQuietly;
 import static org.cobbzilla.util.system.Bytes.KB;
@@ -51,15 +48,11 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
         this.nn = nn;
         this.redis = redis;
 
-        standardTicks = getStandardTicks();
+        standardTicks = getStandardTicks(nn);
         lastStandardTick = standardTicks.get(standardTicks.size()-1);
 
         ticks = new ArrayList<>(standardTicks);
-        final NodeProgressMeterTick[] installTicks = json(stream2string(TICKS_JSON), NodeProgressMeterTick[].class);
-        for (NodeProgressMeterTick tick : installTicks) {
-            tick.setAccount(nn.getAccount()).relativizePercent(lastStandardTick.getPercent());
-        }
-        ticks.addAll(asList(installTicks));
+        ticks.addAll(getInstallTicks(nn));
 
         key = nn.getUuid();
 
@@ -84,12 +77,13 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
             log.warn("error("+line+") ignored, error already set");
             return;
         }
+        closed.set(true);
         error.set(true);
-        close();
-        setCurrentTick(errorTick(getErrorMessageKey(line), line));
+        background(this::close);
+        setCurrentTick(newTick(getErrorMessageKey(line), line));
     }
 
-    private NodeProgressMeterTick errorTick(String messageKey, String line) {
+    private NodeProgressMeterTick newTick(String messageKey, String line) {
         return new NodeProgressMeterTick()
                 .setAccount(nn.getAccount())
                 .setMessageKey(messageKey)
@@ -97,20 +91,26 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     }
 
     public void reset() {
+        if (closed.get()) die("reset: progress meter is closed, cannot reset");
         error.set(false);
         tickPos = standardTicks.size();
-        setCurrentTick(lastStandardTick);
+        _setCurrentTick(lastStandardTick);
     }
 
     @Override public void run() {
         String line;
         try {
-            final File file = new File("/tmp/node_launch_progress.txt");
             while ((line = reader.readLine()) != null && !closed.get()) {
-                FileUtil.appendFile(file, now()+" : "+line+"\n");
                 for (int i=tickPos; i<ticks.size(); i++) {
                     if (ticks.get(i).matches(line)) {
                         if (!error.get() && !closed.get()) setCurrentTick(ticks.get(i));
+                        if (i > tickPos+1) {
+                            if (tickPos+1 == i-1) {
+                                log.warn("run: skipped one tick at index " + tickPos + ": " + json(ticks.get(tickPos), COMPACT_MAPPER));
+                            } else {
+                                log.warn("run: skipped " + (i - tickPos) + " ticks from index " + tickPos + " to " + (i - 1) + ": first skipped was " + json(ticks.get(tickPos), COMPACT_MAPPER) + " and last was " + json(ticks.get(i - 1), COMPACT_MAPPER));
+                            }
+                        }
                         tickPos = i+1;
                         break;
                     }
@@ -122,9 +122,21 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
         }
     }
 
-    public void setCurrentTick(NodeProgressMeterTick tick) {
-        redis.set(key, json(tick), EX, TICK_REDIS_EXPIRATION);
+    public void setCurrentTick(NodeProgressMeterTick tick) { _setCurrentTick(tick, false); }
+    public void _setCurrentTick(NodeProgressMeterTick tick) { _setCurrentTick(tick, true); }
+
+    public void _setCurrentTick(NodeProgressMeterTick tick, boolean allowForce) {
+        final String json = json(tick, COMPACT_MAPPER);
+        if (!allowForce && closed.get()) {
+            log.warn("setCurrentTick (closed, not setting): "+json);
+            return;
+        }
+        log.info("setCurrentTick: "+ json);
+        redis.set(getProgressMeterKey(key, nn.getAccount()), json, EX, TICK_REDIS_EXPIRATION);
     }
+
+    public static String getProgressMeterKey(String key, String accountUuid) { return accountUuid+":"+key; }
+    public static String getProgressMeterPrefix(String accountUuid) { return accountUuid+":"; }
 
     public static final long THREAD_KILL_TIMEOUT = SECONDS.toMillis(5);
 
@@ -141,8 +153,9 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     }
 
     public void completed() {
-        close();
-        setCurrentTick(new NodeProgressMeterTick()
+        closed.set(true);
+        background(this::close);
+        _setCurrentTick(new NodeProgressMeterTick()
                 .setAccount(nn.getAccount())
                 .setMessageKey(METER_COMPLETED)
                 .setPercent(100));

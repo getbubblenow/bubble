@@ -74,12 +74,21 @@ public class NetworkActionsResource {
         return _startNetwork(network, cloud, region, req);
     }
 
+    @GET @Path(EP_STATUS)
+    public Response listLaunchStatuses(@Context Request req,
+                                       @Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        final String account = caller.admin() ? network.getAccount() : caller.getUuid();
+        return ok(networkService.listLaunchStatuses(account));
+    }
+
     @GET @Path(EP_STATUS+"/{uuid}")
     public Response requestLaunchStatus(@Context Request req,
                                         @Context ContainerRequest ctx,
                                         @PathParam("uuid") String uuid) {
         final Account caller = userPrincipal(ctx);
-        final NodeProgressMeterTick tick = networkService.getLaunchStatus(caller, uuid);
+        final String account = caller.admin() ? network.getAccount() : caller.getUuid();
+        final NodeProgressMeterTick tick = networkService.getLaunchStatus(account, uuid);
         return tick == null ? notFound(uuid) : ok(tick);
     }
 

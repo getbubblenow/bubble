@@ -38,6 +38,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,6 +47,8 @@ import static bubble.ApiConstants.getRemoteHost;
 import static bubble.ApiConstants.newNodeHostname;
 import static bubble.model.cloud.BubbleNode.TAG_ERROR;
 import static bubble.service.boot.StandardSelfNodeService.*;
+import static bubble.service.cloud.NodeProgressMeter.getProgressMeterKey;
+import static bubble.service.cloud.NodeProgressMeter.getProgressMeterPrefix;
 import static bubble.service.cloud.NodeProgressMeterConstants.*;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -54,6 +57,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.closeQuietly;
 import static org.cobbzilla.util.system.CommandShell.chmod;
@@ -628,12 +632,36 @@ public class StandardNetworkService implements NetworkService {
         return cloud;
     }
 
-    public NodeProgressMeterTick getLaunchStatus(Account caller, String uuid) {
-        final String json = getNetworkSetupStatus().get(uuid);
+    public NodeProgressMeterTick getLaunchStatus(String accountUuid, String uuid) {
+        final String json = getNetworkSetupStatus().get(getProgressMeterKey(uuid, accountUuid));
         if (json == null) return null;
-        final NodeProgressMeterTick tick = json(json, NodeProgressMeterTick.class);
-        if (!tick.getAccount().equals(caller.getUuid())) return null;
-        return tick.setPattern(null);
+        try {
+            final NodeProgressMeterTick tick = json(json, NodeProgressMeterTick.class);
+            if (!tick.hasAccount() || !tick.getAccount().equals(accountUuid)) {
+                log.warn("getLaunchStatus: tick.account != accountUuid, returning null");
+                return null;
+            }
+            log.warn("getLaunchStatus: returning tick: "+json(tick, COMPACT_MAPPER));
+            return tick.setPattern(null);
+        } catch (Exception e) {
+            return die("getLaunchStatus: "+e);
+        }
+    }
+
+    public List<NodeProgressMeterTick> listLaunchStatuses(String accountUuid) {
+        final RedisService stats = getNetworkSetupStatus();
+        final List<NodeProgressMeterTick> ticks = new ArrayList<>();
+        for (String key : stats.keys(getProgressMeterPrefix(accountUuid))) {
+            final String json = stats.get(key);
+            if (json != null) {
+                try {
+                    ticks.add(json(json, NodeProgressMeterTick.class));
+                } catch (Exception e) {
+                    log.warn("currentTicks (bad json?): "+e);
+                }
+            }
+        }
+        return ticks;
     }
 
 }

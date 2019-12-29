@@ -19,6 +19,7 @@ import bubble.resources.notify.SentNotificationsResource;
 import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.account.download.AccountDownloadService;
+import bubble.service.cloud.StandardNetworkService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
@@ -240,6 +241,15 @@ public class MeResource {
     public DevicesResource getDevices(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(DevicesResource.class, caller);
+    }
+
+    @Autowired private StandardNetworkService networkService;
+
+    @GET @Path(EP_STATUS)
+    public Response listLaunchStatuses(@Context Request req,
+                                       @Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        return ok(networkService.listLaunchStatuses(caller.getUuid()));
     }
 
 }

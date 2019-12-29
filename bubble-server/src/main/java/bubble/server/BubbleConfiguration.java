@@ -70,6 +70,9 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     @Getter @Setter private int nginxPort = 1443;
     @Getter @Setter private int mitmPort = 8888;
 
+    @Getter @Setter private Boolean backupsEnabled = true;
+    public boolean backupsEnabled() { return backupsEnabled == null || backupsEnabled; }
+
     @Override public void registerConfigHandlerbarsHelpers(Handlebars handlebars) { registerUtilityHelpers(handlebars); }
 
     @Setter private RedisConfiguration redis;
