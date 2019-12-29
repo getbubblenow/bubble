@@ -651,7 +651,7 @@ public class StandardNetworkService implements NetworkService {
     public List<NodeProgressMeterTick> listLaunchStatuses(String accountUuid) {
         final RedisService stats = getNetworkSetupStatus();
         final List<NodeProgressMeterTick> ticks = new ArrayList<>();
-        for (String key : stats.keys(getProgressMeterPrefix(accountUuid))) {
+        for (String key : stats.keys(getProgressMeterPrefix(accountUuid)+"*")) {
             final String json = stats.get(key);
             if (json != null) {
                 try {
