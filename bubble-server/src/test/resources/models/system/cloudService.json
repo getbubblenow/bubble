@@ -51,8 +51,7 @@
     "type": "email",
     "driverClass": "{{BUBBLE_SMTP_DRIVER}}",
     "driverConfig": {
-      "tlsEnabled": true,
-      "templatePath": "message_templates/{{locale}}/email"
+      "tlsEnabled": true
     },
     "credentials": {
       "params": [
@@ -70,9 +69,7 @@
     "name": "TwilioSms",
     "type": "sms",
     "driverClass": "{{BUBBLE_SMS_DRIVER}}",
-    "driverConfig": {
-      "templatePath": "message_templates/{{locale}}/sms"
-    },
+    "driverConfig": {},
     "credentials": {
       "params": [
         {"name": "accountSID", "value": "{{TWILIO_ACCOUNT_SID}}"},

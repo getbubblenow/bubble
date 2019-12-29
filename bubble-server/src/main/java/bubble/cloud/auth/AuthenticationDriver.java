@@ -123,7 +123,7 @@ public interface AuthenticationDriver extends CloudServiceDriver {
     static String localePath(final String locale, String templatePath, Handlebars hbs) {
         final String key = locale+":"+templatePath;
         return _localePaths.computeIfAbsent(key,
-                k -> HandlebarsUtil.apply(hbs, templatePath, new SingletonMap<>(CTX_LOCALE, locale)));
+                k -> HandlebarsUtil.apply(hbs, templatePath, new SingletonMap<>(CTX_LOCALE, locale), '[', ']'));
     }
 
 }

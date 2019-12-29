@@ -3,8 +3,12 @@ package bubble.cloud.sms;
 import lombok.Getter;
 import lombok.Setter;
 
+import static bubble.ApiConstants.MESSAGE_RESOURCE_BASE;
+
 public class SmsConfig {
 
-    @Getter @Setter private String templatePath;
+    public static final String DEFAULT_TEMPLATE_PATH = MESSAGE_RESOURCE_BASE+"[[locale]]/sms";
+
+    @Getter @Setter private String templatePath = DEFAULT_TEMPLATE_PATH;
 
 }
