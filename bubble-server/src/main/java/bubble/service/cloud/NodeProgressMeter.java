@@ -119,7 +119,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
                 sleep(50, "checking for interrupt in between reads");
             }
         } catch (Exception e) {
-            log.info("run: "+e);
+            log.warn("run: "+e);
         }
     }
 
