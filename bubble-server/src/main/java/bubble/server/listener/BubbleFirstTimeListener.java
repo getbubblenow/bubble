@@ -2,7 +2,6 @@ package bubble.server.listener;
 
 import bubble.ApiConstants;
 import bubble.dao.account.AccountDAO;
-import bubble.dao.account.message.AccountMessageDAO;
 import bubble.model.account.Account;
 import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.AccountMessage;
@@ -22,6 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.cobbzilla.util.io.FileUtil.abs;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @Slf4j
 public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<BubbleConfiguration> {
@@ -53,7 +53,7 @@ public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<Bub
             final BubbleNetwork network = configuration.getThisNetwork();
 
             final String unlockKey = randomAlphabetic(UNLOCK_KEY_LEN).toUpperCase();
-            redis.get().set(UNLOCK_KEY, unlockKey, "EX", UNLOCK_EXPIRATION);
+            redis.get().set(UNLOCK_KEY, unlockKey, EX, UNLOCK_EXPIRATION);
 
             final SageHelloService helloService = configuration.getBean(SageHelloService.class);
             helloService.setUnlockMessage(new AccountMessage()

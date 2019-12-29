@@ -14,6 +14,7 @@ import static bubble.model.cloud.NetworkKeys.PARAM_STORAGE;
 import static bubble.model.cloud.NetworkKeys.PARAM_STORAGE_CREDENTIALS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @Service @Slf4j
 public class NetworkKeysService {
@@ -35,7 +36,7 @@ public class NetworkKeysService {
             keys.addKey(PARAM_STORAGE, json(storage));
             keys.addKey(PARAM_STORAGE_CREDENTIALS, json(storage.getCredentials()));
         }
-        getNetworkPasswordTokens().set(uuid, json(keys), "EX", KEY_EXPIRATION);
+        getNetworkPasswordTokens().set(uuid, json(keys), EX, KEY_EXPIRATION);
     }
 
     public NetworkKeys retrieveKeys(String uuid) {

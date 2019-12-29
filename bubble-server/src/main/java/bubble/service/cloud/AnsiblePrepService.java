@@ -71,7 +71,7 @@ public class AnsiblePrepService {
         ctx.put("network", network);
         ctx.put("node", node);
         ctx.put("roles", installRoles.stream().map(AnsibleRole::getRoleName).collect(Collectors.toList()));
-        ctx.put("testMode", Boolean.FALSE.toString());
+        ctx.put("testMode", !fork && configuration.testMode());
 
         // Copy database with new encryption key
         if (installRoles.stream().anyMatch(r->r.getName().startsWith("bubble-"))) {

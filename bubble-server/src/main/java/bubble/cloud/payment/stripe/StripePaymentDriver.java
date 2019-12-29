@@ -29,6 +29,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
@@ -162,7 +163,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
                         } else {
                             log.info("authorize: successful: charge=" + chargeJson);
                         }
-                        authCache.set(authCacheKey, charge.getId(), "EX", AUTH_CACHE_DURATION);
+                        authCache.set(authCacheKey, charge.getId(), EX, AUTH_CACHE_DURATION);
                         return true;
 
                     case "pending":
@@ -244,7 +245,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
                 switch (captured.getStatus()) {
                     case "succeeded":
                         log.info("charge: charge successful: "+authCacheKey);
-                        chargeCache.set(billUuid, captured.getId(), "EX", CHARGE_CACHE_DURATION);
+                        chargeCache.set(billUuid, captured.getId(), EX, CHARGE_CACHE_DURATION);
                         authCache.del(authCacheKey);
                         return captured.getId();
 
@@ -314,7 +315,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
                 switch (refund.getStatus()) {
                     case "succeeded":
                         log.info("refund: refund of "+refundAmount+" successful for bill: "+billUuid);
-                        refundCache.set(billUuid, refund.getId(), "EX", REFUND_CACHE_DURATION);
+                        refundCache.set(billUuid, refund.getId(), EX, REFUND_CACHE_DURATION);
                         return refund.getId();
 
                     case "pending":

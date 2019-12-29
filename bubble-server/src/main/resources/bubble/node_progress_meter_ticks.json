@@ -1,0 +1,5 @@
+[
+  { "percent": 10, "messageKey": "meter_tick_apt_install", "pattern": "some pattern installing apt packages" },
+  { "percent": 30, "messageKey": "meter_tick_db_setup", "pattern": "some pattern setting up database" },
+  { "percent": 99, "messageKey": "meter_tick_starting_bubble_api_server", "pattern": "some pattern starting api" }
+]

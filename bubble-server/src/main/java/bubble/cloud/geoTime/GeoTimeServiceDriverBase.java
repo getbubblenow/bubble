@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.concurrent.TimeUnit;
 
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @Slf4j
 public abstract class GeoTimeServiceDriverBase<T> extends CloudServiceDriverBase<T> implements GeoTimeServiceDriver {
@@ -45,7 +46,7 @@ public abstract class GeoTimeServiceDriverBase<T> extends CloudServiceDriverBase
                 ttl = ERROR_TTL;
             }
             val = json(tz);
-            getCache().set(key, val, "EX", ttl);
+            getCache().set(key, val, EX, ttl);
         }
         return valOrError(val, GeoTimeZone.class);
     }

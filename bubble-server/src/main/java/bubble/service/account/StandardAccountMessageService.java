@@ -31,6 +31,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.ValidationRegexes.NUMERIC_PATTERN;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Service @Slf4j
@@ -107,8 +108,8 @@ public class StandardAccountMessageService implements AccountMessageService {
             token = randomNumeric(6);
             final long tokenTimeout = message.tokenTimeoutSeconds(policy);
             if (tokenTimeout == -1) return null;
-            getConfirmationTokens().set(key, token, "EX", tokenTimeout);
-            getConfirmationTokens().set(token, json(amc), "EX", tokenTimeout);
+            getConfirmationTokens().set(key, token, EX, tokenTimeout);
+            getConfirmationTokens().set(token, json(amc), EX, tokenTimeout);
             log.debug("confirmationToken: action="+message.getAction()+", token="+token+", key="+key);
         }
         return token;

@@ -15,8 +15,8 @@ import bubble.model.cloud.notify.NotificationReceipt;
 import bubble.model.cloud.notify.NotificationType;
 import bubble.notify.NewNodeNotification;
 import bubble.server.BubbleConfiguration;
-import bubble.service.notify.NotificationService;
 import bubble.service.backup.RestoreService;
+import bubble.service.notify.NotificationService;
 import com.github.jknack.handlebars.Handlebars;
 import lombok.Cleanup;
 import lombok.Getter;
@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -45,6 +46,7 @@ import static bubble.ApiConstants.getRemoteHost;
 import static bubble.ApiConstants.newNodeHostname;
 import static bubble.model.cloud.BubbleNode.TAG_ERROR;
 import static bubble.service.boot.StandardSelfNodeService.*;
+import static bubble.service.cloud.NodeProgressMeterConstants.*;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
@@ -53,6 +55,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.reflect.ReflectionUtil.closeQuietly;
 import static org.cobbzilla.util.system.CommandShell.chmod;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -62,8 +65,12 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 public class StandardNetworkService implements NetworkService {
 
     public static final String ANSIBLE_DIR = "ansible";
-    public static final String PLAYBOOK_TEMPLATE = stream2string(ANSIBLE_DIR + "/playbook.yml.hbs");
-    public static final String INSTALL_LOCAL_SH = stream2string(ANSIBLE_DIR + "/install_local.sh.hbs");
+
+    public static final String PLAYBOOK_YML = "playbook.yml";
+    public static final String PLAYBOOK_TEMPLATE = stream2string(ANSIBLE_DIR + "/" + PLAYBOOK_YML + ".hbs");
+
+    public static final String INSTALL_LOCAL_SH = "install_local.sh";
+    public static final String INSTALL_LOCAL_TEMPLATE = stream2string(ANSIBLE_DIR + "/" + INSTALL_LOCAL_SH + ".hbs");
 
     public static final String[] BUBBLE_SCRIPTS = {
             "run.sh", "bubble_common", "bubble",
@@ -97,24 +104,33 @@ public class StandardNetworkService implements NetworkService {
     @Autowired private RestoreService restoreService;
 
     @Autowired private RedisService redisService;
-    @Getter(lazy=true) private final RedisService networkLocks = redisService.prefixNamespace(getClass().getSimpleName()+"_netlock_");
+    @Getter(lazy=true) private final RedisService networkLocks = redisService.prefixNamespace(getClass().getSimpleName()+"_lock_");
+    @Getter(lazy=true) private final RedisService networkSetupStatus = redisService.prefixNamespace(getClass().getSimpleName()+"_status_");
 
     public BubbleNode newNode(NewNodeNotification nn) {
         log.info("newNode starting:\n"+json(nn));
         ComputeServiceDriver computeDriver = null;
         BubbleNode node = null;
         String lock = nn.getLock();
+        NodeProgressMeter progressMeter = null;
         try {
+            progressMeter = new NodeProgressMeter(nn, getNetworkSetupStatus());
+            progressMeter.write(METER_TICK_CONFIRMING_NETWORK_LOCK);
+
             if (!confirmLock(nn.getNetwork(), lock)) {
+                progressMeter.error(METER_ERROR_CONFIRMING_NETWORK_LOCK);
                 return die("newNode: Error confirming network lock");
             }
 
+            progressMeter.write(METER_TICK_VALIDATING_NODE_NETWORK_AND_PLAN);
             final BubbleNetwork network = networkDAO.findByUuid(nn.getNetwork());
             if (network.getState() != BubbleNetworkState.setup) {
+                progressMeter.error(METER_ERROR_NETWORK_NOT_READY_FOR_SETUP);
                 return die("newNode: network is not in 'setup' state: "+network.getState());
             }
             final BubbleNode thisNode = configuration.getThisNode();
             if (thisNode == null || !thisNode.hasUuid() || thisNode.getNetwork() == null) {
+                progressMeter.error(METER_ERROR_NO_CURRENT_NODE_OR_NETWORK);
                 return die("newNode: thisNode not set or has no network");
             }
 
@@ -130,6 +146,7 @@ public class StandardNetworkService implements NetworkService {
 
             // ensure AccountPlan has been paid for
             if (!accountPlan.enabled()) {
+                progressMeter.error(METER_ERROR_PLAN_NOT_ENABLED);
                 return die("newNode: accountPlan is not enabled: "+accountPlan.getUuid());
             }
 
@@ -138,6 +155,7 @@ public class StandardNetworkService implements NetworkService {
             final List<BubbleNode> peers = nodeDAO.findByAccountAndNetwork(account.getUuid(), network.getUuid());
             if (peers.size() >= plan.getNodesIncluded() && nn.automated()) {
                 // automated requests to go past network limit are not honored
+                progressMeter.error(METER_ERROR_PEER_LIMIT_REACHED);
                 return die("newNode: peer limit reached ("+plan.getNodesIncluded()+")");
             }
 
@@ -145,8 +163,12 @@ public class StandardNetworkService implements NetworkService {
             computeDriver = cloud.getComputeDriver(configuration);
 
             final CloudService nodeCloud = cloudDAO.findByAccountAndName(network.getAccount(), cloud.getName());
-            if (nodeCloud == null) return die("newNode: node cloud not found: "+cloud.getName()+" for account "+network.getAccount());
+            if (nodeCloud == null) {
+                progressMeter.error(METER_ERROR_NODE_CLOUD_NOT_FOUND);
+                return die("newNode: node cloud not found: "+cloud.getName()+" for account "+network.getAccount());
+            }
 
+            progressMeter.write(METER_TICK_CREATING_NODE);
             node = nodeDAO.create(new BubbleNode()
                     .setHost(nn.getHost())
                     .setState(BubbleNodeState.created)
@@ -170,21 +192,25 @@ public class StandardNetworkService implements NetworkService {
             }
 
             final File bubbleJar = configuration.getBubbleJar();
-            if (!bubbleJar.exists()) return die("newNode: bubble.jar not found");
+            if (!bubbleJar.exists()) {
+                progressMeter.error(METER_ERROR_BUBBLE_JAR_NOT_FOUND);
+                return die("newNode: bubble.jar not found");
+            }
 
             @Cleanup("delete") final TempDir automation = new TempDir();
             final File bubbleFilesDir = mkdirOrDie(new File(abs(automation) + "/roles/bubble/files"));
 
             final List<AnsibleRole> roles = roleDAO.findByAccountAndNames(account, domain.getRoles());
             if (roles.size() != domain.getRoles().length) {
-                return die("newNode: error finding roles");
+                progressMeter.error(METER_ERROR_ROLES_NOT_FOUND);
+                return die("newNode: error finding ansible roles");
             }
 
             // build automation directory for this run
             final ValidationResult errors = new ValidationResult();
             final File roleTgzDir = mkdirOrDie(new File(abs(bubbleFilesDir), "role_tgz"));
 
-            // Someone needs to create a new cloud compute instance...
+            progressMeter.write(METER_TICK_LAUNCHING_NODE);
             node.setState(BubbleNodeState.starting);
             nodeDAO.update(node);
 
@@ -197,6 +223,7 @@ public class StandardNetworkService implements NetworkService {
 
             // Sanity check that it came up OK
             if (!node.hasIp4() || !node.hasSshKey()) {
+                progressMeter.error(METER_ERROR_NO_IP_OR_SSH_KEY);
                 final String message = "newNode: node booted but has no IP or SSH key";
                 killNode(node, message);
                 return die(message);
@@ -204,19 +231,25 @@ public class StandardNetworkService implements NetworkService {
 
             // Prepare ansible roles
             // We must wait until after server is started, because some roles require ip4 in vars
+            progressMeter.write(METER_TICK_PREPARING_ROLES);
             final Map<String, Object> ctx = ansiblePrep.prepAnsible(automation, bubbleFilesDir, account, network, node, roles, errors, roleTgzDir, nn.fork(), nn.getRestoreKey());
-            if (errors.isInvalid()) throw new MultiViolationException(errors.getViolationBeans());
+            if (errors.isInvalid()) {
+                progressMeter.error(METER_ERROR_ROLE_VALIDATION_ERRORS);
+                throw new MultiViolationException(errors.getViolationBeans());
+            }
 
             // Create DNS A and AAAA records for node
+            progressMeter.write(METER_TICK_WRITING_DNS_RECORDS);
             final CloudService dnsService = cloudDAO.findByUuid(domain.getPublicDns());
             dnsService.getDnsDriver(configuration).setNode(node);
 
+            progressMeter.write(METER_TICK_PREPARING_INSTALL);
             node.setState(BubbleNodeState.preparing_install);
             nodeDAO.update(node);
 
             // This node is on our network, or is the very first server. We must run ansible on it ourselves.
             // write playbook file
-            writeFile(automation, ctx, "playbook.yml", PLAYBOOK_TEMPLATE);
+            writeFile(automation, ctx, PLAYBOOK_YML, PLAYBOOK_TEMPLATE);
 
             // write inventory file
             final File inventory = new File(automation, "hosts");
@@ -244,11 +277,12 @@ public class StandardNetworkService implements NetworkService {
             writeFile(bubbleFilesDir, null, SAGE_KEY_JSON, json(BubbleNodeKey.sageMask(sageKey)));
 
             // write install_local.sh script
-            final File file = writeFile(automation, ctx, "install_local.sh", INSTALL_LOCAL_SH);
-            chmod(file, "500");
+            final File installLocalScript = writeFile(automation, ctx, INSTALL_LOCAL_SH, INSTALL_LOCAL_TEMPLATE);
+            chmod(installLocalScript, "500");
 
             // ensure this hostname is visible in our DNS and in public DNS,
             // or else node can't create its own letsencrypt SSL cert
+            progressMeter.write(METER_TICK_AWAITING_DNS);
             node.setState(BubbleNodeState.awaiting_dns);
             nodeDAO.update(node);
 
@@ -257,6 +291,7 @@ public class StandardNetworkService implements NetworkService {
             final DnsServiceDriver dnsDriver = dnsService.getDnsDriver(configuration);
             dnsDriver.ensureResolvable(domain, node, DNS_TIMEOUT);
 
+            progressMeter.write(METER_TICK_STARTING_INSTALL);
             node.setState(BubbleNodeState.installing);
             nodeDAO.update(node);
 
@@ -274,7 +309,7 @@ public class StandardNetworkService implements NetworkService {
             for (int i=0; i<MAX_ANSIBLE_TRIES; i++) {
                 sleep((i+1) * SECONDS.toMillis(5), "waiting to try ansible setup");
                 try {
-                    final CommandResult result = ansibleSetup(script);
+                    final CommandResult result = ansibleSetup(script, progressMeter);
                     // .... wait for ansible ...
                     if (!result.isZeroExitStatus()) {
                         return die("newNode: error in setup:\nstdout=" + result.getStdout() + "\nstderr=" + result.getStderr());
@@ -283,6 +318,7 @@ public class StandardNetworkService implements NetworkService {
                     break;
                 } catch (Exception e) {
                     log.error("newNode: error running ansible: "+e);
+                    progressMeter.reset();
                 }
             }
             if (!setupOk) return die("newNode: error setting up, all retries failed for node: "+node.getUuid());
@@ -295,12 +331,14 @@ public class StandardNetworkService implements NetworkService {
             }
             node.setState(BubbleNodeState.running);
             nodeDAO.update(node);
+            progressMeter.completed();
 
         } catch (Exception e) {
             log.error("newNode: "+e, e);
             if (node != null) {
                 node.setState(BubbleNodeState.unknown_error);
                 nodeDAO.update(node);
+                progressMeter.error(METER_UNKNOWN_ERROR);
                 killNode(node, "error: "+e);
             }
             return die("newNode: "+e, e);
@@ -313,24 +351,30 @@ public class StandardNetworkService implements NetworkService {
                     log.warn("newNode: compute.cleanupStart error: "+e, e);
                 }
             }
+            if (progressMeter != null) closeQuietly(progressMeter);
             unlockNetwork(nn.getNetwork(), lock);
         }
         return node;
     }
 
-    public CommandResult ansibleSetup(String script) throws IOException {
+    public CommandResult ansibleSetup(String script, OutputStream progressMeter) throws IOException {
         return CommandShell.exec(new Command(new CommandLine("/bin/bash")
                 .addArgument("-c")
                 .addArgument(script, false))
-                .setCopyToStandard(true));
+                .setOut(progressMeter)
+                .setCopyToStandard(configuration.testMode()));
     }
 
     protected String getAnsibleSetupScript(TempDir automation, String sshArgs, String nodeUser, String sshTarget) {
         return "cd " + abs(automation) + " && " +
+
                 // rsync ansible dir to remote host
+                "echo '" + METER_TICK_COPYING_ANSIBLE + "' && " +
                 "rsync -az -e \"ssh " + sshArgs + "\" . "+sshTarget+ ":" + ANSIBLE_DIR + " && " +
+
                 // run install_local.sh on remote host, installs ansible locally
-                "ssh "+sshArgs+" "+sshTarget+" ~"+nodeUser+ "/" + ANSIBLE_DIR + "/install_local.sh";
+                "echo '" + METER_TICK_RUNNING_ANSIBLE + "' && " +
+                "ssh "+sshArgs+" "+sshTarget+" ~"+nodeUser+ "/" + ANSIBLE_DIR + "/" + INSTALL_LOCAL_SH;
     }
 
     private File writeFile(File dir, Map<String, Object> ctx, String filename, String templateOrData) throws IOException {
@@ -583,4 +627,13 @@ public class StandardNetworkService implements NetworkService {
         }
         return cloud;
     }
+
+    public NodeProgressMeterTick getLaunchStatus(Account caller, String uuid) {
+        final String json = getNetworkSetupStatus().get(uuid);
+        if (json == null) return null;
+        final NodeProgressMeterTick tick = json(json, NodeProgressMeterTick.class);
+        if (!tick.getAccount().equals(caller.getUuid())) return null;
+        return tick.setPattern(null);
+    }
+
 }

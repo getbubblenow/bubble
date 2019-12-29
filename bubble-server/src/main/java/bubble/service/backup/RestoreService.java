@@ -30,6 +30,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.security.CryptStream.BUFFER_SIZE;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @Service @Slf4j
 public class RestoreService {
@@ -54,7 +55,7 @@ public class RestoreService {
     @Autowired private BubbleConfiguration configuration;
 
     public void registerRestore(String restoreKey, NetworkKeys keys) {
-        getRestoreKeys().set(restoreKey, json(keys), "EX", RESTORE_WINDOW_SECONDS);
+        getRestoreKeys().set(restoreKey, json(keys), EX, RESTORE_WINDOW_SECONDS);
     }
 
     public boolean isValidRestoreKey(String restoreKey) { return getRestoreKeys().exists(restoreKey); }

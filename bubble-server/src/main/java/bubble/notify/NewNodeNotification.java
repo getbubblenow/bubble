@@ -5,11 +5,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class NewNodeNotification {
 
+    @Getter @Setter private String uuid = randomUUID().toString();
     @Getter @Setter private String account;
     @Getter @Setter private String host;
     @Getter @Setter private String network;

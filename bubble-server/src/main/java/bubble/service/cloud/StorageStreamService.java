@@ -21,6 +21,7 @@ import static java.util.UUID.randomUUID;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
 @Service @Slf4j
@@ -39,13 +40,13 @@ public class StorageStreamService {
     public String registerRead(StorageStreamRequest request) {
         final String token = randomUUID().toString();
         request.setToken(token);
-        getReadRequests().set(token, json(request.setToken(token)), "EX", TOKEN_TTL);
+        getReadRequests().set(token, json(request.setToken(token)), EX, TOKEN_TTL);
         return token;
     }
 
     public String registerRead(StorageStreamRequest request, WriteRequest writeRequest) {
         final String token = WR_PREFIX + writeRequest.requestId;
-        getReadRequests().set(token, json(request.setToken(token)), "EX", TOKEN_TTL);
+        getReadRequests().set(token, json(request.setToken(token)), EX, TOKEN_TTL);
         return token;
     }
 

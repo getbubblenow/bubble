@@ -16,6 +16,7 @@ import static bubble.service.account.download.AccountDownloadService.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.terminate;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @AllArgsConstructor @Slf4j
 public class AccountDownloadMonitor implements Runnable {
@@ -40,7 +41,7 @@ public class AccountDownloadMonitor implements Runnable {
                         .setAction(AccountAction.download)
                         .setTarget(ActionTarget.account)
                         .setRemoteHost(remoteHost));
-                downloadService.getAccountData().set(message.getRequestId(), json(data), "EX", ACCOUNT_DOWNLOAD_EXPIRATION);
+                downloadService.getAccountData().set(message.getRequestId(), json(data), EX, ACCOUNT_DOWNLOAD_EXPIRATION);
             }
         } catch (Exception e) {
             die("error: "+e, e);

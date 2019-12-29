@@ -40,6 +40,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.security.CryptStream.BUFFER_SIZE;
 import static org.cobbzilla.util.security.ShaUtil.sha256_file;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @Slf4j
 public class S3StorageDriver extends StorageServiceDriverBase<S3StorageConfig> {
@@ -254,7 +255,7 @@ public class S3StorageDriver extends StorageServiceDriverBase<S3StorageConfig> {
         listing.getObjectSummaries().forEach(o -> keys.add(o.getKey().substring(rootPrefix.length())));
 
         final ListingRequest listingRequest = new ListingRequest(key, listing);
-        getActiveListings().set(listRequestId, json(listingRequest), "EX", LISTING_TIMEOUT);
+        getActiveListings().set(listRequestId, json(listingRequest), EX, LISTING_TIMEOUT);
 
         return new StorageListing()
                 .setListingId(listRequestId)
@@ -274,7 +275,7 @@ public class S3StorageDriver extends StorageServiceDriverBase<S3StorageConfig> {
 
         listingRequest.objectListing = s3client.listNextBatchOfObjects(listingRequest.objectListing);
         listingRequest.objectListing.getObjectSummaries().forEach(o -> keys.add(o.getKey().substring(rootPrefix.length())));
-        activeListings.set(listingId, json(listingRequest), "EX", LISTING_TIMEOUT);
+        activeListings.set(listingId, json(listingRequest), EX, LISTING_TIMEOUT);
 
         return new StorageListing()
                 .setListingId(listingId)

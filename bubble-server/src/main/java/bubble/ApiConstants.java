@@ -147,6 +147,7 @@ public class ApiConstants {
     public static final String EP_STOP = "/stop";
     public static final String EP_RESTORE = "/restore";
     public static final String EP_KEYS = "/keys";
+    public static final String EP_STATUS = "/status";
     public static final String EP_FORK = "/fork";
 
     public static final String DEBUG_ENDPOINT = "/debug";

@@ -25,6 +25,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @Slf4j
 public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBase<T> implements GeoLocateServiceDriver {
@@ -59,7 +60,7 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
                 ttl = ERROR_TTL;
             }
             val = json(loc);
-            getCache().set(ip, val, "EX", ttl);
+            getCache().set(ip, val, EX, ttl);
         }
         return valOrError(val, GeoLocation.class);
     }

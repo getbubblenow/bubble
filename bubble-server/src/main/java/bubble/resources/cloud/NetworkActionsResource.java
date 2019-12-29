@@ -16,6 +16,7 @@ import bubble.model.bill.AccountPlan;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import bubble.service.backup.NetworkKeysService;
+import bubble.service.cloud.NodeProgressMeterTick;
 import bubble.service.cloud.StandardNetworkService;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
@@ -71,6 +72,15 @@ public class NetworkActionsResource {
         if (!network.getState().canStartNetwork()) return invalid("err.network.cannotStartInCurrentState");
 
         return _startNetwork(network, cloud, region, req);
+    }
+
+    @GET @Path(EP_STATUS+"/{uuid}")
+    public Response requestLaunchStatus(@Context Request req,
+                                        @Context ContainerRequest ctx,
+                                        @PathParam("uuid") String uuid) {
+        final Account caller = userPrincipal(ctx);
+        final NodeProgressMeterTick tick = networkService.getLaunchStatus(caller, uuid);
+        return tick == null ? notFound(uuid) : ok(tick);
     }
 
     @GET @Path(EP_KEYS)

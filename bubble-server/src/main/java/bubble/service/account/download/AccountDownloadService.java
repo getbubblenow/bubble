@@ -21,6 +21,7 @@ import static bubble.service.account.download.AccountDownloadMonitor.waitForData
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @Service @Slf4j
 public class AccountDownloadService {
@@ -47,7 +48,7 @@ public class AccountDownloadService {
     public void approve(String uuid) {
         final String data = getAccountData().get(uuid);
         if (data != null) {
-            getApprovedAccountData().set(uuid, data, "EX", ACCOUNT_DOWNLOAD_EXPIRATION);
+            getApprovedAccountData().set(uuid, data, EX, ACCOUNT_DOWNLOAD_EXPIRATION);
         }
     }
 

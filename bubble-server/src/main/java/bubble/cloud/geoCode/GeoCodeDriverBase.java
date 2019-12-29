@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.concurrent.TimeUnit;
 
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @Slf4j
 public abstract class GeoCodeDriverBase<T> extends CloudServiceDriverBase<T> implements GeoCodeServiceDriver {
@@ -46,7 +47,7 @@ public abstract class GeoCodeDriverBase<T> extends CloudServiceDriverBase<T> imp
                 ttl = ERROR_TTL;
             }
             val = json(r);
-            getCache().set(key, val, "EX", ttl);
+            getCache().set(key, val, EX, ttl);
         }
         return valOrError(val, GeoCodeResult.class);
     }
