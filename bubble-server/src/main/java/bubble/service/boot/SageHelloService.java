@@ -63,9 +63,11 @@ public class SageHelloService extends SimpleDaemon {
                 log.info("hello_to_sage: received reply from sage node: " + json(receipt, COMPACT_MAPPER));
                 if (receipt.isSuccess()) {
                     if (!sageHelloSent.get()) sageHelloSent.set(true);
-                    if (unlockMessage.get() != null) {
-                        final AccountMessageDAO messageDAO = c.getBean(AccountMessageDAO.class);
-                        messageDAO.create(unlockMessage.get());
+                    synchronized (unlockMessage) {
+                        if (unlockMessage.get() != null && !unlockMessage.get().hasUuid()) {
+                            final AccountMessageDAO messageDAO = c.getBean(AccountMessageDAO.class);
+                            unlockMessage.set(messageDAO.create(unlockMessage.get()));
+                        }
                     }
                 }
             }
