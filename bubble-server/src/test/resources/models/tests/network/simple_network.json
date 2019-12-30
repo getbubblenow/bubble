@@ -361,6 +361,7 @@
   },
 
   {
+    "before": "sleep 10s",
     "comment": "download VPN config for new user",
     "request": { "uri": "me/devices/{{userDevice.uuid}}/vpn/vpn.conf" },
     "response": {
