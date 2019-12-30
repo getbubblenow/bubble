@@ -20,6 +20,8 @@ public class BubbleBackupDAO extends AccountOwnedEntityDAO<BubbleBackup> {
 
     @Autowired private StorageService storageService;
 
+    @Override public Boolean getHasNameField() { return false; }
+
     public List<BubbleBackup> findByNetwork(String uuid) { return findByField("network", uuid); }
 
     public BubbleBackup findNewestSuccessfulByNetwork(String uuid) {

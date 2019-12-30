@@ -7,6 +7,7 @@ import bubble.server.BubbleConfiguration;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.dao.AbstractCRUDDAO;
+import org.cobbzilla.wizard.dao.SqlViewSearchableDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
@@ -19,7 +20,9 @@ import static org.hibernate.criterion.Restrictions.eq;
 import static org.hibernate.criterion.Restrictions.or;
 
 @Slf4j
-public abstract class AccountOwnedEntityDAO<E extends HasAccount> extends AbstractCRUDDAO<E> {
+public abstract class AccountOwnedEntityDAO<E extends HasAccount>
+        extends AbstractCRUDDAO<E>
+        implements SqlViewSearchableDAO<E> {
 
     @Autowired private BubbleConfiguration configuration;
 

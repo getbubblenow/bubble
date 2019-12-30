@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# Run an HTTP GET against the API, then print out the "uuid" attribute only
+# Run an HTTP GET against the API, then print out the "uuid" attribute only, and only the first one
 #
 # Usage:
 #
-#     bgeti path [options]
+#     bgeti1 path [options]
 #
 #   path     : an API path
 #   options  : bscript options, see bubble.main.BubbleScriptOptions (and parent classes) for more info
@@ -28,7 +28,7 @@ JSON="$(BUBBLE_QUIET=1 ${SCRIPT_DIR}/bubble get -U ${URL} ${@})"
 if [[ ${JSON} = \{* ]] ; then
   echo "${JSON}" | jq -r .uuid
 elif [[ "${JSON}" = \[* ]] ; then
-  echo "${JSON}" | jq -r .[].uuid
+  echo "${JSON}" | jq -r .[].uuid | head -1
 else
   echo "not sure what to do with JSON:"
   echo "${JSON}"

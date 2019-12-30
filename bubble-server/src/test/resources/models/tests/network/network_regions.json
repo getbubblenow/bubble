@@ -1,0 +1,36 @@
+[
+  {
+    "comment": "list all available compute clouds",
+    "request": { "uri": "me/clouds?type=compute" },
+    "response": {
+      "store": "computeClouds",
+      "check": [
+        {"condition": "json.length == 2"}
+      ]
+    }
+  },
+
+  {
+    "comment": "list all available compute regions",
+    "request": { "uri": "me/regions" },
+    "response": {
+      "check": [
+        // ensure we have at least one region from each cloud
+        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[0].getUuid(); }) != null"},
+        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[1].getUuid(); }) != null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "list closest regions",
+    "request": { "uri": "me/regions/closest" },
+    "response": {
+      "check": [
+        // ensure we have at least one region from each cloud
+        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[0].getUuid(); }) != null"},
+        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[1].getUuid(); }) != null"}
+      ]
+    }
+  }
+]

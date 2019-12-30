@@ -190,7 +190,7 @@
   {
     "comment": "start the network. sets up the first node, which does the rest",
     "request": {
-      "uri": "me/networks/{{plan.name}}/actions/start",
+      "uri": "me/networks/{{plan.name}}/actions/start?cloud=DigitalOceanCompute&region=nyc1",
       "headers": { "X-Forwarded-For": "128.252.99.67" },
       "method": "post"
     },

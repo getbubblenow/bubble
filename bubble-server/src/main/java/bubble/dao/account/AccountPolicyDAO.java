@@ -12,6 +12,8 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @Repository
 public class AccountPolicyDAO extends AccountOwnedEntityDAO<AccountPolicy> {
 
+    @Override protected String getNameField() { return "account"; }
+
     @Override public Object preCreate(AccountPolicy policy) {
         policy.setUuid(policy.getAccount());
         final ValidationResult result = policy.validate();

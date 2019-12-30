@@ -5,6 +5,7 @@ import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
+import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.BubbleNetwork;
@@ -31,6 +32,7 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
     @Autowired private BubblePlanDAO planDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private GeoService geoService;
+    @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private StandardNetworkService networkService;
     @Autowired private StandardSelfNodeService selfNodeService;
 
@@ -104,17 +106,20 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
                                 // there is only one region
                                 closestNotUs = closestRegions.get(0);
                             }
-                            final CloudService cloud = closestNotUs.getCloud();
-
-                            final NewNodeNotification newNodeRequest = new NewNodeNotification()
-                                    .setAccount(network.getAccount())
-                                    .setNetwork(network.getUuid())
-                                    .setDomain(network.getDomain())
-                                    .setCloud(cloud.getUuid())
-                                    .setRegion(closestNotUs.getInternalName())
-                                    .setAutomated(true);
-                            log.info("hello_from_sage: requesting new node : "+json(newNodeRequest));
-                            networkService.backgroundNewNode(newNodeRequest);
+                            final CloudService cloud = cloudDAO.findByUuid(closestNotUs.getCloud());
+                            if (cloud == null) {
+                                log.warn("hello_from_sage: cloud not found, cannot request new node: "+closestNotUs.getCloud());
+                            } else {
+                                final NewNodeNotification newNodeRequest = new NewNodeNotification()
+                                        .setAccount(network.getAccount())
+                                        .setNetwork(network.getUuid())
+                                        .setDomain(network.getDomain())
+                                        .setCloud(cloud.getUuid())
+                                        .setRegion(closestNotUs.getInternalName())
+                                        .setAutomated(true);
+                                log.info("hello_from_sage: requesting new node : " + json(newNodeRequest));
+                                networkService.backgroundNewNode(newNodeRequest);
+                            }
                         }
                     }
                 }

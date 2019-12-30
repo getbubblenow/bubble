@@ -76,38 +76,47 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    @ECSearchable
     @HasValue(message="err.name.required")
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
 
+    @ECSearchable
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
+    @ECSearchable
     @HasValue(message="err.type.required")
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private CloudServiceType type;
 
+    @ECSearchable
     @ECIndex @Getter @Setter private Integer priority = 1;
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template() { return template != null && template; }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
     public boolean disabled () { return !enabled(); }
 
+    @ECSearchable
     @ECIndex @Column(updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String delegated;
     public boolean delegated() { return delegated != null; }
 
+    @ECSearchable
     @HasValue(message="err.driverClass.required")
     @Column(nullable=false, length=1000)
     @Getter @Setter private String driverClass;
 
+    @ECSearchable
     @Size(max=100000, message="err.driverConfigJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String driverConfigJson;

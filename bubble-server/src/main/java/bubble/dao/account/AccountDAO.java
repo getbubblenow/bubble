@@ -16,6 +16,7 @@ import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.dao.AbstractCRUDDAO;
+import org.cobbzilla.wizard.dao.SqlViewSearchableDAO;
 import org.cobbzilla.wizard.model.HashedPassword;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
@@ -36,7 +37,7 @@ import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_ASC;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Repository @Slf4j
-public class AccountDAO extends AbstractCRUDDAO<Account> {
+public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearchableDAO<Account> {
 
     @Autowired private AccountPolicyDAO policyDAO;
     @Autowired private BubbleAppDAO appDAO;

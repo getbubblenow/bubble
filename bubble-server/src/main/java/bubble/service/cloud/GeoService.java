@@ -18,6 +18,7 @@ import bubble.model.cloud.CloudService;
 import bubble.model.cloud.NetLocation;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.ArrayUtils;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,12 +26,14 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
 import static org.cobbzilla.util.collection.HasPriority.SORT_PRIORITY;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
-import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.string.LocaleUtil.getDefaultLocales;
+import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Service @Slf4j
 public class GeoService {
@@ -45,15 +48,18 @@ public class GeoService {
 
     public GeoLocation locate (String accountUuid, String ip) {
 
-        List<CloudService> geoServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoLocation);
-        if (geoServices.isEmpty()) {
+        List<CloudService> geoServices = null;
+        if (accountUuid != null) {
+            geoServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoLocation);
+        }
+        if (empty(geoServices)) {
             // try to find using admin
             final Account admin = accountDAO.findFirstAdmin();
             if (admin != null && !admin.getUuid().equals(accountUuid)) {
                 geoServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoLocation);
             }
         }
-        if (geoServices.isEmpty()) {
+        if (empty(geoServices)) {
             throw new SimpleViolationException("err.geoLocateService.notFound");
         }
 
@@ -171,17 +177,19 @@ public class GeoService {
 
     public CloudAndRegion selectCloudAndRegion(BubbleNetwork network, NetLocation netLocation) {
         final CloudRegion closest;
-        final CloudService cloud;
+        final String cloudUuid;
         if (netLocation.hasIp()) {
             // determine closest POP to userIp from cloud compute service
             final List<CloudRegionRelative> closestRegions = getCloudRegionRelatives(network, netLocation.getIp());
             closest = closestRegions.get(0);
-            cloud = ((CloudRegionRelative) closest).getCloud();
+            cloudUuid = closest.getCloud();
+            final CloudService cloud = cloudDAO.findByUuid(cloudUuid);
+            if (cloud == null) throw notFoundEx(cloudUuid);
             return new CloudAndRegion(cloud, closest);
 
         } else if (netLocation.hasCloud() && netLocation.hasRegion()) {
             // use explicitly provided cloud/region
-            cloud = cloudDAO.findByAccountAndId(network.getAccount(), netLocation.getCloud());
+            final CloudService cloud = cloudDAO.findByAccountAndId(network.getAccount(), netLocation.getCloud());
             if (cloud == null) {
                 log.error("selectCloudAndRegion (network="+network.getUuid()+"): netLocation.cloud="+netLocation.getCloud()+" not found under account="+network.getAccount());
                 throw notFoundEx(netLocation.getCloud());
@@ -194,4 +202,43 @@ public class GeoService {
             return die("selectCloudAndRegion: no IP or region provided to launch first node");
         }
     }
+
+    public String getFirstLocale(Account account, String remoteHost, String langHeader) {
+        final List<String> supportedLocales = getSupportedLocales(account, remoteHost, langHeader);
+        return empty(supportedLocales) ? null : supportedLocales.get(0);
+    }
+
+    public List<String> getSupportedLocales(Account caller, String remoteHost, String langHeader) {
+        final List<String> locales = new ArrayList<>();
+        final String[] allLocales = configuration.getAllLocales();
+        if (langHeader != null) locales.add(langHeader);
+
+        try {
+            final GeoLocation loc = locate(caller == null ? null : caller.getUuid(), remoteHost);
+            if (loc != null) {
+                final List<String> found = getDefaultLocales(loc.getCountry());
+                for (int i=0; i<found.size(); i++) {
+                    if (!locales.contains(found.get(i))) {
+                        locales.add(found.get(i));
+                    }
+                }
+            }
+        } catch (SimpleViolationException e) {
+            throw e;
+
+        } catch (Exception e) {
+            log.warn("detectLocale: "+e);
+        }
+
+        // filter out any locales that are not supported
+        final List<String> supportedLocales = locales.stream()
+                .filter(loc -> ArrayUtils.contains(allLocales, loc))
+                .collect(Collectors.toList());
+        if (supportedLocales.isEmpty()) {
+            // re-add default locale if nothing else is supported
+            supportedLocales.add(configuration.getDefaultLocale());
+        }
+        return supportedLocales;
+    }
+
 }

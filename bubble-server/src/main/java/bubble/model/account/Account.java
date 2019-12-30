@@ -18,6 +18,7 @@ import org.cobbzilla.wizard.model.HashedPassword;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
+import org.cobbzilla.wizard.model.search.SqlViewSearchResult;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.cobbzilla.wizard.validation.HasValue;
 import org.cobbzilla.wizard.validation.ValidationResult;
@@ -56,7 +57,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
         @ECTypeChild(type=SentNotification.class, backref="account")
 })
 @Entity @NoArgsConstructor @Accessors(chain=true) @Slf4j
-public class Account extends IdentifiableBase implements TokenPrincipal {
+public class Account extends IdentifiableBase implements TokenPrincipal, SqlViewSearchResult {
 
     public static final String[] UPDATE_FIELDS = {"url", "description", "autoUpdatePolicy"};
     public static final String[] ADMIN_UPDATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "suspended", "admin");
@@ -76,6 +77,7 @@ public class Account extends IdentifiableBase implements TokenPrincipal {
 
     public static String accountField(String table) { return table.equalsIgnoreCase("account") ? "uuid" : "account"; }
 
+    @ECSearchable(filter=true)
     @HasValue(message="err.name.required")
     @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=100)
     @Getter @Setter private String name;
@@ -96,20 +98,25 @@ public class Account extends IdentifiableBase implements TokenPrincipal {
     @Getter @Setter private String parent;
     public boolean hasParent () { return parent != null; }
 
+    @ECSearchable(filter=true)
     @Size(max=1024, message="err.url.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(1024+ENC_PAD)+")")
     @Getter @Setter private String url;
 
+    @ECSearchable(filter=true)
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
+    @ECSearchable
     @Getter @Setter private Boolean admin = false;
     public boolean admin () { return admin != null && admin; }
 
+    @ECSearchable
     @Getter @Setter private Boolean suspended = false;
     public boolean suspended () { return suspended != null && suspended; }
 
+    @ECSearchable
     @Getter @Setter private Boolean locked = false;
     public boolean locked () { return locked != null && locked; }
 

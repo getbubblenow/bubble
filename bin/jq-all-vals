@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# Print all values for a JSON property name, among any given JSON via stdin.
+# JSON could be object, array, nested objects, etc.
+#
+# Note that this command redirects stderr to /dev/null, so it might mask errors.
+# If you get empty results when you expect something there, check the output of the command
+# before piping to jq-all-vals to verify
+#
+# Usage:
+#
+#     some-command-that-produces-JSON | jq-all-vals prop-name
+#
+#  prop-name : a property name
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+ARG=${1:?no property provided}
+jq -r 'getpath(path(.. | select(.'"${ARG}"' != null))) | .'"${ARG}"'' 2> /dev/null

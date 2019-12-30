@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static bubble.model.cloud.BubbleNode.TAG_SSH_KEY_ID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.security.RsaKeyPair.newRsaKeyPair;
 
@@ -21,13 +23,16 @@ public abstract class ComputeServiceDriverBase
         extends CloudServiceDriverBase<ComputeConfig>
         implements ComputeServiceDriver {
 
-    private final NodeReaper reaper;
-
-    public ComputeServiceDriverBase () { reaper = new NodeReaper(this); }
+    private final AtomicReference<NodeReaper> reaper = new AtomicReference<>();
 
     @Override public void startDriver() {
         if (configuration.isSelfSage()) {
-            configuration.autowire(reaper).start();
+            synchronized (reaper) {
+                if (reaper.get() == null) {
+                    reaper.set(new NodeReaper(this));
+                    configuration.autowire(reaper.get()).start();
+                }
+            }
         } else {
             log.info("startDriver("+getClass().getSimpleName()+"): not self-sage, not starting NodeReaper");
         }
@@ -41,7 +46,12 @@ public abstract class ComputeServiceDriverBase
         final HttpRequestBean keyRequest = registerSshKeyRequest(node);
         final HttpResponseBean keyResponse = keyRequest.curl();  // fixme: we can do better than shelling to curl
         if (keyResponse.getStatus() != 200) return die("start: error creating SSH key: " + keyResponse);
-        return readSshKeyId(keyResponse);
+
+        final String keyId = readSshKeyId(keyResponse);
+
+        node.setTag(TAG_SSH_KEY_ID, keyId);
+        nodeDAO.update(node);
+        return keyId;
     }
 
     protected abstract String readSshKeyId(HttpResponseBean keyResponse);

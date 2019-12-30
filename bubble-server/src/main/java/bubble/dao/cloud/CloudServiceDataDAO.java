@@ -9,6 +9,8 @@ import java.util.List;
 @Repository
 public class CloudServiceDataDAO extends AccountOwnedEntityDAO<CloudServiceData> {
 
+    @Override protected String getNameField() { return "key"; }
+
     public List<CloudServiceData> findByAccountAndCloud(String accountUuid, String cloudUuid) {
         return findByFields("account", accountUuid, "cloud", cloudUuid);
     }

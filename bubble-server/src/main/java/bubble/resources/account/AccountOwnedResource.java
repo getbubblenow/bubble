@@ -49,15 +49,18 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     }
 
     @GET
-    public Response listEntities(@Context ContainerRequest ctx) {
+    public Response listEntities(@Context Request req,
+                                 @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()
                 && !caller.getUuid().equals(getAccountUuid(ctx))
                 && !caller.getParent().equals(getAccountUuid(ctx))) {
             return notFound();
         }
-        return ok(populate(ctx, list(ctx)));
+        return ok(populate(ctx, list(req, ctx)));
     }
+
+    protected List<E> list(Request req, ContainerRequest ctx) { return list(ctx); }
 
     protected String getAccountUuid(ContainerRequest ctx) { return getAccountUuid(account, ctx); }
 

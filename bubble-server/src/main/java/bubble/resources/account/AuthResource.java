@@ -1,6 +1,5 @@
 package bubble.resources.account;
 
-import bubble.cloud.geoLocation.GeoLocation;
 import bubble.dao.SessionDAO;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
@@ -21,7 +20,6 @@ import bubble.service.boot.SageHelloService;
 import bubble.service.cloud.GeoService;
 import bubble.service.notify.NotificationService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.ArrayUtils;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.wizard.auth.LoginRequest;
 import org.cobbzilla.wizard.stream.FileSendableResource;
@@ -38,10 +36,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.model.account.Account.validatePassword;
@@ -54,7 +50,6 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpContentTypes.CONTENT_TYPE_ANY;
-import static org.cobbzilla.util.string.LocaleUtil.getDefaultLocales;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -374,41 +369,7 @@ public class AuthResource {
     @GET @Path("/detect/locale")
     public Response detectLocale(@Context Request req,
                                  @Context ContainerRequest ctx) {
-        final List<String> locales = new ArrayList<>();
-        final String[] allLocales = configuration.getAllLocales();
-
-        final String langHeader = normalizeLangHeader(req);
-        if (langHeader != null) locales.add(langHeader);
-
-        final String remoteHost = getRemoteHost(req);
-        try {
-            final Account caller = userPrincipal(ctx);
-            final GeoLocation loc = geoService.locate(caller.getUuid(), remoteHost);
-            if (loc != null) {
-                final List<String> found = getDefaultLocales(loc.getCountry());
-                for (int i=0; i<found.size(); i++) {
-                    if (!locales.contains(found.get(i))) {
-                        locales.add(found.get(i));
-                    }
-                }
-            }
-        } catch (SimpleViolationException e) {
-            return invalid(e);
-
-        } catch (Exception e) {
-            log.warn("detectLocale: "+e);
-        }
-
-        // filter out any locales that are not supported
-        final List<String> supportedLocales = locales.stream()
-                .filter(loc -> ArrayUtils.contains(allLocales, loc))
-                .collect(Collectors.toList());
-        if (supportedLocales.isEmpty()) {
-            // re-add default locale if nothing else is supported
-            supportedLocales.add(configuration.getDefaultLocale());
-        }
-
-        return ok(supportedLocales);
+        return ok(geoService.getSupportedLocales(optionalUserPrincipal(ctx), getRemoteHost(req), normalizeLangHeader(req)));
     }
 
     @GET @Path("/detect/timezone")

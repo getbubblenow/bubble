@@ -116,6 +116,7 @@ public class ApiConstants {
     public static final String EP_SITES = "/sites";
     public static final String EP_DRIVERS = DRIVERS_ENDPOINT;
     public static final String EP_CLOUDS = CLOUDS_ENDPOINT;
+    public static final String EP_REGIONS = "/regions";
     public static final String EP_DOMAINS = DOMAINS_ENDPOINT;
     public static final String EP_NETWORKS = "/networks";
     public static final String EP_PLANS = PLANS_ENDPOINT;
@@ -148,6 +149,8 @@ public class ApiConstants {
     public static final String EP_RESTORE = "/restore";
     public static final String EP_KEYS = "/keys";
     public static final String EP_STATUS = "/status";
+    public static final String EP_ID = "/id";
+    public static final String EP_SEARCH = "/search";
     public static final String EP_FORK = "/fork";
 
     public static final String DEBUG_ENDPOINT = "/debug";
@@ -216,7 +219,7 @@ public class ApiConstants {
         // remove everything after the first comma, change hyphens to underscores
         int comma = langHeader.indexOf(',');
         if (comma != -1) langHeader = langHeader.substring(0, comma);
-        return langHeader.replace('-', '_');
+        return langHeader.replace('-', '_').trim();
     }
 
     public static boolean isHttpsPort(int sslPort) { return sslPort % 1000 == 443; }

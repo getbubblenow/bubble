@@ -96,8 +96,6 @@ public class VultrDriver extends ComputeServiceDriverBase {
 
         // register ssh key, check response
         final String sshKeyId = registerSshKey(node);
-        node.setTag(TAG_SSH_KEY_ID, sshKeyId);
-        nodeDAO.update(node);
 
         // prepare to create server
         final String data = "DCID=" + regionId +

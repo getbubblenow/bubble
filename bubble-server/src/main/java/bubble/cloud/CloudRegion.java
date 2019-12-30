@@ -8,6 +8,8 @@ import lombok.experimental.Accessors;
 @Accessors(chain=true)
 public class CloudRegion {
 
+    @Getter @Setter private String cloud;
+
     @Getter @Setter private String name;
     @Setter private String internalName;
     public String getInternalName () { return internalName != null ? internalName : name; }

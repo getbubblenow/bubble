@@ -23,7 +23,7 @@ public interface RegionalServiceDriver {
                     continue;
                 }
                 final CloudRegionRelative r = new CloudRegionRelative(region);
-                r.setCloud(c);
+                r.setCloud(c.getUuid());
                 r.setDistance(latitude, longitude);
                 allRegions.add(r);
             }

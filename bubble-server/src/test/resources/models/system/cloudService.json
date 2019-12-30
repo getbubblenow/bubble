@@ -96,6 +96,22 @@
     "driverClass": "bubble.cloud.compute.vultr.VultrDriver",
     "driverConfig": {
       "regions": [{
+        "name": "Vultr - Dallas",
+        "internalName": "Dallas",
+        "location": {"city": "Dallas", "country": "US", "region": "TX", "lat": "32.779167", "lon": "-96.808889"}
+      }, {
+        "name": "Vultr - Los Angeles",
+        "internalName": "Los Angeles",
+        "location": {"city": "Los Angeles", "country": "US", "region": "CA", "lat": "34.05", "lon": "-118.25"}
+      }, {
+        "name": "Vultr - Miami",
+        "internalName": "Miami",
+        "location": {"city": "Miami", "country": "US", "region": "FL", "lat": "25.775278", "lon": "-80.208889"}
+      }, {
+        "name": "Vultr - Seattle",
+        "internalName": "Seattle",
+        "location": {"city": "Seattle", "country": "US", "region": "WA", "lat": "47.609722", "lon": "-122.333056"}
+      }, {
         "name": "Vultr - New Jersey",
         "internalName": "New Jersey",
         "location": {"city": "Newark", "country": "US", "region": "NJ", "lat": "40.72", "lon": "-74.17"}
@@ -112,6 +128,10 @@
         "internalName": "Silicon Valley",
         "location": {"city": "San Jose", "country": "US", "region": "CA", "lat": "37.333333", "lon": "-121.9"}
       }, {
+        "name": "Vultr - Toronto",
+        "internalName": "Toronto",
+        "location": {"city": "Toronto", "country": "CA", "region": "ON", "lat": "43.741667", "lon": "-79.373333"}
+      }, {
         "name": "Vultr - London",
         "internalName": "London",
         "location": {"city": "London", "country": "GB", "region": "London", "lat": "51.507222", "lon": "-0.1275"}
@@ -119,17 +139,95 @@
         "name": "Vultr - Paris",
         "internalName": "Paris",
         "location": {"city": "Paris", "country": "FR", "region": "Ile-de-Paris", "lat": "48.8567", "lon": "2.3508"}
+      }, {
+        "name": "Vultr - Frankfurt",
+        "internalName": "Frankfurt",
+        "location": {"city": "Frankfurt", "country": "DE", "region": "Hesse", "lat": "50.116667", "lon": "8.683333"}
+      }, {
+        "name": "Vultr - Singapore",
+        "internalName": "Singapore",
+        "location": {"city": "Singapore", "country": "SG", "region": "Singapore", "lat": "1.283333", "lon": "103.833333"}
+      }, {
+        "name": "Vultr - Tokyo",
+        "internalName": "Tokyo",
+        "location": {"city": "Tokyo", "country": "JP", "region": "Kantō", "lat": "35.689722", "lon": "139.692222"}
+      }, {
+        "name": "Vultr - Sydney",
+        "internalName": "Sydney",
+        "location": {"city": "Sydney", "country": "AU", "region": "NSW", "lat": "-33.865", "lon": "151.209444"}
+      }, {
+        "name": "Vultr - Amsterdam",
+        "internalName": "ams3",
+        "location": {"city": "Amsterdam", "country": "NL", "region": "North Holland", "lat": "52.366667", "lon": "4.9"}
       }],
       "sizes": [
-        {"name": "small", "type": "small", "internalName": "1024 MB RAM,25 GB SSD,1.00 TB BW"},
-        {"name": "medium", "type": "medium", "internalName": "4096 MB RAM,80 GB SSD,3.00 TB BW"},
-        {"name": "large", "type": "large", "internalName": "8192 MB RAM,160 GB SSD,4.00 TB BW"}
+        {"name": "small", "type": "small", "internalName": "1024 MB RAM,25 GB SSD,1.00 TB BW", "vcpu": 1, "memoryMB": 1024, "ssdGB": 25},
+        {"name": "medium", "type": "medium", "internalName": "2048 MB RAM,55 GB SSD,2.00 TB BW", "vcpu": 1, "memoryMB": 2048, "ssdGB": 55},
+        {"name": "large", "type": "large", "internalName": "4096 MB RAM,80 GB SSD,3.00 TB BW", "vcpu": 1, "memoryMB": 4096, "ssdGB": 80}
       ],
       "config": [{"name": "os", "value": "Ubuntu 18.04 x64"}]
     },
     "credentials": {
       "params": [
         {"name": "API-Key", "value": "{{VULTR_API_KEY}}"}
+      ]
+    },
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "DigitalOceanCompute",
+    "type": "compute",
+    "driverClass": "bubble.cloud.compute.digitalocean.DigitalOceanDriver",
+    "driverConfig": {
+      "regions": [{
+        "name": "DigitalOcean - New York City 1",
+        "internalName": "nyc1",
+        "location": {"city": "New York", "country": "US", "region": "NY", "lat": "40.661", "lon": "-73.944"}
+      },{
+        "name": "DigitalOcean - New York City 3",
+        "internalName": "nyc3",
+        "location": {"city": "New York", "country": "US", "region": "NY", "lat": "40.661", "lon": "-73.944"}
+      }, {
+        "name": "DigitalOcean - Singapore 1",
+        "internalName": "sgp1",
+        "location": {"city": "Singapore", "country": "SG", "region": "Singapore", "lat": "1.283333", "lon": "103.833333"}
+      }, {
+        "name": "DigitalOcean - London 1",
+        "internalName": "lon1",
+        "location": {"city": "London", "country": "GB", "region": "London", "lat": "51.507222", "lon": "-0.1275"}
+      }, {
+        "name": "DigitalOcean - Amsterdam 3",
+        "internalName": "ams3",
+        "location": {"city": "Amsterdam", "country": "NL", "region": "North Holland", "lat": "52.366667", "lon": "4.9"}
+      }, {
+        "name": "DigitalOcean - Frankfurt 1",
+        "internalName": "fra1",
+        "location": {"city": "Frankfurt", "country": "DE", "region": "Hesse", "lat": "50.116667", "lon": "8.683333"}
+      }, {
+        "name": "DigitalOcean - Toronto 1",
+        "internalName": "tor1",
+        "location": {"city": "Toronto", "country": "CA", "region": "ON", "lat": "43.741667", "lon": "-79.373333"}
+      }, {
+        "name": "DigitalOcean - San Francisco 2",
+        "internalName": "sfo2",
+        "location": {"city": "San Francisco", "country": "US", "region": "CA", "lat": "37.783333", "lon": "-122.416667"}
+      }, {
+        "name": "DigitalOcean - Bangalore 1",
+        "internalName": "blr1",
+        "location": {"city": "Bangalore", "country": "IN", "region": "Karnataka", "lat": "12.983333", "lon": "77.583333"}
+      }],
+      "sizes": [
+        {"name": "small", "type": "small", "internalName": "s-1vcpu-1gb", "vcpu": 1, "memoryMB": 1024, "ssdGB": 25},
+        {"name": "medium", "type": "medium", "internalName": "s-1vcpu-2gb", "vcpu": 1, "memoryMB": 2048, "ssdGB": 50},
+        {"name": "large", "type": "large", "internalName": "s-2vcpu-4gb", "vcpu": 2, "memoryMB": 4096, "ssdGB": 80}
+      ],
+      "config": [{"name": "os", "value": "ubuntu-18-04-x64"}]
+    },
+    "credentials": {
+      "params": [
+        {"name": "apiKey", "value": "{{DIGITALOCEAN_API_KEY}}"}
       ]
     },
     "template": true
