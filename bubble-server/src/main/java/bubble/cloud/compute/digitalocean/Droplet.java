@@ -29,7 +29,11 @@ public class Droplet {
     @Getter @Setter private String[] tags;
 
     public String getTagWithPrefix (String prefix) {
-        return tags == null ? null : Arrays.stream(tags).filter(t -> t.startsWith(prefix)).findFirst().orElse(null);
+        return tags == null ? null : Arrays.stream(tags)
+                .filter(t -> t.startsWith(prefix))
+                .map(t -> t.substring(prefix.length()))
+                .findFirst()
+                .orElse(null);
     }
     public boolean hasTagWithPrefix (String prefix) {
         return tags != null && Arrays.stream(tags).anyMatch(t -> t.startsWith(prefix));

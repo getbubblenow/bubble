@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 public class DropletIp {
 
     @Getter @Setter private String ip_address;
-    @Getter @Setter private Integer netmask;
+    @Getter @Setter private String netmask;
     @Getter @Setter private String gateway;
     @Getter @Setter private String type;
 

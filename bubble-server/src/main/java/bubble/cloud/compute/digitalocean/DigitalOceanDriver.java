@@ -10,7 +10,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.http.HttpRequestBean;
 import org.cobbzilla.util.http.HttpResponseBean;
-import org.cobbzilla.util.http.HttpUtil;
 
 import java.io.IOException;
 import java.util.*;
@@ -21,12 +20,13 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpMethods.DELETE;
 import static org.cobbzilla.util.http.HttpMethods.POST;
 import static org.cobbzilla.util.http.HttpStatusCodes.NO_CONTENT;
+import static org.cobbzilla.util.http.HttpUtil.getResponse;
+import static org.cobbzilla.util.json.JsonUtil.FULL_MAPPER_ALLOW_UNKNOWN_FIELDS;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -43,19 +43,44 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
 
     @Getter(lazy=true) private final Set<String> regionSlugs = getResourceSlugs("regions");
     @Getter(lazy=true) private final Set<String> sizeSlugs = getResourceSlugs("sizes");
-    @Getter(lazy=true) private final Set<String> imageSlugs = getResourceSlugs("images");
+    @Getter(lazy=true) private final Set<String> imageSlugs = getResourceSlugs("images?type=distribution");
 
-    private Set<String> getResourceSlugs(String type) {
-        final JsonNode found = doGet(type, JsonNode.class);
-        final JsonNode items = found.get(type);
-        if (!items.isArray()) return die("getResourceSlugs("+type+"): expected "+type+" property to contain an array");
+    private Set<String> getResourceSlugs(String uri) {
+        final int qPos = uri.indexOf('?');
+        final String type = qPos == -1 ? uri : uri.substring(0, qPos);
+        final JsonNode found = doGet(uri, JsonNode.class);
         final Set<String> slugs = new HashSet<>();
-        for (int i=0; i<items.size(); i++) {
-            final JsonNode slug = items.get(i).get("slug");
-            if (slug == null) return die("getResourceSlugs("+type+"): no 'slug' found in item: "+json(items.get(i)));
-            slugs.add(slug.textValue());
-        }
+
+        JsonNode page = found;
+        do {
+            final JsonNode items = page.has(type) ? page.get(type) : null;
+            if (empty(items) || !items.isArray()) return die("getResourceSlugs("+uri+"): expected "+type+" property to contain a (non-empty) array");
+
+            for (int i=0; i<items.size(); i++) {
+                final JsonNode slug = items.get(i).get("slug");
+                if (slug == null) return die("getResourceSlugs("+uri+"): no 'slug' found in item: "+json(items.get(i)));
+                slugs.add(slug.textValue());
+            }
+
+            final String next = getNext(page);
+            page = next == null ? null : doGet(next, JsonNode.class, false);
+
+        } while (page != null);
+
         return slugs;
+    }
+
+    private String getNext(JsonNode node) {
+        try {
+            return node.has("links")
+                    && node.get("links").has("pages")
+                    && node.get("links").get("pages").has("next")
+                    ? node.get("links").get("pages").get("next").textValue()
+                    : null;
+        } catch (Exception e) {
+            log.warn("getNext: "+e);
+            return null;
+        }
     }
 
     private HttpRequestBean auth(HttpRequestBean request) {
@@ -63,7 +88,8 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
     }
 
     private HttpRequestBean postRequest(String uri, String json) {
-        return auth(new HttpRequestBean(POST)
+        return auth(new HttpRequestBean()
+                .setMethod(POST)
                 .setUri(DO_API_BASE+uri)
                 .setEntity(json)
                 .setHeader(CONTENT_TYPE, APPLICATION_JSON));
@@ -72,23 +98,25 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
     private <T> T doPost(String uri, String json, Class<T> clazz) {
         final HttpResponseBean response;
         try {
-            response = HttpUtil.getResponse(postRequest(uri, json));
+            response = getResponse(postRequest(uri, json));
         } catch (IOException e) {
             return die("doGet("+uri+"): "+e);
         }
         if (!response.isOk()) return die("doPost("+uri+"): HTTP "+response.getStatus());
-        return json(response.getEntityString(), clazz);
+        return json(response.getEntityString(), clazz, FULL_MAPPER_ALLOW_UNKNOWN_FIELDS);
     }
 
-    private <T> T doGet(String uri, Class<T> clazz) {
+    private <T> T doGet(String uri, Class<T> clazz) { return doGet(uri, clazz, true); }
+
+    private <T> T doGet(String uri, Class<T> clazz, boolean addPrefix) {
         final HttpResponseBean response;
         try {
-            response = HttpUtil.getResponse(auth(new HttpRequestBean(DO_API_BASE + uri)));
+            response = getResponse(auth(new HttpRequestBean(addPrefix ? DO_API_BASE + uri : uri)));
         } catch (IOException e) {
             return die("doGet("+uri+"): "+e);
         }
         if (!response.isOk()) return die("doGet("+uri+"): HTTP "+response.getStatus());
-        return json(response.getEntityString(), clazz);
+        return json(response.getEntityString(), clazz, FULL_MAPPER_ALLOW_UNKNOWN_FIELDS);
     }
 
     @Override protected HttpRequestBean registerSshKeyRequest(BubbleNode node) {
@@ -99,7 +127,7 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
     }
 
     @Override protected String readSshKeyId(HttpResponseBean keyResponse) {
-        return json(keyResponse.getEntityString(), JsonNode.class).get("id").textValue();
+        return ""+json(keyResponse.getEntityString(), JsonNode.class, FULL_MAPPER_ALLOW_UNKNOWN_FIELDS).get("ssh_key").get("id").intValue();
     }
 
     @Override public List<BubbleNode> listNodes() throws IOException { return listNodes(TAG_PREFIX_CLOUD+cloud.getUuid()); }
@@ -182,6 +210,7 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
                 node.setState(BubbleNodeState.booted);
                 nodeDAO.update(node);
                 startedOk = true;
+                break;
             }
         }
         if (!startedOk) {
@@ -194,10 +223,12 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
     @Override public BubbleNode cleanupStart(BubbleNode node) throws Exception {
         if (node.hasTag(TAG_SSH_KEY_ID)) {
             final String keyId = node.getTag(TAG_SSH_KEY_ID);
-            final HttpRequestBean destroyKeyRequest = auth(new HttpRequestBean(DELETE, "account/keys/"+keyId));
+            final HttpRequestBean destroyKeyRequest = auth(new HttpRequestBean()
+                    .setMethod(DELETE)
+                    .setUri(DO_API_BASE+"account/keys/"+keyId));
 
             // destroy key, check response
-            final HttpResponseBean destroyKeyResponse = HttpUtil.getResponse(destroyKeyRequest);
+            final HttpResponseBean destroyKeyResponse = getResponse(destroyKeyRequest);
             if (destroyKeyResponse.getStatus() != NO_CONTENT) {
                 log.warn("cleanupStart: error destroying sshkey: "+ keyId);
             }
@@ -207,8 +238,10 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
 
     @Override public BubbleNode stop(BubbleNode node) throws Exception {
         cleanupStart(node); // just in case the key is still around
-        final HttpRequestBean destroyDropletRequest = auth(new HttpRequestBean(DELETE, "droplets?tag_name="+node.getUuid()));
-        final HttpResponseBean response = HttpUtil.getResponse(destroyDropletRequest);
+        final HttpRequestBean destroyDropletRequest = auth(new HttpRequestBean()
+                .setMethod(DELETE)
+                .setUri("droplets?tag_name="+TAG_PREFIX_NODE+node.getUuid()));
+        final HttpResponseBean response = getResponse(destroyDropletRequest);
         if (response.getStatus() != NO_CONTENT) {
             throw invalidEx("err.node.stop.error", "stop: error stopping node: "+response);
         }
