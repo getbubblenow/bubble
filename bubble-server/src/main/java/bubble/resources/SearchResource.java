@@ -57,7 +57,7 @@ public class SearchResource {
         return search(req, ctx, type, meta, filter, page, size, sort, null);
     }
 
-    private Map<String, Object> _searchCache = new ExpirationMap<>(MINUTES.toMillis(10), MINUTES.toMillis(15));
+    private Map<String, Object> _searchCache = new ExpirationMap<>(MINUTES.toMillis(2), MINUTES.toMillis(5));
 
     @POST @Path("/{type}")
     public Response search(@Context Request req,
