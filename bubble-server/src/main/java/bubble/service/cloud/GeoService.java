@@ -19,21 +19,23 @@ import bubble.model.cloud.NetLocation;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.ArrayUtils;
+import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
 import static org.cobbzilla.util.collection.HasPriority.SORT_PRIORITY;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.string.LocaleUtil.getDefaultLocales;
-import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
 @Service @Slf4j
 public class GeoService {
@@ -203,9 +205,13 @@ public class GeoService {
         }
     }
 
+    private final Map<String, String> firstLocaleCache = new ExpirationMap<>();
+
     public String getFirstLocale(Account account, String remoteHost, String langHeader) {
-        final List<String> supportedLocales = getSupportedLocales(account, remoteHost, langHeader);
-        return empty(supportedLocales) ? null : supportedLocales.get(0);
+        return firstLocaleCache.computeIfAbsent(hashOf(account.getUuid(), remoteHost, langHeader), k -> {
+            final List<String> supportedLocales = getSupportedLocales(account, remoteHost, langHeader);
+            return empty(supportedLocales) ? null : supportedLocales.get(0);
+        });
     }
 
     public List<String> getSupportedLocales(Account caller, String remoteHost, String langHeader) {
