@@ -50,28 +50,35 @@ public class RuleDriver extends IdentifiableBase implements AccountTemplate {
         return this;
     }
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    @ECSearchable(filter=true)
     @HasValue(message="err.name.required")
     @ECIndex @Column(length=200, nullable=false, updatable=false)
     @Getter @Setter private String name;
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template() { return template != null && template; }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
+    @ECSearchable(filter=true)
     @Column(length=200)
     @Getter @Setter private String author;
 
+    @ECSearchable(filter=true)
     @Column(length=1024)
     @Getter @Setter private String url;
 
+    @ECSearchable
     @Column(nullable=false, updatable=false, length=1000)
     @Getter @Setter private String driverClass;
 
@@ -84,6 +91,8 @@ public class RuleDriver extends IdentifiableBase implements AccountTemplate {
     @Transient @JsonIgnore @Getter(lazy=true) private final AppRuleDriver driver = instantiate(this.driverClass);
 
     @Embedded @Getter @Setter private SemanticVersion version;
+
+    @ECSearchable
     @ECIndex @Getter @Setter private Boolean needsUpdate = false;
 
     @Transient @Getter @Setter private AppRuleDriverDescriptor descriptor;

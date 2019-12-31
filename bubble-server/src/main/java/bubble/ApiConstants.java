@@ -31,6 +31,8 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @Slf4j
 public class ApiConstants {
 
+    public static final int MAX_SEARCH_PAGE = 50;
+
     @Getter(lazy=true) private static final String bubbleDefaultDomain = initDefaultDomain();
     private static String initDefaultDomain() {
         final File f = new File(HOME_DIR, ".BUBBLE_DEFAULT_DOMAIN");
@@ -149,14 +151,14 @@ public class ApiConstants {
     public static final String EP_RESTORE = "/restore";
     public static final String EP_KEYS = "/keys";
     public static final String EP_STATUS = "/status";
-    public static final String EP_ID = "/id";
-    public static final String EP_SEARCH = "/search";
     public static final String EP_FORK = "/fork";
 
     public static final String DETECT_ENDPOINT = "/detect";
     public static final String EP_LOCALE = "/locale";
     public static final String EP_TIMEZONE = "/timezone";
 
+    public static final String ID_ENDPOINT = "/id";
+    public static final String SEARCH_ENDPOINT = "/search";
     public static final String DEBUG_ENDPOINT = "/debug";
     public static final String BUBBLE_MAGIC_ENDPOINT = "/.bubble";
     public static final String EP_ASSETS = "/assets";

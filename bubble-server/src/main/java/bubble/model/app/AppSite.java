@@ -42,28 +42,35 @@ public class AppSite extends IdentifiableBase implements AppTemplateEntity {
         return this;
     }
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    @ECSearchable(filter=true)
     @ECIndex @Column(nullable=false, updatable=false, length=1000)
     @Getter @Setter private String name;
 
+    @ECSearchable
     @ECForeignKey(entity=BubbleApp.class)
     @Column(nullable=false, length=UUID_MAXLEN)
     @Getter @Setter private String app;
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template () { return template == null || template; }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
+    @ECSearchable(filter=true)
     @Column(nullable=false, length=10000)
     @Getter @Setter private String description;
 
+    @ECSearchable(filter=true)
     @Column(nullable=false, length=1024)
     @Getter @Setter private String url;
 

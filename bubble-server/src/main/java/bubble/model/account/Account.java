@@ -41,6 +41,7 @@ import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
+import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySearchDepth.none;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @ECType(root=true) @ECTypeURIs(listFields={"name", "url", "description", "admin", "suspended"}, isDeleteDefined=false)
@@ -56,6 +57,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
         @ECTypeChild(type=BubbleNode.class, backref="account"),
         @ECTypeChild(type=SentNotification.class, backref="account")
 })
+@ECSearchDepth(fkDepth=none)
 @Entity @NoArgsConstructor @Accessors(chain=true) @Slf4j
 public class Account extends IdentifiableBase implements TokenPrincipal, SqlViewSearchResult {
 

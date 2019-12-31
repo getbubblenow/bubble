@@ -53,6 +53,7 @@ public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
 
     @Override public Identifiable update(Identifiable other) { copy(this, other, UPDATE_FIELDS); return this; }
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;

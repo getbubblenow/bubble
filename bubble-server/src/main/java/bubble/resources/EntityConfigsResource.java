@@ -35,7 +35,7 @@ public class EntityConfigsResource extends AbstractEntityConfigsResource {
     @Autowired private AccountDAO accountDAO;
     @Getter(AccessLevel.PROTECTED) @Autowired private BubbleConfiguration configuration;
 
-    private AtomicBoolean allowPublic = new AtomicBoolean(false);
+    @Getter private AtomicBoolean allowPublic = new AtomicBoolean(false);
 
     @POST @Path("/set/{param}")
     public Response setConfig (@Context ContainerRequest ctx,

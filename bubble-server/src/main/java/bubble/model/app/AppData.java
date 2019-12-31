@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
 import org.hibernate.annotations.Type;
@@ -46,30 +47,36 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
     @Override @Transient public String getName() { return getKey(); }
     public AppData setName(String n) { return setKey(n); }
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    @ECSearchable
     @ECForeignKey(entity=BubbleApp.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String app;
     public boolean hasApp () { return app != null; }
 
+    @ECSearchable
     @ECForeignKey(entity=AppMatcher.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String matcher;
     public boolean hasMatcher() { return matcher != null; }
 
+    @ECSearchable
     @ECForeignKey(entity=AppSite.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String site;
     public boolean hasSite() { return site != null; }
 
+    @ECSearchable(filter=true)
     @HasValue(message="err.key.required")
     @ECIndex @Column(nullable=false, updatable=false, length=5000)
     @Getter @Setter private String key;
     public boolean hasKey () { return key != null; }
 
+    @ECSearchable(filter=true)
     @Size(max=100000, message="err.data.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @Getter @Setter private String data;
@@ -84,12 +91,15 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
         return setData(String.valueOf(val+1));
     }
 
+    @ECSearchable(type=EntityFieldType.expiration_time)
     @ECIndex @Getter @Setter private Long expiration;
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template() { return template != null && template; }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled() { return enabled != null && enabled; }

@@ -46,10 +46,12 @@ public class AppRule extends IdentifiableBaseParentEntity implements AppTemplate
     public static final String[] VALUE_FIELDS = {"driver", "configJson", "template", "enabled"};
     public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS, "name");
 
+    @ECSearchable(filter=true)
     @HasValue(message="err.name.required")
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
@@ -58,21 +60,26 @@ public class AppRule extends IdentifiableBaseParentEntity implements AppTemplate
         return (account == null && accountUuid == null) || (account != null && account.equals(accountUuid));
     }
 
+    @ECSearchable
     @ECForeignKey(entity=BubbleApp.class)
     @Column(nullable=false, length=UUID_MAXLEN)
     @Getter @Setter private String app;
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template () { return template == null || template; }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
+    @ECSearchable
     @Column(nullable=false)
     @Getter @Setter private Integer priority = 0;
 
+    @ECSearchable
     @ECForeignKey(entity=RuleDriver.class)
     @HasValue(message="err.driver.required")
     @Column(nullable=false, length=UUID_MAXLEN)
@@ -84,6 +91,7 @@ public class AppRule extends IdentifiableBaseParentEntity implements AppTemplate
         return d;
     }
 
+    @ECSearchable(filter=true)
     @Size(max=500000, message="err.configJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(500000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String configJson;

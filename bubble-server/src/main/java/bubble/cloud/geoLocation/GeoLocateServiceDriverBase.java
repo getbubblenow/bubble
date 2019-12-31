@@ -26,7 +26,6 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @Slf4j
@@ -75,7 +74,7 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
             final HttpRequestBean request = new HttpRequestBean(urlWithLicense).setHeaders(headers);
             final HttpMeta meta = HttpUtil.getHeadMetadata(request);
 
-            final String uniq = sha256_hex(hashOf(url, headers));
+            final String uniq = hashOf(url, headers);
             final String dbKey = "dbcache_" + uniq;
             final File dbFile = cloudDataDAO.getFile(cloud.getUuid(), dbKey);
             if (!meta.shouldRefresh(dbFile)) return dbFile; // we are current!

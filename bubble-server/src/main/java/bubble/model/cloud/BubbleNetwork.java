@@ -33,7 +33,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @ECType(root=true)
-@ECTypeURIs(listFields={"name", "domain", "description", "account", "enabled"})
+@ECTypeURIs(baseURI=EP_NETWORKS, listFields={"name", "domain", "description", "account", "enabled"})
 @ECTypeFields(list={"name", "domain", "description", "account", "enabled"})
 @ECTypeChildren(uriPrefix=EP_NETWORKS+"/{BubbleNetwork.name}", value={
         @ECTypeChild(type=BubbleNode.class, backref="network")
@@ -57,6 +57,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
 
     @Transient @JsonIgnore public String getNetwork () { return getUuid(); }
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;

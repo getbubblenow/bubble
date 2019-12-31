@@ -1,7 +1,6 @@
 package bubble.model.cloud;
 
 import bubble.model.account.Account;
-import bubble.model.account.HasAccount;
 import bubble.model.account.HasAccountNoName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
@@ -12,8 +11,10 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.util.security.RsaKeyPair;
 import org.cobbzilla.util.security.RsaMessage;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKey;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECIndex;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECSearchable;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
 import org.hibernate.annotations.Type;
 
@@ -81,14 +82,17 @@ public class BubbleNodeKey extends IdentifiableBase implements HasAccountNoName 
         return keys.stream().allMatch(k -> k.expiresInLessThan(TOKEN_GENERATION_LIMIT));
     }
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    @ECSearchable
     @ECForeignKey(entity=BubbleNode.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String node;
 
+    @ECSearchable(filter=true)
     @Column(length=10000, updatable=false, nullable=false)
     @Getter private String publicKey;
     public BubbleNodeKey setPublicKey (String k) {
@@ -114,10 +118,12 @@ public class BubbleNodeKey extends IdentifiableBase implements HasAccountNoName 
     @Type(type=ENCRYPTED_STRING) @ECIndex(unique=true) @Column(updatable=false, columnDefinition="varchar("+(100+ENC_PAD)+")")
     @Getter @Setter private String privateKeyHash;
 
+    @ECSearchable(filter=true)
     @Size(max=100, message="err.remoteHost.length")
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String remoteHost;
 
+    @ECSearchable(type=EntityFieldType.epoch_time)
     @ECIndex @Column(nullable=false, updatable=false)
     @Getter @Setter private Long expiration = defaultExpiration();
 

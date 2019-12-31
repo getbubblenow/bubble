@@ -1,7 +1,10 @@
 package bubble.test.dev;
 
+import bubble.resources.EntityConfigsResource;
+import bubble.server.BubbleConfiguration;
 import bubble.test.ActivatedBubbleModelTestBase;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.wizard.server.RestServer;
 import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.DAYS;
@@ -19,6 +22,11 @@ public class DevServerTest extends ActivatedBubbleModelTestBase {
     @Override protected boolean dropPreExistingDatabase() { return false; }
     @Override protected boolean allowPreExistingDatabase() { return true; }
     @Override public boolean doTruncateDb() { return false; }
+
+    @Override public void onStart(RestServer<BubbleConfiguration> server) {
+        getConfiguration().getBean(EntityConfigsResource.class).getAllowPublic().set(true);
+        super.onStart(server);
+    }
 
     @Test public void runDevServer () throws Exception {
         log.info("runDevServer: Bubble API server started and model initialized. You may now begin testing.");

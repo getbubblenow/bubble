@@ -43,10 +43,12 @@ public class AnsibleRole extends IdentifiableBase implements AccountTemplate, Ha
 
     public AnsibleRole(AnsibleRole role) { copy(this, role, COPY_FIELDS); }
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    @ECSearchable(filter=true)
     @HasValue(message="err.name.required")
     @Pattern(regexp=ROLENAME_PATTERN, message="err.name.invalid")
     @ECIndex @Column(nullable=false, updatable=false, length=200)
@@ -74,9 +76,11 @@ public class AnsibleRole extends IdentifiableBase implements AccountTemplate, Ha
                 .orElse(null);
     }
 
+    @ECSearchable(filter=true)
     @Size(max=10000, message="err.description.length")
     @Getter @Setter private String description;
 
+    @ECSearchable
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(nullable=false, length=20)
     @Getter @Setter private AnsibleInstallType install = AnsibleInstallType.standard;
@@ -84,13 +88,16 @@ public class AnsibleRole extends IdentifiableBase implements AccountTemplate, Ha
         return install.shouldInstall(installType);
     }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Integer priority;
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template() { return template != null && template; }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }

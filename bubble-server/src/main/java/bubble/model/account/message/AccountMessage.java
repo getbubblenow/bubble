@@ -11,10 +11,7 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.model.IdentifiableBase;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKey;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECIndex;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECIndexes;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
+import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
@@ -49,21 +46,26 @@ public class AccountMessage extends IdentifiableBase implements HasAccount {
     public boolean hasContact () { return !empty(contact); }
     public boolean isSameContact (String uuid) { return hasContact() && contact.equals(uuid); }
 
+    @ECSearchable(filter=true)
     @ECIndex @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String name;
 
+    @ECSearchable(filter=true)
     @Size(max=100, message="err.remoteHost.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100+ENC_PAD)+")")
     @Getter @Setter private String remoteHost;
 
+    @ECSearchable
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false, updatable=false)
     @Getter @Setter private AccountMessageType messageType;
 
+    @ECSearchable
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false, updatable=false)
     @Getter @Setter private AccountAction action;
 
+    @ECSearchable
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false, updatable=false)
     @Getter @Setter private ActionTarget target;

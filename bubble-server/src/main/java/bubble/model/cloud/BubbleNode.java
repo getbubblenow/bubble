@@ -38,6 +38,7 @@ import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.string.ValidationRegexes.IP4_MAXLEN;
 import static org.cobbzilla.util.string.ValidationRegexes.IP6_MAXLEN;
+import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySearchDepth.shallow;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_NODES, listFields={"name", "ip4"})
@@ -86,11 +87,12 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
 
     @JsonIgnore @Transient @Override public String getName() { return getFqdn(); }
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable
+    @ECSearchable(fkDepth=shallow)
     @ECForeignKey(entity=BubbleDomain.class)
     @HasValue(message="err.network.required")
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
@@ -99,7 +101,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         return getDomain() != null && n.getDomain() != null && getDomain().equals(n.getDomain());
     }
 
-    @ECSearchable
+    @ECSearchable(fkDepth=shallow)
     @ECForeignKey(entity=BubbleNetwork.class)
     @HasValue(message="err.network.required")
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)

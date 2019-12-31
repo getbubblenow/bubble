@@ -4,10 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECIndex;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECTypeFields;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECTypeURIs;
+import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -25,6 +22,7 @@ public class ReceivedNotification extends NotificationBase {
 
     public ReceivedNotification(SentNotification notification) { copy(this, notification); setUuid(null); }
 
+    @ECSearchable(filter=true)
     @ECIndex @Column(nullable=false, length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private NotificationProcessingStatus processingStatus = NotificationProcessingStatus.received;
 

@@ -4,10 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECIndex;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECTypeFields;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECTypeURIs;
+import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -22,6 +19,7 @@ import static bubble.ApiConstants.EP_SENT_NOTIFICATIONS;
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class SentNotification extends NotificationBase {
 
+    @ECSearchable
     @ECIndex @Column(nullable=false, length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private NotificationSendStatus status = NotificationSendStatus.created;
 

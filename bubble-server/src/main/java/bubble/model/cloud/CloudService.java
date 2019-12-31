@@ -72,6 +72,7 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
 
     @Override public Identifiable update(Identifiable thing) { copy(this, thing, UPDATE_FIELDS); return this; }
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;

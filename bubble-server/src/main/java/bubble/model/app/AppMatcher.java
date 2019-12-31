@@ -40,26 +40,32 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity {
     public static final String[] VALUE_FIELDS = {"fqdn", "urlRegex", "rule", "template", "enabled"};
     public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS, "name", "site");
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    @ECSearchable(filter=true)
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
 
+    @ECSearchable
     @ECForeignKey(entity=BubbleApp.class)
     @Column(nullable=false, length=UUID_MAXLEN)
     @Getter @Setter private String app;
 
+    @ECSearchable
     @ECForeignKey(entity=AppSite.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String site;
 
+    @ECSearchable(filter=true)
     @HasValue(message="err.fqdn.required")
     @Size(max=1024, message="err.fqdn.length")
     @ECIndex @Column(nullable=false, length=1024)
     @Getter @Setter private String fqdn;
 
+    @ECSearchable(filter=true)
     @HasValue(message="err.urlRegex.required")
     @Size(max=1024, message="err.urlRegex.length")
     @Type(type=ENCRYPTED_STRING) @Column(nullable=false, columnDefinition="varchar("+(1024+ENC_PAD)+") UNIQUE")
@@ -69,18 +75,22 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity {
 
     public boolean matches (String value) { return getPattern().matcher(value).find(); }
 
+    @ECSearchable
     @ECForeignKey(entity=AppRule.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String rule;
 
+    @ECSearchable
     @Column(nullable=false)
     @Getter @Setter private Boolean blocked = false;
     public boolean blocked() { return blocked != null && blocked; }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template () { return template == null || template; }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }

@@ -16,10 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.filters.Scrubbable;
 import org.cobbzilla.wizard.filters.ScrubbableField;
 import org.cobbzilla.wizard.model.IdentifiableBase;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKey;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECIndex;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECIndexes;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
+import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
 
@@ -53,15 +50,18 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
 
     @Override public void beforeCreate() { if (!hasUuid()) initUuid(); }
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String account;
 
+    @ECSearchable
     @ECForeignKey(entity=CloudService.class)
     @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String cloud;
     public boolean hasCloud() { return cloud != null; }
 
+    @ECSearchable
     @Enumerated(EnumType.STRING) @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private PaymentMethodType paymentMethodType;
     public boolean hasPaymentMethodType() { return paymentMethodType != null; }
@@ -71,9 +71,11 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
     public boolean hasPaymentInfo () { return paymentInfo != null; }
 
     public static final String DEFAULT_MASKED_PAYMENT_INFO = "XXXX-".repeat(3)+"XXXX";
+    @ECSearchable
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String maskedPaymentInfo = DEFAULT_MASKED_PAYMENT_INFO;
 
+    @ECSearchable
     @Column(nullable=false)
     @Getter @Setter private Boolean deleted = false;
     public boolean deleted() { return deleted != null && deleted; }

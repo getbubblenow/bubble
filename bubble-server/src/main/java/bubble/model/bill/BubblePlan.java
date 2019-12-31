@@ -44,14 +44,17 @@ public class BubblePlan extends IdentifiableBase implements HasAccount {
 
     public BubblePlan (BubblePlan other) { copy(this, other, CREATE_FIELDS); }
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    @ECSearchable(filter=true)
     @HasValue(message="err.name.required")
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
 
+    @ECSearchable(filter=true)
     @HasValue(message="err.chargeName.required")
     @Size(message="err.chargeName.length")
     @Column(nullable=false, updatable=false, length=12)
@@ -68,37 +71,48 @@ public class BubblePlan extends IdentifiableBase implements HasAccount {
         }
     }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Long price;
 
+    @ECSearchable
     @ECIndex @Column(nullable=false, length=10)
     @Getter @Setter private String currency = "USD";
 
+    @ECSearchable
     @Enumerated(EnumType.STRING) @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private BillPeriod period = BillPeriod.monthly;
 
+    @ECSearchable
     @ECIndex @Column(nullable=false, updatable=false, length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private ComputeNodeSizeType computeSizeType;
 
+    @ECSearchable
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer nodesIncluded;
 
+    @ECSearchable
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer additionalPerNodePrice;
 
+    @ECSearchable
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer storageGbIncluded;
 
+    @ECSearchable
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer additionalStoragePerGbPrice;
 
+    @ECSearchable
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer bandwidthGbIncluded;
 
+    @ECSearchable
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer additionalBandwidthPerGbPrice;
 
