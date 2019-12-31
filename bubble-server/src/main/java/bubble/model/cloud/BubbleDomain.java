@@ -57,27 +57,32 @@ public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    @ECSearchable(filter=true)
     @HasValue(message="err.name.required")
     @ECIndex @Column(nullable=false, updatable=false, length=DOMAIN_NAME_MAXLEN)
     @Getter @Setter private String name;
 
+    @ECSearchable(filter=true)
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template() { return template != null && template; }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
+    @ECSearchable
     @ECIndex @Column(updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String delegated;
     public boolean delegated() { return delegated != null; }
 
-    @ECForeignKey(entity=CloudService.class)
+    @ECSearchable @ECForeignKey(entity=CloudService.class)
     @Column(nullable=false, length=UUID_MAXLEN)
     @Getter @Setter private String publicDns;
 

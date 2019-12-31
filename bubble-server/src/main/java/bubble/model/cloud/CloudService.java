@@ -21,6 +21,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
+import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.collection.HasPriority;
 import org.cobbzilla.wizard.filters.Scrubbable;
 import org.cobbzilla.wizard.filters.ScrubbableField;
@@ -33,7 +34,6 @@ import org.hibernate.annotations.Type;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static bubble.ApiConstants.EP_CLOUDS;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
@@ -76,12 +76,12 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable
+    @ECSearchable(filter=true)
     @HasValue(message="err.name.required")
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
 
-    @ECSearchable
+    @ECSearchable(filter=true)
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
@@ -181,26 +181,27 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
         return (PaymentServiceDriver) wireAndSetup(configuration);
     }
 
-    private static final Map<String, CloudServiceDriver> driverCache = new ConcurrentHashMap<>();
+    private static final Map<String, CloudServiceDriver> driverCache = new ExpirationMap<>();
 
-    private <T extends CloudServiceDriver> T wireAndSetup (BubbleConfiguration configuration) {
-        // todo: CloudServiceDAO can cache these by uuid. clear cache when driver config is updated.
-        synchronized (driverCache) {
-            return (T) driverCache.computeIfAbsent(getUuid(), k -> {
-                final T driver;
-                if (delegated()) {
-                    if (type.hasDelegateDriverClass()) {
-                        driver = (T) configuration.autowire(instantiate(type.getDelegateDriverClass(), this));
-                    } else {
-                        return die("wireAndSetup: cloud service type " + type + " does not support delegation");
-                    }
+    public static void clearDriverCache (String uuid) { driverCache.remove(uuid); }
+
+    public <T extends CloudServiceDriver> T wireAndSetup (BubbleConfiguration configuration) {
+        // note: CloudServiceDAO calls clearDriverCache when driver config is updated,
+        // then the updated class/config/credentials will be used.
+        return (T) driverCache.computeIfAbsent(getUuid(), k -> {
+            final T driver;
+            if (delegated()) {
+                if (type.hasDelegateDriverClass()) {
+                    driver = (T) configuration.autowire(instantiate(type.getDelegateDriverClass(), this));
                 } else {
-                    driver = (T) configuration.autowire(getDriver());
-                    driver.postSetup();
+                    return die("wireAndSetup: cloud service type " + type + " does not support delegation: class not found: "+type.getDelegateDriverClassName());
                 }
-                return driver;
-            });
-        }
+            } else {
+                driver = (T) configuration.autowire(getDriver());
+                driver.postSetup();
+            }
+            return driver;
+        });
     }
 
 }

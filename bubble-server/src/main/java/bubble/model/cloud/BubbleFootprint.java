@@ -63,21 +63,26 @@ public class BubbleFootprint extends IdentifiableBase implements AccountTemplate
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    @ECSearchable(filter=true)
     @ECIndex @Column(nullable=false, updatable=false, length=100)
     @Getter @Setter private String name;
 
+    @ECSearchable(filter=true)
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template() { return template != null && template; }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
+    @ECSearchable
     @Size(max=5000, message="err.allowedCountriesJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(5000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String allowedCountriesJson;
@@ -86,6 +91,7 @@ public class BubbleFootprint extends IdentifiableBase implements AccountTemplate
     @Transient public String[] getAllowedCountries () { return allowedCountriesJson == null ? null : json(allowedCountriesJson, String[].class); }
     public BubbleFootprint setAllowedCountries (String[] countries) { return setAllowedCountriesJson(countries == null ? null : json(countries)); }
 
+    @ECSearchable
     @Size(max=5000, message="err.disallowedCountriesJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(5000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String disallowedCountriesJson;

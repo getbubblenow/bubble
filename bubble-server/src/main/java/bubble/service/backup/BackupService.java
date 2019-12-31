@@ -82,7 +82,7 @@ public class BackupService extends SimpleDaemon {
     @Override protected void init() throws Exception { backupCleanerService.start(); }
 
     @Override protected void process() {
-        if (configuration.backupsEnabled()) {
+        if (!configuration.backupsEnabled()) {
             log.info("backup: backups not enabled, not backing up");
             return;
         }

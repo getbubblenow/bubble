@@ -43,19 +43,17 @@ public enum CloudServiceType {
     public static final List<CloudServiceType> verifiableAuthenticationTypes = Arrays.asList(new CloudServiceType[] { email, sms });
     public boolean isVerifiableAuthenticationType () { return verifiableAuthenticationTypes.contains(this); }
 
+    @Getter private String delegateDriverClassName = "bubble.cloud." + name() + ".delegate.Delegated" + capitalize(name()) + "Driver";
     @Getter(lazy=true) private final Class<? extends CloudServiceDriver> delegateDriverClass = initDelegateDriverClass();
-
     private Class<? extends CloudServiceDriver> initDelegateDriverClass() {
         try {
-            final String clazz = "bubble.cloud." + name() + ".delegate.Delegated" + capitalize(name()) + "Driver";
-            return forName(clazz);
+            return forName(getDelegateDriverClassName());
         } catch (Exception e) {
             log.error("Error initializing delegateDriverClass: "+e);
             return null;
         }
     }
-
-    public boolean hasDelegateDriverClass () { return delegateDriverClass != null; }
+    public boolean hasDelegateDriverClass () { return getDelegateDriverClass() != null; }
 
     @JsonCreator public static CloudServiceType fromString (String v) { return enumFromString(CloudServiceType.class, v); }
 

@@ -13,6 +13,11 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
 
     @Override public Order getDefaultSortOrder() { return Order.desc("priority"); }
 
+    @Override public CloudService postUpdate(CloudService cloud, Object context) {
+        CloudService.clearDriverCache(cloud.getUuid());
+        return super.postUpdate(cloud, context);
+    }
+
     public List<CloudService> findPublicTemplatesByType(String accountUuid, CloudServiceType csType) {
         return findByFields("account", accountUuid, "type", csType, "enabled", true, "template", true);
     }

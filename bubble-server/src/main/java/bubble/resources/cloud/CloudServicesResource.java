@@ -26,6 +26,15 @@ public class CloudServicesResource extends AccountOwnedResource<CloudService, Cl
 
     public CloudServicesResource(Account account) { super(account); }
 
+    @Override protected Object daoCreate(CloudService cloud) {
+        try {
+            cloud.wireAndSetup(configuration);
+        } catch (Exception e) {
+            throw invalidEx("err.driverConfig.initFailure");
+        }
+        return super.daoCreate(cloud);
+    }
+
     @Override protected List<CloudService> list(Request req, ContainerRequest ctx) {
         final Map<String, String> queryParams = queryParams(req.getQueryString());
         final String type = queryParams.get("type");

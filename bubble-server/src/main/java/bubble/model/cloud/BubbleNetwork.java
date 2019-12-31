@@ -13,6 +13,7 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
 import org.hibernate.annotations.Type;
@@ -60,42 +61,51 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    @ECSearchable
     @HasValue(message="err.name.required")
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
 
+    @ECSearchable
     @ECForeignKey(entity=BubbleDomain.class)
     @HasValue(message="err.domain.required")
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String domain;
 
+    @ECSearchable(filter=true)
     @ECIndex @Column(nullable=false, updatable=false, length=DOMAIN_NAME_MAXLEN)
     @Getter @Setter private String domainName;  // denormalized from BubbleNetwork
 
     @Transient @JsonIgnore public String getNetworkDomain () { return name + "." + domainName; }
 
+    @ECSearchable
     @ECIndex @Column(nullable=false, updatable=false, length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private ComputeNodeSizeType computeSizeType;
 
+    @ECSearchable
     @ECForeignKey(entity=BubbleFootprint.class)
     @Column(nullable=false, length=UUID_MAXLEN)
     @Getter @Setter private String footprint;
     public boolean hasFootprint () { return footprint != null; }
 
+    @ECSearchable
     @ECForeignKey(entity=CloudService.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String storage;
 
+    @ECSearchable(filter=true)
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
+    @ECSearchable @ECField(type=EntityFieldType.locale)
     @Size(max=20, message="err.locale.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(20+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String locale = "en_US";
 
     // A unicode timezone alias from: cobbzilla-utils/src/main/resources/org/cobbzilla/util/time/unicode-timezones.xml
     // All unicode aliases are guaranteed to map to a Linux timezone and a Java timezone
+    @ECSearchable @ECField(type=EntityFieldType.time_zone)
     @Size(max=100, message="err.timezone.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String timezone = "America/New_York";

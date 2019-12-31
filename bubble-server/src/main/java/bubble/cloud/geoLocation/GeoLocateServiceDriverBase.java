@@ -7,10 +7,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
+import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.http.HttpMeta;
 import org.cobbzilla.util.http.HttpRequestBean;
 import org.cobbzilla.util.http.HttpUtil;
-import org.cobbzilla.util.io.Tarball;
+import org.cobbzilla.util.io.Decompressors;
+import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.TempDir;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +71,8 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
 
     public File initFile(String url, String pathMatch, List<NameAndValue> headers) {
         try {
-            final HttpRequestBean request = new HttpRequestBean(url).setHeaders(headers);
+            final String urlWithLicense = HandlebarsUtil.apply(getHandlebars(), url, getCredentials().newContext(), '[', ']');
+            final HttpRequestBean request = new HttpRequestBean(urlWithLicense).setHeaders(headers);
             final HttpMeta meta = HttpUtil.getHeadMetadata(request);
 
             final String uniq = sha256_hex(hashOf(url, headers));
@@ -78,15 +81,26 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
             if (!meta.shouldRefresh(dbFile)) return dbFile; // we are current!
 
             final String key = "urlcache_" + uniq;
-            final File tarball = cloudDataDAO.getFile(cloud.getUuid(), key);
-            if (meta.shouldRefresh(tarball)) {
-                HttpUtil.getResponse(request).toFile(tarball);
+            final File archive = cloudDataDAO.getFile(cloud.getUuid(), key);
+            if (meta.shouldRefresh(archive)) {
+                HttpUtil.getResponse(request).toFile(archive);
             }
 
-            @Cleanup("delete") final TempDir tempDir = Tarball.unroll(tarball);
+            // create a symlink with the proper extension, so "unroll" can detect the archive type
+            String ext = getExtension(url);
+            if (ext.startsWith(".")) ext = ext.substring(1);
+            switch (ext) {
+                case "zip": case "tgz": case "tar.gz": case "tar.bz2": break;
+                default: return die("initFile: unrecognized archive extension: "+ext+", from URL="+url);
+            }
+            final File link = new File(abs(archive)+"."+ext);
+            if (link.exists() && !link.delete()) return die("initFile: error removing link: "+abs(link));
+            symlink(link, archive);
+
+            @Cleanup("delete") final TempDir tempDir = Decompressors.unroll(link);
             final File found = findFile(tempDir, Pattern.compile(pathMatch));
             if (found == null) {
-                return die("initFile: tarball " + abs(tarball) + " did not contain a file matching pattern: " + pathMatch);
+                return die("initFile: archive " + abs(archive) + " did not contain a file matching pattern: " + pathMatch);
             }
             copyFile(found, dbFile);
             return dbFile;
@@ -95,5 +109,7 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
             return die("initFile: "+e.getMessage());
         }
     }
+
+    public String getExtension(String url) { return FileUtil.extension(url); }
 
 }

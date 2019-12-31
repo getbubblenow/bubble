@@ -9,10 +9,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKey;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECIndex;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECIndexes;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
+import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
@@ -51,19 +48,23 @@ public class Device extends IdentifiableBase implements HasAccount {
         initTotpKey();
     }
 
+    @ECSearchable(filter=true)
     @ECIndex @Column(nullable=false, length=500)
     @Getter @Setter private String name;
 
+    @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
     public boolean uninitialized () { return name.equals(UNINITIALIZED_DEVICE); }
     public boolean initialized () { return !uninitialized(); }
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    @ECSearchable
     @ECForeignKey(entity=BubbleNetwork.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String network;

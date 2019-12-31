@@ -15,12 +15,16 @@
   },
 
   {
+    "_subst": true,
     "name": "MaxMind",
     "type": "geoLocation",
     "driverClass": "bubble.cloud.geoLocation.maxmind.MaxMindDriver",
     "driverConfig": {
-      "url": "https://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz",
-      "file": "GeoLite2-City_[\\d]+/GeoLite2-City\\.mmdb"
+      "url": "{{{MAXMIND_URL}}}",
+      "file": "{{{MAXMIND_FILE_REGEX}}}"
+    },
+    "credentials": {
+      "params": [ {"name": "apiKey", "value": "{{{MAXMIND_API_KEY}}}"} ]
     },
     "template": true
   },

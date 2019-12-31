@@ -12,7 +12,9 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKey;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECSearchable;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
@@ -49,24 +51,29 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
 
     @Override public Identifiable update(Identifiable thing) { copy(this, thing, UPDATE_FIELDS); return this; }
 
+    @ECSearchable
     @ECForeignKey(entity=Account.class)
     @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String account;
 
     @JsonIgnore @Override public String getName() { return getAccount(); }
 
+    @ECSearchable(type=EntityFieldType.expiration_time)
     @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+ENC_LONG+") NOT NULL")
     @Getter @Setter private Long nodeOperationTimeout = MINUTES.toMillis(30);
 
+    @ECSearchable(type=EntityFieldType.expiration_time)
     @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+ENC_LONG+") NOT NULL")
     @Getter @Setter private Long accountOperationTimeout = MINUTES.toMillis(10);
 
+    @ECSearchable
     @Enumerated(EnumType.STRING) @Column(length=20, nullable=false)
     @Getter @Setter private AccountDeletionPolicy deletionPolicy = AccountDeletionPolicy.block_delete;
 
     @JsonIgnore @Transient public boolean isFullDelete () { return deletionPolicy == AccountDeletionPolicy.full_delete; }
     @JsonIgnore @Transient public boolean isBlockDelete () { return deletionPolicy == AccountDeletionPolicy.block_delete; }
 
+    @ECSearchable(filter=true)
     @Size(max=100000, message="err.accountContactsJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String accountContactsJson;

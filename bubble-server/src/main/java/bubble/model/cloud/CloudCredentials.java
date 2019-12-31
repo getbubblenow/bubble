@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import static bubble.cloud.storage.StorageCryptStream.MIN_DISTINCT_LENGTH;
 import static bubble.cloud.storage.StorageCryptStream.MIN_KEY_LENGTH;
@@ -83,4 +84,7 @@ public class CloudCredentials implements Serializable {
             return defaultValue;
         }
     }
+
+    public Map<String, Object> newContext() { return (Map) NameAndValue.toMap(getParams()); }
+
 }

@@ -1,7 +1,10 @@
 package bubble.server.listener;
 
 import bubble.dao.account.AccountDAO;
+import bubble.dao.cloud.CloudServiceDAO;
+import bubble.model.account.Account;
 import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.boot.SelfNodeService;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +54,21 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
         } else {
             log.warn("onStart: thisNode was null, not doing standard initializations");
         }
+
+        // warm up drivers
+        final Account admin = c.getBean(AccountDAO.class).findFirstAdmin();
+        if (admin != null) {
+            for (CloudService cloud : c.getBean(CloudServiceDAO.class).findPublicTemplates(admin.getUuid())) {
+                try {
+                    cloud.wireAndSetup(c);
+                } catch (Exception e) {
+                    log.warn("onStart: error initializing driver for cloud: "+cloud.getName()+"/"+cloud.getUuid()+": "+e);
+                }
+//            background(() -> cloud.wireAndSetup(c));
+            }
+        }
+
+        log.info("onStart: completed");
     }
 
 }

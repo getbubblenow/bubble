@@ -20,6 +20,7 @@ import org.cobbzilla.util.security.RsaKeyPair;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
 
@@ -89,6 +90,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    @ECSearchable
     @ECForeignKey(entity=BubbleDomain.class)
     @HasValue(message="err.network.required")
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
@@ -97,6 +99,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         return getDomain() != null && n.getDomain() != null && getDomain().equals(n.getDomain());
     }
 
+    @ECSearchable
     @ECForeignKey(entity=BubbleNetwork.class)
     @HasValue(message="err.network.required")
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
@@ -105,36 +108,44 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         return getNetwork() != null && n.getNetwork() != null && getNetwork().equals(n.getNetwork());
     }
 
+    @ECSearchable
     @ECForeignKey(entity=BubbleNode.class, cascade=false)
     @Column(length=UUID_MAXLEN)
     @Getter @Setter private String sageNode;
     public boolean hasSageNode() { return sageNode != null; }
     public boolean selfSage() { return hasSageNode() && getSageNode().equals(getUuid()); }
 
+    @ECSearchable(filter=true)
     @ECIndex @Column(length=250)
     @Getter @Setter private String host;
     public boolean hasHost () { return host != null; }
 
+    @ECSearchable(filter=true)
     @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=1000)
     @Getter @Setter private String fqdn;
 
+    @ECSearchable
     @ECForeignKey(entity=CloudService.class)
     @HasValue(message="err.cloud.required")
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String cloud;
 
+    @ECSearchable
     @HasValue(message="err.region.required")
     @ECIndex @Column(nullable=false, updatable=false, length=100)
     @Getter @Setter private String region;
 
+    @ECSearchable
     @HasValue(message="err.size.required")
     @ECIndex @Column(nullable=false, updatable=false, length=100)
     @Getter @Setter private String size;
 
+    @ECSearchable
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false)
     @Getter @Setter private ComputeNodeSizeType sizeType;
 
+    @ECSearchable
     @Column(nullable=false)
     @Getter @Setter private int costUnits;
 
@@ -148,6 +159,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     @JsonIgnore @Getter @Setter private String ansibleUser = "root";
     @JsonIgnore @Transient public String getUser () { return getAnsibleUser(); }
 
+    @ECSearchable(filter=true) @ECField(type=EntityFieldType.ip4)
     @ECIndex(unique=true) @Column(length=IP4_MAXLEN)
     @Getter @Setter private String ip4;
     public boolean hasIp4() { return ip4 != null; }
@@ -155,6 +167,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
 
     public String id() { return getUuid() + "/fqdn=" + getFqdn() + "/ip4=" + getIp4(); }
 
+    @ECSearchable(filter=true) @ECField(type=EntityFieldType.ip6)
     @ECIndex(unique=true) @Column(length=IP6_MAXLEN)
     @Getter @Setter private String ip6;
     public boolean hasIp6() { return ip6 != null; }
@@ -167,6 +180,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         return (hasIp4() && getIp4().equals(ip)) || (hasIp6() && getIp6().equals(ip));
     }
 
+    @ECSearchable
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false)
     @Getter @Setter private BubbleNodeState state = created;

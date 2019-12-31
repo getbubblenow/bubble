@@ -6,8 +6,8 @@ import java.util.List;
 
 public class AccountOwnedTemplateDAO<E extends AccountTemplate> extends AccountOwnedEntityDAO<E> {
 
-    public List<E> findPublicTemplates(String parentUuid) {
-        return findByFields("account", parentUuid, "enabled", true, "template", true);
+    public List<E> findPublicTemplates(String accountUuid) {
+        return findByFields("account", accountUuid, "enabled", true, "template", true);
     }
 
     public E findPublicTemplate(String parentUuid, String id) {

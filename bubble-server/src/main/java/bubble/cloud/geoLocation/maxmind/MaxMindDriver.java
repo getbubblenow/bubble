@@ -11,10 +11,13 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.http.URIUtil.queryParams;
 
 public class MaxMindDriver extends GeoLocateServiceDriverBase<CloudApiUrlConfig> {
 
     private DatabaseReader reader;
+
+    @Override public String getExtension(String url) { return queryParams(url).get("suffix"); }
 
     @Override public void postSetup() {
         // grab latest DB
