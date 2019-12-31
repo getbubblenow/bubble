@@ -17,14 +17,12 @@ import bubble.service.account.StandardAccountMessageService;
 import bubble.service.backup.RestoreService;
 import bubble.service.boot.ActivationService;
 import bubble.service.boot.SageHelloService;
-import bubble.service.cloud.GeoService;
 import bubble.service.notify.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.wizard.auth.LoginRequest;
 import org.cobbzilla.wizard.stream.FileSendableResource;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
-import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -69,7 +67,6 @@ public class AuthResource {
     @Autowired private AccountMessageDAO accountMessageDAO;
     @Autowired private StandardAccountMessageService messageService;
     @Autowired private BubbleNodeDAO nodeDAO;
-    @Autowired private GeoService geoService;
     @Autowired private BubbleConfiguration configuration;
 
     @GET @Path(EP_CONFIGS)
@@ -364,27 +361,6 @@ public class AuthResource {
             sessionDAO.invalidate(found.getApiToken());
         }
         return ok_empty();
-    }
-
-    @GET @Path("/detect/locale")
-    public Response detectLocale(@Context Request req,
-                                 @Context ContainerRequest ctx) {
-        return ok(geoService.getSupportedLocales(optionalUserPrincipal(ctx), getRemoteHost(req), normalizeLangHeader(req)));
-    }
-
-    @GET @Path("/detect/timezone")
-    public Response detectTimezone(@Context Request req,
-                                   @Context ContainerRequest ctx) {
-        final String remoteHost = getRemoteHost(req);
-        try {
-            return ok(geoService.getTimeZone(optionalUserPrincipal(ctx), remoteHost));
-
-        } catch (SimpleViolationException e) {
-            return invalid(e);
-
-        } catch (Exception e) {
-            return invalid("err.timezone.unknown", e.getMessage());
-        }
     }
 
 }

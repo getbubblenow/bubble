@@ -75,7 +75,7 @@
     "request": { "uri": "clouds?type=compute" },
     "response": {
       "check": [
-        {"condition": "json.length == 1"},
+        {"condition": "json.length >= 1"},
         {"condition": "json[0].getDriver().getRegions().size() >= 3"},
         {"condition": "json[0].getDriver().getSizes().size() >= 1"}
       ]
@@ -85,7 +85,7 @@
   {
     "comment": "detect locale",
     "request": {
-      "uri": "auth/detect/locale",
+      "uri": "detect/locale",
       "headers": {
         "Accept-Language": "en-US,en;q=0.5",  // fwiw, this is what firefox sends
         "X-Forwarded-For": "128.252.99.67"    // this IP has long been associated with Washington University in St. Louis
@@ -103,7 +103,7 @@
   {
     "comment": "detect timezone",
     "request": {
-      "uri": "auth/detect/timezone",
+      "uri": "detect/timezone",
       "headers": { "X-Forwarded-For": "128.252.99.67" }
     },
     "response": {

@@ -153,6 +153,10 @@ public class ApiConstants {
     public static final String EP_SEARCH = "/search";
     public static final String EP_FORK = "/fork";
 
+    public static final String DETECT_ENDPOINT = "/detect";
+    public static final String EP_LOCALE = "/locale";
+    public static final String EP_TIMEZONE = "/timezone";
+
     public static final String DEBUG_ENDPOINT = "/debug";
     public static final String BUBBLE_MAGIC_ENDPOINT = "/.bubble";
     public static final String EP_ASSETS = "/assets";
