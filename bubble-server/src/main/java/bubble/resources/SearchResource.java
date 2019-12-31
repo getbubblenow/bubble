@@ -3,6 +3,7 @@ package bubble.resources;
 import bubble.model.account.Account;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.GeoService;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.wizard.dao.AbstractDAO;
@@ -40,6 +41,7 @@ public class SearchResource {
     public static final String Q_META = "meta";
     public static final String Q_PAGE = "page";
     public static final String Q_SIZE = "size";
+    public static final String Q_SORT = "sort";
 
     private Map<String, DAO> daoCache = new ConcurrentHashMap<>();
 
@@ -50,8 +52,9 @@ public class SearchResource {
                            @QueryParam(Q_META) Boolean meta,
                            @QueryParam(Q_FILTER) String filter,
                            @QueryParam(Q_PAGE) Integer page,
-                           @QueryParam(Q_SIZE) Integer size) {
-        return search(req, ctx, type, meta, filter, page, size, null);
+                           @QueryParam(Q_SIZE) Integer size,
+                           @QueryParam(Q_SORT) String sort) {
+        return search(req, ctx, type, meta, filter, page, size, sort, null);
     }
 
     private Map<String, Object> _searchCache = new ExpirationMap<>(MINUTES.toMillis(10), MINUTES.toMillis(15));
@@ -64,10 +67,11 @@ public class SearchResource {
                            @QueryParam(Q_FILTER) String filter,
                            @QueryParam(Q_PAGE) Integer page,
                            @QueryParam(Q_SIZE) Integer size,
+                           @QueryParam(Q_SORT) String sort,
                            SearchQuery searchQuery) {
 
         final Account caller = userPrincipal(ctx);
-        final String cacheKey = hashOf(caller.getUuid(), type, meta, filter, page, size, searchQuery);
+        final String cacheKey = hashOf(caller.getUuid(), type, meta, filter, page, size, sort, searchQuery);
         return ok(_searchCache.computeIfAbsent(cacheKey, searchKey -> {
             final DAO dao = daoCache.computeIfAbsent(type, k -> getDao(type));
             if (meta != null) return ((AbstractDAO) dao).getSearchFields();
@@ -83,6 +87,11 @@ public class SearchResource {
             }
             q.setPageNumber(page != null ? page : 1);
             q.setPageSize(size != null ? Integer.min(size, MAX_SEARCH_PAGE) : Integer.min(q.getPageSize(), MAX_SEARCH_PAGE));
+            if (sort != null) {
+                final SortAndOrder s = new SortAndOrder(sort);
+                q.setSortField(s.getSortField());
+                q.setSortOrder(s.getSortOrder());
+            }
             if (filter != null) q.setFilter(filter);
 
             if (!caller.admin()) {
@@ -118,4 +127,26 @@ public class SearchResource {
         throw notFoundEx(type);
     }
 
+    private static class SortAndOrder {
+        @Getter private final String sortField;
+        @Getter private final SearchQuery.SortOrder sortOrder;
+        public SortAndOrder(String sort) {
+            if (sort.startsWith("+") || sort.startsWith(" ")) {
+                sortField = sort.substring(1).trim();
+                sortOrder = SearchQuery.SortOrder.ASC;
+            } else if (sort.startsWith("-")) {
+                sortField = sort.substring(1).trim();
+                sortOrder = SearchQuery.SortOrder.DESC;
+            } else if (sort.endsWith("+") || sort.endsWith(" ")) {
+                sortField = sort.substring(0, sort.length()-1).trim();
+                sortOrder = SearchQuery.SortOrder.ASC;
+            } else if (sort.endsWith("-")) {
+                sortField = sort.substring(0, sort.length()-1).trim();
+                sortOrder = SearchQuery.SortOrder.DESC;
+            } else {
+                sortField = sort.trim();
+                sortOrder = SearchQuery.SortOrder.ASC;
+            }
+        }
+    }
 }
