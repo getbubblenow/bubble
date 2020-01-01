@@ -22,6 +22,7 @@ import java.util.List;
 import static bubble.ApiConstants.EP_CLOSEST;
 import static bubble.ApiConstants.getRemoteHost;
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -39,11 +40,19 @@ public class CloudServiceRegionsResource {
 
     @GET
     public Response listRegions(@Context Request req,
-                                @Context ContainerRequest ctx) {
+                                @Context ContainerRequest ctx,
+                                @QueryParam("footprint") String footprintId) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin() && !caller.getUuid().equals(account.getUuid())) return forbidden();
 
-        return ok(findRegions(computeClouds()));
+        final BubbleFootprint footprint;
+        if (empty(footprintId)) {
+            footprint = null;
+        } else {
+            footprint = footprintDAO.findByAccountAndId(caller.getUuid(), footprintId);
+            if (footprint == null) return notFound(footprintId);
+        }
+        return ok(findRegions(computeClouds(), footprint));
     }
 
     @GET @Path(EP_CLOSEST)
@@ -67,10 +76,10 @@ public class CloudServiceRegionsResource {
         return ok(findClosestRegions(computeClouds(), footprint, loc.getLatitude(), loc.getLongitude()));
     }
 
-    public List<CloudRegion> findRegions(List<CloudService> clouds) {
+    public List<CloudRegion> findRegions(List<CloudService> clouds, BubbleFootprint footprint) {
         final List<CloudRegion> regions = new ArrayList<>();
         for (CloudService cloud : clouds) {
-            for (CloudRegion region : cloud.getRegionalDriver().getRegions()) {
+            for (CloudRegion region : cloud.getRegionalDriver().getRegions(footprint)) {
                 regions.add(region.setCloud(cloud.getUuid()));
             }
         }

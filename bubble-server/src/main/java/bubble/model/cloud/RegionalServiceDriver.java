@@ -5,6 +5,7 @@ import bubble.cloud.CloudRegionRelative;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparingDouble;
 
@@ -33,6 +34,13 @@ public interface RegionalServiceDriver {
     }
 
     List<CloudRegion> getRegions();
+
+    default List<CloudRegion> getRegions(BubbleFootprint footprint) {
+        return getRegions().stream()
+                .filter(r -> footprint == null || footprint.isAllowedCountry(r.getLocation().getCountry()))
+                .collect(Collectors.toList());
+    }
+
     CloudRegion getRegion(String region);
 
 }
