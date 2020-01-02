@@ -2,7 +2,7 @@ package bubble.test.dev;
 
 import bubble.resources.EntityConfigsResource;
 import bubble.server.BubbleConfiguration;
-import bubble.test.ActivatedBubbleModelTestBase;
+import bubble.test.BubbleModelTestBase;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.server.RestServer;
 import org.junit.Test;
@@ -11,16 +11,11 @@ import static java.util.concurrent.TimeUnit.DAYS;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
 @Slf4j
-public class DevServerTest extends ActivatedBubbleModelTestBase {
+public class BlankDevServerTest extends BubbleModelTestBase {
 
-    @Override protected String getManifest() { return "manifest-dev"; }
+    @Override protected String getManifest() { return "manifest-empty"; }
 
     @Override protected boolean useMocks() { return false; }
-
-    @Override protected String getDatabaseNameSuffix() { return "dev"; }
-    @Override protected boolean dropPreExistingDatabase() { return false; }
-    @Override protected boolean allowPreExistingDatabase() { return true; }
-    @Override public boolean doTruncateDb() { return false; }
 
     @Override public void onStart(RestServer<BubbleConfiguration> server) {
         getConfiguration().getBean(EntityConfigsResource.class).getAllowPublic().set(true);

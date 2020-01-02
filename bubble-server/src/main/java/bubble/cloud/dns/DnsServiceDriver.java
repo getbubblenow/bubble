@@ -78,6 +78,7 @@ public interface DnsServiceDriver extends CloudServiceDriver {
 
     static DnsRecord recordFromLine(DnsType type, String name, String line) {
         line = line.trim();
+        if (line.startsWith("\"") && line.endsWith("\"")) line = line.substring(1, line.length()-1).trim();
         if (line.startsWith("/")) line = line.substring(1);
         if (line.endsWith(".")) line = line.substring(0, line.length()-1);
         line = line.trim();
@@ -105,7 +106,7 @@ public interface DnsServiceDriver extends CloudServiceDriver {
                         .setFqdn(name)
                         .setValue(IPv4_ALL_ADDRS);
 
-            case A: case AAAA: case CNAME: default:
+            case A: case AAAA: case CNAME: case TXT: default:
                 return (DnsRecord) new DnsRecord()
                         .setType(type)
                         .setFqdn(name)

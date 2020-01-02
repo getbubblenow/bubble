@@ -1,0 +1,149 @@
+[
+  {
+    "comment": "list networks, should be one",
+    "request": { "uri": "me/networks" },
+    "response": {
+      "store": "networks",
+      "check": [ {"condition": "json.length === 1"} ]
+    }
+  },
+
+  {
+    "comment": "list matching records, should be none",
+    "request": { "uri": "me/networks/{{networks.[0].uuid}}/dns/find?name={{urlEncode 'test_\\w+_'}}{{rootUser.uuid}}" },
+    "response": { "check": [ {"condition": "json.length === 0"} ] }
+  },
+  {
+    "comment": "dig TXT record, should be none",
+    "request": { "uri": "me/networks/{{networks.[0].uuid}}/dns/dig?type=txt&name=test_TXT_{{rootUser.uuid}}" },
+    "response": { "check": [ {"condition": "json.length === 0"} ] }
+  },
+  {
+    "comment": "dig A record, should be none",
+    "request": { "uri": "me/networks/{{networks.[0].uuid}}/dns/dig?type=a&name=test_A_{{rootUser.uuid}}" },
+    "response": { "check": [ {"condition": "json.length === 0"} ] }
+  },
+
+  {
+    "comment": "create a TXT record",
+    "request": {
+      "uri": "me/networks/{{networks.[0].uuid}}/dns/update",
+      "entity": {
+        "type": "TXT",
+        "fqdn": "test_TXT_{{rootUser.uuid}}.{{networks.[0].networkDomain}}",
+        "value": "first-{{rand 15}}"
+      }
+    },
+    "response": {
+      "delay": "15s",
+      "store": "txtRecord"
+    }
+  },
+  {
+    "comment": "create an A record",
+    "request": {
+      "uri": "me/networks/{{networks.[0].uuid}}/dns/update",
+      "entity": {
+        "type": "A",
+        "fqdn": "test_A_{{rootUser.uuid}}.{{networks.[0].networkDomain}}",
+        "value": "127.0.0.1"
+      }
+    },
+    "response": {
+      "store": "aRecord"
+    }
+  },
+
+  {
+    "before": "await_url me/networks/{{networks.[0].uuid}}/dns/dig?type=a&name=test_A_{{rootUser.uuid}} 5m 10s await_json.length > 0",
+    "comment": "dig A record, should be found",
+    "request": { "uri": "me/networks/{{networks.[0].uuid}}/dns/dig?type=a&name=test_A_{{rootUser.uuid}}" },
+    "response": { "check": [ {"condition": "json.length === 1"} ] }
+  },
+
+  {
+    "before": "await_url me/networks/{{networks.[0].uuid}}/dns/dig?type=txt&name=test_TXT_{{rootUser.uuid}} 5m 10s await_json.length > 0",
+    "comment": "dig TXT record, should be found",
+    "request": { "uri": "me/networks/{{networks.[0].uuid}}/dns/dig?type=txt&name=test_TXT_{{rootUser.uuid}}" },
+    "response": { "check": [ {"condition": "json.length === 1"} ] }
+  },
+
+  {
+    "before": "await_url me/networks/{{networks.[0].uuid}}/dns/find?name={{urlEncode 'test_\\w+_'}}{{rootUser.uuid}} 5m 10s await_json.length > 0",
+    "comment": "list matching records, should be two",
+    "request": { "uri": "me/networks/{{networks.[0].uuid}}/dns/find?name={{urlEncode 'test_\\w+_'}}{{rootUser.uuid}}" },
+    "response": { "check": [ {"condition": "json.length === 2"} ] }
+  },
+
+  {
+    "comment": "update TXT record",
+    "request": {
+      "uri": "me/networks/{{networks.[0].uuid}}/dns/update",
+      "entity": {
+        "type": "TXT",
+        "fqdn": "test_TXT_{{rootUser.uuid}}.{{networks.[0].networkDomain}}",
+        "value": "different-{{rand 15}}"
+      }
+    },
+    "response": {
+      "store": "txtRecordAfterUpdate"
+    }
+  },
+  {
+    "before": "await_url me/networks/{{networks.[0].uuid}}/dns/dig?type=txt&name=test_TXT_{{rootUser.uuid}} 5m 10s await_json.length > 0 && await_json[0].getValue() === '{{txtRecordAfterUpdate.value}}'",
+    "comment": "re-dig updated TXT record, should be one, verify new value",
+    "request": { "uri": "me/networks/{{networks.[0].uuid}}/dns/dig?type=txt&name=test_TXT_{{rootUser.uuid}}" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getFqdn().toUpperCase() === 'test_TXT_{{rootUser.uuid}}.{{networks.[0].networkDomain}}'.toUpperCase()"},
+        {"condition": "json[0].getValue() === '{{txtRecordAfterUpdate.value}}'"},
+        {"condition": "json[0].getValue() !== '{{txtRecord.value}}'"}
+      ]
+    }
+  },
+  {
+    "before": "await_url me/networks/{{networks.[0].uuid}}/dns/find?type=TXT&name=test_TXT_{{rootUser.uuid}} 5m 10s await_json.length > 0 && await_json[0].getValue() === '{{txtRecordAfterUpdate.value}}'",
+    "comment": "re-list updated TXT record, should be one, verify new value",
+    "request": { "uri": "me/networks/{{networks.[0].uuid}}/dns/find?type=txt&name=test_TXT_{{rootUser.uuid}}" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getFqdn().toUpperCase() === 'test_TXT_{{rootUser.uuid}}.{{networks.[0].networkDomain}}'.toUpperCase()"},
+        {"condition": "json[0].getValue() === '{{txtRecordAfterUpdate.value}}'"},
+        {"condition": "json[0].getValue() !== '{{txtRecord.value}}'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "delete TXT record",
+    "request": {
+      "uri": "me/networks/{{networks.[0].uuid}}/dns/remove",
+      "entity": {
+        "type": "TXT",
+        "fqdn": "test_TXT_{{rootUser.uuid}}.{{networks.[0].networkDomain}}",
+        "value": "{{txtRecord.value}}"
+      }
+    }
+  },
+
+  {
+    "comment": "delete A record",
+    "request": {
+      "uri": "me/networks/{{networks.[0].uuid}}/dns/remove",
+      "entity": {
+        "type": "A",
+        "fqdn": "test_A_{{rootUser.uuid}}.{{networks.[0].networkDomain}}",
+        "value": "127.0.0.1"
+      }
+    }
+  },
+
+  {
+    "before": "await_url me/networks/{{networks.[0].uuid}}/dns/find?name={{urlEncode 'test_\\w+_'}}{{rootUser.uuid}} 5m 10s await_json.length === 0",
+    "comment": "after deletion, list matching records, should be none",
+    "request": { "uri": "me/networks/{{networks.[0].uuid}}/dns/find?name={{urlEncode 'test_\\w+_'}}{{rootUser.uuid}}" },
+    "response": { "check": [ {"condition": "json.length === 0"} ] }
+  }
+]

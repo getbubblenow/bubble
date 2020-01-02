@@ -10,7 +10,6 @@ import org.junit.Test;
 @Slf4j
 public class PaymentTest extends ActivatedBubbleModelTestBase {
 
-    @Override protected String getModelPrefix() { return "models/"; }
     @Override protected String getManifest() { return "manifest-payment"; }
 
     @Override public void beforeStart(RestServer<BubbleConfiguration> server) {

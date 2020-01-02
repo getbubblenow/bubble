@@ -63,6 +63,13 @@ public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
     @ECIndex @Column(nullable=false, updatable=false, length=DOMAIN_NAME_MAXLEN)
     @Getter @Setter private String name;
 
+    public String ensureDomainSuffix(String fqdn) { return fqdn.endsWith("." + getName()) ? fqdn : fqdn + "." + getName(); }
+
+    public String dropDomainSuffix(String fqdn) {
+        return !fqdn.endsWith("." + getName()) ? fqdn
+                : fqdn.substring(0, fqdn.length() - getName().length() - 1);
+    }
+
     @ECSearchable(filter=true)
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")

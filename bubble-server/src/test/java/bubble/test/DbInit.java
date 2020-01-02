@@ -12,7 +12,6 @@ import static org.junit.Assert.assertEquals;
 @Slf4j
 public class DbInit extends BubbleModelTestBase {
 
-    @Override protected String getModelPrefix() { return "models/"; }
     @Override protected String getManifest() { return "manifest-empty"; }
 
     @Override protected boolean createSqlIndexes() { return true; }

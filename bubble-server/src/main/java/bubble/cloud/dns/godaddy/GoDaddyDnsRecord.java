@@ -13,6 +13,8 @@ import static org.cobbzilla.util.dns.DnsRecord.OPT_NS_NAME;
 @NoArgsConstructor @Accessors(chain=true)
 public class GoDaddyDnsRecord {
 
+    public static final GoDaddyDnsRecord[] EMPTY_ARRAY = new GoDaddyDnsRecord[0];
+
     @Getter @Setter private String data;
     @Getter @Setter private String name;
     @Getter @Setter private Integer ttl;
@@ -23,7 +25,7 @@ public class GoDaddyDnsRecord {
         return (DnsRecord) new DnsRecord()
                 .setOption(OPT_NS_NAME, type == DnsType.NS ? data : null)
                 .setType(type)
-                .setFqdn((name.equals("@") ? "" : name+".")+domain.getName())
+                .setFqdn(domain.ensureDomainSuffix(name.equals("@") ? "" : name))
                 .setValue(data);
     }
 }

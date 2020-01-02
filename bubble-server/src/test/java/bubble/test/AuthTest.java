@@ -8,7 +8,6 @@ public class AuthTest extends ActivatedBubbleModelTestBase {
 
     private static final String MANIFEST_ALL = "manifest-all";
 
-    @Override protected String getModelPrefix() { return "models/"; }
     @Override protected String getManifest() { return MANIFEST_ALL; }
 
     @Test public void testBasicAuth () throws Exception { modelTest("auth/basic_auth"); }

@@ -4,7 +4,8 @@ import com.github.jknack.handlebars.Handlebars;
 import lombok.Getter;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.handlebars.HasHandlebars;
-import org.cobbzilla.util.javascript.StandardJsEngine;
+
+import static org.cobbzilla.wizard.client.script.ApiRunner.standardHandlebars;
 
 public class BubbleHandlebars implements HasHandlebars {
 
@@ -12,11 +13,7 @@ public class BubbleHandlebars implements HasHandlebars {
 
     @Getter(lazy=true) private final Handlebars handlebars = initHandlebars();
     private Handlebars initHandlebars() {
-        final Handlebars hbs = new Handlebars(new HandlebarsUtil(ApiConstants.class.getSimpleName()));
-        HandlebarsUtil.registerUtilityHelpers(hbs);
-        HandlebarsUtil.registerDateHelpers(hbs);
-        HandlebarsUtil.registerJavaScriptHelper(hbs, StandardJsEngine::new);
-        return hbs;
+        return standardHandlebars(new Handlebars(new HandlebarsUtil(ApiConstants.class.getSimpleName())));
     }
 
 }

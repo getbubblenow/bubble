@@ -3,6 +3,7 @@ package bubble.server;
 import bubble.ApiConstants;
 import bubble.BubbleHandlebars;
 import bubble.client.BubbleApiClient;
+import bubble.cloud.CloudServiceDriver;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.server.listener.BubbleFirstTimeListener;
@@ -30,6 +31,7 @@ import org.cobbzilla.wizard.server.config.HasDatabaseConfiguration;
 import org.cobbzilla.wizard.server.config.LegalInfo;
 import org.cobbzilla.wizard.server.config.PgRestServerConfiguration;
 import org.cobbzilla.wizard.server.config.RecaptchaConfig;
+import org.cobbzilla.wizard.util.ClasspathScanner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
@@ -37,9 +39,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.beans.Transient;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
@@ -62,6 +62,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_SAGE_LAUNCHER = "sageLauncher";
     public static final String TAG_SAGE_UUID = "sageUuid";
     public static final String TAG_PAYMENTS_ENABLED = "paymentsEnabled";
+    public static final String TAG_CLOUD_DRIVERS = "cloudDrivers";
 
     public static final String DEFAULT_LOCALE = "en_US";
 
@@ -218,10 +219,16 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         return harness;
     }
 
+    @Getter(lazy=true) private final List<String> cloudDriverClasses
+            = ClasspathScanner.scan(CloudServiceDriver.class, CloudServiceDriver.CLOUD_DRIVER_PACKAGE).stream()
+                .map(c -> c.getClass().getName())
+                .collect(Collectors.toList());
+
     @Getter(lazy=true) private final Map<String, Object> publicSystemConfigs = MapBuilder.build(new Object[][] {
             { TAG_ALLOW_REGISTRATION, getThisNetwork().getBooleanTag(TAG_ALLOW_REGISTRATION, false) },
             { TAG_SAGE_LAUNCHER, isSageLauncher() },
-            { TAG_PAYMENTS_ENABLED, paymentsEnabled() }
+            { TAG_PAYMENTS_ENABLED, paymentsEnabled() },
+            { TAG_CLOUD_DRIVERS, getCloudDriverClasses() }
     });
 
     @Getter @Setter private String[] disallowedCountries;

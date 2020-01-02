@@ -1,6 +1,9 @@
 package bubble.test;
 
+import bubble.cloud.CloudServiceDriver;
 import bubble.cloud.CloudServiceType;
+import bubble.cloud.dns.godaddy.GoDaddyDnsDriver;
+import bubble.cloud.storage.local.LocalStorageDriver;
 import bubble.model.account.Account;
 import bubble.model.account.ActivationRequest;
 import bubble.model.cloud.BubbleDomain;
@@ -23,7 +26,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
-import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
 import static bubble.model.account.Account.ROOT_USERNAME;
 import static bubble.service.boot.StandardSelfNodeService.THIS_NODE_FILE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
@@ -41,6 +43,7 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
 
     public static final String ROOT_PASSWORD = "password";
     public static final String ROOT_SESSION = "rootSession";
+    public static final String ROOT_USER_VAR = "rootUser";
 
     protected Account admin;
 
@@ -88,18 +91,14 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
 
             final CloudService[] clouds = scrubSpecial(json(stream2string("models/system/cloudService.json"), JsonNode.class, FULL_MAPPER_ALLOW_COMMENTS), CloudService.class);
 
-            // expect public dns to be the LAST DNS cloud service listed in cloudService.json
-            final List<CloudService> dnsServices = Arrays.stream(clouds)
-                    .filter(c -> c.getType() == CloudServiceType.dns)
-                    .collect(Collectors.toList());
-            if (dnsServices.isEmpty()) die("onStart: no public DNS service found");
-            final CloudService dns = applyReflectively(handlebars, dnsServices.get(dnsServices.size()-1), ctx);
+            // find public DNS service
+            final CloudService dns = getPublicDns(ctx, clouds);
 
             // find storage service
             final CloudService storage = getNetworkStorage(ctx, clouds);
 
             // sanity check
-            if (!dns.getName().equals(domain.getPublicDns())) die("onStart: DNS service mismatch");
+            if (!dns.getName().equals(domain.getPublicDns())) die("onStart: DNS service mismatch: domain references "+domain.getPublicDns()+" but DNS service selected has name "+dns.getName());
 
             @Cleanup final ApiClientBase client = configuration.newApiClient();
 
@@ -122,6 +121,7 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
             }
             getApi().setConnectionInfo(client.getConnectionInfo());
             getApi().pushToken(admin.getApiToken());
+            getApiRunner().getContext().put(ROOT_USER_VAR, admin);
             getApiRunner().addNamedSession(ROOT_SESSION, admin.getApiToken());
 
         } catch (Exception e) {
@@ -130,16 +130,26 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
         if (!hasExistingDb) super.onStart(server);
     }
 
-    protected CloudService getNetworkStorage(Map<String, Object> ctx, CloudService[] clouds) {
+    private CloudService findByTypeAndDriver(Map<String, Object> ctx,
+                                             CloudService[] clouds,
+                                             CloudServiceType type,
+                                             Class<? extends CloudServiceDriver> driverClass) {
         final Handlebars handlebars = getConfiguration().getHandlebars();
-        final List<CloudService> storageServices = Arrays.stream(clouds)
-                .filter(c -> c.getType() == CloudServiceType.storage && c.getName().equals(getNetworkStorageName()))
+        final List<CloudService> dnsServices = Arrays.stream(clouds)
+                .filter(c -> c.getType() == type && c.getDriverClass().equals(driverClass.getName()))
                 .collect(Collectors.toList());
-        if (storageServices.size() != 1) die("onStart: expected exactly one network storage service");
-        return applyReflectively(handlebars, storageServices.get(0), ctx);
+        if (dnsServices.size() != 1) die("onStart: expected exactly one public dns service");
+        return applyReflectively(handlebars, dnsServices.get(0), ctx);
     }
+    private CloudService getPublicDns(Map<String, Object> ctx, CloudService[] clouds) {
+        return findByTypeAndDriver(ctx, clouds, CloudServiceType.dns, getPublicDnsDriver());
+    }
+    protected Class<? extends CloudServiceDriver> getPublicDnsDriver() { return GoDaddyDnsDriver.class; }
 
-    protected String getNetworkStorageName() { return LOCAL_STORAGE; }
+    protected CloudService getNetworkStorage(Map<String, Object> ctx, CloudService[] clouds) {
+        return findByTypeAndDriver(ctx, clouds, CloudServiceType.storage, getNetworkStorageDriver());
+    }
+    protected Class<? extends CloudServiceDriver> getNetworkStorageDriver() { return LocalStorageDriver.class; }
 
     @Override protected Class<? extends ModelSetupListener> getModelSetupListenerClass() { return BubbleModelSetupListener.class; }
 

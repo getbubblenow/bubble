@@ -3,6 +3,7 @@ package bubble.cloud.dns.godaddy;
 import bubble.cloud.dns.DnsDriverBase;
 import bubble.model.cloud.BubbleDomain;
 import org.apache.http.HttpHeaders;
+import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.dns.DnsRecord;
 import org.cobbzilla.util.dns.DnsRecordMatch;
 import org.cobbzilla.util.dns.DnsType;
@@ -10,17 +11,22 @@ import org.cobbzilla.util.http.HttpRequestBean;
 import org.cobbzilla.util.http.HttpResponseBean;
 import org.cobbzilla.util.http.HttpUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.retry;
+import static org.cobbzilla.util.dns.DnsType.NS;
+import static org.cobbzilla.util.dns.DnsType.SOA;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpMethods.PATCH;
-import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.http.HttpMethods.PUT;
+import static org.cobbzilla.util.json.JsonUtil.*;
 
 public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
 
@@ -30,7 +36,7 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
 
     @Override public Collection<DnsRecord> create(BubbleDomain domain) {
         // lookup SOA and NS records for domain, they must already exist
-        final Collection<DnsRecord> soaRecords = readRecords(domain, urlForType(domain, "SOA"), matchSOA(domain));
+        final Collection<DnsRecord> soaRecords = readRecords(domain, urlForType(domain, SOA), matchSOA(domain));
         final List<DnsRecord> records = new ArrayList<>();
         if (soaRecords.isEmpty()) {
             log.warn("create: no SOA found for "+domain.getName());
@@ -40,20 +46,26 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
             records.add(soaRecords.iterator().next());
         }
 
-        records.addAll(readRecords(domain, urlForType(domain, "NS"), matchNS(domain)));
+        records.addAll(readRecords(domain, urlForType(domain, NS), matchNS(domain)));
         return records;
     }
 
-    public String urlForType(BubbleDomain domain, final String type) {
-        return config.getBaseUri()+domain.getName()+ "/records/" + type;
+    public String urlForDomain(BubbleDomain domain) { return config.getBaseUri() + domain.getName() + "/records/"; }
+
+    public String urlForType(BubbleDomain domain, final DnsType type) {
+        return urlForDomain(domain) + type;
+    }
+
+    public String urlForTypeAndName(BubbleDomain domain, final DnsType type, String name) {
+        return urlForType(domain, type)+"/"+domain.dropDomainSuffix(name);
     }
 
     public DnsRecordMatch matchSOA(BubbleDomain domain) {
-        return (DnsRecordMatch) new DnsRecordMatch().setType(DnsType.SOA).setFqdn(domain.getName());
+        return (DnsRecordMatch) new DnsRecordMatch().setType(SOA).setFqdn(domain.getName());
     }
 
     public DnsRecordMatch matchNS(BubbleDomain domain) {
-        return (DnsRecordMatch) new DnsRecordMatch().setType(DnsType.NS).setFqdn(domain.getName());
+        return (DnsRecordMatch) new DnsRecordMatch().setType(NS).setFqdn(domain.getName());
     }
 
     @Override public DnsRecord update(DnsRecord record) {
@@ -65,30 +77,40 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
             if (domain == null) return die("update: domain not found for record: "+record.getFqdn());
             lock = lockDomain(domain.getUuid());
 
-            final String name = dropDomainSuffix(domain, record.getFqdn());
-            final String url = urlForType(domain, record.getType().name()) + "/" + name;
+//            final String name = dropDomainSuffix(domain, record.getFqdn());
+            final String name = domain.ensureDomainSuffix(record.getFqdn());
+            final String url = urlForTypeAndName(domain, record.getType(), name);
             final Collection<DnsRecord> found = readRecords(domain, url, null);
-            if (record.getType() == DnsType.SOA || record.getType() == DnsType.NS) {
+            if (record.getType() == SOA || record.getType() == NS) {
                 // can't do this!
                 log.warn("update: declining to call API to add SOA or NS record: " + record);
                 return record;
             }
+            final String method;
+            final String updateUrl;
             if (found.isEmpty()) {
-                final HttpRequestBean update = auth(config.getBaseUri() + domain.getName() + "/records")
-                        .setMethod(PATCH)
-                        .setHeader(CONTENT_TYPE, APPLICATION_JSON)
-                        .setEntity(json(new GoDaddyDnsRecord[] {
-                                new GoDaddyDnsRecord()
-                                        .setName(name)
-                                        .setType(record.getType())
-                                        .setTtl(record.getTtl())
-                                        .setData(record.getValue())
-                        }));
-                retry(() -> {
-                    final HttpResponseBean response = HttpUtil.getResponse(update);
-                    return response.isOk() ? response : die("update: " + response);
-                }, MAX_GODADDY_RETRIES);
+                method = PATCH;
+                updateUrl = urlForDomain(domain);
+            } else if (found.size() == 1) {
+                method = PUT;
+                updateUrl = url;
+            } else {
+                return die("update("+json(record, COMPACT_MAPPER)+"): "+found.size()+" matching records found, cannot update");
             }
+            final HttpRequestBean update = auth(updateUrl)
+                    .setMethod(method)
+                    .setHeader(CONTENT_TYPE, APPLICATION_JSON)
+                    .setEntity(json(new GoDaddyDnsRecord[] {
+                            new GoDaddyDnsRecord()
+                                    .setName(domain.dropDomainSuffix(name))
+                                    .setType(record.getType())
+                                    .setTtl(record.getTtl())
+                                    .setData(record.getValue())
+                    }));
+            retry(() -> {
+                final HttpResponseBean response = HttpUtil.getResponse(update);
+                return response.isOk() ? response : die("update: " + response);
+            }, MAX_GODADDY_RETRIES);
             return record;
 
         } finally {
@@ -97,9 +119,36 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
     }
 
     @Override public DnsRecord remove(DnsRecord record) {
-        // lookup record, does it exist? if so remove it.
-        return record;  // removal of names is not supported.
-        // if we kept track of ALL names in our db, we could do a "replace all" after removing from here....
+        String lock = null;
+        final AtomicReference<BubbleDomain> domain = new AtomicReference<>();
+        try {
+            domain.set(getDomain(record.getFqdn()));
+
+            if (domain.get() == null) return die("remove: domain not found for record: "+record.getFqdn());
+            lock = lockDomain(domain.get().getUuid());
+
+            final DnsRecordMatch nonMatcher = record.getNonMatcher();
+            final String url = urlForDomain(domain.get());
+            final GoDaddyDnsRecord[] gdRecords = listGoDaddyDnsRecords(url);
+            final Collection<GoDaddyDnsRecord> retained = Arrays.stream(gdRecords)
+                    .filter(r ->  nonMatcher.matches(r.toDnsRecord(domain.get())))
+                    .collect(Collectors.toList());
+            final HttpRequestBean remove = auth(url)
+                    .setMethod(PUT)
+                    .setHeader(CONTENT_TYPE, APPLICATION_JSON)
+                    .setEntity(json(retained));
+            retry(() -> {
+                final HttpResponseBean response = HttpUtil.getResponse(remove);
+                return response.isOk() ? response : die("remove: " + response);
+            }, MAX_GODADDY_RETRIES);
+            return record;
+
+        } catch (IOException e) {
+            return die("remove: "+e);
+
+        } finally {
+            if (lock != null && domain.get() != null) unlockDomain(domain.get().getUuid(), lock);
+        }
     }
 
     @Override public Collection<DnsRecord> list(DnsRecordMatch matcher) {
@@ -115,30 +164,16 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
             }
             if (matcher.hasFqdn()) {
                 String fqdn = matcher.getFqdn();
-                fqdn = dropDomainSuffix(domain, fqdn);
+                fqdn = domain.dropDomainSuffix(fqdn);
                 url += "/" + fqdn;
             }
         }
-
         return readRecords(domain, url, matcher);
-    }
-
-    public String dropDomainSuffix(BubbleDomain domain, String fqdn) {
-        if (fqdn.endsWith("." + domain.getName())) {
-            fqdn = fqdn.substring(0, fqdn.length() - domain.getName().length() - 1);
-        }
-        return fqdn;
     }
 
     public Collection<DnsRecord> readRecords(BubbleDomain domain, String url, DnsRecordMatch matcher) {
         return retry(() -> {
-            final HttpRequestBean request = auth(url);
-            final HttpResponseBean response = HttpUtil.getResponse(request);
-            if (!response.isOk()) {
-                return die("readRecords: "+response);
-            }
-
-            final GoDaddyDnsRecord[] records = json(response.getEntityString(), GoDaddyDnsRecord[].class);
+            final GoDaddyDnsRecord[] records = listGoDaddyDnsRecords(url);
             final List<DnsRecord> out = new ArrayList<>();
             for (GoDaddyDnsRecord r : records) {
                 final DnsRecord outRecord = r.toDnsRecord(domain);
@@ -148,6 +183,23 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
             }
             return out;
         }, MAX_GODADDY_RETRIES);
+    }
+
+    private final Map<String, GoDaddyDnsRecord[]> listCache = new ExpirationMap<>(SECONDS.toMillis(10));
+
+    public GoDaddyDnsRecord[] listGoDaddyDnsRecords(String url) throws IOException {
+        final HttpRequestBean request = auth(url);
+        return listCache.computeIfAbsent(url, k -> {
+            final HttpResponseBean response;
+            try {
+                response = HttpUtil.getResponse(request);
+            } catch (Exception e) {
+                log.error("listGoDaddyDnsRecords("+url+"): "+e);
+                return GoDaddyDnsRecord.EMPTY_ARRAY;
+            }
+            if (!response.isOk()) throw new IllegalStateException("readRecords: "+response);
+            return json(response.getEntityString(), GoDaddyDnsRecord[].class);
+        });
     }
 
     public HttpRequestBean auth(String url) { return new HttpRequestBean(url).setHeader(HttpHeaders.AUTHORIZATION, authValue()); }

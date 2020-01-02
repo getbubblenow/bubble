@@ -17,6 +17,8 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 
 public interface CloudServiceDriver {
 
+    String[] CLOUD_DRIVER_PACKAGE = new String[]{"bubble.cloud"};
+
     String CTX_API_KEY = "apiKey";
     String CTX_PARAMS = "params";
 
