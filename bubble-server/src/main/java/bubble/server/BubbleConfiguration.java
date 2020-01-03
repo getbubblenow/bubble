@@ -66,6 +66,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_CLOUD_DRIVERS = "cloudDrivers";
 
     public static final String DEFAULT_LOCALE = "en_US";
+    public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
     public BubbleConfiguration (BubbleConfiguration other) { copy(this, other); }
 
@@ -109,7 +110,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public boolean hasSageNode () { return getSageNode() != null; }
 
     @Getter @Setter private String letsencryptEmail;
-    @Getter @Setter private String localStorageDir = HOME_DIR + "/.bubble_local_storage";
+    @Setter private String localStorageDir = DEFAULT_LOCAL_STORAGE_DIR;
+    public String getLocalStorageDir () { return empty(localStorageDir) ? DEFAULT_LOCAL_STORAGE_DIR : localStorageDir; }
 
     @Setter private File bubbleJar;
     public File getBubbleJar () {
