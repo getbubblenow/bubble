@@ -83,16 +83,14 @@ public class AuthResource {
     public Response activate(@Context Request req,
                              @Context ContainerRequest ctx,
                              @Valid ActivationRequest request) {
-        if (request == null) return invalid("err.activationRequest.required");
+        if (request == null) return invalid("err.activation.request.required");
         final Account found = optionalUserPrincipal(ctx);
         if (found != null) {
             if (!found.admin()) return forbidden();
-            return invalid("err.activation.alreadyDone",
-                    "activation has already been done");
+            return invalid("err.activation.alreadyDone", "activation has already been done");
         }
         if (accountDAO.activated()) {
-            return invalid("err.activation.alreadyDone",
-                    "activation has already been done");
+            return invalid("err.activation.alreadyDone", "activation has already been done");
         }
         if (!request.hasName()) return invalid("err.name.required", "name is required");
         if (!request.hasPassword()) return invalid("err.password.required", "password is required");
