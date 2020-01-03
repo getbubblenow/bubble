@@ -22,8 +22,8 @@ public class BlankDevServerTest extends BubbleModelTestBase {
         super.onStart(server);
     }
 
-    @Test public void runDevServer () throws Exception {
-        log.info("runDevServer: Bubble API server started and model initialized. You may now begin testing.");
+    @Test public void runBlankServer () throws Exception {
+        log.info("runBlankServer: Bubble API server started and model initialized. You may now begin testing.");
         sleep(DAYS.toMillis(30), "running dev server");
     }
 

@@ -171,7 +171,7 @@ public class StandardSelfNodeService implements SelfNodeService {
     }
 
     private final AutoRefreshingReference<BubbleNetwork> thisNet = new AutoRefreshingReference<>() {
-        @Override public BubbleNetwork refresh() { return networkDAO.findByUuid(getThisNode().getNetwork()); }
+        @Override public BubbleNetwork refresh() { return getThisNode() == null ? null : networkDAO.findByUuid(getThisNode().getNetwork()); }
         @Override public long getTimeout() { return DAYS.toMillis(1); }
     };
     @Override public BubbleNetwork getThisNetwork () { return thisNet.get(); }

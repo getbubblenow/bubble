@@ -144,6 +144,7 @@ public class ActivationService {
         domainDAO.update(domain.setRoles(domainRoles));
 
         selfNodeService.initThisNode(node);
+        configuration.refreshPublicSystemConfigs();
 
         return node;
     }

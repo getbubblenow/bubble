@@ -40,6 +40,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import java.beans.Transient;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
@@ -221,15 +222,24 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     @Getter(lazy=true) private final List<String> cloudDriverClasses
             = ClasspathScanner.scan(CloudServiceDriver.class, CloudServiceDriver.CLOUD_DRIVER_PACKAGE).stream()
-                .map(c -> c.getClass().getName())
-                .collect(Collectors.toList());
+            .map(Class::getName)
+            .collect(Collectors.toList());
 
-    @Getter(lazy=true) private final Map<String, Object> publicSystemConfigs = MapBuilder.build(new Object[][] {
-            { TAG_ALLOW_REGISTRATION, getThisNetwork().getBooleanTag(TAG_ALLOW_REGISTRATION, false) },
-            { TAG_SAGE_LAUNCHER, isSageLauncher() },
-            { TAG_PAYMENTS_ENABLED, paymentsEnabled() },
-            { TAG_CLOUD_DRIVERS, getCloudDriverClasses() }
-    });
+    private final AtomicReference<Map<String, Object>> publicSystemConfigs = new AtomicReference<>();
+    public Map<String, Object> getPublicSystemConfigs () {
+        synchronized (publicSystemConfigs) {
+            if (publicSystemConfigs.get() == null) {
+                publicSystemConfigs.set(MapBuilder.build(new Object[][]{
+                        {TAG_ALLOW_REGISTRATION, getThisNetwork() == null ? null : getThisNetwork().getBooleanTag(TAG_ALLOW_REGISTRATION, false)},
+                        {TAG_SAGE_LAUNCHER, isSageLauncher()},
+                        {TAG_PAYMENTS_ENABLED, paymentsEnabled()},
+                        {TAG_CLOUD_DRIVERS, getCloudDriverClasses()}
+                }));
+            }
+            return publicSystemConfigs.get();
+        }
+    }
+    public void refreshPublicSystemConfigs () { synchronized (publicSystemConfigs) { publicSystemConfigs.set(null); } }
 
     @Getter @Setter private String[] disallowedCountries;
 
