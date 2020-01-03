@@ -8,13 +8,16 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
+import org.cobbzilla.util.dns.DnsRecordMatch;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +26,8 @@ import java.util.stream.Collectors;
 import static bubble.ApiConstants.EP_DOMAINS;
 import static bubble.model.cloud.AnsibleRole.sameRoleName;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.dns.DnsType.NS;
+import static org.cobbzilla.util.dns.DnsType.SOA;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
@@ -143,5 +148,13 @@ public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
             return lastDot == -1 ? prefix : prefix.substring(lastDot+1);
         }
         return die("networkFromFqdn("+fqdn+"): expected suffix ."+getName());
+    }
+
+    public DnsRecordMatch matchSOA() {
+        return (DnsRecordMatch) new DnsRecordMatch().setType(SOA).setFqdn(getName());
+    }
+
+    public DnsRecordMatch matchNS() {
+        return (DnsRecordMatch) new DnsRecordMatch().setType(NS).setFqdn(getName());
     }
 }

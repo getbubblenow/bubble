@@ -180,7 +180,7 @@
   {
     "comment": "start the network",
     "request": {
-      "uri": "me/networks/{{accountPlan.network}}/actions/start",
+      "uri": "me/networks/{{accountPlan.network}}/actions/start?cloud=MockCompute&region=nyc_mock",
       "method": "post"
     },
     "response": {
@@ -438,7 +438,7 @@
   {
     "comment": "try to start network, fails due to non-payment",
     "request": {
-      "uri": "me/networks/{{accountPlan.network}}/actions/start",
+      "uri": "me/networks/{{accountPlan.network}}/actions/start?cloud=MockCompute&region=nyc_mock",
       "method": "post"
     },
     "response": {
@@ -498,7 +498,7 @@
   {
     "comment": "start the network, succeeds because accountPlan is now current",
     "request": {
-      "uri": "me/networks/{{accountPlan.network}}/actions/start",
+      "uri": "me/networks/{{accountPlan.network}}/actions/start?cloud=MockCompute&region=nyc_mock",
       "method": "post"
     },
     "response": {

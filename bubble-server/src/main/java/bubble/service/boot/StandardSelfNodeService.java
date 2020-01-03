@@ -104,7 +104,7 @@ public class StandardSelfNodeService implements SelfNodeService {
             cloudDAO.findByType(CloudServiceType.storage).stream()
                     .filter(cloud -> cloud.getCredentials() != null
                             && cloud.getCredentials().needsNewNetworkKey(network)
-                            && !cloud.getDriverClass().equals(LocalStorageDriver.class.getName()))
+                            && !cloud.usesDriver(LocalStorageDriver.class))
                     .forEach(cloud -> {
                         cloudDAO.update(cloud.setCredentials(cloud.getCredentials().initNetworkKey(network)));
                         log.info("onStart: set network-specific key for storage: " + cloud.getName());

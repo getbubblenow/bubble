@@ -85,7 +85,7 @@ cat "${UPDATED}"
 echo "------------------------------------------------------------"
 
 mkdir -p ${CLASSES_DIR}/scripts
-for script in run.sh bubble_common bubble bget bpost bposte bput bpute bdelete bscript bmodel bencrypt bdecrypt list_bubble_databases cleanup_bubble_databases ; do
+for script in run.sh bubble_common bubble bget bgetn bgeti bpost bposte bput bpute bdelete bscript bmodel bencrypt bdecrypt list_bubble_databases cleanup_bubble_databases ; do
   cp ${SCRIPT_DIR}/${script} ${CLASSES_DIR}/scripts || die "Error copying ${SCRIPT_DIR}/${script} -> ${CLASSES_DIR}/scripts"
 done
 

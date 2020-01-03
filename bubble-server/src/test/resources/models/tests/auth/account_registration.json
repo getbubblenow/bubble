@@ -1,5 +1,14 @@
 [
   {
+    "comment": "lookup networks",
+    "request": { "uri": "me/networks" },
+    "response": {
+      "store": "networks",
+      "check": [ {"condition": "json.length >= 1"} ]
+    }
+  },
+
+  {
     "comment": "new session, register a user account",
     "request": {
       "session": "new",
@@ -61,7 +70,7 @@
     "comment": "back to root session, list network tags",
     "request": {
       "session": "rootSession",
-      "uri": "me/networks/{{configuration.thisNetwork.uuid}}/tags"
+      "uri": "me/networks/{{networks.[0].uuid}}/tags"
     },
     "response": {
       "check": [
@@ -74,7 +83,7 @@
   {
     "comment": "disable account registration",
     "request": {
-      "uri": "me/networks/{{configuration.thisNetwork.uuid}}/tags/allowRegistration",
+      "uri": "me/networks/{{networks.[0].uuid}}/tags/allowRegistration",
       "entity": { "value": "false" }
     }
   },
@@ -83,7 +92,7 @@
     "comment": "re-list network tags, see updated value for allowRegistration",
     "request": {
       "session": "rootSession",
-      "uri": "me/networks/{{configuration.thisNetwork.uuid}}/tags"
+      "uri": "me/networks/{{networks.[0].uuid}}/tags"
     },
     "response": {
       "check": [
@@ -97,7 +106,7 @@
     "comment": "in user session, try to re-enable registrations. fails.",
     "request": {
       "session": "user1session",
-      "uri": "me/networks/{{configuration.thisNetwork.uuid}}/tags"
+      "uri": "me/networks/{{networks.[0].uuid}}/tags"
     },
     "response": { "status": 403 }
   },
@@ -163,7 +172,7 @@
     "comment": "as root, re-enable registration",
     "request": {
       "session": "rootSession",
-      "uri": "me/networks/{{configuration.thisNetwork.uuid}}/tags/allowRegistration",
+      "uri": "me/networks/{{networks.[0].uuid}}/tags/allowRegistration",
       "entity": { "value": "true" }
     }
   },

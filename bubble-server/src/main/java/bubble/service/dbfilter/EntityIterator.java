@@ -68,7 +68,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
     }
 
     public CloudService setLocalStoragePath(CloudService cloudService) {
-        if (!cloudService.getDriverClass().equals(LocalStorageDriver.class.getName())) {
+        if (!cloudService.usesDriver(LocalStorageDriver.class)) {
             return cloudService;
         }
         final LocalStorageConfig localConfig = json(cloudService.getDriverConfigJson(), LocalStorageConfig.class);

@@ -23,7 +23,6 @@ import static bubble.ApiConstants.getBubbleDefaultDomain;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.incrementSystemTimeOffset;
-import static org.cobbzilla.util.reflect.ReflectionUtil.forName;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.util.time.TimeUtil.parseDuration;
 
@@ -91,7 +90,7 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
         final Account admin = configuration.getBean(AccountDAO.class).findFirstAdmin();
         final CloudService stripe = configuration.getBean(CloudServiceDAO.class)
                 .findByAccountAndType(admin.getUuid(), CloudServiceType.payment)
-                .stream().filter(c -> StripePaymentDriver.class.isAssignableFrom(forName(c.getDriverClass())))
+                .stream().filter(c -> c.usesDriver(StripePaymentDriver.class))
                 .findFirst().orElse(null);
         if (stripe == null) {
             die("afterScript: no cloud found with driverClass=" + StripePaymentDriver.class.getName());

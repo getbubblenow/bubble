@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import static bubble.test.BubbleTestBase.ENV_EXPORT_FILE;
+import static bubble.test.HandlebarsTestHelpers.registerTestHelpers;
 import static java.util.Arrays.asList;
 import static org.cobbzilla.util.system.CommandShell.loadShellExportsOrDie;
 
@@ -37,6 +38,7 @@ public abstract class BubbleModelTestBase extends ApiModelTestBase<BubbleConfigu
 
     @Override public void beforeStart(RestServer<BubbleConfiguration> server) {
         server.getConfiguration().setBackupsEnabled(backupsEnabled());
+        registerTestHelpers(getApiRunner().getHandlebars());
         super.beforeStart(server);
     }
 

@@ -34,13 +34,13 @@ import org.hibernate.annotations.Type;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static bubble.ApiConstants.EP_CLOUDS;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
-import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
+import static org.cobbzilla.util.reflect.ReflectionUtil.*;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
@@ -116,6 +116,18 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     @HasValue(message="err.driverClass.required")
     @Column(nullable=false, length=1000)
     @Getter @Setter private String driverClass;
+
+    @Getter(lazy=true) private final Map<Class, Boolean> _driverUsesCache = new ConcurrentHashMap<>();
+    public boolean usesDriver(Class<? extends CloudServiceDriver> clazz) {
+        return get_driverUsesCache().computeIfAbsent(clazz, c -> {
+            try {
+                return c != null && (c.getName().equals(getDriverClass()) || c.isAssignableFrom(forName(getDriverClass())));
+            } catch (Exception e) {
+                log.warn("usesDriver("+c.getName()+"): returning false: "+e);
+                return false;
+            }
+        });
+    }
 
     @ECSearchable
     @Size(max=100000, message="err.driverConfigJson.length")

@@ -9,7 +9,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 @Slf4j
 public class HandlebarsTestHelpers {
 
-    public static Handlebars registerHelpers(Handlebars hb) {
+    public static Handlebars registerTestHelpers(Handlebars hb) {
         hb.registerHelper("authenticator_token", (src, options) -> {
             if (src == null) return die("authenticator_token: no secret provided");
             if (!(src instanceof String)) return die("authenticator_token: secret was not a String");

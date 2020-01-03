@@ -1,6 +1,6 @@
 [
   {
-    "comment": "activate service, create account, login",
+    "comment": "create new account and login",
     "include": "new_account",
     "params": {
       "username": "user-multifactor_auth",

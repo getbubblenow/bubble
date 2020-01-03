@@ -36,7 +36,7 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
 
     @Override public Collection<DnsRecord> create(BubbleDomain domain) {
         // lookup SOA and NS records for domain, they must already exist
-        final Collection<DnsRecord> soaRecords = readRecords(domain, urlForType(domain, SOA), matchSOA(domain));
+        final Collection<DnsRecord> soaRecords = readRecords(domain, urlForType(domain, SOA), domain.matchSOA());
         final List<DnsRecord> records = new ArrayList<>();
         if (soaRecords.isEmpty()) {
             log.warn("create: no SOA found for "+domain.getName());
@@ -46,7 +46,7 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
             records.add(soaRecords.iterator().next());
         }
 
-        records.addAll(readRecords(domain, urlForType(domain, NS), matchNS(domain)));
+        records.addAll(readRecords(domain, urlForType(domain, NS), domain.matchNS()));
         return records;
     }
 
@@ -58,14 +58,6 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
 
     public String urlForTypeAndName(BubbleDomain domain, final DnsType type, String name) {
         return urlForType(domain, type)+"/"+domain.dropDomainSuffix(name);
-    }
-
-    public DnsRecordMatch matchSOA(BubbleDomain domain) {
-        return (DnsRecordMatch) new DnsRecordMatch().setType(SOA).setFqdn(domain.getName());
-    }
-
-    public DnsRecordMatch matchNS(BubbleDomain domain) {
-        return (DnsRecordMatch) new DnsRecordMatch().setType(NS).setFqdn(domain.getName());
     }
 
     @Override public DnsRecord update(DnsRecord record) {

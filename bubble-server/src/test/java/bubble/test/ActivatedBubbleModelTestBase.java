@@ -23,6 +23,7 @@ import org.cobbzilla.wizard.server.RestServer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
@@ -83,13 +84,13 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
 
         try {
             final BubbleConfiguration configuration = server.getConfiguration();
-            final Handlebars handlebars = configuration.getHandlebars();
             final Map<String, Object> ctx = configuration.getEnvCtx();
 
-            // expect domain to be the first domain listed in bubbleDomain.json
-            final BubbleDomain domain = applyReflectively(handlebars, json(stream2string("models/system/bubbleDomain.json"), BubbleDomain[].class, FULL_MAPPER_ALLOW_COMMENTS)[0], ctx);
-
+            // load all clouds
             final CloudService[] clouds = scrubSpecial(json(stream2string("models/system/cloudService.json"), JsonNode.class, FULL_MAPPER_ALLOW_COMMENTS), CloudService.class);
+
+            // determine domain
+            final BubbleDomain domain = getDomain(ctx, clouds);
 
             // find public DNS service
             final CloudService dns = getPublicDns(ctx, clouds);
@@ -130,13 +131,24 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
         if (!hasExistingDb) super.onStart(server);
     }
 
+    private BubbleDomain getDomain(Map<String, Object> ctx, CloudService[] clouds) {
+        final Handlebars handlebars = getConfiguration().getHandlebars();
+        final BubbleDomain[] allDomains = json(stream2string("models/system/bubbleDomain.json"), BubbleDomain[].class, FULL_MAPPER_ALLOW_COMMENTS);
+        final BubbleDomain candidateDomain = Arrays.stream(allDomains).filter(getDomainFilter(clouds)).findFirst().orElse(null);
+        return candidateDomain != null
+                ? applyReflectively(handlebars, candidateDomain, ctx)
+                : die("getDomain: no candidate domain found");
+    }
+
+    protected Predicate<? super BubbleDomain> getDomainFilter(CloudService[] clouds) { return bubbleDomain -> true; }
+
     private CloudService findByTypeAndDriver(Map<String, Object> ctx,
                                              CloudService[] clouds,
                                              CloudServiceType type,
                                              Class<? extends CloudServiceDriver> driverClass) {
         final Handlebars handlebars = getConfiguration().getHandlebars();
         final List<CloudService> dnsServices = Arrays.stream(clouds)
-                .filter(c -> c.getType() == type && c.getDriverClass().equals(driverClass.getName()))
+                .filter(c -> c.getType() == type && c.usesDriver(driverClass))
                 .collect(Collectors.toList());
         if (dnsServices.size() != 1) die("onStart: expected exactly one public dns service");
         return applyReflectively(handlebars, dnsServices.get(0), ctx);

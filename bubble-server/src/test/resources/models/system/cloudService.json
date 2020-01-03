@@ -244,8 +244,6 @@
     "template": true
   },
 
-  // keep this as the last entry. ActivatedBubbleModelTestBase uses the last entry in this file as the DNS
-  // for the initial domain
   {
     "_subst": true,
     "name": "GoDaddyDns",
@@ -256,6 +254,21 @@
       "params": [
         {"name": "GODADDY_API_KEY", "value": "{{GODADDY_API_KEY}}"},
         {"name": "GODADDY_API_SECRET", "value": "{{GODADDY_API_SECRET}}"}
+      ]
+    },
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "Route53Dns",
+    "type": "dns",
+    "driverClass": "bubble.cloud.dns.route53.Route53DnsDriver",
+    "driverConfig": {},
+    "credentials": {
+      "params": [
+        {"name": "AWS_ACCESS_KEY_ID", "value": "{{AWS_ACCESS_KEY_ID}}"},
+        {"name": "AWS_SECRET_KEY", "value": "{{AWS_SECRET_KEY}}"}
       ]
     },
     "template": true

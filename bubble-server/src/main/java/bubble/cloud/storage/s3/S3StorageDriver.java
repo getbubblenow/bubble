@@ -1,5 +1,6 @@
 package bubble.cloud.storage.s3;
 
+import bubble.cloud.shared.aws.BubbleAwsCredentialsProvider;
 import bubble.cloud.storage.StorageCryptStream;
 import bubble.cloud.storage.StorageServiceDriver;
 import bubble.cloud.storage.StorageServiceDriverBase;
@@ -9,7 +10,6 @@ import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.model.cloud.StorageMetadata;
 import bubble.notify.storage.StorageListing;
-import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
@@ -69,28 +69,7 @@ public class S3StorageDriver extends StorageServiceDriverBase<S3StorageConfig> {
                 .build();
     }
 
-    @Getter(lazy=true) private final AWSCredentialsProvider s3credentials = initS3Credentials();
-    private AWSCredentialsProvider initS3Credentials() {
-        return new AWSCredentialsProvider() {
-            @Override public AWSCredentials getCredentials() {
-                return new AWSCredentials() {
-                    @Override public String getAWSAccessKeyId() {
-                        final String key = credentials.getParam("AWS_ACCESS_KEY_ID");
-                        return empty(key)
-                                ? die("getAWSAccessKeyId: no AWS_ACCESS_KEY_ID defined in credentials for cloud: "+cloud.getUuid())
-                                : key;
-                    }
-                    @Override public String getAWSSecretKey() {
-                        final String key = credentials.getParam("AWS_SECRET_KEY");
-                        return empty(key)
-                                ? die("getAWSSecretKey: no AWS_SECRET_KEY defined in credentials for cloud: "+cloud.getUuid())
-                                : key;
-                    }
-                };
-            }
-            @Override public void refresh() {}
-        };
-    }
+    @Getter(lazy=true) private final AWSCredentialsProvider s3credentials = new BubbleAwsCredentialsProvider(cloud, getCredentials());
 
     protected String s3path(BubbleNode from, String key) {
         return s3path_network(from.getNetwork()) + "/" + key;
