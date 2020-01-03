@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static bubble.ApiConstants.EP_NETWORKS;
+import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.model.cloud.BubbleDomain.DOMAIN_NAME_MAXLEN;
 import static bubble.model.cloud.BubbleNetworkState.created;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
@@ -54,6 +55,10 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     public BubbleNetwork (BubbleNetwork other) { copy(this, other, CREATE_FIELDS); }
 
     @Override public Identifiable update(Identifiable other) { copy(this, other, UPDATE_FIELDS); return this; }
+
+    @Override public void beforeCreate() {
+        if (!hasUuid() && !getUuid().equals(ROOT_NETWORK_UUID)) super.beforeCreate();
+    }
 
     @Transient @JsonIgnore public String getNetwork () { return getUuid(); }
 

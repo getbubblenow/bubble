@@ -1,5 +1,6 @@
 package bubble.service.boot;
 
+import bubble.ApiConstants;
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.compute.ComputeNodeSizeType;
 import bubble.cloud.compute.local.LocalComputeDriver;
@@ -11,13 +12,11 @@ import bubble.model.account.ActivationRequest;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static bubble.cloud.storage.StorageServiceDriver.STORAGE_PREFIX;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
@@ -26,7 +25,6 @@ import static bubble.model.cloud.BubbleFootprint.DEFAULT_FOOTPRINT_OBJECT;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static bubble.model.cloud.BubbleNetwork.TAG_PARENT_ACCOUNT;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.background;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.FileUtil.toStringOrDie;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
@@ -40,7 +38,6 @@ public class ActivationService {
 
     public static final String DEFAULT_ROLES = "ansible/default_roles.json";
 
-    public static final String ROOT_NETWORK_UUID = "00000000-0000-0000-0000-000000000000";
     public static final long ROOT_CREATE_TIMEOUT = SECONDS.toMillis(10);
 
     @Autowired private AnsibleRoleDAO roleDAO;
@@ -82,9 +79,15 @@ public class ActivationService {
                     .setAccount(account.getUuid()));
         }
 
+        final AnsibleRole[] roles = request.hasRoles() ? request.getRoles() : json(loadDefaultRoles(), AnsibleRole[].class);
+        for (AnsibleRole role : roles) {
+            roleDAO.create(role.setAccount(account.getUuid()));
+        }
+
         final BubbleDomain domain = domainDAO.create(new BubbleDomain(request.getDomain())
                 .setAccount(account.getUuid())
                 .setPublicDns(publicDns.getUuid())
+                .setRoles(Arrays.stream(roles).map(AnsibleRole::getName).toArray(String[]::new))
                 .setTemplate(true));
 
         BubbleFootprint footprint = footprintDAO.findByAccountAndId(account.getUuid(), DEFAULT_FOOTPRINT);
@@ -133,10 +136,6 @@ public class ActivationService {
 
         selfNodeService.setActivated(node);
 
-        final AnsibleRole[] roles = request.hasRoles() ? request.getRoles() : json(loadDefaultRoles(), AnsibleRole[].class);
-        for (AnsibleRole role : roles) {
-            roleDAO.create(role.setAccount(account.getUuid()));
-        }
         String[] domainRoles = request.getDomain().getRoles();
         if (domainRoles == null || domainRoles.length == 0) {
             domainRoles = Arrays.stream(roles).map(AnsibleRole::getName).toArray(String[]::new);
@@ -161,21 +160,8 @@ public class ActivationService {
     }
 
     public BubbleNetwork createRootNetwork(BubbleNetwork network) {
-        network.setUuid(ROOT_NETWORK_UUID);
-        final AtomicReference<Object> ref = new AtomicReference<>();
-        try {
-            background(() -> {
-                        IdentifiableBase.getEnforceNullUuidOnCreate().set(false);
-                        ref.set(networkDAO.create(network));
-                    },
-                    ref::set).join(ROOT_CREATE_TIMEOUT);
-        } catch (InterruptedException e) {
-            return die("createRoot: interrupted: "+e);
-        }
-        final Object o = ref.get();
-        if (o instanceof BubbleNetwork) return (BubbleNetwork) o;
-        if (o instanceof Exception) return die((Exception) o);
-        return die("createRoot: ref was unset");
+        network.setUuid(ApiConstants.ROOT_NETWORK_UUID);
+        return networkDAO.create(network);
     }
 
 }

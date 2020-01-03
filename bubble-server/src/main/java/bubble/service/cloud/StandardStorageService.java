@@ -40,7 +40,7 @@ public class StandardStorageService implements StorageService {
         }
     }
 
-    private String thisNodeId() { return configuration.getThisNode().getUuid(); }
+    private String thisNodeId() { return configuration.getThisNode() != null ? configuration.getThisNode().getUuid() : null; }
 
     public boolean exists(String account, String uri) {
         final StorageTarget target = new StorageTarget(account, uri);

@@ -28,6 +28,7 @@ import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.Valid;
 import javax.ws.rs.*;
@@ -77,10 +78,12 @@ public class AuthResource {
     @GET @Path(EP_ACTIVATE)
     public Response isActivated(@Context ContainerRequest ctx) { return ok(accountDAO.activated()); }
 
+    @Transactional
     @PUT @Path(EP_ACTIVATE)
     public Response activate(@Context Request req,
                              @Context ContainerRequest ctx,
                              @Valid ActivationRequest request) {
+        if (request == null) return invalid("err.activationRequest.required");
         final Account found = optionalUserPrincipal(ctx);
         if (found != null) {
             if (!found.admin()) return forbidden();

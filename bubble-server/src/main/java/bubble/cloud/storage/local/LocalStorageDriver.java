@@ -2,6 +2,7 @@ package bubble.cloud.storage.local;
 
 import bubble.cloud.CloudServiceDriverBase;
 import bubble.cloud.storage.StorageServiceDriver;
+import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
@@ -12,7 +13,6 @@ import lombok.Cleanup;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.io.FileUtil;
-import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.*;
@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.notSupported;
 import static org.cobbzilla.util.io.FileUtil.*;
@@ -32,7 +33,7 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
     public static final String SUFFIX_META = "._bubble_metadata";
 
     @Autowired private BubbleNodeDAO nodeDAO;
-    @Autowired private RedisService redis;
+    @Autowired private AccountDAO accountDAO;
 
     public static final String LOCAL_STORAGE = "LocalStorage";
     public static final String LOCAL_STORAGE_STANDARD_BASE_DIR = "/home/bubble/.bubble_local_storage";
@@ -43,9 +44,14 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
 
     @Override public boolean _exists(String fromNode, String key) throws IOException {
         final BubbleNode from = getFromNode(fromNode);
-        final File file = keyFile(from, key);
-        final boolean exists = file.exists();
-        return exists;
+        if (from != null) {
+            final File file = keyFile(from, key);
+            return file.exists();
+        }
+        if (activated()) return false;
+        // check classpath only if bubble has not been activated
+        @Cleanup final InputStream in = getClass().getClassLoader().getResourceAsStream(key);
+        return in != null;
     }
 
     protected File metaFile(File f) { return new File(abs(f)+SUFFIX_META); }
@@ -61,9 +67,26 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
 
     @Override public InputStream _read(String fromNode, String key) throws IOException {
         final BubbleNode from = getFromNode(fromNode);
-        final File f = keyFile(from, key);
-        if (!f.exists()) return null;
-        return new FileInputStream(f);
+        if (from != null) {
+            final File f = keyFile(from, key);
+            return f.exists() ? new FileInputStream(f) : null;
+        }
+
+        // only try classpath is bubble has not been activated
+        if (activated()) return null;
+
+        @Cleanup InputStream in = getClass().getClassLoader().getResourceAsStream(key);
+        if (in == null) return null;
+
+        // copy file to root network storage, so we can find it after activation
+        final File file = keyFileForNetwork(ROOT_NETWORK_UUID, config.getBaseDir(), key);
+        @Cleanup OutputStream out = new FileOutputStream(file);
+        IOUtils.copyLarge(in, out);
+        return new FileInputStream(file);
+    }
+
+    public boolean activated() {
+        return accountDAO.activated() && configuration.getThisNode() != null;
     }
 
     @Override public boolean _write(String fromNode, String key, InputStream data, StorageMetadata metadata, String requestId) throws IOException {
@@ -131,7 +154,7 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
 
     protected BubbleNode getFromNode(String fromNode) {
         final BubbleNode node = nodeDAO.findByUuid(fromNode);
-        return node != null ? node : die("fromNode not found: "+fromNode);
+        return node != null ? node : !activated() ? null : die("fromNode not found: "+fromNode);
     }
 
     private File keyFile(BubbleNode from, String key) { return keyFile(from, config.getBaseDir(), key); }

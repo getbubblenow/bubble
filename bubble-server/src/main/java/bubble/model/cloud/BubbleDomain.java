@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import static bubble.ApiConstants.EP_DOMAINS;
 import static bubble.model.cloud.AnsibleRole.sameRoleName;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.dns.DnsType.NS;
 import static org.cobbzilla.util.dns.DnsType.SOA;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -101,6 +102,7 @@ public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
 
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+") NOT NULL")
     @JsonIgnore @Getter @Setter private String rolesJson;
+    public boolean hasRoles () { return !empty(getRoles()); }
 
     @Transient public String[] getRoles () { return rolesJson == null ? null : json(rolesJson, String[].class); }
     public BubbleDomain setRoles (String[] roles) { return setRolesJson(roles == null ? null : json(roles)); }

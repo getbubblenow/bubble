@@ -50,9 +50,8 @@ public class BubbleFootprint extends IdentifiableBase implements AccountTemplate
 
     public static final BubbleFootprint DEFAULT_FOOTPRINT_OBJECT = new BubbleFootprint()
             .setName(DEFAULT_FOOTPRINT)
-            .setDescription("Exclude countries subject to United States OFAC sanctions")
-            .setTemplate(true)
-            .setDisallowedCountries(new String[] {"IR", "KP", "SY", "SD", "CU", "VE"});
+            .setDescription("No restrictions, run anywhere")
+            .setTemplate(true);
 
     @SuppressWarnings("unused")
     public BubbleFootprint (BubbleFootprint other) { copy(this, other, CREATE_FIELDS); }

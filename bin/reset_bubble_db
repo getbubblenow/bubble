@@ -43,5 +43,5 @@ else
 fi
 
 dropdb bubble ; createdb bubble && cat ${SQL_DIR}/bubble.sql | psql bubble
-echo "Successfully initialized DB schema from:"
+echo "Successfully initialized DB schema from: "
 echo ${SQL_DIR}/bubble.sql

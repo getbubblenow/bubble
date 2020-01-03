@@ -84,6 +84,8 @@ echo "------------------------------------------------------------"
 cat "${UPDATED}"
 echo "------------------------------------------------------------"
 
+cd ${LOCALSTORAGE_BASE_DIR} && jar uvf ${BUBBLE_JAR} automation || die "Error updating ${BUBBLE_JAR} with default role archives"
+
 mkdir -p ${CLASSES_DIR}/scripts
 for script in run.sh bubble_common bubble bget bgetn bgeti bpost bposte bput bpute bdelete bscript bmodel bencrypt bdecrypt list_bubble_databases cleanup_bubble_databases ; do
   cp ${SCRIPT_DIR}/${script} ${CLASSES_DIR}/scripts || die "Error copying ${SCRIPT_DIR}/${script} -> ${CLASSES_DIR}/scripts"
