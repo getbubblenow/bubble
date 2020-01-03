@@ -31,7 +31,7 @@ database:
 staticAssets:
   baseUri: /
   assetRoot: site/
-  localOverride: {{ASSETS_DIR}}
+  localOverride: {{BUBBLE_ASSETS_DIR}}
   singlePageApp: /index.html
   utilPaths:
     INDEX_PATH: /index.html

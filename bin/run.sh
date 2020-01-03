@@ -109,6 +109,9 @@ BUBBLE_JVM_OPTS="${BUBBLE_JVM_OPTS} -Djava.net.preferIPv4Stack=true"
 # Choose appropriate log config
 if [[ ${server} -eq 1 ]] ; then
   LOG_CONFIG="-Dlogback.configurationFile=logback.xml"
+  if [[ -f ${BUBBLE_ENV} ]] ; then
+    command="${BUBBLE_ENV}"
+  fi
 else
   LOG_CONFIG="-Dlogback.configurationFile=logback-client.xml"
 fi

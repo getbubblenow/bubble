@@ -34,6 +34,7 @@ database:
 staticAssets:
   baseUri: /
   assetRoot: site/
+  localOverride: {{BUBBLE_ASSETS_DIR}}
   utilPaths:
     INDEX_PATH: /index.html
     INDEX_ALIASES: /:/index.php
