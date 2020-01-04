@@ -43,17 +43,17 @@ public class BubblePlan extends IdentifiableBase implements HasAccount {
 
     public BubblePlan (BubblePlan other) { copy(this, other, CREATE_FIELDS); }
 
-    @ECSearchable
-    @ECForeignKey(entity=Account.class)
-    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
-    @Getter @Setter private String account;
-
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
 
-    @ECSearchable(filter=true)
+    @ECSearchable @ECField(index=20)
+    @ECForeignKey(entity=Account.class)
+    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
+    @Getter @Setter private String account;
+
+    @ECSearchable(filter=true) @ECField(index=30)
     @HasValue(message="err.chargeName.required")
     @Size(message="err.chargeName.length")
     @Column(nullable=false, updatable=false, length=12)
@@ -70,48 +70,48 @@ public class BubblePlan extends IdentifiableBase implements HasAccount {
         }
     }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=40)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Long price;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=60)
     @ECIndex @Column(nullable=false, length=10)
     @Getter @Setter private String currency = "USD";
 
-    @ECSearchable
+    @ECSearchable @ECField(index=70)
     @Enumerated(EnumType.STRING) @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private BillPeriod period = BillPeriod.monthly;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=80)
     @ECIndex @Column(nullable=false, updatable=false, length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private ComputeNodeSizeType computeSizeType;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=90)
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer nodesIncluded;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=100)
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer additionalPerNodePrice;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=120)
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer storageGbIncluded;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=130)
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer additionalStoragePerGbPrice;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=140)
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer bandwidthGbIncluded;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=150)
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer additionalBandwidthPerGbPrice;
 

@@ -50,39 +50,39 @@ public class RuleDriver extends IdentifiableBase implements AccountTemplate {
         return this;
     }
 
-    @ECSearchable
-    @ECForeignKey(entity=Account.class)
-    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
-    @Getter @Setter private String account;
-
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
     @ECIndex @Column(length=200, nullable=false, updatable=false)
     @Getter @Setter private String name;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=20)
+    @ECForeignKey(entity=Account.class)
+    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
+    @Getter @Setter private String account;
+
+    @ECSearchable @ECField(index=30)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template() { return template != null && template; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=40)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=50)
     @Column(length=200)
     @Getter @Setter private String author;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=60)
     @Column(length=1024)
     @Getter @Setter private String url;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=70)
     @Column(nullable=false, updatable=false, length=1000)
     @Getter @Setter private String driverClass;
 
-    @Column(length=100000)
+    @Column(length=100000) @ECField(index=80)
     @JsonIgnore @Getter @Setter private String userConfigJson;
 
     @Transient public RuleDriver setUserConfig (JsonNode json) { return setUserConfigJson(json(json)); }
@@ -92,7 +92,7 @@ public class RuleDriver extends IdentifiableBase implements AccountTemplate {
 
     @Embedded @Getter @Setter private SemanticVersion version;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=90)
     @ECIndex @Getter @Setter private Boolean needsUpdate = false;
 
     @Transient @Getter @Setter private AppRuleDriverDescriptor descriptor;

@@ -35,25 +35,25 @@ public class CloudServiceData extends IdentifiableBase implements HasAccount {
 
     public CloudServiceData (CloudServiceData other) { copy(this, other, CREATE_FIELDS); }
 
-    @ECSearchable
+    @ECSearchable(filter=true) @ECField(index=10)
+    @HasValue(message="err.key.required")
+    @ECIndex @Column(nullable=false, updatable=false, length=1000)
+    @Getter @Setter private String key;
+    public boolean hasKey () { return key != null; }
+
+    @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
     @Override @JsonIgnore @Transient public String getName() { return getKey(); }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=30)
     @ECForeignKey(entity=CloudService.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String cloud;
 
-    @ECSearchable(filter=true)
-    @HasValue(message="err.key.required")
-    @ECIndex @Column(nullable=false, updatable=false, length=1000)
-    @Getter @Setter private String key;
-    public boolean hasKey () { return key != null; }
-
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=40)
     @Size(max=100000, message="err.data.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @Getter @Setter private String data;
@@ -61,7 +61,7 @@ public class CloudServiceData extends IdentifiableBase implements HasAccount {
     @Transient public JsonNode getDataJson () { return data == null ? null : json(data, JsonNode.class); }
     public CloudServiceData setDataJson(JsonNode n) { return setData(n == null ? null : json(n)); }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @ECIndex @Getter @Setter private Long expiration;
 
 }

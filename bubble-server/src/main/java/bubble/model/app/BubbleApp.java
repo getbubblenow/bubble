@@ -40,38 +40,38 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
 
     private static final String[] VALUE_FIELDS = {"url", "description", "template", "enabled"};
 
-    @ECSearchable
-    @ECForeignKey(entity=Account.class)
-    @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
-    @Getter @Setter private String account;
-
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
 
-    @ECSearchable(filter=true)
+    @ECSearchable @ECField(index=20)
+    @ECForeignKey(entity=Account.class)
+    @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
+    @Getter @Setter private String account;
+
+    @ECSearchable(filter=true) @ECField(index=30)
     @HasValue(message="err.url.required")
     @Size(max=1024, message="err.url.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(1024+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String url;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=40)
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template() { return template != null && template; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=60)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=70)
     @ECIndex @Getter @Setter private Boolean needsUpdate = false;
 
     public BubbleApp(Account account, BubbleApp app) {

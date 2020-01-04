@@ -58,15 +58,15 @@ public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
 
     @Override public Identifiable update(Identifiable other) { copy(this, other, UPDATE_FIELDS); return this; }
 
-    @ECSearchable
-    @ECForeignKey(entity=Account.class)
-    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
-    @Getter @Setter private String account;
-
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
     @ECIndex @Column(nullable=false, updatable=false, length=DOMAIN_NAME_MAXLEN)
     @Getter @Setter private String name;
+
+    @ECSearchable @ECField(index=20)
+    @ECForeignKey(entity=Account.class)
+    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
+    @Getter @Setter private String account;
 
     public String ensureDomainSuffix(String fqdn) { return fqdn.endsWith("." + getName()) ? fqdn : fqdn + "." + getName(); }
 
@@ -75,27 +75,27 @@ public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
                 : fqdn.substring(0, fqdn.length() - getName().length() - 1);
     }
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=30)
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=40)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template() { return template != null && template; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=60)
     @ECIndex @Column(updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String delegated;
     public boolean delegated() { return delegated != null; }
 
-    @ECSearchable @ECForeignKey(entity=CloudService.class)
+    @ECSearchable @ECForeignKey(entity=CloudService.class) @ECField(index=70)
     @Column(nullable=false, length=UUID_MAXLEN)
     @Getter @Setter private String publicDns;
 

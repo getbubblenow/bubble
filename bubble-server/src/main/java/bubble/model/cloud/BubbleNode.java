@@ -86,12 +86,16 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
 
     @JsonIgnore @Transient @Override public String getName() { return getFqdn(); }
 
-    @ECSearchable
+    @ECSearchable(filter=true) @ECField(index=10)
+    @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=1000)
+    @Getter @Setter private String fqdn;
+
+    @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable(fkDepth=shallow)
+    @ECSearchable(fkDepth=shallow) @ECField(index=30)
     @ECForeignKey(entity=BubbleDomain.class)
     @HasValue(message="err.network.required")
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
@@ -100,7 +104,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         return getDomain() != null && n.getDomain() != null && getDomain().equals(n.getDomain());
     }
 
-    @ECSearchable(fkDepth=shallow)
+    @ECSearchable(fkDepth=shallow) @ECField(index=40)
     @ECForeignKey(entity=BubbleNetwork.class)
     @HasValue(message="err.network.required")
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
@@ -109,44 +113,40 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         return getNetwork() != null && n.getNetwork() != null && getNetwork().equals(n.getNetwork());
     }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @ECForeignKey(entity=BubbleNode.class, cascade=false)
     @Column(length=UUID_MAXLEN)
     @Getter @Setter private String sageNode;
     public boolean hasSageNode() { return sageNode != null; }
     public boolean selfSage() { return hasSageNode() && getSageNode().equals(getUuid()); }
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=60)
     @ECIndex @Column(length=250)
     @Getter @Setter private String host;
     public boolean hasHost () { return host != null; }
 
-    @ECSearchable(filter=true)
-    @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=1000)
-    @Getter @Setter private String fqdn;
-
-    @ECSearchable
+    @ECSearchable @ECField(index=70)
     @ECForeignKey(entity=CloudService.class)
     @HasValue(message="err.cloud.required")
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String cloud;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=80)
     @HasValue(message="err.region.required")
     @ECIndex @Column(nullable=false, updatable=false, length=100)
     @Getter @Setter private String region;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=90)
     @HasValue(message="err.size.required")
     @ECIndex @Column(nullable=false, updatable=false, length=100)
     @Getter @Setter private String size;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=100)
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false)
     @Getter @Setter private ComputeNodeSizeType sizeType;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=110)
     @Column(nullable=false)
     @Getter @Setter private int costUnits;
 
@@ -160,7 +160,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     @JsonIgnore @Getter @Setter private String ansibleUser = "root";
     @JsonIgnore @Transient public String getUser () { return getAnsibleUser(); }
 
-    @ECSearchable(filter=true) @ECField(type=EntityFieldType.ip4)
+    @ECSearchable(filter=true) @ECField(type=EntityFieldType.ip4, index=120)
     @ECIndex(unique=true) @Column(length=IP4_MAXLEN)
     @Getter @Setter private String ip4;
     public boolean hasIp4() { return ip4 != null; }
@@ -168,7 +168,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
 
     public String id() { return getUuid() + "/fqdn=" + getFqdn() + "/ip4=" + getIp4(); }
 
-    @ECSearchable(filter=true) @ECField(type=EntityFieldType.ip6)
+    @ECSearchable(filter=true) @ECField(type=EntityFieldType.ip6, index=130)
     @ECIndex(unique=true) @Column(length=IP6_MAXLEN)
     @Getter @Setter private String ip6;
     public boolean hasIp6() { return ip6 != null; }
@@ -181,7 +181,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         return (hasIp4() && getIp4().equals(ip)) || (hasIp6() && getIp6().equals(ip));
     }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=140)
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false)
     @Getter @Setter private BubbleNodeState state = created;

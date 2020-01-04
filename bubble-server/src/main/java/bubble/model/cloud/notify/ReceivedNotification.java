@@ -21,7 +21,7 @@ public class ReceivedNotification extends NotificationBase {
 
     public ReceivedNotification(SentNotification notification) { copy(this, notification); setUuid(null); }
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=1000)
     @ECIndex @Column(nullable=false, length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private NotificationProcessingStatus processingStatus = NotificationProcessingStatus.received;
 

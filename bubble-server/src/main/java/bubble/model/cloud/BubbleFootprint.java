@@ -57,31 +57,31 @@ public class BubbleFootprint extends IdentifiableBase implements AccountTemplate
 
     @Override public Identifiable update(Identifiable other) { copy(this, other, UPDATE_FIELDS); return this; }
 
-    @ECSearchable
+    @ECSearchable(filter=true) @ECField(index=10)
+    @ECIndex @Column(nullable=false, updatable=false, length=100)
+    @Getter @Setter private String name;
+
+    @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable(filter=true)
-    @ECIndex @Column(nullable=false, updatable=false, length=100)
-    @Getter @Setter private String name;
-
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=30)
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=40)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template() { return template != null && template; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=60)
     @Size(max=5000, message="err.allowedCountriesJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(5000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String allowedCountriesJson;
@@ -90,7 +90,7 @@ public class BubbleFootprint extends IdentifiableBase implements AccountTemplate
     @Transient public String[] getAllowedCountries () { return allowedCountriesJson == null ? null : json(allowedCountriesJson, String[].class); }
     public BubbleFootprint setAllowedCountries (String[] countries) { return setAllowedCountriesJson(countries == null ? null : json(countries)); }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=70)
     @Size(max=5000, message="err.disallowedCountriesJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(5000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String disallowedCountriesJson;

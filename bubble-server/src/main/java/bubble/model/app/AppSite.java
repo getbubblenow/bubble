@@ -41,35 +41,35 @@ public class AppSite extends IdentifiableBase implements AppTemplateEntity {
         return this;
     }
 
-    @ECSearchable
+    @ECSearchable(filter=true) @ECField(index=10)
+    @ECIndex @Column(nullable=false, updatable=false, length=1000)
+    @Getter @Setter private String name;
+
+    @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable(filter=true)
-    @ECIndex @Column(nullable=false, updatable=false, length=1000)
-    @Getter @Setter private String name;
-
-    @ECSearchable
+    @ECSearchable @ECField(index=30)
     @ECForeignKey(entity=BubbleApp.class)
     @Column(nullable=false, length=UUID_MAXLEN)
     @Getter @Setter private String app;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=40)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template () { return template == null || template; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=60)
     @Column(nullable=false, length=10000)
     @Getter @Setter private String description;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=70)
     @Column(nullable=false, length=1024)
     @Getter @Setter private String url;
 

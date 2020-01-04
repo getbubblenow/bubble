@@ -42,16 +42,16 @@ public class AnsibleRole extends IdentifiableBase implements AccountTemplate, Ha
 
     public AnsibleRole(AnsibleRole role) { copy(this, role, COPY_FIELDS); }
 
-    @ECSearchable
-    @ECForeignKey(entity=Account.class)
-    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
-    @Getter @Setter private String account;
-
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
     @Pattern(regexp=ROLENAME_PATTERN, message="err.name.invalid")
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
+
+    @ECSearchable @ECField(index=20)
+    @ECForeignKey(entity=Account.class)
+    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
+    @Getter @Setter private String account;
 
     @JsonIgnore @Transient @Getter(lazy=true) private final String roleName = getRoleName(name);
     @JsonIgnore @Transient @Getter(lazy=true) private final SemanticVersion version = getRoleVersion(name);
@@ -75,11 +75,11 @@ public class AnsibleRole extends IdentifiableBase implements AccountTemplate, Ha
                 .orElse(null);
     }
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=30)
     @Size(max=10000, message="err.description.length")
     @Getter @Setter private String description;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=40)
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(nullable=false, length=20)
     @Getter @Setter private AnsibleInstallType install = AnsibleInstallType.standard;
@@ -87,16 +87,16 @@ public class AnsibleRole extends IdentifiableBase implements AccountTemplate, Ha
         return install.shouldInstall(installType);
     }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Integer priority;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=60)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template() { return template != null && template; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=70)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
@@ -108,7 +108,7 @@ public class AnsibleRole extends IdentifiableBase implements AccountTemplate, Ha
     @Transient public NameAndValue[] getConfig () { return configJson == null ? null : json(configJson, NameAndValue[].class); }
     public AnsibleRole setConfig(NameAndValue[] config) { return setConfigJson(config == null ? null : json(config)); }
 
-    @Column(updatable=false, length=1000)
+    @Column(updatable=false, length=1000) @ECField(index=80)
     @JsonIgnore @Getter @Setter private String optionalConfigNamesJson;
     public boolean hasOptionalConfigNames () { return optionalConfigNamesJson != null; }
 

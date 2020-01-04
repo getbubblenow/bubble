@@ -12,10 +12,7 @@ import org.cobbzilla.util.security.RsaKeyPair;
 import org.cobbzilla.util.security.RsaMessage;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKey;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECIndex;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECSearchable;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
+import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
@@ -82,17 +79,17 @@ public class BubbleNodeKey extends IdentifiableBase implements HasAccountNoName 
         return keys.stream().allMatch(k -> k.expiresInLessThan(TOKEN_GENERATION_LIMIT));
     }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=10)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=BubbleNode.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String node;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=30)
     @Column(length=10000, updatable=false, nullable=false)
     @Getter private String publicKey;
     public BubbleNodeKey setPublicKey (String k) {
@@ -101,6 +98,7 @@ public class BubbleNodeKey extends IdentifiableBase implements HasAccountNoName 
         return this;
     }
 
+    @ECField(index=40)
     @ECIndex(unique=true) @Column(length=100, updatable=false, nullable=false)
     @Getter @Setter private String publicKeyHash;
 
@@ -118,12 +116,12 @@ public class BubbleNodeKey extends IdentifiableBase implements HasAccountNoName 
     @Type(type=ENCRYPTED_STRING) @ECIndex(unique=true) @Column(updatable=false, columnDefinition="varchar("+(100+ENC_PAD)+")")
     @Getter @Setter private String privateKeyHash;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=50)
     @Size(max=100, message="err.remoteHost.length")
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String remoteHost;
 
-    @ECSearchable(type=EntityFieldType.epoch_time)
+    @ECSearchable(type=EntityFieldType.epoch_time) @ECField(index=60)
     @ECIndex @Column(nullable=false, updatable=false)
     @Getter @Setter private Long expiration = defaultExpiration();
 

@@ -25,46 +25,59 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class AccountPayment extends IdentifiableBase implements HasAccountNoName {
 
-    @ECSearchable
+    @ECSearchable @ECField(index=10)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=AccountPaymentMethod.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String paymentMethod;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=30)
     @ECForeignKey(entity=BubblePlan.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String plan;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=40)
     @ECForeignKey(entity=AccountPlan.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String accountPlan;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @ECForeignKey(entity=Bill.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String bill;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=60)
     @Enumerated(EnumType.STRING) @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private AccountPaymentType type;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=70)
     @Enumerated(EnumType.STRING) @Column(nullable=false, length=20)
     @Getter @Setter private AccountPaymentStatus status;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=80)
+    @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
+    @Getter @Setter private Long amount = 0L;
+
+    @ECSearchable @ECField(index=90)
+    @ECIndex @Column(nullable=false, updatable=false, length=10)
+    @Getter @Setter private String currency;
+
+    @ECSearchable(filter=true) @ECField(index=100)
+    @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100000+ENC_PAD)+") NOT NULL")
+    @Getter @Setter private String info;
+
+    @ECSearchable @ECField(index=110)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(200+ENC_PAD)+")")
     @Getter @Setter private String violation;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=120)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(10000+ENC_PAD)+")")
-    @JsonIgnore @Getter @Setter private String exception;
+    @JsonIgnore
+    @Getter @Setter private String exception;
 
     public AccountPayment setError (Exception e) {
         if (e instanceof SimpleViolationException) {
@@ -75,18 +88,6 @@ public class AccountPayment extends IdentifiableBase implements HasAccountNoName
         setException(errorString(e));
         return this;
     }
-
-    @ECSearchable
-    @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
-    @Getter @Setter private Long amount = 0L;
-
-    @ECSearchable
-    @ECIndex @Column(nullable=false, updatable=false, length=10)
-    @Getter @Setter private String currency;
-
-    @ECSearchable(filter=true)
-    @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100000+ENC_PAD)+") NOT NULL")
-    @Getter @Setter private String info;
 
     @Transient @Getter @Setter private transient Bill billObject;
 

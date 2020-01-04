@@ -39,32 +39,32 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity {
     public static final String[] VALUE_FIELDS = {"fqdn", "urlRegex", "rule", "template", "enabled"};
     public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS, "name", "site");
 
-    @ECSearchable
+    @ECSearchable @ECField(index=10)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=20)
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=30)
     @ECForeignKey(entity=BubbleApp.class)
     @Column(nullable=false, length=UUID_MAXLEN)
     @Getter @Setter private String app;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=40)
     @ECForeignKey(entity=AppSite.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String site;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=50)
     @HasValue(message="err.fqdn.required")
     @Size(max=1024, message="err.fqdn.length")
     @ECIndex @Column(nullable=false, length=1024)
     @Getter @Setter private String fqdn;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=60)
     @HasValue(message="err.urlRegex.required")
     @Size(max=1024, message="err.urlRegex.length")
     @Type(type=ENCRYPTED_STRING) @Column(nullable=false, columnDefinition="varchar("+(1024+ENC_PAD)+") UNIQUE")
@@ -74,22 +74,22 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity {
 
     public boolean matches (String value) { return getPattern().matcher(value).find(); }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=70)
     @ECForeignKey(entity=AppRule.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String rule;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=80)
     @Column(nullable=false)
     @Getter @Setter private Boolean blocked = false;
     public boolean blocked() { return blocked != null && blocked; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=90)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template () { return template == null || template; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=100)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }

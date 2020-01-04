@@ -50,18 +50,18 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
 
     @Override public void beforeCreate() { if (!hasUuid()) initUuid(); }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=10)
     @ECForeignKey(entity=Account.class)
     @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String account;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=CloudService.class)
     @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String cloud;
     public boolean hasCloud() { return cloud != null; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=30)
     @Enumerated(EnumType.STRING) @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private PaymentMethodType paymentMethodType;
     public boolean hasPaymentMethodType() { return paymentMethodType != null; }
@@ -71,11 +71,11 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
     public boolean hasPaymentInfo () { return paymentInfo != null; }
 
     public static final String DEFAULT_MASKED_PAYMENT_INFO = "XXXX-".repeat(3)+"XXXX";
-    @ECSearchable
+    @ECSearchable  @ECField(index=40)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String maskedPaymentInfo = DEFAULT_MASKED_PAYMENT_INFO;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @Column(nullable=false)
     @Getter @Setter private Boolean deleted = false;
     public boolean deleted() { return deleted != null && deleted; }

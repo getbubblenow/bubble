@@ -46,36 +46,36 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
     @Override @Transient public String getName() { return getKey(); }
     public AppData setName(String n) { return setKey(n); }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=10)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=BubbleApp.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String app;
     public boolean hasApp () { return app != null; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=30)
     @ECForeignKey(entity=AppMatcher.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String matcher;
     public boolean hasMatcher() { return matcher != null; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=40)
     @ECForeignKey(entity=AppSite.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String site;
     public boolean hasSite() { return site != null; }
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=50)
     @HasValue(message="err.key.required")
     @ECIndex @Column(nullable=false, updatable=false, length=5000)
     @Getter @Setter private String key;
     public boolean hasKey () { return key != null; }
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=60)
     @Size(max=100000, message="err.data.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @Getter @Setter private String data;

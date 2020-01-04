@@ -80,7 +80,7 @@ public class Account extends IdentifiableBase implements TokenPrincipal, SqlView
 
     public static String accountField(String table) { return table.equalsIgnoreCase("account") ? "uuid" : "account"; }
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
     @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=100)
     @Getter @Setter private String name;
@@ -97,34 +97,34 @@ public class Account extends IdentifiableBase implements TokenPrincipal, SqlView
 
     // make this updatable if we ever want accounts to be able to change parents
     // there might be a lot more involved in that action though (read-only parent objects that will no longer be visible, must be copied in?)
-    @ECIndex @Column(length=UUID_MAXLEN, updatable=false)
+    @ECIndex @Column(length=UUID_MAXLEN, updatable=false) @ECField(index=20)
     @Getter @Setter private String parent;
     public boolean hasParent () { return parent != null; }
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=30)
     @Size(max=1024, message="err.url.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(1024+ENC_PAD)+")")
     @Getter @Setter private String url;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=40)
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
-    @ECSearchable @ECField(type=EntityFieldType.locale)
+    @ECSearchable @ECField(type=EntityFieldType.locale, index=50)
     @Size(max=20, message="err.locale.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(20+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String locale = DEFAULT_LOCALE;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=60)
     @Getter @Setter private Boolean admin = false;
     public boolean admin () { return admin != null && admin; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=70)
     @Getter @Setter private Boolean suspended = false;
     public boolean suspended () { return suspended != null && suspended; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=80)
     @Getter @Setter private Boolean locked = false;
     public boolean locked () { return locked != null && locked; }
 

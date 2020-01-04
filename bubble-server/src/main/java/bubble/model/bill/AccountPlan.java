@@ -43,63 +43,63 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Override public void beforeCreate() { if (!hasUuid()) initUuid(); }
 
     // mirrors network name
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=10)
     @Size(max=100, message="err.name.length")
     @Column(length=100, nullable=false)
     @Getter @Setter private String name;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=30)
     @ECForeignKey(entity=BubblePlan.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String plan;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=40)
     @ECForeignKey(entity=AccountPaymentMethod.class)
     @Column(updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String paymentMethod;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @ECForeignKey(entity=BubbleDomain.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String domain;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=60)
     @ECForeignKey(entity=BubbleNetwork.class, index=false) @ECIndex(unique=true)
     @Column(length=UUID_MAXLEN)
     @Getter @Setter private String network;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=70)
     @Column(nullable=false)
     @Getter @Setter private Boolean enabled = false;
     public boolean enabled() { return enabled != null && enabled; }
     public boolean disabled() { return !enabled(); }
 
-    @ECSearchable(type=EntityFieldType.epoch_time)
+    @ECSearchable(type=EntityFieldType.epoch_time) @ECField(index=80)
     @Column(nullable=false)
     @ECIndex @Getter @Setter private Long nextBill;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=90)
     @Column(nullable=false, length=20)
     @Getter @Setter private String nextBillDate;
     public AccountPlan setNextBillDate() { return setNextBillDate(BILL_START_END_FORMAT.print(getNextBill())); }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=100)
     @ECIndex @Getter @Setter private Long deleted;
     public boolean deleted() { return deleted != null; }
     public boolean notDeleted() { return !deleted(); }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=110)
     @Column(nullable=false)
     @ECIndex @Getter @Setter private Boolean closed = false;
     public boolean closed() { return closed != null && closed; }
     public boolean notClosed() { return !closed(); }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=120)
     @ECIndex(unique=true) @Column(length=UUID_MAXLEN)
     @Getter @Setter private String deletedNetwork;
     public boolean hasDeletedNetwork() { return deletedNetwork != null; }

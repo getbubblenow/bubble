@@ -18,7 +18,7 @@ import static bubble.ApiConstants.EP_SENT_NOTIFICATIONS;
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class SentNotification extends NotificationBase {
 
-    @ECSearchable
+    @ECSearchable @ECField(index=1000)
     @ECIndex @Column(nullable=false, length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private NotificationSendStatus status = NotificationSendStatus.created;
 

@@ -49,23 +49,23 @@ public class Device extends IdentifiableBase implements HasAccount {
         initTotpKey();
     }
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=10)
     @ECIndex @Column(nullable=false, length=500)
     @Getter @Setter private String name;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=20)
+    @ECForeignKey(entity=Account.class)
+    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
+    @Getter @Setter private String account;
+
+    @ECSearchable @ECField(index=30)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
     public boolean uninitialized () { return name.equals(UNINITIALIZED_DEVICE); }
     public boolean initialized () { return !uninitialized(); }
 
-    @ECSearchable
-    @ECForeignKey(entity=Account.class)
-    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
-    @Getter @Setter private String account;
-
-    @ECSearchable
+    @ECSearchable @ECField(index=40)
     @ECForeignKey(entity=BubbleNetwork.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String network;

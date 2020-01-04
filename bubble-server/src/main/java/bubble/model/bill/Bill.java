@@ -23,60 +23,60 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 })
 public class Bill extends IdentifiableBase implements HasAccountNoName {
 
-    @ECSearchable
+    @ECSearchable @ECField(index=10)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=BubblePlan.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String plan;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=30)
     @ECForeignKey(entity=AccountPlan.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String accountPlan;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=40)
     @ECIndex @Enumerated(EnumType.STRING)
     @Column(nullable=false, length=20)
     @Getter @Setter private BillStatus status = BillStatus.unpaid;
     public boolean paid() { return status == BillStatus.paid; }
     public boolean unpaid() { return !paid(); }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @ECIndex @Enumerated(EnumType.STRING)
     @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private BillItemType type;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=60)
     @Column(nullable=false, updatable=false, length=20)
     @ECIndex @Getter @Setter private String periodLabel;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=70)
     @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private String periodStart;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=80)
     @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private String periodEnd;
 
     public int daysInPeriod () { return BillPeriod.daysInPeriod(periodStart, periodEnd); }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=90)
     @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
     @Getter @Setter private Long quantity = 0L;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=100)
     @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
     @Getter @Setter private Long price = 0L;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=110)
     @ECIndex @Column(nullable=false, updatable=false, length=10)
     @Getter @Setter private String currency;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=120)
     @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+(ENC_LONG)+")")
     @Getter @Setter private Long refundedAmount = 0L;
     public boolean hasRefundedAmount () { return refundedAmount != null && refundedAmount > 0L; }

@@ -62,56 +62,56 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
 
     @Transient @JsonIgnore public String getNetwork () { return getUuid(); }
 
-    @ECSearchable
-    @ECForeignKey(entity=Account.class)
-    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
-    @Getter @Setter private String account;
-
-    @ECSearchable
+    @ECSearchable @ECField(index=10)
     @HasValue(message="err.name.required")
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=20)
+    @ECForeignKey(entity=Account.class)
+    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
+    @Getter @Setter private String account;
+
+    @ECSearchable @ECField(index=30)
     @ECForeignKey(entity=BubbleDomain.class)
     @HasValue(message="err.domain.required")
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String domain;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=40)
     @ECIndex @Column(nullable=false, updatable=false, length=DOMAIN_NAME_MAXLEN)
     @Getter @Setter private String domainName;  // denormalized from BubbleNetwork
 
     @Transient @JsonIgnore public String getNetworkDomain () { return name + "." + domainName; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @ECIndex @Column(nullable=false, updatable=false, length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private ComputeNodeSizeType computeSizeType;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=60)
     @ECForeignKey(entity=BubbleFootprint.class)
     @Column(nullable=false, length=UUID_MAXLEN)
     @Getter @Setter private String footprint;
     public boolean hasFootprint () { return footprint != null; }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=70)
     @ECForeignKey(entity=CloudService.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String storage;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=80)
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
-    @ECSearchable @ECField(type=EntityFieldType.locale)
+    @ECSearchable @ECField(type=EntityFieldType.locale, index=90)
     @Size(max=20, message="err.locale.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(20+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String locale = DEFAULT_LOCALE;
 
     // A unicode timezone alias from: cobbzilla-utils/src/main/resources/org/cobbzilla/util/time/unicode-timezones.xml
     // All unicode aliases are guaranteed to map to a Linux timezone and a Java timezone
-    @ECSearchable @ECField(type=EntityFieldType.time_zone)
+    @ECSearchable @ECField(type=EntityFieldType.time_zone, index=100)
     @Size(max=100, message="err.timezone.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String timezone = "America/New_York";

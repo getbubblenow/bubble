@@ -34,43 +34,43 @@ public class AccountMessage extends IdentifiableBase implements HasAccount {
 
     public AccountMessage (AccountMessage other) { copy(this, other); setUuid(null); }
 
-    @ECForeignKey(entity=Account.class)
+    @ECForeignKey(entity=Account.class) @ECField(index=10)
     @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String account;
 
-    @ECIndex @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
+    @ECIndex @ECField(index=20) @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String requestId = randomUUID().toString();
 
-    @ECIndex @Column(length=UUID_MAXLEN, updatable=false)
+    @ECIndex @ECField(index=30) @Column(length=UUID_MAXLEN, updatable=false)
     @Getter @Setter private String contact;
     public boolean hasContact () { return !empty(contact); }
     public boolean isSameContact (String uuid) { return hasContact() && contact.equals(uuid); }
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=40)
     @ECIndex @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String name;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=50)
     @Size(max=100, message="err.remoteHost.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100+ENC_PAD)+")")
     @Getter @Setter private String remoteHost;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=60)
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false, updatable=false)
     @Getter @Setter private AccountMessageType messageType;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=70)
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false, updatable=false)
     @Getter @Setter private AccountAction action;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=80)
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false, updatable=false)
     @Getter @Setter private ActionTarget target;
 
-    @Size(max=100000, message="err.data.length")
+    @Size(max=100000, message="err.data.length") @ECField(index=90)
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @Getter @Setter private String data;
 

@@ -33,22 +33,22 @@ public class BubbleBackup extends IdentifiableBase implements HasAccount {
         if (getUuid() == null) initUuid();
     }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=10)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable
+    @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=BubbleNetwork.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String network;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=30)
     @Size(max=2000, message="err.path.length")
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(2000+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String path;
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=40)
     @Pattern(regexp="[A-Za-z0-9][-A-Za-z0-9\\._]{2,}", message="err.label.invalid")
     @Size(max=300, message="err.label.length")
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(300+ENC_PAD)+")")
@@ -57,13 +57,13 @@ public class BubbleBackup extends IdentifiableBase implements HasAccount {
 
     @Override @JsonIgnore @Transient public String getName() { return hasLabel() ? getLabel() : getPath(); }
 
-    @ECSearchable
+    @ECSearchable @ECField(index=50)
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(nullable=false, length=40)
     @Getter @Setter private BackupStatus status;
     public boolean success () { return status == BackupStatus.backup_completed; }
 
-    @ECSearchable(filter=true)
+    @ECSearchable(filter=true) @ECField(index=60)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(ERROR_MAXLEN+ENC_PAD)+")")
     @Getter private String error;
     public BubbleBackup setError (String err) { this.error = ellipsis(err, ERROR_MAXLEN); return this; }
