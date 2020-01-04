@@ -13,7 +13,7 @@ import javax.persistence.Enumerated;
 
 import static bubble.ApiConstants.EP_SENT_NOTIFICATIONS;
 
-@ECType(root=true)
+@ECType(root=true) @ECTypeCreate(method="DISABLED")
 @ECTypeURIs(baseURI=EP_SENT_NOTIFICATIONS, listFields={"type"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class SentNotification extends NotificationBase {

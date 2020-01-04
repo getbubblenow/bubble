@@ -24,7 +24,7 @@ import static bubble.cloud.storage.StorageServiceDriver.STORAGE_PREFIX;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
-@ECType(root=true, name="role")
+@ECType(root=true, name="role") @ECTypeCreate
 @ECTypeURIs(baseURI=EP_ROLES, listFields={"account", "name", "description"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({

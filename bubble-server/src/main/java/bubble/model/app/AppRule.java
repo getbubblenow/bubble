@@ -27,7 +27,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
-@ECType(root=true)
+@ECType(root=true) @ECTypeCreate
 @ECTypeURIs(baseURI=EP_RULES, listFields={"name", "app", "driver", "configJson"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECTypeChildren(uriPrefix=EP_RULES+"/{AppRule.name}", value={

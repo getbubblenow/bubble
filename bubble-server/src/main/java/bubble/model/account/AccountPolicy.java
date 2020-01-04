@@ -13,10 +13,7 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECField;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKey;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECSearchable;
-import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
+import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
 
@@ -37,7 +34,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 
-@Entity @ECType(root=true)
+@Entity @ECType(root=true) @ECTypeCreate(method="DISABLED")
 @NoArgsConstructor @Accessors(chain=true)
 public class AccountPolicy extends IdentifiableBase implements HasAccount {
 

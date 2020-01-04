@@ -46,7 +46,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySearchDepth.none;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
-@ECType(root=true) @ECTypeURIs(listFields={"name", "url", "description", "admin", "suspended"}, isDeleteDefined=false)
+@ECType(root=true) @ECTypeCreate @ECTypeURIs(listFields={"name", "url", "description", "admin", "suspended"}, isDeleteDefined=false)
 @ECTypeChildren(value={
         @ECTypeChild(type=Device.class, backref="account"),
         @ECTypeChild(type=BubbleApp.class, backref="account"),

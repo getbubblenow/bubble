@@ -40,7 +40,7 @@ import static org.cobbzilla.util.string.ValidationRegexes.IP4_MAXLEN;
 import static org.cobbzilla.util.string.ValidationRegexes.IP6_MAXLEN;
 import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySearchDepth.shallow;
 
-@ECType(root=true)
+@ECType(root=true) @ECTypeCreate(method="DISABLED")
 @ECTypeURIs(baseURI=EP_NODES, listFields={"name", "ip4"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({ @ECIndex(unique=true, of={"domain", "network", "host"}) })

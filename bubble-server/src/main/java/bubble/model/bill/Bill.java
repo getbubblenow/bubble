@@ -16,7 +16,8 @@ import javax.persistence.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.big;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 
-@ECType(root=true) @ECTypeURIs(listFields={"name", "status", "type", "quantity", "price", "periodStart"})
+@ECType(root=true) @ECTypeCreate(method="DISABLED")
+@ECTypeURIs(listFields={"name", "status", "type", "quantity", "price", "periodStart"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "plan", "type", "periodStart"})

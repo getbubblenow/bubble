@@ -14,7 +14,7 @@ import javax.persistence.Enumerated;
 import static bubble.ApiConstants.EP_RECEIVED_NOTIFICATIONS;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
-@ECType(root=true)
+@ECType(root=true) @ECTypeCreate(method="DISABLED")
 @ECTypeURIs(baseURI=EP_RECEIVED_NOTIFICATIONS, listFields={"type"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class ReceivedNotification extends NotificationBase {

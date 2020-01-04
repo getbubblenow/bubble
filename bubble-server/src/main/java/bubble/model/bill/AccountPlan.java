@@ -22,7 +22,7 @@ import static bubble.model.bill.BillPeriod.BILL_START_END_FORMAT;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
-@ECType(root=true)
+@ECType(root=true) @ECTypeCreate(method="DISABLED")
 @ECTypeURIs(listFields={"account", "plan", "network", "name"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({

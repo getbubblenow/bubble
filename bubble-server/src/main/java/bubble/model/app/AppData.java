@@ -25,7 +25,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
-@ECType(root=true, pluralDisplayName="App Data")
+@ECType(root=true, pluralDisplayName="App Data") @ECTypeCreate
 @ECTypeURIs(baseURI= EP_DATA, listFields={"app", "key", "data", "expiration"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({

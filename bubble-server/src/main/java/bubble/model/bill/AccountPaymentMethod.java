@@ -30,7 +30,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
-@Entity @ECType(root=true)
+@Entity @ECType(root=true) @ECTypeCreate(method="DISABLED")
 @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({ @ECIndex(unique=true, of={"paymentMethodType", "paymentInfo"}) })
 @Slf4j
