@@ -3,7 +3,6 @@ package bubble.model.app;
 import bubble.model.account.Account;
 import bubble.model.account.AccountTemplate;
 import bubble.rule.AppRuleDriver;
-import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
@@ -22,7 +21,7 @@ import javax.persistence.*;
 import java.util.Locale;
 
 import static bubble.ApiConstants.*;
-import static bubble.server.BubbleConfiguration.DEFAULT_LOCALE;
+import static bubble.ApiConstants.DEFAULT_LOCALE;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;

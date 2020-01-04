@@ -45,7 +45,7 @@ public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<Bub
         if (FIRST_TIME_FILE.exists()) {
             // final FirstTimeType firstTimeType = FirstTimeType.fromString(FileUtil.toStringOrDie(FIRST_TIME_FILE));
             final AccountDAO accountDAO = configuration.getBean(AccountDAO.class);
-            final Account adminAccount = accountDAO.findFirstAdmin();
+            final Account adminAccount = accountDAO.getFirstAdmin();
             if (adminAccount == null) {
                 log.error("onStart: no admin account found, cannot send first time install message");
                 return;

@@ -87,7 +87,7 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
 
     public void stripTokenizeCard(Map<String, Object> ctx) {
         // ensure stripe API token is initialized
-        final Account admin = configuration.getBean(AccountDAO.class).findFirstAdmin();
+        final Account admin = configuration.getBean(AccountDAO.class).getFirstAdmin();
         final CloudService stripe = configuration.getBean(CloudServiceDAO.class)
                 .findByAccountAndType(admin.getUuid(), CloudServiceType.payment)
                 .stream().filter(c -> c.usesDriver(StripePaymentDriver.class))

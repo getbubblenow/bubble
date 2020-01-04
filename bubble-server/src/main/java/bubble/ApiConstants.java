@@ -35,6 +35,8 @@ public class ApiConstants {
 
     public static final String ROOT_NETWORK_UUID = "00000000-0000-0000-0000-000000000000";
 
+    public static final String DEFAULT_LOCALE = "en_US";
+
     @Getter(lazy=true) private static final String bubbleDefaultDomain = initDefaultDomain();
     private static String initDefaultDomain() {
         final File f = new File(HOME_DIR, ".BUBBLE_DEFAULT_DOMAIN");

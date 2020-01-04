@@ -18,7 +18,7 @@ import bubble.service.bill.StandardRefundService;
 import bubble.service.notify.NotificationService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.cache.AutoRefreshingReference;
+import org.cobbzilla.util.cache.Refreshable;
 import org.cobbzilla.util.string.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -170,10 +170,10 @@ public class StandardSelfNodeService implements SelfNodeService {
         }
     }
 
-    private final AutoRefreshingReference<BubbleNetwork> thisNet = new AutoRefreshingReference<>() {
-        @Override public BubbleNetwork refresh() { return getThisNode() == null ? null : networkDAO.findByUuid(getThisNode().getNetwork()); }
-        @Override public long getTimeout() { return DAYS.toMillis(1); }
-    };
+    public static final long THIS_NET_CACHE_MILLIS = DAYS.toMillis(1);
+    private final Refreshable<BubbleNetwork> thisNet = new Refreshable<>("thisNet", THIS_NET_CACHE_MILLIS, this::safeGetThisNetwork);
+    private BubbleNetwork safeGetThisNetwork() { return getThisNode() == null ? null : networkDAO.findByUuid(getThisNode().getNetwork()); }
+
     @Override public BubbleNetwork getThisNetwork () { return thisNet.get(); }
     @Override public void refreshThisNetwork () { thisNet.flush(); }
 

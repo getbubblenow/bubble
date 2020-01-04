@@ -28,7 +28,7 @@ import static bubble.ApiConstants.EP_NETWORKS;
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.model.cloud.BubbleDomain.DOMAIN_NAME_MAXLEN;
 import static bubble.model.cloud.BubbleNetworkState.created;
-import static bubble.server.BubbleConfiguration.DEFAULT_LOCALE;
+import static bubble.ApiConstants.DEFAULT_LOCALE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;

@@ -28,10 +28,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
-import static org.cobbzilla.util.collection.HasPriority.SORT_PRIORITY;
+import static java.util.concurrent.TimeUnit.DAYS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.string.LocaleUtil.getDefaultLocales;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -50,34 +51,43 @@ public class GeoService {
 
     public GeoLocation locate (String accountUuid, String ip) {
 
-        List<CloudService> geoServices = null;
+        List<CloudService> geoLocationServices = null;
         if (accountUuid != null) {
-            geoServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoLocation);
+            geoLocationServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoLocation);
         }
-        if (empty(geoServices)) {
+        if (empty(geoLocationServices)) {
             // try to find using admin
-            final Account admin = accountDAO.findFirstAdmin();
+            final Account admin = accountDAO.getFirstAdmin();
             if (admin != null && !admin.getUuid().equals(accountUuid)) {
-                geoServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoLocation);
+                geoLocationServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoLocation);
             }
         }
-        if (empty(geoServices)) {
+        if (empty(geoLocationServices)) {
             throw new SimpleViolationException("err.geoLocateService.notFound");
         }
 
         final List<GeoLocation> resolved = new ArrayList<>();
-        geoServices.sort(SORT_PRIORITY);
         GeoCodeServiceDriver geoCodeDriver = null;
-        for (CloudService geo : geoServices) {
+        for (CloudService geo : geoLocationServices) {
             try {
                 final GeoLocation result = geo.getGeoLocateDriver(configuration).geolocate(ip);
                 if (result != null) {
                     if (!result.hasLatLon()) {
                         if (geoCodeDriver == null) {
-                            final List<CloudService> geocodes = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoCode);
-                            if (geocodes.isEmpty()) continue;
-                            geocodes.sort(SORT_PRIORITY);
-                            geoCodeDriver = geocodes.get(0).getGeoCodeDriver(configuration);
+                            List<CloudService> geoCodeServices = null;
+                            if (accountUuid != null) {
+                                geoCodeServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoCode);
+                            }
+                            if (empty(geoCodeServices)) {
+                                final Account admin = accountDAO.getFirstAdmin();
+                                if (admin != null && !admin.getUuid().equals(accountUuid)) {
+                                    geoCodeServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoCode);
+                                }
+                            }
+                            if (empty(geoCodeServices)) {
+                                throw new SimpleViolationException("err.geoCodeService.notFound");
+                            }
+                            geoCodeDriver = geoCodeServices.get(0).getGeoCodeDriver(configuration);
                         }
                         final GeoCodeResult code = geoCodeDriver.lookup(result);
                         result.setLat(code.getLat());
@@ -98,7 +108,7 @@ public class GeoService {
 
             // if we have two, pick the higher priority one
             case 2:
-                return pickHighestPriority(geoServices, resolved);
+                return pickHighestPriority(geoLocationServices, resolved);
 
             default:
                 // determine the average lat/lon
@@ -113,10 +123,10 @@ public class GeoService {
                     }
                 }
                 // if there are any left, pick highest priorty among those remaining
-                if (!near.isEmpty()) return pickHighestPriority(geoServices, near);
+                if (!near.isEmpty()) return pickHighestPriority(geoLocationServices, near);
 
                 // if there are none left, pick highest priority among all
-                return pickHighestPriority(geoServices, resolved);
+                return pickHighestPriority(geoLocationServices, resolved);
         }
     }
 
@@ -129,33 +139,34 @@ public class GeoService {
         return resolved.get(0);
     }
 
-    public GeoTimeZone getTimeZone (Account account, String ip) {
-
-        if (account == null) account = accountDAO.findFirstAdmin();
-        List<CloudService> geoServices = cloudDAO.findByAccountAndType(account.getUuid(), CloudServiceType.geoTime);
-        if (geoServices.isEmpty() && !account.admin()) {
-            // try to find using admin
-            final Account admin = accountDAO.findFirstAdmin();
-            if (admin != null && !admin.getUuid().equals(account.getUuid())) {
-                geoServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoTime);
+    private Map<String, GeoTimeZone> timezoneCache = new ExpirationMap<>(DAYS.toMillis(1));
+    public GeoTimeZone getTimeZone (final Account account, String ip) {
+        final AtomicReference<Account> acct = new AtomicReference<>(account);
+        return timezoneCache.computeIfAbsent(ip, k -> {
+            if (acct.get() == null) acct.set(accountDAO.getFirstAdmin());
+            List<CloudService> geoServices = cloudDAO.findByAccountAndType(acct.get().getUuid(), CloudServiceType.geoTime);
+            if (geoServices.isEmpty() && !account.admin()) {
+                // try to find using admin
+                final Account admin = accountDAO.getFirstAdmin();
+                if (admin != null && !admin.getUuid().equals(account.getUuid())) {
+                    geoServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoTime);
+                }
             }
-        }
-        if (geoServices.isEmpty()) {
-            throw new SimpleViolationException("err.geoTimeService.notFound");
-        }
-        geoServices.sort(SORT_PRIORITY);
+            if (geoServices.isEmpty()) {
+                throw new SimpleViolationException("err.geoTimeService.notFound");
+            }
 
-        final GeoLocation location = locate(account.getUuid(), ip);
-        if (!location.hasLatLon()) {
-            final List<CloudService> geocodes = cloudDAO.findByAccountAndType(account.getUuid(), CloudServiceType.geoCode);
-            if (geocodes.isEmpty()) throw new SimpleViolationException("err.geoCodeService.notFound");
-            geocodes.sort(SORT_PRIORITY);
-            final GeoCodeResult code = geocodes.get(0).getGeoCodeDriver(configuration).lookup(location);
-            location.setLat(code.getLat());
-            location.setLon(code.getLon());
-        }
+            final GeoLocation location = locate(account.getUuid(), ip);
+            if (!location.hasLatLon()) {
+                final List<CloudService> geocodes = cloudDAO.findByAccountAndType(account.getUuid(), CloudServiceType.geoCode);
+                if (geocodes.isEmpty()) throw new SimpleViolationException("err.geoCodeService.notFound");
+                final GeoCodeResult code = geocodes.get(0).getGeoCodeDriver(configuration).lookup(location);
+                location.setLat(code.getLat());
+                location.setLon(code.getLon());
+            }
 
-        return geoServices.get(0).getGeoTimeDriver(configuration).getTimezone(location.getLat(), location.getLon());
+            return geoServices.get(0).getGeoTimeDriver(configuration).getTimezone(location.getLat(), location.getLon());
+        });
     }
 
     public List<CloudRegionRelative> getCloudRegionRelatives(BubbleNetwork network, String userIp) {
@@ -214,37 +225,40 @@ public class GeoService {
         });
     }
 
+    private Map<String, List<String>> localesCache = new ExpirationMap<>(DAYS.toMillis(1));
     public List<String> getSupportedLocales(Account caller, String remoteHost, String langHeader) {
-        final List<String> locales = new ArrayList<>();
-        final String[] allLocales = configuration.getAllLocales();
-        if (langHeader != null) locales.add(langHeader);
+        return localesCache.computeIfAbsent((caller==null?"null":caller.getUuid())+remoteHost+"\t"+langHeader, k -> {
+            final List<String> locales = new ArrayList<>();
+            final String[] allLocales = configuration.getAllLocales();
+            if (langHeader != null) locales.add(langHeader);
 
-        try {
-            final GeoLocation loc = locate(caller == null ? null : caller.getUuid(), remoteHost);
-            if (loc != null) {
-                final List<String> found = getDefaultLocales(loc.getCountry());
-                for (int i=0; i<found.size(); i++) {
-                    if (!locales.contains(found.get(i))) {
-                        locales.add(found.get(i));
+            try {
+                final GeoLocation loc = locate(caller == null ? null : caller.getUuid(), remoteHost);
+                if (loc != null) {
+                    final List<String> found = getDefaultLocales(loc.getCountry());
+                    for (int i=0; i<found.size(); i++) {
+                        if (!locales.contains(found.get(i))) {
+                            locales.add(found.get(i));
+                        }
                     }
                 }
+            } catch (SimpleViolationException e) {
+                throw e;
+
+            } catch (Exception e) {
+                log.warn("detectLocale: "+e);
             }
-        } catch (SimpleViolationException e) {
-            throw e;
 
-        } catch (Exception e) {
-            log.warn("detectLocale: "+e);
-        }
-
-        // filter out any locales that are not supported
-        final List<String> supportedLocales = locales.stream()
-                .filter(loc -> ArrayUtils.contains(allLocales, loc))
-                .collect(Collectors.toList());
-        if (supportedLocales.isEmpty()) {
-            // re-add default locale if nothing else is supported
-            supportedLocales.add(configuration.getDefaultLocale());
-        }
-        return supportedLocales;
+            // filter out any locales that are not supported
+            final List<String> supportedLocales = locales.stream()
+                    .filter(loc -> ArrayUtils.contains(allLocales, loc))
+                    .collect(Collectors.toList());
+            if (supportedLocales.isEmpty()) {
+                // re-add default locale if nothing else is supported
+                supportedLocales.add(configuration.getDefaultLocale());
+            }
+            return supportedLocales;
+        });
     }
 
 }

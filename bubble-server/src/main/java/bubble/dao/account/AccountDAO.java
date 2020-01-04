@@ -15,6 +15,7 @@ import bubble.model.cloud.CloudCredentials;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.cache.Refreshable;
 import org.cobbzilla.wizard.dao.AbstractCRUDDAO;
 import org.cobbzilla.wizard.dao.SqlViewSearchableDAO;
 import org.cobbzilla.wizard.model.HashedPassword;
@@ -32,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static bubble.ApiConstants.getRemoteHost;
 import static bubble.model.account.AccountTemplate.copyTemplateObjects;
 import static bubble.model.account.AutoUpdatePolicy.EMPTY_AUTO_UPDATE_POLICY;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
 import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_ASC;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -260,6 +262,15 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         if (accountsExist) activated.set(true);
         return accountsExist;
     }
+
+    // The admin with the lowest ctime is 'root'
+    // It gets looked up in a few places that may see high traffic, so we cache it under getFirstAdmin
+    // Null values are not cached, getFirstAdmin will continue to call findFirstAdmin until it returns non-null,
+    // then that value will be cached.
+    // findFirstAdmin will always return the current value
+    public static final long FIRST_ADMIN_CACHE_MILLIS = MINUTES.toMillis(20);
+    private final Refreshable<Account> firstAdmin = new Refreshable<>("firstAdmin", FIRST_ADMIN_CACHE_MILLIS, this::findFirstAdmin);
+    public Account getFirstAdmin() { return firstAdmin.get(); }
 
     public Account findFirstAdmin() {
         final List<Account> admins = findByField("admin", true);

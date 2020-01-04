@@ -2,7 +2,6 @@ package bubble.resources;
 
 import bubble.service.cloud.GeoService;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +15,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import static bubble.ApiConstants.*;
-import static bubble.ApiConstants.getRemoteHost;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
-import static org.cobbzilla.wizard.resources.ResourceUtil.*;
-import static org.cobbzilla.wizard.resources.ResourceUtil.invalid;
+import static org.cobbzilla.wizard.resources.ResourceUtil.ok;
+import static org.cobbzilla.wizard.resources.ResourceUtil.optionalUserPrincipal;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -38,16 +36,7 @@ public class DetectResource {
     @GET @Path(EP_TIMEZONE)
     public Response detectTimezone(@Context Request req,
                                    @Context ContainerRequest ctx) {
-        final String remoteHost = getRemoteHost(req);
-        try {
-            return ok(geoService.getTimeZone(optionalUserPrincipal(ctx), remoteHost));
-
-        } catch (SimpleViolationException e) {
-            return invalid(e);
-
-        } catch (Exception e) {
-            return invalid("err.timezone.unknown", e.getMessage());
-        }
+        return ok(geoService.getTimeZone(optionalUserPrincipal(ctx), getRemoteHost(req)));
     }
 
 }

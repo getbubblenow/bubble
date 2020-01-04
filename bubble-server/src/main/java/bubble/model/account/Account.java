@@ -34,7 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static bubble.server.BubbleConfiguration.DEFAULT_LOCALE;
+import static bubble.ApiConstants.DEFAULT_LOCALE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;

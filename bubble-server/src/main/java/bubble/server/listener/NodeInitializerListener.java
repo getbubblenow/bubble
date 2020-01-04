@@ -56,7 +56,7 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
         }
 
         // warm up drivers
-        final Account admin = c.getBean(AccountDAO.class).findFirstAdmin();
+        final Account admin = c.getBean(AccountDAO.class).getFirstAdmin();
         if (admin != null) {
             for (CloudService cloud : c.getBean(CloudServiceDAO.class).findPublicTemplates(admin.getUuid())) {
                 try {

@@ -11,6 +11,6 @@ public class GeoTimeZone {
 
     @Getter @Setter private String timeZoneId;
     @Getter @Setter private String standardName;
-    @Getter @Setter private long currentOffsetMs;
+    @Getter @Setter private Long currentOffsetMs;
 
 }

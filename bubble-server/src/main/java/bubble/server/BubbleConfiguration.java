@@ -67,7 +67,6 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_ENTITY_CLASSES = "entityClasses";
     public static final String TAG_LOCALES = "locales";
 
-    public static final String DEFAULT_LOCALE = "en_US";
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
     public BubbleConfiguration (BubbleConfiguration other) { copy(this, other); }
