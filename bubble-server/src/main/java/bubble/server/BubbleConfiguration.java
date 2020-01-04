@@ -65,6 +65,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_PAYMENTS_ENABLED = "paymentsEnabled";
     public static final String TAG_CLOUD_DRIVERS = "cloudDrivers";
     public static final String TAG_ENTITY_CLASSES = "entityClasses";
+    public static final String TAG_LOCALES = "locales";
 
     public static final String DEFAULT_LOCALE = "en_US";
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
@@ -237,12 +238,15 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_SAGE_LAUNCHER, isSageLauncher()},
                         {TAG_PAYMENTS_ENABLED, paymentsEnabled()},
                         {TAG_CLOUD_DRIVERS, getCloudDriverClasses()},
-                        {TAG_ENTITY_CLASSES, getSortedEntityClassNames()}
+                        {TAG_ENTITY_CLASSES, getSortedEntityClassNames()},
+                        {TAG_LOCALES, getAllLocales()}
                 }));
             }
             return publicSystemConfigs.get();
         }
     }
+
+    // called after activation, because now thisNetwork will be defined. otherwise it remains unchanged
     public void refreshPublicSystemConfigs () { synchronized (publicSystemConfigs) { publicSystemConfigs.set(null); } }
 
     @Getter @Setter private String[] disallowedCountries;

@@ -23,6 +23,7 @@ import bubble.service.cloud.StandardNetworkService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.string.LocaleUtil;
 import org.cobbzilla.wizard.auth.ChangePasswordRequest;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.client.script.ApiRunner;
@@ -39,6 +40,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.StringWriter;
+import java.util.Locale;
 
 import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.errorString;
@@ -67,6 +69,28 @@ public class MeResource {
         } catch (Exception e) {
             return notFound();
         }
+    }
+
+    @GET @Path(EP_LOCALE)
+    public Response getLocale(@Context ContainerRequest ctx) {
+        final Account account = userPrincipal(ctx);
+        return ok(account.getLocale());
+    }
+
+    @POST @Path(EP_LOCALE+"/{locale}")
+    public Response setLocale(@Context ContainerRequest ctx,
+                              @PathParam("locale") String locale) {
+        final Account account = userPrincipal(ctx);
+        final Account me = accountDAO.findByUuid(account.getUuid());
+        if (me == null) return notFound();
+
+        final Locale loc;
+        try {
+            loc = LocaleUtil.fromStringOrDie(locale); // must be valid
+        } catch (Exception e) {
+            return invalid("err.locale.invalid", "Invalid locale: "+locale, locale);
+        }
+        return ok(accountDAO.update(me.setLocale(loc.toString())));
     }
 
     @POST @Path(EP_CHANGE_PASSWORD)

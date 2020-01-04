@@ -17,6 +17,7 @@ import org.cobbzilla.wizard.filters.auth.TokenPrincipal;
 import org.cobbzilla.wizard.model.HashedPassword;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.model.search.SqlViewSearchResult;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static bubble.server.BubbleConfiguration.DEFAULT_LOCALE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -109,6 +111,11 @@ public class Account extends IdentifiableBase implements TokenPrincipal, SqlView
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
+
+    @ECSearchable @ECField(type=EntityFieldType.locale)
+    @Size(max=20, message="err.locale.length")
+    @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(20+ENC_PAD)+") NOT NULL")
+    @Getter @Setter private String locale = DEFAULT_LOCALE;
 
     @ECSearchable
     @Getter @Setter private Boolean admin = false;
