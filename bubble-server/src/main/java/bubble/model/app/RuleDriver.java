@@ -28,7 +28,6 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
 
 @ECType(root=true) @ECTypeURIs(baseURI=DRIVERS_ENDPOINT, listFields={"name", "author", "url"})
-@ECTypeFields(list={"name", "author", "url"})
 @ECTypeChildren(uriPrefix=EP_DRIVERS+"/{RuleDriver.name}", value={
         @ECTypeChild(type=AppRule.class, backref="driver"),
         @ECTypeChild(type=AppData.class, backref="driver")

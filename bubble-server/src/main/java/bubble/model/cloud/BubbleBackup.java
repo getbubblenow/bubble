@@ -25,7 +25,6 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @ECType(root=true, name="backup")
 @ECTypeURIs(baseURI=BACKUPS_ENDPOINT, listFields={"network", "label", "path"})
-@ECTypeFields(list={"network", "label", "path"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({ @ECIndex(unique=true, of={"network", "path"}) })
 public class BubbleBackup extends IdentifiableBase implements HasAccount {

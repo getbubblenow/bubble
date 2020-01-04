@@ -36,7 +36,6 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_DOMAINS, listFields={"name", "description", "account", "enabled"})
-@ECTypeFields(list={"name", "description", "account", "enabled"})
 @ECTypeChildren(uriPrefix=EP_DOMAINS+"/{BubbleDomain.name}", value={
         @ECTypeChild(type=BubbleNetwork.class, backref="domain"),
         @ECTypeChild(type=BubbleNode.class, backref="domain")

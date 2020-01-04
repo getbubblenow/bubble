@@ -15,7 +15,6 @@ import static bubble.ApiConstants.EP_SENT_NOTIFICATIONS;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_SENT_NOTIFICATIONS, listFields={"type"})
-@ECTypeFields(list={"type"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class SentNotification extends NotificationBase {
 

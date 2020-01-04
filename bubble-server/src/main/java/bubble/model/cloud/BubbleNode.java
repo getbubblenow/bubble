@@ -42,7 +42,6 @@ import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySe
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_NODES, listFields={"name", "ip4"})
-@ECTypeFields(list={"name", "ip4"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({ @ECIndex(unique=true, of={"domain", "network", "host"}) })
 public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbleTags<BubbleNode> {

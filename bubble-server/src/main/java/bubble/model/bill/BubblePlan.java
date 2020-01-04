@@ -27,7 +27,6 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_PLANS, listFields={"name", "domain", "description", "account", "enabled"})
-@ECTypeFields(list={"name", "domain", "description", "account", "enabled"})
 @ECTypeChildren(uriPrefix=EP_PLANS+"/{BubblePlan.name}", value={
         @ECTypeChild(type=BubbleNetwork.class, backref="plan")
 })

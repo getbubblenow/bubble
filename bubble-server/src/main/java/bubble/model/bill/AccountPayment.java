@@ -19,7 +19,6 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.errorString;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 
 @ECType(root=true) @ECTypeURIs(listFields={"account", "paymentMethod", "amount"})
-@ECTypeFields(list={"account", "paymentMethod", "amount"})
 @ECIndexes({
         @ECIndex(name="account_payment_uniq_bill_success", unique=true, of={"bill"}, where="status = 'success'")
 })

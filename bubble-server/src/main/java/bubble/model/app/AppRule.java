@@ -29,7 +29,6 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_RULES, listFields={"name", "app", "driver", "configJson"})
-@ECTypeFields(list={"name", "app", "driver", "configJson"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECTypeChildren(uriPrefix=EP_RULES+"/{AppRule.name}", value={
         @ECTypeChild(type= AppData.class, backref="rule"),

@@ -47,7 +47,6 @@ import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySe
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @ECType(root=true) @ECTypeURIs(listFields={"name", "url", "description", "admin", "suspended"}, isDeleteDefined=false)
-@ECTypeFields(list={"name", "url", "description", "admin", "suspended"})
 @ECTypeChildren(value={
         @ECTypeChild(type=Device.class, backref="account"),
         @ECTypeChild(type=BubbleApp.class, backref="account"),

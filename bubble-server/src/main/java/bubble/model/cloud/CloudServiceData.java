@@ -26,7 +26,6 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_DATA, listFields={"key", "data", "expiration"})
-@ECTypeFields(list={"key", "data", "expiration"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({ @ECIndex(unique=true, of={"cloud", "key"}) })
 public class CloudServiceData extends IdentifiableBase implements HasAccount {

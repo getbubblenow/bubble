@@ -24,7 +24,6 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=APPS_ENDPOINT, listFields={"name", "url", "description", "account", "template", "enabled"})
-@ECTypeFields(list={"name", "url", "description", "account", "template", "enabled"})
 @ECTypeChildren(uriPrefix=EP_APPS+"/{BubbleApp.name}", value={
         @ECTypeChild(type=AppSite.class, backref="app"),
         @ECTypeChild(type=AppMatcher.class, backref="app"),

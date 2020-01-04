@@ -31,7 +31,6 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_FOOTPRINTS, listFields={"name", "description"})
-@ECTypeFields(list={"name", "description"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "name"}),

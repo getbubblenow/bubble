@@ -46,7 +46,6 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_CLOUDS, listFields={"name", "description", "account", "enabled"})
-@ECTypeFields(list={"name", "description", "account", "enabled"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECTypeChildren(uriPrefix=EP_CLOUDS+"/{CloudService.name}", value={
         @ECTypeChild(type=CloudServiceData.class, backref="cloud"),

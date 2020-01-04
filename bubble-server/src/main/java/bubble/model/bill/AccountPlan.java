@@ -24,7 +24,6 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
 @ECType(root=true)
 @ECTypeURIs(listFields={"account", "plan", "network", "name"})
-@ECTypeFields(list={"account", "plan", "network", "name"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "name"}),

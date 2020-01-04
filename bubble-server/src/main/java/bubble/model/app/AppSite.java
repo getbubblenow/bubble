@@ -18,7 +18,6 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_SITES, listFields={"name", "app", "description", "url"})
-@ECTypeFields(list={"name", "app", "description", "url"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECTypeChildren(uriPrefix=EP_SITES+"/{AppSite.name}", value={
         @ECTypeChild(type=AppData.class, backref="site")

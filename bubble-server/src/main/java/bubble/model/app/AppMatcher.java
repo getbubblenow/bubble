@@ -26,7 +26,6 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_MATCHERS, listFields={"name", "app", "fqdn", "urlRegex", "rule"})
-@ECTypeFields(list={"name", "app", "fqdn", "urlRegex", "rule"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "app", "name"}),

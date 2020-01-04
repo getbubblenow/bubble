@@ -16,7 +16,6 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_RECEIVED_NOTIFICATIONS, listFields={"type"})
-@ECTypeFields(list={"type"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class ReceivedNotification extends NotificationBase {
 
