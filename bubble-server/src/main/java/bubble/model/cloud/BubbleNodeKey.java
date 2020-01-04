@@ -35,7 +35,7 @@ import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
-@Entity @ECType
+@Entity @ECType(root=true)
 @NoArgsConstructor @Accessors(chain=true) @ToString(of={"publicKeyHash"}, callSuper=true)
 public class BubbleNodeKey extends IdentifiableBase implements HasAccountNoName {
 

@@ -75,55 +75,70 @@ public class SearchResource {
 
         final Account caller = userPrincipal(ctx);
         final String cacheKey = hashOf(caller.getUuid(), type, meta, filter, page, size, sort, searchQuery);
-        return ok(_searchCache.computeIfAbsent(cacheKey, searchKey -> {
-            final DAO dao = daoCache.computeIfAbsent(type, k -> getDao(type));
-            if (meta != null) return ((AbstractDAO) dao).getSearchFields();
-
-            final SearchQuery q = searchQuery != null ? searchQuery : new SearchQuery();
-            if (!q.hasLocale()) {
-                try {
-                    q.setLocale(geoService.getFirstLocale(caller, getRemoteHost(req), normalizeLangHeader(req)));
-                } catch (Exception e) {
-                    log.warn("search: error setting locale, using default: "+configuration.getDefaultLocale()+": "+e);
-                    q.setLocale(configuration.getDefaultLocale());
-                }
-            }
-            q.setPageNumber(page != null ? page : 1);
-            q.setPageSize(size != null ? Integer.min(size, MAX_SEARCH_PAGE) : Integer.min(q.getPageSize(), MAX_SEARCH_PAGE));
-            if (sort != null) {
-                final SortAndOrder s = new SortAndOrder(sort);
-                q.setSortField(s.getSortField());
-                q.setSortOrder(s.getSortOrder());
-            }
-            if (filter != null) q.setFilter(filter);
-
-            if (!caller.admin()) {
-                final Class entityClass = dao.getEntityClass();
-                if (entityClass.equals(Account.class)) {
-                    // non-admins can only look up themselves
-                    q.setBound("uuid", caller.getUuid());
-                } else {
-                    final SqlViewField accountField = ((AbstractDAO) dao).findSearchField(entityClass, "account");
-                    if (accountField != null) {
-                        q.setBound("account", caller.getUuid());
-                    } else {
-                        // no results, non-admin cannot search for things that do not have an account
-                        return new SearchResults<>().setError("cannot search "+ entityClass.getName());
-                    }
-                }
-            }
-
-            final SearchResults results = dao.search(q);
-            if (results.hasNextPage(q)) {
-                results.setNextPage(req.getRequestURI()+"?"+Q_PAGE+"="+(q.getPageNumber()+1)+"&"+Q_SIZE+"="+q.getPageSize());
-            }
-            return results;
-        }));
+        return ok(_searchCache.computeIfAbsent(cacheKey,
+                searchKey -> _search(daoCache, geoService, configuration, req, type, meta, filter, page, size, sort, searchQuery, caller)
+        ));
     }
 
-    public DAO getDao(String type) {
+    public static Object _search(Map<String, DAO> daoCache,
+                                 GeoService geoService,
+                                 BubbleConfiguration configuration,
+                                 Request req,
+                                 String type,
+                                 Boolean meta,
+                                 String filter,
+                                 Integer page,
+                                 Integer size,
+                                 String sort,
+                                 SearchQuery searchQuery,
+                                 Account caller) {
+        final DAO dao = daoCache.computeIfAbsent(type, k -> getDao(configuration, type));
+        if (meta != null) return ((AbstractDAO) dao).getSearchFields();
+
+        final SearchQuery q = searchQuery != null ? searchQuery : new SearchQuery();
+        if (!q.hasLocale()) {
+            try {
+                q.setLocale(geoService.getFirstLocale(caller, getRemoteHost(req), normalizeLangHeader(req)));
+            } catch (Exception e) {
+                log.warn("search: error setting locale, using default: "+configuration.getDefaultLocale()+": "+e);
+                q.setLocale(configuration.getDefaultLocale());
+            }
+        }
+        q.setPageNumber(page != null ? page : 1);
+        q.setPageSize(size != null ? Integer.min(size, MAX_SEARCH_PAGE) : Integer.min(q.getPageSize(), MAX_SEARCH_PAGE));
+        if (sort != null) {
+            final SortAndOrder s = new SortAndOrder(sort);
+            q.setSortField(s.getSortField());
+            q.setSortOrder(s.getSortOrder());
+        }
+        if (filter != null) q.setFilter(filter);
+
+        if (!caller.admin()) {
+            final Class entityClass = dao.getEntityClass();
+            if (entityClass.equals(Account.class)) {
+                // non-admins can only look up themselves
+                q.setBound("uuid", caller.getUuid());
+            } else {
+                final SqlViewField accountField = ((AbstractDAO) dao).findSearchField(entityClass, "account");
+                if (accountField != null) {
+                    q.setBound("account", caller.getUuid());
+                } else {
+                    // no results, non-admin cannot search for things that do not have an account
+                    return new SearchResults<>().setError("cannot search "+ entityClass.getName());
+                }
+            }
+        }
+
+        final SearchResults results = dao.search(q);
+        if (results.hasNextPage(q)) {
+            results.setNextPage(req.getRequestURI()+"?"+Q_PAGE+"="+(q.getPageNumber()+1)+"&"+Q_SIZE+"="+q.getPageSize());
+        }
+        return results;
+    }
+
+    public static DAO getDao(BubbleConfiguration configuration, String type) {
         for (Class c : configuration.getEntityClasses()) {
-            if (c.getSimpleName().equalsIgnoreCase(type)) {
+            if (c.getName().equalsIgnoreCase(type) || c.getSimpleName().equalsIgnoreCase(type)) {
                 return configuration.getDaoForEntityClass(c);
             }
         }

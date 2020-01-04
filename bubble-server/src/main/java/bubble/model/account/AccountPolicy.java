@@ -36,7 +36,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 
-@Entity @ECType
+@Entity @ECType(root=true)
 @NoArgsConstructor @Accessors(chain=true)
 public class AccountPolicy extends IdentifiableBase implements HasAccount {
 

@@ -23,7 +23,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
-@Entity @ECType
+@Entity @ECType(root=true)
 @ECIndexes({
         @ECIndex(of={"account", "name", "requestId", "messageType", "action", "target"}),
         @ECIndex(of={"account", "name", "messageType", "action", "target"}),
