@@ -13,6 +13,7 @@ import lombok.Cleanup;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.io.FileUtil;
+import org.cobbzilla.util.system.OneWayFlag;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.*;
@@ -21,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
+import static bubble.dao.cloud.AnsibleRoleDAO.ROLE_PATH;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.notSupported;
 import static org.cobbzilla.util.io.FileUtil.*;
@@ -48,8 +50,15 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
             final File file = keyFile(from, key);
             return file.exists();
         }
-        if (activated()) return false;
-        // check classpath only if bubble has not been activated
+
+        // Special handling when bubble has not been activated for bootstrapping ansible roles
+        if (activated() || !key.startsWith(ROLE_PATH)) return false;
+
+        // check root network filesystem
+        final File file = keyFileForNetwork(ROOT_NETWORK_UUID, config.getBaseDir(), key);
+        if (file.exists()) return true;
+
+        // check classpath
         @Cleanup final InputStream in = getClass().getClassLoader().getResourceAsStream(key);
         return in != null;
     }
@@ -72,9 +81,14 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
             return f.exists() ? new FileInputStream(f) : null;
         }
 
-        // only try classpath is bubble has not been activated
-        if (activated()) return null;
+        // Special handling when bubble is not activated for bootstrapping ansible roles
+        if (activated() || !key.startsWith(ROLE_PATH)) return null;
 
+        // check root network filesystem
+        final File rootNetFile = keyFileForNetwork(ROOT_NETWORK_UUID, config.getBaseDir(), key);
+        if (rootNetFile.exists()) return new FileInputStream(rootNetFile);
+
+        // check classpath
         @Cleanup InputStream in = getClass().getClassLoader().getResourceAsStream(key);
         if (in == null) return null;
 
@@ -85,9 +99,10 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
         return new FileInputStream(file);
     }
 
-    public boolean activated() {
-        return accountDAO.activated() && configuration.getThisNode() != null;
-    }
+    // once activated (any accounts exist), you can never go back
+    // avoid crossing the Hibernate TX boundary by caching the result here
+    private final OneWayFlag activated = new OneWayFlag("activated", () -> accountDAO.activated());
+    public boolean activated() { return activated.check(); }
 
     @Override public boolean _write(String fromNode, String key, InputStream data, StorageMetadata metadata, String requestId) throws IOException {
         final BubbleNode from = getFromNode(fromNode);

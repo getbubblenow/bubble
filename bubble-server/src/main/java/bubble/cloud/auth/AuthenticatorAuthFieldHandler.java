@@ -7,7 +7,7 @@ import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import java.util.Collections;
 import java.util.List;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.shortErrorString;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.json.JsonUtil.json;
 
 public class AuthenticatorAuthFieldHandler implements AuthFieldHandler {
@@ -17,7 +17,7 @@ public class AuthenticatorAuthFieldHandler implements AuthFieldHandler {
         try {
             final TotpBean bean = json(val, TotpBean.class);
         } catch (Exception e) {
-            return new SingletonList<>(new ConstraintViolationBean("err.authenticator.invalid", "Not a valid TotpBean: "+val+": "+shortErrorString(e)));
+            return new SingletonList<>(new ConstraintViolationBean("err.authenticator.invalid", "Not a valid TotpBean: "+val+": "+ shortError(e)));
         }
         return Collections.emptyList();
     }

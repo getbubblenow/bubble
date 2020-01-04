@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.shortErrorString;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.json.JsonUtil.json;
 
 @NoArgsConstructor @Accessors(chain=true)
@@ -31,7 +31,7 @@ public class StorageResult {
     public static StorageResult failed(StorageDriverNotification notification, NotificationType type, Exception e) {
         return new StorageResult()
                 .setSuccess(false)
-                .setError(shortErrorString(e))
+                .setError(shortError(e))
                 .setKey(notification.getKey())
                 .setType(type);
     }

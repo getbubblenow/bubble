@@ -64,6 +64,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_SAGE_UUID = "sageUuid";
     public static final String TAG_PAYMENTS_ENABLED = "paymentsEnabled";
     public static final String TAG_CLOUD_DRIVERS = "cloudDrivers";
+    public static final String TAG_ENTITY_CLASSES = "entityClasses";
 
     public static final String DEFAULT_LOCALE = "en_US";
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
@@ -235,7 +236,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_ALLOW_REGISTRATION, getThisNetwork() == null ? null : getThisNetwork().getBooleanTag(TAG_ALLOW_REGISTRATION, false)},
                         {TAG_SAGE_LAUNCHER, isSageLauncher()},
                         {TAG_PAYMENTS_ENABLED, paymentsEnabled()},
-                        {TAG_CLOUD_DRIVERS, getCloudDriverClasses()}
+                        {TAG_CLOUD_DRIVERS, getCloudDriverClasses()},
+                        {TAG_ENTITY_CLASSES, getSortedEntityClassNames()}
                 }));
             }
             return publicSystemConfigs.get();

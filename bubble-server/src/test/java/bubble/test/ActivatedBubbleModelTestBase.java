@@ -30,7 +30,7 @@ import static bubble.ApiConstants.*;
 import static bubble.model.account.Account.ROOT_USERNAME;
 import static bubble.service.boot.StandardSelfNodeService.THIS_NODE_FILE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.shortErrorString;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.handlebars.HandlebarsUtil.applyReflectively;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
@@ -114,7 +114,7 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
                         .setDomain(domain), Account.class);
             } catch (ValidationException e) {
                 if (e.hasViolations() && e.getViolations().containsKey("err.activation.alreadyDone")) {
-                    log.warn("onStart: activation already done, trying to login: " + shortErrorString(e));
+                    log.warn("onStart: activation already done, trying to login: " + shortError(e));
                     admin = client.post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_USERNAME, ROOT_PASSWORD), Account.class);
                 } else {
                     throw e;

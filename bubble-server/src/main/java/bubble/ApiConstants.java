@@ -169,7 +169,7 @@ public class ApiConstants {
     public static final String EP_APPLY = "/apply";
 
     public static final int MAX_NOTIFY_LOG = 10000;
-    public static final int ERROR_MAXLEN = 2000;
+    public static final int ERROR_MAXLEN = 4000;
 
     public static String getToken(String json) {
         if (json == null) return null;

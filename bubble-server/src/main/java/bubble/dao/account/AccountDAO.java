@@ -251,8 +251,15 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         }
     }
 
+    // once activated (any accounts exist), you can never go back
+    private static final AtomicBoolean activated = new AtomicBoolean(false);
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public boolean activated() { return countAll() > 0; }
+    public boolean activated() {
+        if (activated.get()) return true;
+        final boolean accountsExist = countAll() > 0;
+        if (accountsExist) activated.set(true);
+        return accountsExist;
+    }
 
     public Account findFirstAdmin() {
         final List<Account> admins = findByField("admin", true);

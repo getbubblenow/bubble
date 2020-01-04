@@ -19,6 +19,7 @@ import static bubble.ApiConstants.BACKUPS_ENDPOINT;
 import static bubble.ApiConstants.ERROR_MAXLEN;
 import static bubble.service.backup.BackupService.BR_STATE_LOCK_TIMEOUT;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.string.StringUtil.ellipsis;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
@@ -64,8 +65,9 @@ public class BubbleBackup extends IdentifiableBase implements HasAccount {
     public boolean success () { return status == BackupStatus.backup_completed; }
 
     @ECSearchable(filter=true)
-    @Type(type=ENCRYPTED_STRING) @Column(length=ERROR_MAXLEN)
-    @Getter @Setter private String error;
+    @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(ERROR_MAXLEN+ENC_PAD)+")")
+    @Getter private String error;
+    public BubbleBackup setError (String err) { this.error = ellipsis(err, ERROR_MAXLEN); return this; }
     public boolean hasError () { return !empty(error); }
 
     public boolean canDelete() { return status.isDeletable() || getCtimeAge() > BR_STATE_LOCK_TIMEOUT; }
