@@ -237,7 +237,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_SAGE_LAUNCHER, isSageLauncher()},
                         {TAG_PAYMENTS_ENABLED, paymentsEnabled()},
                         {TAG_CLOUD_DRIVERS, getCloudDriverClasses()},
-                        {TAG_ENTITY_CLASSES, getSortedEntityClassNames()},
+                        {TAG_ENTITY_CLASSES, getSortedSimpleEntityClassMap()},
                         {TAG_LOCALES, getAllLocales()}
                 }));
             }
