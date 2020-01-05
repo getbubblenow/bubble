@@ -1,13 +1,15 @@
 package bubble.cloud.payment.delegate;
 
-import bubble.cloud.CloudServiceType;
 import bubble.cloud.DelegatedCloudServiceDriverBase;
 import bubble.cloud.payment.PaymentServiceDriver;
-import bubble.notify.payment.*;
 import bubble.dao.cloud.CloudServiceDAO;
-import bubble.model.bill.*;
+import bubble.model.bill.AccountPaymentMethod;
+import bubble.model.bill.AccountPlan;
+import bubble.model.bill.BubblePlan;
+import bubble.model.bill.PaymentMethodType;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
+import bubble.notify.payment.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -21,8 +23,6 @@ public class DelegatedPaymentDriver extends DelegatedCloudServiceDriverBase impl
     @Autowired private CloudServiceDAO cloudDAO;
 
     public DelegatedPaymentDriver(CloudService cloud) { super(cloud); }
-
-    @Override public CloudServiceType getType() { return CloudServiceType.payment; }
 
     @Override public PaymentMethodType getPaymentMethodType() {
         if (!cloud.delegated()) {

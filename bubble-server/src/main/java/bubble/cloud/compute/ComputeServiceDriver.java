@@ -19,4 +19,6 @@ public interface ComputeServiceDriver extends CloudServiceDriver, RegionalServic
     BubbleNode stop(BubbleNode node) throws Exception;
     BubbleNode status(BubbleNode node) throws Exception;
 
+    @Override default boolean test () { return true; }
+
 }

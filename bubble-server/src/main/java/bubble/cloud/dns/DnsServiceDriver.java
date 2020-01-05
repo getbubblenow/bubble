@@ -20,8 +20,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.dns.DnsRecord.OPT_NS_NAME;
 import static org.cobbzilla.util.network.NetworkUtil.IPv4_ALL_ADDRS;
 import static org.cobbzilla.util.network.NetworkUtil.ipEquals;
@@ -48,6 +47,8 @@ public interface DnsServiceDriver extends CloudServiceDriver {
     Collection<DnsRecord> list(DnsRecordMatch matcher);
 
     default Collection<DnsRecord> list() { return list(null); }
+
+    @Override default boolean test() { return !empty(list()); }
 
     default Collection<DnsRecord> listNew(Long lastMod) { return list(); }
 

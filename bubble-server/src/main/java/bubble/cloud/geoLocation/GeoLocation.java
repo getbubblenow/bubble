@@ -10,13 +10,14 @@ import org.cobbzilla.util.math.Haversine;
 
 import javax.persistence.Transient;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.big;
-import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class GeoLocation {
 
     @Getter @Setter private String country;
+    public boolean hasCountry() { return !empty(country); }
+
     @Getter @Setter private String region;
     @Getter @Setter private String city;
     @Getter @Setter private String lat;
@@ -67,4 +68,5 @@ public class GeoLocation {
             return false;
         }
     }
+
 }

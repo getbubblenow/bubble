@@ -1,9 +1,11 @@
 package bubble.service.boot;
 
 import bubble.ApiConstants;
+import bubble.cloud.CloudServiceDriver;
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.compute.ComputeNodeSizeType;
 import bubble.cloud.compute.local.LocalComputeDriver;
+import bubble.cloud.dns.DnsServiceDriver;
 import bubble.cloud.storage.local.LocalStorageConfig;
 import bubble.cloud.storage.local.LocalStorageDriver;
 import bubble.dao.cloud.*;
@@ -12,6 +14,9 @@ import bubble.model.account.ActivationRequest;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.dns.DnsRecordMatch;
+import org.cobbzilla.util.dns.DnsType;
+import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,13 +30,14 @@ import static bubble.model.cloud.BubbleFootprint.DEFAULT_FOOTPRINT_OBJECT;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static bubble.model.cloud.BubbleNetwork.TAG_PARENT_ACCOUNT;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.toStringOrDie;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.getFirstPublicIpv4;
 import static org.cobbzilla.util.network.NetworkUtil.getLocalhostIpv4;
 import static org.cobbzilla.util.system.CommandShell.execScript;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Service @Slf4j
 public class ActivationService {
@@ -62,6 +68,14 @@ public class ActivationService {
                 .setType(CloudServiceType.dns)
                 .setTemplate(true)
                 .setAccount(account.getUuid()));
+        final DnsServiceDriver dnsDriver = publicDns.getDnsDriver(configuration);
+        checkDriver(dnsDriver, "err.dns.testFailed", "err.dns.unknownError");
+        final DnsRecordMatch nsMatcher = (DnsRecordMatch) new DnsRecordMatch()
+                .setType(DnsType.NS)
+                .setFqdn(request.getDomain().getName());
+        if (empty(dnsDriver.list(nsMatcher))) {
+            throw invalidEx("err.dns.noNameServerRecordsForDomain", request.getDomain().getName());
+        }
 
         final CloudService localStorage = cloudDAO.create(new CloudService()
                 .setAccount(account.getUuid())
@@ -77,6 +91,8 @@ public class ActivationService {
         } else {
             networkStorage = cloudDAO.create(new CloudService(request.getStorage())
                     .setAccount(account.getUuid()));
+            final CloudServiceDriver storageDriver = networkStorage.getStorageDriver(configuration);
+            checkDriver(storageDriver, "err.storage.testFailed", "err.storage.unknownError");
         }
 
         final AnsibleRole[] roles = request.hasRoles() ? request.getRoles() : json(loadDefaultRoles(), AnsibleRole[].class);
@@ -146,6 +162,16 @@ public class ActivationService {
         configuration.refreshPublicSystemConfigs();
 
         return node;
+    }
+
+    public void checkDriver(CloudServiceDriver storageDriver, String errTestFailed, String errException) {
+        try {
+            if (!storageDriver.test()) throw invalidEx(errTestFailed);
+        } catch (SimpleViolationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw invalidEx(errException, shortError(e));
+        }
     }
 
     public String loadDefaultRoles() {

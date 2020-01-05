@@ -16,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.system.Sleep.sleep;
@@ -113,6 +114,20 @@ public interface StorageServiceDriver extends CloudServiceDriver {
     default String readString(String fromNode, String key) {
         return new String(readFully(fromNode, key));
     }
+
+    @Override default boolean test () {
+        try {
+            if (!write(getTestNodeId(), getTestKey(), getTestBytes())) return false;
+            if (!delete(getTestNodeId(), getTestKey())) return false;
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
+    default String getTestNodeId () { return ROOT_NETWORK_UUID; }
+    default String getTestKey () { return "_test"; }
+    default byte[] getTestBytes() { return "test".getBytes(); }
 
     boolean _write(String fromNode, String key, InputStream data, StorageMetadata metadata, String requestId) throws IOException;
 

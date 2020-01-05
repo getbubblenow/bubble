@@ -1,7 +1,6 @@
 package bubble.cloud.payment;
 
 import bubble.cloud.CloudServiceDriverBase;
-import bubble.cloud.CloudServiceType;
 import bubble.dao.bill.*;
 import bubble.model.bill.*;
 import lombok.extern.slf4j.Slf4j;
@@ -13,8 +12,6 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
 public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> implements PaymentServiceDriver {
-
-    @Override public CloudServiceType getType() { return CloudServiceType.payment; }
 
     @Autowired protected AccountPlanDAO accountPlanDAO;
     @Autowired protected BubblePlanDAO planDAO;

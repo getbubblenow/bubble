@@ -20,4 +20,14 @@ public class GeoCodeResult {
     @JsonIgnore @Transient public double getLatitude () { return big(lat).doubleValue(); }
     @JsonIgnore @Transient public double getLongitude () { return big(lon).doubleValue(); }
 
+    public boolean valid () {
+        try {
+            Double.parseDouble(lat);
+            Double.parseDouble(lon);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
 }

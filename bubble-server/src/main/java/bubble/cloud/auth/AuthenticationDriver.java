@@ -36,6 +36,8 @@ public interface AuthenticationDriver extends CloudServiceDriver {
 
     boolean send(Account account, AccountMessage message, AccountContact contact);
 
+    @Override default boolean test () { return true; }
+
     default Map<String, Object> buildContext(Account account, AccountMessage message, AccountContact contact) {
         return buildContext(account, message, contact, getConfiguration());
     }
