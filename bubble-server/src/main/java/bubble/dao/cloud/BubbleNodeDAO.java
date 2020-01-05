@@ -5,12 +5,14 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeState;
 import bubble.service.cloud.NetworkService;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.ApiConstants.newNodeHostname;
 import static bubble.model.cloud.BubbleNodeState.running;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -19,13 +21,26 @@ import static org.hibernate.criterion.Restrictions.isNotNull;
 @Repository @Slf4j
 public class BubbleNodeDAO extends AccountOwnedEntityDAO<BubbleNode> {
 
+    @Getter(lazy=true) private static final BubbleNode rootNode = initRootNode();
+    private static BubbleNode initRootNode() {
+        final BubbleNode n = new BubbleNode();
+        n.setUuid(ROOT_NETWORK_UUID);
+        return n.setNetwork(ROOT_NETWORK_UUID);
+    }
+
     @Autowired private NetworkService networkService;
     @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
 
     @Override protected String getNameField() { return "fqdn"; }
 
+    @Override public BubbleNode findByUuid(String uuid) {
+        if (ROOT_NETWORK_UUID.equals(uuid)) return getRootNode();
+        return super.findByUuid(uuid);
+    }
+
     @Override public Object preCreate(BubbleNode node) {
+        if (node.getUuid().equals(ROOT_NETWORK_UUID)) throw invalidEx("err.uuid.invalid");
         final BubbleNetwork network = networkDAO.findByUuid(node.getNetwork());
 
         if (!node.hasHost()) node.setHost(newNodeHostname());

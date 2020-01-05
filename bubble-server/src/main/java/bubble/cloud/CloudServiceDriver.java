@@ -68,6 +68,7 @@ public interface CloudServiceDriver {
         return json(val, resultClass);
     }
 
+    default boolean test(Object arg) { return test(); }
     boolean test();
 
 }

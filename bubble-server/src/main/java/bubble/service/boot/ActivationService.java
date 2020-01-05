@@ -1,6 +1,5 @@
 package bubble.service.boot;
 
-import bubble.ApiConstants;
 import bubble.cloud.CloudServiceDriver;
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.compute.ComputeNodeSizeType;
@@ -23,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.util.Arrays;
 
+import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.cloud.storage.StorageServiceDriver.STORAGE_PREFIX;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
 import static bubble.model.cloud.BubbleFootprint.DEFAULT_FOOTPRINT;
@@ -30,7 +30,8 @@ import static bubble.model.cloud.BubbleFootprint.DEFAULT_FOOTPRINT_OBJECT;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static bubble.model.cloud.BubbleNetwork.TAG_PARENT_ACCOUNT;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.io.FileUtil.toStringOrDie;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -69,13 +70,10 @@ public class ActivationService {
                 .setTemplate(true)
                 .setAccount(account.getUuid()));
         final DnsServiceDriver dnsDriver = publicDns.getDnsDriver(configuration);
-        checkDriver(dnsDriver, "err.dns.testFailed", "err.dns.unknownError");
         final DnsRecordMatch nsMatcher = (DnsRecordMatch) new DnsRecordMatch()
                 .setType(DnsType.NS)
                 .setFqdn(request.getDomain().getName());
-        if (empty(dnsDriver.list(nsMatcher))) {
-            throw invalidEx("err.dns.noNameServerRecordsForDomain", request.getDomain().getName());
-        }
+        checkDriver(dnsDriver, nsMatcher, "err.dns.testFailed", "err.dns.unknownError");
 
         final CloudService localStorage = cloudDAO.create(new CloudService()
                 .setAccount(account.getUuid())
@@ -85,14 +83,17 @@ public class ActivationService {
                 .setName(LOCAL_STORAGE)
                 .setTemplate(true));
 
+        final CloudService storage = request.getStorage();
         final CloudService networkStorage;
-        if (request.getStorage().getName().equals(LOCAL_STORAGE)) {
+        if (storage.getName().equals(LOCAL_STORAGE)) {
             networkStorage = localStorage;
         } else {
-            networkStorage = cloudDAO.create(new CloudService(request.getStorage())
-                    .setAccount(account.getUuid()));
+            if (storage.getCredentials().needsNewNetworkKey(ROOT_NETWORK_UUID)) {
+                storage.setCredentials(storage.getCredentials().initNetworkKey(ROOT_NETWORK_UUID));
+            }
+            networkStorage = cloudDAO.create(new CloudService(storage).setAccount(account.getUuid()));
             final CloudServiceDriver storageDriver = networkStorage.getStorageDriver(configuration);
-            checkDriver(storageDriver, "err.storage.testFailed", "err.storage.unknownError");
+            checkDriver(storageDriver, null, "err.storage.testFailed", "err.storage.unknownError");
         }
 
         final AnsibleRole[] roles = request.hasRoles() ? request.getRoles() : json(loadDefaultRoles(), AnsibleRole[].class);
@@ -164,9 +165,9 @@ public class ActivationService {
         return node;
     }
 
-    public void checkDriver(CloudServiceDriver storageDriver, String errTestFailed, String errException) {
+    public void checkDriver(CloudServiceDriver driver, Object arg, String errTestFailed, String errException) {
         try {
-            if (!storageDriver.test()) throw invalidEx(errTestFailed);
+            if (!driver.test(arg)) throw invalidEx(errTestFailed);
         } catch (SimpleViolationException e) {
             throw e;
         } catch (Exception e) {
@@ -186,7 +187,7 @@ public class ActivationService {
     }
 
     public BubbleNetwork createRootNetwork(BubbleNetwork network) {
-        network.setUuid(ApiConstants.ROOT_NETWORK_UUID);
+        network.setUuid(ROOT_NETWORK_UUID);
         return networkDAO.create(network);
     }
 

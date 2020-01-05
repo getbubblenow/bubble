@@ -55,9 +55,15 @@ public abstract class DnsDriverBase<T> extends CloudServiceDriverBase<T> impleme
             return null;
         }
 
+        final BubbleNode thisNode = configuration.getThisNode();
+        if (thisNode == null) {
+            // we are still in activation
+            return new BubbleDomain().setName(search);
+        }
+
         // todo: add accountUuid param, update DnsServiceDriver interface
-        final String account = configuration.getThisNode().getAccount();
-        while (search.contains(".")) {
+        final String account = thisNode.getAccount();
+        while (account != null && search.contains(".")) {
             final BubbleDomain found = domainDAO.findByAccountAndId(account, search);
             if (found != null) return found;
             search = search.substring(search.indexOf(".") + 1);

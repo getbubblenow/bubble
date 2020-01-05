@@ -71,7 +71,7 @@ public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
     public String ensureDomainSuffix(String fqdn) { return fqdn.endsWith("." + getName()) ? fqdn : fqdn + "." + getName(); }
 
     public String dropDomainSuffix(String fqdn) {
-        return !fqdn.endsWith("." + getName()) ? fqdn
+        return fqdn.equals(getName()) ? "" : !fqdn.endsWith("." + getName()) ? fqdn
                 : fqdn.substring(0, fqdn.length() - getName().length() - 1);
     }
 
