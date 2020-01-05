@@ -28,8 +28,9 @@ import static bubble.ApiConstants.EP_NETWORKS;
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.model.cloud.BubbleDomain.DOMAIN_NAME_MAXLEN;
 import static bubble.model.cloud.BubbleNetworkState.created;
-import static bubble.ApiConstants.DEFAULT_LOCALE;
+import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
@@ -107,7 +108,8 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @ECSearchable @ECField(type=EntityFieldType.locale, index=90)
     @Size(max=20, message="err.locale.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(20+ENC_PAD)+") NOT NULL")
-    @Getter @Setter private String locale = DEFAULT_LOCALE;
+    @Getter @Setter private String locale = getDEFAULT_LOCALE();
+    public boolean hasLocale () { return !empty(locale); }
 
     // A unicode timezone alias from: cobbzilla-utils/src/main/resources/org/cobbzilla/util/time/unicode-timezones.xml
     // All unicode aliases are guaranteed to map to a Linux timezone and a Java timezone

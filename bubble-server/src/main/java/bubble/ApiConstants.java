@@ -129,6 +129,7 @@ public class ApiConstants {
     public static final String EP_TAGS = "/tags";
     public static final String EP_NODES = "/nodes";
     public static final String EP_DEVICES = "/devices";
+    public static final String EP_MODEL = "/model";
     public static final String EP_VPN = "/vpn";
     public static final String EP_PAYMENT_METHOD = "/paymentMethod";
     public static final String EP_PAYMENT_METHODS = PAYMENT_METHODS_ENDPOINT;
@@ -241,4 +242,5 @@ public class ApiConstants {
                 .orElseThrow((Supplier<RuntimeException>) () ->
                         invalidEx("err."+e.getSimpleName()+".invalid", "Invalid "+e.getSimpleName()+": "+v, v));
     }
+
 }

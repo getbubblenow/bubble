@@ -19,10 +19,13 @@ import bubble.resources.notify.SentNotificationsResource;
 import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.account.download.AccountDownloadService;
+import bubble.service.boot.BubbleModelSetupService;
 import bubble.service.cloud.StandardNetworkService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.io.FileUtil;
+import org.cobbzilla.util.io.TempDir;
 import org.cobbzilla.util.string.LocaleUtil;
 import org.cobbzilla.wizard.auth.ChangePasswordRequest;
 import org.cobbzilla.wizard.client.ApiClientBase;
@@ -32,6 +35,7 @@ import org.cobbzilla.wizard.client.script.ApiRunnerListenerStreamLogger;
 import org.cobbzilla.wizard.client.script.ApiScript;
 import org.cobbzilla.wizard.model.HashedPassword;
 import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,13 +43,16 @@ import org.springframework.stereotype.Service;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.Locale;
 
 import static bubble.ApiConstants.*;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.errorString;
-import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
-import static org.cobbzilla.util.http.HttpContentTypes.TEXT_PLAIN;
+import static org.cobbzilla.util.http.HttpContentTypes.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -280,6 +287,23 @@ public class MeResource {
                                        @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return ok(networkService.listLaunchStatuses(caller.getUuid()));
+    }
+
+    @Autowired private BubbleModelSetupService modelSetupService;
+
+    @POST @Path(EP_MODEL)
+    @Consumes(MULTIPART_FORM_DATA)
+    public Response uploadModel(@Context Request req,
+                                @Context ContainerRequest ctx,
+                                @FormDataParam("file") InputStream in,
+                                @FormDataParam("name") String name) throws IOException {
+        final Account caller = userPrincipal(ctx);
+        if (empty(name)) return invalid("err.name.required");
+
+        @Cleanup final TempDir temp = new TempDir();
+        final File modelFile = new File(temp, name);
+        FileUtil.toFileOrDie(modelFile, in);
+        return ok(modelSetupService.setupModel(caller, modelFile));
     }
 
 }

@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import static bubble.ApiConstants.ACCOUNTS_ENDPOINT;
-import static bubble.ApiConstants.DEFAULT_LOCALE;
+import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -116,7 +116,8 @@ public class Account extends IdentifiableBase implements TokenPrincipal, SqlView
     @ECSearchable @ECField(type=EntityFieldType.locale, index=50)
     @Size(max=20, message="err.locale.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(20+ENC_PAD)+") NOT NULL")
-    @Getter @Setter private String locale = DEFAULT_LOCALE;
+    @Getter @Setter private String locale = getDEFAULT_LOCALE();
+    public boolean hasLocale () { return !empty(locale); }
 
     @ECSearchable @ECField(index=60)
     @Getter @Setter private Boolean admin = false;

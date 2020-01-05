@@ -136,11 +136,20 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         return bubbleJar;
     }
 
+    private static final AtomicReference<String> _DEFAULT_LOCALE = new AtomicReference<>();
+    public static String getDEFAULT_LOCALE() { return _DEFAULT_LOCALE.get(); }
+
     @Setter private String defaultLocale = DEFAULT_LOCALE;
     public String getDefaultLocale () {
-        if (!empty(defaultLocale)) return defaultLocale;
+        if (!empty(defaultLocale)) {
+            if (_DEFAULT_LOCALE.get() == null) _DEFAULT_LOCALE.set(defaultLocale);
+            return defaultLocale;
+        }
         final String[] allLocales = getAllLocales();
-        if (ArrayUtils.contains(allLocales, DEFAULT_LOCALE)) return DEFAULT_LOCALE;
+        if (ArrayUtils.contains(allLocales, DEFAULT_LOCALE)) {
+            if (_DEFAULT_LOCALE.get() == null) _DEFAULT_LOCALE.set(DEFAULT_LOCALE);
+            return DEFAULT_LOCALE;
+        }
         return allLocales[0];
     }
 

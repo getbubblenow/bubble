@@ -17,11 +17,15 @@ import org.cobbzilla.wizard.model.SemanticVersion;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.Transient;
 import java.util.Locale;
 
-import static bubble.ApiConstants.*;
-import static bubble.ApiConstants.DEFAULT_LOCALE;
+import static bubble.ApiConstants.DRIVERS_ENDPOINT;
+import static bubble.ApiConstants.EP_DRIVERS;
+import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
@@ -98,7 +102,7 @@ public class RuleDriver extends IdentifiableBase implements AccountTemplate {
     @Transient @Getter @Setter private AppRuleDriverDescriptor descriptor;
 
     public AppRuleDriverDescriptor getDescriptor(Locale locale) {
-        final String localeString = locale != null ? locale.toString() : DEFAULT_LOCALE;
+        final String localeString = locale != null ? locale.toString() : getDEFAULT_LOCALE();
         final AppRuleDriverDescriptor localized;
         final String prefix = driverClass.replace(".", "/");
         try {

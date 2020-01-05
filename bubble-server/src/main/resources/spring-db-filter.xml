@@ -21,7 +21,7 @@
     <!-- RedisService -->
     <context:component-scan base-package="org.cobbzilla.wizard.cache.redis"/>
 
-    <!-- only load the model, DAOs and mocks of certain services -->
+    <!-- only load the modelFile, DAOs and mocks of certain services -->
     <context:component-scan base-package="bubble.model"/>
     <context:component-scan base-package="bubble.dao">
         <context:exclude-filter type="regex" expression="bubble.dao.SessionDAO"/>

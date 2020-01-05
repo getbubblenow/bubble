@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
+
 @Repository @Slf4j
 public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
 
@@ -30,6 +32,11 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
     @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private SelfNodeService selfNodeService;
     @Autowired private BubbleConfiguration configuration;
+
+    @Override public Object preCreate(BubbleNetwork network) {
+        if (!network.hasLocale()) network.setLocale(getDEFAULT_LOCALE());
+        return super.preCreate(network);
+    }
 
     @Override public BubbleNetwork postUpdate(BubbleNetwork network, Object context) {
         if (selfNodeService.getThisNetwork().getUuid().equals(network.getUuid())) {

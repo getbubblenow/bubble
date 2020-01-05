@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static bubble.ApiConstants.getRemoteHost;
 import static bubble.model.account.AccountTemplate.copyTemplateObjects;
 import static bubble.model.account.AutoUpdatePolicy.EMPTY_AUTO_UPDATE_POLICY;
+import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
 import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_ASC;
@@ -71,6 +72,8 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     }
 
     @Override public Object preCreate(Account account) {
+        if (!account.hasLocale()) account.setLocale(getDEFAULT_LOCALE());
+
         final ValidationResult result = account.validateName();
         if (result.isInvalid()) throw invalidEx(result);
 
