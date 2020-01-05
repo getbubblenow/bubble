@@ -47,7 +47,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySearchDepth.none;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
-@ECType(root=true) @ECTypeCreate
+@ECType(root=true)
 @ECTypeURIs(baseURI=ACCOUNTS_ENDPOINT, listFields={"name", "url", "description", "admin", "suspended"}, isDeleteDefined=false)
 @ECTypeChildren(value={
         @ECTypeChild(type=Device.class, backref="account"),
@@ -192,6 +192,7 @@ public class Account extends IdentifiableBase implements TokenPrincipal, SqlView
         setHashedPassword(new HashedPassword(request.getPassword()));
         setAdmin(true);
         setDescription(request.hasDescription() ? request.getDescription() : "root user");
+        setLocale(getDEFAULT_LOCALE());
     }
 
     public Account(AccountRegistration request) {

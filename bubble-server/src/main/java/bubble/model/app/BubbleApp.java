@@ -22,7 +22,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
-@ECType(root=true) @ECTypeCreate
+@ECType(root=true)
 @ECTypeURIs(baseURI=APPS_ENDPOINT, listFields={"name", "url", "description", "account", "template", "enabled"})
 @ECTypeChildren(uriPrefix=EP_APPS+"/{BubbleApp.name}", value={
         @ECTypeChild(type=AppSite.class, backref="app"),

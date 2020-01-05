@@ -137,7 +137,10 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     }
 
     private static final AtomicReference<String> _DEFAULT_LOCALE = new AtomicReference<>();
-    public static String getDEFAULT_LOCALE() { return _DEFAULT_LOCALE.get(); }
+    public static String getDEFAULT_LOCALE() {
+        final String locale = _DEFAULT_LOCALE.get();
+        return empty(locale) ? DEFAULT_LOCALE : locale;
+    }
 
     @Setter private String defaultLocale = DEFAULT_LOCALE;
     public String getDefaultLocale () {

@@ -16,7 +16,7 @@ import javax.persistence.Entity;
 import static bubble.ApiConstants.EP_SITES;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
-@ECType(root=true) @ECTypeCreate
+@ECType(root=true)
 @ECTypeURIs(baseURI=EP_SITES, listFields={"name", "app", "description", "url"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECTypeChildren(uriPrefix=EP_SITES+"/{AppSite.name}", value={

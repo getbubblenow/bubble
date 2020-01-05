@@ -44,7 +44,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.*;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
-@ECType(root=true) @ECTypeCreate
+@ECType(root=true)
 @ECTypeURIs(baseURI=EP_CLOUDS, listFields={"name", "description", "account", "enabled"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECTypeChildren(uriPrefix=EP_CLOUDS+"/{CloudService.name}", value={
@@ -116,7 +116,8 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     @Column(nullable=false, length=1000)
     @Getter @Setter private String driverClass;
 
-    @Getter(lazy=true) private final Map<Class, Boolean> _driverUsesCache = new ConcurrentHashMap<>();
+    @JsonIgnore @Getter(lazy=true) private final Map<Class, Boolean> _driverUsesCache = new ConcurrentHashMap<>();
+
     public boolean usesDriver(Class<? extends CloudServiceDriver> clazz) {
         return get_driverUsesCache().computeIfAbsent(clazz, c -> {
             try {

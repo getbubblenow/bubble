@@ -303,7 +303,9 @@ public class MeResource {
         @Cleanup final TempDir temp = new TempDir();
         final File modelFile = new File(temp, name);
         FileUtil.toFileOrDie(modelFile, in);
-        return ok(modelSetupService.setupModel(caller, modelFile));
+
+        final ApiClientBase api = configuration.newApiClient().setToken(caller.getToken());
+        return ok(modelSetupService.setupModel(api, caller, modelFile));
     }
 
 }

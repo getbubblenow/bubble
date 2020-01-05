@@ -25,7 +25,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
-@ECType(root=true) @ECTypeCreate
+@ECType(root=true)
 @ECTypeURIs(baseURI=EP_PLANS, listFields={"name", "domain", "description", "account", "enabled"})
 @ECTypeChildren(uriPrefix=EP_PLANS+"/{BubblePlan.name}", value={
         @ECTypeChild(type=BubbleNetwork.class, backref="plan")
