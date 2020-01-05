@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static bubble.ApiConstants.ACCOUNTS_ENDPOINT;
 import static bubble.ApiConstants.DEFAULT_LOCALE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -46,7 +47,8 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySearchDepth.none;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
-@ECType(root=true) @ECTypeCreate @ECTypeURIs(listFields={"name", "url", "description", "admin", "suspended"}, isDeleteDefined=false)
+@ECType(root=true) @ECTypeCreate
+@ECTypeURIs(baseURI=ACCOUNTS_ENDPOINT, listFields={"name", "url", "description", "admin", "suspended"}, isDeleteDefined=false)
 @ECTypeChildren(value={
         @ECTypeChild(type=Device.class, backref="account"),
         @ECTypeChild(type=BubbleApp.class, backref="account"),
