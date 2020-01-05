@@ -3,7 +3,7 @@ package bubble.service.boot;
 import bubble.model.account.HasAccount;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
-import org.cobbzilla.wizard.ModelSetupService;
+import org.cobbzilla.wizard.model.ModelSetupService;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
