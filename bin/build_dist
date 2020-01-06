@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# Build Bubble distribution ZIP file
+#
+# Usage:
+#
+#     build_dist [no-build]
+#
+#  no-build  : if present, do not rebuild the bubble jar file
+#
+# Environment variables
+#
+#   BUBBLE_ENV     : env file to load. Default is ~/.bubble.env or /home/bubble/current/bubble.env (whichever is found first)
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+NO_BUILD="${1}"
+
+BASE=$(cd $(dirname $0)/.. && pwd)
+cd ${BASE}
+
+if [[ -z "${NO_BUILD}" || "${NO_BUILD}" != "no-build" ]] ; then
+  echo "Building bubble jar..."
+  ${BASE}/bin/git_update_bubble.sh || die "Error building bubble jar file"
+else
+  echo "Not building bubble jar: no-build was set"
+fi
+
+DIST_BASE="${BASE}/dist"
+rm -rf "${DIST_BASE}" || die "Error removing "${DIST_BASE}" directory"
+mkdir -p "${DIST_BASE}" || die "Error creating "${DIST_BASE}" directory"
+
+JAR_DIR="${BASE}/bubble-server/target"
+JAR="$(find "${JAR_DIR}" -type f -name "bubble-server-*.jar" | head -1)"
+if [[ -z "${JAR}" ]] ; then
+  die "No bubble jar found in ${JAR_DIR}"
+fi
+
+VERSION_FILE="${BASE}/bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
+VERSION=$(cat "${VERSION_FILE}" | grep bubble.version | awk -F '=' '{print $2}')
+if [[ -z "${VERSION}" ]] ; then
+  die "No version found in ${VERSION_FILE}"
+fi
+
+DIST="${DIST_BASE}/bubble-${VERSION}"
+cp "${JAR}" "${DIST}/bubble.jar" || die "Error copying ${JAR} to ${DIST}/bubble.jar"
+cp "${BASE}/dist-README.md" "${DIST}/README.md" || die "Error copying dist-README.md to ${DIST}/README.md"

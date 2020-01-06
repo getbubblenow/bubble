@@ -38,7 +38,6 @@ public abstract class BubbleModelTestBase extends ApiModelTestBase<BubbleConfigu
 
     @Override public void beforeStart(RestServer<BubbleConfiguration> server) {
         server.getConfiguration().setBackupsEnabled(backupsEnabled());
-        registerTestHelpers(getApiRunner().getHandlebars());
         super.beforeStart(server);
     }
 
@@ -51,7 +50,12 @@ public abstract class BubbleModelTestBase extends ApiModelTestBase<BubbleConfigu
 
     @Override protected Collection<RestServerLifecycleListener> getLifecycleListeners() { return TEST_LIFECYCLE_LISTENERS; }
 
-    @Getter(lazy=true) private final ApiRunner apiRunner = new ApiRunner(getApi(), (ApiRunnerListener) getListener());
+    @Getter(lazy=true) private final ApiRunner apiRunner = initApiRunner();
+    private ApiRunner initApiRunner() {
+        final ApiRunner runner = new ApiRunner(getApi(), (ApiRunnerListener) getListener());
+        registerTestHelpers(runner.getHandlebars());
+        return runner;
+    }
 
     @Getter private StreamConfigurationSource configurationSource
             = new StreamConfigurationSource("test-bubble-config.yml");

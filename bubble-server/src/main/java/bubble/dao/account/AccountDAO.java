@@ -1,5 +1,6 @@
 package bubble.dao.account;
 
+import bubble.cloud.CloudServiceDriver;
 import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.app.*;
 import bubble.dao.cloud.AnsibleRoleDAO;
@@ -121,9 +122,14 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         final Map<String, CloudService> clouds = new HashMap<>();
         copyTemplateObjects(acct, parent, cloudDAO, new AccountTemplate.CopyTemplate<>() {
             @Override public CloudService preCreate(CloudService parentEntity, CloudService accountEntity) {
-                return accountEntity.setDelegated(parentEntity.getUuid())
-                        .setCredentials(CloudCredentials.delegate(configuration.getThisNode(), configuration))
-                        .setTemplate(false);
+                final CloudServiceDriver driver = parentEntity.getDriver();
+                if (driver.disableDelegation()) {
+                    return accountEntity.setTemplate(false);
+                } else {
+                    return accountEntity.setDelegated(parentEntity.getUuid())
+                            .setCredentials(CloudCredentials.delegate(configuration.getThisNode(), configuration))
+                            .setTemplate(false);
+                }
             }
             @Override public void postCreate(CloudService parentEntity, CloudService accountEntity) {
                 clouds.put(parentEntity.getUuid(), accountEntity);

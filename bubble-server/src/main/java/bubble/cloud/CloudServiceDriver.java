@@ -22,6 +22,8 @@ public interface CloudServiceDriver {
     String CTX_API_KEY = "apiKey";
     String CTX_PARAMS = "params";
 
+    default boolean disableDelegation () { return false; }
+
     default void startDriver() {}
 
     void setConfig(JsonNode json, CloudService cloudService);

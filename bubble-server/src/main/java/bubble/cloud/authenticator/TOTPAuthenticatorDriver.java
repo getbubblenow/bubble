@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 public class TOTPAuthenticatorDriver implements AuthenticatorServiceDriver {
 
+    @Override public boolean disableDelegation() { return true; }
+
     @Autowired private AccountPolicyDAO policyDAO;
     @Autowired private StandardAccountMessageService messageService;
 
