@@ -22,11 +22,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
 public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBase<T> implements GeoLocateServiceDriver {
@@ -105,7 +105,7 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
             return dbFile;
 
         } catch (Exception e) {
-            return die("initFile: "+e.getMessage());
+            throw invalidEx("err.geoLocation.unknownError", "Error initializing "+getClass().getName()+": "+shortError(e));
         }
     }
 

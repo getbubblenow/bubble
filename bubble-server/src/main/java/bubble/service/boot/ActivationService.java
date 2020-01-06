@@ -4,7 +4,6 @@ import bubble.cloud.CloudServiceDriver;
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.compute.ComputeNodeSizeType;
 import bubble.cloud.compute.local.LocalComputeDriver;
-import bubble.cloud.dns.DnsServiceDriver;
 import bubble.cloud.storage.local.LocalStorageConfig;
 import bubble.cloud.storage.local.LocalStorageDriver;
 import bubble.dao.account.AccountDAO;
@@ -101,7 +100,7 @@ public class ActivationService {
                 if (defaultCloud.getType() == CloudServiceType.compute && compute == null) compute = cloud;
             }
         }
-        if (publicDns == null) errors.addViolation("err.dns.noneSpecified");
+        if (publicDns == null) errors.addViolation("err.publicDns.noneSpecified");
         if (storage == null) errors.addViolation("err.storage.noneSpecified");
         if (compute == null && !configuration.testMode()) errors.addViolation("err.compute.noneSpecified");
         if (errors.isInvalid()) throw invalidEx(errors);
@@ -125,28 +124,23 @@ public class ActivationService {
                     .setEnabled(true)
                     .setAccount(account.getUuid()));
             if (cloud == publicDns) {
-                final DnsServiceDriver dnsDriver = publicDns.getDnsDriver(configuration);
-                if (cloud.getName().equals(request.getDomain().getPublicDns())) {
-                    final DnsRecordMatch nsMatcher = (DnsRecordMatch) new DnsRecordMatch()
-                            .setType(DnsType.NS)
-                            .setFqdn(request.getDomain().getName());
-                    checkDriver(dnsDriver, nsMatcher, "err.dns.testFailed", "err.dns.unknownError");
-                } else {
-                    checkDriver(dnsDriver, null, "err.dns.testFailed", "err.dns.unknownError");
-                }
+                final DnsRecordMatch nsMatcher = (DnsRecordMatch) new DnsRecordMatch()
+                        .setType(DnsType.NS)
+                        .setFqdn(request.getDomain().getName());
+                checkDriver(cloud, errors, nsMatcher, "err.dns.testFailed", "err.dns.unknownError");
 
             } else if (cloud == storage && cloud.isNotLocalStorage()) {
                 networkStorage = cloud;  // prefer non-local storage for network
                 if (storage.getCredentials().needsNewNetworkKey(ROOT_NETWORK_UUID)) {
                     storage.setCredentials(storage.getCredentials().initNetworkKey(ROOT_NETWORK_UUID));
                 }
-                final CloudServiceDriver storageDriver = networkStorage.getStorageDriver(configuration);
-                checkDriver(storageDriver, null, "err.storage.testFailed", "err.storage.unknownError");
+                checkDriver(cloud, errors, null, "err.storage.testFailed", "err.storage.unknownError");
 
             } else {
-                checkDriver(cloud.getConfiguredDriver(configuration), null, "err."+cloud.getType()+".testFailed", "err."+cloud.getType()+".unknownError");
+                checkDriver(cloud, errors, null, "err."+cloud.getType()+".testFailed", "err."+cloud.getType()+".unknownError");
             }
         }
+        if (errors.isInvalid()) throw invalidEx(errors);
 
         final AnsibleRole[] roles = request.hasRoles() ? request.getRoles() : json(loadDefaultRoles(), AnsibleRole[].class);
         for (AnsibleRole role : roles) {
@@ -234,14 +228,32 @@ public class ActivationService {
         return node;
     }
 
-    public void checkDriver(CloudServiceDriver driver, Object arg, String errTestFailed, String errException) {
+    public ValidationResult checkDriver(CloudService cloud, ValidationResult errors, Object arg, String errTestFailed, String errException) {
+
+        final String prefix = cloud.getName()+": ";
+        final String argString = arg != null ? " with arg=" + arg : "";
+        final String invalidValue = arg == null ? null : arg.toString();
+        final String driverClass = cloud.getDriverClass();
+
+        final CloudServiceDriver driver;
         try {
-            if (!driver.test(arg)) throw invalidEx(errTestFailed, "test failed for driver: "+driver.getClass().getName()+(arg != null ? " with arg="+arg : ""), (arg == null ? null : arg.toString()));
+            driver = cloud.getConfiguredDriver(configuration);
         } catch (SimpleViolationException e) {
-            throw e;
+            return errors.addViolation(e.getBean());
+
         } catch (Exception e) {
-            throw invalidEx(errException, "test failed for driver: "+driver.getClass().getName()+(arg != null ? " with arg="+arg : "")+": "+shortError(e), (arg == null ? null : arg.toString()));
+            return errors.addViolation(errTestFailed, prefix+"driver initialization failed: "+driverClass);
         }
+        try {
+            if (!driver.test(arg)) {
+                return errors.addViolation(errTestFailed, prefix+"test failed for driver: "+driverClass+argString, invalidValue);
+            }
+        } catch (SimpleViolationException e) {
+            return errors.addViolation(e.getBean());
+        } catch (Exception e) {
+            return errors.addViolation(errException, prefix+"test failed for driver: "+driverClass+argString+": "+shortError(e), invalidValue);
+        }
+        return errors;
     }
 
     public String loadDefaultRoles() {

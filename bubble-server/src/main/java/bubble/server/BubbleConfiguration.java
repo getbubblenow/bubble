@@ -4,9 +4,11 @@ import bubble.ApiConstants;
 import bubble.BubbleHandlebars;
 import bubble.client.BubbleApiClient;
 import bubble.cloud.CloudServiceDriver;
+import bubble.dao.account.AccountDAO;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.server.listener.BubbleFirstTimeListener;
+import bubble.service.boot.ActivationService;
 import bubble.service.boot.StandardSelfNodeService;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.jknack.handlebars.Handlebars;
@@ -66,6 +68,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_CLOUD_DRIVERS = "cloudDrivers";
     public static final String TAG_ENTITY_CLASSES = "entityClasses";
     public static final String TAG_LOCALES = "locales";
+    public static final String TAG_CLOUD_CONFIGS = "cloudConfigs";
 
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
@@ -244,13 +247,15 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public Map<String, Object> getPublicSystemConfigs () {
         synchronized (publicSystemConfigs) {
             if (publicSystemConfigs.get() == null) {
+                final BubbleNetwork thisNetwork = getThisNetwork();
                 publicSystemConfigs.set(MapBuilder.build(new Object[][]{
-                        {TAG_ALLOW_REGISTRATION, getThisNetwork() == null ? null : getThisNetwork().getBooleanTag(TAG_ALLOW_REGISTRATION, false)},
-                        {TAG_SAGE_LAUNCHER, isSageLauncher()},
+                        {TAG_ALLOW_REGISTRATION, thisNetwork == null ? null : thisNetwork.getBooleanTag(TAG_ALLOW_REGISTRATION, false)},
+                        {TAG_SAGE_LAUNCHER, thisNetwork == null || isSageLauncher()},
                         {TAG_PAYMENTS_ENABLED, paymentsEnabled()},
                         {TAG_CLOUD_DRIVERS, getCloudDriverClasses()},
                         {TAG_ENTITY_CLASSES, getSortedSimpleEntityClassMap()},
-                        {TAG_LOCALES, getAllLocales()}
+                        {TAG_LOCALES, getAllLocales()},
+                        {TAG_CLOUD_CONFIGS, getBean(AccountDAO.class).activated() ? null : getBean(ActivationService.class).getCloudDefaults()}
                 }));
             }
             return publicSystemConfigs.get();

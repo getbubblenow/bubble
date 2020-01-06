@@ -12,6 +12,7 @@ import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
 
 import java.io.File;
+import java.util.Map;
 
 import static bubble.service.boot.StandardSelfNodeService.SELF_NODE_JSON;
 import static bubble.service.boot.StandardSelfNodeService.THIS_NODE_FILE;
@@ -36,6 +37,10 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
 
     @Override public void onStart(RestServer server) {
         final BubbleConfiguration c = (BubbleConfiguration) server.getConfiguration();
+
+        // ensure system configs can be loaded properly
+        final Map<String, Object> configs = c.getPublicSystemConfigs();
+        if (empty(configs)) die("onStart: no system configs found");  // should never happen
 
         if (!c.getBean(AccountDAO.class).activated()) {
             final File nodeFile = THIS_NODE_FILE;

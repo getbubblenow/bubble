@@ -107,8 +107,8 @@
     "type": "geoLocation",
     "driverClass": "bubble.cloud.geoLocation.maxmind.MaxMindDriver",
     "driverConfig": {
-      "url": "{{{MAXMIND_URL}}}",
-      "file": "{{{MAXMIND_FILE_REGEX}}}"
+      "url": "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=[[apiKey]]&suffix=tar.gz",
+      "file": "GeoLite2-City_20[\\d]{6}/GeoLite2-City\\.mmdb"
     },
     "credentials": {
       "params": [ {"name": "apiKey", "value": "{{{MAXMIND_API_KEY}}}"} ]

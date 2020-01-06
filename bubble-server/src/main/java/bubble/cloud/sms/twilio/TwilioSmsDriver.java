@@ -38,6 +38,8 @@ public class TwilioSmsDriver extends SmsServiceDriverBase<TwilioSmsConfig> {
         }
     }
 
+    @Override public boolean test() { return twilioInitDone.get(); }
+
     @Override protected String getFromPhone() { return getCredentials().getParam(PARAM_FROM_PHONE_NUMBER); }
 
     protected boolean deliver(RenderedSms sms) {
