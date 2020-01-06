@@ -5,7 +5,7 @@ import bubble.cloud.CloudServiceType;
 import bubble.cloud.dns.godaddy.GoDaddyDnsDriver;
 import bubble.cloud.storage.local.LocalStorageDriver;
 import bubble.model.account.Account;
-import bubble.model.account.ActivationRequest;
+import bubble.model.boot.ActivationRequest;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
@@ -109,8 +109,9 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
                         .setName(ROOT_USERNAME)
                         .setPassword(ROOT_PASSWORD)
                         .setNetworkName(hostname_short())
-                        .setDns(dns)
-                        .setStorage(storage)
+                        .addCloudConfig(dns)
+                        .addCloudConfig(storage)
+                        .setCreateDefaultObjects(false)
                         .setDomain(domain), Account.class);
             } catch (ValidationException e) {
                 if (e.hasViolations() && e.getViolations().containsKey("err.activation.alreadyDone")) {

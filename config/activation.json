@@ -1,0 +1,102 @@
+{
+  // name, password and description of the initial admin user
+  "name": "root",
+  "password": "REPLACE WITH YOUR ROOT PASSWORD",
+  "description": "root user",
+
+  "cloudConfigs" : {
+    // You must configure at least one of these DNS services
+    // Comment the other one out if you're not going to use it
+    "Route53Dns" : {
+      "credentials" : {
+        "AWS_ACCESS_KEY_ID": "your_aws_access_key_id",
+        "AWS_SECRET_KEY": "your_aws_secret_key"
+      }
+    },
+    "GoDaddyDns" : {
+      "credentials" : {
+        "GODADDY_API_KEY": "your_godaddy_api_key",
+        "GODADDY_API_SECRET": "your_godaddy_api_secret"
+      }
+    },
+
+    // You must configure at least one of these Compute services
+    // Comment the other one out if you're not going to use it
+    "VultrCompute": {
+      "credentials": {"API-Key": "your_vultr_api_key"}
+    },
+    "DigitalOceanCompute": {
+      "credentials": {"apiKey": "your_digitalocean_api_key"}
+    },
+
+    // You must configure the AWS S3 Storage service in order to launch new Bubbles
+    "S3_US_Standard" : {
+      "config": {
+        // region must be a valid value from the Regions enum: https://github.com/aws/aws-sdk-java/blob/master/aws-java-sdk-core/src/main/java/com/amazonaws/regions/Regions.java
+        "region": "US_EAST_1",
+        "bucket": "must be a valid bucket name that the credentials can read/write/list/delete",
+        "prefix": "",  // optional: all paths for S3 operations will be prefixed with this path
+        "listFetchSize": 100
+      },
+      "credentials" : {
+        "AWS_ACCESS_KEY_ID": "your_aws_access_key_id",
+        "AWS_SECRET_KEY": "your_aws_secret_key"
+      }
+    },
+
+    // Required for TOTP-based authentication. Highly recommended.
+    "TOTPAuthenticator": {},
+
+    // OPTIONAL SERVICES
+    // Comment out any services you have not configured
+
+    // Required for sending emails
+    "SmtpServer": {
+      "config": {
+        "tlsEnabled": true
+      },
+      "credentials": {
+        "user": "your_smtp_username",
+        "password": "your_smtp_password",
+        "host": "your_smtp_server_hostname",
+        "port": "your_smtp_server_port"
+      }
+    },
+
+    // Required for sending SMS messages
+    "TwilioSms": {
+      "credentials": {
+        "accountSID": "your_twilio_account_SID",
+        "authToken": "your_twilio_auth_token",
+        // text messages sent by Bubble will come "from" this phone number, must be in Twilio-compatible format
+        "fromPhoneNumber": "your_twilio_from_number"
+      }
+    },
+
+    // Required for locale and "nearest compute region" auto-detection
+    "MaxMind": {
+      "config": {
+        // these values work for the free GeoLite database. you still have to specify an apiKey
+        "url": "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=[[apiKey]]&suffix=tar.gz",
+        "file": "GeoLite2-City_20[\\\\d]{6}/GeoLite2-City\\\\.mmdb"
+      },
+      "credentials": {"apiKey": "your_maxmind_api_key"}
+    },
+
+    // Required for "nearest compute region" auto-detection
+    "GoogleGeoCoder": {
+      "credentials": {"apiKey": "your_google_api_key"}
+    },
+
+    // Required for timezone auto-detection
+    "GoogleGeoTime": {
+      "credentials": {"apiKey": "your_google_api_key"}
+    }
+  },
+
+  // the domain that new Bubbles will be launched within
+  "domain": {
+    "publicDns": "Route53Dns or GoDaddyDns",  // name of a DNS provider configured above
+    "name": "example.com"  // a domain name that you own, that is managed by the DNS provider named in `publicDns`
+  }
+}

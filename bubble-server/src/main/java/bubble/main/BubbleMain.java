@@ -8,6 +8,7 @@ import bubble.server.BubbleServer;
 import org.cobbzilla.util.collection.MapBuilder;
 import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.main.MainBase;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.util.Map;
 import java.util.TreeSet;
@@ -33,6 +34,9 @@ public class BubbleMain {
     public static void main(String[] args) throws Exception {
 
         if (args.length == 0) die(noCommandProvided());
+
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+        SLF4JBridgeHandler.install();
 
         // extract command
         final String command = args[0];

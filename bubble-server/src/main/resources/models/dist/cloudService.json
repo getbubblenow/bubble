@@ -1,15 +1,68 @@
 [
   {
-    "_subst": true,
-    "name": "GoogleGeoCoder",
-    "type": "geoCode",
-    "driverClass": "bubble.cloud.geoCode.google.GoogleGeoCodeDriver",
-    "credentials": { "params": [ {"name": "apiKey", "value": "{{required GOOGLE_API_KEY}}"} ] },
+    "name": "Route53Dns",
+    "type": "dns",
+    "driverClass": "bubble.cloud.dns.route53.Route53DnsDriver",
+    "driverConfig": {},
+    "credentials": {
+      "params": [
+        {"name": "AWS_ACCESS_KEY_ID", "value": "{{AWS_ACCESS_KEY_ID}}"},
+        {"name": "AWS_SECRET_KEY", "value": "{{AWS_SECRET_KEY}}"}
+      ]
+    },
     "template": true
   },
 
   {
-    "_subst": true,
+    "name": "GoDaddyDns",
+    "type": "dns",
+    "driverClass": "bubble.cloud.dns.godaddy.GoDaddyDnsDriver",
+    "driverConfig": {},
+    "credentials": {
+      "params": [
+        {"name": "GODADDY_API_KEY", "value": "{{GODADDY_API_KEY}}"},
+        {"name": "GODADDY_API_SECRET", "value": "{{GODADDY_API_SECRET}}"}
+      ]
+    },
+    "template": true
+  },
+
+  {
+    "name": "LocalStorage",
+    "type": "storage",
+    "driverClass": "bubble.cloud.storage.local.LocalStorageDriver",
+    "driverConfig": { "baseDir": "{{LOCALSTORAGE_BASE_DIR}}" },
+    "template": false
+  },
+
+  {
+    "name": "S3_US_Standard",
+    "type": "storage",
+    "driverClass": "bubble.cloud.storage.s3.S3StorageDriver",
+    "driverConfig": {
+      "region": "US_EAST_1",
+      "bucket": "{{BUBBLE_S3_BUCKET}}",
+      "prefix": "{{BUBBLE_S3_BUCKET_PREFIX}}",
+      "listFetchSize": 100
+    },
+    "credentials": {
+      "params": [
+        {"name": "AWS_ACCESS_KEY_ID", "value": "{{AWS_ACCESS_KEY_ID}}"},
+        {"name": "AWS_SECRET_KEY", "value": "{{AWS_SECRET_KEY}}"}
+      ]
+    },
+    "template": true
+  },
+
+  {
+    "name": "GoogleGeoCoder",
+    "type": "geoCode",
+    "driverClass": "bubble.cloud.geoCode.google.GoogleGeoCodeDriver",
+    "credentials": { "params": [ {"name": "apiKey", "value": "{{GOOGLE_API_KEY}}"} ] },
+    "template": true
+  },
+
+  {
     "name": "TOTPAuthenticator",
     "type": "authenticator",
     "driverClass": "bubble.cloud.authenticator.TOTPAuthenticatorDriver",
@@ -17,7 +70,6 @@
   },
 
   {
-    "_subst": true,
     "name": "SmtpServer",
     "type": "email",
     "driverClass": "{{BUBBLE_SMTP_DRIVER}}",
@@ -26,42 +78,53 @@
     },
     "credentials": {
       "params": [
-        {"name": "user", "value": "{{required BUBBLE_SMTP_USER}}"},
-        {"name": "password", "value": "{{required BUBBLE_SMTP_PASS}}"},
-        {"name": "host", "value": "{{required BUBBLE_SMTP_SERVER}}"},
-        {"name": "port", "value": "{{required BUBBLE_SMTP_PORT}}"}
+        {"name": "user", "value": "{{BUBBLE_SMTP_USER}}"},
+        {"name": "password", "value": "{{BUBBLE_SMTP_PASS}}"},
+        {"name": "host", "value": "{{BUBBLE_SMTP_SERVER}}"},
+        {"name": "port", "value": "{{BUBBLE_SMTP_PORT}}"}
       ]
     },
     "template": true
   },
 
   {
-    "_subst": true,
     "name": "TwilioSms",
     "type": "sms",
     "driverClass": "{{BUBBLE_SMS_DRIVER}}",
     "driverConfig": {},
     "credentials": {
       "params": [
-        {"name": "accountSID", "value": "{{required TWILIO_ACCOUNT_SID}}"},
-        {"name": "authToken", "value": "{{required TWILIO_AUTH_TOKEN}}"},
-        {"name": "fromPhoneNumber", "value": "{{required TWILIO_FROM_PHONE_NUMBER}}"}
+        {"name": "accountSID", "value": "{{TWILIO_ACCOUNT_SID}}"},
+        {"name": "authToken", "value": "{{TWILIO_AUTH_TOKEN}}"},
+        {"name": "fromPhoneNumber", "value": "{{TWILIO_FROM_PHONE_NUMBER}}"}
       ]
     },
     "template": true
   },
 
   {
-    "_subst": true,
-    "name": "GoogleGeoTime",
-    "type": "geoTime",
-    "driverClass": "bubble.cloud.geoTime.google.GoogleGeoTimeDriver",
-    "credentials": {  "params": [ {"name": "apiKey", "value": "{{required GOOGLE_API_KEY}}"} ] },
+    "name": "MaxMind",
+    "type": "geoLocation",
+    "driverClass": "bubble.cloud.geoLocation.maxmind.MaxMindDriver",
+    "driverConfig": {
+      "url": "{{{MAXMIND_URL}}}",
+      "file": "{{{MAXMIND_FILE_REGEX}}}"
+    },
+    "credentials": {
+      "params": [ {"name": "apiKey", "value": "{{{MAXMIND_API_KEY}}}"} ]
+    },
     "template": true
   },
 
   {
-    "_subst": true,
+    "name": "GoogleGeoTime",
+    "type": "geoTime",
+    "driverClass": "bubble.cloud.geoTime.google.GoogleGeoTimeDriver",
+    "credentials": {  "params": [ {"name": "apiKey", "value": "{{GOOGLE_API_KEY}}"} ] },
+    "template": true
+  },
+
+  {
     "name": "VultrCompute",
     "type": "compute",
     "driverClass": "bubble.cloud.compute.vultr.VultrDriver",
@@ -140,14 +203,13 @@
     },
     "credentials": {
       "params": [
-        {"name": "API-Key", "value": "{{required VULTR_API_KEY}}"}
+        {"name": "API-Key", "value": "{{VULTR_API_KEY}}"}
       ]
     },
     "template": true
   },
 
   {
-    "_subst": true,
     "name": "DigitalOceanCompute",
     "type": "compute",
     "driverClass": "bubble.cloud.compute.digitalocean.DigitalOceanDriver",
@@ -198,7 +260,7 @@
     },
     "credentials": {
       "params": [
-        {"name": "apiKey", "value": "{{required DIGITALOCEAN_API_KEY}}"}
+        {"name": "apiKey", "value": "{{DIGITALOCEAN_API_KEY}}"}
       ]
     },
     "template": true

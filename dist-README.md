@@ -18,8 +18,6 @@ will also be "yours only" -- all Bubbles disconnect from their launcher during c
 
 ## Getting Started
 
-### Download a Bubble Distribution
-
 ### Install PostgreSQL and Redis
 Install [PostgreSQL](https://www.postgresql.org/download/) if it is not installed on your system.
 It will probably be easier to install using an OS package, for example `sudo apt install postgresql`
@@ -38,13 +36,26 @@ Otherwise, please either:
   * Create a PostgreSQL database named `bubble` and a database user named `bubble`. Set a password for the `bubble` user,
   and set the environment variable `BUBBLE_PG_PASSWORD` to this password when starting the Bubble launcher.
 
+### Download a Bubble Distribution
+Download and unzip the latest [Bubble Distribution ZIP](https://bubblev.com/download).
+
 ### Start the Bubble launcher
-Running a Bubble locally 
+Run the `./bin/run.sh` script to start the Bubble launcher. Once the server is running, it will try to open a browser window
+to continue configuration. It will also print out the URL, so if the browser doesn't start correctly, you can paste this
+into your browser's location bar.
 
 ### Activate your local Bubble
+Your Bubble is running locally in a "blank" mode. It needs an initial "root" account and some basic services configured.
 
-#### Activate using the Web UI
+#### Activate via Web UI
+The browser-based admin UI should be displaying an "Activate" page. Complete the information on this page and submit the
+data. The Bubble Launcher will create an initial "root" account and other basic system configurations. 
 
-#### Activate using the command line
+#### Activate via command line
+Copy the file in `config/activation.json`, then edit the file. There are comments in the file to guide you.
+After saving the updated file, run this command:
 
-### Configure Cloud Services
+   `./bin/bactivate /path/to/activation.json`
+
+### Launch a new Bubble!
+Using the web UI, click "Bubbles", select "New Bubble". Fill out and submit the New Bubble form, and your Bubble will be created!

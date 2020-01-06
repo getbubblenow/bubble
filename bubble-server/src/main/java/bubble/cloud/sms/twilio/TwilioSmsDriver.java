@@ -25,7 +25,7 @@ public class TwilioSmsDriver extends SmsServiceDriverBase<TwilioSmsConfig> {
 
     @Autowired @Getter protected BubbleConfiguration configuration;
 
-    @Override public void startDriver() {
+    @Override public void postSetup() {
         synchronized (twilioInitDone) {
             if (!twilioInitDone.get()) {
                 sid = getCredentials().getParam(PARAM_ACCOUNT_SID);

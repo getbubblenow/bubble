@@ -13,9 +13,11 @@ import bubble.cloud.storage.StorageServiceDriver;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.AccountTemplate;
+import bubble.model.boot.CloudServiceConfig;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,22 +25,26 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.collection.HasPriority;
+import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.wizard.filters.Scrubbable;
 import org.cobbzilla.wizard.filters.ScrubbableField;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.entityconfig.IdentifiableBaseParentEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
+import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static bubble.ApiConstants.EP_CLOUDS;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.*;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
@@ -75,6 +81,8 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     @HasValue(message="err.name.required")
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
+    @JsonIgnore public boolean isLocalStorage () { return name != null && name.equals(LOCAL_STORAGE); }
+    @JsonIgnore public boolean isNotLocalStorage () { return !isLocalStorage(); }
 
     @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=Account.class)
@@ -143,6 +151,10 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
 
     @Transient public CloudCredentials getCredentials () { return credentialsJson == null ? null : json(credentialsJson, CloudCredentials.class); }
     public CloudService setCredentials (CloudCredentials credentials) { return setCredentialsJson(credentials == null ? null : json(credentials)); }
+    public boolean hasCredentials () {
+        final CloudCredentials creds = getCredentials();
+        return creds != null && !empty(creds.getParams());
+    }
 
     @Transient @JsonIgnore @Getter(lazy=true) private final CloudServiceDriver driver = initDriver();
     private CloudServiceDriver initDriver () {
@@ -152,17 +164,31 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
         return d;
     }
 
+    @Transient @JsonIgnore public CloudServiceDriver getConfiguredDriver (BubbleConfiguration configuration) {
+        switch (getType()) {
+            case compute:       return getComputeDriver(configuration);
+            case email: case sms:
+            case authenticator: return getAuthenticationDriver(configuration);
+            case geoLocation:   return getGeoLocateDriver(configuration);
+            case geoCode:       return getGeoCodeDriver(configuration);
+            case geoTime:       return getGeoTimeDriver(configuration);
+            case dns:           return getDnsDriver(configuration);
+            case storage:       return getStorageDriver(configuration);
+            case payment:       return getPaymentDriver(configuration);
+            default:
+                log.warn("getConfiguredDriver: unrecognized type: "+getType());
+            case local:
+                return wireAndSetup(configuration);
+        }
+    }
+
     @Transient @JsonIgnore public ComputeServiceDriver getComputeDriver (BubbleConfiguration configuration) {
-        final ComputeServiceDriver compute = wireAndSetup(configuration);
-        compute.startDriver();
-        return compute;
+        return wireAndSetup(configuration);
     }
 
     @Transient @JsonIgnore public AuthenticationDriver getAuthenticationDriver(BubbleConfiguration configuration) {
         if (!getType().isAuthenticationType()) return die("getAuthenticationDriver: not an authentication type: "+getType());
-        final AuthenticationDriver driver = wireAndSetup(configuration);
-        driver.startDriver();
-        return driver;
+        return wireAndSetup(configuration);
     }
 
     @Transient @JsonIgnore public RegionalServiceDriver getRegionalDriver () { return (RegionalServiceDriver) getDriver(); }
@@ -180,7 +206,7 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
         return (DnsServiceDriver) wireAndSetup(configuration);
     }
     @Transient @JsonIgnore public StorageServiceDriver getStorageDriver(BubbleConfiguration configuration) {
-        if (!getName().equals(LOCAL_STORAGE)) {
+        if (isNotLocalStorage()) {
             final CloudCredentials credentials = getCredentials();
             final BubbleNetwork thisNetwork = configuration.getThisNetwork();
             if (thisNetwork != null && credentials.needsNewNetworkKey(thisNetwork.getUuid())) {
@@ -217,4 +243,38 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
         });
     }
 
+    public CloudService configure(CloudServiceConfig config, ValidationResult errors) {
+        if (config.hasConfig()) {
+            final JsonNode driverConfig = getDriverConfig();
+            for (Map.Entry<String, String> cfg : config.getConfig().entrySet()) {
+                final String name = cfg.getKey();
+                if (driverConfig == null || !driverConfig.has(name)) {
+                    errors.addViolation("err.cloud.noSuchField", "driver config field does not exist: "+name, name);
+                } else if (errors.isValid()) {
+                    ((ObjectNode) driverConfig).put(name, cfg.getValue());
+                }
+            }
+        }
+        if (config.hasCredentials()) {
+            setCredentials(config.getCredentialsObject());
+        } else {
+            setCredentials(null);
+        }
+        return this;
+    }
+
+    public CloudServiceConfig toCloudConfig() {
+        final CloudServiceConfig config = new CloudServiceConfig();
+        final JsonNode driverConfig = getDriverConfig();
+        if (driverConfig != null) {
+            for (Iterator<String> iter = driverConfig.fieldNames(); iter.hasNext(); ) {
+                final String field = iter.next();
+                config.addConfig(field, driverConfig.get(field).textValue());
+            }
+        }
+        if (hasCredentials()) {
+            config.setCredentials(NameAndValue.toMap(getCredentials().getParams()));
+        }
+        return config;
+    }
 }

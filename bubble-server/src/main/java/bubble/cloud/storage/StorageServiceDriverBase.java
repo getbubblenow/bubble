@@ -19,7 +19,7 @@ public abstract class StorageServiceDriverBase<T> extends CloudServiceDriverBase
 
     private static final Map<String, WriteRequestCleaner> cleaners = new ConcurrentHashMap<>();
 
-    @Override public void startDriver() {
+    @Override public void postSetup() {
         final String key = sha256_hex(json(getConfig())+":"+json(getCredentials()));
         synchronized (cleaners) {
             WriteRequestCleaner cleaner = cleaners.get(key);

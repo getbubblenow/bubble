@@ -1,5 +1,6 @@
 package bubble.dao.cloud;
 
+import bubble.cloud.storage.local.LocalStorageDriver;
 import bubble.dao.account.AccountOwnedTemplateDAO;
 import bubble.model.cloud.CloudService;
 import bubble.cloud.CloudServiceType;
@@ -8,10 +9,22 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+
 @Repository
 public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
 
     @Override public Order getDefaultSortOrder() { return Order.desc("priority"); }
+
+    @Override public Object preCreate(CloudService cloud) {
+        if (cloud.getType() == CloudServiceType.storage
+                && cloud.getName().equals(LOCAL_STORAGE)
+                && !cloud.getDriver().getClass().equals(LocalStorageDriver.class)) {
+            throw invalidEx("err.cloud.localStorageIsReservedName");
+        }
+        return super.preCreate(cloud);
+    }
 
     @Override public CloudService postUpdate(CloudService cloud, Object context) {
         CloudService.clearDriverCache(cloud.getUuid());

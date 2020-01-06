@@ -6,8 +6,8 @@
     "driverClass": "bubble.cloud.storage.s3.S3StorageDriver",
     "driverConfig": {
       "region": "US_EAST_1",
-      "bucket": "dev.bubblev.org",
-      "prefix": "2020-01",
+      "bucket": "{{BUBBLE_S3_BUCKET}}",
+      "prefix": "{{BUBBLE_S3_PREFIX}}",
       "listFetchSize": 100
     },
     "credentials": {

@@ -25,7 +25,7 @@ public abstract class ComputeServiceDriverBase
 
     private final AtomicReference<NodeReaper> reaper = new AtomicReference<>();
 
-    @Override public void startDriver() {
+    @Override public void postSetup() {
         if (configuration.isSelfSage()) {
             synchronized (reaper) {
                 if (reaper.get() == null) {

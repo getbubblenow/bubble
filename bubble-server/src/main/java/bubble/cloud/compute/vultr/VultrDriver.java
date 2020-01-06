@@ -78,6 +78,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
             final String apiKey = HandlebarsUtil.apply(getHandlebars(), credentials.getParam(API_KEY_HEADER), configuration.getEnvCtx());
             credentials.setParam(API_KEY_HEADER, apiKey);
         }
+        super.postSetup();
     }
 
     @Override public BubbleNode start(BubbleNode node) throws Exception {

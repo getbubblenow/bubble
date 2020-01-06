@@ -13,7 +13,10 @@ import bubble.model.account.Account;
 import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
-import bubble.model.cloud.*;
+import bubble.model.cloud.BubbleDomain;
+import bubble.model.cloud.BubbleFootprint;
+import bubble.model.cloud.BubbleNetwork;
+import bubble.model.cloud.CloudService;
 import bubble.resources.account.AccountOwnedResource;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +34,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
-import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Slf4j
@@ -150,7 +152,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         final List<CloudService> storageClouds = cloudDAO.findByAccountAndType(caller.getUuid(), CloudServiceType.storage);
 
         // find the first one that is not LocalStorage
-        final List<CloudService> remoteStorage = storageClouds.stream().filter(c -> !c.getName().equals(LOCAL_STORAGE)).collect(Collectors.toList());
+        final List<CloudService> remoteStorage = storageClouds.stream().filter(CloudService::isNotLocalStorage).collect(Collectors.toList());
 
         if (!remoteStorage.isEmpty()) {
             // todo: storage should know what region it is in.

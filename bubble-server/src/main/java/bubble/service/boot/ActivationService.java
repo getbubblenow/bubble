@@ -7,20 +7,29 @@ import bubble.cloud.compute.local.LocalComputeDriver;
 import bubble.cloud.dns.DnsServiceDriver;
 import bubble.cloud.storage.local.LocalStorageConfig;
 import bubble.cloud.storage.local.LocalStorageDriver;
+import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.*;
 import bubble.model.account.Account;
-import bubble.model.account.ActivationRequest;
+import bubble.model.boot.ActivationRequest;
+import bubble.model.boot.CloudServiceConfig;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.dns.DnsRecordMatch;
 import org.cobbzilla.util.dns.DnsType;
+import org.cobbzilla.util.handlebars.HandlebarsUtil;
+import org.cobbzilla.wizard.api.CrudOperation;
+import org.cobbzilla.wizard.client.ApiClientBase;
+import org.cobbzilla.wizard.model.Identifiable;
+import org.cobbzilla.wizard.model.ModelSetupService;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
+import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.*;
 
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.cloud.storage.StorageServiceDriver.STORAGE_PREFIX;
@@ -30,14 +39,16 @@ import static bubble.model.cloud.BubbleFootprint.DEFAULT_FOOTPRINT_OBJECT;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static bubble.model.cloud.BubbleNetwork.TAG_PARENT_ACCOUNT;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.toStringOrDie;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.getFirstPublicIpv4;
 import static org.cobbzilla.util.network.NetworkUtil.getLocalhostIpv4;
 import static org.cobbzilla.util.system.CommandShell.execScript;
+import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Service @Slf4j
@@ -45,7 +56,7 @@ public class ActivationService {
 
     public static final String DEFAULT_ROLES = "ansible/default_roles.json";
 
-    public static final long ROOT_CREATE_TIMEOUT = SECONDS.toMillis(10);
+    public static final long ACTIVATION_TIMEOUT = SECONDS.toMillis(10);
 
     @Autowired private AnsibleRoleDAO roleDAO;
     @Autowired private CloudServiceDAO cloudDAO;
@@ -56,6 +67,7 @@ public class ActivationService {
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
     @Autowired private StandardSelfNodeService selfNodeService;
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private ModelSetupService modelSetupService;
 
     public BubbleNode bootstrapThisNode(Account account, ActivationRequest request) {
         String ip = getFirstPublicIpv4();
@@ -65,35 +77,75 @@ public class ActivationService {
         }
         if (ip == null) die("bootstrapThisNode: no IP could be found, not even a localhost address");
 
-        final CloudService publicDns = cloudDAO.create(new CloudService(request.getDns())
-                .setType(CloudServiceType.dns)
-                .setTemplate(true)
-                .setAccount(account.getUuid()));
-        final DnsServiceDriver dnsDriver = publicDns.getDnsDriver(configuration);
-        final DnsRecordMatch nsMatcher = (DnsRecordMatch) new DnsRecordMatch()
-                .setType(DnsType.NS)
-                .setFqdn(request.getDomain().getName());
-        checkDriver(dnsDriver, nsMatcher, "err.dns.testFailed", "err.dns.unknownError");
+        final Map<String, CloudServiceConfig> requestConfigs = request.getCloudConfigs();
+        final Map<String, CloudService> defaultConfigs = getCloudDefaultsMap();
+        final ValidationResult errors = new ValidationResult();
+        final List<CloudService> toCreate = new ArrayList<>();
+        CloudService publicDns = null;
+        CloudService localStorage = null;
+        CloudService storage = null;
+        CloudService compute = null;
+        for (Map.Entry<String, CloudServiceConfig> requestedCloud : requestConfigs.entrySet()) {
+            final String name = requestedCloud.getKey();
+            final CloudServiceConfig config = requestedCloud.getValue();
+            final CloudService defaultCloud = defaultConfigs.get(name);
+            if (defaultCloud == null) {
+                errors.addViolation("err.cloud.notFound", "No cloud template found with name: "+name, name);
 
-        final CloudService localStorage = cloudDAO.create(new CloudService()
-                .setAccount(account.getUuid())
-                .setType(CloudServiceType.storage)
-                .setDriverClass(LocalStorageDriver.class.getName())
-                .setDriverConfigJson(json(new LocalStorageConfig().setBaseDir(configuration.getLocalStorageDir())))
-                .setName(LOCAL_STORAGE)
-                .setTemplate(true));
-
-        final CloudService storage = request.getStorage();
-        final CloudService networkStorage;
-        if (storage.getName().equals(LOCAL_STORAGE)) {
-            networkStorage = localStorage;
-        } else {
-            if (storage.getCredentials().needsNewNetworkKey(ROOT_NETWORK_UUID)) {
-                storage.setCredentials(storage.getCredentials().initNetworkKey(ROOT_NETWORK_UUID));
+            } else if (errors.isValid()) {
+                final CloudService cloud = new CloudService(defaultCloud).configure(config, errors);
+                toCreate.add(cloud);
+                if (defaultCloud.getType() == CloudServiceType.dns && defaultCloud.getName().equals(request.getDomain().getPublicDns()) && publicDns == null) publicDns = cloud;
+                if (defaultCloud.getType() == CloudServiceType.storage && localStorage == null && defaultCloud.isLocalStorage()) localStorage = cloud;
+                if (defaultCloud.getType() == CloudServiceType.storage && storage == null) storage = cloud;
+                if (defaultCloud.getType() == CloudServiceType.compute && compute == null) compute = cloud;
             }
-            networkStorage = cloudDAO.create(new CloudService(storage).setAccount(account.getUuid()));
-            final CloudServiceDriver storageDriver = networkStorage.getStorageDriver(configuration);
-            checkDriver(storageDriver, null, "err.storage.testFailed", "err.storage.unknownError");
+        }
+        if (publicDns == null) errors.addViolation("err.dns.noneSpecified");
+        if (storage == null) errors.addViolation("err.storage.noneSpecified");
+        if (compute == null && !configuration.testMode()) errors.addViolation("err.compute.noneSpecified");
+        if (errors.isInvalid()) throw invalidEx(errors);
+
+        // create local storage if it was not provided
+        if (localStorage == null) {
+            localStorage = cloudDAO.create(new CloudService()
+                    .setAccount(account.getUuid())
+                    .setType(CloudServiceType.storage)
+                    .setDriverClass(LocalStorageDriver.class.getName())
+                    .setDriverConfigJson(json(new LocalStorageConfig().setBaseDir(configuration.getLocalStorageDir())))
+                    .setName(LOCAL_STORAGE)
+                    .setTemplate(true));
+        }
+
+        // create all clouds
+        CloudService networkStorage = localStorage;
+        for (CloudService cloud : toCreate) {
+            final CloudService c = cloudDAO.create(cloud
+                    .setTemplate(true)
+                    .setEnabled(true)
+                    .setAccount(account.getUuid()));
+            if (cloud == publicDns) {
+                final DnsServiceDriver dnsDriver = publicDns.getDnsDriver(configuration);
+                if (cloud.getName().equals(request.getDomain().getPublicDns())) {
+                    final DnsRecordMatch nsMatcher = (DnsRecordMatch) new DnsRecordMatch()
+                            .setType(DnsType.NS)
+                            .setFqdn(request.getDomain().getName());
+                    checkDriver(dnsDriver, nsMatcher, "err.dns.testFailed", "err.dns.unknownError");
+                } else {
+                    checkDriver(dnsDriver, null, "err.dns.testFailed", "err.dns.unknownError");
+                }
+
+            } else if (cloud == storage && cloud.isNotLocalStorage()) {
+                networkStorage = cloud;  // prefer non-local storage for network
+                if (storage.getCredentials().needsNewNetworkKey(ROOT_NETWORK_UUID)) {
+                    storage.setCredentials(storage.getCredentials().initNetworkKey(ROOT_NETWORK_UUID));
+                }
+                final CloudServiceDriver storageDriver = networkStorage.getStorageDriver(configuration);
+                checkDriver(storageDriver, null, "err.storage.testFailed", "err.storage.unknownError");
+
+            } else {
+                checkDriver(cloud.getConfiguredDriver(configuration), null, "err."+cloud.getType()+".testFailed", "err."+cloud.getType()+".unknownError");
+            }
         }
 
         final AnsibleRole[] roles = request.hasRoles() ? request.getRoles() : json(loadDefaultRoles(), AnsibleRole[].class);
@@ -162,16 +214,33 @@ public class ActivationService {
         selfNodeService.initThisNode(node);
         configuration.refreshPublicSystemConfigs();
 
+        if (request.createDefaultObjects()) {
+            background(() -> {
+                // wait for activation to complete
+                final AccountDAO accountDAO = configuration.getBean(AccountDAO.class);
+                final long start = now();
+                while (!accountDAO.activated() && now() - start < ACTIVATION_TIMEOUT) {
+                    sleep(SECONDS.toMillis(1), "waiting for activation to complete before creating default objects");
+                }
+                if (!accountDAO.activated()) die("bootstrapThisNode: timeout waiting for activation to complete, default objects not created");
+
+                final ApiClientBase api = configuration.newApiClient().setToken(account.getToken());
+                final Map<CrudOperation, Collection<Identifiable>> objects
+                        = modelSetupService.setupModel(api, account, "manifest-dist");
+                log.info("bootstrapThisNode: created default objects\n"+json(objects));
+            });
+        }
+
         return node;
     }
 
     public void checkDriver(CloudServiceDriver driver, Object arg, String errTestFailed, String errException) {
         try {
-            if (!driver.test(arg)) throw invalidEx(errTestFailed);
+            if (!driver.test(arg)) throw invalidEx(errTestFailed, "test failed for driver: "+driver.getClass().getName()+(arg != null ? " with arg="+arg : ""), (arg == null ? null : arg.toString()));
         } catch (SimpleViolationException e) {
             throw e;
         } catch (Exception e) {
-            throw invalidEx(errException, shortError(e));
+            throw invalidEx(errException, "test failed for driver: "+driver.getClass().getName()+(arg != null ? " with arg="+arg : "")+": "+shortError(e), (arg == null ? null : arg.toString()));
         }
     }
 
@@ -191,4 +260,13 @@ public class ActivationService {
         return networkDAO.create(network);
     }
 
+    @Getter(lazy=true) private final CloudService[] cloudDefaults = initCloudDefaults();
+    private CloudService[] initCloudDefaults() {
+        return json(HandlebarsUtil.apply(configuration.getHandlebars(), stream2string("models/dist/cloudService.json"), configuration.getEnvCtx()), CloudService[].class);
+    }
+
+    @Getter(lazy=true) private final Map<String, CloudService> cloudDefaultsMap = initCloudDefaultsMap();
+    private Map<String, CloudService> initCloudDefaultsMap() {
+        return Arrays.stream(getCloudDefaults()).collect(toMap(CloudService::getName, identity()));
+    }
 }

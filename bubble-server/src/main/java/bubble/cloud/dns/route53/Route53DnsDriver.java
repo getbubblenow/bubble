@@ -45,10 +45,10 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
     }
 
     @Getter(lazy=true) private final Map<String, HostedZone> cachedZoneLookups = new ExpirationMap<>();
-    private HostedZone getHostedZone(AmazonRoute53 client, BubbleDomain domain) {
+    private HostedZone getHostedZone(BubbleDomain domain) {
         return getCachedZoneLookups().computeIfAbsent(domain.getName(), key -> {
             try {
-                final ListHostedZonesResult zones = client.listHostedZones(new ListHostedZonesRequest().withMaxItems("100"));
+                final ListHostedZonesResult zones = getRoute53client().listHostedZones(new ListHostedZonesRequest().withMaxItems("100"));
                 for (HostedZone z : zones.getHostedZones()) {
                     if (z.getName().equalsIgnoreCase(key + ".")) return z;
                 }
@@ -59,10 +59,15 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
         });
     }
 
+    @Override public boolean test() {
+        getRoute53client().listHostedZones(new ListHostedZonesRequest().withMaxItems("10"));
+        return true;
+    }
+
     @Override public Collection<DnsRecord> create(BubbleDomain domain) {
 
         final AmazonRoute53 client = getRoute53client();
-        final HostedZone hostedZone = getHostedZone(client, domain);
+        final HostedZone hostedZone = getHostedZone(domain);
 
         final ListResourceRecordSetsResult soaRecords = client.listResourceRecordSets(new ListResourceRecordSetsRequest()
                 .withHostedZoneId(hostedZone.getId())
@@ -144,7 +149,7 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
     @Override public DnsRecord update(DnsRecord record) {
         final AmazonRoute53 client = getRoute53client();
         final BubbleDomain domain = getDomain(record.getFqdn());
-        final HostedZone hostedZone = getHostedZone(client, domain);
+        final HostedZone hostedZone = getHostedZone(domain);
         final ChangeResourceRecordSetsResult changeResult = client.changeResourceRecordSets(new ChangeResourceRecordSetsRequest()
                 .withHostedZoneId(hostedZone.getId())
                 .withChangeBatch(new ChangeBatch().withChanges(new Change()
@@ -159,7 +164,7 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
     @Override public DnsRecord remove(DnsRecord record) {
         final AmazonRoute53 client = getRoute53client();
         final BubbleDomain domain = getDomain(record.getFqdn());
-        final HostedZone hostedZone = getHostedZone(client, domain);
+        final HostedZone hostedZone = getHostedZone(domain);
 
         final ListResourceRecordSetsRequest listRequest = new ListResourceRecordSetsRequest()
                 .withHostedZoneId(hostedZone.getId())
@@ -186,11 +191,11 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
     }
 
     @Override public Collection<DnsRecord> list(DnsRecordMatch matcher) {
-        final BubbleDomain domain = getDomain(matcher.getFqdn());
+        final BubbleDomain domain = getDomain(matcher);
         if (domain == null) return emptyList();
 
         final AmazonRoute53 client = getRoute53client();
-        final HostedZone hostedZone = getHostedZone(client, domain);
+        final HostedZone hostedZone = getHostedZone(domain);
         final ListResourceRecordSetsRequest listRequest = new ListResourceRecordSetsRequest()
                 .withHostedZoneId(hostedZone.getId())
                 .withStartRecordName(matcher.hasFqdn() ? matcher.getFqdn() : domain.getName())

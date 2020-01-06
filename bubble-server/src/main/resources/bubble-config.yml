@@ -3,7 +3,6 @@
 
 serverName: bubble-api
 
-#publicUriBase: https://127.0.0.1
 publicUriBase: {{PUBLIC_BASE_URI}}
 
 defaultLocale: {{#exists BUBBLE_DEFAULT_LOCALE}}{{BUBBLE_DEFAULT_LOCALE}}{{else}}en_US{{/exists}}
@@ -35,6 +34,7 @@ staticAssets:
   baseUri: /
   assetRoot: site/
   localOverride: {{BUBBLE_ASSETS_DIR}}
+  singlePageApp: /index.html
   utilPaths:
     INDEX_PATH: /index.html
     INDEX_ALIASES: /:/index.php

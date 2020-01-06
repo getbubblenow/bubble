@@ -19,8 +19,7 @@ import java.util.stream.Collectors;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.retry;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.dns.DnsType.NS;
 import static org.cobbzilla.util.dns.DnsType.SOA;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
@@ -140,6 +139,15 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
 
         } finally {
             if (lock != null && domain.get() != null) unlockDomain(domain.get().getUuid(), lock);
+        }
+    }
+
+    @Override public boolean test() {
+        final String url = config.getBaseUri();
+        try {
+            return HttpUtil.getResponse(auth(url)).isOk();
+        } catch (Exception e) {
+            return die("test: "+shortError(e));
         }
     }
 

@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Initial activation of a bubble server
+#
+# Usage:  activate activation.json
+#
+#   activation.json : a JSON file containing the activation information.
+#                     see config/activation.json for an example
+#
+# Environment variables
+#
+#   BUBBLE_API     : which API to use. Default is local (http://127.0.0.1:PORT, where PORT is found in .bubble.env)
+#   BUBBLE_USER    : account to use. Default is root
+#   BUBBLE_PASS    : password for account. Default is root
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+if [[ -z "${BUBBLE_JAR}" ]] ; then
+  die "BUBBLE_JAR env var not set and no jar file found"
+fi
+
+ACTIVATION_JSON="${1:?no activation json file provided}"
+${SCRIPT_DIR}/bput <"${ACTIVATION_JSON}" auth/activate - --no-login

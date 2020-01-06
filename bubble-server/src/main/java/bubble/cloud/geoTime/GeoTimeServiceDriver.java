@@ -9,7 +9,7 @@ public interface GeoTimeServiceDriver extends CloudServiceDriver {
     String TEST_LONGITUDE = "-73.944";
     String TEST_LATITUDE = "40.661";
     String TEST_STANDARD_NAME = "Eastern Standard Time";
-    String TEST_TIMEZONE_ID = "America/New York";
+    String TEST_TIMEZONE_ID = "America/New_York";
 
     @Override default CloudServiceType getType() { return CloudServiceType.geoTime; }
 

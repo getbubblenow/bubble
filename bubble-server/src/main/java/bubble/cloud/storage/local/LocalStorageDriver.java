@@ -10,6 +10,7 @@ import bubble.model.cloud.CloudService;
 import bubble.model.cloud.StorageMetadata;
 import bubble.notify.storage.StorageListing;
 import lombok.Cleanup;
+import lombok.Getter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.io.FileUtil;
@@ -23,8 +24,7 @@ import java.util.List;
 
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.dao.cloud.AnsibleRoleDAO.ROLE_PATH;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.notSupported;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.security.ShaUtil.sha256_file;
@@ -38,11 +38,29 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
     @Autowired private AccountDAO accountDAO;
 
     public static final String LOCAL_STORAGE = "LocalStorage";
-    public static final String LOCAL_STORAGE_STANDARD_BASE_DIR = "/home/bubble/.bubble_local_storage";
+    public static final String BUBBLE_LOCAL_STORAGE_DIR = ".bubble_local_storage";
+    public static final String LOCAL_STORAGE_STANDARD_BASE_DIR = "/home/bubble/" + BUBBLE_LOCAL_STORAGE_DIR;
 
     public static final Class[] FATAL_EX_CLASSES = {FileNotFoundException.class};
 
     @Override public Class[] getFatalExceptionClasses() { return FATAL_EX_CLASSES; }
+
+    @Getter(lazy=true) private final String baseDir = initBaseDir();
+    public String initBaseDir() {
+        if (!empty(config.getBaseDir())) return config.getBaseDir();
+
+        final File standardBaseDir = new File(LOCAL_STORAGE_STANDARD_BASE_DIR);
+        if ((standardBaseDir.exists() || standardBaseDir.mkdirs()) && standardBaseDir.canRead() && standardBaseDir.canWrite()) {
+            return abs(standardBaseDir);
+        }
+
+        final File userBaseDir = new File(System.getProperty("user.home")+"/"+BUBBLE_LOCAL_STORAGE_DIR);
+        if ((userBaseDir.exists() || userBaseDir.mkdirs()) && userBaseDir.canRead() && userBaseDir.canWrite()) {
+            return abs(userBaseDir);
+        }
+
+        return die("getBaseDir: not set and no defaults exist");
+    }
 
     @Override public boolean _exists(String fromNode, String key) throws IOException {
         final BubbleNode from = getFromNode(fromNode);
@@ -55,7 +73,7 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
         if (activated() || !key.startsWith(ROLE_PATH)) return false;
 
         // check root network filesystem
-        final File file = keyFileForNetwork(ROOT_NETWORK_UUID, config.getBaseDir(), key);
+        final File file = keyFileForNetwork(ROOT_NETWORK_UUID, getBaseDir(), key);
         if (file.exists()) return true;
 
         // check classpath
@@ -85,7 +103,7 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
         if (activated() || !key.startsWith(ROLE_PATH)) return null;
 
         // check root network filesystem
-        final File rootNetFile = keyFileForNetwork(ROOT_NETWORK_UUID, config.getBaseDir(), key);
+        final File rootNetFile = keyFileForNetwork(ROOT_NETWORK_UUID, getBaseDir(), key);
         if (rootNetFile.exists()) return new FileInputStream(rootNetFile);
 
         // check classpath
@@ -93,7 +111,7 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
         if (in == null) return null;
 
         // copy file to root network storage, so we can find it after activation
-        final File file = keyFileForNetwork(ROOT_NETWORK_UUID, config.getBaseDir(), key);
+        final File file = keyFileForNetwork(ROOT_NETWORK_UUID, getBaseDir(), key);
         @Cleanup OutputStream out = new FileOutputStream(file);
         IOUtils.copyLarge(in, out);
         return new FileInputStream(file);
@@ -172,14 +190,14 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
         return node != null ? node : !activated() ? null : die("fromNode not found: "+fromNode);
     }
 
-    private File keyFile(BubbleNode from, String key) { return keyFile(from, config.getBaseDir(), key); }
-    private File keyFileNoNetwork(String key) { return keyFileNoNetwork(config.getBaseDir(), key); }
+    private File keyFile(BubbleNode from, String key) { return keyFile(from, getBaseDir(), key); }
+    private File keyFileNoNetwork(String key) { return keyFileNoNetwork(getBaseDir(), key); }
 
     public static File keyFile(BubbleNode from, String baseDir, String key) {
         return keyFileForNetwork(from.getNetwork(), baseDir, key);
     }
     public File keyFileForEntireNetwork(String network) {
-        return keyFileForNetwork(network, config.getBaseDir(), "");
+        return keyFileForNetwork(network, getBaseDir(), "");
     }
     public static File keyFileForNetwork(String network, String baseDir, String key) {
         return new File(baseDir + "/" + network + "/" + key);
@@ -189,14 +207,14 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
     }
 
     public void migrateInitialData(BubbleNetwork network) {
-        final File base = new File(config.getBaseDir());
+        final File base = new File(getBaseDir());
         final File[] matched = base.listFiles((file, s) -> new File(file, s).isDirectory() && !UUID_PATTERN.matcher(s).find());
         if (matched != null) {
             Arrays.stream(matched)
                     .forEach(f -> {
                         final String path = abs(f);
-                        final String key = path.substring(config.getBaseDir().length());
-                        final File dest = new File(config.getBaseDir() + "/" + network.getUuid() + key);
+                        final String key = path.substring(getBaseDir().length());
+                        final File dest = new File(getBaseDir() + "/" + network.getUuid() + key);
                         try {
                             FileUtils.copyDirectory(f, dest);
                         } catch (IOException e) {

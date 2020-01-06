@@ -47,3 +47,6 @@ fi
 DIST="${DIST_BASE}/bubble-${VERSION}"
 cp "${JAR}" "${DIST}/bubble.jar" || die "Error copying ${JAR} to ${DIST}/bubble.jar"
 cp "${BASE}/dist-README.md" "${DIST}/README.md" || die "Error copying dist-README.md to ${DIST}/README.md"
+cp -R "${BASE}/bin" "${DIST}" || die "Error copying bin directory to ${DIST}"
+cp -R "${BASE}/scripts" "${DIST}" || die "Error copying scripts directory to ${DIST}"
+cp -R "${BASE}/config" "${DIST}" || die "Error copying config directory to ${DIST}"

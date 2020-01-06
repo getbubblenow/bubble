@@ -13,8 +13,10 @@ import org.cobbzilla.wizard.server.RestServerBase;
 import org.cobbzilla.wizard.server.RestServerLifecycleListener;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
 import org.cobbzilla.wizard.server.config.factory.ConfigurationSource;
+import org.cobbzilla.wizard.server.listener.BrowserLauncherListener;
 import org.cobbzilla.wizard.server.listener.FlywayMigrationListener;
 import org.cobbzilla.wizard.server.listener.SystemInitializerListener;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
 import java.util.Arrays;
@@ -43,7 +45,8 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
             new FlywayMigrationListener<BubbleConfiguration>(),
             new NodeInitializerListener(),
             new DeviceInitializerListener(),
-            new BubbleFirstTimeListener()
+            new BubbleFirstTimeListener(),
+            new BrowserLauncherListener()
     });
 
     public static final List<RestServerLifecycleListener> RESTORE_LIFECYCLE_LISTENERS = Arrays.asList(new RestServerLifecycleListener[] {
@@ -52,7 +55,8 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
 
     public static final String[] DEFAULT_ENV_FILE_PATHS = {
             HOME_DIR + ".bubble.env",
-            HOME_DIR + "/current/bubble.env"
+            HOME_DIR + "/current/bubble.env",
+            System.getProperty("user.dir") + "/bubble.env"
     };
 
     private static AtomicReference<String> restoreKey = new AtomicReference<>();
@@ -67,6 +71,9 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
 
     // config is loaded from the classpath
     public static void main(String[] args) throws Exception {
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+        SLF4JBridgeHandler.install();
+
         final Map<String, String> env = loadEnvironment(args);
         final ConfigurationSource configSource = getConfigurationSource();
 

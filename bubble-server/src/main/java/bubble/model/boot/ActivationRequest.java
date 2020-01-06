@@ -1,4 +1,4 @@
-package bubble.model.account;
+package bubble.model.boot;
 
 import bubble.model.cloud.AnsibleRole;
 import bubble.model.cloud.BubbleDomain;
@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.validation.HasValue;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
@@ -26,18 +29,22 @@ public class ActivationRequest {
     public boolean hasDescription() { return !empty(description); }
 
     @HasValue(message="err.networkName.required")
-    @Getter @Setter private String networkName;
+    @Getter @Setter private String networkName = "boot-network";
 
     @Getter @Setter private AnsibleRole[] roles;
-    public boolean hasRoles () { return roles != null && roles.length > 0; }
+    public boolean hasRoles () { return !empty(roles); }
+
+    @Getter @Setter private Map<String, CloudServiceConfig> cloudConfigs = new LinkedHashMap<>();
+    public boolean hasCloudConfigs () { return !empty(cloudConfigs); }
+    public ActivationRequest addCloudConfig(CloudService cloud) {
+        cloudConfigs.put(cloud.getName(), cloud.toCloudConfig());
+        return this;
+    }
 
     @HasValue(message="err.domain.required")
     @Getter @Setter private BubbleDomain domain;
 
-    @HasValue(message="err.dns.required")
-    @Getter @Setter private CloudService dns;
-
-    @HasValue(message="err.storage.required")
-    @Getter @Setter private CloudService storage;
+    @Getter @Setter private Boolean createDefaultObjects = true;
+    public boolean createDefaultObjects () { return createDefaultObjects != null && createDefaultObjects; };
 
 }

@@ -8,6 +8,7 @@ import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.model.CertType;
 import bubble.model.account.*;
 import bubble.model.account.message.*;
+import bubble.model.boot.ActivationRequest;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.NetworkKeys;
@@ -78,15 +79,22 @@ public class AuthResource {
     @GET @Path(EP_ACTIVATE)
     public Response isActivated(@Context ContainerRequest ctx) { return ok(accountDAO.activated()); }
 
+    @GET @Path(EP_ACTIVATE+EP_CONFIGS)
+    public Response getActivationConfigs(@Context ContainerRequest ctx) {
+        final Account caller = optionalUserPrincipal(ctx);
+        if (accountDAO.activated() && (caller == null || !caller.admin())) return ok();
+        return ok(activationService.getCloudDefaults());
+    }
+
     @Transactional
     @PUT @Path(EP_ACTIVATE)
     public Response activate(@Context Request req,
                              @Context ContainerRequest ctx,
                              @Valid ActivationRequest request) {
         if (request == null) return invalid("err.activation.request.required");
-        final Account found = optionalUserPrincipal(ctx);
-        if (found != null) {
-            if (!found.admin()) return forbidden();
+        final Account caller = optionalUserPrincipal(ctx);
+        if (caller != null) {
+            if (!caller.admin()) return forbidden();
             return invalid("err.activation.alreadyDone", "activation has already been done");
         }
         if (accountDAO.activated()) {

@@ -24,8 +24,6 @@ public interface CloudServiceDriver {
 
     default boolean disableDelegation () { return false; }
 
-    default void startDriver() {}
-
     void setConfig(JsonNode json, CloudService cloudService);
 
     static <T extends CloudServiceDriver> T setupDriver(BubbleConfiguration configuration, T driver) {

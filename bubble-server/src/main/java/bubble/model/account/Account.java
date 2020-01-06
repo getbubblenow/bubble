@@ -3,6 +3,7 @@ package bubble.model.account;
 import bubble.dao.account.AccountInitializer;
 import bubble.model.app.AppData;
 import bubble.model.app.BubbleApp;
+import bubble.model.boot.ActivationRequest;
 import bubble.model.cloud.*;
 import bubble.model.cloud.notify.SentNotification;
 import bubble.model.device.Device;
