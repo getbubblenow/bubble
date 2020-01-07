@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.cache.Refreshable;
 import org.cobbzilla.util.string.StringUtil;
+import org.cobbzilla.util.system.OneWayFlag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -140,6 +141,8 @@ public class StandardSelfNodeService implements SelfNodeService {
         }
     }
 
+    private OneWayFlag nullWarningPrinted = new OneWayFlag("nullWarningPrinted");
+
     public BubbleNode getThisNode () {
         synchronized (thisNode) {
             final BubbleNode self = thisNode.get();
@@ -151,7 +154,7 @@ public class StandardSelfNodeService implements SelfNodeService {
                 log.debug("getThisNode: setting thisNode="+initSelf.id());
                 thisNode.set(initSelf);
                 if (initSelf == NULL_NODE) {
-                    log.warn("getThisNode: initThisNode returned NULL_NODE");
+                    if (!nullWarningPrinted.check()) log.warn("getThisNode: initThisNode returned NULL_NODE");
                     return null;
                 }
                 if (wasRestored.get()) {
