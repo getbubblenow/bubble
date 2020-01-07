@@ -22,8 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static bubble.ApiConstants.*;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.*;
 import static org.cobbzilla.util.io.FileUtil.basename;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -70,7 +69,11 @@ public class StorageResource {
         if (in == null) return notFound(key);
 
         final String contentType = metadata.hasContentType() ? metadata.getContentType() : APPLICATION_OCTET_STREAM;
-        return stream(contentType, in);
+        try {
+            return stream(contentType, in);
+        } catch (Exception e) {
+            return invalid("err.read.failed", "read failed for prefix: "+key, key);
+        }
     }
 
     @GET @Path(EP_LIST+"/{key : .+}")
@@ -82,7 +85,7 @@ public class StorageResource {
         try {
             return ok(driver.list(thisNodeUuid(), key));
         } catch (IOException e) {
-            return invalid("err.list.failed", "listing failed for prefix: "+key);
+            return invalid("err.list.failed", "listing failed for prefix: "+key, key);
         }
     }
 
@@ -95,7 +98,7 @@ public class StorageResource {
         try {
             return ok(driver.listNext(thisNodeUuid(), id));
         } catch (IOException e) {
-            return invalid("err.listNext.failed", "listing failed for id: "+id);
+            return invalid("err.listNext.failed", "listing failed for id: "+id, id);
         }
     }
 
@@ -125,8 +128,8 @@ public class StorageResource {
         if (key.equals("*")) key = "";
         try {
             return ok(getStorageDriver().get().delete(thisNodeUuid(), key));
-        } catch (IOException e) {
-            return die("delete: "+e, e);
+        } catch (Exception e) {
+            return invalid("err.delete.failed", "delete operation failed for key: "+key+": "+shortError(e), key);
         }
     }
 
