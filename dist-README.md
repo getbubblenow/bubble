@@ -18,8 +18,12 @@ will also be "yours only" -- all Bubbles disconnect from their launcher during c
 
 ## Getting Started
 
+### Install OpenJDK 11
+Install [Java 11](https://openjdk.java.net/install/) from OpenJDK.
+It will probably be easier to install using an OS package, for example `sudo apt install openjdk-11-jre-headless`
+
 ### Install PostgreSQL and Redis
-Install [PostgreSQL](https://www.postgresql.org/download/) if it is not installed on your system.
+Install [PostgreSQL 10](https://www.postgresql.org/download/) if it is not installed on your system.
 It will probably be easier to install using an OS package, for example `sudo apt install postgresql`
 
 Install [Redis](https://redis.io/download) if it is not already installed on your system.

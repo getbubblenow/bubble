@@ -31,7 +31,7 @@
     "name": "LocalStorage",
     "type": "storage",
     "driverClass": "bubble.cloud.storage.local.LocalStorageDriver",
-    "driverConfig": { "baseDir": "{{LOCALSTORAGE_BASE_DIR}}" },
+    "driverConfig": { "baseDir": "{{#exists LOCALSTORAGE_BASE_DIR}}{{LOCALSTORAGE_BASE_DIR}}{{else}}.bubble_local_storage{{/exists}}" },
     "template": false
   },
 
@@ -72,7 +72,7 @@
   {
     "name": "SmtpServer",
     "type": "email",
-    "driverClass": "{{BUBBLE_SMTP_DRIVER}}",
+    "driverClass": "bubble.cloud.email.SmtpEmailDriver",
     "driverConfig": {
       "tlsEnabled": true
     },
@@ -90,7 +90,7 @@
   {
     "name": "TwilioSms",
     "type": "sms",
-    "driverClass": "{{BUBBLE_SMS_DRIVER}}",
+    "driverClass": "bubble.cloud.sms.twilio.TwilioSmsDriver",
     "driverConfig": {},
     "credentials": {
       "params": [
