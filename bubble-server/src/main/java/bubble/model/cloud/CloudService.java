@@ -17,6 +17,7 @@ import bubble.model.boot.CloudServiceConfig;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,8 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static bubble.ApiConstants.EP_CLOUDS;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.*;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
@@ -251,7 +251,19 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
                 if (driverConfig == null || !driverConfig.has(name)) {
                     errors.addViolation("err.cloud.noSuchField", "driver config field does not exist: "+name, name);
                 } else if (errors.isValid()) {
-                    ((ObjectNode) driverConfig).put(name, cfg.getValue());
+                    final JsonNodeType nodeType = driverConfig.get(name).getNodeType();
+                    switch (nodeType) {
+                        case ARRAY: case OBJECT:
+                            ((ObjectNode) driverConfig).replace(name, json(cfg.getValue(), JsonNode.class)); break;
+                        case STRING:
+                            ((ObjectNode) driverConfig).put(name, cfg.getValue()); break;
+                        case NUMBER:
+                            ((ObjectNode) driverConfig).put(name, big(cfg.getValue())); break;
+                        case BOOLEAN:
+                            ((ObjectNode) driverConfig).put(name, Boolean.valueOf(cfg.getValue())); break;
+                        default:
+                            errors.addViolation("err.cloud.invalidFieldType", "Cannot set driver config field '"+name+"' of type "+nodeType, name);
+                    }
                 }
             }
             setDriverConfig(driverConfig);
