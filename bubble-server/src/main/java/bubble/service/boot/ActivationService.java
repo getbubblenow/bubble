@@ -15,8 +15,6 @@ import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.dns.DnsRecordMatch;
-import org.cobbzilla.util.dns.DnsType;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.wizard.api.CrudOperation;
 import org.cobbzilla.wizard.client.ApiClientBase;
@@ -82,7 +80,7 @@ public class ActivationService {
         final List<CloudService> toCreate = new ArrayList<>();
         CloudService publicDns = null;
         CloudService localStorage = null;
-        CloudService storage = null;
+        CloudService networkStorage = null;
         CloudService compute = null;
         for (Map.Entry<String, CloudServiceConfig> requestedCloud : requestConfigs.entrySet()) {
             final String name = requestedCloud.getKey();
@@ -95,13 +93,15 @@ public class ActivationService {
                 final CloudService cloud = new CloudService(defaultCloud).configure(config, errors);
                 toCreate.add(cloud);
                 if (defaultCloud.getType() == CloudServiceType.dns && defaultCloud.getName().equals(request.getDomain().getPublicDns()) && publicDns == null) publicDns = cloud;
-                if (defaultCloud.getType() == CloudServiceType.storage && localStorage == null && defaultCloud.isLocalStorage()) localStorage = cloud;
-                if (defaultCloud.getType() == CloudServiceType.storage && storage == null) storage = cloud;
+                if (defaultCloud.getType() == CloudServiceType.storage) {
+                    if (localStorage == null && defaultCloud.isLocalStorage()) localStorage = cloud;
+                    if (networkStorage == null && defaultCloud.isNotLocalStorage()) networkStorage = cloud;
+                }
                 if (defaultCloud.getType() == CloudServiceType.compute && compute == null) compute = cloud;
             }
         }
         if (publicDns == null) errors.addViolation("err.publicDns.noneSpecified");
-        if (storage == null) errors.addViolation("err.storage.noneSpecified");
+        if (networkStorage == null) errors.addViolation("err.storage.noneSpecified");
         if (compute == null && !configuration.testMode()) errors.addViolation("err.compute.noneSpecified");
         if (errors.isInvalid()) throw invalidEx(errors);
 
@@ -117,22 +117,17 @@ public class ActivationService {
         }
 
         // create all clouds
-        CloudService networkStorage = localStorage;
         for (CloudService cloud : toCreate) {
-            final CloudService c = cloudDAO.create(cloud
+            cloudDAO.create(cloud
                     .setTemplate(true)
                     .setEnabled(true)
                     .setAccount(account.getUuid()));
             if (cloud == publicDns) {
-                final DnsRecordMatch nsMatcher = (DnsRecordMatch) new DnsRecordMatch()
-                        .setType(DnsType.NS)
-                        .setFqdn(request.getDomain().getName());
-                checkDriver(cloud, errors, nsMatcher, "err.dns.testFailed", "err.dns.unknownError");
+                checkDriver(cloud, errors, request.getDomain().getName(), "err.dns.testFailed", "err.dns.unknownError");
 
-            } else if (cloud == storage && cloud.isNotLocalStorage()) {
-                networkStorage = cloud;  // prefer non-local storage for network
-                if (storage.getCredentials().needsNewNetworkKey(ROOT_NETWORK_UUID)) {
-                    storage.setCredentials(storage.getCredentials().initNetworkKey(ROOT_NETWORK_UUID));
+            } else if (cloud == networkStorage) {
+                if (networkStorage.getCredentials().needsNewNetworkKey(ROOT_NETWORK_UUID)) {
+                    networkStorage.setCredentials(networkStorage.getCredentials().initNetworkKey(ROOT_NETWORK_UUID));
                 }
                 checkDriver(cloud, errors, null, "err.storage.testFailed", "err.storage.unknownError");
 

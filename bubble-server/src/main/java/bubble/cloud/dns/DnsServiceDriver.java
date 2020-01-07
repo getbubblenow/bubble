@@ -48,7 +48,9 @@ public interface DnsServiceDriver extends CloudServiceDriver {
 
     default Collection<DnsRecord> list() { return list(null); }
 
-    @Override default boolean test(Object arg) { return arg == null ? test() : !empty(list((DnsRecordMatch) arg)); }
+    @Override default boolean test(Object arg) {
+        return arg == null ? test() : !empty(list((DnsRecordMatch) new DnsRecordMatch().setType(DnsType.NS).setFqdn(arg.toString())));
+    }
     @Override default boolean test() { return true; }
 
     default Collection<DnsRecord> listNew(Long lastMod) { return list(); }
