@@ -156,7 +156,7 @@ public class S3StorageDriver extends StorageServiceDriverBase<S3StorageConfig> {
                 final Map<String, String> userMetadata = objectMetadata.getUserMetadata();
                 final StorageMetadata remoteMeta = StorageMetadata.fromMap(userMetadata);
                 if (remoteMeta.sameSha(metadata.getSha256()) && !metadata.isForceWrite()) {
-                    log.info("_write: sha256 matches, not writing (but returning true): for key="+key);
+                    log.info("writeStorage: sha256 matches, not writing (but returning true): for key="+key);
                     return true;
                 } else {
                     userMetadata.put(META_MTIME, ""+now());
@@ -186,11 +186,11 @@ public class S3StorageDriver extends StorageServiceDriverBase<S3StorageConfig> {
             return true;
 
         } catch (Exception e) {
-            throw new IOException("_write: "+e);
+            throw new IOException("writeStorage: "+e);
         }
     }
 
-    @Override public boolean delete(String fromNode, String uri) throws IOException {
+    @Override public boolean delete(String fromNode, String uri) {
         final BubbleNode from = getFromNode(fromNode);
         final AmazonS3 s3client = getS3client();
         final String key = s3path(from, uri);

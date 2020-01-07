@@ -74,7 +74,7 @@ public class DelegatedStorageDriver extends DelegatedStorageDriverBase {
         return to != null && to.getNetwork().equals(configuration.getThisNetwork().getUuid());
     }
 
-    @Override public boolean delete(String fromNode, String key) throws IOException {
+    @Override public boolean delete(String fromNode, String key) {
         return booleanRequest(key, storage_driver_delete);
     }
 

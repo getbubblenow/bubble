@@ -155,10 +155,14 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
         return from != null && from.getNetwork().equals(configuration.getThisNetwork().getUuid());
     }
 
-    @Override public boolean delete(String fromNode, String uri) throws IOException {
+    @Override public boolean delete(String fromNode, String uri) {
         final BubbleNode from = getFromNode(fromNode);
         final File file = keyFile(from, uri);
-        FileUtils.forceDelete(file);
+        try {
+            FileUtils.forceDelete(file);
+        } catch (IOException e) {
+            return die("delete: forceDelete("+abs(file)+") failed: "+shortError(e));
+        }
         return true;
     }
 

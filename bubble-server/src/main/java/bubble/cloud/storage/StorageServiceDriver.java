@@ -18,7 +18,9 @@ import java.io.InputStream;
 
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static java.util.UUID.randomUUID;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.io.StreamUtil.toStringOrDie;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
 public interface StorageServiceDriver extends CloudServiceDriver {
@@ -116,18 +118,17 @@ public interface StorageServiceDriver extends CloudServiceDriver {
     }
 
     @Override default boolean test () {
-        try {
-            if (!write(getTestNodeId(), getTestKey(), getTestBytes())) return false;
-            if (!delete(getTestNodeId(), getTestKey())) return false;
-        } catch (Exception e) {
-            return false;
-        }
-        return true;
+        final String node = getTestNodeId();
+        final String key = getTestKey();
+        final String data = getTestData();
+        return write(node, key, data.getBytes())
+                && toStringOrDie(read(node, key)).equals(data)
+                && delete(node, key);
     }
 
     default String getTestNodeId () { return ROOT_NETWORK_UUID; }
-    default String getTestKey () { return "_test"; }
-    default byte[] getTestBytes() { return "test".getBytes(); }
+    default String getTestKey    () { return "driver_test_key_" +randomAlphanumeric(30); }
+    default String getTestData   () { return "driver_test_data_"+randomAlphanumeric(100); }
 
     boolean _write(String fromNode, String key, InputStream data, StorageMetadata metadata, String requestId) throws IOException;
 
@@ -143,7 +144,7 @@ public interface StorageServiceDriver extends CloudServiceDriver {
                 sleep(DEFAULT_RETRY_BACKOFF.apply(i), "waiting to retry _write");
             }
         }
-        return die(lastEx == null ? "write error, no lastEx" : "write: "+lastEx);
+        return die(lastEx == null ? "write error, no lastEx" : "write: "+shortError(lastEx));
     }
 
     default boolean write(String fromNode, String key, InputStream data, StorageMetadata metadata) {
@@ -182,7 +183,7 @@ public interface StorageServiceDriver extends CloudServiceDriver {
 
     boolean canWrite(String fromNode, String toNode, String key);
 
-    boolean delete(String fromNode, String uri) throws IOException;
+    boolean delete(String fromNode, String uri);
     boolean deleteNetwork(String networkUuid) throws IOException;
 
     boolean rekey(String fromNode, CloudService newCloud) throws IOException;

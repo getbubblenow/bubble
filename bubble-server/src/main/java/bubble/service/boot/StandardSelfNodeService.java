@@ -164,7 +164,7 @@ public class StandardSelfNodeService implements SelfNodeService {
                 log.debug("initThisNode: wasRestored=false, just returning self: "+initSelf.id());
                 return initSelf;
             } else if (self == NULL_NODE) {
-                log.warn("getThisNode: initThisNode returned NULL_NODE");
+                if (!nullWarningPrinted.check()) log.warn("getThisNode: initThisNode returned NULL_NODE");
                 return null;
             } else {
                 log.debug("getThisNode: thisNode already set, returning: "+self.id());
