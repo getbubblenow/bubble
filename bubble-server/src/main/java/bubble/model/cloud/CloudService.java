@@ -254,6 +254,7 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
                     ((ObjectNode) driverConfig).put(name, cfg.getValue());
                 }
             }
+            setDriverConfig(driverConfig);
         }
         if (config.hasCredentials()) {
             setCredentials(config.getCredentialsObject());
