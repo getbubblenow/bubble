@@ -45,8 +45,13 @@ if [[ -z "${VERSION}" ]] ; then
 fi
 
 DIST="${DIST_BASE}/bubble-${VERSION}"
+ZIP="${DIST_BASE}/bubble-${VERSION}.zip"
+mkdir -p "${DIST}" || die "Error creating distribution directory: ${DIST}"
 cp "${JAR}" "${DIST}/bubble.jar" || die "Error copying ${JAR} to ${DIST}/bubble.jar"
 cp "${BASE}/dist-README.md" "${DIST}/README.md" || die "Error copying dist-README.md to ${DIST}/README.md"
 cp -R "${BASE}/bin" "${DIST}" || die "Error copying bin directory to ${DIST}"
 cp -R "${BASE}/scripts" "${DIST}" || die "Error copying scripts directory to ${DIST}"
 cp -R "${BASE}/config" "${DIST}" || die "Error copying config directory to ${DIST}"
+cd "${DIST}/.." && zip -r "${ZIP}" "$(basename ${DIST})"
+echo "Distribution created: "
+ls -lh "${ZIP}"

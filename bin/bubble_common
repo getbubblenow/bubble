@@ -89,6 +89,8 @@ if [[ -z "${BUBBLE_JAR}" ]] ; then
     BUBBLE_JAR="${HOME}/current/bubble.jar"
   elif [[ -f "/home/bubble/current/bubble.jar" ]] ; then
     BUBBLE_JAR="/home/bubble/current/bubble.jar"
+  elif [[ -f "${BUBBLE_SCRIPTS}/../bubble.jar" ]] ; then
+    BUBBLE_JAR="${BUBBLE_SCRIPTS}/../bubble.jar"
   else
     BUBBLE_JAR="$(find ${BUBBLE_SCRIPTS}/../bubble-server/target -type f -name "bubble*.jar" | head -1)"
   fi
