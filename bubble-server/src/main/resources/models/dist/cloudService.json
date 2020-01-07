@@ -40,9 +40,9 @@
     "type": "storage",
     "driverClass": "bubble.cloud.storage.s3.S3StorageDriver",
     "driverConfig": {
-      "region": "US_EAST_1",
+      "region": "{{#exists BUBBLE_S3_REGION}}{{BUBBLE_S3_REGION}}{{else}}US_EAST_1{{/exists}}",
       "bucket": "{{BUBBLE_S3_BUCKET}}",
-      "prefix": "{{BUBBLE_S3_BUCKET_PREFIX}}",
+      "prefix": "{{#exists BUBBLE_S3_BUCKET_PREFIX}}{{BUBBLE_S3_BUCKET_PREFIX}}{{else}}bubble_data{{/exists}}",
       "listFetchSize": 100
     },
     "credentials": {
