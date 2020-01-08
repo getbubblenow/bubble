@@ -5,8 +5,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import static java.util.UUID.randomUUID;
+
 @Accessors(chain=true)
 public class CloudRegion {
+
+    @Getter @Setter private String uuid = randomUUID().toString();
 
     @Getter @Setter private String cloud;
 
