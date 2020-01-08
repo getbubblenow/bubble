@@ -81,6 +81,7 @@ public class ActivationService {
         CloudService publicDns = null;
         CloudService localStorage = null;
         CloudService networkStorage = null;
+        CloudService email = null;
         CloudService compute = null;
         for (Map.Entry<String, CloudServiceConfig> requestedCloud : requestConfigs.entrySet()) {
             final String name = requestedCloud.getKey();
@@ -92,17 +93,27 @@ public class ActivationService {
             } else if (errors.isValid()) {
                 final CloudService cloud = new CloudService(defaultCloud).configure(config, errors);
                 toCreate.add(cloud);
-                if (defaultCloud.getType() == CloudServiceType.dns && defaultCloud.getName().equals(request.getDomain().getPublicDns()) && publicDns == null) publicDns = cloud;
-                if (defaultCloud.getType() == CloudServiceType.storage) {
-                    if (localStorage == null && defaultCloud.isLocalStorage()) localStorage = cloud;
-                    if (networkStorage == null && defaultCloud.isNotLocalStorage()) networkStorage = cloud;
+                switch (defaultCloud.getType()) {
+                    case dns:
+                        if (defaultCloud.getName().equals(request.getDomain().getPublicDns()) && publicDns == null) publicDns = cloud;
+                        break;
+                    case storage:
+                        if (localStorage == null && defaultCloud.isLocalStorage()) localStorage = cloud;
+                        if (networkStorage == null && defaultCloud.isNotLocalStorage()) networkStorage = cloud;
+                        break;
+                    case compute:
+                        if (compute == null) compute = cloud;
+                        break;
+                    case email:
+                        if (email == null) email = cloud;
+                        break;
                 }
-                if (defaultCloud.getType() == CloudServiceType.compute && compute == null) compute = cloud;
             }
         }
         if (publicDns == null) errors.addViolation("err.publicDns.noneSpecified");
         if (networkStorage == null) errors.addViolation("err.storage.noneSpecified");
         if (compute == null && !configuration.testMode()) errors.addViolation("err.compute.noneSpecified");
+        if (email == null && !configuration.testMode()) errors.addViolation("err.email.noneSpecified");
         if (errors.isInvalid()) throw invalidEx(errors);
 
         // create local storage if it was not provided

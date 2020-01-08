@@ -138,9 +138,14 @@ public class BackupService extends SimpleDaemon {
 
                         @Cleanup final TempDir temp = new TempDir();
 
-                        // 1 backup ansible snapshot (check sha256 first, we only need to do this once, it never changes)
-                        log.info("backup: backing up ansible archive");
-                        backupFile(ansiblePath, new File(home, "ansible.tgz"));
+                        // 1 backup ansible snapshot -- todo: check sha256
+                        final File ansibleTgz = new File(home, "ansible.tgz");
+                        if (ansibleTgz.exists()) {
+                            log.info("backup: backing up ansible archive");
+                            backupFile(ansiblePath, ansibleTgz);
+                        } else {
+                            log.warn("backup: ansible archive not found, not backing up: "+abs(ansibleTgz));
+                        }
 
                         // 2 dump database to storage
                         log.info("backup: backing up DB");

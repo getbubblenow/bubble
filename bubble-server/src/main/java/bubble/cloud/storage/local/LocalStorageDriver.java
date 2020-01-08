@@ -47,7 +47,11 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
 
     @Getter(lazy=true) private final String baseDir = initBaseDir();
     public String initBaseDir() {
-        if (!empty(config.getBaseDir())) return config.getBaseDir();
+        if (!empty(config.getBaseDir())) {
+            final File base = new File(config.getBaseDir());
+            if (base.isAbsolute()) return base.getAbsolutePath();
+            return new File(System.getProperty("user.home")+"/"+config.getBaseDir()).getAbsolutePath();
+        }
 
         final File standardBaseDir = new File(LOCAL_STORAGE_STANDARD_BASE_DIR);
         if ((standardBaseDir.exists() || standardBaseDir.mkdirs()) && standardBaseDir.canRead() && standardBaseDir.canWrite()) {
@@ -162,6 +166,14 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
             FileUtils.forceDelete(file);
         } catch (IOException e) {
             return die("delete: forceDelete("+abs(file)+") failed: "+shortError(e));
+        }
+        final File metaFile = metaFile(file);
+        if (metaFile.exists()) {
+            try {
+                FileUtils.forceDelete(metaFile);
+            } catch (IOException e) {
+                log.warn("delete: forceDelete of meta file (" + abs(metaFile) + ") failed: " + shortError(e));
+            }
         }
         return true;
     }
