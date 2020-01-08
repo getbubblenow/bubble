@@ -680,7 +680,7 @@ public class StandardNetworkService implements NetworkService {
             final String json = stats.get_withPrefix(key);
             if (json != null) {
                 try {
-                    ticks.add(json(json, NodeProgressMeterTick.class));
+                    ticks.add(json(json, NodeProgressMeterTick.class).setPattern(null));
                 } catch (Exception e) {
                     log.warn("currentTicks (bad json?): "+e);
                 }
