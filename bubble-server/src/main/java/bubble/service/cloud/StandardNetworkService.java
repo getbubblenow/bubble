@@ -461,13 +461,18 @@ public class StandardNetworkService implements NetworkService {
 
     public NewNodeNotification startNetwork(BubbleNetwork network, NetLocation netLocation) {
 
+        final String accountUuid = network.getAccount();
         if (configuration.paymentsEnabled()) {
-            final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(network.getAccount(), network.getUuid());
+            final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(accountUuid, network.getUuid());
             if (accountPlan == null) throw invalidEx("err.accountPlan.notFound");
             if (accountPlan.disabled()) throw invalidEx("err.accountPlan.disabled");
         }
-        final AccountPolicy policy = policyDAO.findSingleByAccount(network.getAccount());
-        if (!policy.hasVerifiedAccountContacts()) {
+
+        final Account account = accountDAO.findByUuid(accountUuid);
+        if (account == null) throw notFoundEx(accountUuid);
+
+        final AccountPolicy policy = policyDAO.findSingleByAccount(accountUuid);
+        if (!policy.hasVerifiedAccountContacts() && !account.admin()) {
             throw invalidEx("err.accountPlan.noVerifiedContacts");
         }
 
@@ -494,7 +499,7 @@ public class StandardNetworkService implements NetworkService {
             final CloudAndRegion cloudAndRegion = geoService.selectCloudAndRegion(network, netLocation);
             final String host = network.fork() ? network.getForkHost() : newNodeHostname();
             final NewNodeNotification newNodeRequest = new NewNodeNotification()
-                    .setAccount(network.getAccount())
+                    .setAccount(accountUuid)
                     .setNetwork(network.getUuid())
                     .setDomain(network.getDomain())
                     .setFork(network.fork())

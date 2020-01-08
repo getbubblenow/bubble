@@ -67,7 +67,7 @@ public class BubbleDomainDAO extends AccountOwnedTemplateDAO<BubbleDomain> {
             return null;
         }
         final StringBuilder dname = new StringBuilder(parts[parts.length-1]);
-        for (int i=parts.length-2; i>1; i--) {
+        for (int i=parts.length-2; i>=1; i--) {
             dname.insert(0, ".").insert(0, parts[i]);
             final BubbleDomain domain = findByAccountAndId(configuration.getThisNode().getAccount(), dname.toString());
             if (domain != null) return domain;
