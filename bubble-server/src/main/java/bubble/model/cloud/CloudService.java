@@ -33,6 +33,7 @@ import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.entityconfig.IdentifiableBaseParentEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
+import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
 
@@ -68,6 +69,7 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
             new ScrubbableField(CloudService.class, "credentials", CloudCredentials.class),
             new ScrubbableField(CloudService.class, "credentialsJson", String.class)
     };
+
     @Override public ScrubbableField[] fieldsToScrub() { return SCRUB_FIELDS; }
 
     public static final String[] UPDATE_FIELDS = {"description", "template", "enabled", "driverConfig", "priority"};
@@ -227,20 +229,26 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     public <T extends CloudServiceDriver> T wireAndSetup (BubbleConfiguration configuration) {
         // note: CloudServiceDAO calls clearDriverCache when driver config is updated,
         // then the updated class/config/credentials will be used.
-        return (T) driverCache.computeIfAbsent(getUuid(), k -> {
-            final T driver;
-            if (delegated()) {
-                if (type.hasDelegateDriverClass()) {
-                    driver = (T) configuration.autowire(instantiate(type.getDelegateDriverClass(), this));
-                } else {
-                    return die("wireAndSetup: cloud service type " + type + " does not support delegation: class not found: "+type.getDelegateDriverClassName());
-                }
+        if (!hasUuid()) {
+            // this is a test before creation, just try to wire it up, but do not cache the result
+            return _wireAndSetup(configuration);
+        }
+        return (T) driverCache.computeIfAbsent(getUuid(), k -> _wireAndSetup(configuration));
+    }
+
+    private <T extends CloudServiceDriver> T _wireAndSetup (BubbleConfiguration configuration) {
+        final T driver;
+        if (delegated()) {
+            if (type.hasDelegateDriverClass()) {
+                driver = (T) configuration.autowire(instantiate(type.getDelegateDriverClass(), this));
             } else {
-                driver = (T) configuration.autowire(getDriver());
-                driver.postSetup();
+                return die("wireAndSetup: cloud service type " + type + " does not support delegation: class not found: "+type.getDelegateDriverClassName());
             }
-            return driver;
-        });
+        } else {
+            driver = (T) configuration.autowire(getDriver());
+            driver.postSetup();
+        }
+        return driver;
     }
 
     public CloudService configure(CloudServiceConfig config, ValidationResult errors) {
@@ -289,5 +297,41 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
             config.setCredentials(NameAndValue.toMap(getCredentials().getParams()));
         }
         return config;
+    }
+
+    @Transient @JsonIgnore @Getter @Setter private Object testArg = null;
+
+    public static ValidationResult testDriver(CloudService cloud, BubbleConfiguration configuration) {
+        return testDriver(cloud, configuration, new ValidationResult());
+    }
+
+    public static ValidationResult testDriver(CloudService cloud, BubbleConfiguration configuration, ValidationResult errors) {
+        final String prefix = cloud.getName()+": ";
+        final Object arg = cloud.getTestArg();
+        final String argString = arg != null ? " with arg=" + arg : "";
+        final String invalidValue = arg == null ? null : arg.toString();
+        final String driverClass = cloud.getDriverClass();
+        final String errTestFailed = "err."+cloud.getType()+".testFailed";
+        final String errException = "err."+cloud.getType()+".unknownError";
+
+        final CloudServiceDriver driver;
+        try {
+            driver = cloud.getConfiguredDriver(configuration);
+        } catch (SimpleViolationException e) {
+            return errors.addViolation(e.getBean());
+
+        } catch (Exception e) {
+            return errors.addViolation(errTestFailed, prefix+"driver initialization failed: "+driverClass+": "+shortError(e));
+        }
+        try {
+            if (!driver.test(arg)) {
+                return errors.addViolation(errTestFailed, prefix+"test failed for driver: "+driverClass+argString, invalidValue);
+            }
+        } catch (SimpleViolationException e) {
+            return errors.addViolation(e.getBean());
+        } catch (Exception e) {
+            return errors.addViolation(errException, prefix+"test failed for driver: "+driverClass+argString+": "+shortError(e), invalidValue);
+        }
+        return errors;
     }
 }

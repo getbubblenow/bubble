@@ -1,6 +1,5 @@
 package bubble.service.boot;
 
-import bubble.cloud.CloudServiceDriver;
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.compute.ComputeNodeSizeType;
 import bubble.cloud.compute.local.LocalComputeDriver;
@@ -21,7 +20,6 @@ import org.cobbzilla.wizard.api.CrudOperation;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.ModelSetupService;
-import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -128,24 +126,19 @@ public class ActivationService {
                     .setTemplate(true));
         }
 
-        // create all clouds
+        // create clouds, test cloud drivers
         for (CloudService cloud : toCreate) {
+            final Object testArg;
+            if (cloud == publicDns) {
+                testArg = request.getDomain().getName();
+            } else {
+                testArg = null;
+            }
             cloudDAO.create(cloud
                     .setTemplate(true)
                     .setEnabled(true)
-                    .setAccount(account.getUuid()));
-            if (cloud == publicDns) {
-                checkDriver(cloud, errors, request.getDomain().getName(), "err.dns.testFailed", "err.dns.unknownError");
-
-            } else if (cloud == networkStorage) {
-                if (networkStorage.getCredentials().needsNewNetworkKey(ROOT_NETWORK_UUID)) {
-                    networkStorage.setCredentials(networkStorage.getCredentials().initNetworkKey(ROOT_NETWORK_UUID));
-                }
-                checkDriver(cloud, errors, null, "err.storage.testFailed", "err.storage.unknownError");
-
-            } else {
-                checkDriver(cloud, errors, null, "err."+cloud.getType()+".testFailed", "err."+cloud.getType()+".unknownError");
-            }
+                    .setAccount(account.getUuid())
+                    .setTestArg(testArg));
         }
         if (errors.isInvalid()) throw invalidEx(errors);
 
@@ -233,34 +226,6 @@ public class ActivationService {
         }
 
         return node;
-    }
-
-    public ValidationResult checkDriver(CloudService cloud, ValidationResult errors, Object arg, String errTestFailed, String errException) {
-
-        final String prefix = cloud.getName()+": ";
-        final String argString = arg != null ? " with arg=" + arg : "";
-        final String invalidValue = arg == null ? null : arg.toString();
-        final String driverClass = cloud.getDriverClass();
-
-        final CloudServiceDriver driver;
-        try {
-            driver = cloud.getConfiguredDriver(configuration);
-        } catch (SimpleViolationException e) {
-            return errors.addViolation(e.getBean());
-
-        } catch (Exception e) {
-            return errors.addViolation(errTestFailed, prefix+"driver initialization failed: "+driverClass);
-        }
-        try {
-            if (!driver.test(arg)) {
-                return errors.addViolation(errTestFailed, prefix+"test failed for driver: "+driverClass+argString, invalidValue);
-            }
-        } catch (SimpleViolationException e) {
-            return errors.addViolation(e.getBean());
-        } catch (Exception e) {
-            return errors.addViolation(errException, prefix+"test failed for driver: "+driverClass+argString+": "+shortError(e), invalidValue);
-        }
-        return errors;
     }
 
     public String loadDefaultRoles() {

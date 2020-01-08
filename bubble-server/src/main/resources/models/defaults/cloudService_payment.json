@@ -26,6 +26,7 @@
   {
     "name": "FreePlay",
     "type": "payment",
+    "priority": 300,
     "driverClass": "bubble.cloud.payment.free.FreePaymentDriver",
     "driverConfig": {},
     "credentials": {},
