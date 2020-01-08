@@ -208,5 +208,5 @@ public interface DnsServiceDriver extends CloudServiceDriver {
         return true;
     }
 
-    default boolean requireSubnetNS() { return true; }
+    default boolean requireSubnetNS() { return false; }
 }

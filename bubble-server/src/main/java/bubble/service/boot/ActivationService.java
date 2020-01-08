@@ -109,10 +109,11 @@ public class ActivationService {
                 }
             }
         }
+        final boolean testMode = configuration.testMode();
         if (publicDns == null) errors.addViolation("err.publicDns.noneSpecified");
-        if (networkStorage == null) errors.addViolation("err.storage.noneSpecified");
-        if (compute == null && !configuration.testMode()) errors.addViolation("err.compute.noneSpecified");
-        if (email == null && !configuration.testMode()) errors.addViolation("err.email.noneSpecified");
+        if (networkStorage == null && !testMode) errors.addViolation("err.storage.noneSpecified");
+        if (compute == null && !testMode) errors.addViolation("err.compute.noneSpecified");
+        if (email == null && !testMode) errors.addViolation("err.email.noneSpecified");
         if (errors.isInvalid()) throw invalidEx(errors);
 
         // create local storage if it was not provided
@@ -168,7 +169,7 @@ public class ActivationService {
                 .setName(request.getNetworkName())
                 .setTag(TAG_ALLOW_REGISTRATION, true)
                 .setTag(TAG_PARENT_ACCOUNT, account.getUuid())
-                .setStorage(networkStorage.getUuid())
+                .setStorage(networkStorage != null ? networkStorage.getUuid() : localStorage.getUuid())
                 .setState(BubbleNetworkState.running));
 
         // copy data outside the network to inside the network

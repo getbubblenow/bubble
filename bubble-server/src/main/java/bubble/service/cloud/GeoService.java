@@ -156,9 +156,9 @@ public class GeoService {
                 throw new SimpleViolationException("err.geoTimeService.notFound");
             }
 
-            final GeoLocation location = locate(account.getUuid(), ip);
+            final GeoLocation location = locate(acct.get().getUuid(), ip);
             if (!location.hasLatLon()) {
-                final List<CloudService> geocodes = cloudDAO.findByAccountAndType(account.getUuid(), CloudServiceType.geoCode);
+                final List<CloudService> geocodes = cloudDAO.findByAccountAndType(acct.get().getUuid(), CloudServiceType.geoCode);
                 if (geocodes.isEmpty()) throw new SimpleViolationException("err.geoCodeService.notFound");
                 final GeoCodeResult code = geocodes.get(0).getGeoCodeDriver(configuration).lookup(location);
                 location.setLat(code.getLat());

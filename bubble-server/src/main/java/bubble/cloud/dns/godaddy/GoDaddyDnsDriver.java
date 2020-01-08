@@ -31,8 +31,6 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
 
     public static final int MAX_GODADDY_RETRIES = 5;
 
-    @Override public boolean requireSubnetNS() { return false; }
-
     @Override public Collection<DnsRecord> create(BubbleDomain domain) {
         // lookup SOA and NS records for domain, they must already exist
         final Collection<DnsRecord> soaRecords = readRecords(domain, urlForType(domain, SOA), domain.matchSOA());
