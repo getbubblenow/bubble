@@ -54,7 +54,7 @@ public class FilteredEntityIterator extends EntityIterator {
         // and the new/initial user IS the admin
         if (account.hasParent()) {
             final Account sageAccount = configuration.getBean(AccountDAO.class).findByUuid(account.getParent());
-            if (sageAccount == null) die(getClass().getName()+": iterate: account parent not found: "+account.getParent());
+            if (sageAccount == null) die(getClass().getName()+": iterate: parent "+account.getParent()+" not found for account: "+account.getUuid());
             add(Account.sageMask(sageAccount));
         }
         add(account.setAdmin(true));

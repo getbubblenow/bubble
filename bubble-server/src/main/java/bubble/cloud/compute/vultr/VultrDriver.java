@@ -13,6 +13,7 @@ import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.http.HttpRequestBean;
 import org.cobbzilla.util.http.HttpResponseBean;
 
+import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -21,8 +22,7 @@ import static bubble.model.cloud.BubbleNode.TAG_SSH_KEY_ID;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.http.HttpHeaders.CONTENT_ENCODING;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpMethods.POST;
 import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.util.http.HttpUtil.getResponse;
@@ -43,12 +43,16 @@ public class VultrDriver extends ComputeServiceDriverBase {
     public static final String PLANS_URL = VULTR_API_BASE + "plans/list";
     public static final String OS_URL = VULTR_API_BASE + "os/list";
 
+    public static final String VULTR_SUBID = "SUBID";
+    public static final String VULTR_V4_IP = "main_ip";
+    public static final String VULTR_V6_IP = "v6_main_ip";
+
     public static final String CREATE_SSH_KEY_URL = VULTR_API_BASE + "sshkey/create";
     public static final String DESTROY_SSH_KEY_URL = VULTR_API_BASE + "sshkey/destroy";
     public static final String CREATE_SERVER_URL = VULTR_API_BASE + "server/create";
     public static final String DESTROY_SERVER_URL = VULTR_API_BASE + "server/destroy";
     public static final String LIST_SERVERS_URL = VULTR_API_BASE + "server/list";
-    public static final String POLL_SERVER_URL = LIST_SERVERS_URL + "?SUBID=";
+    public static final String POLL_SERVER_URL = LIST_SERVERS_URL + "?" + VULTR_SUBID + "=";
 
     @Getter(lazy=true) private static final Map<String, Integer> regionMap = getResourceMap(REGIONS_URL);
     @Getter(lazy=true) private static final Map<String, Integer> plansMap = getResourceMap(PLANS_URL);
@@ -56,6 +60,8 @@ public class VultrDriver extends ComputeServiceDriverBase {
 
     public static final long SERVER_START_POLL_INTERVAL = SECONDS.toMillis(5);
     public static final long SERVER_START_TIMEOUT = MINUTES.toMillis(10);
+    public static final long SERVER_STOP_TIMEOUT = SECONDS.toMillis(60);
+    public static final long SERVER_STOP_CHECK_INTERVAL = SECONDS.toMillis(5);
 
     private static Map<String, Integer> getResourceMap(String uri) {
         try {
@@ -111,7 +117,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
         // create server, check response
         final HttpResponseBean serverResponse = serverRequest.curl();  // fixme: we can do better than shelling to curl
         if (serverResponse.getStatus() != 200) return die("start: error creating server: " + serverResponse);
-        final String subId = json(serverResponse.getEntityString(), JsonNode.class).get("SUBID").textValue();
+        final String subId = json(serverResponse.getEntityString(), JsonNode.class).get(VULTR_SUBID).textValue();
 
         node.setState(BubbleNodeState.booting);
         node.setTag(TAG_INSTANCE_ID, subId);
@@ -132,15 +138,15 @@ public class VultrDriver extends ComputeServiceDriverBase {
                 if (serverNode.has("tag")
                         && serverNode.get("tag").textValue().equals(cloud.getUuid())
                         && serverNode.has("status")
-                        && serverNode.has("main_ip")) {
+                        && serverNode.has(VULTR_V4_IP)) {
 
                     final String status = serverNode.get("status").textValue();
-                    final String ip4 = serverNode.get("main_ip").textValue();
+                    final String ip4 = serverNode.get(VULTR_V4_IP).textValue();
                     if (ip4 != null && ip4.length() > 0 && !ip4.equals("0.0.0.0")) {
                         node.setIp4(ip4);
                         nodeDAO.update(node);
                     }
-                    final String ip6 = serverNode.get("v6_main_ip").textValue();
+                    final String ip6 = serverNode.get(VULTR_V6_IP).textValue();
                     if (ip6 != null && ip6.length() > 0) {
                         node.setIp6(ip6);
                         nodeDAO.update(node);
@@ -184,13 +190,34 @@ public class VultrDriver extends ComputeServiceDriverBase {
 
         deleteVultrKey(node); // just in case
 
+        Exception lastEx = null;
+        final long start = now();
+        while (now() - start < SERVER_STOP_TIMEOUT) {
+            try {
+                _stop(node);
+            } catch (EntityNotFoundException e) {
+                log.info("stop: node stopped");
+                return node;
+
+            } catch (Exception e) {
+                lastEx = e;
+            }
+            sleep(SERVER_STOP_CHECK_INTERVAL, "stop: waiting to try stopping again until node is not found");
+            log.warn("stop: node still running: "+node.id());
+        }
+        log.error("stop: error stopping node: "+node.id());
+        if (lastEx != null) throw lastEx;
+        return die("stop: timeout stopping node: "+node.id());
+    }
+
+    public BubbleNode _stop(BubbleNode node) throws IOException {
         BubbleNode vultrNode;
         final String ip4 = node.getIp4();
         if (!node.hasTag(TAG_INSTANCE_ID)) {
             if (ip4 == null) {
                 throw notFoundEx(node.id());
             }
-            log.warn("stop: no subid tag found on node ("+node.getFqdn()+"/"+ ip4 +"), searching based in ip4...");
+            log.warn("stop: no "+TAG_INSTANCE_ID+" tag found on node ("+node.getFqdn()+"/"+ ip4 +"), searching based in ip4...");
             vultrNode = findByIp4(node, ip4);
         } else {
             // does the node still exist?
@@ -205,10 +232,10 @@ public class VultrDriver extends ComputeServiceDriverBase {
 
         final String subId = vultrNode.getTag(TAG_INSTANCE_ID);
         if (subId == null) {
-            throw invalidEx("err.node.stop.error", "stop: no SUBID on node, returning");
+            throw invalidEx("err.node.stop.error", "stop: no " + VULTR_SUBID + " on node, returning");
         }
 
-        final HttpRequestBean destroyServerRequest = auth(new HttpRequestBean(POST, DESTROY_SERVER_URL, "SUBID="+ subId));
+        final HttpRequestBean destroyServerRequest = auth(new HttpRequestBean(POST, DESTROY_SERVER_URL, VULTR_SUBID + "=" + subId));
         final HttpResponseBean destroyResponse = destroyServerRequest.curl();
         if (destroyResponse.getStatus() != OK) {
             throw invalidEx("err.node.stop.error", "stop: error stopping node: "+destroyResponse);
@@ -232,19 +259,28 @@ public class VultrDriver extends ComputeServiceDriverBase {
         return found;
     }
 
-    public BubbleNode listNode(BubbleNode node) throws IOException {
+    public BubbleNode listNode(BubbleNode node) {
         final HttpRequestBean listServerRequest = auth(new HttpRequestBean(POLL_SERVER_URL+node.getTag(TAG_INSTANCE_ID)));
-        final HttpResponseBean listResponse = getResponse(listServerRequest);
+        final HttpResponseBean listResponse = listServerRequest.curl();
         switch (listResponse.getStatus()) {
             case OK:
-                break;
-            case NOT_FOUND: case PRECONDITION_FAILED:
-                log.warn("stop: node "+node.id()+" is already stopped? http status: "+listResponse.getStatus());
-                return node;
+                try {
+                    final JsonNode jsonNode = json(listResponse.getEntityString(), JsonNode.class);
+                    final JsonNode subId = jsonNode.get(VULTR_SUBID);
+                    final JsonNode ip4 = jsonNode.get(VULTR_V4_IP);
+                    final JsonNode ip6 = jsonNode.get(VULTR_V6_IP);
+                    return (subId != null && node.hasTag(TAG_INSTANCE_ID) && subId.textValue().equals(node.getTag(TAG_INSTANCE_ID)))
+                            || (ip4 != null && node.hasIp4() && ip4.textValue().equals(node.getIp4()))
+                            || (ip6 != null && node.hasIp6() && ip6.textValue().equals(node.getIp6())) ? node : null;
+                } catch (Exception e) {
+                    log.error("listNode: error finding node "+node.id()+", status="+listResponse.getStatus()+": "+listResponse+": exception="+shortError(e));
+                    return null;
+                }
+            case NOT_FOUND: return null;
             default:
-                return die("listNode: error finding node "+node.id()+", status="+listResponse.getStatus()+": "+listResponse);
+                log.error("listNode: error finding node "+node.id()+", status="+listResponse.getStatus()+": "+listResponse);
+                return null;
         }
-        return null;
     }
 
     @Override public List<BubbleNode> listNodes() throws IOException {
@@ -262,9 +298,9 @@ public class VultrDriver extends ComputeServiceDriverBase {
                         log.debug("Skipping node without cloud tag "+cloud.getUuid()+": "+subid);
                         continue;
                     }
-                    final String subId = server.has("SUBID") ? server.get("SUBID").textValue() : null;
-                    final String ip4 = server.has("main_ip") ? server.get("main_ip").textValue() : null;
-                    final String ip6 = server.has("v6_main_ip") ? server.get("v6_main_ip").textValue() : null;
+                    final String subId = server.has(VULTR_SUBID) ? server.get(VULTR_SUBID).textValue() : null;
+                    final String ip4 = server.has(VULTR_V4_IP) ? server.get(VULTR_V4_IP).textValue() : null;
+                    final String ip6 = server.has(VULTR_V6_IP) ? server.get(VULTR_V6_IP).textValue() : null;
                     nodes.add(new BubbleNode().setIp4(ip4).setIp6(ip6).setTag(TAG_INSTANCE_ID, subId));
                 }
                 break;
@@ -290,11 +326,11 @@ public class VultrDriver extends ComputeServiceDriverBase {
                     for (Iterator<String> iter = entity.fieldNames(); iter.hasNext(); ) {
                         final String subid = iter.next();
                         final ObjectNode server = (ObjectNode) entity.get(subid);
-                        final String ip4 = server.has("main_ip") ? server.get("main_ip").textValue() : "";
+                        final String ip4 = server.has(VULTR_V4_IP) ? server.get(VULTR_V4_IP).textValue() : "";
                         if (ip4.equals(node.getIp4())) {
                             if (server.has("power_status") && server.get("power_status").textValue().equals("running")
                                     && server.has("server_state") && server.get("server_state").textValue().equals("ok")) {
-                                final String ip6 = server.has("v6_main_ip") ? server.get("v6_main_ip").textValue() : null;
+                                final String ip6 = server.has(VULTR_V6_IP) ? server.get(VULTR_V6_IP).textValue() : null;
                                 return node.setIp4(ip4).setIp6(ip6).setState(BubbleNodeState.running);
                             }
                         }
