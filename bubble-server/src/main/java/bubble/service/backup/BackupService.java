@@ -67,8 +67,8 @@ public class BackupService extends SimpleDaemon {
 
     // todo: make these configurable. maybe tags on the BubbleNetwork?
     public static final long BACKUP_INTERVAL = DAYS.toMillis(1) + MINUTES.toMillis(10);
-    public static final long BR_STATE_LOCK_TIMEOUT = MINUTES.toSeconds(30);
-    public static final long BR_STATE_DEADLOCK_TIMEOUT = MINUTES.toSeconds(25);
+    public static final long BR_STATE_LOCK_TIMEOUT = MINUTES.toMillis(30);
+    public static final long BR_STATE_DEADLOCK_TIMEOUT = MINUTES.toMillis(25);
     public static final long BR_CHECK_INTERVAL = HOURS.toMillis(1);
     public static final long STARTUP_DELAY = MINUTES.toMillis(5);
 

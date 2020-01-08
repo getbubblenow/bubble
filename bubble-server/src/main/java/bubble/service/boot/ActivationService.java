@@ -138,7 +138,8 @@ public class ActivationService {
                     .setTemplate(true)
                     .setEnabled(true)
                     .setAccount(account.getUuid())
-                    .setTestArg(testArg));
+                    .setTestArg(testArg)
+                    .setSkipTest(request.skipTests()));
         }
         if (errors.isInvalid()) throw invalidEx(errors);
 

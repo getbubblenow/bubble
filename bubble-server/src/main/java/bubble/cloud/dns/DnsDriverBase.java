@@ -22,8 +22,8 @@ import static org.cobbzilla.util.network.NetworkUtil.IPv4_ALL_ADDRS;
 
 public abstract class DnsDriverBase<T> extends CloudServiceDriverBase<T> implements DnsServiceDriver {
 
-    private static final long DNS_LOCK_TIMEOUT = TimeUnit.MINUTES.toSeconds(1);
-    private static final long DNS_DEADLOCK_TIMEOUT = TimeUnit.MINUTES.toSeconds(5);
+    private static final long DNS_LOCK_TIMEOUT = TimeUnit.MINUTES.toMillis(1);
+    private static final long DNS_DEADLOCK_TIMEOUT = TimeUnit.MINUTES.toMillis(5);
 
     @Autowired protected BubbleDomainDAO domainDAO;
     @Autowired protected BubbleNetworkDAO networkDAO;

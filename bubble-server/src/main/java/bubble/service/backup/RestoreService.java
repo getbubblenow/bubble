@@ -46,8 +46,8 @@ public class RestoreService {
     // API is started (in role bubble_finalizer)
     public static final long RESTORE_MONITOR_SCRIPT_TIMEOUT_SECONDS = RESTORE_WINDOW_SECONDS + MINUTES.toSeconds(5);
 
-    private static final long RESTORE_LOCK_TIMEOUT = MINUTES.toSeconds(31);
-    private static final long RESTORE_DEADLOCK_TIMEOUT = MINUTES.toSeconds(30);
+    private static final long RESTORE_LOCK_TIMEOUT = MINUTES.toMillis(31);
+    private static final long RESTORE_DEADLOCK_TIMEOUT = MINUTES.toMillis(30);
 
     @Autowired private RedisService redis;
     @Getter(lazy=true) private final RedisService restoreKeys = redis.prefixNamespace(getClass().getSimpleName());

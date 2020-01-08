@@ -300,12 +300,16 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     }
 
     @Transient @JsonIgnore @Getter @Setter private Object testArg = null;
+    @Transient @JsonIgnore @Getter @Setter private Boolean skipTest = false;
+    public boolean skipTest () { return skipTest != null && skipTest; };
 
     public static ValidationResult testDriver(CloudService cloud, BubbleConfiguration configuration) {
         return testDriver(cloud, configuration, new ValidationResult());
     }
 
     public static ValidationResult testDriver(CloudService cloud, BubbleConfiguration configuration, ValidationResult errors) {
+        if (cloud.skipTest()) return errors;
+
         final String prefix = cloud.getName()+": ";
         final Object arg = cloud.getTestArg();
         final String argString = arg != null ? " with arg=" + arg : "";

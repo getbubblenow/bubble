@@ -7,6 +7,7 @@ import bubble.model.cloud.StorageMetadata;
 import bubble.notify.storage.StorageListing;
 import lombok.Cleanup;
 import org.apache.commons.io.IOUtils;
+import org.cobbzilla.util.daemon.ExceptionHandler;
 import org.cobbzilla.util.string.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,7 @@ public interface StorageServiceDriver extends CloudServiceDriver {
 
     Logger log = LoggerFactory.getLogger(StorageServiceDriver.class);
 
-    default ExceptionRunnable getExceptionRunnable() { return exceptionRunnable(getFatalExceptionClasses()); }
+    default ExceptionHandler getExceptionRunnable() { return ExceptionHandler.exceptionRunnable(getFatalExceptionClasses()); }
     default Class[] getFatalExceptionClasses() { return new Class[0]; }
     default int getMaxTries() { return 5; }
 

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 public class RekeyReaderMain extends BaseMain<RekeyOptions> {
@@ -35,7 +36,8 @@ public class RekeyReaderMain extends BaseMain<RekeyOptions> {
         final RestServerHarness<BubbleConfiguration, BubbleDbFilterServer> fromHarness = getOptions().getServer();
         final BubbleConfiguration fromConfig = fromHarness.getConfiguration();
         final boolean debugEnabled = log.isDebugEnabled();
-        final Iterator<Identifiable> producer = getEntityProducer(fromConfig);
+        final AtomicReference<Exception> error = new AtomicReference<>();
+        final Iterator<Identifiable> producer = getEntityProducer(fromConfig, error);
         while (producer.hasNext()) {
             final Identifiable from = producer.next();
             if (from instanceof EndOfEntityStream) break;
@@ -50,8 +52,8 @@ public class RekeyReaderMain extends BaseMain<RekeyOptions> {
         out("READER: complete");
     }
 
-    protected Iterator<Identifiable> getEntityProducer(BubbleConfiguration fromConfig) {
-        return new FullEntityIterator(fromConfig);
+    protected Iterator<Identifiable> getEntityProducer(BubbleConfiguration fromConfig, AtomicReference<Exception> error) {
+        return new FullEntityIterator(fromConfig, error);
     }
 
 }

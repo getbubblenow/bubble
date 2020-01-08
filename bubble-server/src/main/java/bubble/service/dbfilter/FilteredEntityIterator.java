@@ -10,19 +10,19 @@ import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeKey;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.dao.DAO;
 import org.cobbzilla.wizard.model.Identifiable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static bubble.model.device.Device.UNINITIALIZED_DEVICE;
 import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 
-@AllArgsConstructor @Slf4j
+@Slf4j
 public class FilteredEntityIterator extends EntityIterator {
 
     public static final List<Class<? extends Identifiable>> POST_COPY_ENTITIES = new ArrayList<>();
@@ -39,11 +39,24 @@ public class FilteredEntityIterator extends EntityIterator {
     private final Account account;
     private final BubbleNode node;
 
+    public FilteredEntityIterator (BubbleConfiguration configuration,
+                                   Account account,
+                                   BubbleNode node,
+                                   AtomicReference<Exception> error) {
+        super(error);
+        this.configuration = configuration;
+        this.account = account;
+        this.node = node;
+    }
+
     @Override protected void iterate() {
         // in the new DB, the admin on this system is NOT an admin,
         // and the new/initial user IS the admin
-        final Account sageAccount = configuration.getBean(AccountDAO.class).findByUuid(account.getParent());
-        add(Account.sageMask(sageAccount));
+        if (account.hasParent()) {
+            final Account sageAccount = configuration.getBean(AccountDAO.class).findByUuid(account.getParent());
+            if (sageAccount == null) die(getClass().getName()+": iterate: account parent not found: "+account.getParent());
+            add(Account.sageMask(sageAccount));
+        }
         add(account.setAdmin(true));
 
         configuration.getEntityClasses().forEach(c -> {

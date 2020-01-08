@@ -87,8 +87,8 @@ public class StandardNetworkService implements NetworkService {
     public static final int MAX_ANSIBLE_TRIES = 5;
     public static final int RESTORE_KEY_LEN = 6;
 
-    private static final long NET_LOCK_TIMEOUT = MINUTES.toSeconds(21);
-    private static final long NET_DEADLOCK_TIMEOUT = MINUTES.toSeconds(20);
+    private static final long NET_LOCK_TIMEOUT = MINUTES.toMillis(21);
+    private static final long NET_DEADLOCK_TIMEOUT = MINUTES.toMillis(20);
     private static final long DNS_TIMEOUT = MINUTES.toMillis(60);
     private static final long PLAN_ENABLE_TIMEOUT = PURCHASE_DELAY + SECONDS.toMillis(10);
 
@@ -403,6 +403,15 @@ public class StandardNetworkService implements NetworkService {
         }
         node.setState(BubbleNodeState.error_stopped);
         if (node.hasUuid()) nodeDAO.update(node);
+
+        // if there are no running nodes, and network was in 'setup' state, put it network back into 'created' state
+        final BubbleNetwork network = networkDAO.findByUuid(node.getNetwork());
+        if (network.getState() == BubbleNetworkState.setup) {
+            if (nodeDAO.findByNetwork(node.getNetwork()).stream().noneMatch(BubbleNode::isRunning)) {
+                networkDAO.update(network.setState(BubbleNetworkState.created));
+            }
+        }
+
         return node;
     }
 
@@ -486,7 +495,7 @@ public class StandardNetworkService implements NetworkService {
             lock = lockNetwork(network.getUuid());
 
             // sanity checks
-            if (!nodeDAO.findByNetwork(network.getUuid()).isEmpty()) {
+            if (nodeDAO.findByNetwork(network.getUuid()).stream().anyMatch(BubbleNode::isRunning)) {
                 throw invalidEx("err.network.alreadyStarted");
             }
             if (!network.getState().canStartNetwork()) {

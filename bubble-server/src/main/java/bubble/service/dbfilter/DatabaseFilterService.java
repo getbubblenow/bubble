@@ -38,6 +38,7 @@ import static org.cobbzilla.wizard.server.config.PgRestServerConfiguration.ENV_P
 @Service @Slf4j
 public class DatabaseFilterService {
 
+    public static final long DB_FILTER_CHECK = SECONDS.toMillis(1);
     public static final long DB_FILTER_TIMEOUT = SECONDS.toMillis(120);
     public static final long THREAD_KILL_TIMEOUT = SECONDS.toMillis(10);
 
@@ -83,6 +84,7 @@ public class DatabaseFilterService {
 
             // start a RekeyReader to send objects to RekeyWriter.
             // the RekeyReader will run in-process and receive objects from this method, instead of doing its own queries
+            final AtomicReference<Exception> readerError = new AtomicReference<>();
             final RekeyOptions readerOptions = new RekeyOptions() {
                 @Override public Map<String, String> getEnv() { return env; }
             }
@@ -93,12 +95,12 @@ public class DatabaseFilterService {
                     .setPort(port);
             reader = new RekeyReaderMain() {
                 @Override public RekeyOptions getOptions() { return readerOptions; }
-                @Override protected Iterator<Identifiable> getEntityProducer(BubbleConfiguration fromConfig) {
+                @Override protected Iterator<Identifiable> getEntityProducer(BubbleConfiguration fromConfig, AtomicReference<Exception> error) {
                     return fork
-                            ? new FullEntityIterator(configuration)
-                            : new FilteredEntityIterator(configuration, account, node);
+                            ? new FullEntityIterator(configuration, readerError)
+                            : new FilteredEntityIterator(configuration, account, node, readerError);
                 }
-            }.runInBackground();
+            }.runInBackground(readerError::set);
 
             // start a RekeyWriter to pull objects from RekeyReader
             final AtomicReference<CommandResult> writeResult = new AtomicReference<>();
@@ -113,8 +115,15 @@ public class DatabaseFilterService {
                     .setJar(abs(configuration.getBubbleJar()));
             writer = RekeyDatabaseMain.runWriter(writerOptions, writeResult, env);
 
-            reader.join(DB_FILTER_TIMEOUT);
-            writer.join(DB_FILTER_TIMEOUT);
+            final long start = now();
+            while ((reader.isAlive() || writer.isAlive()) && now() - start < DB_FILTER_TIMEOUT) {
+                reader.join(DB_FILTER_CHECK);
+                writer.join(DB_FILTER_CHECK);
+                if (readerError.get() != null) die("copyDatabase: reader error: "+shortError(readerError.get()));
+                if (writeResult.get() != null && writeResult.get().hasException()) {
+                    die("copyDatabase: writer error: "+shortError(writeResult.get().getException()));
+                }
+            }
             if (reader.isAlive() || writer.isAlive()) {
                 log.error("copyDatabase: reader/writer taking too long, stopping them (dbName="+dbName+")");
                 stopThread(reader, node, "reader");
@@ -174,7 +183,7 @@ public class DatabaseFilterService {
             log.info("copyDatabase: "+name+" thread finished! we are OK.");
             return true;
         } else {
-            return die("copyDatabase: "+name+" thread timed out for node: "+node.getUuid());
+            return die("copyDatabase: "+name+" error copying database for node: "+node.getUuid());
         }
     }
 }

@@ -4,7 +4,6 @@ import bubble.main.rekey.RekeyOptions;
 import bubble.main.rekey.RekeyReaderMain;
 import bubble.main.rekey.RekeyWriterMain;
 import org.apache.commons.exec.CommandLine;
-import org.cobbzilla.util.daemon.ZillaRuntime;
 import org.cobbzilla.util.main.BaseMain;
 import org.cobbzilla.util.system.Command;
 import org.cobbzilla.util.system.CommandResult;
@@ -53,9 +52,9 @@ public class RekeyDatabaseMain extends BaseMain<RekeyDatabaseOptions> {
             try {
                 writeResult.set(CommandShell.exec(writerCommand(options, env)));
             } catch (Exception e) {
-                ZillaRuntime.die("WRITE ERROR: " + e);
+                writeResult.set(new CommandResult(e).setExitStatus(-1));
             }
-        });
+        }, e -> writeResult.set(new CommandResult(e).setExitStatus(-1)));
     }
 
     public static Command readerCommand(RekeyDatabaseOptions options, Map<String, String> env) {

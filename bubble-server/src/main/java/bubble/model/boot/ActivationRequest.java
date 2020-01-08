@@ -47,4 +47,7 @@ public class ActivationRequest {
     @Getter @Setter private Boolean createDefaultObjects = true;
     public boolean createDefaultObjects () { return createDefaultObjects != null && createDefaultObjects; };
 
+    @Getter @Setter private Boolean skipTests = false;
+    public boolean skipTests () { return skipTests != null && skipTests; };
+
 }

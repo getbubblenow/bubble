@@ -67,7 +67,11 @@ public class NetworkActionsResource {
 
         // any nodes?
         final List<BubbleNode> nodes = nodeDAO.findByNetwork(network.getUuid());
-        if (!nodes.isEmpty()) return invalid("err.network.alreadyStarted");
+        if (!nodes.isEmpty()) {
+            if (nodes.stream().anyMatch(BubbleNode::isRunning)) {
+                return invalid("err.network.alreadyStarted");
+            }
+        }
 
         if (!network.getState().canStartNetwork()) return invalid("err.network.cannotStartInCurrentState");
 
