@@ -36,7 +36,7 @@
     <logger name="bubble.cloud.email.SmtpEmailDriver" level="DEBUG" />
     <logger name="org.cobbzilla.wizard.dao.AbstractCRUDDAO" level="DEBUG" />
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
-    <logger name="bubble.main.rekey" level="DEBUG" />
+    <logger name="bubble.main.rekey" level="INFO" />
     <logger name="bubble" level="INFO" />
 
     <root level="INFO">
