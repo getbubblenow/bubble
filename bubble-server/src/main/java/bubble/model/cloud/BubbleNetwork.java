@@ -58,7 +58,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @Override public Identifiable update(Identifiable other) { copy(this, other, UPDATE_FIELDS); return this; }
 
     @Override public void beforeCreate() {
-        if (!hasUuid() && !getUuid().equals(ROOT_NETWORK_UUID)) super.beforeCreate();
+        if (!hasUuid() || !getUuid().equals(ROOT_NETWORK_UUID)) super.beforeCreate();
     }
 
     @Transient @JsonIgnore public String getNetwork () { return getUuid(); }

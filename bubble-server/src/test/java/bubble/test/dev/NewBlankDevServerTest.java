@@ -15,6 +15,7 @@ public class NewBlankDevServerTest extends BubbleModelTestBase {
 
     @Override protected String getManifest() { return "manifest-empty"; }
     @Override protected boolean useMocks() { return false; }
+    @Override protected boolean createSqlIndexes () { return true; }
 
     @Override public void onStart(RestServer<BubbleConfiguration> server) {
         getConfiguration().getBean(EntityConfigsResource.class).getAllowPublic().set(true);

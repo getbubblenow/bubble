@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.collection.ArrayUtil;
+import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
@@ -32,13 +34,15 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 })
 public class AccountPlan extends IdentifiableBase implements HasAccount {
 
-    public static final String[] CREATE_FIELDS = {
-            "name", "description", "locale", "timezone", "domain", "network", "plan", "footprint",
-            "paymentMethod", "paymentMethodObject"
-    };
+    public static final String[] UPDATE_FIELDS = {"description", "paymentMethod", "paymentMethodObject"};
+
+    public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS,
+            "name", "locale", "timezone", "domain", "network", "plan", "footprint");
 
     @SuppressWarnings("unused")
     public AccountPlan (AccountPlan other) { copy(this, other, CREATE_FIELDS); }
+
+    @Override public Identifiable update(Identifiable other) { copy(this, other, UPDATE_FIELDS); return this; }
 
     @Override public void beforeCreate() { if (!hasUuid()) initUuid(); }
 

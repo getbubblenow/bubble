@@ -19,6 +19,7 @@ public class DevServerTest extends ActivatedBubbleModelTestBase {
     @Override protected boolean dropPreExistingDatabase() { return false; }
     @Override protected boolean allowPreExistingDatabase() { return true; }
     @Override public boolean doTruncateDb() { return false; }
+    @Override protected boolean createSqlIndexes () { return true; }
 
     @Override public void onStart(RestServer<BubbleConfiguration> server) {
         getConfiguration().getBean(EntityConfigsResource.class).getAllowPublic().set(true);
