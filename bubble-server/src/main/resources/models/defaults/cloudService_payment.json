@@ -1,0 +1,34 @@
+[
+  {
+    "name": "StripePayments",
+    "type": "payment",
+    "priority": 100,
+    "driverClass": "bubble.cloud.payment.stripe.StripePaymentDriver",
+    "driverConfig": {
+      "publicApiKey": "{{STRIPE_PUBLIC_API_KEY}}"
+    },
+    "credentials": {
+      "params": [ {"name": "secretApiKey", "value": "{{STRIPE_SECRET_API_KEY}}"} ]
+    },
+    "template": true
+  },
+
+  {
+    "name": "InviteCode",
+    "type": "payment",
+    "priority": 200,
+    "driverClass": "bubble.cloud.payment.code.CodePaymentDriver",
+    "driverConfig": {},
+    "credentials": {},
+    "template": true
+  },
+
+  {
+    "name": "FreePlay",
+    "type": "payment",
+    "driverClass": "bubble.cloud.payment.free.FreePaymentDriver",
+    "driverConfig": {},
+    "credentials": {},
+    "template": true
+  }
+]

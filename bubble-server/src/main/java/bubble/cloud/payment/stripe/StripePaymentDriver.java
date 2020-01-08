@@ -8,10 +8,8 @@ import bubble.notify.payment.PaymentValidationResult;
 import com.stripe.Stripe;
 import com.stripe.exception.CardException;
 import com.stripe.exception.StripeException;
-import com.stripe.model.Card;
-import com.stripe.model.Charge;
-import com.stripe.model.Customer;
-import com.stripe.model.Refund;
+import com.stripe.model.*;
+import com.stripe.param.EventListParams;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.cache.redis.RedisService;
@@ -69,6 +67,15 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
         }
         if (!setupDone.get().equals(cloud.getUuid())) {
             die("postSetup: cannot re-initialize with another API key (only one "+getClass().getSimpleName()+" is supported)");
+        }
+    }
+
+    @Override public boolean test() {
+        try {
+            Event.list(EventListParams.builder().setLimit(1L).build());
+            return true;
+        } catch (StripeException e) {
+            return die("test: failed ");
         }
     }
 

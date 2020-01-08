@@ -41,11 +41,15 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.beans.Transient;
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
+import static bubble.cloud.CloudServiceDriver.CLOUD_DRIVER_PACKAGE;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static bubble.server.BubbleServer.getConfigurationSource;
 import static java.util.Collections.emptyMap;
@@ -239,7 +243,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     }
 
     @Getter(lazy=true) private final List<String> cloudDriverClasses
-            = ClasspathScanner.scan(CloudServiceDriver.class, CloudServiceDriver.CLOUD_DRIVER_PACKAGE).stream()
+            = ClasspathScanner.scan(CloudServiceDriver.class, CLOUD_DRIVER_PACKAGE).stream()
+            .filter(c -> !c.getName().contains(".delegate."))
             .map(Class::getName)
             .collect(Collectors.toList());
 

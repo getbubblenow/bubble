@@ -15,6 +15,7 @@ import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.wizard.api.CrudOperation;
 import org.cobbzilla.wizard.client.ApiClientBase;
@@ -280,7 +281,14 @@ public class ActivationService {
 
     @Getter(lazy=true) private final CloudService[] cloudDefaults = initCloudDefaults();
     private CloudService[] initCloudDefaults() {
-        return json(HandlebarsUtil.apply(configuration.getHandlebars(), stream2string("models/dist/cloudService.json"), configuration.getEnvCtx()), CloudService[].class);
+        final CloudService[] standardServices = loadCloudServices("cloudService");
+        return configuration.paymentsEnabled()
+                ? ArrayUtil.concat(standardServices, loadCloudServices("cloudService_payment"))
+                : standardServices;
+    }
+
+    private CloudService[] loadCloudServices(final String services) {
+        return json(HandlebarsUtil.apply(configuration.getHandlebars(), stream2string("models/defaults/" + services + ".json"), configuration.getEnvCtx()), CloudService[].class);
     }
 
     @Getter(lazy=true) private final Map<String, CloudService> cloudDefaultsMap = initCloudDefaultsMap();
