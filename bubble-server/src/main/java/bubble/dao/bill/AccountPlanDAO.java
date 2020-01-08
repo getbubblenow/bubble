@@ -13,6 +13,7 @@ import bubble.model.cloud.CloudService;
 import bubble.notify.payment.PaymentValidationResult;
 import bubble.server.BubbleConfiguration;
 import bubble.service.bill.RefundService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -25,7 +26,7 @@ import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.hibernate.criterion.Restrictions.*;
 
-@Repository
+@Repository @Slf4j
 public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
 
     public static final long PURCHASE_DELAY = SECONDS.toMillis(3);

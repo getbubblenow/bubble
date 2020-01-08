@@ -90,7 +90,7 @@ public class StandardNetworkService implements NetworkService {
     private static final long NET_LOCK_TIMEOUT = MINUTES.toSeconds(21);
     private static final long NET_DEADLOCK_TIMEOUT = MINUTES.toSeconds(20);
     private static final long DNS_TIMEOUT = MINUTES.toMillis(60);
-    private static final long PLAN_ENABLE_TIMEOUT = PURCHASE_DELAY + SECONDS.toMillis(2);
+    private static final long PLAN_ENABLE_TIMEOUT = PURCHASE_DELAY + SECONDS.toMillis(10);
 
     @Autowired private AccountDAO accountDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
@@ -463,11 +463,12 @@ public class StandardNetworkService implements NetworkService {
 
         final String accountUuid = network.getAccount();
         if (configuration.paymentsEnabled()) {
-            final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(accountUuid, network.getUuid());
+            AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(accountUuid, network.getUuid());
             if (accountPlan == null) throw invalidEx("err.accountPlan.notFound");
             final long start = now();
             while (accountPlan.disabled() && now() - start < PLAN_ENABLE_TIMEOUT) {
                 sleep(100, "startNetwork: waiting for accountPlan to become enabled: "+accountUuid);
+                accountPlan = accountPlanDAO.findByAccountAndNetwork(accountUuid, network.getUuid());
             }
             if (accountPlan.disabled()) throw invalidEx("err.accountPlan.disabled");
         }
