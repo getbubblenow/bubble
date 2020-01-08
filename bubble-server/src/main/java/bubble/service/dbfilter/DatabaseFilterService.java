@@ -38,7 +38,7 @@ import static org.cobbzilla.wizard.server.config.PgRestServerConfiguration.ENV_P
 @Service @Slf4j
 public class DatabaseFilterService {
 
-    public static final long DB_FILTER_TIMEOUT = SECONDS.toMillis(60);
+    public static final long DB_FILTER_TIMEOUT = SECONDS.toMillis(120);
     public static final long THREAD_KILL_TIMEOUT = SECONDS.toMillis(10);
 
     public static final String ENV_OLD_DB_KEY = "OLD_DB_KEY";

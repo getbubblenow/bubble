@@ -47,6 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static bubble.ApiConstants.getRemoteHost;
 import static bubble.ApiConstants.newNodeHostname;
+import static bubble.dao.bill.AccountPlanDAO.PURCHASE_DELAY;
 import static bubble.model.cloud.BubbleNode.TAG_ERROR;
 import static bubble.service.boot.StandardSelfNodeService.*;
 import static bubble.service.cloud.NodeProgressMeter.getProgressMeterKey;
@@ -55,11 +56,9 @@ import static bubble.service.cloud.NodeProgressMeterConstants.*;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
-import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
-import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.closeQuietly;
 import static org.cobbzilla.util.system.CommandShell.chmod;
@@ -91,6 +90,7 @@ public class StandardNetworkService implements NetworkService {
     private static final long NET_LOCK_TIMEOUT = MINUTES.toSeconds(21);
     private static final long NET_DEADLOCK_TIMEOUT = MINUTES.toSeconds(20);
     private static final long DNS_TIMEOUT = MINUTES.toMillis(60);
+    private static final long PLAN_ENABLE_TIMEOUT = PURCHASE_DELAY + SECONDS.toMillis(2);
 
     @Autowired private AccountDAO accountDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
@@ -465,6 +465,10 @@ public class StandardNetworkService implements NetworkService {
         if (configuration.paymentsEnabled()) {
             final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(accountUuid, network.getUuid());
             if (accountPlan == null) throw invalidEx("err.accountPlan.notFound");
+            final long start = now();
+            while (accountPlan.disabled() && now() - start < PLAN_ENABLE_TIMEOUT) {
+                sleep(100, "startNetwork: waiting for accountPlan to become enabled: "+accountUuid);
+            }
             if (accountPlan.disabled()) throw invalidEx("err.accountPlan.disabled");
         }
 
@@ -653,7 +657,6 @@ public class StandardNetworkService implements NetworkService {
                 log.warn("getLaunchStatus: tick.account != accountUuid, returning null");
                 return null;
             }
-            log.warn("getLaunchStatus: returning tick: "+json(tick, COMPACT_MAPPER));
             return tick.setPattern(null);
         } catch (Exception e) {
             return die("getLaunchStatus: "+e);

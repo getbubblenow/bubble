@@ -33,10 +33,10 @@
     <!--<logger name="org.cobbzilla.wizardtest.resources.AbstractResourceIT" level="INFO" />-->
     <logger name="org.cobbzilla.wizardtest.resources" level="INFO" />
     <logger name="org.glassfish.jersey.grizzly" level="INFO" />
-    <logger name="com.moparisthebest.dns.listen.intercept" level="ERROR" />
     <logger name="bubble.cloud.email.SmtpEmailDriver" level="DEBUG" />
     <logger name="org.cobbzilla.wizard.dao.AbstractCRUDDAO" level="DEBUG" />
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
+    <logger name="bubble.main.rekey" level="DEBUG" />
     <logger name="bubble" level="INFO" />
 
     <root level="INFO">

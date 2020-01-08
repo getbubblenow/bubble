@@ -28,6 +28,8 @@ import static org.hibernate.criterion.Restrictions.*;
 @Repository
 public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
 
+    public static final long PURCHASE_DELAY = SECONDS.toMillis(3);
+
     @Autowired private BubblePlanDAO planDAO;
     @Autowired private BillDAO billDAO;
     @Autowired private CloudServiceDAO cloudDAO;
@@ -111,7 +113,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
 
             final PaymentServiceDriver paymentDriver = paymentService.getPaymentDriver(configuration);
             background(() -> {
-                sleep(SECONDS.toMillis(3), "AccountPlanDAO.postCreate: waiting to finalize purchase");
+                sleep(PURCHASE_DELAY, "AccountPlanDAO.postCreate: waiting to finalize purchase");
                 paymentDriver.purchase(accountPlanUuid, paymentMethodUuid, billUuid);
             });
         }
