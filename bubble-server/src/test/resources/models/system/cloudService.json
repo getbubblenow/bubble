@@ -1,7 +1,7 @@
 [
   {
     "_subst": true,
-    "name": "S3_US_Standard",
+    "name": "S3Storage",
     "type": "storage",
     "driverClass": "bubble.cloud.storage.s3.S3StorageDriver",
     "driverConfig": {

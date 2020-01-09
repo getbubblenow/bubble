@@ -113,6 +113,7 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
                                 final NewNodeNotification newNodeRequest = new NewNodeNotification()
                                         .setAccount(network.getAccount())
                                         .setNetwork(network.getUuid())
+                                        .setNetworkName(network.getName())
                                         .setDomain(network.getDomain())
                                         .setCloud(cloud.getUuid())
                                         .setRegion(closestNotUs.getInternalName())

@@ -39,7 +39,7 @@ public class S3StorageTest extends NetworkTestBase {
     public static final int NUM_FILES_IN_DIR = 13;
     public static final int LIST_FETCH_SIZE = 5;
 
-    public static final String S3_CLOUD_NAME = "S3_US_Standard";
+    public static final String S3_CLOUD_NAME = "S3Storage";
     public static final String REKEY_S3_CLOUD = "RekeyS3Cloud";
 
     public static String comment = "not running";

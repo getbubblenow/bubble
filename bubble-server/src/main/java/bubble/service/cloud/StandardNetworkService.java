@@ -131,7 +131,7 @@ public class StandardNetworkService implements NetworkService {
 
             progressMeter.write(METER_TICK_VALIDATING_NODE_NETWORK_AND_PLAN);
             final BubbleNetwork network = networkDAO.findByUuid(nn.getNetwork());
-            if (network.getState() != BubbleNetworkState.setup) {
+            if (network.getState() != BubbleNetworkState.starting) {
                 progressMeter.error(METER_ERROR_NETWORK_NOT_READY_FOR_SETUP);
                 return die("newNode: network is not in 'setup' state: "+network.getState());
             }
@@ -406,7 +406,7 @@ public class StandardNetworkService implements NetworkService {
 
         // if there are no running nodes, and network was in 'setup' state, put it network back into 'created' state
         final BubbleNetwork network = networkDAO.findByUuid(node.getNetwork());
-        if (network.getState() == BubbleNetworkState.setup) {
+        if (network.getState() == BubbleNetworkState.starting) {
             if (nodeDAO.findByNetwork(node.getNetwork()).stream().noneMatch(BubbleNode::isRunning)) {
                 networkDAO.update(network.setState(BubbleNetworkState.created));
             }
@@ -502,7 +502,7 @@ public class StandardNetworkService implements NetworkService {
                 throw invalidEx("err.network.cannotStartInCurrentState");
             }
 
-            network.setState(BubbleNetworkState.setup);
+            network.setState(BubbleNetworkState.starting);
             networkDAO.update(network);
 
             // ensure NS records for network are in DNS
@@ -515,6 +515,7 @@ public class StandardNetworkService implements NetworkService {
             final NewNodeNotification newNodeRequest = new NewNodeNotification()
                     .setAccount(accountUuid)
                     .setNetwork(network.getUuid())
+                    .setNetworkName(network.getName())
                     .setDomain(network.getDomain())
                     .setFork(network.fork())
                     .setHost(host)
@@ -554,7 +555,7 @@ public class StandardNetworkService implements NetworkService {
             if (network.getState() != BubbleNetworkState.stopped) {
                 throw invalidEx("err.network.restore.notStopped");
             }
-            network.setState(BubbleNetworkState.setup);
+            network.setState(BubbleNetworkState.starting);
             networkDAO.update(network);
 
             // ensure NS records for network are in DNS
@@ -569,6 +570,7 @@ public class StandardNetworkService implements NetworkService {
             final NewNodeNotification newNodeRequest = new NewNodeNotification()
                     .setAccount(network.getAccount())
                     .setNetwork(network.getUuid())
+                    .setNetworkName(network.getName())
                     .setDomain(network.getDomain())
                     .setRestoreKey(restoreKey)
                     .setHost(host)

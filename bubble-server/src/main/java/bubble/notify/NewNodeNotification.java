@@ -15,6 +15,7 @@ public class NewNodeNotification {
     @Getter @Setter private String account;
     @Getter @Setter private String host;
     @Getter @Setter private String network;
+    @Getter @Setter private String networkName;
     @Getter @Setter private String domain;
     @Getter @Setter private String fqdn;
     @Getter @Setter private String cloud;

@@ -300,6 +300,13 @@ public class AccountsResource {
         return configuration.subResource(DomainsResource.class, c.account);
     }
 
+    @Path("/{id}"+EP_FOOTPRINTS)
+    public FootprintsResource getFootprints(@Context ContainerRequest ctx,
+                                            @PathParam("id") String id) {
+        final AccountContext c = new AccountContext(ctx, id);
+        return configuration.subResource(FootprintsResource.class, c.account);
+    }
+
     @Path("/{id}"+EP_NETWORKS)
     public NetworksResource getNetworks(@Context ContainerRequest ctx,
                                         @PathParam("id") String id) {
