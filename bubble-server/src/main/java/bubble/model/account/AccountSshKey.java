@@ -71,7 +71,6 @@ public class AccountSshKey extends IdentifiableBase implements HasAccount {
     public boolean installSshKey() { return installSshKey != null && installSshKey; }
 
     @ECField(index=60)
-    @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+ENC_LONG+")")
     @Getter @Setter private Long expiration;
     public boolean hasExpiration () { return expiration != null; }
     @JsonIgnore @Transient public long getExpirationMillis () { return expiration - now(); }

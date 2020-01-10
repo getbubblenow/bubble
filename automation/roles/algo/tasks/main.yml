@@ -43,4 +43,3 @@
   when: restore_key is not defined
 
 - include: algo_firewall.yml
-

@@ -133,3 +133,19 @@
 - import_tasks: postgresql_data.yml
 
 - import_tasks: restore.yml
+
+- name: Install refresh_bubble_ssh_keys script and monitor
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/local/sbin/{{ item }}"
+    owner: root
+    group: root
+    mode: 0500
+  with_items:
+    - "refresh_bubble_ssh_keys.sh"
+    - "refresh_bubble_ssh_keys_monitor.sh"
+
+- name: Install refresh_bubble_ssh_keys_monitor supervisor conf file
+  copy:
+    src: refresh_bubble_ssh_keys_monitor.conf
+    dest: /etc/supervisor/conf.d/refresh_bubble_ssh_keys_monitor.conf
