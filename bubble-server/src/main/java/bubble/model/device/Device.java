@@ -16,6 +16,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.validation.constraints.Size;
 
+import static java.util.UUID.randomUUID;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
@@ -38,6 +39,22 @@ public class Device extends IdentifiableBase implements HasAccount {
     public Device (Device other) { copy(this, other, CREATE_FIELDS); }
 
     public Device (String uuid) { setUuid(uuid); }
+
+    public static Device newUninitializedDevice(String networkUuid, String accountUuid) {
+        return new Device()
+                .setName(UNINITIALIZED_DEVICE)
+                .setNetwork(networkUuid)
+                .setAccount(accountUuid)
+                .initTotpKey();
+    }
+
+    public static Device firstDeviceForNewNetwork(BubbleNetwork network) {
+        return new Device(randomUUID().toString())
+                .setName(UNINITIALIZED_DEVICE)
+                .setNetwork(network.getUuid())
+                .setAccount(network.getAccount())
+                .initTotpKey();
+    }
 
     @Override public Identifiable update(Identifiable thing) {
         copy(this, thing, UPDATE_FIELDS);

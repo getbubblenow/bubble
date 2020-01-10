@@ -11,6 +11,7 @@ import java.util.List;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static bubble.model.device.Device.UNINITIALIZED_DEVICE;
+import static bubble.model.device.Device.newUninitializedDevice;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.touch;
 
@@ -77,11 +78,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
         Device uninitialized = null;
         if (devices.isEmpty()) {
             log.info("ensureSpareDevice: no uninitialized devices for account " + account + ", creating one");
-            uninitialized = create(new Device()
-                    .setName(UNINITIALIZED_DEVICE)
-                    .setNetwork(network)
-                    .setAccount(account)
-                    .initTotpKey());
+            uninitialized = create(newUninitializedDevice(network, account));
         }
         if (refreshVpnUsers) refreshVpnUsers();
         return uninitialized;

@@ -2,6 +2,7 @@ package bubble.service.boot;
 
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.storage.local.LocalStorageDriver;
+import bubble.dao.account.AccountSshKeyDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
@@ -69,6 +70,9 @@ public class StandardSelfNodeService implements SelfNodeService {
     @Override public boolean initThisNode(BubbleNode thisNode) {
         log.info("initThisNode: initializing with thisNode="+thisNode.id());
         final BubbleConfiguration c = configuration;
+
+        // ensure ssh keys are configured
+        c.getBean(AccountSshKeyDAO.class).refreshInstalledKeys();
 
         final BubbleNode dbThis = nodeDAO.findByUuid(thisNode.getUuid());
         if (dbThis == null) return die("initThisNode: self_node not found in database: "+thisNode.getUuid());

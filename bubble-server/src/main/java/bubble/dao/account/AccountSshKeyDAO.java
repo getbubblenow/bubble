@@ -72,6 +72,6 @@ public class AccountSshKeyDAO extends AccountOwnedEntityDAO<AccountSshKey> {
 
     // refresh_bubble_ssh_keys_monitor.sh watches this file (in ansible bubble role)
     private static final File REFRESH_SSH_KEYS_FILE = new File(HOME_DIR, ".refresh_ssh_keys");
-    private void refreshInstalledKeys() { touch(REFRESH_SSH_KEYS_FILE); }
+    public void refreshInstalledKeys() { touch(REFRESH_SSH_KEYS_FILE); }
 
 }

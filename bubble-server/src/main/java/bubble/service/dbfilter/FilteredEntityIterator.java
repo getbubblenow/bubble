@@ -19,8 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static bubble.model.device.Device.UNINITIALIZED_DEVICE;
-import static java.util.UUID.randomUUID;
+import static bubble.model.device.Device.firstDeviceForNewNetwork;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 
 @Slf4j
@@ -94,11 +93,7 @@ public class FilteredEntityIterator extends EntityIterator {
 
         // add an initial device so that algo starts properly the first time
         // name and totp key will be overwritten when the device is initialized for use
-        add(new Device(randomUUID().toString())
-                .setName(UNINITIALIZED_DEVICE)
-                .setAccount(node.getAccount())
-                .setNetwork(node.getNetwork())
-                .initTotpKey());
+        add(firstDeviceForNewNetwork(network));
 
         // in the new DB, the sage's node key must exist, but not its private key
         final BubbleNodeKey sageKey = configuration.getBean(BubbleNodeKeyDAO.class).findFirstByNode(sageNode.getUuid());
