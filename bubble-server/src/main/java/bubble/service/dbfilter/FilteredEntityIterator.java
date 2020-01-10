@@ -6,6 +6,7 @@ import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccount;
+import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeKey;
 import bubble.model.device.Device;
@@ -37,15 +38,18 @@ public class FilteredEntityIterator extends EntityIterator {
 
     private final BubbleConfiguration configuration;
     private final Account account;
+    private final BubbleNetwork network;
     private final BubbleNode node;
 
-    public FilteredEntityIterator (BubbleConfiguration configuration,
-                                   Account account,
-                                   BubbleNode node,
-                                   AtomicReference<Exception> error) {
+    public FilteredEntityIterator(BubbleConfiguration configuration,
+                                  Account account,
+                                  BubbleNetwork network,
+                                  BubbleNode node,
+                                  AtomicReference<Exception> error) {
         super(error);
         this.configuration = configuration;
         this.account = account;
+        this.network = network;
         this.node = node;
     }
 
@@ -72,7 +76,7 @@ public class FilteredEntityIterator extends EntityIterator {
                 final List<? extends HasAccount> entities = aoDAO.dbFilterIncludeAll()
                         ? aoDAO.findAll()
                         : aoDAO.findByAccount(account.getUuid());
-                addEntities(c, entities, node);
+                addEntities(c, entities, network, node);
             }
         });
 

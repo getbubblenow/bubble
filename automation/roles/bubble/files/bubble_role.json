@@ -22,9 +22,8 @@
     {"name": "is_fork", "value": "[[fork]]"},
     {"name": "restore_key", "value": "[[restoreKey]]"},
     {"name": "restore_timeout", "value": "[[restoreTimeoutSeconds]]"},
-    {"name": "rsa_key", "value": "[[rsa_key]]"},
     {"name": "test_mode", "value": "[[testMode]]"}
   ],
-  "optionalConfigNames": ["restore_key", "restore_timeout", "ssh_key"],
+  "optionalConfigNames": ["restore_key", "restore_timeout"],
   "tgzB64": ""
 }

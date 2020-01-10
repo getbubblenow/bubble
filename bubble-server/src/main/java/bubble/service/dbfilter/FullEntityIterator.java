@@ -17,7 +17,7 @@ public class FullEntityIterator extends EntityIterator {
 
     protected void iterate() {
         config.getEntityClasses().forEach(c -> {
-            addEntities(c, config.getDaoForEntityClass(c).findAll(), null);
+            addEntities(c, config.getDaoForEntityClass(c).findAll(), null, null);
         });
         log.info("iterate: completed");
     }

@@ -5,6 +5,7 @@ import bubble.main.RekeyDatabaseOptions;
 import bubble.main.rekey.RekeyOptions;
 import bubble.main.rekey.RekeyReaderMain;
 import bubble.model.account.Account;
+import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.server.BubbleConfiguration;
 import lombok.Cleanup;
@@ -47,7 +48,7 @@ public class DatabaseFilterService {
 
     @Autowired private BubbleConfiguration configuration;
 
-    public String copyDatabase(boolean fork, BubbleNode node, Account account, File pgDumpFile) {
+    public String copyDatabase(boolean fork, BubbleNetwork network, BubbleNode node, Account account, File pgDumpFile) {
         final String dbName = ("bubble_slice_"+randomAlphanumeric(8)+"_"+now()).toLowerCase();
         log.info("copyDatabase: starting with dbName: "+dbName);
 
@@ -98,7 +99,7 @@ public class DatabaseFilterService {
                 @Override protected Iterator<Identifiable> getEntityProducer(BubbleConfiguration fromConfig, AtomicReference<Exception> error) {
                     return fork
                             ? new FullEntityIterator(configuration, readerError)
-                            : new FilteredEntityIterator(configuration, account, node, readerError);
+                            : new FilteredEntityIterator(configuration, account, network, node, readerError);
                 }
             }.runInBackground(readerError::set);
 

@@ -2,6 +2,8 @@ package bubble.service.dbfilter;
 
 import bubble.cloud.storage.local.LocalStorageConfig;
 import bubble.cloud.storage.local.LocalStorageDriver;
+import bubble.model.account.AccountSshKey;
+import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import lombok.Getter;
@@ -66,15 +68,30 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
         }
     }
 
-    public void addEntities(Class<? extends Identifiable> c, List<? extends Identifiable> entities, BubbleNode node) {
+    public void addEntities(Class<? extends Identifiable> c,
+                            List<? extends Identifiable> entities,
+                            BubbleNetwork network,
+                            BubbleNode node) {
         if (CloudService.class.isAssignableFrom(c)) {
             entities.forEach(e -> add(setLocalStoragePath((CloudService) e)));
+
+        } else if (AccountSshKey.class.isAssignableFrom(c)) {
+            entities.forEach(e -> add(setInstallKey((AccountSshKey) e, network)));
+
         } else {
             entities.forEach(this::add);
         }
     }
 
-    public CloudService setLocalStoragePath(CloudService cloudService) {
+    private AccountSshKey setInstallKey(AccountSshKey sshKey, BubbleNetwork network) {
+        if (network == null) return sshKey;
+        if (network.hasSshKey() && network.getSshKey().equals(sshKey.getUuid())) {
+            sshKey.setInstallSshKey(true);
+        }
+        return sshKey;
+    }
+
+    private CloudService setLocalStoragePath(CloudService cloudService) {
         if (!cloudService.usesDriver(LocalStorageDriver.class)) {
             return cloudService;
         }

@@ -2,7 +2,6 @@ package bubble.service.cloud;
 
 import bubble.dao.account.AccountSshKeyDAO;
 import bubble.model.account.Account;
-import bubble.model.account.AccountSshKey;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.AnsibleRole;
 import bubble.model.cloud.BubbleNetwork;
@@ -71,18 +70,6 @@ public class AnsiblePrepService {
             ctx.put("restoreKey", restoreKey);
             ctx.put("restoreTimeoutSeconds", RESTORE_MONITOR_SCRIPT_TIMEOUT_SECONDS);
         }
-        if (network.hasSshKey()) {
-            final AccountSshKey sshKey = sshKeyDAO.findByAccountAndId(account.getUuid(), network.getSshKey());
-            if (sshKey == null) {
-                return die("prepAnsible: SSH key not found: "+network.getSshKey());
-            } else if (sshKey.expired()) {
-                return die("prepAnsible: SSH key expired: "+network.getSshKey());
-            } else {
-                ctx.put("rsa_key", sshKey.getSshPublicKey());
-            }
-        } else {
-            ctx.put("rsa_key", "disabled");
-        }
         ctx.put("network", network);
         ctx.put("node", node);
         ctx.put("roles", installRoles.stream().map(AnsibleRole::getRoleName).collect(Collectors.toList()));
@@ -90,7 +77,7 @@ public class AnsiblePrepService {
 
         // Copy database with new encryption key
         if (installRoles.stream().anyMatch(r->r.getName().startsWith("bubble-"))) {
-            final String key = dbFilter.copyDatabase(fork, node, account, new File(bubbleFilesDir, "bubble.sql.gz"));
+            final String key = dbFilter.copyDatabase(fork, network, node, account, new File(bubbleFilesDir, "bubble.sql.gz"));
             ctx.put("dbEncryptionKey", key);
 
             // if this is a fork, and current server is local, then sage will be self

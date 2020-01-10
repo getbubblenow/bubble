@@ -116,13 +116,13 @@
 
   {
     "comment": "add an ssh key",
-    "onlyIf": "'{{TEST_SSH_KEY}}'.startsWith('ssh-rsa ')",
+    "onlyIf": "'{{serverConfig.environment.TEST_SSH_KEY}}'.startsWith('ssh-rsa ')",
     "request": {
       "uri": "me/keys",
       "method": "put",
       "entity": {
         "name": "test-key",
-        "sshPublicKey": "{{TEST_SSH_KEY}}"
+        "sshPublicKey": "{{serverConfig.environment.TEST_SSH_KEY}}"
       }
     },
     "response": {
