@@ -6,6 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.io.File;
+
+import static bubble.ApiConstants.HOME_DIR;
+import static org.cobbzilla.util.io.FileUtil.touch;
 import static org.cobbzilla.util.security.RsaKeyPair.isValidSshPublicKey;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -50,26 +54,24 @@ public class AccountSshKeyDAO extends AccountOwnedEntityDAO<AccountSshKey> {
     }
 
     @Override public AccountSshKey postCreate(AccountSshKey key, Object context) {
-        if (key.installSshKey()) {
-            // poke SSH key manager, refresh installed keys
-        }
+        if (key.installSshKey()) refreshInstalledKeys();
         return super.postCreate(key, context);
     }
 
     @Override public AccountSshKey postUpdate(AccountSshKey key, Object context) {
         final Account owner = accountDAO.findByUuid(key.getAccount());
-        if (owner.admin()) {
-            // poke SSH key manager, refresh installed keys
-        }
+        if (owner.admin()) refreshInstalledKeys();
         return super.postUpdate(key, context);
     }
 
     @Override public void delete(String uuid) {
         final AccountSshKey key = findByUuid(uuid);
         super.delete(uuid);
-        if (key.installSshKey()) {
-            // poke SSH key manager, refresh installed keys
-        }
+        if (key.installSshKey()) refreshInstalledKeys();
     }
+
+    // refresh_bubble_ssh_keys_monitor.sh watches this file (in ansible bubble role)
+    private static final File REFRESH_SSH_KEYS_FILE = new File(HOME_DIR, ".refresh_ssh_keys");
+    private void refreshInstalledKeys() { touch(REFRESH_SSH_KEYS_FILE); }
 
 }
