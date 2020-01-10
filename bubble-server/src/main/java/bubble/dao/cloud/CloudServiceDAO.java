@@ -41,8 +41,10 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
     }
 
     @Override public CloudService postCreate(CloudService cloud, Object context) {
-        final ValidationResult errors = testDriver(cloud, configuration);
-        if (errors.isInvalid()) throw invalidEx(errors);
+        if (!cloud.delegated()) {
+            final ValidationResult errors = testDriver(cloud, configuration);
+            if (errors.isInvalid()) throw invalidEx(errors);
+        }
         return super.postCreate(cloud, context);
     }
 
