@@ -77,14 +77,14 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
 
     @Override protected AccountPlan setReferences(ContainerRequest ctx, Account caller, AccountPlan request) {
 
-        final ValidationResult result = new ValidationResult();
-        if (!request.hasTimezone()) result.addViolation("err.timezone.required");
-        if (!request.hasLocale()) result.addViolation("err.locale.required");
+        final ValidationResult errors = new ValidationResult();
+        if (!request.hasTimezone()) errors.addViolation("err.timezone.required");
+        if (!request.hasLocale()) errors.addViolation("err.locale.required");
 
         if (request.hasSshKey()) {
             final AccountSshKey sshKey = sshKeyDAO.findByAccountAndId(caller.getUuid(), request.getSshKey());
             if (sshKey == null) {
-                result.addViolation("err.sshPublicKey.notFound");
+                errors.addViolation("err.sshPublicKey.notFound");
             } else {
                 request.setSshKey(sshKey.getUuid());
             }
@@ -95,29 +95,32 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         final BubbleDomain domain = domainDAO.findByAccountAndId(caller.getUuid(), request.getDomain());
         if (domain == null) {
             log.info("setReferences: domain not found: "+request.getDomain()+" for caller: "+caller.getUuid());
-            result.addViolation("err.domain.required");
+            errors.addViolation("err.domain.required");
         } else {
             request.setDomain(domain.getUuid());
+
+            final BubbleNetwork existingNetwork = networkDAO.findByNameAndDomainName(request.getName(), domain.getName());
+            if (existingNetwork != null) errors.addViolation("err.name.networkNameAlreadyExists");
         }
 
         final BubblePlan plan = planDAO.findByAccountOrParentAndId(caller, request.getPlan());
         if (plan == null) {
-            result.addViolation("err.plan.required");
+            errors.addViolation("err.plan.required");
         } else {
             request.setPlan(plan.getUuid());
         }
 
         final BubbleNetwork network = networkDAO.findByAccountAndId(caller.getUuid(), request.getNetwork());
         if (network != null) {
-            result.addViolation("err.network.exists", "A plan already exists for this network", request.getNetwork());
+            errors.addViolation("err.network.exists", "A plan already exists for this network", request.getNetwork());
         }
 
-        final CloudService storage = selectStorageCloud(ctx, caller, request, result);
+        final CloudService storage = selectStorageCloud(ctx, caller, request, errors);
 
         if (request.hasFootprint()) {
             final BubbleFootprint footprint = footprintDAO.findByAccountAndId(caller.getUuid(), request.getFootprint());
             if (footprint == null) {
-                result.addViolation("err.footprint.required");
+                errors.addViolation("err.footprint.required");
             } else {
                 request.setFootprint(footprint.getUuid());
             }
@@ -129,20 +132,20 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         AccountPaymentMethod paymentMethod = null;
         if (configuration.paymentsEnabled()) {
             if (!request.hasPaymentMethodObject()) {
-                result.addViolation("err.paymentMethod.required");
+                errors.addViolation("err.paymentMethod.required");
             } else {
                 if (request.getPaymentMethodObject().hasUuid()) {
                     paymentMethod = paymentMethodDAO.findByUuid(request.getPaymentMethodObject().getUuid());
-                    if (paymentMethod == null) result.addViolation("err.purchase.paymentMethodNotFound");
+                    if (paymentMethod == null) errors.addViolation("err.purchase.paymentMethodNotFound");
                 } else {
                     paymentMethod = request.getPaymentMethodObject();
                 }
                 if (paymentMethod != null) {
-                    paymentMethod.setAccount(caller.getUuid()).validate(result, configuration);
+                    paymentMethod.setAccount(caller.getUuid()).validate(errors, configuration);
                 }
             }
         }
-        if (result.isInvalid()) throw invalidEx(result);
+        if (errors.isInvalid()) throw invalidEx(errors);
 
         if (domain != null && plan != null && storage != null) {
             final BubbleNetwork newNetwork = networkDAO.create(request.bubbleNetwork(caller, domain, plan, storage));

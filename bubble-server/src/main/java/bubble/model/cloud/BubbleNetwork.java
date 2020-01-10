@@ -42,7 +42,10 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
         @ECTypeChild(type=BubbleNode.class, backref="network")
 })
 @Entity @NoArgsConstructor @Accessors(chain=true)
-@ECIndexes({ @ECIndex(unique=true, of={"account", "name"}) })
+@ECIndexes({
+        @ECIndex(unique=true, of={"account", "name"}),
+        @ECIndex(unique=true, of={"name", "domainName"})
+})
 public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBubbleTags<BubbleNetwork> {
 
     public static final String[] UPDATE_FIELDS = {"footprint", "description", "locale", "timezone", "plan", "state"};
@@ -82,7 +85,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
 
     @ECSearchable(filter=true) @ECField(index=40)
     @ECIndex @Column(nullable=false, updatable=false, length=DOMAIN_NAME_MAXLEN)
-    @Getter @Setter private String domainName;  // denormalized from BubbleNetwork
+    @Getter @Setter private String domainName;  // denormalized from BubbleDomain
 
     @Transient @JsonIgnore public String getNetworkDomain () { return name + "." + domainName; }
 

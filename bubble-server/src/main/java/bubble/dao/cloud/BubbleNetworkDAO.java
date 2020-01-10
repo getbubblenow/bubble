@@ -67,6 +67,10 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
         return domainUuids;
     }
 
+    public BubbleNetwork findByNameAndDomainName(String name, String domainName) {
+        return findByUniqueFields("name", name, "domainName", domainName);
+    }
+
     @Override public void delete(String uuid) { delete(uuid, false); }
     @Override public void forceDelete(String uuid) { delete(uuid, true); }
 
