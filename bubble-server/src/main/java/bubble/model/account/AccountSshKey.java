@@ -1,6 +1,5 @@
 package bubble.model.account;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,7 +21,8 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.util.time.TimeUtil.formatISO8601;
 import static org.cobbzilla.util.time.TimeUtil.parseISO8601;
-import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
+import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
+import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @Entity @ECType(root=true)
 @NoArgsConstructor @Accessors(chain=true)
@@ -73,9 +73,8 @@ public class AccountSshKey extends IdentifiableBase implements HasAccount {
     @ECField(index=60)
     @Getter @Setter private Long expiration;
     public boolean hasExpiration () { return expiration != null; }
-    @JsonIgnore @Transient public long getExpirationMillis () { return expiration - now(); }
-
-    public boolean valid() { return now() < getExpiration(); }
+    public boolean neverExpires () { return !hasExpiration(); }
+    public boolean valid() { return neverExpires() || now() < getExpiration(); }
     public boolean expired() { return !valid(); }
 
     @Transient public String getExpirationISO8601 () {

@@ -147,5 +147,5 @@
 
 - name: Install refresh_bubble_ssh_keys_monitor supervisor conf file
   copy:
-    src: refresh_bubble_ssh_keys_monitor.conf
+    src: supervisor_refresh_bubble_ssh_keys_monitor.conf
     dest: /etc/supervisor/conf.d/refresh_bubble_ssh_keys_monitor.conf
