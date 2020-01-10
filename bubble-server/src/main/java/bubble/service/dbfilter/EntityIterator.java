@@ -48,6 +48,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
         try {
             return queue.take();
         } catch (InterruptedException e) {
+            error.set(e);
             return die("next: queue.take interrupted");
         }
     }
