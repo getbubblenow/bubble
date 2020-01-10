@@ -1,5 +1,6 @@
 package bubble.model.boot;
 
+import bubble.model.account.AccountSshKey;
 import bubble.model.cloud.AnsibleRole;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.CloudService;
@@ -49,5 +50,8 @@ public class ActivationRequest {
 
     @Getter @Setter private Boolean skipTests = false;
     public boolean skipTests () { return skipTests != null && skipTests; };
+
+    @Getter @Setter private AccountSshKey sshKey;
+    public boolean hasSshKey () { return sshKey != null; }
 
 }

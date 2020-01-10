@@ -3,7 +3,6 @@
   "priority": 300,
   "template": true,
   "config": [
-    {"name": "ansible_python_interpreter", "value": "/usr/bin/python3"},
     {"name": "node_uuid", "value": "[[node.uuid]]"},
     {"name": "network_uuid", "value": "[[node.network]]"},
     {"name": "admin_port", "value": "[[node.adminPort]]"},
@@ -23,8 +22,9 @@
     {"name": "is_fork", "value": "[[fork]]"},
     {"name": "restore_key", "value": "[[restoreKey]]"},
     {"name": "restore_timeout", "value": "[[restoreTimeoutSeconds]]"},
+    {"name": "rsa_key", "value": "[[rsa_key]]"},
     {"name": "test_mode", "value": "[[testMode]]"}
   ],
-  "optionalConfigNames": ["restore_key", "restore_timeout"],
+  "optionalConfigNames": ["restore_key", "restore_timeout", "ssh_key"],
   "tgzB64": ""
 }

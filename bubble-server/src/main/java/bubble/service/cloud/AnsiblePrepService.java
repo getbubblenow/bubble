@@ -1,6 +1,8 @@
 package bubble.service.cloud;
 
+import bubble.dao.account.AccountSshKeyDAO;
 import bubble.model.account.Account;
+import bubble.model.account.AccountSshKey;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.AnsibleRole;
 import bubble.model.cloud.BubbleNetwork;
@@ -35,6 +37,7 @@ import static org.cobbzilla.util.string.Base64.DONT_GUNZIP;
 @Service @Slf4j
 public class AnsiblePrepService {
 
+    @Autowired private AccountSshKeyDAO sshKeyDAO;
     @Autowired private DatabaseFilterService dbFilter;
     @Autowired private StandardStorageService storageService;
     @Autowired private BubbleConfiguration configuration;
@@ -67,6 +70,18 @@ public class AnsiblePrepService {
         if (restoreKey != null) {
             ctx.put("restoreKey", restoreKey);
             ctx.put("restoreTimeoutSeconds", RESTORE_MONITOR_SCRIPT_TIMEOUT_SECONDS);
+        }
+        if (network.hasSshKey()) {
+            final AccountSshKey sshKey = sshKeyDAO.findByAccountAndId(account.getUuid(), network.getSshKey());
+            if (sshKey == null) {
+                return die("prepAnsible: SSH key not found: "+network.getSshKey());
+            } else if (sshKey.expired()) {
+                return die("prepAnsible: SSH key expired: "+network.getSshKey());
+            } else {
+                ctx.put("rsa_key", sshKey.getSshPublicKey());
+            }
+        } else {
+            ctx.put("rsa_key", "disabled");
         }
         ctx.put("network", network);
         ctx.put("node", node);

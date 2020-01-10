@@ -71,7 +71,7 @@ public class Device extends IdentifiableBase implements HasAccount {
     @Getter @Setter private String network;
 
     @Size(max=300, message="err.totpKey.length")
-    @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+300+ENC_PAD+") NOT NULL")
+    @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(300+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String totpKey;
     public Device initTotpKey() { return setTotpKey(randomAlphanumeric(200)); }
 

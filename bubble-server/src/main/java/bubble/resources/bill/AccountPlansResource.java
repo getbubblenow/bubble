@@ -2,6 +2,7 @@ package bubble.resources.bill;
 
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.geoLocation.GeoLocation;
+import bubble.dao.account.AccountSshKeyDAO;
 import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BubblePlanDAO;
@@ -10,6 +11,7 @@ import bubble.dao.cloud.BubbleFootprintDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
+import bubble.model.account.AccountSshKey;
 import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
@@ -39,6 +41,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 @Slf4j
 public class AccountPlansResource extends AccountOwnedResource<AccountPlan, AccountPlanDAO> {
 
+    @Autowired private AccountSshKeyDAO sshKeyDAO;
     @Autowired private BubbleDomainDAO domainDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private BubblePlanDAO planDAO;
@@ -77,6 +80,15 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         final ValidationResult result = new ValidationResult();
         if (!request.hasTimezone()) result.addViolation("err.timezone.required");
         if (!request.hasLocale()) result.addViolation("err.locale.required");
+
+        if (request.hasSshKey()) {
+            final AccountSshKey sshKey = sshKeyDAO.findByAccountAndId(caller.getUuid(), request.getSshKey());
+            if (sshKey == null) {
+                result.addViolation("err.sshPublicKey.notFound");
+            } else {
+                request.setSshKey(sshKey.getUuid());
+            }
+        }
 
         final BubbleDomain domain = domainDAO.findByAccountAndId(caller.getUuid(), request.getDomain());
         if (domain == null) {

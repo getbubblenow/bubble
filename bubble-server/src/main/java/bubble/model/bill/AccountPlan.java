@@ -1,6 +1,7 @@
 package bubble.model.bill;
 
 import bubble.model.account.Account;
+import bubble.model.account.AccountSshKey;
 import bubble.model.account.HasAccount;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleNetwork;
@@ -78,32 +79,38 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Getter @Setter private String network;
 
     @ECSearchable @ECField(index=70)
+    @ECForeignKey(entity=AccountSshKey.class)
+    @Column(length=UUID_MAXLEN)
+    @Getter @Setter private String sshKey;
+    public boolean hasSshKey () { return !empty(sshKey); }
+
+    @ECSearchable @ECField(index=80)
     @Column(nullable=false)
     @Getter @Setter private Boolean enabled = false;
     public boolean enabled() { return enabled != null && enabled; }
     public boolean disabled() { return !enabled(); }
 
-    @ECSearchable(type=EntityFieldType.epoch_time) @ECField(index=80)
+    @ECSearchable(type=EntityFieldType.epoch_time) @ECField(index=90)
     @Column(nullable=false)
     @ECIndex @Getter @Setter private Long nextBill;
 
-    @ECSearchable @ECField(index=90)
+    @ECSearchable @ECField(index=100)
     @Column(nullable=false, length=20)
     @Getter @Setter private String nextBillDate;
     public AccountPlan setNextBillDate() { return setNextBillDate(BILL_START_END_FORMAT.print(getNextBill())); }
 
-    @ECSearchable @ECField(index=100)
+    @ECSearchable @ECField(index=110)
     @ECIndex @Getter @Setter private Long deleted;
     public boolean deleted() { return deleted != null; }
     public boolean notDeleted() { return !deleted(); }
 
-    @ECSearchable @ECField(index=110)
+    @ECSearchable @ECField(index=120)
     @Column(nullable=false)
     @ECIndex @Getter @Setter private Boolean closed = false;
     public boolean closed() { return closed != null && closed; }
     public boolean notClosed() { return !closed(); }
 
-    @ECSearchable @ECField(index=120)
+    @ECSearchable @ECField(index=130)
     @ECIndex(unique=true) @Column(length=UUID_MAXLEN)
     @Getter @Setter private String deletedNetwork;
     public boolean hasDeletedNetwork() { return deletedNetwork != null; }
@@ -134,6 +141,7 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
                 .setLocale(getLocale())
                 .setTimezone(getTimezone())
                 .setAccount(account.getUuid())
+                .setSshKey(getSshKey())
                 .setDomain(domain.getUuid())
                 .setDomainName(domain.getName())
                 .setFootprint(getFootprint())

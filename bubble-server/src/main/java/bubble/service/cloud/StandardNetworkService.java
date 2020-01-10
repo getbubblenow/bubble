@@ -5,11 +5,13 @@ import bubble.cloud.compute.ComputeServiceDriver;
 import bubble.cloud.dns.DnsServiceDriver;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
+import bubble.dao.account.AccountSshKeyDAO;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.*;
 import bubble.model.account.Account;
 import bubble.model.account.AccountPolicy;
+import bubble.model.account.AccountSshKey;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.*;
@@ -93,6 +95,7 @@ public class StandardNetworkService implements NetworkService {
     private static final long PLAN_ENABLE_TIMEOUT = PURCHASE_DELAY + SECONDS.toMillis(10);
 
     @Autowired private AccountDAO accountDAO;
+    @Autowired private AccountSshKeyDAO sshKeyDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
@@ -480,6 +483,11 @@ public class StandardNetworkService implements NetworkService {
                 accountPlan = accountPlanDAO.findByAccountAndNetwork(accountUuid, network.getUuid());
             }
             if (accountPlan.disabled()) throw invalidEx("err.accountPlan.disabled");
+        }
+        if (network.hasSshKey()) {
+            final AccountSshKey key = sshKeyDAO.findByAccountAndId(network.getAccount(), network.getSshKey());
+            if (key == null) throw invalidEx("err.sshPublicKey.notFound");
+            if (key.expired()) throw invalidEx("err.sshPublicKey.expired");
         }
 
         final Account account = accountDAO.findByUuid(accountUuid);

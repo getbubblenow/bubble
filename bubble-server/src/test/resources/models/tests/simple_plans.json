@@ -58,7 +58,6 @@
         "name": "bubble-0.0.1",
         "template": true,
         "config": [
-          {"name": "ansible_python_interpreter", "value": "/usr/bin/python3"},
           {"name": "upstream_bubble", "value": "{{configuration.thisNode.uuid}}"},
           {"name": "bubble_version", "value": "{{configuration.version}}"},
           {"name": "bubble_host", "value": "{{node.fqdn}}"}

@@ -250,6 +250,12 @@ public class MeResource {
         return configuration.subResource(AccountPlansResource.class, caller);
     }
 
+    @Path(EP_KEYS)
+    public AccountSshKeysResource getSshKeys(@Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        return configuration.subResource(AccountSshKeysResource.class, caller);
+    }
+
     @Path(EP_PAYMENT_METHODS)
     public AccountPaymentMethodsResource getAccountPaymentMethods(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);

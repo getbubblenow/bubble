@@ -6,6 +6,7 @@ import bubble.cloud.compute.local.LocalComputeDriver;
 import bubble.cloud.storage.local.LocalStorageConfig;
 import bubble.cloud.storage.local.LocalStorageDriver;
 import bubble.dao.account.AccountDAO;
+import bubble.dao.account.AccountSshKeyDAO;
 import bubble.dao.cloud.*;
 import bubble.model.account.Account;
 import bubble.model.boot.ActivationRequest;
@@ -54,6 +55,7 @@ public class ActivationService {
 
     public static final long ACTIVATION_TIMEOUT = SECONDS.toMillis(10);
 
+    @Autowired private AccountSshKeyDAO sshKeyDAO;
     @Autowired private AnsibleRoleDAO roleDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleDomainDAO domainDAO;
@@ -72,6 +74,8 @@ public class ActivationService {
             ip = getLocalhostIpv4();
         }
         if (ip == null) die("bootstrapThisNode: no IP could be found, not even a localhost address");
+
+        if (request.hasSshKey()) sshKeyDAO.create(request.getSshKey().setAccount(account.getUuid()));
 
         final Map<String, CloudServiceConfig> requestConfigs = request.getCloudConfigs();
         final Map<String, CloudService> defaultConfigs = getCloudDefaultsMap();

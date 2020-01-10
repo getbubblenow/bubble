@@ -24,7 +24,6 @@
     "priority": 300,
     "template": true,
     "config": [
-      {"name": "ansible_python_interpreter", "value": "/usr/bin/python3"},
       {"name": "dns_port", "value": "[[configuration.dnsPort]]"},
       {"name": "node_uuid", "value": "[[node.uuid]]"},
       {"name": "network_uuid", "value": "[[node.network]]"},

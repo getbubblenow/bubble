@@ -349,6 +349,13 @@ public class AccountsResource {
         return configuration.subResource(AccountPlansResource.class, c.account);
     }
 
+    @Path("/{id}"+EP_KEYS)
+    public AccountSshKeysResource getSshKeys(@Context ContainerRequest ctx,
+                                             @PathParam("id") String id) {
+        final AccountContext c = new AccountContext(ctx, id);
+        return configuration.subResource(AccountSshKeysResource.class, c.account);
+    }
+
     @Path("/{id}"+EP_PAYMENT_METHODS)
     public AccountPaymentMethodsResource getAccountPaymentMethods(@Context ContainerRequest ctx,
                                                                   @PathParam("id") String id) {

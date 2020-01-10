@@ -94,7 +94,7 @@ public class BubbleNodeKey extends IdentifiableBase implements HasAccountNoName 
     @Getter private String publicKey;
     public BubbleNodeKey setPublicKey (String k) {
         this.publicKey = k;
-        this.publicKeyHash = sha256_hex(k);
+        if (!empty(k)) this.publicKeyHash = sha256_hex(k);
         return this;
     }
 
