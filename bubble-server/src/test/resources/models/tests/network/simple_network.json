@@ -115,6 +115,22 @@
   },
 
   {
+    "comment": "add an ssh key",
+    "onlyIf": "'{{TEST_SSH_KEY}}'.startsWith('ssh-rsa ')",
+    "request": {
+      "uri": "me/keys",
+      "method": "put",
+      "entity": {
+        "name": "test-key",
+        "sshPublicKey": "{{TEST_SSH_KEY}}"
+      }
+    },
+    "response": {
+      "store": "sshKey"
+    }
+  },
+
+  {
     "comment": "add plan",
     "request": {
       "uri": "me/plans",
@@ -126,6 +142,7 @@
         "timezone": "{{detected_timezone.timeZoneId}}",
         "plan": "{{find plans 'name' 'bubble' 'uuid'}}",
         "footprint": "US",
+        "sshKey": "{{#exists sshKey}}{{sshKey.uuid}}{{/exists}}",
         "paymentMethodObject": {
           "paymentMethodType": "code",
           "paymentInfo": "code1"

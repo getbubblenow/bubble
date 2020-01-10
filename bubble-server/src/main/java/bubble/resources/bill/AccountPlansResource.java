@@ -88,6 +88,8 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             } else {
                 request.setSshKey(sshKey.getUuid());
             }
+        } else {
+            request.setSshKey(null); // if it's an empty string, make it null (see simple_network test)
         }
 
         final BubbleDomain domain = domainDAO.findByAccountAndId(caller.getUuid(), request.getDomain());
