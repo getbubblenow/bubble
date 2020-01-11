@@ -131,6 +131,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     }
 
     protected E findAlternate(ContainerRequest ctx, E request) { return null; }
+    protected E findAlternate(ContainerRequest ctx, String id) { return null; }
 
     protected Object daoCreate(E toCreate) { return getDao().create(toCreate); }
 
@@ -141,8 +142,11 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
                            @PathParam("id") String id,
                            E request) {
         final Account caller = checkEditable(ctx);
-        final E found = find(ctx, id);
-        if (found == null) return notFound(id);
+        E found = find(ctx, id);
+        if (found == null) {
+            found = findAlternate(ctx, id);
+            if (found == null) return notFound(id);
+        }
         if (!(found instanceof HasAccountNoName) && !canChangeName() && request.hasName() && !found.getName().equals(request.getName())) {
             return notFound(id+"/"+request.getName());
         }
@@ -158,8 +162,11 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     public Response delete(@Context ContainerRequest ctx,
                            @PathParam("id") String id) {
         final Account caller = checkEditable(ctx);
-        final E found = find(ctx, id);
-        if (found == null) return notFound(id);
+        E found = find(ctx, id);
+        if (found == null) {
+            found = findAlternate(ctx, id);
+            if (found == null) return notFound(id);
+        }
 
         if (!canDelete(ctx, caller, found)) return forbidden();
 

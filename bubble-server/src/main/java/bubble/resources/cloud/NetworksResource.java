@@ -99,6 +99,11 @@ public class NetworksResource extends AccountOwnedResource<BubbleNetwork, Bubble
         return false;
     }
 
+    @Override protected boolean canDelete(ContainerRequest ctx, Account caller, BubbleNetwork found) {
+        // delete networks through plans
+        return false;
+    }
+
     @GET @Path("/{id}"+EP_CLOSEST)
     public Response findClosest(@Context Request req,
                                 @Context ContainerRequest ctx,

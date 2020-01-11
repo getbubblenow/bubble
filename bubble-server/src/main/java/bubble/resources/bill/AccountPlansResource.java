@@ -56,6 +56,13 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         return getDao().findByAccountAndNotDeleted(account.getUuid());
     }
 
+    @Override protected AccountPlan findAlternate(ContainerRequest ctx, String id) {
+        // id might be a network uuid
+        final String accountUuid = getAccountUuid(ctx);
+        final BubbleNetwork network = networkDAO.findByAccountAndId(accountUuid, id);
+        return network == null ? null : getDao().findByAccountAndNetwork(accountUuid, network.getUuid());
+    }
+
     @Override protected boolean canCreate(Request req, ContainerRequest ctx, Account caller, AccountPlan request) {
         // ensure caller is not from a disallowed country
         if (configuration.hasDisallowedCountries()) {
