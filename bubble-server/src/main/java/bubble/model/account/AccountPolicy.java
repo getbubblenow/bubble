@@ -56,11 +56,11 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
 
     @JsonIgnore @Override public String getName() { return getAccount(); }
 
-    @ECSearchable(type=EntityFieldType.expiration_time) @ECField(index=20)
+    @ECSearchable(type=EntityFieldType.time_duration) @ECField(index=20)
     @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+ENC_LONG+") NOT NULL")
     @Getter @Setter private Long nodeOperationTimeout = MINUTES.toMillis(30);
 
-    @ECSearchable(type=EntityFieldType.expiration_time) @ECField(index=30)
+    @ECSearchable(type=EntityFieldType.time_duration) @ECField(index=30)
     @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+ENC_LONG+") NOT NULL")
     @Getter @Setter private Long accountOperationTimeout = MINUTES.toMillis(10);
 
