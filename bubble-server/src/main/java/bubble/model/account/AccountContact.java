@@ -70,6 +70,7 @@ public class AccountContact implements Serializable {
 
     @Getter @Setter private Boolean requiredForNetworkOperations = true;
     @Getter @Setter private Boolean requiredForAccountOperations = true;
+
     @Getter @Setter private Boolean receiveVerifyNotifications = true;
     @Getter @Setter private Boolean receiveLoginNotifications = true;
     @Getter @Setter private Boolean receivePasswordNotification = true;
