@@ -25,6 +25,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
@@ -78,7 +79,7 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
     @ECSearchable @ECField(index=50)
     @Column(nullable=false)
     @Getter @Setter private Boolean deleted = false;
-    public boolean deleted() { return deleted != null && deleted; }
+    public boolean deleted() { return bool(deleted); }
     public boolean notDeleted() { return !deleted(); }
 
     public ValidationResult validate(ValidationResult result, BubbleConfiguration configuration) {

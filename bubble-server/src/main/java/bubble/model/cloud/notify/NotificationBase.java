@@ -19,6 +19,7 @@ import org.hibernate.annotations.Type;
 import javax.persistence.*;
 
 import static bubble.ApiConstants.ERROR_MAXLEN;
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.errorString;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.ellipsis;
@@ -72,7 +73,7 @@ public class NotificationBase extends IdentifiableBase implements HasAccountNoNa
 
     @ECField(index=80)
     @Getter @Setter private Boolean truncated = false;
-    public boolean truncated () { return truncated != null && truncated; }
+    public boolean truncated () { return bool(truncated); }
 
     @ECField(index=90)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(1000+ENC_PAD)+")")

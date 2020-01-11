@@ -20,6 +20,7 @@ import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
 import static bubble.ApiConstants.EP_DATA;
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
@@ -96,12 +97,12 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
     @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
-    public boolean template() { return template != null && template; }
+    public boolean template() { return bool(template); }
 
     @ECSearchable
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
-    public boolean enabled() { return enabled != null && enabled; }
+    public boolean enabled() { return bool(enabled); }
 
     public AppData(RuleConfig config) {
         setMatcher(config.getMatcher());

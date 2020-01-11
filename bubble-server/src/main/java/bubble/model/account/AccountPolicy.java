@@ -115,7 +115,7 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
                 }
             case network: case node:
                 return Arrays.stream(getAccountContacts())
-                        .filter(c -> c.requiredForNodeOperations() || c.requiredAuthFactor())
+                        .filter(c -> c.requiredForNetworkOperations() || c.requiredAuthFactor())
                         .collect(Collectors.toList());
             default:
                 return requiredAuthFactors();

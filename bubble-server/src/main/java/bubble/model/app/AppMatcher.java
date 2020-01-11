@@ -20,6 +20,7 @@ import javax.validation.constraints.Size;
 import java.util.regex.Pattern;
 
 import static bubble.ApiConstants.EP_MATCHERS;
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
@@ -82,7 +83,7 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity {
     @ECSearchable @ECField(index=80)
     @Column(nullable=false)
     @Getter @Setter private Boolean blocked = false;
-    public boolean blocked() { return blocked != null && blocked; }
+    public boolean blocked() { return bool(blocked); }
 
     @ECSearchable @ECField(index=90)
     @ECIndex @Column(nullable=false)

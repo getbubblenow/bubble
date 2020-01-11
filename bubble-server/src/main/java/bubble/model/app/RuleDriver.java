@@ -68,7 +68,7 @@ public class RuleDriver extends IdentifiableBase implements AccountTemplate {
     @ECSearchable @ECField(index=30)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
-    public boolean template() { return template != null && template; }
+    public boolean template() { return bool(template); }
 
     @ECSearchable @ECField(index=40)
     @ECIndex @Column(nullable=false)

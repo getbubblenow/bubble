@@ -15,8 +15,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.util.time.TimeUtil.formatISO8601;
@@ -68,7 +67,7 @@ public class AccountSshKey extends IdentifiableBase implements HasAccount {
     @ECField(index=50) @ECSearchable
     @Column(nullable=false)
     @Getter @Setter private Boolean installSshKey = false;
-    public boolean installSshKey() { return installSshKey != null && installSshKey; }
+    public boolean installSshKey() { return bool(installSshKey); }
 
     @ECField(index=60)
     @Getter @Setter private Long expiration;

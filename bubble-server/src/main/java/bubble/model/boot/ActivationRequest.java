@@ -13,6 +13,7 @@ import org.cobbzilla.wizard.validation.HasValue;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
 @NoArgsConstructor @Accessors(chain=true)
@@ -46,10 +47,10 @@ public class ActivationRequest {
     @Getter @Setter private BubbleDomain domain;
 
     @Getter @Setter private Boolean createDefaultObjects = true;
-    public boolean createDefaultObjects () { return createDefaultObjects != null && createDefaultObjects; };
+    public boolean createDefaultObjects () { return bool(createDefaultObjects); };
 
     @Getter @Setter private Boolean skipTests = false;
-    public boolean skipTests () { return skipTests != null && skipTests; };
+    public boolean skipTests () { return bool(skipTests); };
 
     @Getter @Setter private AccountSshKey sshKey;
     public boolean hasSshKey () { return sshKey != null; }

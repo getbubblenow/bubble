@@ -22,6 +22,7 @@ import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
 import static bubble.model.bill.BillPeriod.BILL_START_END_FORMAT;
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
@@ -87,7 +88,7 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @ECSearchable @ECField(index=80)
     @Column(nullable=false)
     @Getter @Setter private Boolean enabled = false;
-    public boolean enabled() { return enabled != null && enabled; }
+    public boolean enabled() { return bool(enabled); }
     public boolean disabled() { return !enabled(); }
 
     @ECSearchable(type=EntityFieldType.epoch_time) @ECField(index=90)
@@ -107,7 +108,7 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @ECSearchable @ECField(index=120)
     @Column(nullable=false)
     @ECIndex @Getter @Setter private Boolean closed = false;
-    public boolean closed() { return closed != null && closed; }
+    public boolean closed() { return bool(closed); }
     public boolean notClosed() { return !closed(); }
 
     @ECSearchable @ECField(index=130)

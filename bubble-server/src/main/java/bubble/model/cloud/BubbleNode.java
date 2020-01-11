@@ -30,8 +30,7 @@ import java.util.*;
 
 import static bubble.ApiConstants.EP_NODES;
 import static bubble.model.cloud.BubbleNodeState.*;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.json.JsonUtil.fromJson;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
@@ -217,7 +216,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
 
     // After a restore operation, we will want to notify the server
     @Transient @Getter @Setter private transient Boolean wasRestored;
-    public boolean wasRestored() { return wasRestored != null && wasRestored; }
+    public boolean wasRestored() { return bool(wasRestored); }
 
     public ApiClientBase getApiClient(BubbleConfiguration configuration) {
         return new BubbleNodeClient(this, configuration);

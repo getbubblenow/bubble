@@ -94,7 +94,7 @@ public class AnsibleRole extends IdentifiableBase implements AccountTemplate, Ha
     @ECSearchable @ECField(index=60)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
-    public boolean template() { return template != null && template; }
+    public boolean template() { return bool(template); }
 
     @ECSearchable @ECField(index=70)
     @ECIndex @Column(nullable=false)

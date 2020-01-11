@@ -122,15 +122,15 @@ public class Account extends IdentifiableBase implements TokenPrincipal, SqlView
 
     @ECSearchable @ECField(index=60)
     @Getter @Setter private Boolean admin = false;
-    public boolean admin () { return admin != null && admin; }
+    public boolean admin () { return bool(admin); }
 
     @ECSearchable @ECField(index=70)
     @Getter @Setter private Boolean suspended = false;
-    public boolean suspended () { return suspended != null && suspended; }
+    public boolean suspended () { return bool(suspended); }
 
     @ECSearchable @ECField(index=80)
     @Getter @Setter private Boolean locked = false;
-    public boolean locked () { return locked != null && locked; }
+    public boolean locked () { return bool(locked); }
 
     @JsonIgnore @Embedded @Getter @Setter private HashedPassword hashedPassword;
 

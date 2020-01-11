@@ -68,8 +68,7 @@ public class AccountContact implements Serializable {
     @Getter @Setter private Boolean verified = null;
     public boolean verified () { return bool(verified); }
 
-    @Getter @Setter private Boolean requiredForNetworkUnlock = true;
-    @Getter @Setter private Boolean requiredForNodeOperations = true;
+    @Getter @Setter private Boolean requiredForNetworkOperations = true;
     @Getter @Setter private Boolean requiredForAccountOperations = true;
     @Getter @Setter private Boolean receiveVerifyNotifications = true;
     @Getter @Setter private Boolean receiveLoginNotifications = true;
@@ -82,9 +81,8 @@ public class AccountContact implements Serializable {
     public boolean authFactor () { return authFactor != null && authFactor != AuthFactorType.not_required; }
     public boolean requiredAuthFactor () { return authFactor == AuthFactorType.required; }
     public boolean sufficientAuthFactor () { return authFactor == AuthFactorType.sufficient; }
-    public boolean requiredForAccountOperations () { return requiredForAccountOperations != null && requiredForAccountOperations; }
-    public boolean requiredForNetworkUnlock () { return requiredForNetworkUnlock != null && requiredForNetworkUnlock; }
-    public boolean requiredForNodeOperations () { return requiredForNodeOperations != null && requiredForNodeOperations; }
+    public boolean requiredForAccountOperations () { return bool(requiredForAccountOperations); }
+    public boolean requiredForNetworkOperations() { return bool(requiredForNetworkOperations); }
 
     public static AccountContact[] set(AccountContact c, AccountContact[] contacts, Account account, BubbleConfiguration configuration) {
         if (!c.getType().isAuthenticationType()) return die("add: not an authentication type: "+c);
@@ -228,13 +226,13 @@ public class AccountContact implements Serializable {
                                         && verified()
                         ) || (
                                 target == ActionTarget.network
-                                        && bool(requiredForNodeOperations)
+                                        && bool(requiredForNetworkOperations)
                                         && getType() != CloudServiceType.authenticator
                                         && verified()
                         );
                     case confirmation:
                         return target == ActionTarget.network
-                                && bool(requiredForNodeOperations)
+                                && bool(requiredForNetworkOperations)
                                 && getType() != CloudServiceType.authenticator
                                 && verified();
                     default:
@@ -256,7 +254,7 @@ public class AccountContact implements Serializable {
                     if (target == ActionTarget.account && getType().isVerifiableAuthenticationType()) {
                         if (message.hasContact() && message.getContact().equals(getUuid())) return true;
                         return bool(receiveVerifyNotifications);
-                    } else if (target == ActionTarget.network && bool(requiredForNetworkUnlock)) {
+                    } else if (target == ActionTarget.network && requiredForNetworkOperations()) {
                         return true;
                     } else {
                         log.warn("isAllowed(verify): verify action not allowed for type/target: "+getType()+"/"+target);
@@ -269,7 +267,7 @@ public class AccountContact implements Serializable {
             case start: case stop: case delete:
                 switch (target) {
                     case account:            return bool(requiredForAccountOperations);
-                    case node: case network: return bool(requiredForNodeOperations);
+                    case node: case network: return bool(requiredForNetworkOperations);
                     default:
                         log.warn("isAllowed(start/stop/delete): unknown target: "+target+", returning false");
                         return false;

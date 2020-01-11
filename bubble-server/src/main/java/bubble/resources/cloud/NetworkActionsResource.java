@@ -78,6 +78,9 @@ public class NetworkActionsResource {
 
         if (!network.getState().canStartNetwork()) return invalid("err.network.cannotStartInCurrentState");
 
+        final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
+        // todo: enforce policy
+
         return _startNetwork(network, cloud, region, req);
     }
 

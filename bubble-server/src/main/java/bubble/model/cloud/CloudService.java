@@ -108,7 +108,7 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     @ECSearchable @ECField(index=60)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
-    public boolean template() { return template != null && template; }
+    public boolean template() { return bool(template); }
 
     @ECSearchable @ECField(index=70)
     @ECIndex @Column(nullable=false)
@@ -301,7 +301,7 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
 
     @Transient @JsonIgnore @Getter @Setter private Object testArg = null;
     @Transient @JsonIgnore @Getter @Setter private Boolean skipTest = false;
-    public boolean skipTest () { return skipTest != null && skipTest; };
+    public boolean skipTest () { return bool(skipTest); };
 
     public static ValidationResult testDriver(CloudService cloud, BubbleConfiguration configuration) {
         return testDriver(cloud, configuration, new ValidationResult());
