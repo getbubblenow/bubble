@@ -19,6 +19,8 @@ import bubble.service.backup.NetworkKeysService;
 import bubble.service.cloud.NodeProgressMeterTick;
 import bubble.service.cloud.StandardNetworkService;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.NameAndValue;
+import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 import static bubble.ApiConstants.*;
+import static bubble.model.account.Account.validatePassword;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -115,14 +118,22 @@ public class NetworkActionsResource {
         return ok();
     }
 
-    @GET @Path(EP_KEYS+"/{uuid}")
+    @POST @Path(EP_KEYS+"/{uuid}")
     public Response retrieveNetworkKeys(@Context Request req,
                                         @Context ContainerRequest ctx,
-                                        @PathParam("uuid") String uuid) {
+                                        @PathParam("uuid") String uuid,
+                                        NameAndValue enc) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();
+
+        final String encryptionKey = enc == null ? null : enc.getValue();
+        final ConstraintViolationBean error = validatePassword(encryptionKey);
+        if (error != null) return invalid(error);
+
         final NetworkKeys keys = keysService.retrieveKeys(uuid);
-        return keys == null ? notFound(uuid) : ok(keys);
+        return keys == null
+                ? invalid("err.retrieveNetworkKeys.notFound")
+                : ok(keys.encrypt(encryptionKey));
     }
 
     @POST @Path(EP_STOP)

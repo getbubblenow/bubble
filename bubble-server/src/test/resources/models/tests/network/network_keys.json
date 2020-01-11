@@ -70,14 +70,43 @@
   },
 
   {
+    "comment": "use confirmation token in email to retrieve network keys, fails because password is not supplied",
+    "request": {
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{emailInbox.[0].ctx.message.requestId}}",
+      "method": "post"
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.password.required')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "use confirmation token in email to retrieve network keys, fails because password is too simple",
+    "request": {
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{emailInbox.[0].ctx.message.requestId}}",
+      "entity": { "name": "password", "value": "password" }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.password.invalid')"}
+      ]
+    }
+  },
+
+  {
     "comment": "use confirmation token in email to retrieve network keys",
     "request": {
-      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{emailInbox.[0].ctx.message.requestId}}"
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{emailInbox.[0].ctx.message.requestId}}",
+      "entity": { "name": "password", "value": "Passw0rd!" }
     },
     "response": {
       "store": "networkKeys",
       "check": [
-        {"condition": "json.getKeys().length >= 1"}
+        {"condition": "json.getData().length >= 1"}
       ]
     }
   },
@@ -85,10 +114,12 @@
   {
     "comment": "try to retrieve keys again, fails because it's a one-time operation",
     "request": {
-      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{emailInbox.[0].ctx.message.requestId}}"
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{emailInbox.[0].ctx.message.requestId}}",
+      "entity": { "name": "password", "value": "Passw0rd!" }
     },
     "response": {
-      "status": 404
+      "status": 422,
+      "check": [ {"condition": "json.has('err.retrieveNetworkKeys.notFound')"} ]
     }
   },
 
@@ -210,12 +241,13 @@
   {
     "comment": "use confirmation token in email to retrieve network keys",
     "request": {
-      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{emailInbox.[0].ctx.message.requestId}}"
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{emailInbox.[0].ctx.message.requestId}}",
+      "entity": { "name": "password", "value": "Passw0rd!" }
     },
     "response": {
       "store": "networkKeys",
       "check": [
-        {"condition": "json.getKeys().length >= 1"}
+        {"condition": "json.getData().length >= 1"}
       ]
     }
   },
@@ -223,10 +255,12 @@
   {
     "comment": "try to retrieve keys again, fails because it's a one-time operation",
     "request": {
-      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{smsInbox.[0].ctx.message.requestId}}"
+      "uri": "me/networks/{{serverConfig.thisNetwork.uuid}}/actions/keys/{{smsInbox.[0].ctx.message.requestId}}",
+      "entity": { "name": "password", "value": "Passw0rd!" }
     },
     "response": {
-      "status": 404
+      "status": 422,
+      "check": [ {"condition": "json.has('err.retrieveNetworkKeys.notFound')"} ]
     }
   }
 ]

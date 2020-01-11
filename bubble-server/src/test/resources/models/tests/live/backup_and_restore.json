@@ -147,7 +147,8 @@
     "params": {
       "network": "{{bubbleNetwork.network}}",
       "rootEmail": "bubble-user@example.com",
-      "networkKeysVar": "networkKeys"
+      "networkKeysVar": "networkKeys",
+      "networkKeysPassword": "Passw0rd!!"
     }
   },
 
@@ -195,7 +196,10 @@
     "comment": "restore node using restoreKey",
     "request": {
       "uri": "auth/restore/{{restoreNN.restoreKey}}",
-      "entityJson": "{{json networkKeys}}",
+      "entity": {
+        "data": "{{networkKeys.data}}",
+        "password": "Passw0rd!!"
+      },
       "method": "put"
     },
     "after": "sleep 240s"  // give the restore some time to stop the server, restore and restart

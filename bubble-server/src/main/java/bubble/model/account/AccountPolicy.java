@@ -76,6 +76,12 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String accountContactsJson;
     public boolean hasAccountContacts() { return accountContactsJson != null; }
+
+    @JsonIgnore @Transient public List<AccountContact> getVerifiedContacts () {
+        return hasVerifiedAccountContacts()
+                ? Arrays.stream(getAccountContacts()).filter(AccountContact::verified).collect(Collectors.toList())
+                : Collections.emptyList();
+    }
     public boolean hasVerifiedAccountContacts() {
         return hasAccountContacts() && Arrays.stream(getAccountContacts()).anyMatch(AccountContact::verified);
     }

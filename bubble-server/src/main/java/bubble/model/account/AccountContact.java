@@ -19,8 +19,10 @@ import org.cobbzilla.wizard.validation.ValidationResult;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.G_AUTH;
 import static java.util.UUID.randomUUID;
@@ -284,8 +286,11 @@ public class AccountContact implements Serializable {
     }
 
     public AccountContact mask() {
-        return new AccountContact(this)
-                .setInfo(getType().mask(getInfo()));
+        return new AccountContact(this).setInfo(getType().mask(getInfo()));
+    }
+
+    public static Collection<AccountContact> mask(Collection<AccountContact> contacts) {
+        return empty(contacts) ? contacts : contacts.stream().map(c -> c.mask()).collect(Collectors.toList());
     }
 
     public ValidationResult validate(ValidationResult errors) {

@@ -130,6 +130,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
             throw invalidEx("err.accountPlan.stopNetworkBeforeDeleting");
         }
         update(accountPlan.setDeleted(now()).setEnabled(false));
+        networkDAO.delete(accountPlan.getNetwork());
         if (configuration.paymentsEnabled()) {
             refundService.processRefunds();
         }

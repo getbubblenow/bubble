@@ -46,8 +46,7 @@ import static bubble.model.cloud.BubbleNetwork.TAG_PARENT_ACCOUNT;
 import static bubble.model.cloud.notify.NotificationType.retrieve_backup;
 import static bubble.server.BubbleServer.getRestoreKey;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpContentTypes.CONTENT_TYPE_ANY;
 import static org.cobbzilla.util.system.Sleep.sleep;
@@ -117,7 +116,7 @@ public class AuthResource {
     public Response restore(@Context Request req,
                             @Context ContainerRequest ctx,
                             @PathParam("restoreKey") String restoreKey,
-                            @Valid NetworkKeys keys) {
+                            @Valid NetworkKeys.EncryptedNetworkKeys encryptedKeys) {
 
         // ensure we have been initialized
         long start = now();
@@ -136,6 +135,14 @@ public class AuthResource {
 
         final BubbleNode sageNode = nodeDAO.findByUuid(thisNode.getSageNode());
         if (sageNode == null) return invalid("err.sageNode.notFound");
+
+        final NetworkKeys keys;
+        try {
+            keys = encryptedKeys.decrypt();
+        } catch (Exception e) {
+            log.warn("restore: error decrypting keys: "+shortError(e));
+            return invalid("err.networkKeys.invalid");
+        }
 
         restoreService.registerRestore(restoreKey, keys);
         final NotificationReceipt receipt = notificationService.notify(thisNode.getUuid(), sageNode, retrieve_backup, thisNode.setRestoreKey(getRestoreKey()));

@@ -608,44 +608,68 @@ public class StandardNetworkService implements NetworkService {
 
     public boolean stopNetwork(BubbleNetwork network) {
         log.info("stopNetwork: stopping "+network.getNetworkDomain());
+
+        String lock = null;
         final String networkUuid = network.getUuid();
+        boolean stopped = false;
+        try {
+            lock = lockNetwork(networkUuid);
 
-        network = networkDAO.findByUuid(networkUuid);
-        if (network == null) throw notFoundEx(networkUuid);
+            network = networkDAO.findByUuid(networkUuid);
+            if (network == null) throw notFoundEx(networkUuid);
 
-        // are any of them still alive?
-        final List<BubbleNode> nodes = nodeDAO.findByNetwork(network.getUuid());
-        if (nodes.isEmpty()) {
-            // nothing is running... what do we need to stop?
-            log.warn("stopNetwork: no nodes running");
-        }
-
-        network.setState(BubbleNetworkState.stopping);
-        networkDAO.update(network);
-
-        final ValidationResult validationResult = new ValidationResult();
-
-        // todo: parallel shutdown?
-        // stop all nodes in network
-        nodes.forEach(node -> {
-            try {
-                stopNode(node);
-                log.info("stopNetwork: stopped node "+node.id());
-            } catch (Exception e) {
-                validationResult.addViolation("err.node.shutdownFailed", "Node shutdown failed: " + node.getUuid() + "/" + node.getIp4() + ": " + e);
+            // are any of them still alive?
+            final List<BubbleNode> nodes = nodeDAO.findByNetwork(networkUuid);
+            if (nodes.isEmpty()) {
+                // nothing is running... what do we need to stop?
+                log.warn("stopNetwork: no nodes running");
             }
-        });
 
-        if (validationResult.isInvalid()) throw invalidEx(validationResult);
+            if (nodes.size() == 1) {
+                final BubbleNode n = nodes.get(0);
+                if (n.isLocalCompute()) {
+                    throw invalidEx("err.node.cannotStopLocalNode", "Cannot stop local node: " + n.id(), n.id());
+                }
+            }
 
-        network.setState(BubbleNetworkState.stopped);
-        networkDAO.update(network);
+            network.setState(BubbleNetworkState.stopping);
+            networkDAO.update(network);
 
-        // delete nodes in network
-        nodes.forEach(node -> nodeDAO.delete(node.getUuid()));
+            final ValidationResult validationResult = new ValidationResult();
 
-        log.info("stopNetwork: stopped " + network.getNetworkDomain());
-        return true;
+            // todo: parallel shutdown?
+            // stop all nodes in network
+            nodes.forEach(node -> {
+                try {
+                    stopNode(node);
+                    log.info("stopNetwork: stopped node " + node.id());
+                } catch (Exception e) {
+                    validationResult.addViolation("err.node.shutdownFailed", "Node shutdown failed: " + node.getUuid() + "/" + node.getIp4() + ": " + e);
+                }
+            });
+
+            if (validationResult.isInvalid()) {
+                throw invalidEx(validationResult);
+            }
+
+            // delete nodes in network
+            nodes.forEach(node -> nodeDAO.delete(node.getUuid()));
+
+            log.info("stopNetwork: stopped " + network.getNetworkDomain());
+            network.setState(BubbleNetworkState.stopped);
+            networkDAO.update(network);
+            stopped = true;
+
+        } catch (RuntimeException e) {
+            log.error("stopNetwork: error stopping: "+e);
+            if (network != null) network.setState(BubbleNetworkState.error_stopping);
+            networkDAO.update(network);
+            throw e;
+
+        } finally {
+            if (lock != null) unlockNetwork(networkUuid, lock);
+        }
+        return stopped;
     }
 
     protected CloudService findServiceOrDelegate(String cloudUuid) {

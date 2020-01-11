@@ -145,6 +145,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false)
     @Getter @Setter private ComputeNodeSizeType sizeType;
+    @Transient @JsonIgnore public boolean isLocalCompute () { return sizeType == ComputeNodeSizeType.local; }
 
     @ECSearchable @ECField(index=110)
     @Column(nullable=false)

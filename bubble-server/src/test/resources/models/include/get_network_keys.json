@@ -5,7 +5,8 @@
     "params": {
       "network": "_required",
       "rootEmail": "root@example.com",
-      "networkKeysVar": "networkKeys"
+      "networkKeysVar": "networkKeys",
+      "networkKeysPassword": "Passw0rd!"
     }
   },
 
@@ -59,12 +60,13 @@
   {
     "comment": "use confirmation token in email to retrieve network keys",
     "request": {
-      "uri": "me/networks/<<network>>/actions/keys/{{emailInbox.[0].ctx.message.requestId}}"
+      "uri": "me/networks/<<network>>/actions/keys/{{emailInbox.[0].ctx.message.requestId}}",
+      "entity": { "name": "password", "value": "<<networkKeysPassword>>" }
     },
     "response": {
       "store": "<<networkKeysVar>>",
       "check": [
-        {"condition": "json.getKeys().length >= 1"}
+        {"condition": "json.getData().length >= 1"}
       ]
     }
   }
