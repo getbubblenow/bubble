@@ -7,7 +7,7 @@ import bubble.model.cloud.StorageMetadata;
 import bubble.notify.storage.StorageListing;
 import lombok.Cleanup;
 import org.apache.commons.io.IOUtils;
-import org.cobbzilla.util.daemon.ExceptionHandler;
+import org.cobbzilla.util.error.ExceptionHandler;
 import org.cobbzilla.util.string.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

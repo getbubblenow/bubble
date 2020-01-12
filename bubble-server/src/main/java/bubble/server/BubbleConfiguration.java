@@ -41,10 +41,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.beans.Transient;
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -280,4 +277,16 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         }
         return false;
     }
+
+    @JsonIgnore @Getter(lazy=true) private final List<String> defaultCloudModels = initDefaultCloudModels();
+    private List<String> initDefaultCloudModels () {
+        final List<String> defaults = new ArrayList<>();
+        defaults.add("models/defaults/cloudService.json");
+        if (paymentsEnabled()) defaults.add("models/defaults/cloudService_payment.json");
+        if (testMode()) defaults.addAll(getTestCloudModels());
+        return defaults;
+    }
+
+    @JsonIgnore @Getter @Setter private List<String> testCloudModels = Collections.emptyList();
+
 }

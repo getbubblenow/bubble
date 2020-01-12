@@ -14,6 +14,7 @@ import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.NetworkKeys;
 import bubble.model.cloud.notify.NotificationReceipt;
 import bubble.server.BubbleConfiguration;
+import bubble.service.AuthenticatorService;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.backup.RestoreService;
 import bubble.service.boot.ActivationService;
@@ -69,6 +70,7 @@ public class AuthResource {
     @Autowired private StandardAccountMessageService messageService;
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private AuthenticatorService authenticatorService;
 
     @GET @Path(EP_CONFIGS)
     public Response getPublicSystemConfigs(@Context ContainerRequest ctx) {
@@ -237,9 +239,7 @@ public class AuthResource {
                     return ok(new Account()
                             .setName(account.getName())
                             .setLoginRequest(loginRequest.getUuid())
-                            .setMultifactorAuth(authFactors.stream()
-                                    .map(AccountContact::mask)
-                                    .toArray(AccountContact[]::new)));
+                            .setMultifactorAuth(AccountContact.mask(authFactors)));
                 }
             }
         }
@@ -305,34 +305,40 @@ public class AuthResource {
         final Account caller = optionalUserPrincipal(ctx);
         final Account account = accountDAO.findById(request.getAccount());
         if (account == null) return notFound(request.getAccount());
-        if (caller != null && !caller.getUuid().equals(account.getUuid())) {
-            return invalid("err.token.invalid");
+        if (caller != null) {
+            if (!caller.getUuid().equals(account.getUuid())) return invalid("err.token.invalid");
+
+            // authenticatorService requires the Account to have a token, or it will generate one
+            account.setToken(caller.getToken());
         }
 
         final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
         final AccountContact authenticator = policy.getAuthenticator();
-        if (authenticator == null) return invalid("err.authenticator.notConfigured");
+        final String sessionToken = authenticatorService.authenticate(account, policy, request);
+        if (request.authenticate()) {
+            return ok_empty();
 
-        final String secret = authenticator.totpInfo().getKey();
-        final Integer code = request.intToken();
-        if (code == null) return invalid("err.token.invalid");
-        if (G_AUTH.authorize(secret, code)) {
-            if (request.verify()) {
-                policyDAO.update(policy.verifyContact(policy.getAuthenticator().getUuid()));
-                return ok_empty();
-            }
-            final AccountMessage loginRequest = accountMessageDAO.findMostRecentLoginRequest(account.getUuid());
-            final AccountMessageContact amc = messageService.accountMessageContact(loginRequest, authenticator);
-            final AccountMessage approval = messageService.approve(account, getRemoteHost(req), amc.key());
-            if (approval.getMessageType() == AccountMessageType.confirmation) {
-                // OK we can log in!
-                return ok(account.setToken(sessionDAO.create(account)));
-            } else {
-                return ok(messageService.determineRemainingApprovals(approval));
-            }
-        } else {
-            return invalid("err.token.invalid");
+        } else if (request.verify()) {
+            policyDAO.update(policy.verifyContact(policy.getAuthenticator().getUuid()));
+            return ok_empty();
         }
+        final AccountMessage loginRequest = accountMessageDAO.findMostRecentLoginRequest(account.getUuid());
+        final AccountMessageContact amc = messageService.accountMessageContact(loginRequest, authenticator);
+        final AccountMessage approval = messageService.approve(account, getRemoteHost(req), amc.key());
+        if (approval.getMessageType() == AccountMessageType.confirmation) {
+            // OK we can log in!
+            return ok(account.setToken(sessionToken));
+        } else {
+            return ok(messageService.determineRemainingApprovals(approval));
+        }
+    }
+
+    @DELETE @Path(EP_AUTHENTICATOR)
+    public Response flushAuthenticatorTokens(@Context Request req,
+                                  @Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        authenticatorService.flush(caller.getToken());
+        return ok_empty();
     }
 
     @POST @Path(EP_DENY+"/{token}")

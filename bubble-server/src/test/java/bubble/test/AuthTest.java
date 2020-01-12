@@ -6,9 +6,7 @@ import org.junit.Test;
 @Slf4j
 public class AuthTest extends ActivatedBubbleModelTestBase {
 
-    private static final String MANIFEST_ALL = "manifest-all";
-
-    @Override protected String getManifest() { return MANIFEST_ALL; }
+    @Override protected String getManifest() { return "manifest-test"; }
 
     @Test public void testBasicAuth () throws Exception { modelTest("auth/basic_auth"); }
     @Test public void testAccountCrud () throws Exception { modelTest("auth/account_crud"); }
@@ -17,5 +15,6 @@ public class AuthTest extends ActivatedBubbleModelTestBase {
     @Test public void testForgotPassword () throws Exception { modelTest("auth/forgot_password"); }
     @Test public void testMultifactorAuth () throws Exception { modelTest("auth/multifactor_auth"); }
     @Test public void testDownloadAccount () throws Exception { modelTest("auth/download_account"); }
+    @Test public void testNetworkAuth () throws Exception { modelTest("auth/network_auth"); }
 
 }

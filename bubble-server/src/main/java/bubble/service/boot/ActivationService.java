@@ -13,6 +13,7 @@ import bubble.model.boot.ActivationRequest;
 import bubble.model.boot.CloudServiceConfig;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
@@ -36,8 +37,6 @@ import static bubble.model.cloud.BubbleFootprint.DEFAULT_FOOTPRINT_OBJECT;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static bubble.model.cloud.BubbleNetwork.TAG_PARENT_ACCOUNT;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.toStringOrDie;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
@@ -46,6 +45,7 @@ import static org.cobbzilla.util.network.NetworkUtil.getFirstPublicIpv4;
 import static org.cobbzilla.util.network.NetworkUtil.getLocalhostIpv4;
 import static org.cobbzilla.util.system.CommandShell.execScript;
 import static org.cobbzilla.util.system.Sleep.sleep;
+import static org.cobbzilla.wizard.model.entityconfig.ModelSetup.scrubSpecial;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Service @Slf4j
@@ -252,18 +252,23 @@ public class ActivationService {
 
     @Getter(lazy=true) private final CloudService[] cloudDefaults = initCloudDefaults();
     private CloudService[] initCloudDefaults() {
-        final CloudService[] standardServices = loadCloudServices("cloudService");
-        return configuration.paymentsEnabled()
-                ? ArrayUtil.concat(standardServices, loadCloudServices("cloudService_payment"))
-                : standardServices;
+        CloudService[] defaults = new CloudService[0];
+        for (String modelPath : configuration.getDefaultCloudModels()) {
+            defaults = ArrayUtil.concat(defaults, loadCloudServices(modelPath));
+        }
+        return defaults;
     }
 
-    private CloudService[] loadCloudServices(final String services) {
-        return json(HandlebarsUtil.apply(configuration.getHandlebars(), stream2string("models/defaults/" + services + ".json"), configuration.getEnvCtx()), CloudService[].class);
+    private CloudService[] loadCloudServices(final String modelPath) {
+        final String cloudsJson = HandlebarsUtil.apply(configuration.getHandlebars(), stream2string(modelPath), configuration.getEnvCtx());
+        final JsonNode cloudsArrayNode = json(cloudsJson, JsonNode.class);
+        return scrubSpecial(cloudsArrayNode, CloudService.class);
     }
 
     @Getter(lazy=true) private final Map<String, CloudService> cloudDefaultsMap = initCloudDefaultsMap();
     private Map<String, CloudService> initCloudDefaultsMap() {
-        return Arrays.stream(getCloudDefaults()).collect(toMap(CloudService::getName, identity()));
+        final Map<String, CloudService> defaults = new HashMap<>();
+        Arrays.stream(getCloudDefaults()).forEach(c -> defaults.put(c.getName(), c));
+        return defaults;
     }
 }

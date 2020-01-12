@@ -6,7 +6,7 @@ import static bubble.ApiConstants.enumFromString;
 
 public enum ActionTarget {
 
-    node, network, account;
+    network, account;
 
     @JsonCreator public static ActionTarget fromString (String v) { return enumFromString(ActionTarget.class, v); }
 

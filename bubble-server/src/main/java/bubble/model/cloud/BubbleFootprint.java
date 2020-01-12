@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import static bubble.ApiConstants.EP_FOOTPRINTS;
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;

@@ -19,10 +19,8 @@ import org.cobbzilla.wizard.validation.ValidationResult;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.G_AUTH;
 import static java.util.UUID.randomUUID;
@@ -117,12 +115,7 @@ public class AccountContact implements Serializable {
             if (c.hasNick() && c.getNick().length() > MAX_NICK_LENGTH) {
                 throw invalidEx("err.nick.tooLong");
             }
-            if (c.isAuthenticator()) {
-                // can only change nick on authenticator
-                if (c.hasNick()) existing.setNick(c.getNick());
-            } else {
-                copy(existing, c);
-            }
+            existing.update(c);
 
         } else {
             // creating a new contact -- cannot set authFactor for contacts requiring verification
@@ -267,8 +260,8 @@ public class AccountContact implements Serializable {
 
             case start: case stop: case delete:
                 switch (target) {
-                    case account:            return bool(requiredForAccountOperations);
-                    case node: case network: return bool(requiredForNetworkOperations);
+                    case account: return bool(requiredForAccountOperations);
+                    case network: return bool(requiredForNetworkOperations);
                     default:
                         log.warn("isAllowed(start/stop/delete): unknown target: "+target+", returning false");
                         return false;
@@ -284,12 +277,12 @@ public class AccountContact implements Serializable {
         }
     }
 
-    public AccountContact mask() {
-        return new AccountContact(this).setInfo(getType().mask(getInfo()));
-    }
+    public AccountContact mask() { return new AccountContact(this).setInfo(getType().mask(getInfo())); }
 
-    public static Collection<AccountContact> mask(Collection<AccountContact> contacts) {
-        return empty(contacts) ? contacts : contacts.stream().map(c -> c.mask()).collect(Collectors.toList());
+    public static AccountContact[] mask(List<AccountContact> contacts) {
+        return contacts.stream()
+                .map(AccountContact::mask)
+                .toArray(AccountContact[]::new);
     }
 
     public ValidationResult validate(ValidationResult errors) {

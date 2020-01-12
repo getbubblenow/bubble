@@ -120,6 +120,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
         }
         if (found != null) {
             if (!canUpdate(ctx, caller, found, request)) return ok(found);
+            setReferences(ctx, caller, request);
             found.update(request);
             return ok(getDao().update(found));
         }

@@ -1,10 +1,16 @@
 package bubble.notify;
 
+import bubble.model.account.AccountContact;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import javax.persistence.Transient;
+
+import java.util.List;
+
+import static bubble.model.account.AccountContact.mask;
 import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
@@ -30,5 +36,11 @@ public class NewNodeNotification {
     public boolean hasRestoreKey () { return !empty(restoreKey); }
 
     @Getter @Setter private String lock;
+
+    @Transient @Getter @Setter private transient AccountContact[] multifactorAuth;
+
+    public static NewNodeNotification requiresAuth(List<AccountContact> contacts) {
+        return new NewNodeNotification().setMultifactorAuth(mask(contacts));
+    }
 
 }

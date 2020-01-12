@@ -21,6 +21,7 @@ import java.util.Arrays;
 
 import static bubble.ApiConstants.EP_ROLES;
 import static bubble.cloud.storage.StorageServiceDriver.STORAGE_PREFIX;
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 

@@ -15,6 +15,7 @@ import bubble.model.account.message.ActionTarget;
 import bubble.model.bill.AccountPlan;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
+import bubble.service.AuthenticatorService;
 import bubble.service.backup.NetworkKeysService;
 import bubble.service.cloud.NodeProgressMeterTick;
 import bubble.service.cloud.StandardNetworkService;
@@ -50,6 +51,7 @@ public class NetworkActionsResource {
     @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private AuthenticatorService authenticatorService;
 
     private Account account;
     private BubbleNetwork network;
@@ -77,9 +79,7 @@ public class NetworkActionsResource {
         }
 
         if (!network.getState().canStartNetwork()) return invalid("err.network.cannotStartInCurrentState");
-
-        final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
-        // todo: enforce policy
+        authenticatorService.ensureAuthenticated(ctx, ActionTarget.network);
 
         return _startNetwork(network, cloud, region, req);
     }
@@ -129,6 +129,8 @@ public class NetworkActionsResource {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();
 
+        authenticatorService.ensureAuthenticated(ctx, ActionTarget.network);
+
         final String encryptionKey = enc == null ? null : enc.getValue();
         final ConstraintViolationBean error = validatePassword(encryptionKey);
         if (error != null) return invalid(error);
@@ -148,6 +150,8 @@ public class NetworkActionsResource {
         final List<BubbleNode> nodes = nodeDAO.findByNetwork(network.getUuid());
         if (nodes.isEmpty()) log.warn("stopNetwork: no nodes found for network: "+network.getUuid());
 
+        authenticatorService.ensureAuthenticated(ctx, ActionTarget.network);
+
         return ok(networkService.stopNetwork(network));
     }
 
@@ -158,6 +162,9 @@ public class NetworkActionsResource {
                                    @QueryParam("region") String region) {
         final Account caller = userPrincipal(ctx);
         if (!authAccount(caller)) return forbidden();
+
+        authenticatorService.ensureAuthenticated(ctx, ActionTarget.network);
+
         return ok(networkService.restoreNetwork(network, cloud, region, req));
     }
 
@@ -169,6 +176,8 @@ public class NetworkActionsResource {
                          @QueryParam("region") String region) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();
+
+        authenticatorService.ensureAuthenticated(ctx, ActionTarget.network);
 
         final BubbleDomain domain = domainDAO.findByFqdn(fqdn);
         if (domain == null) return invalid("err.fqdn.domain.invalid", "domain not found for "+fqdn, fqdn);

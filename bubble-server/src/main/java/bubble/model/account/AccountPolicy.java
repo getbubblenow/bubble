@@ -23,10 +23,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static bubble.model.account.AccountContact.contactMatch;
+import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
@@ -38,10 +38,13 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 @NoArgsConstructor @Accessors(chain=true)
 public class AccountPolicy extends IdentifiableBase implements HasAccount {
 
-    public static final Long MAX_ACCOUNT_OPERATION_TIMEOUT = TimeUnit.DAYS.toMillis(3);
-    public static final Long MAX_NODE_OPERATION_TIMEOUT = TimeUnit.DAYS.toMillis(3);
+    public static final Long MAX_ACCOUNT_OPERATION_TIMEOUT = DAYS.toMillis(3);
+    public static final Long MAX_NODE_OPERATION_TIMEOUT    = DAYS.toMillis(3);
+    public static final Long MAX_AUTHENTICATOR_TIMEOUT     = DAYS.toMillis(1);
+
     public static final Long MIN_ACCOUNT_OPERATION_TIMEOUT = MINUTES.toMillis(1);
-    public static final Long MIN_NODE_OPERATION_TIMEOUT = MINUTES.toMillis(1);
+    public static final Long MIN_NODE_OPERATION_TIMEOUT    = MINUTES.toMillis(1);
+    public static final Long MIN_AUTHENTICATOR_TIMEOUT     = MINUTES.toMillis(1);
 
     public static final String[] UPDATE_FIELDS = {"deletionPolicy", "nodeOperationTimeout", "accountOperationTimeout"};
 
@@ -64,14 +67,18 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
     @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+ENC_LONG+") NOT NULL")
     @Getter @Setter private Long accountOperationTimeout = MINUTES.toMillis(10);
 
-    @ECSearchable @ECField(index=40)
+    @ECSearchable(type=EntityFieldType.time_duration) @ECField(index=40)
+    @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+ENC_LONG+") NOT NULL")
+    @Getter @Setter private Long authenticatorTimeout = MAX_AUTHENTICATOR_TIMEOUT;
+
+    @ECSearchable @ECField(index=50)
     @Enumerated(EnumType.STRING) @Column(length=40, nullable=false)
     @Getter @Setter private AccountDeletionPolicy deletionPolicy = AccountDeletionPolicy.block_delete;
 
     @JsonIgnore @Transient public boolean isFullDelete () { return deletionPolicy == AccountDeletionPolicy.full_delete; }
     @JsonIgnore @Transient public boolean isBlockDelete () { return deletionPolicy == AccountDeletionPolicy.block_delete; }
 
-    @ECSearchable(filter=true) @ECField(index=50)
+    @ECSearchable(filter=true) @ECField(index=60)
     @Size(max=100000, message="err.accountContactsJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String accountContactsJson;
@@ -113,7 +120,7 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
                             .filter(c -> c.requiredForAccountOperations() || c.requiredAuthFactor())
                             .collect(Collectors.toList());
                 }
-            case network: case node:
+            case network:
                 return Arrays.stream(getAccountContacts())
                         .filter(c -> c.requiredForNetworkOperations() || c.requiredAuthFactor())
                         .collect(Collectors.toList());
@@ -143,6 +150,22 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
         if (empty(uuid) || !hasAccountContacts()) return null;
         final AccountContact contact = Arrays.stream(getAccountContacts()).filter(c -> c.getUuid().equals(uuid)).findFirst().orElse(null);
         return contact == null ? null : contact.getAuthFactor();
+    }
+
+    @Transient @JsonIgnore public List<AccountContact> getAccountAuthFactors() {
+        if (!hasAccountContacts()) return Collections.emptyList();
+        return Arrays.stream(getAccountContacts())
+                .filter(AccountContact::authFactor)
+                .filter(AccountContact::requiredForAccountOperations)
+                .collect(Collectors.toList());
+    }
+
+    @Transient @JsonIgnore public List<AccountContact> getNetworkAuthFactors() {
+        if (!hasAccountContacts()) return Collections.emptyList();
+        return Arrays.stream(getAccountContacts())
+                .filter(AccountContact::authFactor)
+                .filter(AccountContact::requiredForAccountOperations)
+                .collect(Collectors.toList());
     }
 
     public String contactsString () {
@@ -195,13 +218,17 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
         if (!hasAccountContacts()) return null;
         return Arrays.stream(getAccountContacts()).filter(AccountContact::isAuthenticator).findFirst().orElse(null);
     }
+    public boolean hasVerifiedAuthenticator () {
+        final AccountContact authenticator = getAuthenticator();
+        return authenticator != null && authenticator.verified();
+    }
 
     public Long getTimeout(AccountMessage message) { return getTimeout(message.getTarget()); }
 
     public Long getTimeout(ActionTarget target) {
         switch (target) {
-            case account:            return accountOperationTimeout;
-            case node: case network: return nodeOperationTimeout;
+            case account: return accountOperationTimeout;
+            case network: return nodeOperationTimeout;
             default: return die("getTimeout: invalid target: "+ target);
         }
     }
@@ -239,6 +266,13 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
             result.addViolation("err.nodeOperationTimeout.tooLong");
         } else if (nodeOperationTimeout < MIN_NODE_OPERATION_TIMEOUT) {
             result.addViolation("err.nodeOperationTimeout.tooShort");
+        }
+        if (authenticatorTimeout == null) {
+            result.addViolation("err.authenticatorTimeout.required");
+        } else if (authenticatorTimeout > MAX_AUTHENTICATOR_TIMEOUT) {
+            result.addViolation("err.authenticatorTimeout.tooLong");
+        } else if (authenticatorTimeout < MIN_AUTHENTICATOR_TIMEOUT) {
+            result.addViolation("err.authenticatorTimeout.tooShort");
         }
         return result;
     }

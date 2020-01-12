@@ -83,7 +83,7 @@ public class AccountMessage extends IdentifiableBase implements HasAccount {
         if (getMessageType() != AccountMessageType.request) return -1;
         switch (getTarget()) {
             case account: return policy.getAccountOperationTimeout()/1000;
-            case node: case network: return policy.getNodeOperationTimeout()/1000;
+            case network: return policy.getNodeOperationTimeout()/1000;
             default:
                 log.warn("tokenTimeout: invalid target: "+getTarget());
                 return -1;

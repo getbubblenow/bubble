@@ -26,6 +26,7 @@ import java.util.Locale;
 import static bubble.ApiConstants.DRIVERS_ENDPOINT;
 import static bubble.ApiConstants.EP_DRIVERS;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;

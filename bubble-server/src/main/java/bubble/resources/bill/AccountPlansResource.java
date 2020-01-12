@@ -2,6 +2,7 @@ package bubble.resources.bill;
 
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.geoLocation.GeoLocation;
+import bubble.dao.account.AccountPolicyDAO;
 import bubble.dao.account.AccountSshKeyDAO;
 import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.AccountPlanDAO;
@@ -21,6 +22,7 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.CloudService;
 import bubble.resources.account.AccountOwnedResource;
 import bubble.server.BubbleConfiguration;
+import bubble.service.AuthenticatorService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
@@ -42,6 +44,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 public class AccountPlansResource extends AccountOwnedResource<AccountPlan, AccountPlanDAO> {
 
     @Autowired private AccountSshKeyDAO sshKeyDAO;
+    @Autowired private AccountPolicyDAO policyDAO;
     @Autowired private BubbleDomainDAO domainDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private BubblePlanDAO planDAO;
@@ -49,6 +52,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private AccountPaymentMethodDAO paymentMethodDAO;
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private AuthenticatorService authenticatorService;
 
     public AccountPlansResource(Account account) { super(account); }
 
@@ -64,6 +68,8 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     }
 
     @Override protected boolean canCreate(Request req, ContainerRequest ctx, Account caller, AccountPlan request) {
+        authenticatorService.ensureAuthenticated(ctx);
+
         // ensure caller is not from a disallowed country
         if (configuration.hasDisallowedCountries()) {
             // do we have a geoLocation service?
@@ -80,6 +86,16 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             }
         }
         return super.canCreate(req, ctx, caller, request);
+    }
+
+    @Override protected boolean canUpdate(ContainerRequest ctx, Account caller, AccountPlan found, AccountPlan request) {
+        authenticatorService.ensureAuthenticated(ctx);
+        return super.canUpdate(ctx, caller, found, request);
+    }
+
+    @Override protected boolean canDelete(ContainerRequest ctx, Account caller, AccountPlan found) {
+        authenticatorService.ensureAuthenticated(ctx);
+        return super.canDelete(ctx, caller, found);
     }
 
     @Override protected AccountPlan setReferences(ContainerRequest ctx, Account caller, AccountPlan request) {

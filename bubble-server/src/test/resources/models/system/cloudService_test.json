@@ -10,6 +10,14 @@
   },
 
   {
+    "name": "MockDns",
+    "type": "dns",
+    "driverClass": "bubble.cloud.dns.mock.MockDnsDriver",
+    "driverConfig": {},
+    "template": true
+  },
+
+  {
     "_subst": true,
     "name": "FreePlay",
     "type": "payment",

@@ -1,7 +1,0 @@
-[
-  "system/cloudService",
-  "system/cloudService_test",
-  "system/bubbleDomain",
-  "system/bubblePlan",
-  "system/bubbleFootprint"
-]

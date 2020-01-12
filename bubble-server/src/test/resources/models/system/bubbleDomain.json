@@ -1,49 +1,8 @@
 [
   {
-    "name": "bubv.net",
-    "publicDns": "GoDaddyDns",
-    "template": true,
-    "roles": [
-      "common-0.0.1",
-      "firewall-0.0.1",
-      "bubble-0.0.1",
-      "algo-0.0.1",
-      "mitmproxy-0.0.1",
-      "nginx-0.0.1",
-      "bubble_finalizer-0.0.1"
-    ]
-  },
-  {
-    "name": "bubblev.org",
-    "publicDns": "GoDaddyDns",
-    "template": true,
-    "roles": [
-      "common-0.0.1",
-      "firewall-0.0.1",
-      "bubble-0.0.1",
-      "algo-0.0.1",
-      "mitmproxy-0.0.1",
-      "nginx-0.0.1",
-      "bubble_finalizer-0.0.1"
-    ]
-  },
-  {
-    "name": "fufb.io",
-    "publicDns": "GoDaddyDns",
-    "template": true,
-    "roles": [
-      "common-0.0.1",
-      "firewall-0.0.1",
-      "bubble-0.0.1",
-      "algo-0.0.1",
-      "mitmproxy-0.0.1",
-      "nginx-0.0.1",
-      "bubble_finalizer-0.0.1"
-    ]
-  },
-  {
-    "name": "bubblev.net",
-    "publicDns": "Route53Dns",
+    "_subst": true,
+    "name": "{{defaultDomain}}",
+    "publicDns": "{{TEST_DEFAULT_DNS_CLOUD}}",
     "template": true,
     "roles": [
       "common-0.0.1",

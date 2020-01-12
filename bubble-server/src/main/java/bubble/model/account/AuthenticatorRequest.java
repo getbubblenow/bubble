@@ -19,4 +19,9 @@ public class AuthenticatorRequest {
     @Getter @Setter private Boolean verify;
     public boolean verify() { return bool(verify); }
 
+    @Getter @Setter private Boolean authenticate;
+    public boolean authenticate() { return bool(authenticate); }
+
+    public boolean startSession() { return !verify() && !authenticate(); }
+
 }

@@ -65,7 +65,6 @@ public interface AuthenticationDriver extends CloudServiceDriver {
     static BubbleNode getNode(AccountMessage message, BubbleConfiguration configuration) {
         switch (message.getTarget()) {
             case account: case network: return configuration.getThisNode();
-            case node: return configuration.getBean(BubbleNodeDAO.class).findByAccountAndId(message.getAccount(), message.getName());
             default: return null;
         }
     }
@@ -79,7 +78,6 @@ public interface AuthenticationDriver extends CloudServiceDriver {
         switch (message.getTarget()) {
             case account: return configuration.getThisNetwork();
             case network: return networkDAO.findByAccountAndId(message.getAccount(), message.getName());
-            case node: return networkDAO.findByAccountAndId(message.getAccount(), node.getNetwork());
             default: return null;
         }
     }

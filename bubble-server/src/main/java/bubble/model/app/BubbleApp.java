@@ -18,6 +18,7 @@ import javax.validation.constraints.Size;
 
 import static bubble.ApiConstants.APPS_ENDPOINT;
 import static bubble.ApiConstants.EP_APPS;
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;

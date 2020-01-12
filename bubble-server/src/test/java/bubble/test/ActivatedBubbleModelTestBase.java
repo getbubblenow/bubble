@@ -2,7 +2,7 @@ package bubble.test;
 
 import bubble.cloud.CloudServiceDriver;
 import bubble.cloud.CloudServiceType;
-import bubble.cloud.dns.godaddy.GoDaddyDnsDriver;
+import bubble.cloud.dns.mock.MockDnsDriver;
 import bubble.cloud.storage.local.LocalStorageDriver;
 import bubble.model.account.Account;
 import bubble.model.boot.ActivationRequest;
@@ -13,6 +13,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.ArrayUtil;
+import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.wizard.api.ValidationException;
 import org.cobbzilla.wizard.auth.LoginRequest;
 import org.cobbzilla.wizard.client.ApiClientBase;
@@ -20,6 +22,7 @@ import org.cobbzilla.wizard.client.script.ApiRunner;
 import org.cobbzilla.wizard.model.entityconfig.ModelSetupListener;
 import org.cobbzilla.wizard.server.RestServer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +32,7 @@ import java.util.stream.Collectors;
 import static bubble.ApiConstants.*;
 import static bubble.model.account.Account.ROOT_USERNAME;
 import static bubble.service.boot.StandardSelfNodeService.THIS_NODE_FILE;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.handlebars.HandlebarsUtil.applyReflectively;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
@@ -54,7 +56,8 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
 
     @Override public void beforeStart(RestServer<BubbleConfiguration> server) {
         // if server hbm2ddl mode is validate, do not delete node file
-        if (server.getConfiguration().dbExists()) {
+        final BubbleConfiguration configuration = server.getConfiguration();
+        if (configuration.dbExists()) {
             hasExistingDb = true;
             log.info("beforeStart: not deleting "+abs(THIS_NODE_FILE)+" because DB exists");
         } else {
@@ -63,14 +66,24 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
                 die("beforeStart: error deleting " + abs(THIS_NODE_FILE));
             }
         }
+
+        // set default domain
+        final Map<String, String> env = configuration.getEnvironment();
+        env.put("defaultDomain", getDefaultDomain());
+        env.put("TEST_DEFAULT_DNS_CLOUD", "MockDns");
+        configuration.setTestCloudModels(getCloudServiceModels());
+
         super.beforeStart(server);
     }
+
+    public String getDefaultDomain() { return "example.com"; }
 
     @Override protected String[] getSqlPostScripts() { return hasExistingDb ? null : super.getSqlPostScripts(); }
 
     @Override protected void modelTest(final String name, ApiRunner apiRunner) throws Exception {
         getApi().logout();
         final Account root = getApi().post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_USERNAME, ROOT_PASSWORD), Account.class);
+        if (empty(root.getToken())) die("modelTest: error logging in root user (was MFA configured in a previous test?): "+json(root));
         getApi().pushToken(root.getToken());
         apiRunner.addNamedSession(ROOT_SESSION, root.getToken());
         apiRunner.run(include(name));
@@ -87,7 +100,10 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
             final Map<String, Object> ctx = configuration.getEnvCtx();
 
             // load all clouds
-            final CloudService[] clouds = scrubSpecial(json(stream2string("models/system/cloudService.json"), JsonNode.class, FULL_MAPPER_ALLOW_COMMENTS), CloudService.class);
+            CloudService[] clouds = new CloudService[0];
+            for (String model : getCloudServiceModels()) {
+                clouds = ArrayUtil.concat(clouds, scrubSpecial(json(stream2string(model), JsonNode.class, FULL_MAPPER_ALLOW_COMMENTS), CloudService.class));
+            }
 
             // determine domain
             final BubbleDomain domain = getDomain(ctx, clouds);
@@ -99,7 +115,9 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
             final CloudService storage = getNetworkStorage(ctx, clouds);
 
             // sanity check
-            if (!dns.getName().equals(domain.getPublicDns())) die("onStart: DNS service mismatch: domain references "+domain.getPublicDns()+" but DNS service selected has name "+dns.getName());
+            if (!dns.getName().equals(domain.getPublicDns())) {
+                die("onStart: DNS service mismatch: domain references "+domain.getPublicDns()+" but DNS service selected has name "+dns.getName());
+            }
 
             @Cleanup final ApiClientBase client = configuration.newApiClient();
 
@@ -132,13 +150,18 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
         if (!hasExistingDb) super.onStart(server);
     }
 
+    protected List<String> getCloudServiceModels() {
+        final ArrayList<String> models = new ArrayList<>();
+        models.add("models/system/cloudService.json");
+        models.add("models/system/cloudService_test.json");
+        return models;
+    }
+
     private BubbleDomain getDomain(Map<String, Object> ctx, CloudService[] clouds) {
         final Handlebars handlebars = getConfiguration().getHandlebars();
-        final BubbleDomain[] allDomains = json(stream2string("models/system/bubbleDomain.json"), BubbleDomain[].class, FULL_MAPPER_ALLOW_COMMENTS);
-        final BubbleDomain candidateDomain = Arrays.stream(allDomains).filter(getDomainFilter(clouds)).findFirst().orElse(null);
-        return candidateDomain != null
-                ? applyReflectively(handlebars, candidateDomain, ctx)
-                : die("getDomain: no candidate domain found");
+        final JsonNode domainsArray = json(HandlebarsUtil.apply(handlebars, stream2string("models/system/bubbleDomain.json"), ctx), JsonNode.class, FULL_MAPPER_ALLOW_COMMENTS);
+        final BubbleDomain[] allDomains = scrubSpecial(domainsArray, BubbleDomain.class);
+        return Arrays.stream(allDomains).filter(getDomainFilter(clouds)).findFirst().orElseGet(() -> die("getDomain: no candidate domain found"));
     }
 
     protected Predicate<? super BubbleDomain> getDomainFilter(CloudService[] clouds) { return bubbleDomain -> true; }
@@ -157,7 +180,7 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
     private CloudService getPublicDns(Map<String, Object> ctx, CloudService[] clouds) {
         return findByTypeAndDriver(ctx, clouds, CloudServiceType.dns, getPublicDnsDriver());
     }
-    protected Class<? extends CloudServiceDriver> getPublicDnsDriver() { return GoDaddyDnsDriver.class; }
+    protected Class<? extends CloudServiceDriver> getPublicDnsDriver() { return MockDnsDriver.class; }
 
     protected CloudService getNetworkStorage(Map<String, Object> ctx, CloudService[] clouds) {
         return findByTypeAndDriver(ctx, clouds, CloudServiceType.storage, getNetworkStorageDriver());

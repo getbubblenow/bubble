@@ -7,6 +7,7 @@ import bubble.model.account.Account;
 import bubble.model.account.AccountPolicy;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
+import bubble.model.account.message.ActionTarget;
 import bubble.resources.app.AppsResource;
 import bubble.resources.bill.AccountPaymentMethodsResource;
 import bubble.resources.bill.AccountPaymentsResource;
@@ -17,6 +18,7 @@ import bubble.resources.driver.DriversResource;
 import bubble.resources.notify.ReceivedNotificationsResource;
 import bubble.resources.notify.SentNotificationsResource;
 import bubble.server.BubbleConfiguration;
+import bubble.service.AuthenticatorService;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.BubbleModelSetupService;
@@ -67,6 +69,7 @@ public class MeResource {
     @Autowired private SessionDAO sessionDAO;
     @Autowired private AccountDownloadService downloadService;
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private AuthenticatorService authenticatorService;
 
     @GET
     public Response me(@Context ContainerRequest ctx) {
@@ -104,6 +107,7 @@ public class MeResource {
     public Response changePassword(@Context ContainerRequest ctx,
                                    ChangePasswordRequest request) {
         final Account caller = userPrincipal(ctx);
+        authenticatorService.ensureAuthenticated(ctx, ActionTarget.account);
         if (!caller.getHashedPassword().isCorrectPassword(request.getOldPassword())) {
             return invalid("err.oldPassword.invalid", "old password was invalid");
         }
@@ -123,6 +127,7 @@ public class MeResource {
                             @Context ContainerRequest ctx,
                             @PathParam("token") String token) {
         final Account caller = userPrincipal(ctx);
+        authenticatorService.ensureAuthenticated(ctx, ActionTarget.account);
         final AccountMessage approval = messageService.approve(caller, getRemoteHost(req), token);
         if (approval == null) return notFound(token);
 
@@ -138,6 +143,7 @@ public class MeResource {
                          @Context ContainerRequest ctx,
                          @PathParam("token") String token) {
         final Account caller = userPrincipal(ctx);
+        authenticatorService.ensureAuthenticated(ctx, ActionTarget.account);
         final AccountMessage denial = messageService.deny(caller, getRemoteHost(req), token);
         return denial != null ? ok(denial) : notFound(token);
     }
@@ -147,6 +153,7 @@ public class MeResource {
                                                @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         final AccountPolicy policy = policyDAO.findSingleByAccount(caller.getUuid());
+        authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
         if (policy == null || !policy.hasVerifiedAccountContacts()) {
             return invalid("err.download.noVerifiedContacts");
         }
@@ -159,6 +166,7 @@ public class MeResource {
                                         @Context ContainerRequest ctx,
                                         @PathParam("uuid") String uuid) {
         final Account caller = userPrincipal(ctx);
+        authenticatorService.ensureAuthenticated(ctx, ActionTarget.account);
         final JsonNode data = downloadService.retrieveAccountData(uuid);
         return data != null ? ok(data) : notFound(uuid);
     }
@@ -167,6 +175,7 @@ public class MeResource {
     public Response runScript(@Context ContainerRequest ctx,
                               JsonNode script) {
         final Account caller = userPrincipal(ctx);
+        authenticatorService.ensureAuthenticated(ctx);
         final StringWriter writer = new StringWriter();
         final ApiRunnerListener listener = new ApiRunnerListenerStreamLogger("runScript", writer);
         @Cleanup final ApiClientBase api = configuration.newApiClient();
@@ -304,6 +313,8 @@ public class MeResource {
                                 @FormDataParam("file") InputStream in,
                                 @FormDataParam("name") String name) throws IOException {
         final Account caller = userPrincipal(ctx);
+        authenticatorService.ensureAuthenticated(ctx);
+
         if (empty(name)) return invalid("err.name.required");
 
         @Cleanup final TempDir temp = new TempDir();

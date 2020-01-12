@@ -1,0 +1,57 @@
+[
+  {
+    "comment": "declare default parameters for add_authenticator test part",
+    "include": "_defaults",
+    "params": {
+      "userId": "_required",
+      "authFactor": null,
+      "authenticatorVar": "authenticator"
+    }
+  },
+
+  {
+    "comment": "add an authenticator auth factor",
+    "request": {
+      "uri": "users/<<userId>>/policy/contacts",
+      "entity": {
+        "type": "authenticator"
+      }
+    },
+    "response": {
+      "store": "<<authenticatorVar>>",
+      "check": [
+        {"condition": "json.getType().name() == 'authenticator'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify authenticator",
+    "request": {
+      "uri": "auth/authenticator",
+      "entity": {
+        "account": "<<userId>>",
+        "token": "{{authenticator_token authenticator.totpKey}}",
+        "verify": true
+      }
+    }
+  },
+
+  {
+    "comment": "set authenticator auth factor to <<authFactor>>",
+    "onlyIf": "'<<authFactor>>' != '",
+    "request": {
+      "uri": "users/<<userId>>/policy/contacts",
+      "data": "authenticator",
+      "entity": {
+        "authFactor": "<<authFactor>>"
+      }
+    },
+    "response": {
+      "store": "<<authenticatorVar>>",
+      "check": [
+        {"condition": "json.getType().name() == 'authenticator'"}
+      ]
+    }
+  }
+]

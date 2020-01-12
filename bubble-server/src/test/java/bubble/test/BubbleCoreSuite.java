@@ -12,6 +12,8 @@ import org.junit.runners.Suite;
         DriverTest.class,
         ProxyTest.class,
         TrafficAnalyticsTest.class,
-        NetworkTest.class
+        BackupTest.class,
+        NetworkTest.class,
+        NetworkKeysTest.class
 })
 public class BubbleCoreSuite {}

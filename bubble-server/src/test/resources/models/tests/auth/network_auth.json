@@ -1,0 +1,171 @@
+[
+  {
+    "comment": "add email contact for root user",
+    "include": "add_approved_contact",
+    "params": {
+      "username": "root",
+      "userSession": "rootSession",
+      "contactInfo": "root@example.com",
+      "contactLookup": "root@example.com"
+    }
+  },
+
+  {
+    "comment": "add authenticator as required auth factor",
+    "include": "add_authenticator",
+    "params": {
+      "userId": "root",
+      "authFactor": "required"
+    }
+  },
+
+  {
+    "comment": "flush authenticator tokens",
+    "request": {
+      "uri": "auth/authenticator",
+      "method": "delete"
+    }
+  },
+
+  {
+    "comment": "add plan, fails because TOTP token not sent",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "America/New_York",
+        "plan": "bubble",
+        "footprint": "US",
+        "paymentMethodObject": {
+          "paymentMethodType": "free",
+          "paymentInfo": "free"
+        }
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.token.invalid')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "send authenticator token",
+    "request": {
+      "uri": "auth/authenticator",
+      "entity": {
+        "account": "root",
+        "token": "{{authenticator_token authenticator.totpKey}}",
+        "authenticate": true
+      }
+    }
+  },
+
+  {
+    "comment": "add plan after sending TOTP token, succeeds",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "America/New_York",
+        "plan": "bubble",
+        "footprint": "US",
+        "paymentMethodObject": {
+          "paymentMethodType": "free",
+          "paymentInfo": "free"
+        }
+      }
+    },
+    "response": {
+      "store": "plan"
+    }
+  },
+
+  {
+    "comment": "flush authenticator tokens",
+    "request": {
+      "uri": "auth/authenticator",
+      "method": "delete"
+    }
+  },
+
+  {
+    "comment": "start the network. fails because we need a new TOTP token",
+    "request": {
+      "uri": "me/networks/{{plan.name}}/actions/start?cloud=MockCompute&region=nyc_mock",
+      "method": "post"
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.token.invalid')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "update policy, do not require authenticator for network operations. fails because we need a new TOTP token",
+    "request": {
+      "uri": "users/root/policy/contacts",
+      "entity": {
+        "type": "authenticator",
+        "requiredForNetworkOperations": false
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.token.invalid')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "send authenticator token",
+    "request": {
+      "uri": "auth/authenticator",
+      "entity": {
+        "account": "root",
+        "token": "{{authenticator_token authenticator.totpKey}}",
+        "authenticate": true
+      }
+    }
+  },
+
+  {
+    "comment": "update policy, do not require authenticator for network operations. succeeds",
+    "request": {
+      "uri": "users/root/policy/contacts",
+      "entity": {
+        "type": "authenticator",
+        "requiredForNetworkOperations": false
+      }
+    }
+  },
+
+  {
+    "comment": "flush authenticator tokens",
+    "request": {
+      "uri": "auth/authenticator",
+      "method": "delete"
+    }
+  },
+
+  {
+    "comment": "start the network. succeeds without TOTP token because it is no longer required",
+    "request": {
+      "uri": "me/networks/{{plan.name}}/actions/start?cloud=MockCompute&region=nyc_mock",
+      "method": "post"
+    },
+    "response": {
+      "store": "nn"
+    }
+  }
+]

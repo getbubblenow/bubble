@@ -182,47 +182,11 @@
   },
 
   {
-    "comment": "add an authenticator auth factor",
-    "request": {
-      "uri": "users/{{userAccount.name}}/policy/contacts",
-      "entity": {
-        "type": "authenticator"
-      }
-    },
-    "response": {
-      "store": "authenticator",
-      "check": [
-        {"condition": "json.getType().name() == 'authenticator'"}
-      ]
-    }
-  },
-
-  {
-    "comment": "verify authenticator",
-    "request": {
-      "uri": "auth/authenticator",
-      "entity": {
-        "account": "{{userAccount.name}}",
-        "token": "{{authenticator_token authenticator.totpKey}}",
-        "verify": true
-      }
-    }
-  },
-
-  {
-    "comment": "set authenticator as required auth factor",
-    "request": {
-      "uri": "users/{{userAccount.name}}/policy/contacts",
-      "data": "authenticator",
-      "entity": {
-        "authFactor": "required"
-      }
-    },
-    "response": {
-      "store": "authenticator",
-      "check": [
-        {"condition": "json.getType().name() == 'authenticator'"}
-      ]
+    "comment": "add authenticator as required auth factor",
+    "include": "add_authenticator",
+    "params": {
+      "userId": "{{userAccount.name}}",
+      "authFactor": "required"
     }
   },
 

@@ -22,6 +22,7 @@ import bubble.resources.driver.DriversResource;
 import bubble.resources.notify.ReceivedNotificationsResource;
 import bubble.resources.notify.SentNotificationsResource;
 import bubble.server.BubbleConfiguration;
+import bubble.service.AuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.cloud.StandardNetworkService;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +55,7 @@ public class AccountsResource {
     @Autowired private AccountPolicyDAO policyDAO;
     @Autowired private AccountMessageDAO messageDAO;
     @Autowired private AccountDownloadService downloadService;
+    @Autowired private AuthenticatorService authenticatorService;
 
     @GET
     public Response list(@Context ContainerRequest ctx) {
@@ -88,12 +90,15 @@ public class AccountsResource {
         return ok(created.waitForAccountInit());
     }
 
-    @GET @Path("/{id}"+EP_DOWNLOAD)
+    @POST @Path("/{id}"+EP_DOWNLOAD)
     public Response downloadAllUserData(@Context Request req,
                                         @Context ContainerRequest ctx,
                                         @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
-        if (!c.account.admin()) return forbidden();
+        if (!c.caller.admin()) return forbidden();
+
+        authenticatorService.ensureAuthenticated(ctx, ActionTarget.account);
+
         final Map<String, List<String>> data = downloadService.downloadAccountData(req, id, false);
         return data != null ? ok(data) : invalid("err.download.error");
     }
@@ -103,6 +108,8 @@ public class AccountsResource {
                                @PathParam("id") String id,
                                Account request) {
         final AccountContext c = new AccountContext(ctx, id);
+        authenticatorService.ensureAuthenticated(ctx, ActionTarget.account);
+
         if (c.caller.admin()) {
             if (c.caller.getUuid().equals(c.account.getUuid())) {
                 // admins cannot suspend themselves
@@ -144,6 +151,7 @@ public class AccountsResource {
         if (policy == null) {
             policy = policyDAO.create(new AccountPolicy(request).setAccount(c.account.getUuid()));
         } else {
+            authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
             policy = policyDAO.update((AccountPolicy) policy.update(request));
         }
         return ok(policy.mask());
@@ -156,13 +164,10 @@ public class AccountsResource {
                                @Valid AccountContact contact) {
         final AccountContext c = new AccountContext(ctx, id);
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
+        authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
 
         final AccountContact existing = policy.findContact(contact);
         if (existing != null) {
-            if (existing.isAuthenticator() && (!contact.hasUuid() || !existing.getUuid().equals(contact.getUuid()))) {
-                return invalid("err.authenticator.configured");
-            }
-
             // if it already exists, these fields cannot be changed
             contact.setUuid(existing.getUuid());
             contact.setType(existing.getType());
@@ -218,6 +223,7 @@ public class AccountsResource {
         final AccountContext c = new AccountContext(ctx, id);
         if (type == CloudServiceType.authenticator) return invalid("err.info.invalid", "info should be empty for authenticator");
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
+        authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
         final AccountContact contact = policy.findContact(new AccountContact().setType(type).setInfo(info));
         if (contact == null) return notFound(type.name()+"/"+info);
         return ok(policyDAO.update(policy.removeContact(contact)).mask());
@@ -228,6 +234,9 @@ public class AccountsResource {
                                         @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
+
+        authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
+
         final AccountContact contact = policy.findContact(new AccountContact().setType(CloudServiceType.authenticator));
         if (contact == null) return notFound(CloudServiceType.authenticator.name());
         return ok(policyDAO.update(policy.removeContact(contact)).mask());
@@ -238,7 +247,9 @@ public class AccountsResource {
                                         @PathParam("id") String id,
                                         @PathParam("uuid") String uuid) {
         final AccountContext c = new AccountContext(ctx, id);
-        final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
+        final AccountPolicy policy = policyDAO.findSingleByAccount(c.caller.getUuid());
+        authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
+
         final AccountContact found = policy.findContact(new AccountContact().setUuid(uuid));
         if (found == null) return notFound(uuid);
         return ok(policyDAO.update(policy.removeContact(found)).mask());
@@ -249,6 +260,8 @@ public class AccountsResource {
                                       @Context ContainerRequest ctx,
                                       @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
+
+        authenticatorService.ensureAuthenticated(ctx, ActionTarget.account);
 
         // request deletion
         return ok(messageDAO.create(new AccountMessage()
@@ -268,6 +281,9 @@ public class AccountsResource {
         if (c.caller.getUuid().equals(c.account.getUuid())) {
             return invalid("err.delete.cannotDeleteSelf");
         }
+
+        authenticatorService.ensureAuthenticated(ctx, ActionTarget.account);
+
         accountDAO.delete(c.account.getUuid());
         return ok(c.account);
     }

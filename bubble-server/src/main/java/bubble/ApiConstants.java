@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -37,18 +38,23 @@ public class ApiConstants {
 
     public static final String DEFAULT_LOCALE = "en_US";
 
-    @Getter(lazy=true) private static final String bubbleDefaultDomain = initDefaultDomain();
+    private static final AtomicReference<String> bubbleDefaultDomain = new AtomicReference<>();
     private static String initDefaultDomain() {
         final File f = new File(HOME_DIR, ".BUBBLE_DEFAULT_DOMAIN");
         final String domain = FileUtil.toStringOrDie(f);
         return domain != null ? domain.trim() : die("initDefaultDomain: "+abs(f)+" not found");
     }
 
+    public static String getBubbleDefaultDomain () {
+        synchronized (bubbleDefaultDomain) {
+            if (bubbleDefaultDomain.get() == null) bubbleDefaultDomain.set(initDefaultDomain());
+        }
+        return bubbleDefaultDomain.get();
+    }
+
     public static final BubbleNode NULL_NODE = new BubbleNode() {
         @Override public String getUuid() { return "NULL_UUID"; }
     };
-
-    public static final String ENV_BUBBLE_JAR = "BUBBLE_JAR";
 
     public static final GoogleAuthenticator G_AUTH = new GoogleAuthenticator();
 
@@ -87,7 +93,6 @@ public class ApiConstants {
     public static final String EP_REQUEST = "/request";
     public static final String EP_DOWNLOAD = "/download";
 
-    public static final String SESSIONS_ENDPOINT = "/sessions";
     public static final String MESSAGES_ENDPOINT = "/messages";
     public static final String TIMEZONES_ENDPOINT = "/timezones";
 

@@ -4,6 +4,7 @@ import bubble.BubbleHandlebars;
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.payment.stripe.StripePaymentDriver;
 import bubble.dao.account.AccountDAO;
+import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.mock.MockStripePaymentDriver;
 import bubble.model.account.Account;
@@ -12,6 +13,7 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.bill.BillingService;
 import com.github.jknack.handlebars.Handlebars;
 import com.stripe.model.Token;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.client.script.SimpleApiRunnerListener;
 
@@ -19,13 +21,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static bubble.ApiConstants.getBubbleDefaultDomain;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.incrementSystemTimeOffset;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.util.time.TimeUtil.parseDuration;
 
+@Slf4j
 public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
 
     public static final String FAST_FORWARD_AND_BILL = "fast_forward_and_bill";
@@ -115,7 +116,11 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
 
     @Override public void setCtxVars(Map<String, Object> ctx) {
         ctx.put("serverConfig", configuration);
-        ctx.put("defaultDomain", getBubbleDefaultDomain());
+        try {
+            ctx.put("defaultDomain", configuration.getBean(BubbleDomainDAO.class).findAll().get(0).getName());
+        } catch (Exception e) {
+            log.warn("setCtxVars: error setting defaultDomain: "+shortError(e));
+        }
     }
 
 }

@@ -1,0 +1,11 @@
+[
+  "system/cloudService",
+  "system/cloudService_test",
+  "system/bubbleDomain",
+  "system/bubblePlan",
+  "system/bubbleFootprint",
+  "system/ruleDriver",
+  "manifest-app-analytics",
+  "manifest-app-user-block-hn",
+  "manifest-app-user-block-localhost"
+]

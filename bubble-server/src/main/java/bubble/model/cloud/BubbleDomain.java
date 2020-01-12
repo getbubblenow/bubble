@@ -25,8 +25,7 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.EP_DOMAINS;
 import static bubble.model.cloud.AnsibleRole.sameRoleName;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.dns.DnsType.NS;
 import static org.cobbzilla.util.dns.DnsType.SOA;
 import static org.cobbzilla.util.json.JsonUtil.json;

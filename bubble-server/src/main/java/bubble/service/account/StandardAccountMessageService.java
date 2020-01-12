@@ -147,8 +147,6 @@ public class StandardAccountMessageService implements AccountMessageService {
     @Getter(lazy=true) private final AccountMessageCompletionHandler accountVerifyHandler = configuration.autowire(new AccountVerifyHandler());
     @Getter(lazy=true) private final AccountMessageCompletionHandler accountDeleteHandler = configuration.autowire(new AccountDeletionHandler());
     @Getter(lazy=true) private final AccountMessageCompletionHandler accountDownloadHandler = configuration.autowire(new AccountDownloadHandler());
-    @Getter(lazy=true) private final AccountMessageCompletionHandler nodeStartHandler = configuration.autowire(new NodeStartHandler());
-    @Getter(lazy=true) private final AccountMessageCompletionHandler nodeStopHandler = configuration.autowire(new NodeStopHandler());
     @Getter(lazy=true) private final AccountMessageCompletionHandler networkPasswordHandler = configuration.autowire(new NetworkPasswordHandler());
     @Getter(lazy=true) private final AccountMessageCompletionHandler networkStartHandler = configuration.autowire(new NetworkStartHandler());
     @Getter(lazy=true) private final AccountMessageCompletionHandler networkStopHandler = configuration.autowire(new NetworkStopHandler());
@@ -161,8 +159,6 @@ public class StandardAccountMessageService implements AccountMessageService {
         handlers.put(ActionTarget.account+":"+AccountAction.verify, getAccountVerifyHandler());
         handlers.put(ActionTarget.account+":"+AccountAction.delete, getAccountDeleteHandler());
         handlers.put(ActionTarget.account+":"+AccountAction.download, getAccountDownloadHandler());
-        handlers.put(ActionTarget.node+":"+AccountAction.start, getNodeStartHandler());
-        handlers.put(ActionTarget.node+":"+AccountAction.stop, getNodeStopHandler());
         handlers.put(ActionTarget.network+":"+AccountAction.password, getNetworkPasswordHandler());
         handlers.put(ActionTarget.network+":"+AccountAction.start, getNetworkStartHandler());
         handlers.put(ActionTarget.network+":"+AccountAction.stop, getNetworkStopHandler());
