@@ -274,19 +274,19 @@ public class AuthResource {
             final String accountName = NameAndValue.find(data, DATA_ACCOUNT_NAME);
             final Account account = accountDAO.findById(accountName);
             if (caller != null && account != null && !caller.getUuid().equals(account.getUuid())) {
-                return invalid("err.token.invalid");
+                return invalid("err.totpToken.invalid");
             }
             if (caller == null && account == null) {
-                return invalid("err.token.invalid");
+                return invalid("err.totpToken.invalid");
             }
             caller = account;
         }
         final AccountMessage approval = messageService.approve(caller, getRemoteHost(req), token, data);
-        if (approval == null) return invalid("err.token.invalid");
+        if (approval == null) return invalid("err.totpToken.invalid");
         final Account account = validateCallerForApproveOrDeny(caller, approval, token);
 
         if (approval.getMessageType() == AccountMessageType.confirmation) {
-            if (account == null) return invalid("err.token.invalid");
+            if (account == null) return invalid("err.totpToken.invalid");
             if (approval.getAction() == AccountAction.login) {
                 return ok(account.setToken(sessionDAO.create(account)));
             } else {
@@ -306,7 +306,7 @@ public class AuthResource {
         final Account account = accountDAO.findById(request.getAccount());
         if (account == null) return notFound(request.getAccount());
         if (caller != null) {
-            if (!caller.getUuid().equals(account.getUuid())) return invalid("err.token.invalid");
+            if (!caller.getUuid().equals(account.getUuid())) return invalid("err.totpToken.invalid");
 
             // authenticatorService requires the Account to have a token, or it will generate one
             account.setToken(caller.getToken());

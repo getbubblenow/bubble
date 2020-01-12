@@ -140,7 +140,7 @@
     },
     "response": {
       "status": 422,
-      "check": [ {"condition": "json.has('err.token.invalid')"} ]
+      "check": [ {"condition": "json.has('err.totpToken.invalid')"} ]
     }
   },
 

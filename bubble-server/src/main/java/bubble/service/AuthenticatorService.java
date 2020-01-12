@@ -32,17 +32,17 @@ public class AuthenticatorService {
         if (authenticator == null) throw invalidEx("err.authenticator.notConfigured");
 
         final Integer code = request.intToken();
-        if (code == null) throw invalidEx("err.token.invalid");
+        if (code == null) throw invalidEx("err.totpToken.invalid");
 
         final String secret = authenticator.totpInfo().getKey();
         if (G_AUTH.authorize(secret, code)) {
             final String sessionToken = request.startSession() ? sessionDAO.create(account) : account.getToken();
-            if (sessionToken == null) throw invalidEx("err.token.noSession");
+            if (sessionToken == null) throw invalidEx("err.totpToken.noSession");
             getAuthenticatorTimes().set(sessionToken, String.valueOf(now()), EX, policy.getAuthenticatorTimeout()/1000);
             return sessionToken;
 
         } else {
-            throw invalidEx("err.token.invalid");
+            throw invalidEx("err.totpToken.invalid");
         }
     }
 
@@ -71,7 +71,7 @@ public class AuthenticatorService {
                 default: throw invalidEx("err.actionTarget.invalid");
             }
         }
-        if (!isAuthenticated(account.getToken())) throw invalidEx("err.token.invalid");
+        if (!isAuthenticated(account.getToken())) throw invalidEx("err.totpToken.invalid");
     }
 
     public void flush(String sessionToken) { getAuthenticatorTimes().del(sessionToken); }

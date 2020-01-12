@@ -210,7 +210,7 @@ public class StandardAccountMessageService implements AccountMessageService {
         String json = tokens.get(token);
         if (json == null) {
             log.warn("captureResponse("+type+"): regular token not found: "+token);
-            throw invalidEx("err.token.invalid");
+            throw invalidEx("err.totpToken.invalid");
         }
 
         if (NUMERIC_PATTERN.matcher(json).matches()) {
@@ -219,7 +219,7 @@ public class StandardAccountMessageService implements AccountMessageService {
             json = tokens.get(numericToken);
             if (json == null) {
                 log.warn("captureResponse("+type+"): numeric token not found: "+numericToken+" (token="+token+")");
-                throw invalidEx("err.token.invalid");
+                throw invalidEx("err.totpToken.invalid");
             }
         }
 
@@ -237,7 +237,7 @@ public class StandardAccountMessageService implements AccountMessageService {
                 .setTarget(amc.getMessage().getTarget());
 
         if (data != null && !getCompletionHandler(toCreate).validate(toCreate, data)) {
-            throw invalidEx("err.token.invalid", type+" request was invalid", json(data));
+            throw invalidEx("err.totpToken.invalid", type+" request was invalid", json(data));
         }
 
         final AccountMessage message = messageDAO.create(toCreate);
