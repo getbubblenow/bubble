@@ -139,6 +139,7 @@ public class AccountsResource {
                                @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
+        authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
         return policy == null ? notFound(id) : ok(policy.mask());
     }
 
@@ -152,8 +153,12 @@ public class AccountsResource {
             policy = policyDAO.create(new AccountPolicy(request).setAccount(c.account.getUuid()));
         } else {
             authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
+            if (policy.authenticatorTimeoutChanged(request)) {
+                authenticatorService.updateExpiration(ctx, policy);
+            }
             policy = policyDAO.update((AccountPolicy) policy.update(request));
         }
+
         return ok(policy.mask());
     }
 
@@ -184,7 +189,7 @@ public class AccountsResource {
             log.info("setContact: contact is new, sending verify message");
             messageDAO.sendVerifyRequest(getRemoteHost(req), c.account, contact);
         }
-        return ok(added);
+        return ok(added.mask());
     }
 
     @POST @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/verify")
@@ -201,7 +206,7 @@ public class AccountsResource {
         final AccountContact found = policy.findContact(contact);
         if (found == null) return notFound(contact.getType()+"/"+contact.getInfo());
         messageDAO.sendVerifyRequest(getRemoteHost(req), c.account, found);
-        return ok(policy);
+        return ok(policy.mask());
     }
 
     @GET @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/{type}/{info}")
@@ -211,6 +216,7 @@ public class AccountsResource {
                                 @PathParam("info") String info) {
         final AccountContext c = new AccountContext(ctx, id);
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
+        authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
         final AccountContact contact = policy.findContact(new AccountContact().setType(type).setInfo(info));
         return contact != null ? ok(contact.mask()) : notFound(type+"/"+info);
     }
@@ -239,7 +245,11 @@ public class AccountsResource {
 
         final AccountContact contact = policy.findContact(new AccountContact().setType(CloudServiceType.authenticator));
         if (contact == null) return notFound(CloudServiceType.authenticator.name());
-        return ok(policyDAO.update(policy.removeContact(contact)).mask());
+
+        final AccountPolicy updated = policyDAO.update(policy.removeContact(contact)).mask();
+        authenticatorService.flush(c.caller.getToken());
+
+        return ok(updated);
     }
 
     @DELETE @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/{uuid}")

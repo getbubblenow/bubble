@@ -322,9 +322,25 @@ public class AuthResource {
             policyDAO.update(policy.verifyContact(policy.getAuthenticator().getUuid()));
             return ok_empty();
         }
+
         final AccountMessage loginRequest = accountMessageDAO.findMostRecentLoginRequest(account.getUuid());
+        if (loginRequest == null) {
+            log.warn("authenticator: AccountMessage (loginRequest) was null, returning OK without doing anything further");
+            return ok_empty();
+        }
+
         final AccountMessageContact amc = messageService.accountMessageContact(loginRequest, authenticator);
+        if (amc == null || !amc.valid()) {
+            log.warn("authenticator: AccountMessageContact was null or invalid, returning OK without doing anything further");
+            return ok_empty();
+        }
+
         final AccountMessage approval = messageService.approve(account, getRemoteHost(req), amc.key());
+        if (approval == null) {
+            log.warn("authenticator: AccountMessage (approval) was null, returning OK without doing anything further");
+            return ok_empty();
+        }
+
         if (approval.getMessageType() == AccountMessageType.confirmation) {
             // OK we can log in!
             return ok(account.setToken(sessionToken));

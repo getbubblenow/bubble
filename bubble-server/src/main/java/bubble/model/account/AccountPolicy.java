@@ -46,7 +46,9 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
     public static final Long MIN_NODE_OPERATION_TIMEOUT    = MINUTES.toMillis(1);
     public static final Long MIN_AUTHENTICATOR_TIMEOUT     = MINUTES.toMillis(1);
 
-    public static final String[] UPDATE_FIELDS = {"deletionPolicy", "nodeOperationTimeout", "accountOperationTimeout"};
+    public static final String[] UPDATE_FIELDS = {
+            "deletionPolicy", "nodeOperationTimeout", "accountOperationTimeout", "authenticatorTimeout"
+    };
 
     public AccountPolicy(AccountPolicy policy) { copy(this, policy); }
 
@@ -70,6 +72,9 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
     @ECSearchable(type=EntityFieldType.time_duration) @ECField(index=40)
     @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+ENC_LONG+") NOT NULL")
     @Getter @Setter private Long authenticatorTimeout = MAX_AUTHENTICATOR_TIMEOUT;
+    public boolean authenticatorTimeoutChanged (AccountPolicy other) {
+        return authenticatorTimeout != null && other.getAuthenticatorTimeout() != null && !authenticatorTimeout.equals(other.getAuthenticatorTimeout());
+    }
 
     @ECSearchable @ECField(index=50)
     @Enumerated(EnumType.STRING) @Column(length=40, nullable=false)

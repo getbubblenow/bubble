@@ -38,12 +38,16 @@ public class AuthenticatorService {
         if (G_AUTH.authorize(secret, code)) {
             final String sessionToken = request.startSession() ? sessionDAO.create(account) : account.getToken();
             if (sessionToken == null) throw invalidEx("err.totpToken.noSession");
-            getAuthenticatorTimes().set(sessionToken, String.valueOf(now()), EX, policy.getAuthenticatorTimeout()/1000);
+            markAsAuthenticated(sessionToken, policy);
             return sessionToken;
 
         } else {
             throw invalidEx("err.totpToken.invalid");
         }
+    }
+
+    public void markAsAuthenticated(String sessionToken, AccountPolicy policy) {
+        getAuthenticatorTimes().set(sessionToken, String.valueOf(now()), EX, policy.getAuthenticatorTimeout()/1000);
     }
 
     public boolean isAuthenticated (String sessionToken) { return getAuthenticatorTimes().get(sessionToken) != null; }
@@ -74,6 +78,17 @@ public class AuthenticatorService {
         if (!isAuthenticated(account.getToken())) throw invalidEx("err.totpToken.invalid");
     }
 
-    public void flush(String sessionToken) { getAuthenticatorTimes().del(sessionToken); }
+    public boolean flush(String sessionToken) {
+        final String exists = getAuthenticatorTimes().get(sessionToken);
+        getAuthenticatorTimes().del(sessionToken);
+        return exists != null;
+    }
 
+    public void updateExpiration(ContainerRequest ctx, AccountPolicy policy) {
+        final Account account = userPrincipal(ctx);
+        final String sessionToken = account.getToken();
+        if (flush(sessionToken)) {
+            markAsAuthenticated(sessionToken, policy);
+        }
+    }
 }
