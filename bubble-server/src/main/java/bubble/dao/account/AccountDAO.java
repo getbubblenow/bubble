@@ -272,6 +272,17 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         return accountsExist;
     }
 
+    // once unlocked, you can never go back
+    private static final AtomicBoolean unlocked = new AtomicBoolean(false);
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public boolean locked() {
+        if (unlocked.get()) return false;
+        // if any accounts are unlocked, the bubble is unlocked
+        final boolean anyAccountUnlocked = !findByField("locked", false).isEmpty();
+        if (anyAccountUnlocked) unlocked.set(true);
+        return anyAccountUnlocked;
+    }
+
     // The admin with the lowest ctime is 'root'
     // It gets looked up in a few places that may see high traffic, so we cache it under getFirstAdmin
     // Null values are not cached, getFirstAdmin will continue to call findFirstAdmin until it returns non-null,
@@ -287,4 +298,10 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         admins.sort(CTIME_ASC); // todo: do this in SQL
         return admins.get(0);
     }
+
+    public void unlock() {
+        findAll().forEach(a -> update(a.setLocked(false)));
+        unlocked.set(true);
+    }
+
 }

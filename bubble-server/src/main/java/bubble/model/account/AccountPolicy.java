@@ -98,6 +98,12 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
         return hasAccountContacts() && Arrays.stream(getAccountContacts()).anyMatch(AccountContact::verified);
     }
 
+    public boolean hasVerifiedNonAuthenticatorAccountContacts() {
+        return hasAccountContacts() && Arrays.stream(getAccountContacts())
+                .filter(AccountContact::isNotAuthenticator)
+                .anyMatch(AccountContact::verified);
+    }
+
     @Transient public AccountContact[] getAccountContacts () { return accountContactsJson == null ? null : json(accountContactsJson, AccountContact[].class); }
     public AccountPolicy setAccountContacts(AccountContact[] contacts) { return setAccountContactsJson(contacts == null ? null : json(contacts)); }
 

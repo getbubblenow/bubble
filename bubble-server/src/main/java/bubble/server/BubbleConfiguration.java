@@ -50,8 +50,7 @@ import static bubble.cloud.CloudServiceDriver.CLOUD_DRIVER_PACKAGE;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static bubble.server.BubbleServer.getConfigurationSource;
 import static java.util.Collections.emptyMap;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.handlebars.HandlebarsUtil.registerUtilityHelpers;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
@@ -70,6 +69,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_ENTITY_CLASSES = "entityClasses";
     public static final String TAG_LOCALES = "locales";
     public static final String TAG_CLOUD_CONFIGS = "cloudConfigs";
+    public static final String TAG_LOCKED = "locked";
 
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
@@ -250,6 +250,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         synchronized (publicSystemConfigs) {
             if (publicSystemConfigs.get() == null) {
                 final BubbleNetwork thisNetwork = getThisNetwork();
+                final AccountDAO accountDAO = getBean(AccountDAO.class);
+                final ActivationService activationService = getBean(ActivationService.class);
                 publicSystemConfigs.set(MapBuilder.build(new Object[][]{
                         {TAG_ALLOW_REGISTRATION, thisNetwork == null ? null : thisNetwork.getBooleanTag(TAG_ALLOW_REGISTRATION, false)},
                         {TAG_SAGE_LAUNCHER, thisNetwork == null || isSageLauncher()},
@@ -257,7 +259,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_CLOUD_DRIVERS, getCloudDriverClasses()},
                         {TAG_ENTITY_CLASSES, getSortedSimpleEntityClassMap()},
                         {TAG_LOCALES, getAllLocales()},
-                        {TAG_CLOUD_CONFIGS, getBean(AccountDAO.class).activated() ? null : getBean(ActivationService.class).getCloudDefaults()}
+                        {TAG_CLOUD_CONFIGS, accountDAO.activated() ? null : activationService.getCloudDefaults()},
+                        {TAG_LOCKED, accountDAO.locked()}
                 }));
             }
             return publicSystemConfigs.get();
@@ -265,7 +268,10 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     }
 
     // called after activation, because now thisNetwork will be defined. otherwise it remains unchanged
-    public void refreshPublicSystemConfigs () { synchronized (publicSystemConfigs) { publicSystemConfigs.set(null); } }
+    public void refreshPublicSystemConfigs () {
+        synchronized (publicSystemConfigs) { publicSystemConfigs.set(null); }
+        background(this::getPublicSystemConfigs);
+    }
 
     @Getter @Setter private String[] disallowedCountries;
 

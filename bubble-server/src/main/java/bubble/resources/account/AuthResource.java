@@ -216,11 +216,14 @@ public class AuthResource {
         boolean isUnlock = false;
         if (account.locked()) {
             if (empty(unlockKey)) return invalid("err.account.locked");
-            if (!unlockKey.equals(configuration.getUnlockKey())) return invalid("err.account.locked");
+            if (!unlockKey.equals(configuration.getUnlockKey())) return invalid("err.unlockKey.invalid");
             // unlock all accounts
             isUnlock = true;
             log.info("Unlock key was valid, unlocking accounts");
-            accountDAO.findAll().forEach(a -> accountDAO.update(a.setLocked(false)));
+            accountDAO.unlock();
+
+            // refresh system configs, we are now unlocked
+            configuration.refreshPublicSystemConfigs();
         }
 
         if (!isUnlock) {

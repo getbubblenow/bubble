@@ -2,7 +2,9 @@ package bubble.server.listener;
 
 import bubble.ApiConstants;
 import bubble.dao.account.AccountDAO;
+import bubble.dao.account.AccountPolicyDAO;
 import bubble.model.account.Account;
+import bubble.model.account.AccountPolicy;
 import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
@@ -47,7 +49,14 @@ public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<Bub
             final AccountDAO accountDAO = configuration.getBean(AccountDAO.class);
             final Account adminAccount = accountDAO.getFirstAdmin();
             if (adminAccount == null) {
-                log.error("onStart: no admin account found, cannot send first time install message");
+                log.error("onStart: no admin account found, cannot send first time install message, unlocking now");
+                accountDAO.unlock();
+                return;
+            }
+            final AccountPolicy adminPolicy = configuration.getBean(AccountPolicyDAO.class).findSingleByAccount(adminAccount.getUuid());
+            if (adminPolicy == null || !adminPolicy.hasVerifiedNonAuthenticatorAccountContacts()) {
+                log.error("onStart: no AccountPolicy found (or no verified non-authenticator contacts) for admin account ("+adminAccount.getName()+"), cannot send first time install message, unlocking now");
+                accountDAO.unlock();
                 return;
             }
             final BubbleNetwork network = configuration.getThisNetwork();
