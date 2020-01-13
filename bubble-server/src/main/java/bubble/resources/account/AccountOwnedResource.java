@@ -171,12 +171,9 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
 
         if (!canDelete(ctx, caller, found)) return forbidden();
 
-        cascadingDeletes(found);
         getDao().delete(found.getUuid());
         return ok(found);
     }
-
-    protected void cascadingDeletes(E entity) {}
 
     protected Account checkEditable(ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);

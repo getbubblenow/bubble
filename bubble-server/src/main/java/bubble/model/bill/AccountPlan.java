@@ -116,6 +116,12 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Getter @Setter private String deletedNetwork;
     public boolean hasDeletedNetwork() { return deletedNetwork != null; }
 
+    @ECSearchable @ECField(index=140) @Column(nullable=false)
+    @Getter @Setter private Boolean refundIssued = false;
+
+    @ECSearchable @ECField(index=150)
+    @Getter @Setter private String refundError;
+
     // Fields below are used when creating a new plan, to also create the network associated with it
     @Size(max=10000, message="err.description.length")
     @Transient @Getter @Setter private transient String description;

@@ -4,8 +4,6 @@ import bubble.dao.app.AppMatcherDAO;
 import bubble.dao.app.AppRuleDAO;
 import bubble.dao.app.BubbleAppDAO;
 import bubble.model.account.Account;
-import bubble.model.app.AppMatcher;
-import bubble.model.app.AppRule;
 import bubble.model.app.BubbleApp;
 import bubble.resources.account.AccountOwnedTemplateResource;
 import bubble.server.BubbleConfiguration;
@@ -39,18 +37,9 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
 
         final BubbleApp found = appDAO.findByAccountAndId(getAccountUuid(ctx), id);
         if (found == null) return notFound(id);
-        cascadingDeletes(found);
+
         appDAO.delete(found.getUuid());
         return ok_empty();
-    }
-
-    @Override protected void cascadingDeletes(BubbleApp found) {
-        for (AppMatcher m : matcherDAO.findByApp(found.getUuid())) {
-            matcherDAO.delete(m.getUuid());
-        }
-        for (AppRule r : ruleDAO.findByApp(found.getUuid())) {
-            ruleDAO.delete(r.getUuid());
-        }
     }
 
     @Path("/{id}"+EP_RULES)

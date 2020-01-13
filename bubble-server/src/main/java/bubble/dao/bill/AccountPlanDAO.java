@@ -50,10 +50,11 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
         return findByFields("account", account, "paymentMethod", paymentMethod, "deleted", null);
     }
 
-    public List<AccountPlan> findByDeletedAndNotClosed() {
+    public List<AccountPlan> findByDeletedAndNotClosedAndNoRefundIssued() {
         return list(criteria().add(and(
                 isNotNull("deleted"),
-                eq("closed", false)
+                eq("closed", false),
+                eq("refundIssued", false)
         )));
     }
 
@@ -130,9 +131,14 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
             throw invalidEx("err.accountPlan.stopNetworkBeforeDeleting");
         }
         update(accountPlan.setDeleted(now()).setEnabled(false));
-        networkDAO.delete(accountPlan.getNetwork());
-        if (configuration.paymentsEnabled()) {
-            refundService.processRefunds();
+        if (accountPlan.getNetwork() == null && accountPlan.getDeletedNetwork() != null) {
+            log.warn("delete: network was supposed to be deleted, deleting it again: "+accountPlan.getDeletedNetwork());
+            networkDAO.delete(accountPlan.getDeletedNetwork());
+        } else {
+            networkDAO.delete(accountPlan.getNetwork());
+            if (configuration.paymentsEnabled()) {
+                refundService.processRefunds();
+            }
         }
     }
 

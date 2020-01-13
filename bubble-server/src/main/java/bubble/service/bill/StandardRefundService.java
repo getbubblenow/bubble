@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 import static java.util.concurrent.TimeUnit.HOURS;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 
 @Service @Slf4j
 public class StandardRefundService extends SimpleDaemon implements RefundService {
@@ -35,15 +36,20 @@ public class StandardRefundService extends SimpleDaemon implements RefundService
 
     @Override protected void process() {
         // iterate over all account plans that have been deleted but not yet closed
-        final List<AccountPlan> pendingPlans = accountPlanDAO.findByDeletedAndNotClosed();
+        final List<AccountPlan> pendingPlans = accountPlanDAO.findByDeletedAndNotClosedAndNoRefundIssued();
         for (AccountPlan accountPlan : pendingPlans) {
             try {
                 final AccountPaymentMethod paymentMethod = paymentMethodDAO.findByUuid(accountPlan.getPaymentMethod());
                 final CloudService paymentCloud = cloudDAO.findByUuid(paymentMethod.getCloud());
                 final PaymentServiceDriver paymentDriver = paymentCloud.getPaymentDriver(configuration);
                 paymentDriver.refund(accountPlan.getUuid());
+
             } catch (Exception e) {
                 log.error("process: error processing refund for AccountPlan: "+accountPlan.getUuid());
+                accountPlan.setRefundError(shortError(e));
+
+            } finally {
+                accountPlanDAO.update(accountPlan.setRefundIssued(true));
             }
         }
     }
