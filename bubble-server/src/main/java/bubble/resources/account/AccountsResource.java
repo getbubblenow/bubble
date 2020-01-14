@@ -189,7 +189,7 @@ public class AccountsResource {
             log.info("setContact: contact is new, sending verify message");
             messageDAO.sendVerifyRequest(getRemoteHost(req), c.account, contact);
         }
-        return ok(added.mask());
+        return ok(existing != null ? added.mask() : added);
     }
 
     @POST @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/verify")

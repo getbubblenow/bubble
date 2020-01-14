@@ -31,10 +31,8 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.model.account.Account.ROOT_USERNAME;
-import static bubble.service.boot.StandardSelfNodeService.THIS_NODE_FILE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.handlebars.HandlebarsUtil.applyReflectively;
-import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.FULL_MAPPER_ALLOW_COMMENTS;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -50,22 +48,10 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
 
     protected Account admin;
 
-    private boolean hasExistingDb = false;
-
     @Override public boolean doTruncateDb() { return false; }
 
     @Override public void beforeStart(RestServer<BubbleConfiguration> server) {
-        // if server hbm2ddl mode is validate, do not delete node file
         final BubbleConfiguration configuration = server.getConfiguration();
-        if (configuration.dbExists()) {
-            hasExistingDb = true;
-            log.info("beforeStart: not deleting "+abs(THIS_NODE_FILE)+" because DB exists");
-        } else {
-            // start fresh
-            if (THIS_NODE_FILE.exists() && !THIS_NODE_FILE.delete()) {
-                die("beforeStart: error deleting " + abs(THIS_NODE_FILE));
-            }
-        }
 
         // set default domain
         final Map<String, String> env = configuration.getEnvironment();
@@ -94,7 +80,7 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
         server.getConfiguration().getEntityClassesReverse();
 
         // Activate the system
-
+        resetBubbleServer();
         try {
             final BubbleConfiguration configuration = server.getConfiguration();
             final Map<String, Object> ctx = configuration.getEnvCtx();

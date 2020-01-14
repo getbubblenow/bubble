@@ -8,5 +8,7 @@ public class NetworkTest extends NetworkTestBase {
 
     @Test public void testRegions       () throws Exception { modelTest("network/network_regions"); }
     @Test public void testUpgradeRole   () throws Exception { modelTest("network/upgrade_role"); }
+    @Test public void testGetNetworkKeys() throws Exception { modelTest("network/network_keys"); }
+
 
 }

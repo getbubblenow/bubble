@@ -1,9 +1,10 @@
-package bubble.test;
+package bubble.test.live;
 
 import bubble.cloud.CloudServiceDriver;
 import bubble.cloud.dns.route53.Route53DnsDriver;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.CloudService;
+import bubble.test.NetworkTestBase;
 import org.junit.Test;
 
 import java.util.Arrays;

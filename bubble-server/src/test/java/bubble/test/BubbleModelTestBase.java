@@ -2,11 +2,18 @@ package bubble.test;
 
 import bubble.cloud.email.mock.MockEmailDriver;
 import bubble.cloud.sms.mock.MockSmsDriver;
+import bubble.dao.account.AccountDAO;
+import bubble.dao.account.AccountPolicyDAO;
+import bubble.model.account.Account;
+import bubble.model.account.AccountPolicy;
+import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.server.BubbleServer;
 import bubble.server.listener.NodeInitializerListener;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.client.script.ApiRunner;
 import org.cobbzilla.wizard.client.script.ApiRunnerListener;
@@ -14,6 +21,8 @@ import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListener;
 import org.cobbzilla.wizard.server.config.factory.StreamConfigurationSource;
 import org.cobbzilla.wizardtest.resources.ApiModelTestBase;
+import org.junit.AfterClass;
+import org.junit.Before;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,9 +30,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static bubble.service.boot.StandardSelfNodeService.SELF_NODE_JSON;
+import static bubble.service.boot.StandardSelfNodeService.THIS_NODE_FILE;
 import static bubble.test.BubbleTestBase.ENV_EXPORT_FILE;
 import static bubble.test.HandlebarsTestHelpers.registerTestHelpers;
 import static java.util.Arrays.asList;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.system.CommandShell.loadShellExportsOrDie;
 
 @Slf4j
@@ -33,15 +47,58 @@ public abstract class BubbleModelTestBase extends ApiModelTestBase<BubbleConfigu
             new NodeInitializerListener()
     });
 
+    protected boolean hasExistingDb = false;
+    protected static BubbleServer server = null;
+
     // disable model cache for all tests
     @Override public File permCacheDir() { return null; }
 
-    @Override public void beforeStart(RestServer<BubbleConfiguration> server) {
-        server.getConfiguration().setBackupsEnabled(backupsEnabled());
-        super.beforeStart(server);
+    @Before public void resetBubbleServer() {
+        server = (BubbleServer) getServer();
+        try {
+            final BubbleNode thisNode = server.getConfiguration().getThisNode();
+            log.info("resetBubbleServer: set server (thisNode=" + (thisNode == null ? null : thisNode.id()) + ")");
+        } catch (Exception e) {
+            log.warn("resetBubbleServer: "+shortError(e));
+        }
+        final BubbleConfiguration configuration = getConfiguration();
+        final AccountDAO accountDAO = configuration.getBean(AccountDAO.class);
+        final AccountPolicyDAO policyDAO = configuration.getBean(AccountPolicyDAO.class);
+        CloudService.flushDriverCache();
+
+        configuration.getBean(RedisService.class).flush();
+        final Account root = accountDAO.getFirstAdmin();
+        if (root != null) {
+            final AccountPolicy rootPolicy = policyDAO.findSingleByAccount(root.getUuid());
+            policyDAO.delete(rootPolicy.getUuid());
+            policyDAO.create(new AccountPolicy().setAccount(root.getUuid()));
+        }
+    }
+
+    @AfterClass public static void resetSelfJson () {
+        if (server != null) server.stopServer();
+        final File selfJson = new File(SELF_NODE_JSON);
+        if (selfJson.exists()) {
+            if (!selfJson.delete()) die("resetSelfJson: error deleting "+abs(SELF_NODE_JSON));
+        }
     }
 
     public boolean backupsEnabled() { return false; }
+
+    @Override public void beforeStart(RestServer<BubbleConfiguration> server) {
+        final BubbleConfiguration configuration = server.getConfiguration();
+        configuration.setBackupsEnabled(backupsEnabled());
+        if (configuration.dbExists()) {
+            hasExistingDb = true;
+            log.info("beforeStart: not deleting "+abs(THIS_NODE_FILE)+" because DB exists");
+        } else {
+            // start fresh
+            if (THIS_NODE_FILE.exists() && !THIS_NODE_FILE.delete()) {
+                die("beforeStart: error deleting " + abs(THIS_NODE_FILE));
+            }
+        }
+        super.beforeStart(server);
+    }
 
     @Getter(lazy=true) private final ApiClientBase _api = new TestBubbleApiClient(getConfiguration());
     @Override public ApiClientBase getApi() { return get_api(); }

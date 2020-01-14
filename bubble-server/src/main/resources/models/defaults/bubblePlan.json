@@ -1,6 +1,6 @@
 [{
   "name": "bubble",
-  "chargeName": "BubbleStd",
+  "chargeName": "BubbleVPN",
   "computeSizeType": "small",
   "nodesIncluded": 1,
   "additionalPerNodePrice": 0,
@@ -11,7 +11,7 @@
   "additionalBandwidthPerGbPrice": 0
 }, {
   "name": "bubble_plus",
-  "chargeName": "BubblePlus",
+  "chargeName": "BubbleVPN-Plus",
   "computeSizeType": "medium",
   "nodesIncluded": 1,
   "additionalPerNodePrice": 0,

@@ -266,7 +266,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     private static final AtomicBoolean activated = new AtomicBoolean(false);
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public boolean activated() {
-        if (activated.get()) return true;
+        if (activated.get() && !configuration.testMode()) return true;
         final boolean accountsExist = countAll() > 0;
         if (accountsExist) activated.set(true);
         return accountsExist;

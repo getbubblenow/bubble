@@ -161,7 +161,7 @@ public class ActivationService {
 
         BubbleFootprint footprint = footprintDAO.findByAccountAndId(account.getUuid(), DEFAULT_FOOTPRINT);
         if (footprint == null) {
-            footprint = footprintDAO.create(DEFAULT_FOOTPRINT_OBJECT.setAccount(account.getUuid()));
+            footprint = footprintDAO.create(new BubbleFootprint(DEFAULT_FOOTPRINT_OBJECT).setAccount(account.getUuid()));
         }
 
         final BubbleNetwork network = createRootNetwork(new BubbleNetwork()

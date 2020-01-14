@@ -6,12 +6,14 @@ import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.model.cloud.notify.ReceivedNotification;
 import bubble.notify.DelegatedNotificationHandlerBase;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static bubble.model.cloud.notify.NotificationType.payment_driver_response;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.json;
 
+@Slf4j
 public class NotificationHandler_payment_driver_validate extends DelegatedNotificationHandlerBase {
 
     @Autowired protected BubbleNodeDAO nodeDAO;

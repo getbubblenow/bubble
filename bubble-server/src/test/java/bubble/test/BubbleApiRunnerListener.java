@@ -14,7 +14,6 @@ import bubble.service.bill.BillingService;
 import com.github.jknack.handlebars.Handlebars;
 import com.stripe.model.Token;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.client.script.SimpleApiRunnerListener;
 
 import java.util.HashMap;
@@ -23,6 +22,7 @@ import java.util.Map;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.util.time.TimeUtil.parseDuration;
 
@@ -35,7 +35,7 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
     public static final String STRIPE_TOKENIZE_CARD = "stripe_tokenize_card";
     public static final String CTX_STRIPE_TOKEN = "stripeToken";
 
-    public static final long DEFAULT_BILLING_SLEEP = SECONDS.toMillis(10);
+    public static final long DEFAULT_BILLING_SLEEP = SECONDS.toMillis(30);
 
     private BubbleConfiguration configuration;
 
@@ -49,7 +49,7 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
     @Override public void beforeScript(String before, Map<String, Object> ctx) throws Exception {
         if (before == null) return;
         if (before.startsWith(FAST_FORWARD_AND_BILL)) {
-            final List<String> parts = StringUtil.splitAndTrim(before.substring(FAST_FORWARD_AND_BILL.length()), " ");
+            final List<String> parts = splitAndTrim(before.substring(FAST_FORWARD_AND_BILL.length()), " ");
             final long delta = parseDuration(parts.get(0));
             final long sleepTime = parts.size() > 1 ? parseDuration(parts.get(1)) : DEFAULT_BILLING_SLEEP;
             incrementSystemTimeOffset(delta);

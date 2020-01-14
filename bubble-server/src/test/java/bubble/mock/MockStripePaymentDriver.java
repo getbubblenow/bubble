@@ -5,6 +5,7 @@ import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.Bill;
 import bubble.model.bill.BubblePlan;
+import com.stripe.Stripe;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -14,6 +15,10 @@ public class MockStripePaymentDriver extends StripePaymentDriver {
 
     public static final AtomicReference<String> error = new AtomicReference<>(null);
     public static void setError(String err) { error.set(err); }
+
+    @Override public void postSetup() {
+        Stripe.apiKey = getCredentials().getParam(PARAM_SECRET_API_KEY);;
+    }
 
     @Override public boolean authorize(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod) {
         final String err = error.get();

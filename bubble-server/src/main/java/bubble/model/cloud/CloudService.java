@@ -223,14 +223,15 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     }
 
     private static final Map<String, CloudServiceDriver> driverCache = new ExpirationMap<>();
+    public static void flushDriverCache() { driverCache.clear(); }
 
     public static void clearDriverCache (String uuid) { driverCache.remove(uuid); }
 
     public <T extends CloudServiceDriver> T wireAndSetup (BubbleConfiguration configuration) {
         // note: CloudServiceDAO calls clearDriverCache when driver config is updated,
         // then the updated class/config/credentials will be used.
-        if (!hasUuid()) {
-            // this is a test before creation, just try to wire it up, but do not cache the result
+        if (!hasUuid() || configuration.testMode()) {
+            // this is a test before creation (or we are in test mode), just wire it up, but do not cache the result
             return _wireAndSetup(configuration);
         }
         return (T) driverCache.computeIfAbsent(getUuid(), k -> _wireAndSetup(configuration));

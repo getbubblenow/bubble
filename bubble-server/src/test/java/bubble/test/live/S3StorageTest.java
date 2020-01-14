@@ -1,4 +1,4 @@
-package bubble.test;
+package bubble.test.live;
 
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.storage.s3.S3StorageConfig;
@@ -7,6 +7,7 @@ import bubble.model.cloud.CloudService;
 import bubble.model.cloud.RekeyRequest;
 import bubble.model.cloud.StorageMetadata;
 import bubble.notify.storage.StorageListing;
+import bubble.test.NetworkTestBase;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpHeaders;

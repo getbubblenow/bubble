@@ -107,7 +107,6 @@
     "response": {
       "check": [
         {"condition": "json.getType().name() == 'email'"},
-        {"condition": "json.getInfo() == 'user-multifactor_auth@example.com'"},
         {"condition": "json.getAuthFactor().name() == 'required'"}
       ]
     }
@@ -540,8 +539,7 @@
     },
     "response": {
       "check": [
-        {"condition": "json.getAuthFactor().name() == 'sufficient'"},
-        {"condition": "json.getInfo() == 'foo@example.com'"}
+        {"condition": "json.getAuthFactor().name() == 'sufficient'"}
       ]
     }
   },
@@ -711,8 +709,8 @@
       "check": [
         {"condition": "json.getAccountContacts() != null"},
         {"condition": "json.getAccountContacts().length == 2"},
-        {"condition": "!json.getAccountContacts()[0].getInfo() != 'bar@example.com'"},
-        {"condition": "!json.getAccountContacts()[1].getInfo() != 'bar@example.com'"}
+        {"condition": "!json.getAccountContacts()[0].getInfo().startsWith('bar')"},
+        {"condition": "!json.getAccountContacts()[1].getInfo().startsWith('bar')"}
       ]
     }
   }

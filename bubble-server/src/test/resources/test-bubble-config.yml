@@ -41,7 +41,7 @@ staticAssets:
       STRIPE_PUBLIC_API_KEY: {{STRIPE_PUBLIC_API_KEY}}
 
 http:
-  port: {{#exists BUBBLE_SERVER_PORT}}{{BUBBLE_SERVER_PORT}}{{else}}8090{{/exists}}
+  port: 0
   baseUri: /api
 
 jersey:

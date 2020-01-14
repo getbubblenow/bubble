@@ -1,5 +1,6 @@
 package bubble.service.notify;
 
+import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.notify.ReceivedNotificationDAO;
 import bubble.model.cloud.notify.NotificationProcessingStatus;
 import bubble.model.cloud.notify.ReceivedNotification;
@@ -48,6 +49,10 @@ public class NotificationInboxProcessor implements Runnable {
                 log.warn("processNotification: reply for non-existent syncNotification: "+reply.getNotificationId());
                 return;
             }
+        }
+        if (configuration.getBean(BubbleNodeDAO.class).findByUuid(n.getFromNode()) == null) {
+            log.warn("processNotification: fromNode does not exist: "+n.getFromNode());
+            return;
         }
         handler.handleNotification(n);
     }

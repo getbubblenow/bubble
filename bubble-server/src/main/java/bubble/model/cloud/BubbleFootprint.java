@@ -25,6 +25,7 @@ import java.util.function.Function;
 
 import static bubble.ApiConstants.EP_FOOTPRINTS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
@@ -48,7 +49,9 @@ public class BubbleFootprint extends IdentifiableBase implements AccountTemplate
 
     public static final String DEFAULT_FOOTPRINT = "Worldwide";
 
-    public static final BubbleFootprint DEFAULT_FOOTPRINT_OBJECT = new BubbleFootprint()
+    public static final BubbleFootprint DEFAULT_FOOTPRINT_OBJECT = new BubbleFootprint() {
+        @Override public void setUuid(String uuid) { die("cannot set uuid on DEFAULT_FOOTPRINT_OBJECT"); }
+    }
             .setName(DEFAULT_FOOTPRINT)
             .setDescription("No restrictions, run anywhere")
             .setTemplate(true);

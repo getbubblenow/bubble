@@ -35,7 +35,8 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
 
     @Override public PaymentMethodType getPaymentMethodType() { return PaymentMethodType.credit; }
 
-    private static final String PARAM_SECRET_API_KEY = "secretApiKey";
+    protected static final String PARAM_SECRET_API_KEY = "secretApiKey";
+    private static final String SIMPLE_NAME = StripePaymentDriver.class.getSimpleName();;
 
     public static final long AUTH_CACHE_DURATION = DAYS.toSeconds(7);
     public static final long CHARGE_CACHE_DURATION = HOURS.toSeconds(24);
@@ -44,20 +45,23 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
     @Autowired private AccountPolicyDAO policyDAO;
 
     @Autowired private RedisService redisService;
-    @Getter(lazy=true) private final RedisService authCache = redisService.prefixNamespace(getClass().getSimpleName()+"_auth");
-    @Getter(lazy=true) private final RedisService chargeCache = redisService.prefixNamespace(getClass().getSimpleName()+"_charge");
-    @Getter(lazy=true) private final RedisService refundCache = redisService.prefixNamespace(getClass().getSimpleName()+"_refund");
+    @Getter(lazy=true) private final RedisService authCache = redisService.prefixNamespace(SIMPLE_NAME +"_auth");
+    @Getter(lazy=true) private final RedisService chargeCache = redisService.prefixNamespace(SIMPLE_NAME +"_charge");
+    @Getter(lazy=true) private final RedisService refundCache = redisService.prefixNamespace(SIMPLE_NAME +"_refund");
 
     private static final AtomicReference<String> setupDone = new AtomicReference<>(null);
 
     @Override public void postSetup() {
+        final String apiKey = getCredentials().getParam(PARAM_SECRET_API_KEY);
+        if (empty(apiKey)) die("postSetup: "+PARAM_SECRET_API_KEY+" not found in credentials");
         if (setupDone.get() == null) {
             synchronized (setupDone) {
                 if (setupDone.get() == null) {
-                    final String apiKey = getCredentials().getParam(PARAM_SECRET_API_KEY);
-                    if (empty(apiKey)) die("postSetup: "+PARAM_SECRET_API_KEY+" not found in credentials");
+                    if (setupDone.get() != null && !setupDone.get().equals(apiKey)) {
+                        die("postSetup: cannot re-initialize with another API key (only one "+ SIMPLE_NAME +" is supported)");
+                    }
                     Stripe.apiKey = apiKey;
-                    setupDone.set(cloud.getUuid());
+                    setupDone.set(apiKey);
                 } else {
                     log.info("postSetup: already set up");
                 }
@@ -65,8 +69,8 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
         } else {
             log.info("postSetup: already set up");
         }
-        if (!setupDone.get().equals(cloud.getUuid())) {
-            die("postSetup: cannot re-initialize with another API key (only one "+getClass().getSimpleName()+" is supported)");
+        if (!setupDone.get().equals(apiKey)) {
+            die("postSetup: cannot re-initialize with another API key (only one "+ SIMPLE_NAME +" is supported)");
         }
     }
 

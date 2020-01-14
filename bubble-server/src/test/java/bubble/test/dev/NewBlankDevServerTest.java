@@ -8,6 +8,7 @@ import org.cobbzilla.wizard.server.RestServer;
 import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.DAYS;
+import static org.cobbzilla.util.string.StringUtil.safeParseInt;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
 @Slf4j
@@ -16,6 +17,13 @@ public class NewBlankDevServerTest extends BubbleModelTestBase {
     @Override protected String getManifest() { return "manifest-empty"; }
     @Override protected boolean useMocks() { return false; }
     @Override protected boolean createSqlIndexes () { return true; }
+
+    @Override public void beforeStart(RestServer<BubbleConfiguration> server) {
+        final BubbleConfiguration configuration = server.getConfiguration();
+        final Integer port = safeParseInt(configuration.getEnvironment().get("BUBBLE_SERVER_PORT"));
+        configuration.getHttp().setPort(port);
+        super.beforeStart(server);
+    }
 
     @Override public void onStart(RestServer<BubbleConfiguration> server) {
         getConfiguration().getBean(EntityConfigsResource.class).getAllowPublic().set(true);

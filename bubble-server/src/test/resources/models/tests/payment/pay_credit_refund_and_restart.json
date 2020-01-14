@@ -178,26 +178,6 @@
   },
 
   {
-    "comment": "try to delete plan, must stop network first",
-    "request": {
-      "method": "delete",
-      "uri": "me/plans/{{accountPlan.uuid}}"
-    },
-    "response": {
-      "status": 422,
-      "check": [{"condition": "json.has('err.accountPlan.stopNetworkBeforeDeleting')"}]
-    }
-  },
-
-  {
-    "comment": "delete network",
-    "request": {
-      "method": "delete",
-      "uri": "me/networks/{{accountPlan.network}}"
-    }
-  },
-
-  {
     "comment": "delete plan",
     "request": {
       "method": "delete",

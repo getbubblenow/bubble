@@ -13,6 +13,7 @@ import bubble.model.cloud.CloudService;
 import bubble.notify.payment.PaymentValidationResult;
 import bubble.server.BubbleConfiguration;
 import bubble.service.bill.RefundService;
+import bubble.service.cloud.NetworkService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -35,6 +36,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
     @Autowired private BillDAO billDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
+    @Autowired private NetworkService networkService;
     @Autowired private RefundService refundService;
     @Autowired private BubbleConfiguration configuration;
 
@@ -128,7 +130,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
 
         final BubbleNetwork network = networkDAO.findByUuid(accountPlan.getNetwork());
         if (network != null && network.getState() != BubbleNetworkState.stopped) {
-            throw invalidEx("err.accountPlan.stopNetworkBeforeDeleting");
+            networkService.stopNetwork(network);
         }
         update(accountPlan.setDeleted(now()).setEnabled(false));
         if (accountPlan.getNetwork() == null && accountPlan.getDeletedNetwork() != null) {
