@@ -40,11 +40,6 @@ For commercial use, please contact jonathan@kyuss.org
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.cobbzilla</groupId>
-            <artifactId>wizard-client</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
 
         <!-- RDBMS persistence -->
         <dependency>
