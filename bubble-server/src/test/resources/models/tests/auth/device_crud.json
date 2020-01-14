@@ -117,10 +117,10 @@
   },
 
   {
-    "comment": "as user, try to get vpn config. should return 404 but not 403",
+    "comment": "as user, try to get vpn config. should return 422 but not 403",
     "request": { "uri": "me/devices/user-added-device/vpn/vpn.conf" },
     "response": {
-      "status": 404
+      "status": 422
     }
   },
 
