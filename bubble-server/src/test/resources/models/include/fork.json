@@ -5,15 +5,13 @@
     "params": {
       "rootUsername": "root",
       "rootPassword": "password",
-      "username": "user-<<rand 5>>",
-      "password": "<<rand 10>>",
       "email": "user-<<rand 5>>@example.com",
       "planVar": "plan",
-      "hostname": "api-<<rand 5>>",
+      "forkHost": "api-<<rand 5>>",
       "network": "_required",
       "domain": "{{defaultDomain}}",
       "locale": "en_US",
-      "timezone": "EST",
+      "timezone": "America/New_York",
       "plan": "bubble",
       "networkVar": "newNetwork",
       "networkConnectionVar": "newNetworkConnection",
@@ -21,6 +19,41 @@
       "compute": "VultrCompute",
       "region": "Atlanta"
     }
+  },
+
+  {
+    "comment": "add email contact for root user",
+    "include": "add_approved_contact",
+    "params": {
+      "username": "root",
+      "userSession": "rootSession",
+      "contactInfo": "<<email>>",
+      "contactLookup": "<<email>>"
+    }
+  },
+
+  {
+    "comment": "add an ssh key",
+    "request": {
+      "uri": "me/keys",
+      "method": "put",
+      "entity": {
+        "name": "root SSH key",
+        "sshPublicKey": "{{serverConfig.environment.TEST_SSH_KEY}}"
+      }
+    },
+    "response": {
+      "store": "sshKey"
+    }
+  },
+
+  {
+    "comment": "get payment methods, tokenize a credit card",
+    "request": { "uri": "paymentMethods" },
+    "response": {
+      "store": "paymentMethods"
+    },
+    "after": "stripe_tokenize_card"
   },
 
   {
@@ -34,7 +67,12 @@
         "locale": "<<locale>>",
         "timezone": "<<timezone>>",
         "plan": "<<plan>>",
-        "footprint": "<<footprint>>"
+        "footprint": "<<footprint>>",
+        "sshKey": "{{sshKey.uuid}}",
+        "paymentMethodObject": {
+          "paymentMethodType": "credit",
+          "paymentInfo": "{{stripeToken}}"
+        }
       }
     },
     "response": {
@@ -45,7 +83,7 @@
   {
     "comment": "fork the system; sets up the first node, which does the rest",
     "request": {
-      "uri": "me/networks/<<network>>/actions/fork/<<hostname>>.<<network>>.<<domain>>?cloud=<<urlEncode compute>>&region=<<urlEncode region>>",
+      "uri": "me/networks/<<network>>/actions/fork/<<forkHost>>.<<network>>.<<domain>>?cloud=<<urlEncode compute>>&region=<<urlEncode region>>",
       "method": "put"
     },
     "response": {
@@ -54,10 +92,10 @@
   },
 
   {
-    "before": "await_url me/networks/<<network>>/dns/find?type=A&name=<<hostname>>.<<network>>.<<domain>> 30m 10s await_json.length > 0",
+    "before": "await_url me/networks/<<network>>/dns/find?type=A&name=<<forkHost>>.<<network>>.<<domain>> 30m 10s await_json.length > 0",
     "comment": "list DNS for the forked network, should now see a DNS A record for new instance",
     "request": {
-      "uri": "me/networks/<<network>>/dns/find?type=A&name=<<hostname>>.<<network>>.<<domain>>"
+      "uri": "me/networks/<<network>>/dns/find?type=A&name=<<forkHost>>.<<network>>.<<domain>>"
     },
     "response": {
       "store": "dnsRecords",
@@ -68,11 +106,11 @@
   },
 
   {
-    "before": "await_url https://<<hostname>>.<<network>>.<<domain>>:{{serverConfig.nginxPort}}/api/.bubble 40m 20s",
+    "before": "await_url https://<<forkHost>>.<<network>>.<<domain>>:{{serverConfig.nginxPort}}/api/.bubble 40m 20s",
     "comment": "call API of deployed node, ensure it is running",
     "connection": {
       "name": "<<networkConnectionVar>>",
-      "baseUri": "https://<<hostname>>.<<network>>.<<domain>>:{{serverConfig.nginxPort}}/api"
+      "baseUri": "https://<<forkHost>>.<<network>>.<<domain>>:{{serverConfig.nginxPort}}/api"
     },
     "request": { "uri" : ".bubble" },
     "response": {

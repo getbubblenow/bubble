@@ -1,16 +1,15 @@
-[
-  {
-    "name": "bubble",
-    "chargeName": "BubbleStd",
-    "computeSizeType": "small",
-    "nodesIncluded": 1,
-    "additionalPerNodePrice": 1200,
-    "price": 1200,
-    "storageGbIncluded": 15,
-    "additionalStoragePerGbPrice": 2,
-    "bandwidthGbIncluded": 500,
-    "additionalBandwidthPerGbPrice": 2
-  }, {
+[{
+  "name": "bubble",
+  "chargeName": "BubbleVPN",
+  "computeSizeType": "small",
+  "nodesIncluded": 1,
+  "additionalPerNodePrice": 1200,
+  "price": 1200,
+  "storageGbIncluded": 15,
+  "additionalStoragePerGbPrice": 2,
+  "bandwidthGbIncluded": 500,
+  "additionalBandwidthPerGbPrice": 2
+}, {
   "name": "bubble_plus",
   "chargeName": "BubblePlus",
   "computeSizeType": "medium",
@@ -20,6 +19,17 @@
   "storageGbIncluded": 40,
   "additionalStoragePerGbPrice": 2,
   "bandwidthGbIncluded": 1000,
+  "additionalBandwidthPerGbPrice": 2
+}, {
+  "name": "bubble_big",
+  "chargeName": "BubbleBig",
+  "computeSizeType": "large",
+  "nodesIncluded": 1,
+  "additionalPerNodePrice": 2800,
+  "price": 2800,
+  "storageGbIncluded": 70,
+  "additionalStoragePerGbPrice": 2,
+  "bandwidthGbIncluded": 4000,
   "additionalBandwidthPerGbPrice": 2
 }//,
 //  {

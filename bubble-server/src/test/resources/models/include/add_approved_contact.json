@@ -21,7 +21,7 @@
     "connection": {"name": "<<userConnection>>"},
     "request": {
       "session": "<<userSession>>",
-      "uri": "users/<<username>>/policy/contacts/<<contactType>>/<<contactInfo>>"
+      "uri": "users/<<username>>/policy/contacts/<<contactType>>/<<urlEncode contactInfo>>"
     },
     "response": {
       "store": "existingContact",
@@ -71,7 +71,7 @@
     "connection": {"name": "<<rootConnection>>"},
     "request": {
       "session": "<<rootSession>>",
-      "uri": "debug/inbox/<<contactType>>/<<contactLookup>>?type=request&action=verify&target=account"
+      "uri": "debug/inbox/<<contactType>>/<<urlEncode contactLookup>>?type=request&action=verify&target=account"
     },
     "response": {
       "store": "<<contactType>>Inbox",
