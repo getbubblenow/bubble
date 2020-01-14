@@ -54,6 +54,29 @@ This code is available under the GNU Affero General Public License, version 3: h
                     <showWarnings>true</showWarnings>
                 </configuration>
             </plugin>
+
+            <!-- JUnit options -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M4</version>
+                <configuration>
+                    <forkCount>1</forkCount>
+                    <reuseForks>false</reuseForks>
+                    <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
+                    <includes>
+                        <include>bubble.test.DbInit</include>
+                        <include>bubble.test.AuthTest</include>
+                        <include>bubble.test.PaymentTest</include>
+                        <include>bubble.test.RecurringBillingTest</include>
+                        <include>bubble.test.DriverTest</include>
+                        <include>bubble.test.ProxyTest</include>
+                        <include>bubble.test.TrafficAnalyticsTest</include>
+                        <include>bubble.test.BackupTest</include>
+                        <include>bubble.test.NetworkTest</include>
+                    </includes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
