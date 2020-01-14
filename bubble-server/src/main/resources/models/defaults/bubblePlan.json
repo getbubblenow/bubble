@@ -11,7 +11,7 @@
   "additionalBandwidthPerGbPrice": 0
 }, {
   "name": "bubble_plus",
-  "chargeName": "BubbleVPN-Plus",
+  "chargeName": "BubblePlus",
   "computeSizeType": "medium",
   "nodesIncluded": 1,
   "additionalPerNodePrice": 0,
