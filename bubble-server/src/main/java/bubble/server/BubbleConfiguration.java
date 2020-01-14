@@ -63,7 +63,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String SPRING_DB_FILTER = "classpath:/spring-db-filter.xml";
 
     public static final String TAG_SAGE_LAUNCHER = "sageLauncher";
-    public static final String TAG_SAGE_UUID = "sageUuid";
+    public static final String TAG_NETWORK_UUID = "networkUuid";
     public static final String TAG_PAYMENTS_ENABLED = "paymentsEnabled";
     public static final String TAG_CLOUD_DRIVERS = "cloudDrivers";
     public static final String TAG_ENTITY_CLASSES = "entityClasses";
@@ -254,6 +254,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                 final ActivationService activationService = getBean(ActivationService.class);
                 publicSystemConfigs.set(MapBuilder.build(new Object[][]{
                         {TAG_ALLOW_REGISTRATION, thisNetwork == null ? null : thisNetwork.getBooleanTag(TAG_ALLOW_REGISTRATION, false)},
+                        {TAG_NETWORK_UUID, thisNetwork == null ? null : thisNetwork.getUuid()},
                         {TAG_SAGE_LAUNCHER, thisNetwork == null || isSageLauncher()},
                         {TAG_PAYMENTS_ENABLED, paymentsEnabled()},
                         {TAG_CLOUD_DRIVERS, getCloudDriverClasses()},

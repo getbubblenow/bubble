@@ -34,6 +34,8 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 @ECIndexes({ @ECIndex(unique=true, of={"account", "name"}) })
 public class BubblePlan extends IdentifiableBase implements HasAccount {
 
+    public static final int MAX_CHARGENAME_LEN = 12;
+
     public static final String[] CREATE_FIELDS = {
             "name", "chargeName", "enabled", "price", "period", "computeSizeType",
             "nodesIncluded", "additionalPerNodePrice",
@@ -55,8 +57,8 @@ public class BubblePlan extends IdentifiableBase implements HasAccount {
 
     @ECSearchable(filter=true) @ECField(index=30)
     @HasValue(message="err.chargeName.required")
-    @Size(message="err.chargeName.length")
-    @Column(nullable=false, updatable=false, length=12)
+    @Size(max=MAX_CHARGENAME_LEN, message="err.chargeName.length")
+    @Column(nullable=false, updatable=false, length=MAX_CHARGENAME_LEN)
     @Getter @Setter private String chargeName;
 
     public static final DateTimeFormatter MONTHLY_CHARGE_FORMAT = DateTimeFormat.forPattern("MMM-yyyy");

@@ -22,10 +22,16 @@ import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.dns.DnsRecordBase.dropTailingDot;
 import static org.cobbzilla.util.dns.DnsType.*;
 
 public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
+
+    public static final String STATUS_PENDING = "PENDING";
+    public static final String STATUS_INSYNC = "INSYNC";
+    public static final String MAX_ITEMS = "100";
+    public static final String TEST_MAX_ITEMS1 = "10";
 
     @Getter(lazy=true) private final AWSCredentialsProvider route53credentials = new BubbleAwsCredentialsProvider(cloud, getCredentials());
 
@@ -48,7 +54,7 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
     private HostedZone getHostedZone(BubbleDomain domain) {
         return getCachedZoneLookups().computeIfAbsent(domain.getName(), key -> {
             try {
-                final ListHostedZonesResult zones = getRoute53client().listHostedZones(new ListHostedZonesRequest().withMaxItems("100"));
+                final ListHostedZonesResult zones = getRoute53client().listHostedZones(new ListHostedZonesRequest().withMaxItems(MAX_ITEMS));
                 for (HostedZone z : zones.getHostedZones()) {
                     if (z.getName().equalsIgnoreCase(key + ".")) return z;
                 }
@@ -60,7 +66,7 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
     }
 
     @Override public boolean test() {
-        getRoute53client().listHostedZones(new ListHostedZonesRequest().withMaxItems("10"));
+        getRoute53client().listHostedZones(new ListHostedZonesRequest().withMaxItems(TEST_MAX_ITEMS1));
         return true;
     }
 
@@ -72,7 +78,7 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
         final ListResourceRecordSetsResult soaRecords = client.listResourceRecordSets(new ListResourceRecordSetsRequest()
                 .withHostedZoneId(hostedZone.getId())
                 .withStartRecordName(domain.getName())
-                .withMaxItems("100")
+                .withMaxItems(MAX_ITEMS)
                 .withStartRecordType(SOA.name()));
         if (soaRecords.isTruncated()) {
             // should never happen
@@ -90,7 +96,7 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
         final ListResourceRecordSetsResult nsRecords = client.listResourceRecordSets(new ListResourceRecordSetsRequest()
                 .withHostedZoneId(hostedZone.getId())
                 .withStartRecordName(domain.getName())
-                .withMaxItems("100")
+                .withMaxItems(MAX_ITEMS)
                 .withStartRecordType(NS.name()));
         if (nsRecords.isTruncated()) {
             // should never happen
@@ -156,7 +162,7 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
                         .withAction(ChangeAction.UPSERT)
                         .withResourceRecordSet(toRoute53RecordSet(record)))));
         switch (changeResult.getChangeInfo().getStatus()) {
-            case "PENDING": case "INSYNC": return record;
+            case STATUS_PENDING: case STATUS_INSYNC: return record;
             default: return die("update: unrecognized changeResult.changeInfo.status: "+changeResult.getChangeInfo().getStatus());
         }
     }
@@ -170,11 +176,15 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
                 .withHostedZoneId(hostedZone.getId())
                 .withStartRecordName(record.getFqdn())
                 .withStartRecordType(record.getType().name())
-                .withMaxItems("100");
+                .withMaxItems(MAX_ITEMS);
         ListResourceRecordSetsResult recordSets = client.listResourceRecordSets(listRequest);
 
         final DnsRecordMatch matcher = record.getMatcher();
         final List<ResourceRecordSet> toDelete = rawMatches(recordSets.getResourceRecordSets(), matcher);
+        if (empty(toDelete)) {
+            log.warn("remove("+record+"): no matching record(s) found");
+            return null;
+        }
 
         final ChangeResourceRecordSetsRequest changeRequest = new ChangeResourceRecordSetsRequest()
                 .withHostedZoneId(hostedZone.getId())
@@ -185,8 +195,8 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
 
         final ChangeResourceRecordSetsResult changeResult = client.changeResourceRecordSets(changeRequest);
         switch (changeResult.getChangeInfo().getStatus()) {
-            case "PENDING": case "INSYNC": return record;
-            default: return die("update: changeResult.changeInfo.status was "+changeResult.getChangeInfo().getStatus());
+            case STATUS_PENDING: case STATUS_INSYNC: return record;
+            default: return die("remove: changeResult.changeInfo.status was "+changeResult.getChangeInfo().getStatus());
         }
     }
 
@@ -200,7 +210,7 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
                 .withHostedZoneId(hostedZone.getId())
                 .withStartRecordName(matcher.hasFqdn() ? matcher.getFqdn() : domain.getName())
                 .withStartRecordType(matcher.hasType() ? matcher.getType().name() : null)
-                .withMaxItems("100");
+                .withMaxItems(MAX_ITEMS);
         ListResourceRecordSetsResult recordSets = client.listResourceRecordSets(listRequest);
 
         final List<DnsRecord> matched = matches(recordSets.getResourceRecordSets(), matcher);

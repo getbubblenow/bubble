@@ -34,9 +34,9 @@ public enum NotificationType {
     // driver-level notifications
 
     // delegated dns driver notifications
-    dns_driver_set_domain (DnsRecord[].class),
-    dns_driver_set_node (DnsRecord[].class),
     dns_driver_set_network (DnsRecord[].class),
+    dns_driver_set_node (DnsRecord[].class),
+    dns_driver_delete_node (DnsRecord[].class),
     dns_driver_create (DnsRecord[].class),
     dns_driver_list (DnsRecord[].class),
     dns_driver_update (DnsRecord.class),
@@ -44,16 +44,16 @@ public enum NotificationType {
     dns_driver_response (true),
 
     // delegated geo driver notifications
-    geoLocation_driver_geolocate(GeoLocation.class),
-    geoLocation_driver_response(true),
+    geoLocation_driver_geolocate (GeoLocation.class),
+    geoLocation_driver_response (true),
 
     // delegate geo code driver notifications
-    geoCode_driver_geocode(GeoCodeResult.class),
-    geoCode_driver_response(true),
+    geoCode_driver_geocode (GeoCodeResult.class),
+    geoCode_driver_response (true),
 
     // delegate geo time driver notifications
-    geoTime_driver_geotime(GeoTimeZone.class),
-    geoTime_driver_response(true),
+    geoTime_driver_geotime (GeoTimeZone.class),
+    geoTime_driver_response (true),
 
     // delegated compute driver notifications
     compute_driver_get_sizes (ComputeNodeSize[].class),

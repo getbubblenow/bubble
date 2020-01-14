@@ -40,6 +40,7 @@ public interface DnsServiceDriver extends CloudServiceDriver {
 
     Collection<DnsRecord> setNetwork(BubbleNetwork network);
     Collection<DnsRecord> setNode(BubbleNode node);
+    Collection<DnsRecord> deleteNode(BubbleNode node);
 
     DnsRecord update(DnsRecord record);
     DnsRecord remove(DnsRecord record);

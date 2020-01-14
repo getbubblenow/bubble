@@ -277,10 +277,10 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public boolean locked() {
         if (unlocked.get()) return false;
-        // if any accounts are unlocked, the bubble is unlocked
-        final boolean anyAccountUnlocked = !findByField("locked", false).isEmpty();
-        if (anyAccountUnlocked) unlocked.set(true);
-        return anyAccountUnlocked;
+        // if any admins are unlocked, the bubble is unlocked
+        final boolean anyAdminUnlocked = !findByFields("admin", true, "locked", false).isEmpty();
+        if (anyAdminUnlocked) unlocked.set(true);
+        return !anyAdminUnlocked;
     }
 
     // The admin with the lowest ctime is 'root'

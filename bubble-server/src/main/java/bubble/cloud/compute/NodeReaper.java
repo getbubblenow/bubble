@@ -1,7 +1,11 @@
 package bubble.cloud.compute;
 
+import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
+import bubble.dao.cloud.CloudServiceDAO;
+import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.daemon.SimpleDaemon;
@@ -28,6 +32,8 @@ public class NodeReaper extends SimpleDaemon {
     @Override protected long getSleepTime() { return KILL_CHECK_INTERVAL; }
 
     @Autowired private BubbleNodeDAO nodeDAO;
+    @Autowired private BubbleDomainDAO domainDAO;
+    @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleConfiguration configuration;
 
     private String prefix() { return compute.getClass().getSimpleName()+": "; }
@@ -46,8 +52,12 @@ public class NodeReaper extends SimpleDaemon {
         if (found == null) {
             if (wouldKillSelf(node)) return;
             log.warn(prefix()+"processNode: no node exists with ip4="+node.getIp4()+", killing it");
+            final BubbleDomain domain = domainDAO.findByUuid(node.getDomain());
+            final CloudService dns = cloudDAO.findByUuid(domain.getPublicDns());
             try {
+                dns.getDnsDriver(configuration).deleteNode(node);
                 compute.stop(node);
+
             } catch (Exception e) {
                 log.error(prefix()+"processNode: error stopping node "+node.getIp4()+": "+e);
             }

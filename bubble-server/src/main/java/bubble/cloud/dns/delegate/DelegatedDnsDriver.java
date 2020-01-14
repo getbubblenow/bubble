@@ -37,6 +37,12 @@ public class DelegatedDnsDriver extends DelegatedCloudServiceDriverBase implemen
         return Arrays.asList(records);
     }
 
+    @Override public Collection<DnsRecord> deleteNode(BubbleNode node) {
+        final BubbleNode delegate = getDelegateNode();
+        final DnsRecord[] records = notificationService.notifySync(delegate, dns_driver_delete_node, notification(new DnsDriverNotification(node)));
+        return Arrays.asList(records);
+    }
+
     @Override public DnsRecord update(DnsRecord record) {
         final BubbleNode delegate = getDelegateNode();
         return notificationService.notifySync(delegate, dns_driver_update, notification(record));

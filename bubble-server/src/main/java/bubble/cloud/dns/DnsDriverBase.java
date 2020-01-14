@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
@@ -90,27 +91,43 @@ public abstract class DnsDriverBase<T> extends CloudServiceDriverBase<T> impleme
 
     @Override public Collection<DnsRecord> setNode(BubbleNode node) {
         final DnsServiceDriver dns = cloud.getDnsDriver(configuration);
-        final Collection<DnsRecord> records = new ArrayList<>();
-        BubbleNetwork network = null;
-        if (node.hasIp4()) {
-            log.info("setRecords: setting IP4: "+node.getFqdn()+":"+node.getIp4());
-            network = networkDAO.findByUuid(node.getNetwork());
-            if (network == null) return die("setNode: network not found: "+node.getNetwork());
+        final BubbleNetwork network = networkDAO.findByUuid(node.getNetwork());
+        if (network == null) return die("setNode: network not found: "+node.getNetwork());;
+        if (!node.hasIp4() && !node.hasIp6()) return die("setNode: both ip4 and ip6 are null: "+node.id());
 
-            records.add(dns.update((DnsRecord) new DnsRecord()
+        final Collection<DnsRecord> records = getNodeRecords(node, network);
+        records.forEach(dns::update);
+        return records;
+    }
+
+    @Override public Collection<DnsRecord> deleteNode(BubbleNode node) {
+        final DnsServiceDriver dns = cloud.getDnsDriver(configuration);
+        final BubbleNetwork network = networkDAO.findByUuid(node.getNetwork());
+        if (network == null) return die("deleteNode: network not found: "+node.getNetwork());;
+
+        final Collection<DnsRecord> records = getNodeRecords(node, network);
+        records.forEach(dns::remove);
+        return records;
+    }
+
+    protected Collection<DnsRecord> getNodeRecords(BubbleNode node, BubbleNetwork network) {
+        final List<DnsRecord> records = new ArrayList<>();
+        if (node.hasIp4()) {
+            records.add((DnsRecord) new DnsRecord()
                     .setType(DnsType.A)
                     .setValue(node.getIp4())
-                    .setFqdn(node.getFqdn())));
+                    .setFqdn(node.getFqdn()));
         }
         if (node.hasIp6()) {
-            if (network == null) network = networkDAO.findByUuid(node.getNetwork());
-            if (network == null) return die("setNode: network not found: "+node.getNetwork());
-
-            records.add(dns.update((DnsRecord) new DnsRecord()
+            records.add((DnsRecord) new DnsRecord()
                     .setType(DnsType.AAAA)
                     .setValue(node.getIp6())
-                    .setFqdn(node.getFqdn())));
+                    .setFqdn(node.getFqdn()));
         }
+        records.add((DnsRecord) new DnsRecord()
+                .setType(DnsType.CNAME)
+                .setFqdn(network.getNetworkDomain())
+                .setValue(node.getFqdn()));
         return records;
     }
 

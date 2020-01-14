@@ -2,7 +2,7 @@ package bubble.cloud.dns.godaddy;
 
 import bubble.cloud.dns.DnsDriverBase;
 import bubble.model.cloud.BubbleDomain;
-import org.apache.http.HttpHeaders;
+import lombok.Getter;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.dns.DnsRecord;
 import org.cobbzilla.util.dns.DnsRecordMatch;
@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.dns.DnsType.NS;
@@ -25,7 +26,8 @@ import static org.cobbzilla.util.dns.DnsType.SOA;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpMethods.PATCH;
 import static org.cobbzilla.util.http.HttpMethods.PUT;
-import static org.cobbzilla.util.json.JsonUtil.*;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
+import static org.cobbzilla.util.json.JsonUtil.json;
 
 public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
 
@@ -122,6 +124,10 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
             final Collection<GoDaddyDnsRecord> retained = Arrays.stream(gdRecords)
                     .filter(r ->  nonMatcher.matches(r.toDnsRecord(domain.get())))
                     .collect(Collectors.toList());
+            if (empty(retained)) {
+                log.warn("remove("+record+"): no matching record(s) found");
+                return null;
+            }
             final HttpRequestBean remove = auth(url)
                     .setMethod(PUT)
                     .setHeader(CONTENT_TYPE, APPLICATION_JSON)
@@ -200,13 +206,11 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
         });
     }
 
-    public HttpRequestBean auth(String url) { return new HttpRequestBean(url).setHeader(HttpHeaders.AUTHORIZATION, authValue()); }
+    public HttpRequestBean auth(String url) { return new HttpRequestBean(url).setHeader(AUTHORIZATION, getAuthValue()); }
 
-    public String authValue() {
-        return "sso-key "
-                + getCredentials().getParam("GODADDY_API_KEY")
-                + ":" + getCredentials().getParam("GODADDY_API_SECRET");
-    }
+    @Getter(lazy=true) private final String authValue = "sso-key "
+            + getCredentials().getParam("GODADDY_API_KEY")
+            + ":" + getCredentials().getParam("GODADDY_API_SECRET");
 
     @Override public Collection<DnsRecord> listNew(Long lastMod) {
         return list(); // not supported, we always return all matches

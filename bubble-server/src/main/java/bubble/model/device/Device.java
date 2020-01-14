@@ -3,6 +3,8 @@ package bubble.model.device;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccount;
 import bubble.model.cloud.BubbleNetwork;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -89,7 +91,10 @@ public class Device extends IdentifiableBase implements HasAccount {
 
     @Size(max=300, message="err.totpKey.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(300+ENC_PAD)+") NOT NULL")
-    @Getter @Setter private String totpKey;
+    @JsonIgnore @Getter @Setter private String totpKey;
     public Device initTotpKey() { return setTotpKey(randomAlphanumeric(200)); }
+
+    // make ctime visible
+    @JsonProperty public long getCtime () { return super.getCtime(); }
 
 }

@@ -107,6 +107,12 @@ public class NetworkActionsResource {
                                        @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();
+
+        // must request from the network you are on
+        if (!network.getUuid().equals(configuration.getThisNetwork().getUuid())) {
+            return invalid("err.networkKeys.mustRequestFromSameNetwork");
+        }
+
         final AccountPolicy policy = policyDAO.findSingleByAccount(caller.getUuid());
         if (policy == null || !policy.hasVerifiedAccountContacts()) {
             return invalid("err.networkKeys.noVerifiedContacts");
