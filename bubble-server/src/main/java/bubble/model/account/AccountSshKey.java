@@ -42,7 +42,6 @@ public class AccountSshKey extends IdentifiableBase implements HasAccount {
     @HasValue(message="err.name.required")
     @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=100)
     @Getter @Setter private String name;
-    public boolean hasName () { return !empty(name); }
 
     @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=Account.class)

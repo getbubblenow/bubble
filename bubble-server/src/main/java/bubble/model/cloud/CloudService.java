@@ -102,7 +102,7 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     @ECIndex @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private CloudServiceType type;
 
-    @ECSearchable @ECField(index=50)
+    @ECSearchable @ECField(index=50) @Column(nullable=false)
     @ECIndex @Getter @Setter private Integer priority = 1;
 
     @ECSearchable @ECField(index=60)

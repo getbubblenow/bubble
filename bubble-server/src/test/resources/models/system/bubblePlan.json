@@ -20,39 +20,4 @@
   "additionalStoragePerGbPrice": 2,
   "bandwidthGbIncluded": 1000,
   "additionalBandwidthPerGbPrice": 2
-}, {
-  "name": "bubble_big",
-  "chargeName": "BubbleBig",
-  "computeSizeType": "large",
-  "nodesIncluded": 1,
-  "additionalPerNodePrice": 2800,
-  "price": 2800,
-  "storageGbIncluded": 70,
-  "additionalStoragePerGbPrice": 2,
-  "bandwidthGbIncluded": 4000,
-  "additionalBandwidthPerGbPrice": 2
-}//,
-//  {
-//    "name": "bubble_pro",
-//    "chargeName": "BubblePro",
-//    "computeSizeType": "small",
-//    "nodesIncluded": 2,
-//    "additionalPerNodePrice": 1200,
-//    "price": 2500,
-//    "storageGbIncluded": 25,
-//    "additionalStoragePerGbPrice": 2,
-//    "bandwidthGbIncluded": 1000,
-//    "additionalBandwidthPerGbPrice": 2
-//  },
-//  {
-//    "name": "bubble_power_user",
-//    "computeSizeType": "medium",
-//    "nodesIncluded": 3,
-//    "additionalPerNodePrice": 2500,
-//    "price": 7500,
-//    "storageGbIncluded": 50,
-//    "additionalStoragePerGbPrice": 2,
-//    "bandwidthGbIncluded": 2000,
-//    "additionalBandwidthPerGbPrice": 2
-//  }
-]
+}]

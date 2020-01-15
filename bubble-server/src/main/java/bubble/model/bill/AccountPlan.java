@@ -22,6 +22,7 @@ import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
 import static bubble.model.bill.BillPeriod.BILL_START_END_FORMAT;
+import static bubble.model.cloud.BubbleNetwork.NETWORK_NAME_MAXLEN;
 import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
@@ -50,8 +51,8 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
 
     // mirrors network name
     @ECSearchable(filter=true) @ECField(index=10)
-    @Size(max=100, message="err.name.length")
-    @Column(length=100, nullable=false)
+    @Size(max=NETWORK_NAME_MAXLEN, message="err.name.length")
+    @Column(length=NETWORK_NAME_MAXLEN, nullable=false)
     @Getter @Setter private String name;
 
     @ECSearchable @ECField(index=20)
@@ -138,6 +139,9 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Transient @Getter @Setter private transient AccountPaymentMethod paymentMethodObject = null;
     public boolean hasPaymentMethodObject () { return paymentMethodObject != null; }
 
+    @Transient @Getter @Setter private transient String forkHost = null;
+    public boolean hasForkHost () { return !empty(forkHost); }
+
     public BubbleNetwork bubbleNetwork(Account account,
                                        BubbleDomain domain,
                                        BubblePlan plan,
@@ -153,7 +157,8 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
                 .setDomainName(domain.getName())
                 .setFootprint(getFootprint())
                 .setComputeSizeType(plan.getComputeSizeType())
-                .setStorage(storage.getUuid());
+                .setStorage(storage.getUuid())
+                .setForkHost(hasForkHost() ? getForkHost() : null);
     }
 
 }

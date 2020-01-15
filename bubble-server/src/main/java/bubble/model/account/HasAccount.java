@@ -10,6 +10,5 @@ public interface HasAccount extends Identifiable, NamedEntity, SqlViewSearchResu
     <E> E setAccount (String account);
     default boolean hasAccount () { return getAccount() != null; }
     String getName();
-    default boolean hasName() { return getName() != null; }
 
 }

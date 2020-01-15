@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.collection.HasPriority;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
@@ -32,13 +33,13 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 })
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({ @ECIndex(unique=true, of={"account", "name"}) })
-public class BubblePlan extends IdentifiableBase implements HasAccount {
+public class BubblePlan extends IdentifiableBase implements HasAccount, HasPriority {
 
     public static final int MAX_CHARGENAME_LEN = 12;
 
     public static final String[] CREATE_FIELDS = {
-            "name", "chargeName", "enabled", "price", "period", "computeSizeType",
-            "nodesIncluded", "additionalPerNodePrice",
+            "name", "chargeName", "enabled", "priority", "price", "period",
+            "computeSizeType", "nodesIncluded", "additionalPerNodePrice",
             "storageGbIncluded", "additionalStoragePerGbPrice",
             "bandwidthGbIncluded", "additionalBandwidthPerGbPrice"
     };
@@ -77,27 +78,30 @@ public class BubblePlan extends IdentifiableBase implements HasAccount {
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
-    @ECSearchable @ECField(index=50)
+    @ECSearchable @ECField(index=50) @Column(nullable=false)
+    @ECIndex @Getter @Setter private Integer priority = 1;
+
+    @ECSearchable @ECField(index=60)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Long price;
 
-    @ECSearchable @ECField(index=60)
+    @ECSearchable @ECField(index=70)
     @ECIndex @Column(nullable=false, length=10)
     @Getter @Setter private String currency = "USD";
 
-    @ECSearchable @ECField(index=70)
+    @ECSearchable @ECField(index=80)
     @Enumerated(EnumType.STRING) @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private BillPeriod period = BillPeriod.monthly;
 
-    @ECSearchable @ECField(index=80)
+    @ECSearchable @ECField(index=90)
     @ECIndex @Column(nullable=false, updatable=false, length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private ComputeNodeSizeType computeSizeType;
 
-    @ECSearchable @ECField(index=90)
+    @ECSearchable @ECField(index=100)
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer nodesIncluded;
 
-    @ECSearchable @ECField(index=100)
+    @ECSearchable @ECField(index=110)
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer additionalPerNodePrice;
 

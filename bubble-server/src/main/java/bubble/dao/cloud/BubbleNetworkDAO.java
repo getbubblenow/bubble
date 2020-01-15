@@ -12,6 +12,7 @@ import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.NetworkService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -19,7 +20,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static bubble.model.cloud.BubbleNetwork.validateHostname;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Repository @Slf4j
 public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
@@ -34,6 +37,9 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
     @Autowired private BubbleConfiguration configuration;
 
     @Override public Object preCreate(BubbleNetwork network) {
+        final ValidationResult errors = validateHostname(network);
+        if (errors.isInvalid()) throw invalidEx(errors);
+
         if (!network.hasLocale()) network.setLocale(getDEFAULT_LOCALE());
         return super.preCreate(network);
     }

@@ -1,6 +1,6 @@
 
 server {
-    server_name {{ server_name }};
+    server_name {{ server_name }} {{ server_alias }};
     listen {{ ssl_port }} ssl http2;
 
     ssl_certificate /etc/letsencrypt/live/{{ server_name }}/fullchain.pem;

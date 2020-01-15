@@ -1,5 +1,6 @@
 [{
   "name": "bubble",
+  "priority": 1000,
   "chargeName": "BubbleVPN",
   "computeSizeType": "small",
   "nodesIncluded": 1,
@@ -11,6 +12,7 @@
   "additionalBandwidthPerGbPrice": 0
 }, {
   "name": "bubble_plus",
+  "priority": 2000,
   "chargeName": "BubblePlus",
   "computeSizeType": "medium",
   "nodesIncluded": 1,

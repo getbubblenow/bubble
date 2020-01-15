@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
+import static org.cobbzilla.util.string.ValidationRegexes.HOST_PART_PATTERN;
+import static org.cobbzilla.util.string.ValidationRegexes.validateRegexMatches;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Slf4j
@@ -113,6 +115,16 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             }
         } else {
             request.setSshKey(null); // if it's an empty string, make it null (see simple_network test)
+        }
+
+        if (request.hasForkHost()) {
+            if (!configuration.isSageLauncher()) {
+                errors.addViolation("err.forkHost.notAllowed");
+            } else if (!validateRegexMatches(HOST_PART_PATTERN, request.getForkHost())) {
+                errors.addViolation("err.forkHost.invalid");
+            }
+        } else {
+            BubbleNetwork.validateHostname(request, errors);
         }
 
         final BubbleDomain domain = domainDAO.findByAccountAndId(caller.getUuid(), request.getDomain());

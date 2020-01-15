@@ -14,9 +14,11 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.NamedEntity;
 import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
+import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
@@ -33,6 +35,8 @@ import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
+import static org.cobbzilla.util.string.ValidationRegexes.HOST_PART_PATTERN;
+import static org.cobbzilla.util.string.ValidationRegexes.validateRegexMatches;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
@@ -67,9 +71,13 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
 
     @Transient @JsonIgnore public String getNetwork () { return getUuid(); }
 
+    public static final int NETWORK_NAME_MAXLEN = 100;
+    public static final int NETWORK_NAME_MINLEN = 4;
+
     @ECSearchable @ECField(index=10)
     @HasValue(message="err.name.required")
-    @ECIndex @Column(nullable=false, updatable=false, length=200)
+    @Size(min=NETWORK_NAME_MINLEN, max=NETWORK_NAME_MAXLEN, message="err.name.length")
+    @ECIndex @Column(nullable=false, updatable=false, length=NETWORK_NAME_MAXLEN)
     @Getter @Setter private String name;
 
     @ECSearchable @ECField(index=20)
@@ -143,4 +151,22 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
         }
         return die("hostFromFqdn("+fqdn+"): expected suffix ."+getNetworkDomain());
     }
+
+    public static ValidationResult validateHostname(NamedEntity request) {
+        return validateHostname(request, new ValidationResult());
+    }
+
+    public static ValidationResult validateHostname(NamedEntity request, ValidationResult errors) {
+        if (!request.hasName()) {
+            errors.addViolation("err.name.required");
+        } else if (!validateRegexMatches(HOST_PART_PATTERN, request.getName())) {
+            errors.addViolation("err.name.invalid");
+        } else if (request.getName().length() > NETWORK_NAME_MAXLEN) {
+            errors.addViolation("err.name.length");
+        } else if (request.getName().length() < NETWORK_NAME_MINLEN) {
+            errors.addViolation("err.name.tooShort");
+        }
+        return errors;
+    }
+
 }
