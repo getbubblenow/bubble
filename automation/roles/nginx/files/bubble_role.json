@@ -4,7 +4,7 @@
   "template": true,
   "config": [
     {"name": "server_name", "value": "[[node.fqdn]]"},
-    {"name": "server_alias", "value": "[[node.networkDomain]]"},
+    {"name": "server_alias", "value": "[[network.networkDomain]]"},
     {"name": "letsencrypt_email", "value": "[[configuration.letsencryptEmail]]"},
     {"name": "ssl_port", "value": "[[configuration.nginxPort]]"},
     {"name": "admin_port", "value": "[[node.adminPort]]"}

@@ -12,7 +12,7 @@
     {"name": "default_locale", "value": "[[network.locale]]"},
     {"name": "bubble_version", "value": "[[configuration.version]]"},
     {"name": "bubble_host", "value": "[[node.fqdn]]"},
-    {"name": "bubble_cname", "value": "[[node.networkDomain]]"},
+    {"name": "bubble_cname", "value": "[[network.networkDomain]]"},
     {"name": "admin_user", "value": "[[node.user]]"},
     {"name": "db_encoding", "value": "UTF-8"},
     {"name": "db_locale", "value": "en_US"},
