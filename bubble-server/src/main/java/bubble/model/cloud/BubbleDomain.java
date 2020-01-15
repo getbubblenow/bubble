@@ -13,6 +13,7 @@ import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
+import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.EP_DOMAINS;
 import static bubble.model.cloud.AnsibleRole.sameRoleName;
+import static org.apache.commons.lang3.StringUtils.countMatches;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.dns.DnsType.NS;
 import static org.cobbzilla.util.dns.DnsType.SOA;
@@ -141,13 +143,23 @@ public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
         return addRole(current);
     }
 
-    public String networkFromFqdn(String fqdn) {
-        if (fqdn.endsWith("."+getName())) {
-            final String prefix = fqdn.substring(0, fqdn.length() - ("." + getName()).length());
-            final int lastDot = prefix.lastIndexOf('.');
-            return lastDot == -1 ? prefix : prefix.substring(lastDot+1);
+    public String networkFromFqdn(String fqdn, ValidationResult errors) {
+        if (!fqdn.endsWith("."+getName())) {
+            errors.addViolation("err.fqdn.outOfNetwork");
+            return null;
         }
-        return die("networkFromFqdn("+fqdn+"): expected suffix ."+getName());
+        final String prefix = fqdn.substring(0, fqdn.length() - ("." + getName()).length());
+        final int dotCount = countMatches(prefix, '.');
+        if (dotCount != -1) {
+            errors.addViolation("err.fqdn.invalid");
+            return null;
+        }
+        final int lastDot = prefix.lastIndexOf('.');
+        if (lastDot == -1) {
+            errors.addViolation("err.fqdn.invalid");
+            return null;
+        }
+        return prefix.substring(lastDot+1);
     }
 
     public DnsRecordMatch matchSOA() {

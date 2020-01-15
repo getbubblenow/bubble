@@ -22,6 +22,7 @@ import bubble.service.cloud.StandardNetworkService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
+import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -188,7 +189,11 @@ public class NetworkActionsResource {
         final BubbleDomain domain = domainDAO.findByFqdn(fqdn);
         if (domain == null) return invalid("err.fqdn.domain.invalid", "domain not found for "+fqdn, fqdn);
 
-        final String netName = domain.networkFromFqdn(fqdn);
+        final ValidationResult errors = new ValidationResult();
+        final String netName = domain.networkFromFqdn(fqdn, errors);
+        if (errors.isInvalid()) throw invalidEx(errors);
+        if (netName == null) throw invalidEx("err.fqdn.invalid");
+
         final BubbleNetwork network = networkDAO.findByAccountAndId(caller.getUuid(), netName);
         if (network == null) return invalid("err.fqdn.network.invalid", "network not found for "+fqdn, fqdn);
 

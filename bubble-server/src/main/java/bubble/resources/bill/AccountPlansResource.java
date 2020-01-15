@@ -23,7 +23,6 @@ import bubble.resources.account.AccountOwnedResource;
 import bubble.server.BubbleConfiguration;
 import bubble.service.AuthenticatorService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.util.StringUtil;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -39,7 +38,8 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.model.cloud.BubbleNetwork.validateHostname;
-import static org.cobbzilla.util.string.ValidationRegexes.*;
+import static org.cobbzilla.util.string.ValidationRegexes.HOST_PATTERN;
+import static org.cobbzilla.util.string.ValidationRegexes.validateRegexMatches;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Slf4j
@@ -137,14 +137,8 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                 } else if (domain != null && !forkHost.endsWith("."+domain.getName())) {
                     errors.addViolation("err.forkHost.domainMismatch");
                 } else if (domain != null) {
-                    final String nameWithoutDomain = forkHost.substring(0, forkHost.length()-domain.getName().length()-1);
-                    final int dotCount = StringUtil.countMatches(nameWithoutDomain, '.');
-                    if (dotCount != 1) {
-                        errors.addViolation("err.forkHost.invalid");
-                    } else {
-                        request.setName(nameWithoutDomain.substring(nameWithoutDomain.indexOf('.') + 1));
-                        validateHostname(request, errors);
-                    }
+                    request.setName(domain.networkFromFqdn(forkHost, errors));
+                    validateHostname(request, errors);
                 }
             }
         } else {
