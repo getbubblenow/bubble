@@ -104,7 +104,7 @@ public class AnsiblePrepService {
                     for (NameAndValue cfg : role.getConfig()) {
                         final String cfgName = cfg.getName();
                         final String rawVal = cfg.getValue();
-                        String value = HandlebarsUtil.apply(handlebars, rawVal, ctx);
+                        final String value = HandlebarsUtil.apply(handlebars, rawVal, ctx);
                         if (value == null || value.trim().length() == 0) {
                             if (!role.hasOptionalConfigNames() || !role.isOptionalConfigName(cfgName)) {
                                 errors.addViolation("err.role.config." + cfgName + ".required", "value for " + cfgName + " evaluated to empty string");

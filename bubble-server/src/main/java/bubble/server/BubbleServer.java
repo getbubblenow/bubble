@@ -14,6 +14,7 @@ import org.cobbzilla.wizard.server.RestServerLifecycleListener;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
 import org.cobbzilla.wizard.server.config.factory.ConfigurationSource;
 import org.cobbzilla.wizard.server.listener.BrowserLauncherListener;
+import org.cobbzilla.wizard.server.listener.ErrbitConfigListener;
 import org.cobbzilla.wizard.server.listener.FlywayMigrationListener;
 import org.cobbzilla.wizard.server.listener.SystemInitializerListener;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -41,6 +42,7 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
     public static final String BUBBLE_DUMP_CONFIG = "BUBBLE_DUMP_CONFIG";
 
     public static final List<RestServerLifecycleListener> LIFECYCLE_LISTENERS = Arrays.asList(new RestServerLifecycleListener[] {
+            new ErrbitConfigListener(),
             new SystemInitializerListener(),
             new FlywayMigrationListener<BubbleConfiguration>(),
             new NodeInitializerListener(),

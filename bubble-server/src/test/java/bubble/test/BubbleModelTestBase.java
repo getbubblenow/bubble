@@ -20,6 +20,7 @@ import org.cobbzilla.wizard.client.script.ApiRunnerListener;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListener;
 import org.cobbzilla.wizard.server.config.factory.StreamConfigurationSource;
+import org.cobbzilla.wizard.server.listener.ErrbitConfigListener;
 import org.cobbzilla.wizardtest.resources.ApiModelTestBase;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -44,6 +45,7 @@ import static org.cobbzilla.util.system.CommandShell.loadShellExportsOrDie;
 public abstract class BubbleModelTestBase extends ApiModelTestBase<BubbleConfiguration, BubbleServer> {
 
     public static final List<RestServerLifecycleListener> TEST_LIFECYCLE_LISTENERS = asList(new RestServerLifecycleListener[] {
+            new ErrbitConfigListener(),
             new NodeInitializerListener()
     });
 

@@ -60,9 +60,13 @@ redis:
   key: '{{#exists BUBBLE_REDIS_ENCRYPTION_KEY}}{{BUBBLE_REDIS_ENCRYPTION_KEY}}{{else}}{{key_file '.BUBBLE_REDIS_ENCRYPTION_KEY'}}{{/exists}}'
   prefix: bubble_
 
+errorApi:
+  url: {{ERRBIT_URL}}
+  key: {{ERRBIT_KEY}}
+  env: {{ERRBIT_ENV}}
+
 letsencryptEmail: {{LETSENCRYPT_EMAIL}}
 localStorageDir: {{LOCALSTORAGE_BASE_DIR}}
 
-# US OFAC list
-disallowedCountries: [IR, KP, SY, SD, CU, VE]
+disallowedCountries: {{DISALLOWED_COUNTRIES}}
 paymentsEnabled: {{BUBBLE_PAYMENTS_ENABLED}}
