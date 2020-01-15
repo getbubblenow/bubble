@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ANSIBLE_USER="{{node.user}}"
-ANSIBLE_HOME="$(cd ~${ANSIBLE_USER} && pwd)"
+ANSIBLE_HOME="$(cd ~{{node.user}} && pwd)"
 LOG="${ANSIBLE_HOME}/.ansible.log"
 
 function log {
