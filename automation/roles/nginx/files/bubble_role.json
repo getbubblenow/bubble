@@ -7,7 +7,8 @@
     {"name": "server_alias", "value": "[[network.networkDomain]]"},
     {"name": "letsencrypt_email", "value": "[[configuration.letsencryptEmail]]"},
     {"name": "ssl_port", "value": "[[configuration.nginxPort]]"},
-    {"name": "admin_port", "value": "[[node.adminPort]]"}
+    {"name": "admin_port", "value": "[[node.adminPort]]"},
+    {"name": "install_type", "value": "[[installType]]"}
   ],
   "tgzB64": ""
 }

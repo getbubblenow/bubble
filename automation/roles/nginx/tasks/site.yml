@@ -3,8 +3,17 @@
     path: /etc/nginx/sites-enabled/default
     state: absent
 
-- name: Create default site
-  template: src=site.conf.j2 dest=/etc/nginx/sites-available/{{ server_name }}.conf
+- name: Create the .well-known directory
+  file:
+    path: /var/www/html/.well-known
+    owner: www-data
+    group: www-data
+    state: directory
+
+- name: Create default nginx site (type={{ install_type }})
+  template:
+    src: "site_{{ install_type }}.conf.j2"
+    dest: "/etc/nginx/sites-available/{{ server_name }}.conf"
 
 - name: Symlink default site to site-enabled
   file:

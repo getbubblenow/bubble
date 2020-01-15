@@ -2,4 +2,3 @@ fw_enable_http: true
 fw_enable_admin: true
 fw_enable_dns: true
 fw_enable_ssh: true
-primary_net_interface: ens3

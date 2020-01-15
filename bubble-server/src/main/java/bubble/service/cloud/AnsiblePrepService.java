@@ -12,7 +12,6 @@ import com.github.jknack.handlebars.Handlebars;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.ArchiveException;
-import org.cobbzilla.util.collection.HasPriority;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.io.Tarball;
@@ -29,6 +28,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static bubble.service.backup.RestoreService.RESTORE_MONITOR_SCRIPT_TIMEOUT_SECONDS;
+import static org.cobbzilla.util.collection.HasPriority.SORT_PRIORITY;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.string.Base64.DONT_GUNZIP;
@@ -56,7 +56,7 @@ public class AnsiblePrepService {
 
         final AnsibleInstallType installType = (fork && c.isSageLauncher()) ? AnsibleInstallType.sage : AnsibleInstallType.node;
 
-        roles.sort(HasPriority.SORT_PRIORITY);
+        roles.sort(SORT_PRIORITY);
         final List<AnsibleRole> installRoles = roles.stream()
                 .filter(role -> role.shouldInstall(installType))
                 .collect(Collectors.toList());

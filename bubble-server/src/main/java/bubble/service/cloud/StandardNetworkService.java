@@ -242,7 +242,9 @@ public class StandardNetworkService implements NetworkService {
             // Prepare ansible roles
             // We must wait until after server is started, because some roles require ip4 in vars
             progressMeter.write(METER_TICK_PREPARING_ROLES);
-            final Map<String, Object> ctx = ansiblePrep.prepAnsible(automation, bubbleFilesDir, account, network, node, roles, errors, roleTgzDir, nn.fork(), nn.getRestoreKey());
+            final Map<String, Object> ctx = ansiblePrep.prepAnsible(
+                    automation, bubbleFilesDir, account, network, node,
+                    roles, errors, roleTgzDir, nn.fork(), nn.getRestoreKey());
             if (errors.isInvalid()) {
                 progressMeter.error(METER_ERROR_ROLE_VALIDATION_ERRORS);
                 throw new MultiViolationException(errors.getViolationBeans());
@@ -276,7 +278,9 @@ public class StandardNetworkService implements NetworkService {
                 final File sshPubKeyFile = new File(bubbleFilesDir, "admin_ssh_key.pub");
                 final AccountSshKey sshKey = sshKeyDAO.findByAccountAndId(network.getAccount(), network.getSshKey());
                 if (sshKey == null) throw invalidEx("err.sshPublicKey.notFound");
-                toFile(sshPubKeyFile, sshKey.getSshPublicKey());
+                // add a newline before in case authorized_keys file does not end in a new line
+                // add a newline after so keys appended later will be OK
+                toFile(sshPubKeyFile, "\n"+sshKey.getSshPublicKey()+"\n");
             }
 
             // write scripts
