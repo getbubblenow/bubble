@@ -40,6 +40,10 @@ public class StandardRefundService extends SimpleDaemon implements RefundService
         for (AccountPlan accountPlan : pendingPlans) {
             try {
                 final AccountPaymentMethod paymentMethod = paymentMethodDAO.findByUuid(accountPlan.getPaymentMethod());
+                if (!paymentMethod.getPaymentMethodType().refundable()) {
+                    log.info("process: not issuing refund for plan "+accountPlan.getUuid()+" because paymentMethodType="+paymentMethod.getPaymentMethodType());
+                    continue;
+                }
                 final CloudService paymentCloud = cloudDAO.findByUuid(paymentMethod.getCloud());
                 final PaymentServiceDriver paymentDriver = paymentCloud.getPaymentDriver(configuration);
                 paymentDriver.refund(accountPlan.getUuid());

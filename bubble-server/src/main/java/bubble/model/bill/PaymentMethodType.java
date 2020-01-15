@@ -13,4 +13,6 @@ public enum PaymentMethodType {
 
     @JsonCreator public static PaymentMethodType fromString(String v) { return enumFromString(PaymentMethodType.class, v); }
 
+    public boolean refundable() { return this == credit; }
+
 }
