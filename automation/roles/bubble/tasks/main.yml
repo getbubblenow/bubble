@@ -136,8 +136,8 @@
 
 - name: Install refresh_bubble_ssh_keys monitor
   copy:
-    src: "refresh_bubble_ssh_keys.sh"
-    dest: "/usr/local/sbin/refresh_bubble_ssh_keys.sh"
+    src: "refresh_bubble_ssh_keys_monitor.sh"
+    dest: "/usr/local/sbin/refresh_bubble_ssh_keys_monitor.sh"
     owner: root
     group: root
     mode: 0500

@@ -154,7 +154,7 @@ public class StandardNetworkService implements NetworkService {
 
             final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(account.getUuid(), network.getUuid());
 
-            // ensure AccountPlan has been paid for
+            // ensure AccountPlan is enabled
             if (!accountPlan.enabled()) {
                 progressMeter.error(METER_ERROR_PLAN_NOT_ENABLED);
                 return die("newNode: accountPlan is not enabled: "+accountPlan.getUuid());
@@ -270,6 +270,14 @@ public class StandardNetworkService implements NetworkService {
 
             // write jar file
             copyFile(bubbleJar, new File(bubbleFilesDir, "bubble.jar"));
+
+            // write SSH key, if present
+            if (network.hasSshKey()) {
+                final File sshPubKeyFile = new File(bubbleFilesDir, "admin_ssh_key.pub");
+                final AccountSshKey sshKey = sshKeyDAO.findByAccountAndId(network.getAccount(), network.getSshKey());
+                if (sshKey == null) throw invalidEx("err.sshPublicKey.notFound");
+                toFile(sshPubKeyFile, sshKey.getSshPublicKey());
+            }
 
             // write scripts
             final File scriptsDir = mkdirOrDie(new File(bubbleFilesDir, "scripts"));
