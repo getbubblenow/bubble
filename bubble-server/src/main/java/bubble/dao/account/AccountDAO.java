@@ -268,7 +268,10 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     public boolean activated() {
         if (activated.get() && !configuration.testMode()) return true;
         final boolean accountsExist = countAll() > 0;
-        if (accountsExist) activated.set(true);
+        if (accountsExist) {
+            activated.set(true);
+            configuration.refreshPublicSystemConfigs();
+        }
         return accountsExist;
     }
 
