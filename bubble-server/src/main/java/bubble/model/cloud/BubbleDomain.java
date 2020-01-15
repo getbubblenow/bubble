@@ -150,7 +150,7 @@ public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
         }
         final String prefix = fqdn.substring(0, fqdn.length() - ("." + getName()).length());
         final int dotCount = countMatches(prefix, '.');
-        if (dotCount != -1) {
+        if (dotCount != 1) {
             errors.addViolation("err.fqdn.invalid");
             return null;
         }
