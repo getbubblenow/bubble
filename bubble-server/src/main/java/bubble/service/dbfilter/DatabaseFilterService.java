@@ -98,7 +98,7 @@ public class DatabaseFilterService {
                 @Override public RekeyOptions getOptions() { return readerOptions; }
                 @Override protected Iterator<Identifiable> getEntityProducer(BubbleConfiguration fromConfig, AtomicReference<Exception> error) {
                     return fork
-                            ? new FullEntityIterator(configuration, readerError)
+                            ? new FullEntityIterator(configuration, network, readerError)
                             : new FilteredEntityIterator(configuration, account, network, node, readerError);
                 }
             }.runInBackground(readerError::set);
