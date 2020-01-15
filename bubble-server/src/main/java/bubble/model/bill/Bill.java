@@ -20,7 +20,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 @ECTypeURIs(listFields={"name", "status", "type", "quantity", "price", "periodStart"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({
-        @ECIndex(unique=true, of={"account", "plan", "type", "periodStart"})
+        @ECIndex(unique=true, of={"account", "accountPlan", "type", "periodStart"})
 })
 public class Bill extends IdentifiableBase implements HasAccountNoName {
 
