@@ -23,7 +23,7 @@ if [[ $(whoami) != "{{ admin_user }}" ]] ; then
   die "${0} must be run as {{ admin_user }}"
 fi
 
-ANSIBLE_USER_HOME=$(cd "~{{ admin_user }}" && pwd)
+ANSIBLE_USER_HOME=$(cd ~{{ admin_user }} && pwd)
 
 ANSIBLE_SNAPSHOT="/home/bubble/ansible.tgz"
 

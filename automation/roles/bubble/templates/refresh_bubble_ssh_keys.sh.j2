@@ -38,7 +38,7 @@ done
 # Retain self-generated ansible setup key
 ANSIBLE_USER="{{admin_user}}"
 if [[ ! -z "${ANSIBLE_USER}" ]] ; then
-  PUB_FILE="$(cd "~{{admin_user}}" && pwd)/.ssh/bubble_rsa.pub"
+  PUB_FILE="$(cd ~{{admin_user}} && pwd)/.ssh/bubble_rsa.pub"
   if [[ -f "${PUB_FILE}" ]] ; then
     cat "${PUB_FILE}" >> ${NEW_KEYS}
   fi
