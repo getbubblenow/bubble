@@ -13,6 +13,7 @@ public class BlankDevServerTest extends NewBlankDevServerTest {
     @Override protected boolean dropPreExistingDatabase() { return false; }
     @Override protected boolean allowPreExistingDatabase() { return true; }
     @Override public boolean doTruncateDb() { return false; }
+    @Override public boolean shouldFlushRedis() { return false; }
 
     @Test public void runBlankServer () throws Exception {
         log.info("runBlankServer: Bubble API server started and model initialized. You may now begin testing.");

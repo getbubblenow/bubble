@@ -134,16 +134,21 @@
 
 - import_tasks: restore.yml
 
-- name: Install refresh_bubble_ssh_keys script and monitor
+- name: Install refresh_bubble_ssh_keys monitor
   copy:
-    src: "{{ item }}"
-    dest: "/usr/local/sbin/{{ item }}"
+    src: "refresh_bubble_ssh_keys.sh"
+    dest: "/usr/local/sbin/refresh_bubble_ssh_keys.sh"
     owner: root
     group: root
     mode: 0500
-  with_items:
-    - "refresh_bubble_ssh_keys.sh"
-    - "refresh_bubble_ssh_keys_monitor.sh"
+
+- name: Install refresh_bubble_ssh_keys script
+  template:
+    src: refresh_bubble_ssh_keys.sh.j2
+    dest: /usr/local/sbin/refresh_bubble_ssh_keys.sh
+    owner: root
+    group: root
+    mode: 0500
 
 - name: Install refresh_bubble_ssh_keys_monitor supervisor conf file
   copy:

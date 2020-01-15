@@ -66,7 +66,7 @@ public abstract class BubbleModelTestBase extends ApiModelTestBase<BubbleConfigu
         final AccountPolicyDAO policyDAO = configuration.getBean(AccountPolicyDAO.class);
         CloudService.flushDriverCache();
 
-        configuration.getBean(RedisService.class).flush();
+        if (shouldFlushRedis()) configuration.getBean(RedisService.class).flush();
         final Account root = accountDAO.getFirstAdmin();
         if (root != null) {
             final AccountPolicy rootPolicy = policyDAO.findSingleByAccount(root.getUuid());
@@ -74,6 +74,8 @@ public abstract class BubbleModelTestBase extends ApiModelTestBase<BubbleConfigu
             policyDAO.create(new AccountPolicy().setAccount(root.getUuid()));
         }
     }
+
+    protected boolean shouldFlushRedis() { return true; }
 
     @AfterClass public static void resetSelfJson () {
         if (server != null) server.stopServer();

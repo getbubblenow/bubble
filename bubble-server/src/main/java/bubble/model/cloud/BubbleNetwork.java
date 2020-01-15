@@ -139,7 +139,8 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @Embedded @Getter @Setter private BubbleTags tags;
 
     @Transient @Getter @Setter private transient String forkHost;
-    public boolean fork() { return forkHost != null; }
+    public boolean hasForkHost () { return !empty(forkHost); }
+    public boolean fork() { return hasForkHost(); }
 
     @ECSearchable @ECField(index=120)
     @Column(length=20)

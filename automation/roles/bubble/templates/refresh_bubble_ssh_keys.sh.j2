@@ -35,6 +35,17 @@ for key in $(echo "${CURRENT_KEYS_SQL}" | PGPASSWORD="$(cat /home/bubble/.BUBBLE
   fi
 done
 
+# Retain self-generated ansible setup key
+ANSIBLE_USER="{{node.user}}"
+if [[ ! -z "${ANSIBLE_USER}" ]] ; then
+  PUB_FILE="$(cd ~${ANSIBLE_USER} && pwd)/.ssh/bubble_rsa.pub"
+  if [[ -f "${PUB_FILE}" ]] ; then
+    cat "${PUB_FILE}" >> ${NEW_KEYS}
+  fi
+else
+  log "Warning: No ansible user defined, unable to retain setup key"
+fi
+
 mv ${NEW_KEYS} ${AUTH_KEYS} || die "Error moving ${NEW_KEYS} -> ${AUTH_KEYS}"
 
 log "Installed new SSH keys ${NEW_KEYS} -> ${AUTH_KEYS}"

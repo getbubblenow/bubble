@@ -2,7 +2,6 @@ package bubble.resources.bill;
 
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.geoLocation.GeoLocation;
-import bubble.dao.account.AccountPolicyDAO;
 import bubble.dao.account.AccountSshKeyDAO;
 import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.AccountPlanDAO;
@@ -24,6 +23,7 @@ import bubble.resources.account.AccountOwnedResource;
 import bubble.server.BubbleConfiguration;
 import bubble.service.AuthenticatorService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.util.StringUtil;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -38,15 +38,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
-import static org.cobbzilla.util.string.ValidationRegexes.HOST_PART_PATTERN;
-import static org.cobbzilla.util.string.ValidationRegexes.validateRegexMatches;
+import static bubble.model.cloud.BubbleNetwork.validateHostname;
+import static org.cobbzilla.util.string.ValidationRegexes.*;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Slf4j
 public class AccountPlansResource extends AccountOwnedResource<AccountPlan, AccountPlanDAO> {
 
     @Autowired private AccountSshKeyDAO sshKeyDAO;
-    @Autowired private AccountPolicyDAO policyDAO;
     @Autowired private BubbleDomainDAO domainDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private BubblePlanDAO planDAO;
@@ -117,16 +116,6 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             request.setSshKey(null); // if it's an empty string, make it null (see simple_network test)
         }
 
-        if (request.hasForkHost()) {
-            if (!configuration.isSageLauncher()) {
-                errors.addViolation("err.forkHost.notAllowed");
-            } else if (!validateRegexMatches(HOST_PART_PATTERN, request.getForkHost())) {
-                errors.addViolation("err.forkHost.invalid");
-            }
-        } else {
-            BubbleNetwork.validateHostname(request, errors);
-        }
-
         final BubbleDomain domain = domainDAO.findByAccountAndId(caller.getUuid(), request.getDomain());
         if (domain == null) {
             log.info("setReferences: domain not found: "+request.getDomain()+" for caller: "+caller.getUuid());
@@ -136,6 +125,30 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
 
             final BubbleNetwork existingNetwork = networkDAO.findByNameAndDomainName(request.getName(), domain.getName());
             if (existingNetwork != null) errors.addViolation("err.name.networkNameAlreadyExists");
+        }
+
+        if (request.hasForkHost()) {
+            if (!configuration.isSageLauncher()) {
+                errors.addViolation("err.forkHost.notAllowed");
+            } else {
+                final String forkHost = request.getForkHost();
+                if (!validateRegexMatches(HOST_PATTERN, forkHost)) {
+                    errors.addViolation("err.forkHost.invalid");
+                } else if (domain != null && !forkHost.endsWith("."+domain.getName())) {
+                    errors.addViolation("err.forkHost.domainMismatch");
+                } else if (domain != null) {
+                    final String nameWithoutDomain = forkHost.substring(0, forkHost.length()-domain.getName().length()-1);
+                    final int dotCount = StringUtil.countMatches(nameWithoutDomain, '.');
+                    if (dotCount != 1) {
+                        errors.addViolation("err.forkHost.invalid");
+                    } else {
+                        request.setName(nameWithoutDomain.substring(nameWithoutDomain.indexOf('.') + 1));
+                        validateHostname(request, errors);
+                    }
+                }
+            }
+        } else {
+            validateHostname(request, errors);
         }
 
         final BubblePlan plan = planDAO.findByAccountOrParentAndId(caller, request.getPlan());

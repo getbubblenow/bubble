@@ -37,8 +37,10 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
     @Autowired private BubbleConfiguration configuration;
 
     @Override public Object preCreate(BubbleNetwork network) {
-        final ValidationResult errors = validateHostname(network);
-        if (errors.isInvalid()) throw invalidEx(errors);
+        if (!network.hasForkHost()) {
+            final ValidationResult errors = validateHostname(network);
+            if (errors.isInvalid()) throw invalidEx(errors);
+        }
 
         if (!network.hasLocale()) network.setLocale(getDEFAULT_LOCALE());
         return super.preCreate(network);
