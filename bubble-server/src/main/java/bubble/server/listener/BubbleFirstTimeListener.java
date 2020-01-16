@@ -45,36 +45,38 @@ public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<Bub
         redis.set(configuration.getBean(RedisService.class));
 
         if (FIRST_TIME_FILE.exists()) {
-            // final FirstTimeType firstTimeType = FirstTimeType.fromString(FileUtil.toStringOrDie(FIRST_TIME_FILE));
-            final AccountDAO accountDAO = configuration.getBean(AccountDAO.class);
-            final Account adminAccount = accountDAO.getFirstAdmin();
-            if (adminAccount == null) {
-                log.error("onStart: no admin account found, cannot send first time install message, unlocking now");
-                accountDAO.unlock();
-                return;
-            }
-            final AccountPolicy adminPolicy = configuration.getBean(AccountPolicyDAO.class).findSingleByAccount(adminAccount.getUuid());
-            if (adminPolicy == null || !adminPolicy.hasVerifiedNonAuthenticatorAccountContacts()) {
-                log.error("onStart: no AccountPolicy found (or no verified non-authenticator contacts) for admin account ("+adminAccount.getName()+"), cannot send first time install message, unlocking now");
-                accountDAO.unlock();
-                return;
-            }
-            final BubbleNetwork network = configuration.getThisNetwork();
+            try {
+                // final FirstTimeType firstTimeType = FirstTimeType.fromString(FileUtil.toStringOrDie(FIRST_TIME_FILE));
+                final AccountDAO accountDAO = configuration.getBean(AccountDAO.class);
+                final Account adminAccount = accountDAO.getFirstAdmin();
+                if (adminAccount == null) {
+                    log.error("onStart: no admin account found, cannot send first time install message, unlocking now");
+                    accountDAO.unlock();
+                    return;
+                }
+                final AccountPolicy adminPolicy = configuration.getBean(AccountPolicyDAO.class).findSingleByAccount(adminAccount.getUuid());
+                if (adminPolicy == null || !adminPolicy.hasVerifiedNonAuthenticatorAccountContacts()) {
+                    log.error("onStart: no AccountPolicy found (or no verified non-authenticator contacts) for admin account (" + adminAccount.getName() + "), cannot send first time install message, unlocking now");
+                    accountDAO.unlock();
+                    return;
+                }
+                final BubbleNetwork network = configuration.getThisNetwork();
 
-            final String unlockKey = randomAlphabetic(UNLOCK_KEY_LEN).toUpperCase();
-            redis.get().set(UNLOCK_KEY, unlockKey, EX, UNLOCK_EXPIRATION);
+                final String unlockKey = randomAlphabetic(UNLOCK_KEY_LEN).toUpperCase();
+                redis.get().set(UNLOCK_KEY, unlockKey, EX, UNLOCK_EXPIRATION);
 
-            final SageHelloService helloService = configuration.getBean(SageHelloService.class);
-            helloService.setUnlockMessage(new AccountMessage()
-                    .setAccount(adminAccount.getUuid())
-                    .setName(network.getUuid())
-                    .setMessageType(AccountMessageType.request)
-                    .setAction(AccountAction.verify)
-                    .setTarget(ActionTarget.network)
-                    .setData(unlockKey));
-
-            if (!FIRST_TIME_FILE.delete()) {
-                log.error("onStart: error deleting: "+abs(FIRST_TIME_FILE));
+                final SageHelloService helloService = configuration.getBean(SageHelloService.class);
+                helloService.setUnlockMessage(new AccountMessage()
+                        .setAccount(adminAccount.getUuid())
+                        .setName(network.getUuid())
+                        .setMessageType(AccountMessageType.request)
+                        .setAction(AccountAction.verify)
+                        .setTarget(ActionTarget.network)
+                        .setData(unlockKey));
+            } finally {
+                if (!FIRST_TIME_FILE.delete()) {
+                    log.error("onStart: error deleting: "+abs(FIRST_TIME_FILE));
+                }
             }
         }
     }
