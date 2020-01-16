@@ -15,10 +15,23 @@
     src: "site_{{ install_type }}.conf.j2"
     dest: "/etc/nginx/sites-available/{{ server_name }}.conf"
 
+- name: Create alias nginx site (type={{ install_type }})
+  template:
+    src: "site_{{ install_type }}_alias.conf.j2"
+    dest: "/etc/nginx/sites-available/{{ server_alias }}.conf"
+
 - name: Symlink default site to site-enabled
   file:
     src: /etc/nginx/sites-available/{{ server_name }}.conf
     dest: /etc/nginx/sites-enabled/{{ server_name }}.conf
+    owner: root
+    group: root
+    state: link
+
+- name: Symlink alias site to site-enabled
+  file:
+    src: /etc/nginx/sites-available/{{ server_alias }}.conf
+    dest: /etc/nginx/sites-enabled/{{ server_alias }}.conf
     owner: root
     group: root
     state: link

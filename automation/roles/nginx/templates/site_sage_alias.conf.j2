@@ -1,6 +1,6 @@
 server {
-    server_name {{ server_name }};
-    listen {{ ssl_port }} ssl http2;
+    listen 80;
+    server_name {{ server_alias }};
 
     location / {
         proxy_pass http://127.0.0.1:{{ admin_port }}/;
@@ -15,8 +15,9 @@ server {
         root /var/www/html;
     }
 
-    ssl_certificate /etc/letsencrypt/live/{{ server_name }}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/{{ server_name }}/privkey.pem;
+    listen 443 ssl;
+    ssl_certificate /etc/letsencrypt/live/{{ server_alias }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ server_alias }}/privkey.pem;
     ssl_session_cache shared:le_nginx_SSL:1m;
     ssl_session_timeout 1440m;
 
