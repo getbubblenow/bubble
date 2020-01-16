@@ -1,9 +1,13 @@
 package bubble.dao.device;
 
 import bubble.dao.account.AccountOwnedEntityDAO;
+import bubble.model.cloud.AnsibleInstallType;
+import bubble.model.cloud.BubbleNetwork;
 import bubble.model.device.Device;
+import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.criterion.Order;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
@@ -11,6 +15,7 @@ import java.util.List;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static bubble.model.device.Device.*;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.touch;
 
@@ -18,6 +23,8 @@ import static org.cobbzilla.util.io.FileUtil.touch;
 public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
     public static final File VPN_REFRESH_USERS_FILE = new File(HOME_DIR, ".algo_refresh_users");
+
+    @Autowired private BubbleConfiguration configuration;
 
     @Override public Order getDefaultSortOrder() { return Order.asc("ctime"); }
 
@@ -27,6 +34,14 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
     public Device findByNetworkAndName(String networkUuid, String name) {
         return findByUniqueFields("network", networkUuid, "name", name);
+    }
+
+    @Override public Object preCreate(Device entity) {
+        final BubbleNetwork thisNetwork = configuration.getThisNetwork();
+        if (thisNetwork == null || thisNetwork.getInstallType() != AnsibleInstallType.node) {
+            return die("preCreate: cannot create devices, thisNetwork="+thisNetwork);
+        }
+        return super.preCreate(entity);
     }
 
     @Override public Device create(Device device) {

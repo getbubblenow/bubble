@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.model.Identifiable;
@@ -45,7 +46,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 @ECTypeChildren(uriPrefix=EP_NETWORKS+"/{BubbleNetwork.name}", value={
         @ECTypeChild(type=BubbleNode.class, backref="network")
 })
-@Entity @NoArgsConstructor @Accessors(chain=true)
+@Entity @NoArgsConstructor @Accessors(chain=true) @ToString(of={"name", "domainName", "installType"})
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "name"}),
         @ECIndex(unique=true, of={"name", "domainName"})

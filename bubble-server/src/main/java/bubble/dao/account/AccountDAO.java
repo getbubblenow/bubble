@@ -10,10 +10,7 @@ import bubble.dao.cloud.CloudServiceDAO;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.*;
 import bubble.model.app.*;
-import bubble.model.cloud.BubbleDomain;
-import bubble.model.cloud.BubbleNode;
-import bubble.model.cloud.CloudCredentials;
-import bubble.model.cloud.CloudService;
+import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.cache.Refreshable;
@@ -91,10 +88,14 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
             policyDAO.create(new AccountPolicy(account.getPolicy()).setAccount(accountUuid));
         }
 
-        // create an uninitialized device for the account
+        // create an uninitialized device for the account, but only if this is a regular node network
+        // sage networks do not allow devices, they launch and manage other regular node networks
         final BubbleNode thisNode = configuration.getThisNode();
         if (thisNode != null) {
-            deviceDAO.ensureSpareDevice(accountUuid, thisNode.getNetwork(), true);
+            final BubbleNetwork thisNetwork = configuration.getThisNetwork();
+            if (thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.node) {
+                deviceDAO.ensureSpareDevice(accountUuid, thisNode.getNetwork(), true);
+            }
         }
 
         if (account.hasParent()) {
