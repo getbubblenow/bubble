@@ -41,12 +41,13 @@
 - name: Install bubble jar
   copy:
     src: "{{ item }}"
-    dest: /home/bubble/bubble_{{ bubble_version }}/{{ item }}
+    dest: /home/bubble/bubble_{{ bubble_version }}/bubble.jar
     owner: bubble
     group: bubble
     mode: 0444
-  with_items:
-    - bubble.jar
+
+- name: Unpack site files
+  shell: su - bubble -c "cd /home/bubble && unzip /home/bubble/bubble_{{ bubble_version }}/bubble.jar 'site/*'"
 
 - name: Install bubble self_node.json, sage_node.json and sage_key.json
   copy:
