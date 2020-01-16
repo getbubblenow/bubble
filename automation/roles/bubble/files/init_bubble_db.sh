@@ -2,7 +2,7 @@
 
 echo "$@" > /tmp/init.args
 
-LOG=/tmp/bubble.err.log
+LOG=/dev/null
 
 function die {
   echo 1>&2 "${1}"

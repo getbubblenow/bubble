@@ -38,3 +38,6 @@
     state: restarted
   with_items:
     - bubble
+
+- name: Ensure authorized SSH keys are up-to-date
+  shell: su - bubble bash -c "touch /home/bubble/.refresh_ssh_keys"
