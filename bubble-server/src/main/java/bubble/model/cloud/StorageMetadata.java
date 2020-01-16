@@ -108,4 +108,6 @@ public class StorageMetadata implements Serializable {
         return m;
     }
 
+    @JsonIgnore @Transient @Getter(lazy=true) private final String cacheKey
+            = hashOf(name, cnode, mnode, ctime, mtime, contentType, contentLength, sha256, nonce);
 }

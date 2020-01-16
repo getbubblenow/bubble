@@ -49,58 +49,69 @@ public class GeoService {
     @Autowired private BubbleFootprintDAO footprintDAO;
     @Autowired private BubbleConfiguration configuration;
 
+    private final Map<String, GeoLocation> locateCache = new ExpirationMap<>(DAYS.toMillis(1));
+
     public GeoLocation locate (String accountUuid, String ip) {
 
-        List<CloudService> geoLocationServices = null;
+        List<CloudService> candidateGeoLocationServices = null;
         if (accountUuid != null) {
-            geoLocationServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoLocation);
+            candidateGeoLocationServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoLocation);
         }
-        if (empty(geoLocationServices)) {
+        if (empty(candidateGeoLocationServices)) {
             // try to find using admin
             final Account admin = accountDAO.getFirstAdmin();
             if (admin != null && !admin.getUuid().equals(accountUuid)) {
-                geoLocationServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoLocation);
+                candidateGeoLocationServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoLocation);
             }
         }
-        if (empty(geoLocationServices)) {
+        if (empty(candidateGeoLocationServices)) {
             throw new SimpleViolationException("err.geoLocateService.notFound");
         }
 
-        final List<GeoLocation> resolved = new ArrayList<>();
-        GeoCodeServiceDriver geoCodeDriver = null;
-        for (CloudService geo : geoLocationServices) {
-            try {
-                final GeoLocation result = geo.getGeoLocateDriver(configuration).geolocate(ip);
-                if (result != null) {
-                    if (!result.hasLatLon()) {
-                        if (geoCodeDriver == null) {
-                            List<CloudService> geoCodeServices = null;
-                            if (accountUuid != null) {
-                                geoCodeServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoCode);
-                            }
-                            if (empty(geoCodeServices)) {
-                                final Account admin = accountDAO.getFirstAdmin();
-                                if (admin != null && !admin.getUuid().equals(accountUuid)) {
-                                    geoCodeServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoCode);
+        final List<CloudService> geoLocationServices = candidateGeoLocationServices;
+        final String cacheKey = hashOf(accountUuid, ip, geoLocationServices);
+        return locateCache.computeIfAbsent(cacheKey, k -> {
+            log.info("locate: resolving IP: "+ip+" for cacheKey: "+cacheKey);
+            final List<GeoLocation> resolved = new ArrayList<>();
+            GeoCodeServiceDriver geoCodeDriver = null;
+            for (CloudService geo : geoLocationServices) {
+                try {
+                    final GeoLocation result = geo.getGeoLocateDriver(configuration).geolocate(ip);
+                    if (result != null) {
+                        if (!result.hasLatLon()) {
+                            if (geoCodeDriver == null) {
+                                List<CloudService> geoCodeServices = null;
+                                if (accountUuid != null) {
+                                    geoCodeServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoCode);
                                 }
+                                if (empty(geoCodeServices)) {
+                                    final Account admin = accountDAO.getFirstAdmin();
+                                    if (admin != null && !admin.getUuid().equals(accountUuid)) {
+                                        geoCodeServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoCode);
+                                    }
+                                }
+                                if (empty(geoCodeServices)) {
+                                    throw new SimpleViolationException("err.geoCodeService.notFound");
+                                }
+                                geoCodeDriver = geoCodeServices.get(0).getGeoCodeDriver(configuration);
                             }
-                            if (empty(geoCodeServices)) {
-                                throw new SimpleViolationException("err.geoCodeService.notFound");
-                            }
-                            geoCodeDriver = geoCodeServices.get(0).getGeoCodeDriver(configuration);
+                            final GeoCodeResult code = geoCodeDriver.lookup(result);
+                            result.setLat(code.getLat());
+                            result.setLon(code.getLon());
                         }
-                        final GeoCodeResult code = geoCodeDriver.lookup(result);
-                        result.setLat(code.getLat());
-                        result.setLon(code.getLon());
+                        resolved.add(result.setCloud(geo));
                     }
-                    resolved.add(result.setCloud(geo));
+                } catch (Exception e) {
+                    log.warn("locate: "+e, e);
                 }
-            } catch (Exception e) {
-                log.warn("locate: "+e, e);
             }
-        }
 
-        switch (resolved.size()){
+            return getGeoLocation(ip, geoLocationServices, resolved);
+        });
+    }
+
+    public GeoLocation getGeoLocation(String ip, List<CloudService> geoLocationServices, List<GeoLocation> resolved) {
+        switch (resolved.size()) {
             case 0: throw new SimpleViolationException("err.geoService.unresolvable", "could not resolve: "+ip, ip);
 
             // if we only have one, use that

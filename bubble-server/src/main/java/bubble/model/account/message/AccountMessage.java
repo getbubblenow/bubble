@@ -4,6 +4,7 @@ import bubble.model.account.Account;
 import bubble.model.account.AccountContact;
 import bubble.model.account.AccountPolicy;
 import bubble.model.account.HasAccount;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,6 +20,7 @@ import javax.validation.constraints.Size;
 
 import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
@@ -89,4 +91,7 @@ public class AccountMessage extends IdentifiableBase implements HasAccount {
                 return -1;
         }
     }
+
+    @JsonIgnore @Transient @Getter(lazy=true) private final String cacheKey =
+            hashOf(account, contact, name, remoteHost, messageType, action, target, data);
 }

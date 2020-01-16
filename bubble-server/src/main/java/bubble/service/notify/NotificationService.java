@@ -6,10 +6,12 @@ import bubble.dao.cloud.notify.SentNotificationDAO;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.notify.*;
 import bubble.notify.SynchronousNotification;
+import bubble.notify.SynchronousNotificationReply;
 import bubble.server.BubbleConfiguration;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.wizard.api.ApiException;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.util.RestResponse;
@@ -19,7 +21,6 @@ import org.springframework.stereotype.Service;
 import java.net.ConnectException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static bubble.ApiConstants.MAX_NOTIFY_LOG;
 import static bubble.ApiConstants.NOTIFY_ENDPOINT;
@@ -72,7 +73,7 @@ public class NotificationService {
     }
     public NotificationReceipt _notify(String sender, ApiClientBase api, String toNodeUuid, NotificationType type, Object payload, boolean enhancedReceipt) {
         final SentNotification notification = sentNotificationDAO.create((SentNotification) new SentNotification()
-                .setNotificationId(payload instanceof SynchronousNotification ? ((SynchronousNotification) payload).getId() : null)
+                .setNotificationId(getNotificationId(payload))
                 .setAccount(sender)
                 .setType(type)
                 .setFromNode(configuration.getThisNode().getUuid())
@@ -104,33 +105,55 @@ public class NotificationService {
             notification.setStatus(NotificationSendStatus.error);
             notification.setException(e);
             sentNotificationDAO.update(notification);
-            return die("notify: " + e);
+            return die("_notify: " + e);
 
         } catch (Exception e) {
             notification.setStatus(NotificationSendStatus.error);
             notification.setException(e);
             sentNotificationDAO.update(notification);
-            return die("notify: " + e, e);
+            return die("_notify: " + e, e);
         }
     }
 
-    private final Map<String, SynchronousNotification> syncRequests = new ConcurrentHashMap<>();
+    public String getNotificationId(Object payload) {
+        if (payload instanceof SynchronousNotification) return ((SynchronousNotification) payload).getId();
+        if (payload instanceof SynchronousNotificationReply) return ((SynchronousNotificationReply) payload).getNotificationId();
+        return null;
+    }
+
+    private final Map<String, SynchronousNotification> syncRequests = new ExpirationMap<>(SECONDS.toMillis(160));
+    private final Map<String, SynchronousNotification> syncRequestCache = new ExpirationMap<>(SECONDS.toMillis(150));
 
     public <T> T notifySync(BubbleNode delegate, NotificationType type, SynchronousNotification notification) {
-        // register callback for response
-        syncRequests.put(notification.getId(), notification);
-        final NotificationReceipt receipt = _notify(configuration.getThisNode().getAccount(),
-                delegate.getApiClient(configuration),
-                delegate.getUuid(),
-                type,
-                notification,
-                false);
+        final String cacheKey = notification.getCacheKey(delegate, type);
+        SynchronousNotification activeNotification;
+        synchronized (syncRequestCache) {
+            activeNotification = syncRequestCache.get(cacheKey);
+            if (activeNotification == null) {
+                // no one else is calling, we are the activeNotification
+                syncRequestCache.put(cacheKey, notification);
+                activeNotification = notification;
+            }
+        }
+        if (activeNotification == notification) {
+            // register callback for response
+            log.debug("notifySync ("+notification.getClass().getSimpleName()+"/"+notification.getId()+"): sending notification: "+activeNotification.getId());
+            syncRequests.put(notification.getId(), notification);
+            final NotificationReceipt receipt = _notify(configuration.getThisNode().getAccount(),
+                    delegate.getApiClient(configuration),
+                    delegate.getUuid(),
+                    type,
+                    notification,
+                    false);
+        } else {
+            log.debug("notifySync ("+notification.getClass().getSimpleName()+"/"+notification.getId()+"): waiting for identical notification: "+activeNotification.getId());
+        }
         final long start = now();
         while (now() - start < SYNC_TIMEOUT) {
-            if (notification.hasException()) {
-                return die(notification.getException().toString());
-            } else if (notification.hasResponse()) {
-                return type.toResponse(notification.getResponse());
+            if (activeNotification.hasException()) {
+                return die(activeNotification.getException().toString());
+            } else if (activeNotification.hasResponse()) {
+                return type.toResponse(activeNotification.getResponse());
             }
             sleep(SYNC_WAIT_TIME, "awaiting sync notification response: "+notification.getClass().getSimpleName());
         }

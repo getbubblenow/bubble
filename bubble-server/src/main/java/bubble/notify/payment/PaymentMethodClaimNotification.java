@@ -3,10 +3,15 @@ package bubble.notify.payment;
 import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.AccountPlan;
 import bubble.notify.SynchronousNotification;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import javax.persistence.Transient;
+
+import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class PaymentMethodClaimNotification extends SynchronousNotification {
@@ -29,4 +34,6 @@ public class PaymentMethodClaimNotification extends SynchronousNotification {
         this.cloud = cloud;
     }
 
+    @JsonIgnore @Transient @Getter(lazy=true) private final String cacheKey
+            = hashOf(hasPaymentMethod() ? paymentMethod.getUuid() : null, hasAccountPlan() ? accountPlan.getUuid() : null, cloud);
 }

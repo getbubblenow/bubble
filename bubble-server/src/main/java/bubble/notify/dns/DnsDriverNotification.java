@@ -4,12 +4,18 @@ import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.notify.SynchronousNotification;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.dns.DnsRecord;
 import org.cobbzilla.util.dns.DnsRecordMatch;
+
+import javax.persistence.Transient;
+
+import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
+import static org.cobbzilla.util.json.JsonUtil.json;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class DnsDriverNotification extends SynchronousNotification {
@@ -40,4 +46,7 @@ public class DnsDriverNotification extends SynchronousNotification {
 
     public DnsDriverNotification(DnsRecordMatch matcher) { this.matcher = matcher; }
 
+    @JsonIgnore @Transient @Getter(lazy=true) private final String cacheKey
+            = hashOf(hasDomain() ? domain.getUuid() : null, hasNetwork() ? network.getUuid() : null, hasNode() ? node.getUuid() : null,
+            hasRecord() ? getRecord().dnsUniq(): null, matcher != null ? json(matcher) : null, dnsService);
 }

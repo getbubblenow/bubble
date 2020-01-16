@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
+
 @Accessors(chain=true)
 public class AuthDriverNotification extends SynchronousNotification {
 
@@ -15,5 +17,8 @@ public class AuthDriverNotification extends SynchronousNotification {
     @Getter @Setter private Account account;
     @Getter @Setter private AccountMessage message;
     @Getter @Setter private AccountContact contact;
+
+    @Getter(lazy=true) private final String cacheKey
+            = hashOf(authService, account != null ? account.getUuid() : null, message != null ? message.getCacheKey() : null, contact != null ? contact.getCacheKey() : null);
 
 }

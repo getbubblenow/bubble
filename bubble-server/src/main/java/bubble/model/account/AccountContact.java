@@ -16,6 +16,7 @@ import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.cobbzilla.wizard.validation.HasValue;
 import org.cobbzilla.wizard.validation.ValidationResult;
 
+import javax.persistence.Transient;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -294,4 +295,7 @@ public class AccountContact implements Serializable {
         }
         return errors;
     }
+
+    @JsonIgnore @Transient @Getter(lazy=true) private final String cacheKey = getType()+"/"+getInfo();
+
 }

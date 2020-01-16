@@ -69,4 +69,5 @@ public class GeoLocation {
         }
     }
 
+    @JsonIgnore @Transient @Getter(lazy=true) private final String cacheKey = hashKey();
 }
