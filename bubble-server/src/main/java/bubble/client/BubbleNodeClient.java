@@ -124,7 +124,7 @@ public class BubbleNodeClient extends BubbleApiClient {
             log.debug("execute: attempting request...");
             return super.execute(client, request);
         } catch (Exception e) {
-            log.info("execute: error: "+e);
+            log.info("execute("+request+"): error: "+e);
             if (alternate == null) throw e;
 
             final String uri = (isHttpsPort(toNode.getSslPort()) ? "https://" : "http://")

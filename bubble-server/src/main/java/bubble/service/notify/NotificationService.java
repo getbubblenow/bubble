@@ -1,6 +1,5 @@
 package bubble.service.notify;
 
-import bubble.ApiConstants;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
 import bubble.dao.cloud.notify.ReceivedNotificationDAO;
 import bubble.dao.cloud.notify.SentNotificationDAO;
@@ -22,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static bubble.ApiConstants.MAX_NOTIFY_LOG;
 import static bubble.ApiConstants.NOTIFY_ENDPOINT;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -84,14 +84,15 @@ public class NotificationService {
         sentNotificationDAO.update(notification);
 
         try {
+            final String json = json(notification);
             if (log.isDebugEnabled()) {
                 log.debug("_notify:\n>>>>> SENDING to " + api.getConnectionInfo().getBaseUri() + " >>>>>\n"
-                        + truncate(json(notification), ApiConstants.MAX_NOTIFY_LOG)
+                        + truncate(json, MAX_NOTIFY_LOG)
                         + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
             } else {
                 log.info("_notify: >>>>> SENDING "+notification.getType()+" to " + api.getConnectionInfo().getBaseUri() + " >>>>>");
             }
-            final RestResponse response = api.doPost(NOTIFY_ENDPOINT, json(notification));
+            final RestResponse response = api.doPost(NOTIFY_ENDPOINT, json);
             final NotificationReceipt receipt = json(response.json, NotificationReceipt.class);
             notification.setStatus(NotificationSendStatus.sent);
             notification.setReceipt(receipt);
