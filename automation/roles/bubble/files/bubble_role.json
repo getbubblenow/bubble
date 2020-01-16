@@ -6,7 +6,7 @@
     {"name": "node_uuid", "value": "[[node.uuid]]"},
     {"name": "network_uuid", "value": "[[node.network]]"},
     {"name": "admin_port", "value": "[[node.adminPort]]"},
-    {"name": "ssl_port", "value": "[[configuration.nginxPort]]"},
+    {"name": "ssl_port", "value": "[[#compare installType '==' 'sage']]443[[else]][[configuration.nginxPort]][[/compare]]"},
     {"name": "sage_node", "value": "[[sageNode]]"},
     {"name": "install_type", "value": "[[installType]]"},
     {"name": "default_locale", "value": "[[network.locale]]"},
