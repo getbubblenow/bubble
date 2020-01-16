@@ -3,10 +3,7 @@ package bubble.dao.cloud;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.model.bill.AccountPlan;
-import bubble.model.cloud.BubbleDomain;
-import bubble.model.cloud.BubbleNetwork;
-import bubble.model.cloud.BubbleNode;
-import bubble.model.cloud.CloudService;
+import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.NetworkService;
@@ -41,7 +38,7 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
             final ValidationResult errors = validateHostname(network);
             if (errors.isInvalid()) throw invalidEx(errors);
         }
-
+        network.setInstallType((network.hasForkHost() && configuration.isSageLauncher()) ? AnsibleInstallType.sage : AnsibleInstallType.node);
         if (!network.hasLocale()) network.setLocale(getDEFAULT_LOCALE());
         return super.preCreate(network);
     }

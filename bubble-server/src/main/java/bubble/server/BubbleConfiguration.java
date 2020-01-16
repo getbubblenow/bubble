@@ -70,6 +70,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_LOCALES = "locales";
     public static final String TAG_CLOUD_CONFIGS = "cloudConfigs";
     public static final String TAG_LOCKED = "locked";
+    public static final String TAG_NGINX_PORT = "nginxPort";
 
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
@@ -261,7 +262,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_ENTITY_CLASSES, getSortedSimpleEntityClassMap()},
                         {TAG_LOCALES, getAllLocales()},
                         {TAG_CLOUD_CONFIGS, accountDAO.activated() ? null : activationService.getCloudDefaults()},
-                        {TAG_LOCKED, accountDAO.locked()}
+                        {TAG_LOCKED, accountDAO.locked()},
+                        {TAG_NGINX_PORT, getNginxPort()}
                 }));
             }
             return publicSystemConfigs.get();

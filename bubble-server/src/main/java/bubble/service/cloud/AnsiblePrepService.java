@@ -54,7 +54,7 @@ public class AnsiblePrepService {
         final BubbleConfiguration c = configuration;
         if (tarballDir == null) tarballDir = automation;
 
-        final AnsibleInstallType installType = (fork && c.isSageLauncher()) ? AnsibleInstallType.sage : AnsibleInstallType.node;
+        final AnsibleInstallType installType = network.getInstallType();
 
         roles.sort(SORT_PRIORITY);
         final List<AnsibleRole> installRoles = roles.stream()
