@@ -37,6 +37,7 @@ public class Device extends IdentifiableBase implements HasAccount {
     public static final String[] UPDATE_FIELDS = { "name", "enabled" };
 
     public static final String UNINITIALIZED_DEVICE = "__uninitialized_device__";
+    public static final String UNINITIALIZED_DEVICE_LIKE = UNINITIALIZED_DEVICE+"%";
 
     public Device (Device other) { copy(this, other, CREATE_FIELDS); }
 
@@ -44,7 +45,7 @@ public class Device extends IdentifiableBase implements HasAccount {
 
     public static Device newUninitializedDevice(String networkUuid, String accountUuid) {
         return new Device()
-                .setName(UNINITIALIZED_DEVICE)
+                .setName(UNINITIALIZED_DEVICE+randomUUID().toString())
                 .setNetwork(networkUuid)
                 .setAccount(accountUuid)
                 .initTotpKey();
@@ -52,7 +53,7 @@ public class Device extends IdentifiableBase implements HasAccount {
 
     public static Device firstDeviceForNewNetwork(BubbleNetwork network) {
         return new Device(randomUUID().toString())
-                .setName(UNINITIALIZED_DEVICE)
+                .setName(UNINITIALIZED_DEVICE+randomUUID().toString())
                 .setNetwork(network.getUuid())
                 .setAccount(network.getAccount())
                 .initTotpKey();
@@ -81,7 +82,7 @@ public class Device extends IdentifiableBase implements HasAccount {
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
-    public boolean uninitialized () { return name.equals(UNINITIALIZED_DEVICE); }
+    public boolean uninitialized () { return name.startsWith(UNINITIALIZED_DEVICE); }
     public boolean initialized () { return !uninitialized(); }
 
     @ECSearchable @ECField(index=40)

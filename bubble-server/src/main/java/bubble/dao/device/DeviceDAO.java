@@ -10,8 +10,7 @@ import java.io.File;
 import java.util.List;
 
 import static bubble.ApiConstants.HOME_DIR;
-import static bubble.model.device.Device.UNINITIALIZED_DEVICE;
-import static bubble.model.device.Device.newUninitializedDevice;
+import static bubble.model.device.Device.*;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.touch;
 
@@ -90,6 +89,6 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
     }
 
     public List<Device> findByAccountAndUninitialized(String accountUuid) {
-        return findByFields("account", accountUuid, "name", UNINITIALIZED_DEVICE);
+        return findByFieldEqualAndFieldLike("account", accountUuid, "name", UNINITIALIZED_DEVICE_LIKE);
     }
 }
