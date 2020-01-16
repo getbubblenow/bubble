@@ -14,16 +14,22 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAccountMessageService;
 import com.github.jknack.handlebars.Handlebars;
 import org.apache.commons.collections4.map.SingletonMap;
+import org.apache.commons.lang3.ArrayUtils;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.io.FileUtil.basename;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 
 public interface AuthenticationDriver extends CloudServiceDriver {
+
+    Logger log = LoggerFactory.getLogger(AuthenticationDriver.class);
 
     String CTX_LOCALE = "locale";
 
@@ -107,13 +113,13 @@ public interface AuthenticationDriver extends CloudServiceDriver {
         } catch (Exception e) {
             final String defaultLocale = configuration.getDefaultLocale();
             if (locale.equals(defaultLocale)) {
-                return die("loadTemplate: no default template found: "+path);
+                return handleTemplateNotFound(templateName, path);
             }
             final String defaultPath = localePath(defaultLocale, templatePath, handlebars) + "/" + templateName;
             try {
                 return stream2string(defaultPath);
             } catch (Exception e2) {
-                return die("loadTemplate: no default template found: "+defaultPath);
+                return handleTemplateNotFound(templateName, path);
             }
         }
     }
@@ -124,6 +130,19 @@ public interface AuthenticationDriver extends CloudServiceDriver {
         final String key = locale+":"+templatePath;
         return _localePaths.computeIfAbsent(key,
                 k -> HandlebarsUtil.apply(hbs, templatePath, new SingletonMap<>(CTX_LOCALE, locale), '[', ']'));
+    }
+
+    String HTML_MESSAGE_HBS = "htmlMessage.hbs";
+    String[] OPTIONAL_TEMPLATES = {HTML_MESSAGE_HBS};
+    static String[] getOptionalTemplates() { return OPTIONAL_TEMPLATES; }
+
+    static String handleTemplateNotFound(String templateName, String path) {
+        if (ArrayUtils.contains(getOptionalTemplates(), basename(templateName))) {
+            log.warn("loadTemplate: no (optional) default template found: "+path);
+            return null;
+        } else {
+            return die("loadTemplate: no default template found: " + path);
+        }
     }
 
 }
