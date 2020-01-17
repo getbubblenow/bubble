@@ -78,6 +78,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public BubbleConfiguration (BubbleConfiguration other) { copy(this, other); }
 
     @Getter @Setter private int defaultNodeSslPort = 1443;
+    @Getter @Setter private int defaultMitmProxyPort = 8888;
 
     @Getter @Setter private LocalNotificationStrategy localNotificationStrategy = LocalNotificationStrategy.inline;
     public LocalNotificationStrategy localNotificationStrategy() {

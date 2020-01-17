@@ -6,7 +6,7 @@
   "config": [
     {"name": "admin_port", "value": "[[node.adminPort]]"},
     {"name": "bubble_network", "value": "[[node.network]]"},
-    {"name": "mitm_port", "value": "[[configuration.mitmPort]]"}
+    {"name": "mitm_port", "value": "[[configuration.defaultMitmProxyPort]]"}
   ],
   "tgzB64": ""
 }

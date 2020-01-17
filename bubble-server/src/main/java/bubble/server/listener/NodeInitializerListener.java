@@ -23,6 +23,8 @@ import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss;
 @Slf4j
 public class NodeInitializerListener extends RestServerLifecycleListenerBase<BubbleConfiguration> {
 
+    private static final int MIN_WORKER_THREADS = 12;
+
     @Override public void beforeStart(RestServer server) {
         final BubbleConfiguration c = (BubbleConfiguration) server.getConfiguration();
 
@@ -33,6 +35,14 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
         // ensure locales were loaded correctly
         final String[] allLocales = c.getAllLocales();
         if (empty(allLocales)) die("beforeStart: no locales found");  // should never happen
+
+        // if we are using the 'http' localNotificationStrategy, ensure we have enough worker threads
+        if (!c.getHttp().hasWorkerThreads() || c.getHttp().getWorkerThreads() < MIN_WORKER_THREADS) {
+            log.info("beforeStart: http.workerThreads="+c.getHttp().getWorkerThreads()+" is not set or too low, increasing to "+ MIN_WORKER_THREADS);
+            c.getHttp().setWorkerThreads(MIN_WORKER_THREADS);
+        } else {
+            log.info("beforeStart: http.workerThreads="+c.getHttp().getWorkerThreads());
+        }
     }
 
     @Override public void onStart(RestServer server) {
