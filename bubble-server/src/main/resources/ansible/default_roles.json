@@ -13,7 +13,7 @@
     "priority": 200,
     "template": true,
     "config": [
-      {"name": "ssl_port", "value": "[[configuration.nginxPort]]"},
+      {"name": "ssl_port", "value": "[[node.sslPort]]"},
       {"name": "admin_port", "value": "[[node.adminPort]]"},
       {"name": "dns_port", "value": "[[configuration.dnsPort]]"}
     ],
@@ -28,7 +28,7 @@
       {"name": "node_uuid", "value": "[[node.uuid]]"},
       {"name": "network_uuid", "value": "[[node.network]]"},
       {"name": "admin_port", "value": "[[node.adminPort]]"},
-      {"name": "ssl_port", "value": "[[configuration.nginxPort]]"},
+      {"name": "ssl_port", "value": "[[node.sslPort]]"},
       {"name": "sage_node", "value": "[[sageNode]]"},
       {"name": "install_type", "value": "[[installType]]"},
       {"name": "bubble_version", "value": "[[configuration.version]]"},
@@ -57,7 +57,7 @@
       {"name": "server_name", "value": "[[node.fqdn]]"},
       {"name": "endpoint", "value": "[[node.ip4]]"},
       {"name": "dns_port", "value": "[[configuration.dnsPort]]"},
-      {"name": "ssl_port", "value": "[[configuration.nginxPort]]"}
+      {"name": "ssl_port", "value": "[[node.sslPort]]"}
     ],
     "tgzB64": ""
   },
@@ -68,7 +68,7 @@
     "config": [
       {"name": "server_name", "value": "[[node.fqdn]]"},
       {"name": "letsencrypt_email", "value": "[[configuration.letsencryptEmail]]"},
-      {"name": "ssl_port", "value": "[[configuration.nginxPort]]"},
+      {"name": "ssl_port", "value": "[[node.sslPort]]"},
       {"name": "admin_port", "value": "[[node.adminPort]]"}
     ],
     "tgzB64": ""
