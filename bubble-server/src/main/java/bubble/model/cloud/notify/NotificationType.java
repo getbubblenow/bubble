@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static bubble.ApiConstants.enumFromString;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.getSystemTimeOffset;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.forName;
 import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
@@ -135,6 +136,7 @@ public enum NotificationType {
         // payment validation requests are never cached, because the response depends on data outside the message
         // specifically, if the user does not have any validated email address, an error is returned
         // but an identical notification can later return a different response, after the email has been validated
-        return this != payment_driver_validate;
+        // also, do not cache if the system time has been altered
+        return this != payment_driver_validate && getSystemTimeOffset() == 0;
     }
 }
