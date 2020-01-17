@@ -38,11 +38,12 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
         if (empty(allLocales)) die("beforeStart: no locales found");  // should never happen
 
         // if we are using the 'http' localNotificationStrategy, ensure we have enough worker threads
-        if (c.localNotificationStrategy() == LocalNotificationStrategy.http) {
-            if (!c.getHttp().hasWorkerThreads() || c.getHttp().getWorkerThreads() < MIN_WORKER_THREADS_FOR_LOCAL_HTTP_NOTIFY) {
-                log.info("beforeStart: http.workerThreads="+c.getHttp().getWorkerThreads()+" is not set or too low, increasing to "+MIN_WORKER_THREADS_FOR_LOCAL_HTTP_NOTIFY);
-                c.getHttp().setWorkerThreads(MIN_WORKER_THREADS_FOR_LOCAL_HTTP_NOTIFY);
-            }
+        if (c.localNotificationStrategy() == LocalNotificationStrategy.http
+                && !c.getHttp().hasWorkerThreads() || c.getHttp().getWorkerThreads() < MIN_WORKER_THREADS_FOR_LOCAL_HTTP_NOTIFY) {
+            log.info("beforeStart: http.workerThreads="+c.getHttp().getWorkerThreads()+" is not set or too low, increasing to "+MIN_WORKER_THREADS_FOR_LOCAL_HTTP_NOTIFY);
+            c.getHttp().setWorkerThreads(MIN_WORKER_THREADS_FOR_LOCAL_HTTP_NOTIFY);
+        } else {
+            log.info("beforeStart: http.workerThreads="+c.getHttp().getWorkerThreads());
         }
     }
 
