@@ -40,7 +40,7 @@
 
 - name: Install bubble jar
   copy:
-    src: "{{ item }}"
+    src: bubble.jar
     dest: /home/bubble/bubble_{{ bubble_version }}/bubble.jar
     owner: bubble
     group: bubble
