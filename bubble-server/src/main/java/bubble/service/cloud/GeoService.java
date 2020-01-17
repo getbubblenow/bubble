@@ -174,6 +174,7 @@ public class GeoService {
             if (found != null) return json(found, GeoTimeZone.class);
 
             if (acct.get() == null) acct.set(accountDAO.getFirstAdmin());
+            if (acct.get() == null) throw new SimpleViolationException("err.activation.required");
             List<CloudService> geoServices = cloudDAO.findByAccountAndType(acct.get().getUuid(), CloudServiceType.geoTime);
             if (geoServices.isEmpty() && !account.admin()) {
                 // try to find using admin
