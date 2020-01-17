@@ -129,7 +129,7 @@ public class NotificationService {
         SynchronousNotification activeNotification;
         synchronized (syncRequestCache) {
             activeNotification = syncRequestCache.get(cacheKey);
-            if (activeNotification == null) {
+            if (activeNotification == null || !type.canReturnCachedResponse()) {
                 // no one else is calling, we are the activeNotification
                 syncRequestCache.put(cacheKey, notification);
                 activeNotification = notification;

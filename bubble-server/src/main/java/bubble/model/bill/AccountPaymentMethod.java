@@ -8,6 +8,7 @@ import bubble.model.account.HasAccountNoName;
 import bubble.model.cloud.CloudService;
 import bubble.notify.payment.PaymentValidationResult;
 import bubble.server.BubbleConfiguration;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,13 +21,9 @@ import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
+import javax.persistence.*;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
@@ -134,5 +131,9 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
         }
 
         return result;
+    }
+
+    @JsonIgnore @Transient public String getCacheKey () {
+        return hashOf(getUuid(), account, cloud, paymentMethodType, paymentInfo);
     }
 }

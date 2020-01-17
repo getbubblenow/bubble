@@ -131,4 +131,10 @@ public enum NotificationType {
                 : die("toResponse: no responseClass defined for "+this.name());
     }
 
+    public boolean canReturnCachedResponse() {
+        // payment validation requests are never cached, because the response depends on data outside the message
+        // specifically, if the user does not have any validated email address, an error is returned
+        // but an identical notification can later return a different response, after the email has been validated
+        return this != payment_driver_validate;
+    }
 }

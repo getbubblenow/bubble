@@ -35,5 +35,5 @@ public class PaymentMethodClaimNotification extends SynchronousNotification {
     }
 
     @JsonIgnore @Transient @Getter(lazy=true) private final String cacheKey
-            = hashOf(hasPaymentMethod() ? paymentMethod.getUuid() : null, hasAccountPlan() ? accountPlan.getUuid() : null, cloud);
+            = hashOf(hasPaymentMethod() ? paymentMethod.getCacheKey() : null, hasAccountPlan() ? accountPlan.getUuid() : null, cloud);
 }
