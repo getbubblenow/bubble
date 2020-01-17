@@ -128,6 +128,7 @@ public class StandardAccountMessageService implements AccountMessageService {
         if (approval == null) {
             return null;
         }
+        if (account == null) account = accountDAO.findByUuid(approval.getAccount());
         final AccountMessageApprovalStatus approvalStatus = messageDAO.requestApproved(account, approval);
         if (approvalStatus == AccountMessageApprovalStatus.ok_confirmed) {
             final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());

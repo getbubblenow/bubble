@@ -277,19 +277,19 @@ public class AuthResource {
             final String accountName = NameAndValue.find(data, DATA_ACCOUNT_NAME);
             final Account account = accountDAO.findById(accountName);
             if (caller != null && account != null && !caller.getUuid().equals(account.getUuid())) {
-                return invalid("err.totpToken.invalid");
+                return invalid("err.approvalToken.invalid");
             }
             if (caller == null && account == null) {
-                return invalid("err.totpToken.invalid");
+                return invalid("err.approvalToken.invalid");
             }
             caller = account;
         }
         final AccountMessage approval = messageService.approve(caller, getRemoteHost(req), token, data);
-        if (approval == null) return invalid("err.totpToken.invalid");
+        if (approval == null) return invalid("err.approvalToken.invalid");
         final Account account = validateCallerForApproveOrDeny(caller, approval, token);
 
         if (approval.getMessageType() == AccountMessageType.confirmation) {
-            if (account == null) return invalid("err.totpToken.invalid");
+            if (account == null) return invalid("err.approvalToken.invalid");
             if (approval.getAction() == AccountAction.login) {
                 return ok(account.setToken(sessionDAO.create(account)));
             } else {
