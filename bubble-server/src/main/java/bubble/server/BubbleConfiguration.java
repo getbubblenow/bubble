@@ -10,6 +10,7 @@ import bubble.model.cloud.BubbleNode;
 import bubble.server.listener.BubbleFirstTimeListener;
 import bubble.service.boot.ActivationService;
 import bubble.service.boot.StandardSelfNodeService;
+import bubble.service.notify.LocalNotificationStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.jknack.handlebars.Handlebars;
 import lombok.Getter;
@@ -70,14 +71,18 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_LOCALES = "locales";
     public static final String TAG_CLOUD_CONFIGS = "cloudConfigs";
     public static final String TAG_LOCKED = "locked";
-    public static final String TAG_NGINX_PORT = "nginxPort";
+    public static final String TAG_SSL_PORT = "sslPort";
 
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
     public BubbleConfiguration (BubbleConfiguration other) { copy(this, other); }
 
-    @Getter @Setter private int nginxPort = 1443;
-    @Getter @Setter private int mitmPort = 8888;
+    @Getter @Setter private int defaultNodeSslPort = 1443;
+
+    @Getter @Setter private LocalNotificationStrategy localNotificationStrategy = LocalNotificationStrategy.inline;
+    public LocalNotificationStrategy localNotificationStrategy() {
+        return localNotificationStrategy == null ? LocalNotificationStrategy.inline : localNotificationStrategy;
+    }
 
     @Getter @Setter private Boolean backupsEnabled = true;
     public boolean backupsEnabled() { return backupsEnabled == null || backupsEnabled; }
@@ -250,6 +255,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public Map<String, Object> getPublicSystemConfigs () {
         synchronized (publicSystemConfigs) {
             if (publicSystemConfigs.get() == null) {
+                final BubbleNode thisNode = getThisNode();
                 final BubbleNetwork thisNetwork = getThisNetwork();
                 final AccountDAO accountDAO = getBean(AccountDAO.class);
                 final ActivationService activationService = getBean(ActivationService.class);
@@ -263,7 +269,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_LOCALES, getAllLocales()},
                         {TAG_CLOUD_CONFIGS, accountDAO.activated() ? null : activationService.getCloudDefaults()},
                         {TAG_LOCKED, accountDAO.locked()},
-                        {TAG_NGINX_PORT, getNginxPort()}
+                        {TAG_SSL_PORT, thisNode == null ? null : thisNode.getSslPort()}
                 }));
             }
             return publicSystemConfigs.get();

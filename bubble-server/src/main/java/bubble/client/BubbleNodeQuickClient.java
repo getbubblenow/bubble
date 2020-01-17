@@ -17,15 +17,6 @@ public class BubbleNodeQuickClient extends BubbleNodeClient {
         init();
     }
 
-    public BubbleNodeQuickClient(BubbleNode node, BubbleConfiguration configuration, boolean alternate) {
-        super(node, configuration, alternate);
-        init();
-    }
-
-    @Override public BubbleNodeClient getAlternate(BubbleNode node, BubbleConfiguration configuration) {
-        return new BubbleNodeQuickClient(node, configuration, true);
-    }
-
     public void init() {
         setNumTries(NUM_TRIES);
         setConnectTimeout(QUICK_CONNECT_TIMEOUT);

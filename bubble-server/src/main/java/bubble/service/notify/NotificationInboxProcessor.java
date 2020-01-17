@@ -38,6 +38,12 @@ public class NotificationInboxProcessor implements Runnable {
     }
 
     private void processNotification(ReceivedNotification n, Map<String, SynchronousNotification> syncRequests) {
+        processNotification(n, syncRequests, configuration);
+    }
+
+    public static void processNotification(ReceivedNotification n,
+                                           Map<String, SynchronousNotification> syncRequests,
+                                           BubbleConfiguration configuration) {
         final ReceivedNotificationHandler handler = n.getType().getHandler(configuration);
         if (n.getType().isResponse()) {
             final SynchronousNotificationReply reply = json(n.getPayloadJson(), SynchronousNotificationReply.class);

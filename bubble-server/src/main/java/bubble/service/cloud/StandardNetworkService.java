@@ -183,6 +183,7 @@ public class StandardNetworkService implements NetworkService {
                     .setHost(nn.getHost())
                     .setState(BubbleNodeState.created)
                     .setSageNode(nn.fork() ? null : configuration.getThisNode().getUuid())
+                    .setSslPort(network.getInstallType() == AnsibleInstallType.sage ? 443 : configuration.getDefaultNodeSslPort())
                     .setNetwork(network.getUuid())
                     .setDomain(network.getDomain())
                     .setAccount(network.getAccount())

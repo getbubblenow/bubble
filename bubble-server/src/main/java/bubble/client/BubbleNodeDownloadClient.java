@@ -18,15 +18,6 @@ public class BubbleNodeDownloadClient extends BubbleNodeClient {
         init();
     }
 
-    public BubbleNodeDownloadClient(BubbleNode node, BubbleConfiguration configuration, boolean alternate) {
-        super(node, configuration, alternate);
-        init();
-    }
-
-    @Override public BubbleNodeClient getAlternate(BubbleNode node, BubbleConfiguration configuration) {
-        return new BubbleNodeDownloadClient(node, configuration, true);
-    }
-
     public void init() {
         setNumTries(NUM_TRIES);
         setConnectTimeout(DL_CONNECT_TIMEOUT);

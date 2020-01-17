@@ -71,7 +71,7 @@ public class AnsiblePrepService {
             ctx.put("restoreTimeoutSeconds", RESTORE_MONITOR_SCRIPT_TIMEOUT_SECONDS);
         }
 
-        final int sslPort = installType == AnsibleInstallType.sage ? 443 : configuration.getNginxPort();
+        final int sslPort = node.getSslPort();
         ctx.put("sslPort", sslPort);
         final String publicBaseUri = sslPort == 443
                 ? "https://"+network.getNetworkDomain()+"/"

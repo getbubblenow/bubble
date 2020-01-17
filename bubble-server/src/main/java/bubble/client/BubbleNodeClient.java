@@ -12,17 +12,14 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 import org.cobbzilla.util.http.ApiConnectionInfo;
 import org.cobbzilla.util.http.HttpRequestBean;
-import org.cobbzilla.util.http.URIUtil;
 import org.cobbzilla.wizard.server.config.HttpConfiguration;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static bubble.ApiConstants.isHttpsPort;
 import static bubble.server.BubbleServer.getRestoreKey;
 import static bubble.server.BubbleServer.isRestoreMode;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
@@ -42,21 +39,11 @@ public class BubbleNodeClient extends BubbleApiClient {
     private BubbleNodeKey fromKey;
     private BubbleNode toNode;
     private BubbleNodeKey toKey;
-    private BubbleApiClient alternate;
-    private boolean useAlternate = false;
 
     public BubbleNodeClient(BubbleNode toNode, BubbleConfiguration configuration) {
         // use http if connection is to localhost
         super(new ApiConnectionInfo(baseUri(toNode, configuration)));
         initKeys(toNode, configuration);
-        alternate = getAlternate(toNode, configuration);
-    }
-
-    // ensure we have at least one valid key so others can talk to us
-    public BubbleNodeClient(BubbleNode toNode, BubbleConfiguration configuration, boolean alternate) {
-        super(new ApiConnectionInfo(baseUri(toNode, configuration)));
-        initKeys(toNode, configuration);
-        this.alternate = null;
     }
 
     public void initKeys(BubbleNode toNode, BubbleConfiguration configuration) {
@@ -78,18 +65,9 @@ public class BubbleNodeClient extends BubbleApiClient {
         this.toNode = toNode;
     }
 
-    public BubbleNodeClient getAlternate(BubbleNode node, BubbleConfiguration configuration) {
-        return new BubbleNodeClient(node, configuration, true);
-    }
-
     private static String baseUri(BubbleNode node, BubbleConfiguration configuration) {
         final HttpConfiguration http = configuration.getHttp();
-
-        if (node.getUuid().equals(configuration.getThisNode().getUuid())) {
-            return "http://127.0.0.1:"+ http.getPort()+ http.getBaseUri();
-        }
-        return (isHttpsPort(node.getSslPort()) ? "https://" : "http://")
-                + node.getFqdn() + ":" + node.getSslPort() + http.getBaseUri();
+        return "https://" + node.getFqdn() + ":" + node.getSslPort() + http.getBaseUri();
     }
 
     @Override protected <T> void setRequestEntity(HttpEntityEnclosingRequest entityRequest, T data, ContentType contentType) {
@@ -116,31 +94,12 @@ public class BubbleNodeClient extends BubbleApiClient {
     }
 
     @Override public HttpResponse execute(HttpClient client, HttpRequestBase request) throws IOException {
-        if (useAlternate) {
-            log.info("execute: useAlternate true, using alternate...");
-            return alternate.execute(client, request);
-        }
         try {
             log.debug("execute: attempting request...");
             return super.execute(client, request);
         } catch (Exception e) {
-            log.info("execute("+request+"): error: "+e);
-            if (alternate == null) throw e;
-
-            final String uri = (isHttpsPort(toNode.getSslPort()) ? "https://" : "http://")
-                    + toNode.getIp4() + ":" + toNode.getAdminPort() + URIUtil.getPath(request.getURI().toString());
-            request.setURI(URI.create(uri));
-            log.info("execute: api call failed, trying alternate...");
-            final HttpResponse response = alternate.execute(client, request);
-            useAlternate = true;
-            log.info("execute: api call failed, alternate succeeded, will continue using that");
-            return response;
+            return die("execute("+request+"): error: "+e);
         }
-    }
-
-    @Override public void close() {
-        super.close();
-        if (alternate != null) alternate.close();
     }
 
 }

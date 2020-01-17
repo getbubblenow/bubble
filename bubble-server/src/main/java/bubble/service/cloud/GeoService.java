@@ -17,9 +17,11 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.CloudService;
 import bubble.model.cloud.NetLocation;
 import bubble.server.BubbleConfiguration;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.ArrayUtils;
 import org.cobbzilla.util.collection.ExpirationMap;
+import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,8 +35,11 @@ import java.util.stream.Collectors;
 
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
 import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.LocaleUtil.getDefaultLocales;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
@@ -48,29 +53,35 @@ public class GeoService {
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleFootprintDAO footprintDAO;
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private RedisService redis;
 
-    private final Map<String, GeoLocation> locateCache = new ExpirationMap<>(DAYS.toMillis(1));
+    private static final long REDIS_CACHE_TIME = DAYS.toSeconds(1);
+    private static final long MEMORY_CACHE_TIME = MINUTES.toSeconds(20);
+
+    @Getter(lazy=true) private final RedisService locateRedis = redis.prefixNamespace(getClass().getName()+".locate");
+    private final Map<String, GeoLocation> locateCache = new ExpirationMap<>(MEMORY_CACHE_TIME);
 
     public GeoLocation locate (String accountUuid, String ip) {
-
-        List<CloudService> candidateGeoLocationServices = null;
-        if (accountUuid != null) {
-            candidateGeoLocationServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoLocation);
-        }
-        if (empty(candidateGeoLocationServices)) {
-            // try to find using admin
-            final Account admin = accountDAO.getFirstAdmin();
-            if (admin != null && !admin.getUuid().equals(accountUuid)) {
-                candidateGeoLocationServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoLocation);
-            }
-        }
-        if (empty(candidateGeoLocationServices)) {
-            throw new SimpleViolationException("err.geoLocateService.notFound");
-        }
-
-        final List<CloudService> geoLocationServices = candidateGeoLocationServices;
-        final String cacheKey = hashOf(accountUuid, ip, geoLocationServices);
+        final String cacheKey = hashOf(accountUuid, ip);
         return locateCache.computeIfAbsent(cacheKey, k -> {
+            final String found = getLocateRedis().get(cacheKey);
+            if (found != null) return json(found, GeoLocation.class);
+
+            List<CloudService> geoLocationServices = null;
+            if (accountUuid != null) {
+                geoLocationServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoLocation);
+            }
+            if (empty(geoLocationServices)) {
+                // try to find using admin
+                final Account admin = accountDAO.getFirstAdmin();
+                if (admin != null && !admin.getUuid().equals(accountUuid)) {
+                    geoLocationServices = cloudDAO.findByAccountAndType(admin.getUuid(), CloudServiceType.geoLocation);
+                }
+            }
+            if (empty(geoLocationServices)) {
+                throw new SimpleViolationException("err.geoLocateService.notFound");
+            }
+
             log.info("locate: resolving IP: "+ip+" for cacheKey: "+cacheKey);
             final List<GeoLocation> resolved = new ArrayList<>();
             GeoCodeServiceDriver geoCodeDriver = null;
@@ -106,7 +117,10 @@ public class GeoService {
                 }
             }
 
-            return getGeoLocation(ip, geoLocationServices, resolved);
+            final GeoLocation geoLocation = getGeoLocation(ip, geoLocationServices, resolved);
+            getLocateRedis().set(cacheKey, json(geoLocation), EX, REDIS_CACHE_TIME);
+
+            return geoLocation;
         });
     }
 
@@ -150,10 +164,15 @@ public class GeoService {
         return resolved.get(0);
     }
 
-    private Map<String, GeoTimeZone> timezoneCache = new ExpirationMap<>(DAYS.toMillis(1));
+    @Getter(lazy=true) private final RedisService timezoneRedis = redis.prefixNamespace(getClass().getName()+".timezone");
+    private Map<String, GeoTimeZone> timezoneCache = new ExpirationMap<>(MEMORY_CACHE_TIME);
+
     public GeoTimeZone getTimeZone (final Account account, String ip) {
         final AtomicReference<Account> acct = new AtomicReference<>(account);
         return timezoneCache.computeIfAbsent(ip, k -> {
+            final String found = getTimezoneRedis().get(ip);
+            if (found != null) return json(found, GeoTimeZone.class);
+
             if (acct.get() == null) acct.set(accountDAO.getFirstAdmin());
             List<CloudService> geoServices = cloudDAO.findByAccountAndType(acct.get().getUuid(), CloudServiceType.geoTime);
             if (geoServices.isEmpty() && !account.admin()) {
@@ -176,7 +195,9 @@ public class GeoService {
                 location.setLon(code.getLon());
             }
 
-            return geoServices.get(0).getGeoTimeDriver(configuration).getTimezone(location.getLat(), location.getLon());
+            final GeoTimeZone timezone = geoServices.get(0).getGeoTimeDriver(configuration).getTimezone(location.getLat(), location.getLon());
+            getTimezoneRedis().set(ip, json(timezone), EX, REDIS_CACHE_TIME);
+            return timezone;
         });
     }
 
@@ -237,6 +258,7 @@ public class GeoService {
     }
 
     private Map<String, List<String>> localesCache = new ExpirationMap<>(DAYS.toMillis(1));
+
     public List<String> getSupportedLocales(Account caller, String remoteHost, String langHeader) {
         return localesCache.computeIfAbsent((caller==null?"null":caller.getUuid())+remoteHost+"\t"+langHeader, k -> {
             final List<String> locales = new ArrayList<>();

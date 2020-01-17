@@ -42,6 +42,8 @@ staticAssets:
 http:
   port: {{#exists BUBBLE_SERVER_PORT}}{{BUBBLE_SERVER_PORT}}{{else}}8090{{/exists}}
   baseUri: /api
+  {{#exists BUBBLE_SELECTOR_THREADS}}selectorThreads: {{BUBBLE_SELECTOR_THREADS}}{{/exists}}
+  {{#exists BUBBLE_WORKER_THREADS}}workerThreads: {{BUBBLE_WORKER_THREADS}}{{/exists}}
 
 jersey:
   resourcePackages:
@@ -63,6 +65,8 @@ errorApi:
   url: {{ERRBIT_URL}}
   key: {{ERRBIT_KEY}}
   env: {{ERRBIT_ENV}}
+
+localNotificationStrategy: {{#exists BUBBLE_LOCAL_NOTIFY}}{{BUBBLE_LOCAL_NOTIFY}}{{else}}inline{{/exists}}
 
 letsencryptEmail: {{LETSENCRYPT_EMAIL}}
 localStorageDir: {{LOCALSTORAGE_BASE_DIR}}

@@ -22,6 +22,7 @@ import bubble.model.cloud.CloudService;
 import bubble.resources.account.AccountOwnedResource;
 import bubble.server.BubbleConfiguration;
 import bubble.service.AuthenticatorService;
+import bubble.service.cloud.GeoService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
@@ -54,6 +55,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     @Autowired private AccountPaymentMethodDAO paymentMethodDAO;
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AuthenticatorService authenticatorService;
+    @Autowired private GeoService geoService;
 
     public AccountPlansResource(Account account) { super(account); }
 
@@ -78,7 +80,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             final String remoteHost = getRemoteHost(req);
             for (CloudService geo : geoLocationServices) {
                 try {
-                    final GeoLocation location = geo.getGeoLocateDriver(configuration).geolocate(remoteHost);
+                    final GeoLocation location = geoService.locate(request.getAccount(), remoteHost);
                     if (configuration.isDisallowed(location.getCountry())) throw invalidEx("err.accountPlan.callerCountryDisallowed");
                     break;
                 } catch (Exception e) {

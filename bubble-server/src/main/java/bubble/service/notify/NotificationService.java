@@ -42,6 +42,7 @@ public class NotificationService {
     @Autowired private ReceivedNotificationDAO receivedNotificationDAO;
     @Autowired private BubbleConfiguration configuration;
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
+    @Autowired private NotificationReceiverService notificationReceiverService;
 
     public NotificationReceipt notify(String sender, ApiClientBase api, NotificationType type, Object payload) {
         return notify(sender, api, null, type, payload);
@@ -72,46 +73,63 @@ public class NotificationService {
         return _notify(sender, api, toNodeUuid, type, payload, true);
     }
     public NotificationReceipt _notify(String sender, ApiClientBase api, String toNodeUuid, NotificationType type, Object payload, boolean enhancedReceipt) {
+        final BubbleNode thisNode = configuration.getThisNode();
+        final boolean isLocal = toNodeUuid != null && toNodeUuid.equals(thisNode.getUuid());
         final SentNotification notification = sentNotificationDAO.create((SentNotification) new SentNotification()
                 .setNotificationId(getNotificationId(payload))
                 .setAccount(sender)
                 .setType(type)
-                .setFromNode(configuration.getThisNode().getUuid())
+                .setFromNode(thisNode.getUuid())
                 .setToNode(toNodeUuid != null ? toNodeUuid : api.getBaseUri())
-                .setUri(api.getBaseUri()+NOTIFY_ENDPOINT)
+                .setUri(api.getBaseUri() + NOTIFY_ENDPOINT)
                 .setPayloadJson(payload == null ? null : json(payload)));
 
-        notification.setStatus(NotificationSendStatus.sending);
-        sentNotificationDAO.update(notification);
-
-        try {
-            final String json = json(notification);
-            if (log.isDebugEnabled()) {
-                log.debug("_notify:\n>>>>> SENDING to " + api.getConnectionInfo().getBaseUri() + " >>>>>\n"
-                        + truncate(json, MAX_NOTIFY_LOG)
-                        + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-            } else {
-                log.info("_notify: >>>>> SENDING "+notification.getType()+" to " + api.getConnectionInfo().getBaseUri() + " >>>>>");
-            }
-            final RestResponse response = api.doPost(NOTIFY_ENDPOINT, json);
-            final NotificationReceipt receipt = json(response.json, NotificationReceipt.class);
-            notification.setStatus(NotificationSendStatus.sent);
-            notification.setReceipt(receipt);
-            sentNotificationDAO.update(notification);
-            log.debug("_notify: <<<<< RECEIPT <<<<<< "+json(receipt, COMPACT_MAPPER)+" <<<<<<<<<<<<<<<<<<");
+        if (isLocal && configuration.localNotificationStrategy() == LocalNotificationStrategy.inline) {
+            final NotificationReceipt receipt = new NotificationReceipt();
+            final ReceivedNotification n = new ReceivedNotification(notification).setReceipt(receipt);
+            NotificationInboxProcessor.processNotification(n, syncRequests, configuration);
             return receipt;
 
-        } catch (ConnectException | ConnectTimeoutException | ApiException e) {
-            notification.setStatus(NotificationSendStatus.error);
-            notification.setException(e);
+        } else {
+            notification.setStatus(NotificationSendStatus.sending);
             sentNotificationDAO.update(notification);
-            return die("_notify: " + e);
 
-        } catch (Exception e) {
-            notification.setStatus(NotificationSendStatus.error);
-            notification.setException(e);
-            sentNotificationDAO.update(notification);
-            return die("_notify: " + e, e);
+            try {
+                final NotificationReceipt receipt;
+                if (isLocal && configuration.localNotificationStrategy() == LocalNotificationStrategy.queue) {
+                    log.info("_notify: >>>>> SENDING " + notification.getType() + " to SELF via NotificationReceiverService >>>>>");
+                    receipt = notificationReceiverService.receive(thisNode.getUuid(), notification);
+
+                } else {
+                    final String json = json(notification);
+                    if (log.isTraceEnabled()) {
+                        log.trace("_notify:\n>>>>> SENDING to " + api.getConnectionInfo().getBaseUri() + " >>>>>\n"
+                                + truncate(json, MAX_NOTIFY_LOG)
+                                + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+                    } else {
+                        log.info("_notify: >>>>> SENDING " + notification.getType() + " to " + api.getConnectionInfo().getBaseUri() + " >>>>>");
+                    }
+                    final RestResponse response = api.doPost(NOTIFY_ENDPOINT, json);
+                    receipt = json(response.json, NotificationReceipt.class);
+                }
+                notification.setStatus(NotificationSendStatus.sent);
+                notification.setReceipt(receipt);
+                sentNotificationDAO.update(notification);
+                log.debug("_notify: <<<<< RECEIPT <<<<<< " + json(receipt, COMPACT_MAPPER) + " <<<<<<<<<<<<<<<<<<");
+                return receipt;
+
+            } catch (ConnectException | ConnectTimeoutException | ApiException e) {
+                notification.setStatus(NotificationSendStatus.error);
+                notification.setException(e);
+                sentNotificationDAO.update(notification);
+                return die("_notify: " + e);
+
+            } catch (Exception e) {
+                notification.setStatus(NotificationSendStatus.error);
+                notification.setException(e);
+                sentNotificationDAO.update(notification);
+                return die("_notify: " + e, e);
+            }
         }
     }
 
@@ -172,9 +190,11 @@ public class NotificationService {
                     n.setProcessingStatus(NotificationProcessingStatus.processing);
                     receivedNotificationDAO.update(n);
                     receivedNotificationDAO.flush();
+                    log.debug("checkInbox: spawning NotificationInboxProcessor for "+n.getType()+" notificationId="+n.getNotificationId());
                     daemon(new NotificationInboxProcessor(n, syncRequests, configuration, receivedNotificationDAO));
                 }
             }
+            log.debug("checkInbox: finished");
         } catch (Exception e) {
             log.error("checkInbox: "+e, e);
         }

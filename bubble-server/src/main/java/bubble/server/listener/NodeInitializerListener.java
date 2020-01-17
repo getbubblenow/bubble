@@ -7,6 +7,7 @@ import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.boot.SelfNodeService;
+import bubble.service.notify.LocalNotificationStrategy;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
@@ -23,6 +24,8 @@ import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss;
 @Slf4j
 public class NodeInitializerListener extends RestServerLifecycleListenerBase<BubbleConfiguration> {
 
+    private static final int MIN_WORKER_THREADS_FOR_LOCAL_HTTP_NOTIFY = 10;
+
     @Override public void beforeStart(RestServer server) {
         final BubbleConfiguration c = (BubbleConfiguration) server.getConfiguration();
 
@@ -33,6 +36,14 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
         // ensure locales were loaded correctly
         final String[] allLocales = c.getAllLocales();
         if (empty(allLocales)) die("beforeStart: no locales found");  // should never happen
+
+        // if we are using the 'http' localNotificationStrategy, ensure we have enough worker threads
+        if (c.localNotificationStrategy() == LocalNotificationStrategy.http) {
+            if (!c.getHttp().hasWorkerThreads() || c.getHttp().getWorkerThreads() < MIN_WORKER_THREADS_FOR_LOCAL_HTTP_NOTIFY) {
+                log.info("beforeStart: http.workerThreads="+c.getHttp().getWorkerThreads()+" is not set or too low, increasing to "+MIN_WORKER_THREADS_FOR_LOCAL_HTTP_NOTIFY);
+                c.getHttp().setWorkerThreads(MIN_WORKER_THREADS_FOR_LOCAL_HTTP_NOTIFY);
+            }
+        }
     }
 
     @Override public void onStart(RestServer server) {

@@ -26,4 +26,8 @@ public class BubbleApiClient extends ApiClientBase {
         return HttpClientBuilder.create().setConnectionManager(cm);
     }
 
+    @Override public HttpClientBuilder getHttpClientBuilder() {
+        return newHttpClientBuilder(5, 5);
+    }
+
 }

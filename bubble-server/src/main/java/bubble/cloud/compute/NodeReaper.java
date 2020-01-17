@@ -21,8 +21,8 @@ import static org.cobbzilla.util.system.Sleep.sleep;
 @Slf4j
 public class NodeReaper extends SimpleDaemon {
 
-    private static final long STARTUP_DELAY = MINUTES.toMillis(1);
-    private static final long KILL_CHECK_INTERVAL = MINUTES.toMillis(10);
+    private static final long STARTUP_DELAY = MINUTES.toMillis(30);
+    private static final long KILL_CHECK_INTERVAL = MINUTES.toMillis(30);
 
     private final ComputeServiceDriverBase compute;
 
