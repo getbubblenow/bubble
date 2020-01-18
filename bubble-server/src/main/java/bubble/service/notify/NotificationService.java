@@ -139,8 +139,8 @@ public class NotificationService {
         return null;
     }
 
-    private final Map<String, SynchronousNotification> syncRequests = new ExpirationMap<>(SECONDS.toMillis(160));
-    private final Map<String, SynchronousNotification> syncRequestCache = new ExpirationMap<>(SECONDS.toMillis(150));
+    private final Map<String, SynchronousNotification> syncRequests = new ExpirationMap<>(SECONDS.toMillis(20));
+    private final Map<String, SynchronousNotification> syncRequestCache = new ExpirationMap<>(SECONDS.toMillis(15));
 
     public <T> T notifySync(BubbleNode delegate, NotificationType type, SynchronousNotification notification) {
         final String cacheKey = notification.getCacheKey(delegate, type);
