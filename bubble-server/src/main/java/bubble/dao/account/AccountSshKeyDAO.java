@@ -23,6 +23,10 @@ public class AccountSshKeyDAO extends AccountOwnedEntityDAO<AccountSshKey> {
         return findByUniqueFields("account", accountUuid, "sshPublicKeyHash", hash);
     }
 
+    public AccountSshKey findByHash(String hash) {
+        return findByUniqueField("sshPublicKeyHash", hash);
+    }
+
     @Override public Object preCreate(AccountSshKey key) {
 
         if (!key.hasSshPublicKey()) throw invalidEx("err.sshPublicKey.required");
@@ -44,7 +48,7 @@ public class AccountSshKeyDAO extends AccountOwnedEntityDAO<AccountSshKey> {
             key.setSshPublicKeyHash(hash);
         }
 
-        final AccountSshKey byHash = findByAccountAndHash(key.getAccount(), key.getSshPublicKeyHash());
+        final AccountSshKey byHash = findByHash(key.getSshPublicKeyHash());
         if (byHash != null) throw invalidEx("err.sshPublicKey.alreadyExists");
 
         final AccountSshKey byName = findByAccountAndId(key.getAccount(), key.getName());
