@@ -395,11 +395,12 @@ public class AuthResource {
     @GET @Path(EP_LOGOUT)
     public Response logout(@Context ContainerRequest ctx,
                            @QueryParam("all") Boolean all) {
-        final Account found = userPrincipal(ctx);
+        final Account account = optionalUserPrincipal(ctx);
+        if (account == null) return invalid("err.logout.noSession");
         if (all != null && all) {
-            sessionDAO.invalidateAllSessions(found.getApiToken());
+            sessionDAO.invalidateAllSessions(account.getApiToken());
         } else {
-            sessionDAO.invalidate(found.getApiToken());
+            sessionDAO.invalidate(account.getApiToken());
         }
         return ok_empty();
     }
