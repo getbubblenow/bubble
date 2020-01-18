@@ -240,7 +240,7 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
         cleanupStart(node); // just in case the key is still around
         final HttpRequestBean destroyDropletRequest = auth(new HttpRequestBean()
                 .setMethod(DELETE)
-                .setUri("droplets?tag_name="+TAG_PREFIX_NODE+node.getUuid()));
+                .setUri(DO_API_BASE+"droplets?tag_name="+TAG_PREFIX_NODE+node.getUuid()));
         final HttpResponseBean response = getResponse(destroyDropletRequest);
         if (response.getStatus() != NO_CONTENT) {
             throw invalidEx("err.node.stop.error", "stop: error stopping node: "+response);
