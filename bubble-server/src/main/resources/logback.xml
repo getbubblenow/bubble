@@ -33,12 +33,12 @@
     <!--<logger name="org.cobbzilla.wizardtest.resources.AbstractResourceIT" level="INFO" />-->
     <logger name="org.cobbzilla.wizardtest.resources" level="INFO" />
     <logger name="org.glassfish.jersey.grizzly" level="INFO" />
-    <logger name="bubble.cloud.email.SmtpEmailDriver" level="DEBUG" />
-    <logger name="org.cobbzilla.wizard.dao.AbstractCRUDDAO" level="DEBUG" />
+    <logger name="bubble.cloud.email.SmtpEmailDriver" level="WARN" />
+    <logger name="org.cobbzilla.wizard.dao.AbstractCRUDDAO" level="WARN" />
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
-    <logger name="bubble.service.notify.NotificationService" level="DEBUG" />
-    <logger name="bubble.resources.notify" level="DEBUG" />
-    <logger name="bubble.client" level="DEBUG" />
+    <logger name="bubble.service.notify.NotificationService" level="WARN" />
+    <logger name="bubble.resources.notify" level="WARN" />
+    <logger name="bubble.client" level="WARN" />
     <logger name="bubble.main.rekey" level="INFO" />
     <logger name="bubble" level="INFO" />
 
