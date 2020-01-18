@@ -40,7 +40,7 @@ public class AccountSshKey extends IdentifiableBase implements HasAccount {
 
     @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
-    @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=100)
+    @ECIndex @Column(nullable=false, updatable=false, length=100)
     @Getter @Setter private String name;
 
     @ECSearchable @ECField(index=20)
