@@ -23,7 +23,11 @@ import java.util.function.Predicate;
 
 import static bubble.ApiConstants.DEBUG_ENDPOINT;
 import static bubble.cloud.auth.RenderedMessage.filteredInbox;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.reflect.ReflectionUtil.forName;
+import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Consumes(APPLICATION_JSON)
@@ -72,6 +76,21 @@ public class DebugResource {
                 && (actionPredicate == null || actionPredicate.test(m))
                 && (targetPredicate == null || targetPredicate.test(m))
         );
+    }
+
+    @GET @Path("/error")
+    public Response testError(@Context ContainerRequest ctx,
+                              @QueryParam("type") String type,
+                              @QueryParam("message") String message) {
+        if (!empty(type)) {
+            if (!empty(message)) {
+                return die((Exception) instantiate(forName(type), message));
+            } else {
+                return die((Exception) instantiate(type));
+            }
+        } else {
+            return die("testing error catcher");
+        }
     }
 
 }

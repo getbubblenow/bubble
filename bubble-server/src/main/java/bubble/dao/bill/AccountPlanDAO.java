@@ -97,9 +97,10 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
             }
             accountPlan.setPaymentMethod(accountPlan.getPaymentMethodObject().getUuid());
             accountPlan.setNextBill(0L); // bill and payment occurs in postCreate, will update this
-            accountPlan.setNextBillDate();
+            accountPlan.setNextBillDate("msg.nextBillDate.pending");
         } else {
             accountPlan.setNextBill(Long.MAX_VALUE);
+            accountPlan.setNextBillDate("msg.nextBillDate.paymentsNotEnabled");
         }
         return super.preCreate(accountPlan);
     }

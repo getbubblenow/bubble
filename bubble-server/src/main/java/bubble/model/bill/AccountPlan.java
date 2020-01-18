@@ -97,7 +97,7 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @ECIndex @Getter @Setter private Long nextBill;
 
     @ECSearchable @ECField(index=100)
-    @Column(nullable=false, length=20)
+    @Column(nullable=false, length=50)
     @Getter @Setter private String nextBillDate;
     public AccountPlan setNextBillDate() { return setNextBillDate(BILL_START_END_FORMAT.print(getNextBill())); }
 
