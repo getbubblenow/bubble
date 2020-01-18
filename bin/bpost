@@ -4,10 +4,10 @@
 #
 # Usage:
 #
-#     bpost path [file] [options]
+#     bpost path file [options]
 #
-#   path     : an API path
 #   file     : a JSON file to POST. To read from stdin, specify the file as -
+#   path     : an API path
 #   options  : bscript options, see bubble.main.BubbleScriptOptions (and parent classes) for more info
 #
 # Environment variables

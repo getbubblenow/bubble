@@ -1,10 +1,12 @@
 package bubble.dao.cloud;
 
+import bubble.cloud.CloudServiceType;
 import bubble.cloud.storage.local.LocalStorageDriver;
+import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountOwnedTemplateDAO;
+import bubble.model.account.Account;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.CloudService;
-import bubble.cloud.CloudServiceType;
 import bubble.server.BubbleConfiguration;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.criterion.Order;
@@ -21,6 +23,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @Repository
 public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
 
+    @Autowired private AccountDAO accountDAO;
     @Autowired private BubbleConfiguration configuration;
 
     @Override public Order getDefaultSortOrder() { return Order.desc("priority"); }
@@ -37,6 +40,12 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
                 }
             }
         }
+        if (cloud.hasCredentials() && cloud.getCredentialsJson().contains("{{") && cloud.getCredentialsJson().contains("}}")) {
+            cloud.setCredentialsJson(configuration.applyHandlebars(cloud.getCredentialsJson()));
+        }
+        if (cloud.hasDriverConfig() && cloud.getDriverConfigJson().contains("{{") && cloud.getDriverConfigJson().contains("}}")) {
+            cloud.setDriverConfigJson(configuration.applyHandlebars(cloud.getDriverConfigJson()));
+        }
         return super.preCreate(cloud);
     }
 
@@ -44,6 +53,13 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
         if (!cloud.delegated() && !configuration.testMode()) {
             final ValidationResult errors = testDriver(cloud, configuration);
             if (errors.isInvalid()) throw invalidEx(errors);
+        }
+        if (cloud.getType() == CloudServiceType.payment
+                && cloud.template()
+                && cloud.enabled()
+                && !configuration.paymentsEnabled()) {
+            // a public template for a payment cloud has been added, and payments were not enabled -- now they are
+            configuration.refreshPublicSystemConfigs();
         }
         return super.postCreate(cloud, context);
     }
@@ -83,4 +99,9 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
         return found.isEmpty() ? null : found.get(0);
     }
 
+    public boolean paymentsEnabled() {
+        final Account admin = accountDAO.findFirstAdmin();
+        if (admin == null) return false;
+        return !findPublicTemplatesByType(admin.getUuid(), CloudServiceType.payment).isEmpty();
+    }
 }

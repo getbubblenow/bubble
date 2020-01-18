@@ -72,4 +72,3 @@ letsencryptEmail: {{LETSENCRYPT_EMAIL}}
 localStorageDir: {{LOCALSTORAGE_BASE_DIR}}
 
 disallowedCountries: {{DISALLOWED_COUNTRIES}}
-paymentsEnabled: {{BUBBLE_PAYMENTS_ENABLED}}

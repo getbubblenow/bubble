@@ -5,6 +5,7 @@ import bubble.BubbleHandlebars;
 import bubble.client.BubbleApiClient;
 import bubble.cloud.CloudServiceDriver;
 import bubble.dao.account.AccountDAO;
+import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.server.listener.BubbleFirstTimeListener;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.map.DefaultedMap;
 import org.apache.commons.lang.ArrayUtils;
 import org.cobbzilla.util.collection.MapBuilder;
+import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.handlebars.HasHandlebars;
 import org.cobbzilla.util.http.ApiConnectionInfo;
 import org.cobbzilla.util.io.FileUtil;
@@ -195,10 +197,9 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     @Getter @Setter private LegalInfo legal = new LegalInfo();
 
-    @Getter @Setter private Boolean paymentsEnabled = false;
-    public boolean paymentsEnabled() { return paymentsEnabled != null && paymentsEnabled; }
-
     @Override @JsonIgnore public Handlebars getHandlebars() { return BubbleHandlebars.instance.getHandlebars(); }
+
+    public String applyHandlebars(String val) { return HandlebarsUtil.apply(getHandlebars(), val, getEnvCtx()); }
 
     public ApiClientBase newApiClient() { return new BubbleApiClient(new ApiConnectionInfo(getLoopbackApiBase())); }
 
@@ -259,12 +260,13 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                 final BubbleNode thisNode = getThisNode();
                 final BubbleNetwork thisNetwork = getThisNetwork();
                 final AccountDAO accountDAO = getBean(AccountDAO.class);
+                final CloudServiceDAO cloudDAO = getBean(CloudServiceDAO.class);
                 final ActivationService activationService = getBean(ActivationService.class);
                 publicSystemConfigs.set(MapBuilder.build(new Object[][]{
                         {TAG_ALLOW_REGISTRATION, thisNetwork == null ? null : thisNetwork.getBooleanTag(TAG_ALLOW_REGISTRATION, false)},
                         {TAG_NETWORK_UUID, thisNetwork == null ? null : thisNetwork.getUuid()},
                         {TAG_SAGE_LAUNCHER, thisNetwork == null || isSageLauncher()},
-                        {TAG_PAYMENTS_ENABLED, paymentsEnabled()},
+                        {TAG_PAYMENTS_ENABLED, cloudDAO.paymentsEnabled()},
                         {TAG_CLOUD_DRIVERS, getCloudDriverClasses()},
                         {TAG_ENTITY_CLASSES, getSortedSimpleEntityClassMap()},
                         {TAG_LOCALES, getAllLocales()},
@@ -277,10 +279,15 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         }
     }
 
-    // called after activation, because now thisNetwork will be defined. otherwise it remains unchanged
+    // called after activation, because now thisNetwork will be defined
     public void refreshPublicSystemConfigs () {
         synchronized (publicSystemConfigs) { publicSystemConfigs.set(null); }
         background(this::getPublicSystemConfigs);
+    }
+
+    public boolean paymentsEnabled () {
+        final Object peValue = getPublicSystemConfigs().get(TAG_PAYMENTS_ENABLED);
+        return peValue != null && Boolean.parseBoolean(peValue.toString());
     }
 
     @Getter @Setter private String[] disallowedCountries;
@@ -294,11 +301,14 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         return false;
     }
 
+    @Getter @Setter private Boolean defaultPaymentModelsEnabled;
+    public boolean defaultPaymentModelsEnabled() { return defaultPaymentModelsEnabled != null && defaultPaymentModelsEnabled; }
+
     @JsonIgnore @Getter(lazy=true) private final List<String> defaultCloudModels = initDefaultCloudModels();
     private List<String> initDefaultCloudModels () {
         final List<String> defaults = new ArrayList<>();
         defaults.add("models/defaults/cloudService.json");
-        if (paymentsEnabled()) defaults.add("models/defaults/cloudService_payment.json");
+        if (defaultPaymentModelsEnabled()) defaults.add("models/defaults/cloudService_payment.json");
         if (testMode()) defaults.addAll(getTestCloudModels());
         return defaults;
     }

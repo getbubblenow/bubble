@@ -81,7 +81,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
 
     @Override public void postSetup() {
         if (credentials != null && credentials.hasParam(API_KEY_HEADER) && credentials.getParam(API_KEY_HEADER).contains("{{")) {
-            final String apiKey = HandlebarsUtil.apply(getHandlebars(), credentials.getParam(API_KEY_HEADER), configuration.getEnvCtx());
+            final String apiKey = configuration.applyHandlebars(credentials.getParam(API_KEY_HEADER));
             credentials.setParam(API_KEY_HEADER, apiKey);
         }
         super.postSetup();

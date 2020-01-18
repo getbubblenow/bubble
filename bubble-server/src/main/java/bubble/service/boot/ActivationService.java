@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
-import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.wizard.api.CrudOperation;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.model.Identifiable;
@@ -260,7 +259,7 @@ public class ActivationService {
     }
 
     private CloudService[] loadCloudServices(final String modelPath) {
-        final String cloudsJson = HandlebarsUtil.apply(configuration.getHandlebars(), stream2string(modelPath), configuration.getEnvCtx());
+        final String cloudsJson = configuration.applyHandlebars(stream2string(modelPath));
         final JsonNode cloudsArrayNode = json(cloudsJson, JsonNode.class);
         return scrubSpecial(cloudsArrayNode, CloudService.class);
     }
