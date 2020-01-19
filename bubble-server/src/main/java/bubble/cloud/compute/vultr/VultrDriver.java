@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.http.HttpRequestBean;
 import org.cobbzilla.util.http.HttpResponseBean;
 
@@ -262,6 +261,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
     public BubbleNode listNode(BubbleNode node) {
         final HttpRequestBean listServerRequest = auth(new HttpRequestBean(POLL_SERVER_URL+node.getTag(TAG_INSTANCE_ID)));
         final HttpResponseBean listResponse = listServerRequest.curl();
+        if (listResponse.getEntityString().startsWith("Invalid ")) return null;
         switch (listResponse.getStatus()) {
             case OK:
                 try {
