@@ -420,12 +420,10 @@ public class StandardNetworkService implements NetworkService {
         node.setState(BubbleNodeState.error_stopped);
         if (node.hasUuid()) nodeDAO.update(node);
 
-        // if there are no running nodes, and network was in 'setup' state, put it network back into 'created' state
         final BubbleNetwork network = networkDAO.findByUuid(node.getNetwork());
-        if (network.getState() == BubbleNetworkState.starting) {
-            if (nodeDAO.findByNetwork(node.getNetwork()).stream().noneMatch(BubbleNode::isRunning)) {
-                networkDAO.update(network.setState(BubbleNetworkState.created));
-            }
+        if (noNodesRunning(network)) {
+            // if no nodes are running, then the network is stopped
+            networkDAO.update(network.setState(BubbleNetworkState.stopped));
         }
 
         return node;
@@ -516,7 +514,7 @@ public class StandardNetworkService implements NetworkService {
             lock = lockNetwork(network.getUuid());
 
             // sanity checks
-            if (nodeDAO.findByNetwork(network.getUuid()).stream().anyMatch(BubbleNode::isRunning)) {
+            if (anyNodesRunning(network)) {
                 throw invalidEx("err.network.alreadyStarted");
             }
             if (!network.getState().canStartNetwork()) {
@@ -557,6 +555,12 @@ public class StandardNetworkService implements NetworkService {
             return die("startNetwork: "+e, e);
         }
     }
+
+    public boolean anyNodesRunning(BubbleNetwork network) {
+        return nodeDAO.findByNetwork(network.getUuid()).stream().anyMatch(BubbleNode::isRunning);
+    }
+
+    public boolean noNodesRunning(BubbleNetwork network) { return !anyNodesRunning(network); }
 
     public NewNodeNotification restoreNetwork(BubbleNetwork network, String cloud, String region, Request req) {
 

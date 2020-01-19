@@ -7,6 +7,7 @@ import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.boot.SelfNodeService;
+import bubble.service.cloud.NetworkMonitorService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
@@ -70,6 +71,9 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
             log.warn("onStart: thisNode was null, not doing standard initializations");
         }
 
+        // start network monitor if we manage networks
+        if (c.isSageLauncher()) c.getBean(NetworkMonitorService.class).start();
+
         // warm up drivers
         final Account admin = c.getBean(AccountDAO.class).getFirstAdmin();
         if (admin != null) {
@@ -77,7 +81,7 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
                 try {
                     cloud.wireAndSetup(c);
                 } catch (Exception e) {
-                    log.warn("onStart: error initializing driver for cloud: "+cloud.getName()+"/"+cloud.getUuid()+": "+e);
+                    die("onStart: error initializing driver for cloud: "+cloud.getName()+"/"+cloud.getUuid()+": "+shortError(e), e);
                 }
 //            background(() -> cloud.wireAndSetup(c));
             }

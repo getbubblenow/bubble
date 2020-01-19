@@ -12,14 +12,16 @@ import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.DEBUG_ENDPOINT;
 import static bubble.cloud.auth.RenderedMessage.filteredInbox;
@@ -90,6 +92,24 @@ public class DebugResource {
             }
         } else {
             return die("testing error catcher");
+        }
+    }
+
+    @GET @Path("/beans")
+    public Response springBeans(@Context ContainerRequest ctx,
+                                @QueryParam("type") String type) {
+        final ApplicationContext spring = configuration.getApplicationContext();
+        if (type == null) {
+            final String[] names = spring.getBeanDefinitionNames();
+            Arrays.sort(names);
+            return ok(names);
+        }
+        final Collection<String> beansWithAnnotation;
+        switch (type.toLowerCase()) {
+            case "dao":      return ok(new TreeSet<>(spring.getBeansWithAnnotation(Repository.class).keySet()));
+            case "service":  return ok(new TreeSet<>(spring.getBeansWithAnnotation(Service.class).keySet().stream().filter(n -> !n.endsWith("Resource")).collect(Collectors.toSet())));
+            case "resource": return ok(new TreeSet<>(spring.getBeansWithAnnotation(Service.class).keySet().stream().filter(n -> n.endsWith("Resource")).collect(Collectors.toSet())));
+            default: return invalid(type);
         }
     }
 
