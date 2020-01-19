@@ -46,7 +46,7 @@ public class NetworkMonitorService extends SimpleDaemon {
 
                 if (networkService.anyNodesActive(network)) {
                     switch (network.getState()) {
-                        case running: case restoring: continue;
+                        case starting: case running: case restoring: continue;
                         default:
                             reportError(getName()+": network "+network.getNetworkDomain()+" has nodes running but state is "+network.getState());
                     }
