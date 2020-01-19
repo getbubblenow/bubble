@@ -30,14 +30,13 @@
     <logger name="org.cobbzilla.wizard.model.entityconfig.ModelSetup" level="INFO" />
     <logger name="org.cobbzilla.wizard.resources.AbstractEntityConfigsResource" level="ERROR" />
     <logger name="org.cobbzilla.wizard.resources.ResourceUtil" level="ERROR" />
-    <!--<logger name="org.cobbzilla.wizardtest.resources.AbstractResourceIT" level="INFO" />-->
     <logger name="org.cobbzilla.wizardtest.resources" level="INFO" />
     <logger name="org.glassfish.jersey.grizzly" level="WARN" />
     <logger name="bubble.cloud.email.SmtpEmailDriver" level="WARN" />
     <logger name="org.cobbzilla.wizard.dao.AbstractCRUDDAO" level="WARN" />
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
     <logger name="bubble.service.notify.NotificationService" level="WARN" />
-    <logger name="bubble.service.cloud.StandardNetworkService" level="INFO" />
+<!--    <logger name="bubble.service.cloud.StandardNetworkService" level="INFO" />-->
     <logger name="bubble.resources.notify" level="WARN" />
     <logger name="bubble.client" level="WARN" />
     <logger name="bubble.main.rekey" level="INFO" />
