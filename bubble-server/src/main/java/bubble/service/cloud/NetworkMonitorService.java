@@ -3,12 +3,13 @@ package bubble.service.cloud;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNetworkState;
-import bubble.server.BubbleConfiguration;
+import bubble.service.boot.StandardSelfNodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.daemon.SimpleDaemon;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.wizard.server.RestServerBase.reportError;
@@ -24,15 +25,25 @@ public class NetworkMonitorService extends SimpleDaemon {
 
     @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private StandardNetworkService networkService;
-    @Autowired private BubbleConfiguration configuration;
+    @Autowired private StandardSelfNodeService selfNodeService;
 
     @Override protected void process() {
-        final BubbleNetwork thisNetwork = configuration.getThisNetwork();
+        final BubbleNetwork thisNetwork = selfNodeService.getThisNetwork();
         try {
             for (BubbleNetwork network : networkDAO.findAll()) {
+
+                // never update the root network
+                if (network.getUuid().equals(ROOT_NETWORK_UUID)) continue;
+
+                // if we are looking at ourselves, obviously we are running
                 if (thisNetwork != null && network.getUuid().equals(thisNetwork.getUuid())) {
+                    if (network.getState() != BubbleNetworkState.running) {
+                        networkDAO.update(network.setState(BubbleNetworkState.running));
+                        selfNodeService.refreshThisNetwork();
+                    }
                     continue;
                 }
+
                 if (networkService.anyNodesRunning(network)) {
                     switch (network.getState()) {
                         case running: case restoring: continue;
