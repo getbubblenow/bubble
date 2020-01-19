@@ -12,7 +12,7 @@ public enum BubbleNodeState {
     unreachable, error_stopping, error_stopped, unknown_error;
 
     public static final BubbleNodeState[] ACTIVE_STATES = {
-            created, starting, booting, booted, installing, running
+            created, starting, booting, booted, preparing_install, awaiting_dns, installing, running, stopping
     };
 
     @JsonCreator public static BubbleNodeState fromString (String v) { return enumFromString(BubbleNodeState.class, v); }

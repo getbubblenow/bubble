@@ -186,6 +186,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     @ECIndex @Column(length=20, nullable=false)
     @Getter @Setter private BubbleNodeState state = created;
     @JsonIgnore @Transient public boolean isRunning () { return state == running; }
+    @JsonIgnore @Transient public boolean isActive () { return state.active(); }
     public boolean notStopped() { return state != stopped; }
 
     @Embedded @Getter @Setter private BubbleTags tags;

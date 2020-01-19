@@ -44,7 +44,7 @@ public class NetworkMonitorService extends SimpleDaemon {
                     continue;
                 }
 
-                if (networkService.anyNodesRunning(network)) {
+                if (networkService.anyNodesActive(network)) {
                     switch (network.getState()) {
                         case running: case restoring: continue;
                         default:
