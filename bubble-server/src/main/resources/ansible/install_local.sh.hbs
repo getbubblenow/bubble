@@ -54,4 +54,4 @@ cd "${ANSIBLE_DIR}" && \
   . ./venv/bin/activate && \
   pip3 install ansible && \
   bash -c "ansible-playbook ${SSH_OPTIONS} --inventory ./hosts ./playbook.yml" \
-|| die "Error running ansible"
+|| die "Error running ansible. journalctl -xe = $(journalctl -xe)"
