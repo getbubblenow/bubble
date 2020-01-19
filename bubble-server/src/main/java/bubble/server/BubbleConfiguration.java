@@ -65,6 +65,9 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     public static final String SPRING_DB_FILTER = "classpath:/spring-db-filter.xml";
 
+    public static final String ENV_DEBUG_NODE_INSTALL = "BUBBLE_DEBUG_NODE_INSTALL";
+    public static final File DEBUG_NODE_INSTALL_FILE = new File(HOME_DIR, ".debug_node_install");
+
     public static final String TAG_SAGE_LAUNCHER = "sageLauncher";
     public static final String TAG_NETWORK_UUID = "networkUuid";
     public static final String TAG_PAYMENTS_ENABLED = "paymentsEnabled";

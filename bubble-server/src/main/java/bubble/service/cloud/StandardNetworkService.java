@@ -47,10 +47,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static bubble.ApiConstants.getRemoteHost;
-import static bubble.ApiConstants.newNodeHostname;
+import static bubble.ApiConstants.*;
 import static bubble.dao.bill.AccountPlanDAO.PURCHASE_DELAY;
 import static bubble.model.cloud.BubbleNode.TAG_ERROR;
+import static bubble.server.BubbleConfiguration.DEBUG_NODE_INSTALL_FILE;
+import static bubble.server.BubbleConfiguration.ENV_DEBUG_NODE_INSTALL;
 import static bubble.service.boot.StandardSelfNodeService.*;
 import static bubble.service.cloud.NodeProgressMeter.getProgressMeterKey;
 import static bubble.service.cloud.NodeProgressMeter.getProgressMeterPrefix;
@@ -328,6 +329,8 @@ public class StandardNetworkService implements NetworkService {
             boolean setupOk = false;
             final String nodeUser = node.getUser();
             final String script = getAnsibleSetupScript(automation, sshArgs, nodeUser, sshTarget);
+            waitForDebugger();
+
             log.info("newNode: running script:\n"+script);
             for (int i=0; i<MAX_ANSIBLE_TRIES; i++) {
                 sleep((i+1) * SECONDS.toMillis(5), "waiting to try ansible setup");
@@ -378,6 +381,17 @@ public class StandardNetworkService implements NetworkService {
             unlockNetwork(nn.getNetwork(), lock);
         }
         return node;
+    }
+
+    public void waitForDebugger() {
+        if (Boolean.parseBoolean(configuration.getEnvironment().get(ENV_DEBUG_NODE_INSTALL))) {
+            final String msg = "waitForDebugger: debugging installation, waiting for " + abs(DEBUG_NODE_INSTALL_FILE) + " to exist";
+            log.info(msg);
+            while (!DEBUG_NODE_INSTALL_FILE.exists()) {
+                sleep(SECONDS.toMillis(10), msg);
+            }
+            log.info("waitForDebugger: "+abs(DEBUG_NODE_INSTALL_FILE)+" exists, continuing installation");
+        }
     }
 
     public CommandResult ansibleSetup(String script, OutputStream progressMeter) throws IOException {
