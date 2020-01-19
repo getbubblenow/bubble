@@ -329,7 +329,7 @@ public class StandardNetworkService implements NetworkService {
             boolean setupOk = false;
             final String nodeUser = node.getUser();
             final String script = getAnsibleSetupScript(automation, sshArgs, nodeUser, sshTarget);
-            waitForDebugger();
+            waitForDebugger(script);
 
             log.info("newNode: running script:\n"+script);
             for (int i=0; i<MAX_ANSIBLE_TRIES; i++) {
@@ -383,10 +383,10 @@ public class StandardNetworkService implements NetworkService {
         return node;
     }
 
-    public void waitForDebugger() {
+    public void waitForDebugger(String script) {
         if (Boolean.parseBoolean(configuration.getEnvironment().get(ENV_DEBUG_NODE_INSTALL))) {
             final String msg = "waitForDebugger: debugging installation, waiting for " + abs(DEBUG_NODE_INSTALL_FILE) + " to exist";
-            log.info(msg);
+            log.info(msg+" before running script:\n"+script);
             while (!DEBUG_NODE_INSTALL_FILE.exists()) {
                 sleep(SECONDS.toMillis(10), msg);
             }
