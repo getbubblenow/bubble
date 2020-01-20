@@ -6,6 +6,7 @@ import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccount;
+import bubble.model.account.message.AccountMessage;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeKey;
@@ -30,6 +31,7 @@ public class FilteredEntityIterator extends EntityIterator {
         POST_COPY_ENTITIES.add(BubbleNode.class);
         POST_COPY_ENTITIES.add(BubbleNodeKey.class);
         POST_COPY_ENTITIES.add(Device.class);
+        POST_COPY_ENTITIES.add(AccountMessage.class);
     }
     public static boolean isPostCopyEntity(Class<? extends Identifiable> clazz) {
         return POST_COPY_ENTITIES.stream().anyMatch(c -> c.isAssignableFrom(clazz));

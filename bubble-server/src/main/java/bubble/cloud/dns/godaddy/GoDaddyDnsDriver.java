@@ -124,7 +124,7 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
             final Collection<GoDaddyDnsRecord> retained = Arrays.stream(gdRecords)
                     .filter(r ->  nonMatcher.matches(r.toDnsRecord(domain.get())))
                     .collect(Collectors.toList());
-            if (empty(retained)) {
+            if (gdRecords.length == retained.size()) {
                 log.warn("remove("+record+"): no matching record(s) found");
                 return null;
             }

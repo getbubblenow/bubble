@@ -366,6 +366,12 @@ public class StandardNetworkService implements NetworkService {
                 nodeDAO.update(node);
                 progressMeter.error(METER_UNKNOWN_ERROR);
                 killNode(node, "error: "+e);
+            } else {
+                final BubbleNetwork network = networkDAO.findByUuid(node.getNetwork());
+                if (noNodesActive(network)) {
+                    // if no nodes are running, then the network is stopped
+                    networkDAO.update(network.setState(BubbleNetworkState.stopped));
+                }
             }
             return die("newNode: "+e, e);
 

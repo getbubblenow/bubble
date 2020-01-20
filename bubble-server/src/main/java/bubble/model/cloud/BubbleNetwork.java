@@ -103,7 +103,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @Getter @Setter private Integer sslPort;
 
     @Transient @JsonIgnore public String getPublicUri() {
-        return "https://" + getNetworkDomain() + (getSslPort() == 443 ? "" : ":"+getSslPort()) + "/";
+        return "https://" + getNetworkDomain() + (getSslPort() == 443 ? "" : ":"+getSslPort());
     }
 
     public String getPublicUri(BubbleConfiguration configuration) {

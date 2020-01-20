@@ -47,7 +47,7 @@
     mode: 0444
 
 - name: Unpack site files
-  shell: su - bubble -c "cd /home/bubble && unzip /home/bubble/bubble_{{ bubble_version }}/bubble.jar 'site/*'"
+  shell: cd /home/bubble && unzip /home/bubble/bubble_{{ bubble_version }}/bubble.jar 'site/*' && chown -R bubble site
 
 - name: Install bubble self_node.json, sage_node.json and sage_key.json
   copy:

@@ -41,6 +41,7 @@ public class MockNetworkService extends StandardNetworkService {
                 .setState(BubbleNodeState.running)
                 .setSageNode(nn.fork() ? null : configuration.getThisNode().getUuid())
                 .setNetwork(network.getUuid())
+                .setSslPort(network.getSslPort())
                 .setDomain(network.getDomain())
                 .setAccount(network.getAccount())
                 .setSizeType(network.getComputeSizeType())

@@ -53,7 +53,7 @@ public class RekeyWriterMain extends BaseMain<RekeyOptions> {
                 return;
             } catch (SocketException e) {
                 err("WRITER SocketException: "+e);
-                return;
+                throw e;
             } catch (Exception e) {
                 err("WRITER error (sleeping then retrying): "+e);
                 sleep(RETRY_DELAY);
