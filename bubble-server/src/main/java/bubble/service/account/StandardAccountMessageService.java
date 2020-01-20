@@ -230,6 +230,7 @@ public class StandardAccountMessageService implements AccountMessageService {
         final AccountMessage toCreate = new AccountMessage()
                 .setRemoteHost(remoteHost)
                 .setAccount(amc.getMessage().getAccount())
+                .setNetwork(amc.getMessage().getNetwork())
                 .setContact(amc.getContact().getUuid())
                 .setRequestId(amc.getMessage().getRequestId())
                 .setName(amc.getMessage().getName())

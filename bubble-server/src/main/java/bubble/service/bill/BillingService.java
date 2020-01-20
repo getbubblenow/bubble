@@ -91,9 +91,9 @@ public class BillingService extends SimpleDaemon {
                 final Bill bill = bills.get(0);
                 final long unpaidStart = plan.getPeriod().periodMillis(bill.getPeriodStart());
                 final int unpaidDays = Days.daysBetween(new DateTime(unpaidStart), new DateTime(now())).getDays();
+                final BubbleNetwork network = networkDAO.findByUuid(accountPlan.getNetwork());
                 if (unpaidDays > MAX_UNPAID_DAYS_BEFORE_STOP) {
                     accountPlanDAO.update(accountPlan.setEnabled(false));
-                    final BubbleNetwork network = networkDAO.findByUuid(accountPlan.getNetwork());
                     try {
                         networkService.stopNetwork(network);
                     } catch (Exception e) {
@@ -103,6 +103,7 @@ public class BillingService extends SimpleDaemon {
                     }
                     messageDAO.create(new AccountMessage()
                             .setAccount(accountPlan.getAccount())
+                            .setNetwork(network.getUuid())
                             .setMessageType(AccountMessageType.notice)
                             .setTarget(ActionTarget.network)
                             .setAction(AccountAction.payment)
@@ -112,6 +113,7 @@ public class BillingService extends SimpleDaemon {
                 } else {
                     messageDAO.create(new AccountMessage()
                             .setAccount(accountPlan.getAccount())
+                            .setNetwork(network.getUuid())
                             .setMessageType(AccountMessageType.request)
                             .setTarget(ActionTarget.network)
                             .setAction(AccountAction.payment)

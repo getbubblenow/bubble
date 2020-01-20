@@ -38,7 +38,11 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
             final ValidationResult errors = validateHostname(network);
             if (errors.isInvalid()) throw invalidEx(errors);
         }
-        network.setInstallType((network.hasForkHost() && configuration.isSageLauncher()) ? AnsibleInstallType.sage : AnsibleInstallType.node);
+        final AnsibleInstallType installType = network.hasForkHost() && configuration.isSageLauncher()
+                ? AnsibleInstallType.sage
+                : AnsibleInstallType.node;
+        network.setInstallType(installType);
+        network.setSslPort(installType == AnsibleInstallType.sage ? 443 : configuration.getDefaultSslPort());
         if (!network.hasLocale()) network.setLocale(getDEFAULT_LOCALE());
         return super.preCreate(network);
     }

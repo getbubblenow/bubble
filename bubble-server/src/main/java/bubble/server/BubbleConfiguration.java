@@ -82,7 +82,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     public BubbleConfiguration (BubbleConfiguration other) { copy(this, other); }
 
-    @Getter @Setter private int defaultNodeSslPort = 1443;
+    @Getter @Setter private int defaultSslPort = 1443;
     @Getter @Setter private int defaultMitmProxyPort = 8888;
 
     @Getter @Setter private LocalNotificationStrategy localNotificationStrategy = LocalNotificationStrategy.inline;
@@ -275,7 +275,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_LOCALES, getAllLocales()},
                         {TAG_CLOUD_CONFIGS, accountDAO.activated() ? null : activationService.getCloudDefaults()},
                         {TAG_LOCKED, accountDAO.locked()},
-                        {TAG_SSL_PORT, thisNode == null ? null : thisNode.getSslPort()}
+                        {TAG_SSL_PORT, getDefaultSslPort()}
                 }));
             }
             return publicSystemConfigs.get();

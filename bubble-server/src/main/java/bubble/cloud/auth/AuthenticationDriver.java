@@ -61,8 +61,10 @@ public interface AuthenticationDriver extends CloudServiceDriver {
         ctx.put("confirmationToken", configuration.getBean(StandardAccountMessageService.class).confirmationToken(policy, message, contact));
 
         final BubbleNode node = getNode(message, configuration);
+        final BubbleNetwork network = getNetwork(message, configuration);
         ctx.put("node", node);
-        ctx.put("network", getNetwork(message, node, configuration));
+        ctx.put("network", network);
+        ctx.put("publicUri", network.getPublicUri(configuration));
         return ctx;
     }
 
@@ -75,17 +77,9 @@ public interface AuthenticationDriver extends CloudServiceDriver {
         }
     }
 
-    default BubbleNetwork getNetwork(AccountMessage message, BubbleNode node) {
-        return getNetwork(message, node, getConfiguration());
-    }
-
-    static BubbleNetwork getNetwork(AccountMessage message, BubbleNode node, BubbleConfiguration configuration) {
+    static BubbleNetwork getNetwork(AccountMessage message, BubbleConfiguration configuration) {
         final BubbleNetworkDAO networkDAO = configuration.getBean(BubbleNetworkDAO.class);
-        switch (message.getTarget()) {
-            case account: return configuration.getThisNetwork();
-            case network: return networkDAO.findByAccountAndId(message.getAccount(), message.getName());
-            default: return null;
-        }
+        return networkDAO.findByUuid(message.getNetwork());
     }
 
     default String render(String basename, Map<String, Object> ctx, AccountMessage message) {

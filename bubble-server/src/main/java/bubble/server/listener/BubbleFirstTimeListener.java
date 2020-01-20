@@ -68,6 +68,7 @@ public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<Bub
                 final SageHelloService helloService = configuration.getBean(SageHelloService.class);
                 helloService.setUnlockMessage(new AccountMessage()
                         .setAccount(adminAccount.getUuid())
+                        .setNetwork(network.getUuid())
                         .setName(network.getUuid())
                         .setMessageType(AccountMessageType.request)
                         .setAction(AccountAction.verify)

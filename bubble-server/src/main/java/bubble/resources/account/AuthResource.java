@@ -233,6 +233,7 @@ public class AuthResource {
                 if (!empty(authFactors)) {
                     final AccountMessage loginRequest = accountMessageDAO.create(new AccountMessage()
                             .setAccount(account.getUuid())
+                            .setNetwork(configuration.getThisNetwork().getUuid())
                             .setName(account.getUuid())
                             .setMessageType(AccountMessageType.request)
                             .setAction(AccountAction.login)
@@ -259,6 +260,7 @@ public class AuthResource {
 
         accountMessageDAO.create(new AccountMessage()
                 .setAccount(account.getUuid())
+                .setNetwork(configuration.getThisNetwork().getUuid())
                 .setName(account.getUuid())
                 .setMessageType(AccountMessageType.request)
                 .setAction(AccountAction.password)

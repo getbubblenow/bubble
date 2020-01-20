@@ -6,6 +6,8 @@ import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
+import bubble.model.cloud.BubbleNetwork;
+import bubble.service.boot.SelfNodeService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,6 +27,7 @@ public class AccountInitializer implements Runnable {
     private Account account;
     private AccountDAO accountDAO;
     private AccountMessageDAO messageDAO;
+    private SelfNodeService selfNodeService;
 
     private AtomicBoolean ready = new AtomicBoolean(false);
     public boolean ready() { return ready.get(); }
@@ -33,10 +36,11 @@ public class AccountInitializer implements Runnable {
     public Exception getError() { return error.get(); }
     public boolean hasError () { return getError() != null; }
 
-    public AccountInitializer(Account account, AccountDAO accountDAO, AccountMessageDAO messageDAO) {
+    public AccountInitializer(Account account, AccountDAO accountDAO, AccountMessageDAO messageDAO, SelfNodeService selfNodeService) {
         this.account = account;
         this.accountDAO = accountDAO;
         this.messageDAO = messageDAO;
+        this.selfNodeService = selfNodeService;
     }
 
     @Override public void run() {
@@ -59,10 +63,12 @@ public class AccountInitializer implements Runnable {
                 }
             }
             if (!success) throw lastEx;
+            final BubbleNetwork thisNetwork = selfNodeService.getThisNetwork();
             messageDAO.create(new AccountMessage()
                     .setRemoteHost(account.getRemoteHost())
                     .setAccount(account.getUuid())
                     .setName(account.getUuid())
+                    .setNetwork(thisNetwork.getUuid())
                     .setMessageType(AccountMessageType.notice)
                     .setAction(AccountAction.welcome)
                     .setTarget(ActionTarget.account));

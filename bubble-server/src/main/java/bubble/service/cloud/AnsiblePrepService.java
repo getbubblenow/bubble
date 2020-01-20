@@ -70,13 +70,8 @@ public class AnsiblePrepService {
             ctx.put("restoreKey", restoreKey);
             ctx.put("restoreTimeoutSeconds", RESTORE_MONITOR_SCRIPT_TIMEOUT_SECONDS);
         }
-
-        final int sslPort = node.getSslPort();
-        ctx.put("sslPort", sslPort);
-        final String publicBaseUri = sslPort == 443
-                ? "https://"+network.getNetworkDomain()+"/"
-                : "https://"+network.getNetworkDomain()+":"+sslPort+"/";
-        ctx.put("publicBaseUri", publicBaseUri);
+        ctx.put("sslPort", network.getSslPort());
+        ctx.put("publicBaseUri", network.getPublicUri());
 
         ctx.put("network", network);
         ctx.put("node", node);

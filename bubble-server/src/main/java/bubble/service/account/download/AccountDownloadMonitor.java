@@ -25,6 +25,7 @@ public class AccountDownloadMonitor implements Runnable {
     private Thread t;
     private AtomicReference<Map<String, List<String>>> ref;
     private String accountUuid;
+    private String networkUuid;
     private AccountMessageDAO messageDAO;
     private String remoteHost;
 
@@ -37,6 +38,7 @@ public class AccountDownloadMonitor implements Runnable {
                 final AccountMessage message = messageDAO.create(new AccountMessage()
                         .setAccount(accountUuid)
                         .setName(accountUuid)
+                        .setNetwork(networkUuid)
                         .setMessageType(AccountMessageType.request)
                         .setAction(AccountAction.download)
                         .setTarget(ActionTarget.account)

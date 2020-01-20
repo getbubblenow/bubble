@@ -27,6 +27,7 @@ public class AccountDownloadCollector implements Runnable {
 
     private BubbleConfiguration configuration;
     private String accountUuid;
+    private String networkUuid;
     private AtomicReference<Map<String, List<String>>> ref;
     private String remoteHost;
     @Setter private Thread thread;
@@ -43,6 +44,7 @@ public class AccountDownloadCollector implements Runnable {
                                     AccountDownloadService downloadService) {
         this.configuration = configuration;
         this.accountUuid = accountUuid;
+        this.networkUuid = configuration.getThisNetwork().getUuid();
         this.ref = ref;
         this.remoteHost = remoteHost;
         this.messageDAO = messageDAO;
@@ -57,7 +59,7 @@ public class AccountDownloadCollector implements Runnable {
             configuration.getEntityClasses().forEach(clazz -> collectEntities(data, clazz, configuration, accountUuid));
             ref.set(data);
             if (sendMessage) {
-                daemon(new AccountDownloadMonitor(downloadService, thread, ref, accountUuid, messageDAO, remoteHost));
+                daemon(new AccountDownloadMonitor(downloadService, thread, ref, accountUuid, networkUuid, messageDAO, remoteHost));
             }
         } catch (Exception e) {
             // todo: add exception handler that sends to Errbit

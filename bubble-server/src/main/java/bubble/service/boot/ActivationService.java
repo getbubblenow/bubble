@@ -174,6 +174,7 @@ public class ActivationService {
                 .setTag(TAG_PARENT_ACCOUNT, account.getUuid())
                 .setStorage(networkStorage != null ? networkStorage.getUuid() : localStorage.getUuid())
                 .setState(BubbleNetworkState.running));
+        selfNodeService.refreshThisNetwork();
 
         // copy data outside the network to inside the network
         final LocalStorageDriver storageDriver = (LocalStorageDriver) localStorage.getStorageDriver(configuration);
@@ -195,6 +196,7 @@ public class ActivationService {
                 .setRegion("local")
                 .setSizeType(ComputeNodeSizeType.local)
                 .setCloud(localCloud.getUuid())
+                .setSslPort(network.getSslPort())
                 .setIp4(ip)
                 // todo: also set ip6 if we have one
                 .setAdminPort(configuration.getHttp().getPort())

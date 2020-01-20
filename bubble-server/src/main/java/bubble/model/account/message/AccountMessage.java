@@ -4,6 +4,7 @@ import bubble.model.account.Account;
 import bubble.model.account.AccountContact;
 import bubble.model.account.AccountPolicy;
 import bubble.model.account.HasAccount;
+import bubble.model.cloud.BubbleNetwork;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,9 +28,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @Entity @ECType(root=true) @ECTypeCreate(method="DISABLED")
 @ECIndexes({
-        @ECIndex(of={"account", "name", "requestId", "messageType", "action", "target"}),
-        @ECIndex(of={"account", "name", "messageType", "action", "target"}),
-        @ECIndex(of={"messageType", "action", "target"})
+        @ECIndex(of={"account", "network"})
 })
 @NoArgsConstructor @Accessors(chain=true) @Slf4j @ToString(of={"messageType", "action", "target", "name"})
 public class AccountMessage extends IdentifiableBase implements HasAccount {
@@ -40,39 +39,43 @@ public class AccountMessage extends IdentifiableBase implements HasAccount {
     @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String account;
 
-    @ECIndex @ECField(index=20) @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
+    @ECForeignKey(entity=BubbleNetwork.class) @ECField(index=20)
+    @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
+    @Getter @Setter private String network;
+
+    @ECIndex @ECField(index=30) @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String requestId = randomUUID().toString();
 
-    @ECIndex @ECField(index=30) @Column(length=UUID_MAXLEN, updatable=false)
+    @ECIndex @ECField(index=40) @Column(length=UUID_MAXLEN, updatable=false)
     @Getter @Setter private String contact;
     public boolean hasContact () { return !empty(contact); }
     public boolean isSameContact (String uuid) { return hasContact() && contact.equals(uuid); }
 
-    @ECSearchable(filter=true) @ECField(index=40)
+    @ECSearchable(filter=true) @ECField(index=50)
     @ECIndex @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String name;
 
-    @ECSearchable(filter=true) @ECField(index=50)
+    @ECSearchable(filter=true) @ECField(index=60)
     @Size(max=100, message="err.remoteHost.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100+ENC_PAD)+")")
     @Getter @Setter private String remoteHost;
 
-    @ECSearchable @ECField(index=60)
+    @ECSearchable @ECField(index=70)
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false, updatable=false)
     @Getter @Setter private AccountMessageType messageType;
 
-    @ECSearchable @ECField(index=70)
+    @ECSearchable @ECField(index=80)
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false, updatable=false)
     @Getter @Setter private AccountAction action;
 
-    @ECSearchable @ECField(index=80)
+    @ECSearchable @ECField(index=90)
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false, updatable=false)
     @Getter @Setter private ActionTarget target;
 
-    @Size(max=100000, message="err.data.length") @ECField(index=90)
+    @Size(max=100000, message="err.data.length") @ECField(index=100)
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @Getter @Setter private String data;
 

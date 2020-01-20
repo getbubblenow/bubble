@@ -153,14 +153,14 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     @Column(nullable=false)
     @Getter @Setter private int adminPort = RandomUtils.nextInt(6000, 19000);
 
-    @Column(nullable=false)
-    @Getter @Setter private int sslPort = 1443;
+    @Column(nullable=false) @ECField(index=120)
+    @Getter @Setter private Integer sslPort;
 
     @Column(length=50, nullable=false, updatable=false)
     @JsonIgnore @Getter @Setter private String ansibleUser = "root";
     @JsonIgnore @Transient public String getUser () { return getAnsibleUser(); }
 
-    @ECSearchable(filter=true) @ECField(type=EntityFieldType.ip4, index=120)
+    @ECSearchable(filter=true) @ECField(type=EntityFieldType.ip4, index=130)
     @ECIndex(unique=true) @Column(length=IP4_MAXLEN)
     @Getter @Setter private String ip4;
     public boolean hasIp4() { return ip4 != null; }
@@ -168,7 +168,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
 
     public String id() { return getUuid() + "/fqdn=" + getFqdn() + "/ip4=" + getIp4(); }
 
-    @ECSearchable(filter=true) @ECField(type=EntityFieldType.ip6, index=130)
+    @ECSearchable(filter=true) @ECField(type=EntityFieldType.ip6, index=140)
     @ECIndex(unique=true) @Column(length=IP6_MAXLEN)
     @Getter @Setter private String ip6;
     public boolean hasIp6() { return ip6 != null; }
@@ -181,7 +181,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         return (hasIp4() && getIp4().equals(ip)) || (hasIp6() && getIp6().equals(ip));
     }
 
-    @ECSearchable @ECField(index=140)
+    @ECSearchable @ECField(index=150)
     @Enumerated(EnumType.STRING)
     @ECIndex @Column(length=20, nullable=false)
     @Getter @Setter private BubbleNodeState state = created;

@@ -12,6 +12,7 @@ import bubble.model.account.*;
 import bubble.model.app.*;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
+import bubble.service.boot.SelfNodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.cache.Refreshable;
 import org.cobbzilla.wizard.dao.AbstractCRUDDAO;
@@ -54,6 +55,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AccountMessageDAO messageDAO;
     @Autowired private DeviceDAO deviceDAO;
+    @Autowired private SelfNodeService selfNodeService;
 
     public Account newAccount(Request req, AccountRegistration request, Account parent) {
         return create(new Account(request)
@@ -99,7 +101,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         }
 
         if (account.hasParent()) {
-            final AccountInitializer init = new AccountInitializer(account, this, messageDAO);
+            final AccountInitializer init = new AccountInitializer(account, this, messageDAO, selfNodeService);
             account.setAccountInitializer(init);
             daemon(init);
         }

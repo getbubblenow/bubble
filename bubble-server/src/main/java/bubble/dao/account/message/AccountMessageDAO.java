@@ -8,6 +8,7 @@ import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
 import bubble.service.account.AccountMessageService;
+import bubble.service.boot.SelfNodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -23,6 +24,7 @@ public class AccountMessageDAO extends AccountOwnedEntityDAO<AccountMessage> {
 
     @Autowired private AccountMessageService messageService;
     @Autowired private AccountPolicyDAO policyDAO;
+    @Autowired private SelfNodeService selfNodeService;
 
     @Override public AccountMessage postCreate(AccountMessage message, Object context) {
         if (!messageService.send(message)) {
@@ -34,6 +36,7 @@ public class AccountMessageDAO extends AccountOwnedEntityDAO<AccountMessage> {
     public AccountMessage sendVerifyRequest(String remoteHost, Account account, AccountContact contact) {
         return create(new AccountMessage()
                 .setAccount(account.getUuid())
+                .setNetwork(selfNodeService.getThisNetwork().getUuid())
                 .setName(account.getUuid())
                 .setRemoteHost(remoteHost)
                 .setTarget(ActionTarget.account)

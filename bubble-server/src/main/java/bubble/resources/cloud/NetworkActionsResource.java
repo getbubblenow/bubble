@@ -123,6 +123,7 @@ public class NetworkActionsResource {
                 .setAction(AccountAction.password)
                 .setTarget(ActionTarget.network)
                 .setAccount(caller.getUuid())
+                .setNetwork(configuration.getThisNetwork().getUuid())
                 .setName(network.getUuid())
                 .setRemoteHost(getRemoteHost(req)));
         return ok();

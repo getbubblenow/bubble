@@ -24,6 +24,7 @@ import bubble.resources.notify.SentNotificationsResource;
 import bubble.server.BubbleConfiguration;
 import bubble.service.AuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
+import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.StandardNetworkService;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
@@ -56,6 +57,7 @@ public class AccountsResource {
     @Autowired private AccountMessageDAO messageDAO;
     @Autowired private AccountDownloadService downloadService;
     @Autowired private AuthenticatorService authenticatorService;
+    @Autowired private SelfNodeService selfNodeService;
 
     @GET
     public Response list(@Context ContainerRequest ctx) {
@@ -279,6 +281,7 @@ public class AccountsResource {
                 .setAction(AccountAction.delete)
                 .setTarget(ActionTarget.account)
                 .setAccount(c.account.getUuid())
+                .setNetwork(selfNodeService.getThisNetwork().getUuid())
                 .setName(c.account.getUuid())
                 .setRemoteHost(getRemoteHost(req))));
     }
