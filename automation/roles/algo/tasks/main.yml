@@ -32,14 +32,31 @@
     group: root
     mode: 0500
 
+- name: Install wg_monitor_connections script
+  copy:
+    src: wg_monitor_connections.sh
+    dest: "/usr/local/sbin/wg_monitor_connections.sh"
+    owner: root
+    group: root
+    mode: 0500
+
+- name: Install wg_monitor_connections supervisor conf file
+  copy:
+    src: supervisor_wg_monitor_connections.conf
+    dest: /etc/supervisor/conf.d/wg_monitor_connections.conf
+
 # Don't setup algo when in restore mode, bubble_restore_monitor.sh will set it up after the CA key has been restored
 - name: Run algo playbook to install algo
   shell: /root/ansible/roles/algo/algo-master/install_algo.sh
   when: restore_key is not defined
 
-# Don't start algo_refresh_users_monitor when in restore mode, bubble_restore_monitor.sh will start it after algo is installed
+# Don't start monitors when in restore mode, bubble_restore_monitor.sh will start it after algo is installed
 - name: Run algo playbook to install algo
-  shell: bash -c "supervisorctl reload && sleep 5s && supervisorctl restart algo_refresh_users_monitor"
+  shell: bash -c "supervisorctl reload && sleep 5s && supervisorctl restart algo_refresh_users_monitor && supervisorctl restart wg_monitor_connections"
   when: restore_key is not defined
+
+- name: Run algo playbook to install algo
+  shell: bash -c "supervisorctl reload && sleep 5s && supervisorctl stop algo_refresh_users_monitor && supervisorctl stop wg_monitor_connections"
+  when: restore_key is defined
 
 - include: algo_firewall.yml

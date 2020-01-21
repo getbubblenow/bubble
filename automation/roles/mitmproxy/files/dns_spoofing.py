@@ -25,7 +25,7 @@ Usage:
 """
 import json
 import re
-from bubble_api import bubble_matchers, HEADER_BUBBLE_MATCHERS
+from bubble_api import bubble_matchers, bubble_log, HEADER_BUBBLE_MATCHERS, HEADER_BUBBLE_DEVICE
 from mitmproxy import ctx
 
 # This regex extracts splits the host header into host and port.
@@ -36,23 +36,26 @@ parse_host_header = re.compile(r"^(?P<host>[^:]+|\[.+\])(?::(?P<port>\d+))?$")
 
 class Rerouter:
     @staticmethod
-    def get_matcher_ids(flow, host):
+    def get_matchers(flow, host):
         if host is None:
             return None
 
-        remote_addr = flow.client_conn.address[0]
+        remote_addr = str(flow.client_conn.address[0])
         host = host.decode('utf-8')
-        matchers = bubble_matchers(remote_addr, flow, host)
-        if not matchers:
-            print("no matchers for remote_addr/host: "+remote_addr+'/'+host)
+        resp = bubble_matchers(remote_addr, flow, host)
+        if not resp or not resp['matchers'] or not resp['device']:
+            bubble_log("get_matchers: no matchers for remote_addr/host: "+remote_addr+'/'+str(host))
             return None
         matcher_ids = []
-        for m in matchers:
-            ctx.log.info('get_matcher_ids: checking for match of path='+flow.request.path+' against regex: '+m['regex'])
+        for m in resp.matchers:
+            bubble_log('get_matchers: checking for match of path='+flow.request.path+' against regex: '+m['regex'])
             if re.match(m['regex'], flow.request.path):
-                ctx.log.info('get_matcher_ids: rule matched, adding rule: '+m['rule'])
+                bubble_log('get_matchers: rule matched, adding rule: '+m['rule'])
                 matcher_ids.append(m['uuid'])
-        return matcher_ids
+
+        matcher_response = { 'device': resp.device, 'matchers': matcher_ids }
+        bubble_log("get_matchers: returning "+repr(matcher_response))
+        return matcher_response
 
     def request(self, flow):
         if flow.client_conn.tls_established:
@@ -73,14 +76,15 @@ class Rerouter:
 
         # Determine if this request should be filtered
         if sni or host_header:
-            matchers = self.get_matcher_ids(flow, sni or host_header)
-            if matchers:
-                ctx.log.info("dns_spoofing.request: found matchers: " + ' '.join(matchers))
-                flow.request.headers[HEADER_BUBBLE_MATCHERS] = json.dumps(matchers)
+            matcher_response = self.get_matchers(flow, sni or host_header)
+            if matcher_response and matcher_response.matchers:
+                bubble_log("dns_spoofing.request: found matchers: " + ' '.join(matcher_response.matchers))
+                flow.request.headers[HEADER_BUBBLE_MATCHERS] = json.dumps(matcher_response.matchers)
+                flow.request.headers[HEADER_BUBBLE_DEVICE] = matcher_response.device
             else:
-                ctx.log.info('dns_spoofing.request: no rules returned, passing thru...')
+                bubble_log('dns_spoofing.request: no rules returned, passing thru...')
         else:
-            ctx.log.info('dns_spoofing.request: no sni/host found, not applying rules to path: ' + flow.request.path)
+            bubble_log('dns_spoofing.request: no sni/host found, not applying rules to path: ' + flow.request.path)
 
         flow.request.host_header = host_header
         flow.request.host = sni or host_header

@@ -73,6 +73,8 @@ public class Device extends IdentifiableBase implements HasAccount {
     @ECIndex @Column(nullable=false, length=500)
     @Getter @Setter private String name;
 
+    public String id () { return getName() + "/" + getUuid(); }
+
     @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)

@@ -4,19 +4,21 @@ import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
+import bubble.service.cloud.DeviceIdService;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static bubble.ApiConstants.EP_VPN;
-import static bubble.ApiConstants.getUserAgent;
+import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
-import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
 
@@ -64,6 +66,16 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
                                           @PathParam("id") String id) {
         final Device device = getDao().findByAccountAndId(getAccountUuid(ctx), id);
         return configuration.subResource(VpnConfigResource.class, device);
+    }
+
+    @Autowired private DeviceIdService deviceIdService;
+
+    @GET @Path("/{id}"+EP_IPS)
+    public Response getIps(@Context ContainerRequest ctx,
+                           @PathParam("id") String id) {
+        final Device device = getDao().findByAccountAndId(getAccountUuid(ctx), id);
+        if (device == null) return notFound(id);
+        return ok(deviceIdService.findIpsByDevice(device.getUuid()));
     }
 
 }
