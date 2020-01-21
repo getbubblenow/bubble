@@ -46,8 +46,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
-import static bubble.ApiConstants.*;
+import static bubble.ApiConstants.getRemoteHost;
+import static bubble.ApiConstants.newNodeHostname;
 import static bubble.dao.bill.AccountPlanDAO.PURCHASE_DELAY;
 import static bubble.model.cloud.BubbleNode.TAG_ERROR;
 import static bubble.server.BubbleConfiguration.DEBUG_NODE_INSTALL_FILE;
@@ -64,6 +66,7 @@ import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.closeQuietly;
+import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 import static org.cobbzilla.util.system.CommandShell.chmod;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -80,12 +83,8 @@ public class StandardNetworkService implements NetworkService {
     public static final String INSTALL_LOCAL_SH = "install_local.sh";
     public static final String INSTALL_LOCAL_TEMPLATE = stream2string(ANSIBLE_DIR + "/" + INSTALL_LOCAL_SH + ".hbs");
 
-    public static final String[] BUBBLE_SCRIPTS = {
-            "run.sh", "bubble_common", "bubble",
-            "bget", "bpost", "bposte", "bput", "bpute", "bdelete",
-            "bscript", "bmodel", "bencrypt", "bdecrypt",
-            "list_bubble_databases", "cleanup_bubble_databases"
-    };
+    public static final List<String> BUBBLE_SCRIPTS = splitAndTrim(stream2string(ANSIBLE_DIR + "/bubble_scripts.txt"), "\n")
+            .stream().filter(s -> !empty(s)).collect(Collectors.toList());
 
     public static final int MAX_ANSIBLE_TRIES = 5;
     public static final int RESTORE_KEY_LEN = 6;
