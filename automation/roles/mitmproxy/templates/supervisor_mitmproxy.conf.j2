@@ -2,4 +2,6 @@
 [program:mitmdump]
 stdout_logfile = /home/mitmproxy/mitmdump-out.log
 stderr_logfile = /home/mitmproxy/mitmdump-err.log
-command=sudo -u mitmproxy bash -c "/home/mitmproxy/mitmproxy/run_mitmdump.sh {{ mitm_port }}"
+command=sudo -H -u mitmproxy bash -c "/home/mitmproxy/mitmproxy/run_mitmdump.sh {{ mitm_port }}"
+stopasgroup=true
+stopsignal=QUIT
