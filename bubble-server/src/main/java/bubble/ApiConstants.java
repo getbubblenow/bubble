@@ -121,6 +121,9 @@ public class ApiConstants {
 
     public static final String ME_ENDPOINT = "/me";
     public static final String EP_APPS = APPS_ENDPOINT;
+    public static final String EP_MITM = "/mitm";
+    public static final String EP_ENABLE = "/enable";
+    public static final String EP_DISABLE = "/disable";
     public static final String EP_RULES = "/rules";
     public static final String EP_MATCHERS = "/matchers";
     public static final String EP_DATA = "/data";

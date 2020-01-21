@@ -27,7 +27,7 @@ if [[ ! -f ${ROOT_KEY_MARKER} ]] ; then
   touch ${ROOT_KEY_MARKER}
 fi
 
-log "Watching marker file..."
+log "Watching marker file ${BUBBLE_KEY_MARKER} ..."
 while : ; do
   if [[ $(stat -c %Y ${BUBBLE_KEY_MARKER}) -gt $(stat -c %Y ${ROOT_KEY_MARKER}) ]] ; then
     touch ${ROOT_KEY_MARKER}

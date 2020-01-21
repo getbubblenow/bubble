@@ -86,3 +86,19 @@
     state: restarted
 
 - import_tasks: route.yml
+
+- name: Install mitmdump_monitor
+  copy:
+    src: "mitmdump_monitor.sh"
+    dest: "/usr/local/sbin/mitmdump_monitor.sh"
+    owner: root
+    group: root
+    mode: 0500
+
+- name: Install mitmdump_monitor supervisor conf file
+  copy:
+    src: supervisor_mitmdump_monitor.conf
+    dest: /etc/supervisor/conf.d/mitmdump_monitor.conf
+
+- name: Ensure mitmdump_monitor is started
+    shell: supervisorctl restart mitmdump_monitor

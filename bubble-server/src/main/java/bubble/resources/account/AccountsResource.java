@@ -23,6 +23,7 @@ import bubble.resources.notify.ReceivedNotificationsResource;
 import bubble.resources.notify.SentNotificationsResource;
 import bubble.server.BubbleConfiguration;
 import bubble.service.AuthenticatorService;
+import bubble.service.account.MitmControlService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.StandardNetworkService;
@@ -299,6 +300,32 @@ public class AccountsResource {
 
         accountDAO.delete(c.account.getUuid());
         return ok(c.account);
+    }
+
+    @Autowired private MitmControlService mitmControlService;
+
+    @GET @Path(EP_MITM)
+    @Produces(APPLICATION_JSON)
+    public Response mitmStatus(@Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        if (!caller.admin()) return forbidden();
+        return ok(mitmControlService.getEnabled());
+    }
+
+    @POST @Path(EP_MITM+EP_ENABLE)
+    @Produces(APPLICATION_JSON)
+    public Response mitmOn(@Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        if (!caller.admin()) return forbidden();
+        return ok(mitmControlService.setEnabled(true));
+    }
+
+    @POST @Path(EP_MITM+EP_DISABLE)
+    @Produces(APPLICATION_JSON)
+    public Response mitmOff(@Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        if (!caller.admin()) return forbidden();
+        return ok(mitmControlService.setEnabled(false));
     }
 
     @Path("/{id}"+EP_APPS)

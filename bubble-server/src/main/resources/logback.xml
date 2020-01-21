@@ -36,6 +36,7 @@
     <logger name="org.cobbzilla.wizard.dao.AbstractCRUDDAO" level="WARN" />
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
     <logger name="bubble.service.notify.NotificationService" level="WARN" />
+    <logger name="bubble.service.account.StandardAccountMessageService" level="DEBUG" />
 <!--    <logger name="bubble.service.cloud.StandardNetworkService" level="INFO" />-->
     <logger name="bubble.resources.notify" level="WARN" />
     <logger name="bubble.client" level="WARN" />

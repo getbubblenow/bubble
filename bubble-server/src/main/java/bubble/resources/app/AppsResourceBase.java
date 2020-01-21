@@ -23,7 +23,6 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 public abstract class AppsResourceBase extends AccountOwnedTemplateResource<BubbleApp, BubbleAppDAO> {
 
     @Autowired protected BubbleConfiguration configuration;
-    @Autowired protected BubbleAppDAO appDAO;
     @Autowired protected AppRuleDAO ruleDAO;
     @Autowired protected AppMatcherDAO matcherDAO;
 
@@ -35,11 +34,29 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
 
         if (isReadOnly(ctx)) return forbidden();
 
-        final BubbleApp found = appDAO.findByAccountAndId(getAccountUuid(ctx), id);
+        final BubbleApp found = getDao().findByAccountAndId(getAccountUuid(ctx), id);
         if (found == null) return notFound(id);
 
-        appDAO.delete(found.getUuid());
+        getDao().delete(found.getUuid());
         return ok_empty();
+    }
+
+    @POST @Path("/{id}/enable")
+    public Response enable(@Context ContainerRequest ctx,
+                           @PathParam("id") String id) {
+        if (isReadOnly(ctx)) return forbidden();
+        final BubbleApp found = getDao().findByAccountAndId(getAccountUuid(ctx), id);
+        if (found == null) return notFound(id);
+        return ok(getDao().update(found.setEnabled(true)));
+    }
+
+    @POST @Path("/{id}/disable")
+    public Response disable(@Context ContainerRequest ctx,
+                            @PathParam("id") String id) {
+        if (isReadOnly(ctx)) return forbidden();
+        final BubbleApp found = getDao().findByAccountAndId(getAccountUuid(ctx), id);
+        if (found == null) return notFound(id);
+        return ok(getDao().update(found.setEnabled(false)));
     }
 
     @Path("/{id}"+EP_RULES)

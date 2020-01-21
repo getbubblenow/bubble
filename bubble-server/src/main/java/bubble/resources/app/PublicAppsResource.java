@@ -19,7 +19,7 @@ public class PublicAppsResource extends AppsResourceBase {
     public PublicAppsResource() { super(null); }
 
     @Override protected List<BubbleApp> list(ContainerRequest ctx) {
-        return appDAO.findPublicTemplates(getAccountUuid(ctx));
+        return getDao().findPublicTemplates(getAccountUuid(ctx));
     }
 
     @Override protected BubbleApp find(ContainerRequest ctx, String id) {
