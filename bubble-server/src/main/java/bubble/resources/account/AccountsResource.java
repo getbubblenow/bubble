@@ -304,27 +304,27 @@ public class AccountsResource {
 
     @Autowired private MitmControlService mitmControlService;
 
-    @GET @Path(EP_MITM)
-    @Produces(APPLICATION_JSON)
-    public Response mitmStatus(@Context ContainerRequest ctx) {
-        final Account caller = userPrincipal(ctx);
-        if (!caller.admin()) return forbidden();
+    @GET @Path("/{id}"+EP_MITM)
+    public Response mitmStatus(@Context ContainerRequest ctx,
+                               @PathParam("id") String id) {
+        final AccountContext c = new AccountContext(ctx, id);
+        if (!c.caller.admin()) return forbidden();
         return ok(mitmControlService.getEnabled());
     }
 
-    @POST @Path(EP_MITM+EP_ENABLE)
-    @Produces(APPLICATION_JSON)
-    public Response mitmOn(@Context ContainerRequest ctx) {
-        final Account caller = userPrincipal(ctx);
-        if (!caller.admin()) return forbidden();
+    @POST @Path("/{id}"+EP_MITM+EP_ENABLE)
+    public Response mitmOn(@Context ContainerRequest ctx,
+                           @PathParam("id") String id) {
+        final AccountContext c = new AccountContext(ctx, id);
+        if (!c.caller.admin()) return forbidden();
         return ok(mitmControlService.setEnabled(true));
     }
 
-    @POST @Path(EP_MITM+EP_DISABLE)
-    @Produces(APPLICATION_JSON)
-    public Response mitmOff(@Context ContainerRequest ctx) {
-        final Account caller = userPrincipal(ctx);
-        if (!caller.admin()) return forbidden();
+    @POST @Path("/{id}"+EP_MITM+EP_DISABLE)
+    public Response mitmOff(@Context ContainerRequest ctx,
+                            @PathParam("id") String id) {
+        final AccountContext c = new AccountContext(ctx, id);
+        if (!c.caller.admin()) return forbidden();
         return ok(mitmControlService.setEnabled(false));
     }
 
