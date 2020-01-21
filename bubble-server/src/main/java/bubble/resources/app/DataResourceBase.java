@@ -18,11 +18,14 @@ import javax.ws.rs.Produces;
 import java.util.List;
 
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON) @Slf4j
 public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppData, AppDataDAO> {
+
+    private static final String[] BASIS_FIELDS = {"app", "site"};
 
     @Autowired protected BubbleConfiguration configuration;
     @Autowired protected AccountDAO accountDAO;
@@ -32,7 +35,7 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
     @Autowired protected AppMatcherDAO matcherDAO;
     @Autowired protected AppSiteDAO siteDAO;
 
-    private AppData basis;
+    protected AppData basis;
 
     public DataResourceBase (Account account, AppData basis) {
         super(account);
@@ -50,6 +53,8 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
     }
 
     @Override protected AppData setReferences(ContainerRequest ctx, Account caller, AppData request) {
+
+        copy(request, basis, BASIS_FIELDS);
 
         final BubbleApp app = appDAO.findByAccountAndId(caller.getUuid(), request.getApp());
         if (app == null) throw notFoundEx(request.getApp());
