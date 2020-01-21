@@ -27,7 +27,7 @@ fi
 
 function ensureMitmOn {
   log "Flushing PREROUTING before enabling MITM services"
-  iptables -F PREROUTING  -t nat || log "Error disabling MITM port forwarding"
+  iptables -F PREROUTING  -t nat || log "Error flushing port forwarding when enabling MITM services"
   log "Enabling MITM port forwarding on TCP port 80 -> 8888"
   iptables -I PREROUTING 1 -t nat -p tcp --dport 80 -j REDIRECT --to-ports 8888 || log "Error enabling MITM port forwarding 80 -> 8888"
   log "Enabling MITM port forwarding on TCP port 443 -> 8888"
@@ -37,7 +37,7 @@ function ensureMitmOn {
 
 function ensureMitmOff {
   log "Flushing PREROUTING before disabling MITM services"
-  iptables -F PREROUTING  -t nat || log "Error disabling MITM port forwarding"
+  iptables -F PREROUTING  -t nat || log "Error flushing port forwarding when disabling MITM services"
   log "Enabling MITM port forwarding on TCP port 80 -> 1080"
   iptables -I PREROUTING 1 -t nat -p tcp --dport 80 -j REDIRECT --to-ports 1080 || log "Error enabling nginx port forwarding 80 -> 1080"
   log "Enabling MITM port forwarding on TCP port 443 -> 1443"
