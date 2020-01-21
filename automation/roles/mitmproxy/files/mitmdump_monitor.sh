@@ -26,22 +26,22 @@ if [[ ! -f ${ROOT_KEY_MARKER} ]] ; then
 fi
 
 function ensureMitmOn {
-  ok80=$(iptables -vnL PREROUTING  -t nat | tail +3 | grep REDIRECT | grep -c "tcp dpt:80 redir ports 8888")
-  if [[ ${ok80} -eq 0 ]] ; then
-    log "Enabling MITM port forwarding on TCP port 80 -> 8888"
-    iptables -I PREROUTING 1 -t nat -p tcp --dport 80 -j REDIRECT --to-ports 8888 || log "Error enabling MITM port 80 forwarding"
-  fi
-  ok443=$(iptables -vnL PREROUTING  -t nat | tail +3 | grep REDIRECT | grep -c "tcp dpt:443 redir ports 8888")
-  if [[ ${ok443} -eq 0 ]] ; then
-    log "Enabling MITM port forwarding on TCP port 443 -> 8888"
-    iptables -I PREROUTING 1 -t nat -p tcp --dport 443 -j REDIRECT --to-ports 8888 || log "Error enabling MITM port 443 forwarding"
-  fi
+  log "Flushing PREROUTING before enabling MITM services"
+  iptables -F PREROUTING  -t nat || log "Error disabling MITM port forwarding"
+  log "Enabling MITM port forwarding on TCP port 80 -> 8888"
+  iptables -I PREROUTING 1 -t nat -p tcp --dport 80 -j REDIRECT --to-ports 8888 || log "Error enabling MITM port forwarding 80 -> 8888"
+  log "Enabling MITM port forwarding on TCP port 443 -> 8888"
+  iptables -I PREROUTING 1 -t nat -p tcp --dport 443 -j REDIRECT --to-ports 8888 || log "Error enabling MITM port forwarding 443 -> 8888"
   echo -n on > ${ROOT_KEY_MARKER}
 }
 
 function ensureMitmOff {
-  log "Disabling MITM port forwarding"
+  log "Flushing PREROUTING before disabling MITM services"
   iptables -F PREROUTING  -t nat || log "Error disabling MITM port forwarding"
+  log "Enabling MITM port forwarding on TCP port 80 -> 1080"
+  iptables -I PREROUTING 1 -t nat -p tcp --dport 80 -j REDIRECT --to-ports 1080 || log "Error enabling nginx port forwarding 80 -> 1080"
+  log "Enabling MITM port forwarding on TCP port 443 -> 1443"
+  iptables -I PREROUTING 1 -t nat -p tcp --dport 443 -j REDIRECT --to-ports 1443 || log "Error enabling nginx port forwarding 443 -> 1143"
   echo -n off > ${ROOT_KEY_MARKER}
 }
 

@@ -37,3 +37,16 @@
     jump: ACCEPT
     comment: Accept new admin SSL connections
   become: yes
+
+- name: Allow admin HTTP on port 1080
+  iptables:
+    chain: INPUT
+    action: insert
+    rule_num: 8
+    protocol: tcp
+    destination_port: "1080"
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new admin SSL connections
+  become: yes
