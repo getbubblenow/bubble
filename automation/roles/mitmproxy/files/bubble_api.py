@@ -4,6 +4,8 @@ import requests
 import traceback
 import sys
 
+HEADER_USER_AGENT = 'User-Agent'
+
 HEADER_BUBBLE_MATCHERS='X-Bubble-Matchers'
 HEADER_BUBBLE_DEVICE='X-Bubble-Device'
 
@@ -17,12 +19,16 @@ def bubble_matchers (remote_addr, flow, host):
         'Accept' : 'application/json',
         'Content-Type': 'application/json'
     }
-    response = None
+    if HEADER_USER_AGENT not in flow.request.headers:
+        bubble_log('bubble_matchers: no User-Agent header, setting to UNKNOWN')
+        user_agent = 'UNKNOWN'
+    else:
+        user_agent = flow.request.headers[HEADER_USER_AGENT]
     try:
         data = {
             'fqdn': host,
             'uri': flow.request.path,
-            'userAgent': flow.request.headers['User-Agent'],
+            'userAgent': user_agent,
             'remoteAddr': remote_addr
         }
         response = requests.post('http://127.0.0.1:'+bubble_port+'/api/filter/matchers', headers=headers, json=data)
