@@ -5,10 +5,13 @@ import bubble.dao.app.AppRuleDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
+import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
+import bubble.service.cloud.DeviceIdService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.http.URIBean;
+import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +25,7 @@ import java.net.URISyntaxException;
 import java.util.*;
 
 import static bubble.ApiConstants.PROXY_ENDPOINT;
+import static bubble.ApiConstants.getRemoteHost;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.CONTENT_TYPE_ANY;
@@ -35,16 +39,21 @@ public class ReverseProxyResource {
     @Autowired private AppMatcherDAO matcherDAO;
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private RuleEngine ruleEngine;
+    @Autowired private DeviceIdService deviceIdService;
 
     @Getter(lazy=true) private final int prefixLength = configuration.getHttp().getBaseUri().length() + PROXY_ENDPOINT.length() + 1;
 
     @GET @Path("/{path: .*}")
     @Consumes(CONTENT_TYPE_ANY)
     @Produces(CONTENT_TYPE_ANY)
-    public Response get(@Context ContainerRequest request,
+    public Response get(@Context Request req,
+                        @Context ContainerRequest request,
                         @Context ContainerResponse response,
                         @PathParam("path") String path) throws URISyntaxException, IOException {
         final Account account = userPrincipal(request);
+        final String remoteHost = getRemoteHost(req);
+        final Device device = deviceIdService.findDeviceByIp(remoteHost);
+        if (device == null) return ruleEngine.passthru(request);
 
         final URIBean ub = getUriBean(request);
         final List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabled(account.getUuid(), ub.getHost());
@@ -77,7 +86,7 @@ public class ReverseProxyResource {
             }
 
             // if 'rules' is null or empty, this will passthru
-            return ruleEngine.applyRulesAndSendResponse(request, account, ub, new ArrayList<>(rules));
+            return ruleEngine.applyRulesAndSendResponse(request, account, device, ub, new ArrayList<>(rules));
         }
     }
 
