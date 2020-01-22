@@ -3,8 +3,9 @@ package bubble.rule;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
-import bubble.resources.stream.FilterMatchersRequest;
+import bubble.model.device.Device;
 import bubble.resources.stream.AppRuleHarness;
+import bubble.resources.stream.FilterMatchersRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
@@ -24,7 +25,16 @@ public interface AppRuleDriver {
     void setNext(AppRuleDriver next);
     default boolean hasNext() { return getNext() != null; }
 
-    default void init(JsonNode config, JsonNode userConfig, AppRule rule, AppMatcher matcher) {}
+    default void init(JsonNode config,
+                      JsonNode userConfig,
+                      AppRule rule,
+                      AppMatcher matcher,
+                      Account account,
+                      Device device) {}
+
+    default boolean preprocess(AppRuleHarness ruleHarness, FilterMatchersRequest filter, Account account, Request req, ContainerRequest request) {
+        return false;
+    }
 
     default InputStream filterRequest(InputStream in) {
         if (hasNext()) return doFilterRequest(getNext().filterRequest(in));
@@ -39,9 +49,6 @@ public interface AppRuleDriver {
     }
 
     default InputStream doFilterResponse(InputStream in) { return in; }
-
-    String getSessionId ();
-    void setSessionId (String s);
 
     default String resolveResource(String res, Map<String, Object> ctx) {
         final String resource = locateResource(res);
@@ -86,7 +93,4 @@ public interface AppRuleDriver {
         return null;
     }
 
-    default boolean preprocess(AppRuleHarness ruleHarness, FilterMatchersRequest filter, Account account, Request req, ContainerRequest request) {
-        return false;
-    }
 }

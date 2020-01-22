@@ -1,6 +1,7 @@
 package bubble.model.app;
 
 import bubble.model.account.Account;
+import bubble.model.device.Device;
 import bubble.rule.AppRuleDriver;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -84,9 +85,9 @@ public class AppRule extends IdentifiableBaseParentEntity implements AppTemplate
     @Column(nullable=false, length=UUID_MAXLEN)
     @Getter @Setter private String driver;
 
-    public AppRuleDriver initDriver(RuleDriver driver, AppMatcher matcher) {
+    public AppRuleDriver initDriver(RuleDriver driver, AppMatcher matcher, Account account, Device device) {
         final AppRuleDriver d = driver.getDriver();
-        d.init(json(configJson, JsonNode.class), driver.getUserConfig(), this, matcher);
+        d.init(json(configJson, JsonNode.class), driver.getUserConfig(), this, matcher, account, device);
         return d;
     }
 

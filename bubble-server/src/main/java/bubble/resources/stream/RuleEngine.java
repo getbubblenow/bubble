@@ -47,7 +47,6 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpStatusCodes.OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.send;
-import static org.cobbzilla.wizard.util.SpringUtil.autowire;
 
 @Service @Slf4j
 public class RuleEngine {
@@ -169,8 +168,8 @@ public class RuleEngine {
                 log.warn("get: driver not found: "+h.getRule().getDriver());
                 continue;
             }
-            final AppRuleDriver driver = autowire(configuration.getApplicationContext(), h.getRule().initDriver(ruleDriver, h.getMatcher()));
-            driver.setSessionId(account.getApiToken());
+            final AppRuleDriver unwiredDriver = h.getRule().initDriver(ruleDriver, h.getMatcher(), account, device);
+            final AppRuleDriver driver = configuration.autowire(unwiredDriver);
             h.setRuleDriver(ruleDriver);
             h.setDriver(driver);
         }

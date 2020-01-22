@@ -2,6 +2,7 @@ package bubble.rule.social.block;
 
 import bubble.ApiConstants;
 import bubble.BubbleHandlebars;
+import bubble.dao.app.AppDataDAO;
 import bubble.model.app.AppData;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
@@ -33,10 +34,12 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
 
     private AppMatcher matcher;
     private AppRule rule;
+    private AppDataDAO dataDAO;
 
-    public UserBlockerStreamFilter(AppMatcher matcher, AppRule rule) {
+    public UserBlockerStreamFilter(AppMatcher matcher, AppRule rule, AppDataDAO dataDAO) {
         this.matcher = matcher;
         this.rule = rule;
+        this.dataDAO = dataDAO;
     }
 
     private enum UserBlockerStreamState { seeking_comments, blocking_comments }
@@ -141,7 +144,7 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
     protected boolean isUserBlocked(String userId) {
         // todo: cache these lookups for a while
         if (userId == null) return false;
-        final String data = config.getDataDAO().findValueByAppAndSiteAndKey(config.getApp(), matcher.getSite(), userId);
+        final String data = dataDAO.findValueByAppAndSiteAndKey(config.getApp(), matcher.getSite(), userId);
         return Boolean.parseBoolean(data);
     }
 

@@ -1,7 +1,6 @@
 package bubble.rule.social.block;
 
-import bubble.dao.remote.RemoteDAOConfig;
-import bubble.dao.remote.RemoteAppDataDAO;
+import bubble.dao.app.AppDataDAO;
 import bubble.rule.AbstractAppRuleDriver;
 import bubble.rule.RequestDecorator;
 import bubble.service.cloud.RequestCoordinationService;
@@ -46,8 +45,6 @@ public class UserBlocker extends AbstractAppRuleDriver {
         userBlockerConfig.setRule(rule.getUuid());
         userBlockerConfig.setApp(rule.getApp());
         userBlockerConfig.setDriver(rule.getDriver());
-        userBlockerConfig.setRuleDataDAOClass(RemoteAppDataDAO.class.getName());
-        userBlockerConfig.setRuleDataDAOConfig(json(new RemoteDAOConfig(configuration.getApiUriBase(), getSessionId())));
 
         // resolve block control
         final UserBlockerUserConfig userConfigObject = json(json(userConfig), UserBlockerUserConfig.class);
@@ -61,7 +58,7 @@ public class UserBlocker extends AbstractAppRuleDriver {
     protected UserBlockerConfig configObject() { return json(getFullConfig(), UserBlockerConfig.class); }
 
     @Override public InputStream doFilterResponse(InputStream in) {
-        final UserBlockerStreamFilter filter = new UserBlockerStreamFilter(matcher, rule);
+        final UserBlockerStreamFilter filter = new UserBlockerStreamFilter(matcher, rule, configuration.getBean(AppDataDAO.class));
         filter.configure(getFullConfig());
         RegexFilterReader reader = new RegexFilterReader(in, RESPONSE_BUFSIZ, filter).setName("mainFilterReader");
 
