@@ -44,8 +44,7 @@ public class DeviceIdService {
     public Device findDeviceByIp (String ipAddr) {
 
         if (!WG_DEVICES_DIR.exists()) {
-            if (configuration.testMode() && ipAddr.equals("127.0.0.1")) {
-                // this is a test
+            if (configuration.testMode()) {
                 return new Device().setAccount(accountDAO.getFirstAdmin().getUuid());
             }
             throw invalidEx("err.deviceDir.notFound");
