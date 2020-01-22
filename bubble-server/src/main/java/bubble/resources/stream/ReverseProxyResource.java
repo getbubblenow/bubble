@@ -4,13 +4,13 @@ import bubble.dao.app.AppMatcherDAO;
 import bubble.dao.app.AppRuleDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
-import bubble.model.app.AppRule;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.DeviceIdService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.http.URIBean;
+import org.cobbzilla.util.string.StringUtil;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;
@@ -22,13 +22,17 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
 
 import static bubble.ApiConstants.PROXY_ENDPOINT;
 import static bubble.ApiConstants.getRemoteHost;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.CONTENT_TYPE_ANY;
+import static org.cobbzilla.util.string.StringUtil.EMPTY_ARRAY;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Path(PROXY_ENDPOINT)
@@ -62,7 +66,7 @@ public class ReverseProxyResource {
             return ruleEngine.passthru(ub, request);
         } else {
             // find rules by regex
-            final Set<AppRuleHarness> rules = new TreeSet<>();
+            final Set<String> matcherIds = new TreeSet<>();
             for (AppMatcher m : matchers) {
                 // check for regex match
                 if (m.matches(ub.getFullPath())) {
@@ -71,22 +75,12 @@ public class ReverseProxyResource {
                         log.debug("get: matcher("+m.getUuid()+") blocks request, returning 404 Not Found for "+ub.getFullPath());
                         return notFound(ub.getFullPath());
                     }
-
-                    // lookup rule and add to rules array
-                    final AppRule rule = ruleDAO.findByUuid(m.getRule());
-                    if (rule == null) {
-                        log.warn("get: matcher(" + m.getUuid() + "): rule not found: " + m.getRule());
-                    } else if (!rule.getApp().equals(m.getApp())) {
-                        // sanity check
-                        log.error("get: matcher(" + m.getUuid() + "): rule belongs to another site: " + m.getRule());
-                    } else {
-                        rules.add(new AppRuleHarness(m, rule));
-                    }
+                    matcherIds.add(m.getUuid());
                 }
             }
 
             // if 'rules' is null or empty, this will passthru
-            return ruleEngine.applyRulesAndSendResponse(request, account, device, ub, new ArrayList<>(rules));
+            return ruleEngine.applyRulesAndSendResponse(request, account, device, ub, matcherIds.toArray(EMPTY_ARRAY));
         }
     }
 

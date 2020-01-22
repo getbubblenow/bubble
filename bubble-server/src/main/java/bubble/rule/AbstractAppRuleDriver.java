@@ -20,12 +20,21 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
     protected JsonNode userConfig;
     protected AppMatcher matcher;
     protected AppRule rule;
+    protected Account account;
+    protected Device device;
 
-    @Override public void init(JsonNode config, JsonNode userConfig, AppRule rule, AppMatcher matcher, Account account, Device device) {
+    @Override public void init(JsonNode config,
+                               JsonNode userConfig,
+                               AppRule rule,
+                               AppMatcher matcher,
+                               Account account,
+                               Device device) {
         this.config = config;
         this.userConfig = userConfig;
         this.matcher = matcher;
         this.rule = rule;
+        this.account = account;
+        this.device = device;
     }
 
 }

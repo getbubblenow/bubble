@@ -44,11 +44,18 @@ public interface AppRuleDriver {
     default InputStream doFilterRequest(InputStream in) { return in; }
 
     default InputStream filterResponse(InputStream in) {
-        if (hasNext()) return doFilterResponse(getNext().filterRequest(in));
+        if (hasNext()) return doFilterResponse(getNext().filterResponse(in));
         return doFilterResponse(in);
     }
 
     default InputStream doFilterResponse(InputStream in) { return in; }
+
+    default InputStream filterResponseChunk(String requestId, InputStream in, boolean last) {
+        if (hasNext()) return doFilterResponseChunk(requestId, getNext().filterResponseChunk(requestId, in, last), last);
+        return doFilterResponse(in);
+    }
+
+    default InputStream doFilterResponseChunk(String requestId, InputStream in, boolean last) { return in; }
 
     default String resolveResource(String res, Map<String, Object> ctx) {
         final String resource = locateResource(res);

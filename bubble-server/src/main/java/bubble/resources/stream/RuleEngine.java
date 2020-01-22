@@ -94,16 +94,16 @@ public class RuleEngine {
                                               Account account,
                                               Device device,
                                               URIBean ub,
-                                              List<AppRuleHarness> rules) throws IOException {
+                                              String[] matcherIds) throws IOException {
 
         // sanity check
-        if (rules == null || rules.isEmpty()) return passthru(request.getEntityStream());
+        if (empty(matcherIds)) return passthru(request.getEntityStream());
 
         // todo: we have at least 1 rule, so add another rule that inserts the global settings controls in the top-left
 
         // initialize drivers -- todo: cache drivers / todo: ensure cache is shorter than session timeout,
         // since drivers that talk thru API will get a session key in their config
-        rules = initRules(account, device, rules);
+        final List<AppRuleHarness> rules = initRules(account, device, matcherIds);
         final AppRuleHarness firstRule = rules.get(0);
 
         // filter request
@@ -128,10 +128,12 @@ public class RuleEngine {
 
     public Response passthru(ContainerRequest request) { return passthru(request.getEntityStream()); }
 
-    public Response applyRulesAndSendResponse(ContainerRequest request,
-                                              Account account,
-                                              Device device,
-                                              String[] matcherIds) throws IOException {
+    public Response applyRulesToChunkAndSendResponse(ContainerRequest request,
+                                                     String requestId,
+                                                     Account account,
+                                                     Device device,
+                                                     String[] matcherIds,
+                                                     boolean last) throws IOException {
 
         if (empty(matcherIds)) return passthru(null, request);
 
@@ -139,11 +141,11 @@ public class RuleEngine {
         final List<AppRuleHarness> ruleHarnesses = initRules(account, device, matcherIds);
         final AppRuleHarness firstRule = ruleHarnesses.get(0);
 
-        final InputStream responseEntity = firstRule.getDriver().filterResponse(request.getEntityStream());
+        final InputStream responseEntity = firstRule.getDriver().filterResponseChunk(requestId, request.getEntityStream(), last);
         return sendResponse(responseEntity);
     }
 
-    public List<AppRuleHarness> initRules(Account account, Device device, String[] matcherIds) {
+    private List<AppRuleHarness> initRules(Account account, Device device, String[] matcherIds) {
         final List<AppMatcher> matchers = matcherDAO.findByUuids(matcherIds);
         if (matchers.size() != matcherIds.length) {
             log.warn("initRules: duplicate rules, or could not resolve some rule(s)");
@@ -161,7 +163,7 @@ public class RuleEngine {
         return ruleHarnesses;
     }
 
-    public List<AppRuleHarness> initRules(Account account, Device device, List<AppRuleHarness> rules) {
+    private List<AppRuleHarness> initRules(Account account, Device device, List<AppRuleHarness> rules) {
         for (AppRuleHarness h : rules) {
             final RuleDriver ruleDriver = driverDAO.findByUuid(h.getRule().getDriver());
             if (ruleDriver == null) {
