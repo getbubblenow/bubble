@@ -1,7 +1,9 @@
 package bubble.service.cloud;
 
+import bubble.dao.account.AccountDAO;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.device.Device;
+import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.io.FileUtil;
@@ -34,12 +36,20 @@ public class DeviceIdService {
     public static final FilenamePrefixFilter DEVICE_FILE_FILTER = new FilenamePrefixFilter(DEVICE_FILE_PREFIX);
 
     @Autowired private DeviceDAO deviceDAO;
+    @Autowired private BubbleConfiguration configuration;
+    @Autowired private AccountDAO accountDAO;
 
     private Map<String, Device> deviceCache = new ExpirationMap<>(MINUTES.toMillis(10));
 
     public Device findDeviceByIp (String ipAddr) {
 
-        if (!WG_DEVICES_DIR.exists()) throw invalidEx("err.deviceDir.notFound");
+        if (!WG_DEVICES_DIR.exists()) {
+            if (configuration.testMode() && ipAddr.equals("127.0.0.1")) {
+                // this is a test
+                return new Device().setAccount(accountDAO.getFirstAdmin().getUuid());
+            }
+            throw invalidEx("err.deviceDir.notFound");
+        }
 
         return deviceCache.computeIfAbsent(ipAddr, ip -> {
             try {

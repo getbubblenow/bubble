@@ -5,7 +5,7 @@
     "params": {
       "fqdn": "foo.example.com",
       "uri": "/bar",
-      "jsCheck": "json.length == 0"
+      "jsCheck": "json.getMatchers().length == 0"
     }
   },
 
@@ -15,7 +15,7 @@
     "params": {
       "fqdn": "foo.example.com",
       "uri": "/baz",
-      "jsCheck": "json.length == 0"
+      "jsCheck": "json.getMatchers().length == 0"
     }
   },
 
@@ -25,7 +25,7 @@
     "params": {
       "fqdn": "bar.example.com",
       "uri": "/qux",
-      "jsCheck": "json.length == 0"
+      "jsCheck": "json.getMatchers().length == 0"
     }
   },
 
