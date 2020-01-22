@@ -32,4 +32,4 @@ def bubble_matchers (remote_addr, flow, host):
     except Exception as e:
         bubble_log('bubble_matchers API call failed: '+repr(e))
         traceback.print_exc()
-    return []
+    return None

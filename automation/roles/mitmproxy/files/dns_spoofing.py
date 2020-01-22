@@ -41,19 +41,28 @@ class Rerouter:
             return None
 
         remote_addr = str(flow.client_conn.address[0])
-        host = host.decode('utf-8')
+        try:
+            host = host.decode()
+        except (UnicodeDecodeError, AttributeError):
+            bubble_log("get_matchers: host "+str(host)+" could not be decoded, type="+str(type(host)))
+            pass
+
         resp = bubble_matchers(remote_addr, flow, host)
-        if not resp or not resp['matchers'] or not resp['device']:
-            bubble_log("get_matchers: no matchers for remote_addr/host: "+remote_addr+'/'+str(host))
+        if (not resp) or (not 'matchers' in resp) or (not 'device' in resp):
+            bubble_log("get_matchers: no matchers/device for remote_addr/host: "+remote_addr+'/'+str(host))
             return None
         matcher_ids = []
-        for m in resp.matchers:
-            bubble_log('get_matchers: checking for match of path='+flow.request.path+' against regex: '+m['regex'])
-            if re.match(m['regex'], flow.request.path):
+        for m in resp['matchers']:
+            if 'urlRegex' in m:
+                bubble_log('get_matchers: checking for match of path='+flow.request.path+' against regex: '+m['urlRegex'])
+            else:
+                bubble_log('get_matchers: checking for match of path='+flow.request.path+' -- NO regex, skipping')
+                continue
+            if re.match(m['urlRegex'], flow.request.path):
                 bubble_log('get_matchers: rule matched, adding rule: '+m['rule'])
                 matcher_ids.append(m['uuid'])
 
-        matcher_response = { 'device': resp.device, 'matchers': matcher_ids }
+        matcher_response = { 'device': resp['device'], 'matchers': matcher_ids }
         bubble_log("get_matchers: returning "+repr(matcher_response))
         return matcher_response
 
@@ -68,6 +77,7 @@ class Rerouter:
             port = 80
 
         host_header = flow.request.host_header
+        bubble_log("dns_spoofing.request: host_header is "+repr(host_header))
         m = parse_host_header.match(host_header)
         if m:
             host_header = m.group("host").strip("[]")
@@ -77,10 +87,10 @@ class Rerouter:
         # Determine if this request should be filtered
         if sni or host_header:
             matcher_response = self.get_matchers(flow, sni or host_header)
-            if matcher_response and matcher_response.matchers:
-                bubble_log("dns_spoofing.request: found matchers: " + ' '.join(matcher_response.matchers))
-                flow.request.headers[HEADER_BUBBLE_MATCHERS] = json.dumps(matcher_response.matchers)
-                flow.request.headers[HEADER_BUBBLE_DEVICE] = matcher_response.device
+            if matcher_response and 'matchers' in matcher_response and 'device' in matcher_response:
+                bubble_log("dns_spoofing.request: found matchers: " + ' '.join(matcher_response['matchers']))
+                flow.request.headers[HEADER_BUBBLE_MATCHERS] = json.dumps(matcher_response['matchers'])
+                flow.request.headers[HEADER_BUBBLE_DEVICE] = matcher_response['device']
             else:
                 bubble_log('dns_spoofing.request: no rules returned, passing thru...')
         else:

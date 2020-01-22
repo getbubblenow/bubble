@@ -114,7 +114,7 @@ public class RuleEngine {
         return sendResponse(responseEntity, proxyResponse);
     }
 
-    private Response passthru(InputStream stream) {
+    public Response passthru(InputStream stream) {
         final SendableResource response = new SendableResource(new StreamStreamingOutput(stream))
                 .setStatus(OK);
         return send(response);
