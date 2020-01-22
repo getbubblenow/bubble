@@ -12,12 +12,21 @@
 #
 # Usage:
 #
-#     prep_bubble_jar
+#   prep_bubble_jar
 #
+# Environment variables:
+#
+#   INSTALL_WEB   : if this is equal to 'web' then the frontend will be built and included in the jar
+#   DEBUG_BUILD   : if this is equal to 'debug' then nothing will be done, the jar will be left as-is
 #
 SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/bubble_common
+
+if [[ ! -z "${DEBUG_BUILD}" && "${DEBUG_BUILD}" == "debug" ]] ; then
+  echo "DEBUG_BUILD is set, not doing anything further"
+  exit 0
+fi
 
 BUBBLE_SERVER="$(cd "${SCRIPT_DIR}/../bubble-server" && pwd)"
 CLASSES_DIR="${BUBBLE_SERVER}/target/classes"
