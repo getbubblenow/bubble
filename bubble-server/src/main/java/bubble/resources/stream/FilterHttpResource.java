@@ -8,6 +8,7 @@ import bubble.model.app.AppMatcher;
 import bubble.model.device.Device;
 import bubble.service.cloud.DeviceIdService;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -108,7 +109,7 @@ public class FilterHttpResource {
             removeMatchers = new ArrayList<>();
             for (AppMatcher matcher : matchers) {
                 if (matcher.matches(uri)) {
-                    if (ruleEngine.preprocess(filterRequest, req, request, caller, matcher.getUuid())) {
+                    if (ruleEngine.preprocess(filterRequest, req, request, caller, device, matcher.getUuid())) {
                         removeMatchers.add(matcher);
                     }
                 }
@@ -119,6 +120,8 @@ public class FilterHttpResource {
         if (log.isDebugEnabled()) log.debug("findMatchers: after pre-processing, returning "+matchers.size()+" matchers");
         return new FilterMatchersResponse().setMatchers(matchers).setDevice(device.getUuid());
     }
+
+    private Map<String, FilterHttpRequest> activeRequests = new ExpirationMap<>(MINUTES.toMillis(10));
 
     @POST @Path(EP_APPLY+"/{requestId}")
     @Consumes(MediaType.WILDCARD)
@@ -137,56 +140,69 @@ public class FilterHttpResource {
         // only mitmproxy is allowed to call us, and this should always be a local address
         if (!isLocalIpv4(mitmAddr)) return forbidden();
 
+        if (empty(requestId)) {
+            if (log.isDebugEnabled()) log.debug("filterHttp: no requestId provided, returning passthru");
+            return passthru(request);
+        }
+
+        FilterHttpRequest filterRequest = activeRequests.get(requestId);
+        if (filterRequest == null) {
+            if (empty(deviceId) || empty(matchersJson) || empty(contentType)) {
+                if (log.isDebugEnabled()) log.debug("filterHttp: filter request not found, and no device/matchers/contentType provided, returning passthru");
+                return passthru(request);
+            }
+            final String[] matchers;
+            try {
+                matchers = json(matchersJson, String[].class);
+            } catch (Exception e) {
+                if (log.isDebugEnabled()) log.debug("filterHttp: error parsing matchers ("+matchersJson+"), returning passthru");
+                return passthru(request);
+            }
+            if (matchers.length == 0) {
+                if (log.isDebugEnabled()) log.debug("filterHttp: empty matchers array, returning passthru");
+                return passthru(request);
+            } else {
+                if (log.isDebugEnabled()) log.debug("filterHttp: found matchers: "+ArrayUtil.arrayToString(matchers)+" ... ");
+            }
+            final Device device = findDevice(deviceId);
+            if (device == null) {
+                if (log.isDebugEnabled()) log.debug("filterHttp: device "+deviceId+" not found, returning passthru");
+                return passthru(request);
+            } else {
+                if (log.isDebugEnabled()) log.debug("filterHttp: found device: "+device.id()+" ... ");
+            }
+            final Account caller = findCaller(device.getAccount());
+            if (caller == null) {
+                if (log.isDebugEnabled()) log.debug("filterHttp: account "+device.getAccount()+" not found, returning passthru");
+                return passthru(request);
+            }
+            filterRequest = new FilterHttpRequest()
+                    .setId(requestId)
+                    .setDevice(device)
+                    .setAccount(caller)
+                    .setMatchers(matchers)
+                    .setContentType(contentType);
+            activeRequests.put(requestId, filterRequest);
+        }
+
         if (log.isDebugEnabled()) {
             log.debug("filterHttp: starting with requestId="+requestId+", deviceId="+deviceId+", matchersJson="+matchersJson+", contentType="+contentType+", last="+last);
 
             // for now, just try to return unmodified...
-            if (last != null && last) {
-                log.debug("filterHttp: DEBUG: last chunk detected, returning empty response");
-                return ok(); // no response body
-            } else {
-                log.debug("filterHttp: DEBUG: chunk detected, returning chunk as passthru response");
-                return passthru(request);
-            }
+//            if (last != null && last) {
+//                log.debug("filterHttp: DEBUG: last chunk detected, returning empty response");
+//                return ok(); // no response body
+//            } else {
+//                log.debug("filterHttp: DEBUG: chunk detected, returning chunk as passthru response");
+//                return passthru(request);
+//            }
         }
 
-        if (missing(matchersJson)) {
-            if (log.isDebugEnabled()) log.debug("filterHttp: no matchers provided, returning passthru");
-            return passthru(request);
-        }
-        if (empty(deviceId)) {
-            log.info("filterHttp: no deviceId provided, returning passthru");
-            return passthru(request);
-        }
-
-        final String[] matchers;
-        try {
-            matchers = json(matchersJson, String[].class);
-        } catch (Exception e) {
-            if (log.isDebugEnabled()) log.debug("filterHttp: error parsing matchers ("+matchersJson+"), returning passthru");
-            return passthru(request);
-        }
-        if (matchers.length == 0) {
-            if (log.isDebugEnabled()) log.debug("filterHttp: empty matchers array, returning passthru");
-            return passthru(request);
-        }
-
-        final Device device = findDevice(deviceId);
-        if (device == null) {
-            if (log.isDebugEnabled()) log.debug("filterHttp: device "+deviceId+" not found, returning passthru");
-            return passthru(request);
-        }
-
-        final Account caller = findCaller(device.getAccount());
-        if (caller == null) {
-            if (log.isDebugEnabled()) log.debug("filterHttp: account "+device.getAccount()+" not found, returning passthru");
-            return passthru(request);
-        }
-
-        return ruleEngine.applyRulesAndSendResponse(request, caller, matchers);
+        final boolean isLast = last != null && last;
+        return ruleEngine.applyRulesToChunkAndSendResponse(
+                request, filterRequest.getId(), filterRequest.getAccount(), filterRequest.getDevice(), filterRequest.getMatchers(),
+                isLast);
     }
-
-    private boolean missing(String v) { return v == null || v.trim().length() == 0; }
 
     public Response passthru(@Context ContainerRequest request) { return ruleEngine.passthru(request); }
 
