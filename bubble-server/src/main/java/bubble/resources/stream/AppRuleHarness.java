@@ -20,7 +20,6 @@ public class AppRuleHarness implements Comparable<AppRuleHarness> {
         this.rule = rule;
     }
 
-    @Override public int compareTo(AppRuleHarness other) {
-        return HasPriority.compare(other.getRule(), getRule());
-    }
+    @Override public int compareTo(AppRuleHarness other) { return HasPriority.compare(other.getRule(), getRule()); }
+
 }

@@ -7,6 +7,7 @@ import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.app.RuleDriver;
+import bubble.model.device.Device;
 import bubble.rule.AppRuleDriver;
 import bubble.server.BubbleConfiguration;
 import lombok.Cleanup;
@@ -56,7 +57,12 @@ public class RuleEngine {
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private BubbleConfiguration configuration;
 
-    public boolean preprocess(FilterMatchersRequest filter, Request req, ContainerRequest request, Account account, String matcherUuid) {
+    public boolean preprocess(FilterMatchersRequest filter,
+                              Request req,
+                              ContainerRequest request,
+                              Account account,
+                              Device device,
+                              String matcherUuid) {
         final AppRuleHarness ruleHarness = initRules(account, new String[]{ matcherUuid }).get(0);
         return ruleHarness.getDriver().preprocess(ruleHarness, filter, account, req, request);
     }

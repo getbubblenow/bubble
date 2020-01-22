@@ -187,21 +187,20 @@ public class FilterHttpResource {
 
         if (log.isDebugEnabled()) {
             log.debug("filterHttp: starting with requestId="+requestId+", deviceId="+deviceId+", matchersJson="+matchersJson+", contentType="+contentType+", last="+last);
-
-            // for now, just try to return unmodified...
-//            if (last != null && last) {
-//                log.debug("filterHttp: DEBUG: last chunk detected, returning empty response");
-//                return ok(); // no response body
-//            } else {
-//                log.debug("filterHttp: DEBUG: chunk detected, returning chunk as passthru response");
-//                return passthru(request);
-//            }
         }
 
-        final boolean isLast = last != null && last;
-        return ruleEngine.applyRulesToChunkAndSendResponse(
-                request, filterRequest.getId(), filterRequest.getAccount(), filterRequest.getDevice(), filterRequest.getMatchers(),
-                isLast);
+        // for now, just try to return unmodified...
+        if (last != null && last) {
+            log.debug("filterHttp: DEBUG: last chunk detected, returning empty response");
+            return ok(); // no response body
+        } else {
+            log.debug("filterHttp: DEBUG: chunk detected, returning chunk as passthru response");
+            return passthru(request);
+        }
+//        final boolean isLast = last != null && last;
+//        return ruleEngine.applyRulesToChunkAndSendResponse(
+//                request, filterRequest.getId(), filterRequest.getAccount(), filterRequest.getDevice(), filterRequest.getMatchers(),
+//                isLast);
     }
 
     public Response passthru(@Context ContainerRequest request) { return ruleEngine.passthru(request); }
