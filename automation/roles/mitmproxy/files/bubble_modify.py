@@ -63,20 +63,22 @@ def responseheaders(flow):
         device = flow.request.headers[HEADER_BUBBLE_DEVICE]
         if HEADER_CONTENT_TYPE in flow.response.headers:
             content_type = flow.response.headers[HEADER_CONTENT_TYPE ]
+            if matchers:
+                # flow.response.stream = filter_with_matchers(matchers)
+                bubble_log("responseheaders: contentType="+repr(content_type)
+                           +", req_id=" + req_id
+                           + ", device=" + device
+                           + ", matchers: " + repr(json.loads(matchers)))
+                flow.response.stream = bubble_modify(req_id,
+                                                     content_type,
+                                                     device,
+                                                     matchers)
+            else:
+                bubble_log("responseheaders: no matchers, passing thru")
+                pass
         else:
-            content_type = 'application/octet-stream'
-            bubble_log("responseheaders: "+HEADER_CONTENT_TYPE +" header not found in: "+repr(flow.response.headers))
-        if matchers:
-            # flow.response.stream = filter_with_matchers(matchers)
-            bubble_log("responseheaders: contentType="+repr(content_type)
-                       +", req_id=" + req_id
-                       + ", device=" + device
-                       + ", matchers: " + repr(json.loads(matchers)))
-            flow.response.stream = bubble_modify(req_id,
-                                                 content_type,
-                                                 device,
-                                                 matchers)
-        else:
+            bubble_log("responseheaders: no "+HEADER_CONTENT_TYPE +" header, passing thru")
             pass
     else:
+        bubble_log("responseheaders: no "+HEADER_BUBBLE_MATCHERS +" header, passing thru")
         pass
