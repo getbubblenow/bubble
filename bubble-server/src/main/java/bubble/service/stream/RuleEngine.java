@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 
 import static bubble.client.BubbleApiClient.newHttpClientBuilder;
+import static java.util.UUID.randomUUID;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
@@ -125,7 +126,8 @@ public class RuleEngine {
         final CloseableHttpResponse proxyResponse = httpClient.execute(get);
 
         // filter response. when stream is closed, close http client
-        final InputStream responseEntity = firstRule.getDriver().filterResponse(new HttpClosingFilterInputStream(httpClient, proxyResponse));
+        final String requestId = randomUUID().toString();
+        final InputStream responseEntity = firstRule.getDriver().filterResponse(requestId, new HttpClosingFilterInputStream(httpClient, proxyResponse));
 
         // send response
         return sendResponse(responseEntity, proxyResponse);
@@ -151,7 +153,7 @@ public class RuleEngine {
         if (empty(matcherIds)) return passthru(request);
 
         // have we seen this request before?
-        final ActiveStreamState state = activeProcessors.computeIfAbsent(requestId, k -> new ActiveStreamState(initRules(account, device, matcherIds)));
+        final ActiveStreamState state = activeProcessors.computeIfAbsent(requestId, k -> new ActiveStreamState(k, initRules(account, device, matcherIds)));
         final byte[] chunk = toBytes(request.getEntityStream());
         if (last) {
             if (log.isDebugEnabled()) log.debug("applyRulesToChunkAndSendResponse: adding LAST stream");
@@ -251,20 +253,24 @@ public class RuleEngine {
 
     private static class ActiveStreamState {
 
+        private String requestId;
         private MultiStream multiStream;
         private AppRuleHarness firstRule;
         private InputStream output = null;
         private long totalBytesWritten = 0;
         private long totalBytesRead = 0;
 
-        public ActiveStreamState(List<AppRuleHarness> rules) { this.firstRule = rules.get(0); }
+        public ActiveStreamState(String requestId, List<AppRuleHarness> rules) {
+            this.requestId = requestId;
+            this.firstRule = rules.get(0);
+        }
 
         public void addChunk(byte[] chunk) {
             if (log.isDebugEnabled()) log.debug("addChunk: adding "+chunk.length+" bytes");
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk));
-                output = firstRule.getDriver().filterResponse(multiStream);
+                output = firstRule.getDriver().filterResponse(requestId, multiStream);
             } else {
                 multiStream.addStream(new ByteArrayInputStream(chunk));
             }
@@ -275,7 +281,7 @@ public class RuleEngine {
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk), true);
-                output = firstRule.getDriver().filterResponse(multiStream);
+                output = firstRule.getDriver().filterResponse(requestId, multiStream);
             } else {
                 multiStream.addLastStream(new ByteArrayInputStream(chunk));
             }

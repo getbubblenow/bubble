@@ -62,8 +62,8 @@ public class UserBlocker extends AbstractAppRuleDriver {
 
     protected UserBlockerConfig configObject() { return json(getFullConfig(), UserBlockerConfig.class); }
 
-    @Override public InputStream doFilterResponse(InputStream in) {
-        final UserBlockerStreamFilter filter = new UserBlockerStreamFilter(matcher, rule);
+    @Override public InputStream doFilterResponse(String requestId, InputStream in) {
+        final UserBlockerStreamFilter filter = new UserBlockerStreamFilter(requestId, matcher, rule);
         filter.configure(getFullConfig());
         filter.setDataDAO(appDataDAO);
         RegexFilterReader reader = new RegexFilterReader(in, RESPONSE_BUFSIZ, filter).setName("mainFilterReader");

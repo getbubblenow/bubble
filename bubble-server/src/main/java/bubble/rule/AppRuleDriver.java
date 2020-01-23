@@ -43,12 +43,12 @@ public interface AppRuleDriver {
 
     default InputStream doFilterRequest(InputStream in) { return in; }
 
-    default InputStream filterResponse(InputStream in) {
-        if (hasNext()) return doFilterResponse(getNext().filterResponse(in));
-        return doFilterResponse(in);
+    default InputStream filterResponse(String requestId, InputStream in) {
+        if (hasNext()) return doFilterResponse(requestId, getNext().filterResponse(requestId, in));
+        return doFilterResponse(requestId, in);
     }
 
-    default InputStream doFilterResponse(InputStream in) { return in; }
+    default InputStream doFilterResponse(String requestId, InputStream in) { return in; }
 
     default String resolveResource(String res, Map<String, Object> ctx) {
         final String resource = locateResource(res);

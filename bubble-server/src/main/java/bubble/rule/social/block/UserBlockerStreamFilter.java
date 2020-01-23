@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.ning.http.util.Base64;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
+import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.io.regex.RegexChunk;
 import org.cobbzilla.util.io.regex.RegexChunkStreamer;
@@ -21,6 +23,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 
 import static bubble.rule.social.block.UserBlockerConfig.STANDARD_JS_ENGINE;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 
@@ -33,11 +36,13 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
     public static final String PROP_UNBLOCK_URL = "unblockUrl";
     public static final String PROP_CHUNK_START_REGEX = "chunkStartRegex";
 
+    private String requestId;
     private AppMatcher matcher;
     private AppRule rule;
     @Setter private AppDataDAO dataDAO;
 
-    public UserBlockerStreamFilter(AppMatcher matcher, AppRule rule) {
+    public UserBlockerStreamFilter(String requestId, AppMatcher matcher, AppRule rule) {
+        this.requestId = requestId;
         this.matcher = matcher;
         this.rule = rule;
     }
@@ -75,7 +80,7 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
                             if (userId == null) {
                                 log.warn("apply: no userId found for chunk: "+pageChunk);
                                 append(result, pageChunk.getData());
-                            } else if (!isUserBlocked(userId)) {
+                            } else if (!isUserBlocked(requestId, userId)) {
                                 // add controls to unblocked comment, to allow it to be blocked
                                 append(result, decorate(pageChunk));
                             } else {
@@ -141,15 +146,16 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
         return HandlebarsUtil.apply(config.getHandlebars(), config.getBlockedCommentReplacement(), ctx);
     }
 
-    protected boolean isUserBlocked(String userId) {
-        // todo: cache these lookups for a while
-        if (userId == null) return false;
-        final String data = dataDAO.findValueByAppAndSiteAndKey(config.getApp(), matcher.getSite(), userId);
-        return Boolean.parseBoolean(data);
+    private Map<String, Boolean> blockCache = new ExpirationMap<>(MINUTES.toMillis(1), ExpirationEvictionPolicy.atime);
+    protected boolean isUserBlocked(String requestId, String userId) {
+        return blockCache.computeIfAbsent(requestId+":"+userId, k -> {
+            if (userId == null) return false;
+            final String data = dataDAO.findValueByAppAndSiteAndKey(config.getApp(), matcher.getSite(), userId);
+            return Boolean.parseBoolean(data);
+        });
     }
 
     private boolean isCommentBlocked(RegexChunk blockedComment, RegexChunk candidateComment) {
-
         // if it's the same user, of course it is blocked
         final String blockedUser = blockedComment.getProperty(PROP_USER_ID);
         final String thisUser = candidateComment.getProperty(PROP_USER_ID);
