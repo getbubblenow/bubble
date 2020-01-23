@@ -7,6 +7,7 @@ import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.device.Device;
 import bubble.service.cloud.DeviceIdService;
+import bubble.service.stream.RuleEngine;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.ExpirationMap;
@@ -189,14 +190,6 @@ public class FilterHttpResource {
             log.debug("filterHttp: starting with requestId="+requestId+", deviceId="+deviceId+", matchersJson="+matchersJson+", contentType="+contentType+", last="+last);
         }
 
-//        // for now, just try to return unmodified...
-//        if (last != null && last) {
-//            log.debug("filterHttp: DEBUG: last chunk detected, returning empty response");
-//            return ok(); // no response body
-//        } else {
-//            log.debug("filterHttp: DEBUG: chunk detected, returning chunk as passthru response");
-//            return passthru(request);
-//        }
         final boolean isLast = last != null && last;
         return ruleEngine.applyRulesToChunkAndSendResponse(request,
                         filterRequest.getId(), filterRequest.getAccount(), filterRequest.getDevice(),

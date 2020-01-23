@@ -45,7 +45,7 @@ class Rerouter:
             host = host.decode()
         except (UnicodeDecodeError, AttributeError):
             bubble_log("get_matchers: host "+str(host)+" could not be decoded, type="+str(type(host)))
-            pass
+            return None
 
         resp = bubble_matchers(remote_addr, flow, host)
         if (not resp) or (not 'matchers' in resp) or (not 'device' in resp):

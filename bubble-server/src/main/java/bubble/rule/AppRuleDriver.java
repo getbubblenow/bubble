@@ -4,7 +4,7 @@ import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.device.Device;
-import bubble.resources.stream.AppRuleHarness;
+import bubble.service.stream.AppRuleHarness;
 import bubble.resources.stream.FilterMatchersRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
@@ -49,13 +49,6 @@ public interface AppRuleDriver {
     }
 
     default InputStream doFilterResponse(InputStream in) { return in; }
-
-    default InputStream filterResponseChunk(String requestId, InputStream in, boolean last) {
-        if (hasNext()) return doFilterResponseChunk(requestId, getNext().filterResponseChunk(requestId, in, last), last);
-        return doFilterResponse(in);
-    }
-
-    default InputStream doFilterResponseChunk(String requestId, InputStream in, boolean last) { return in; }
 
     default String resolveResource(String res, Map<String, Object> ctx) {
         final String resource = locateResource(res);

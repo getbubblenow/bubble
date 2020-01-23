@@ -1,4 +1,4 @@
-package bubble.resources.stream;
+package bubble.service.stream;
 
 import bubble.dao.app.AppMatcherDAO;
 import bubble.dao.app.AppRuleDAO;
@@ -8,6 +8,7 @@ import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.app.RuleDriver;
 import bubble.model.device.Device;
+import bubble.resources.stream.FilterMatchersRequest;
 import bubble.rule.AppRuleDriver;
 import bubble.server.BubbleConfiguration;
 import lombok.Cleanup;
@@ -23,9 +24,13 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
+import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.http.HttpClosingFilterInputStream;
 import org.cobbzilla.util.http.HttpMethods;
 import org.cobbzilla.util.http.URIBean;
+import org.cobbzilla.util.io.NullInputStream;
+import org.cobbzilla.util.io.multi.MultiStream;
 import org.cobbzilla.wizard.stream.ByteStreamingOutput;
 import org.cobbzilla.wizard.stream.SendableResource;
 import org.cobbzilla.wizard.stream.StreamStreamingOutput;
@@ -35,6 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.core.Response;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,9 +49,12 @@ import java.util.List;
 import java.util.Map;
 
 import static bubble.client.BubbleApiClient.newHttpClientBuilder;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpStatusCodes.OK;
+import static org.cobbzilla.util.io.StreamUtil.DEFAULT_BUFFER_SIZE;
 import static org.cobbzilla.wizard.resources.ResourceUtil.send;
 
 @Service @Slf4j
@@ -128,6 +137,8 @@ public class RuleEngine {
 
     public Response passthru(ContainerRequest request) { return passthru(request.getEntityStream()); }
 
+    private final Map<String, ActiveStreamState> activeProcessors = new ExpirationMap<>(MINUTES.toMillis(5), ExpirationEvictionPolicy.atime);
+
     public Response applyRulesToChunkAndSendResponse(ContainerRequest request,
                                                      String requestId,
                                                      Account account,
@@ -135,14 +146,29 @@ public class RuleEngine {
                                                      String[] matcherIds,
                                                      boolean last) throws IOException {
 
-        if (empty(matcherIds)) return passthru(null, request);
+        if (empty(matcherIds)) return passthru(request);
 
-        // init rules
-        final List<AppRuleHarness> ruleHarnesses = initRules(account, device, matcherIds);
-        final AppRuleHarness firstRule = ruleHarnesses.get(0);
+        // have we seen this request before?
+        ActiveStreamState state = activeProcessors.computeIfAbsent(requestId, k -> new ActiveStreamState(initRules(account, device, matcherIds)));
+        final byte[] chunk = toBytes(request.getEntityStream());
+        if (last) {
+            if (log.isDebugEnabled()) log.debug("applyRulesToChunkAndSendResponse: adding LAST stream");
+            state.addLastChunk(chunk);
+        } else {
+            if (log.isDebugEnabled()) log.debug("applyRulesToChunkAndSendResponse: adding a stream");
+            state.addChunk(chunk);
+        }
 
-        final InputStream responseEntity = firstRule.getDriver().filterResponseChunk(requestId, request.getEntityStream(), last);
-        return sendResponse(responseEntity);
+        if (log.isDebugEnabled()) log.debug("applyRulesToChunkAndSendResponse: sending as much filtered data as we can right now (which may be nothing)");
+//        return sendResponse(new ByteArrayInputStream(chunk)); // noop for testing
+        return sendResponse(state.getResponseStream(last));
+    }
+
+    public byte[] toBytes(InputStream entityStream) throws IOException {
+        if (entityStream == null) return EMPTY_BYTE_ARRAY;
+        final ByteArrayOutputStream bout = new ByteArrayOutputStream(8192);
+        IOUtils.copyLarge(entityStream, bout);
+        return bout.toByteArray();
     }
 
     private List<AppRuleHarness> initRules(Account account, Device device, String[] matcherIds) {
@@ -216,5 +242,69 @@ public class RuleEngine {
 
     @Getter(lazy=true) private final HttpClientBuilder httpClientBuilder = newHttpClientBuilder(1000, 50);
     public CloseableHttpClient newHttpConn() { return getHttpClientBuilder().build(); }
+
+    private static class ActiveStreamState {
+
+        private MultiStream multiStream;
+        private AppRuleHarness firstRule;
+        private InputStream output = null;
+        private long totalBytesWritten = 0;
+        private long totalBytesRead = 0;
+
+        public ActiveStreamState(List<AppRuleHarness> rules) { this.firstRule = rules.get(0); }
+
+        public void addChunk(byte[] chunk) {
+            if (log.isDebugEnabled()) log.debug("addChunk: adding "+chunk.length+" bytes");
+            totalBytesWritten += chunk.length;
+            if (multiStream == null) {
+                multiStream = new MultiStream(new ByteArrayInputStream(chunk));
+                output = firstRule.getDriver().filterResponse(multiStream);
+            } else {
+                multiStream.addStream(new ByteArrayInputStream(chunk));
+            }
+        }
+
+        public void addLastChunk(byte[] chunk) {
+            if (log.isDebugEnabled()) log.debug("addLastChunk: adding "+chunk.length+" bytes");
+            totalBytesWritten += chunk.length;
+            if (multiStream == null) {
+                multiStream = new MultiStream(new ByteArrayInputStream(chunk), true);
+                output = firstRule.getDriver().filterResponse(multiStream);
+            } else {
+                multiStream.addLastStream(new ByteArrayInputStream(chunk));
+            }
+        }
+
+        public InputStream getResponseStream(boolean last) throws IOException {
+            if (log.isDebugEnabled()) log.debug("getResponseStream: starting with last="+last+", totalBytesWritten="+totalBytesWritten+", totalBytesRead="+totalBytesRead);
+            // read to end of all streams, there is no more data coming in
+            if (last) {
+                if (log.isDebugEnabled()) log.debug("getResponseStream: last==true, returning full output");
+                return output;
+            }
+
+            // try to read as many bytes as we have written, and have not yet read, less a safety buffer
+            final int bytesToRead = (int) (totalBytesWritten - totalBytesRead - (4*DEFAULT_BUFFER_SIZE));
+            if (bytesToRead < 0) {
+                // we shouldn't try to read yet, less than 1024 bytes have been written
+                if (log.isDebugEnabled()) log.debug("getResponseStream: not enough data written (bytesToRead="+bytesToRead+"), can't read anything yet");
+                return NullInputStream.instance;
+            }
+
+            if (log.isDebugEnabled()) log.debug("getResponseStream: trying to read "+bytesToRead+" bytes");
+            final byte[] buffer = new byte[bytesToRead];
+            final int bytesRead = output.read(buffer);
+            if (log.isDebugEnabled()) log.debug("getResponseStream: actually read "+bytesRead+" bytes");
+            if (bytesRead == -1) {
+                // nothing to return
+                if (log.isDebugEnabled()) log.debug("getResponseStream: end of stream, returning NullInputStream");
+                return NullInputStream.instance;
+            }
+
+            if (log.isDebugEnabled()) log.debug("getResponseStream: read "+bytesRead+", returning buffer");
+            totalBytesRead += bytesRead;
+            return new ByteArrayInputStream(buffer, 0, bytesRead);
+        }
+    }
 
 }

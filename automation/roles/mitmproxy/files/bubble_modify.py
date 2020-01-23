@@ -26,7 +26,8 @@ def filter_chunk(chunk, req_id, content_type=None, device=None, matchers=None):
     if not response.ok:
         err_message = "filter_chunk: Error fetching " + url + ", HTTP status " + str(response.status_code)
         bubble_log(err_message)
-        raise RuntimeError(err_message)
+        return b''
+        # raise RuntimeError(err_message)
 
     return response.content
     # NOOP code:

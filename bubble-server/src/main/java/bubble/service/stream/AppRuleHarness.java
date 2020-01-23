@@ -1,4 +1,4 @@
-package bubble.resources.stream;
+package bubble.service.stream;
 
 import bubble.model.app.AppMatcher;
 import bubble.model.app.RuleDriver;

@@ -4,7 +4,7 @@ import bubble.dao.app.AppDataDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppData;
 import bubble.resources.stream.FilterMatchersRequest;
-import bubble.resources.stream.AppRuleHarness;
+import bubble.service.stream.AppRuleHarness;
 import bubble.rule.AbstractAppRuleDriver;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;

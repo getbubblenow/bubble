@@ -7,6 +7,7 @@ import bubble.service.cloud.RequestCoordinationService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexInsertionFilter;
@@ -25,16 +26,19 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.UTF8cs;
 
+@Slf4j
 public class UserBlocker extends AbstractAppRuleDriver {
 
     private static final int RESPONSE_BUFSIZ = (int) (64 * Bytes.KB);
 
     @Autowired private RequestCoordinationService requestService;
+    @Autowired private AppDataDAO appDataDAO;
 
     private final String requestId = randomUUID().toString().replace("-", "_");
 
     // This gets called after autowiring, so `configuration` object will be non-null by now
     @Getter(lazy=true) private final JsonNode fullConfig = initFullConfig();
+
     private JsonNode initFullConfig() {
         UserBlockerConfig userBlockerConfig;
         try {
@@ -52,14 +56,16 @@ public class UserBlocker extends AbstractAppRuleDriver {
 
         final String json = json(userBlockerConfig);
         requestService.set(UserBlocker.class.getName(), requestId, json);
+
         return json(json, JsonNode.class);
     }
 
     protected UserBlockerConfig configObject() { return json(getFullConfig(), UserBlockerConfig.class); }
 
     @Override public InputStream doFilterResponse(InputStream in) {
-        final UserBlockerStreamFilter filter = new UserBlockerStreamFilter(matcher, rule, configuration.getBean(AppDataDAO.class));
+        final UserBlockerStreamFilter filter = new UserBlockerStreamFilter(matcher, rule);
         filter.configure(getFullConfig());
+        filter.setDataDAO(appDataDAO);
         RegexFilterReader reader = new RegexFilterReader(in, RESPONSE_BUFSIZ, filter).setName("mainFilterReader");
 
         final UserBlockerConfig config = configObject();

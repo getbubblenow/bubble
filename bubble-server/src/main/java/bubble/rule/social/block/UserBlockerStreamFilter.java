@@ -8,6 +8,7 @@ import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ning.http.util.Base64;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.io.regex.RegexChunk;
@@ -34,12 +35,11 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
 
     private AppMatcher matcher;
     private AppRule rule;
-    private AppDataDAO dataDAO;
+    @Setter private AppDataDAO dataDAO;
 
-    public UserBlockerStreamFilter(AppMatcher matcher, AppRule rule, AppDataDAO dataDAO) {
+    public UserBlockerStreamFilter(AppMatcher matcher, AppRule rule) {
         this.matcher = matcher;
         this.rule = rule;
-        this.dataDAO = dataDAO;
     }
 
     private enum UserBlockerStreamState { seeking_comments, blocking_comments }
