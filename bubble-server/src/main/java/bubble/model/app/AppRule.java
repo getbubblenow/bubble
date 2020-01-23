@@ -43,8 +43,8 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 })
 public class AppRule extends IdentifiableBaseParentEntity implements AppTemplateEntity, HasPriority {
 
-    public static final String[] VALUE_FIELDS = {"driver", "configJson", "template", "enabled"};
-    public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS, "name");
+    public static final String[] UPDATE_FIELDS = {"configJson", "template", "enabled"};
+    public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "driver", "app", "name");
 
     @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
@@ -107,7 +107,7 @@ public class AppRule extends IdentifiableBaseParentEntity implements AppTemplate
         setUuid(null);
     }
 
-    @Override public Identifiable update(Identifiable other) { copy(this, other, VALUE_FIELDS); return this; }
+    @Override public Identifiable update(Identifiable other) { copy(this, other, UPDATE_FIELDS); return this; }
 
     @Transient public JsonNode getConfig () { return json(configJson, JsonNode.class); }
     public AppRule setConfig(JsonNode config) { return setConfigJson(json(config)); }

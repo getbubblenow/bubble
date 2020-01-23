@@ -22,7 +22,7 @@
         ],
         "commentDecorator": {
           "regex": "class=\"age\"\\s*>.+?</span>",
-          "insert": "<a href=\"{{{blockUrl}}}\">BLOCK</a>"
+          "insert": " <a href=\"{{{blockUrl}}}\"><b>[X]</b></a> "
         }
       }
     }]
