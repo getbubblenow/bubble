@@ -135,12 +135,33 @@ public class FilterHttpResource {
                                @PathParam("requestId") String requestId,
                                @QueryParam("device") String deviceId,
                                @QueryParam("matchers") String matchersJson,
-                               @QueryParam("encoding") HttpContentEncodingType contentEncoding,
+                               @QueryParam("encoding") String contentEncoding,
                                @QueryParam("contentType") String contentType,
                                @QueryParam("last") Boolean last) throws IOException {
 
         final String remoteHost = getRemoteHost(req);
         final String mitmAddr = req.getRemoteAddr();
+
+        // only mitmproxy is allowed to call us, and this should always be a local address
+        if (!isLocalIpv4(mitmAddr)) return forbidden();
+
+        if (empty(requestId)) {
+            if (log.isDebugEnabled()) log.debug("filterHttp: no requestId provided, returning passthru");
+            return passthru(request);
+        }
+
+        // can we handle the encoding?
+        final HttpContentEncodingType encoding;
+        if (empty(contentEncoding)) {
+            encoding = null;
+        } else {
+            try {
+                encoding = HttpContentEncodingType.fromString(contentEncoding);
+            } catch (Exception e) {
+                if (log.isWarnEnabled()) log.warn("filterHttp: invalid encoding ("+contentEncoding+"), returning passthru");
+                return passthru(request);
+            }
+        }
 
         // mitmproxy provides Content-Length, which helps us right-size the input byte buffer
         final String contentLengthHeader = req.getHeader(CONTENT_LENGTH);
@@ -150,14 +171,6 @@ public class FilterHttpResource {
         } catch (Exception e) {
             if (log.isDebugEnabled()) log.debug("filterHttp: error parsing Content-Length ("+contentLengthHeader+"): "+shortError(e));
             contentLength = null;
-        }
-
-        // only mitmproxy is allowed to call us, and this should always be a local address
-        if (!isLocalIpv4(mitmAddr)) return forbidden();
-
-        if (empty(requestId)) {
-            if (log.isDebugEnabled()) log.debug("filterHttp: no requestId provided, returning passthru");
-            return passthru(request);
         }
 
         FilterHttpRequest filterRequest = activeRequests.get(requestId);
@@ -205,7 +218,7 @@ public class FilterHttpResource {
         }
 
         final boolean isLast = last != null && last;
-        return ruleEngine.applyRulesToChunkAndSendResponse(request, contentEncoding, contentLength,
+        return ruleEngine.applyRulesToChunkAndSendResponse(request, encoding, contentLength,
                         filterRequest.getId(), filterRequest.getAccount(), filterRequest.getDevice(),
                         filterRequest.getMatchers(), isLast);
     }

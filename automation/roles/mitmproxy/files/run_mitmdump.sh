@@ -16,4 +16,4 @@ mitmdump \
   --set keep_host_header \
   -s ./dns_spoofing.py \
   -s ./bubble_modify.py \
-  --mode reverse:https://example.com:443/
+  --mode transparent

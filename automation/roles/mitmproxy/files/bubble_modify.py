@@ -49,8 +49,7 @@ def bubble_filter_chunks(chunks, req_id, content_encoding, content_type, device,
 
 
 def bubble_modify(req_id, content_encoding, content_type, device, matchers):
-    return lambda chunks: bubble_filter_chunks(chunks, req_id, content_encoding, content_type,
-                                               device, matchers)
+    return lambda chunks: bubble_filter_chunks(chunks, req_id, content_encoding, content_type, device, matchers)
 
 
 def responseheaders(flow):

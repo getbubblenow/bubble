@@ -36,12 +36,8 @@ function ensureMitmOn {
 }
 
 function ensureMitmOff {
-  log "Flushing PREROUTING before disabling MITM services"
+  log "Flushing PREROUTING to disable MITM services"
   iptables -F PREROUTING  -t nat || log "Error flushing port forwarding when disabling MITM services"
-  log "Enabling MITM port forwarding on TCP port 80 -> 1080"
-  iptables -I PREROUTING 1 -t nat -p tcp --dport 80 -j REDIRECT --to-ports 1080 || log "Error enabling nginx port forwarding 80 -> 1080"
-  log "Enabling MITM port forwarding on TCP port 443 -> 1443"
-  iptables -I PREROUTING 1 -t nat -p tcp --dport 443 -j REDIRECT --to-ports 1443 || log "Error enabling nginx port forwarding 443 -> 1143"
   echo -n off > ${ROOT_KEY_MARKER}
 }
 
