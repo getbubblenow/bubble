@@ -2,5 +2,6 @@
   "name": "UserBlocker",
   "description": "UserBlocker App for Bubble",
   "url": "https://bubblev.com/apps/UserBlocker",
-  "template": true
+  "template": true,
+  "dataPresentation": "site"
 }]

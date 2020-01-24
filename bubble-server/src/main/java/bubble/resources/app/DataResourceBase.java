@@ -13,16 +13,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.Produces;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 import java.util.List;
 
-import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static bubble.ApiConstants.EP_DISABLE;
+import static bubble.ApiConstants.EP_ENABLE;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
-import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
+import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
-@Consumes(APPLICATION_JSON)
-@Produces(APPLICATION_JSON) @Slf4j
+@Slf4j
 public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppData, AppDataDAO> {
 
     private static final String[] BASIS_FIELDS = {"app", "site"};
@@ -50,6 +53,28 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
         if (found.size() == 1) return found.get(0);
         log.warn("find: multiple matches ("+found.size()+") for "+ key +": returning null");
         return null;
+    }
+
+    @POST @Path("/{id}"+EP_ENABLE)
+    public Response enable(@Context ContainerRequest ctx,
+                           @PathParam("id") String key) {
+        if (isReadOnly(ctx)) return forbidden();
+        final List<AppData> found = getDao().findByExample(account, basis, key);
+        for (AppData d : found) {
+            getDao().update(d.setEnabled(true));
+        }
+        return ok(found);
+    }
+
+    @POST @Path("/{id}"+EP_DISABLE)
+    public Response disable(@Context ContainerRequest ctx,
+                            @PathParam("id") String key) {
+        if (isReadOnly(ctx)) return forbidden();
+        final List<AppData> found = getDao().findByExample(account, basis, key);
+        for (AppData d : found) {
+            getDao().update(d.setEnabled(false));
+        }
+        return ok(found);
     }
 
     @Override protected AppData setReferences(ContainerRequest ctx, Account caller, AppData request) {

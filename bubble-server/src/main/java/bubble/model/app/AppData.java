@@ -31,6 +31,9 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({
         @ECIndex(unique=true, of={"app", "matcher", "key"}),
+        @ECIndex(unique=true, of={"app", "site", "key"}),
+        @ECIndex(of={"account", "app"}),
+        @ECIndex(of={"account", "app", "site"}),
         @ECIndex(of={"app", "matcher"}),
         @ECIndex(of={"app", "site"}),
         @ECIndex(of={"app", "key"}),

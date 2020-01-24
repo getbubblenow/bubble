@@ -1,0 +1,55 @@
+const {{JS_PREFIX}}_blocked_users = [];
+const {{JS_PREFIX}}_request_id = '{{BUBBLE_REQUEST_ID}}';
+
+function {{JS_PREFIX}}_onReady(callback) {
+    const intervalId = window.setInterval(function() {
+        if (document.getElementsByTagName('body')[0] !== undefined) {
+            window.clearInterval(intervalId);
+            callback.call(this);
+        }
+    }, 1000);
+}
+
+function {{JS_PREFIX}}_fetch_blocks () {
+    const requestOptions = {
+        method: 'GET',
+        headers: {'X-Bubble-Request': {{JS_PREFIX}}_request_id}
+    };
+    const blocked_users_url = '/.bubble/api/me/apps/JsUserBlocker/sites/{{site}}/data?prefix=blocked_';
+    fetch(blocked_users_url, requestOptions).then(
+        response => response.json().then(json => {
+            {{JS_PREFIX}}_blocked_users.length = 0;
+            for (let i=0; i<json.length; i++) {
+                {{JS_PREFIX}}_blocked_users.push(json[i].key);
+            }
+            {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
+        })
+    );
+}
+
+function {{JS_PREFIX}}_block_user (author) {
+    {{JS_PREFIX}}_blocked_users.push(author);
+    {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
+    const block_user_url = '/.bubble/api/me/apps/JsUserBlocker/sites/{{site}}/data';
+    const requestOptions = {
+        method: 'POST',
+        headers: {'X-Bubble-Request': {{JS_PREFIX}}_request_id},
+        body: JSON.stringify({'key': author})
+    };
+    fetch(block_user_url, requestOptions);
+}
+
+{{{APPLY_BLOCKS_JS}}}
+
+{{JS_PREFIX}}_onReady(function() {
+
+    const bubbleControlDiv = document.createElement('div');
+    bubbleControlDiv.style.position = 'fixed';
+    bubbleControlDiv.style.bottom = '0';
+    bubbleControlDiv.style.right = '0';
+    bubbleControlDiv.innerHTML = '<a href="/.bubble/site/apps/JsUserBlocker/sites/{{site}}/data"><img width="64" src="bubble_icon.png"/></a>';
+    document.getElementsByTagName('body')[0].appendChild(bubbleControlDiv);
+
+    {{JS_PREFIX}}_fetch_blocks();
+});
+

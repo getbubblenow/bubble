@@ -1,0 +1,45 @@
+function {{JS_PREFIX}}_apply_blocks(blocked_users) {
+    const commentTable = document.querySelector('table.comment-tree');
+    const comments = commentTable.querySelectorAll('tr');
+    let blocking = false;
+    let blocking_indent = null;
+    for (let i=0; i<comments.length; i++) {
+        const comment = comments[i];
+        const userElement = comment.querySelector('.hnuser');
+        if (userElement !== null) {
+            const author = userElement.href.split('=')[1];
+            const indent = parseInt(comment.querySelector('.ind').querySelector('img').width);
+            if (blocking) {
+                if (indent > blocking_indent) {
+                    // console.log('removing reply comment by author='+author+', indent='+indent);
+                    comment.parentNode.removeChild(comment);
+                    i++;
+                } else {
+                    // console.log('new comment detected, adding X button for author='+author+', indent='+indent);
+                    // const ageElement = comment.querySelector('.age');
+                    // ageElement.innerHTML = ageElement.innerHTML + ' [X]';
+                    blocking = false;
+                    blocking_indent = null;
+                }
+            } else {
+                if (blocked_users.includes(author)) {
+                    // console.log('blocking initial comment by author='+author+', indent='+indent);
+                    blocking = true;
+                    blocking_indent = indent;
+                    comment.parentNode.removeChild(comment);
+                    i++;
+                } else {
+                    const existingBlock = comment.querySelector('.bubble_block');
+                    if (existingBlock === null) {
+                        const ageElement = comment.querySelector('.age');
+                        const blockNode = document.createElement('span');
+                        blockNode.className = "bubble_block";
+                        blockNode.innerHTML = ' [<b><a href="#" onclick="{{JS_PREFIX}}_block_user(\''+author+'\'); return false;">X</a></b>]';
+                        ageElement.parentNode.insertBefore(blockNode, ageElement.nextSibling);
+                    }
+                }
+            }
+        }
+    }
+}
+

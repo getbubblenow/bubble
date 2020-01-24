@@ -1,9 +1,7 @@
 package bubble.rule.social.block;
 
-import bubble.dao.app.AppDataDAO;
 import bubble.rule.AbstractAppRuleDriver;
 import bubble.rule.RequestDecorator;
-import bubble.service.cloud.RequestCoordinationService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
 import lombok.Getter;
@@ -12,8 +10,6 @@ import org.apache.commons.io.input.ReaderInputStream;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexInsertionFilter;
 import org.cobbzilla.util.io.regex.RegexStreamFilter;
-import org.cobbzilla.util.system.Bytes;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -21,20 +17,12 @@ import java.util.Map;
 
 import static bubble.ApiConstants.EP_ASSETS;
 import static bubble.ApiConstants.EP_DATA;
-import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.UTF8cs;
 
 @Slf4j
 public class UserBlocker extends AbstractAppRuleDriver {
-
-    private static final int RESPONSE_BUFSIZ = (int) (64 * Bytes.KB);
-
-    @Autowired private RequestCoordinationService requestService;
-    @Autowired private AppDataDAO appDataDAO;
-
-    private final String requestId = randomUUID().toString().replace("-", "_");
 
     // This gets called after autowiring, so `configuration` object will be non-null by now
     @Getter(lazy=true) private final JsonNode fullConfig = initFullConfig();
@@ -55,7 +43,6 @@ public class UserBlocker extends AbstractAppRuleDriver {
         userBlockerConfig.setUserConfig(userConfigObject);
 
         final String json = json(userBlockerConfig);
-        requestService.set(UserBlocker.class.getName(), requestId, json);
 
         return json(json, JsonNode.class);
     }
@@ -112,12 +99,12 @@ public class UserBlocker extends AbstractAppRuleDriver {
         return new ReaderInputStream(reader, UTF8cs);
     }
 
-    public String defaultBlockControlImageUri() {
+    public String defaultBlockControlImageUri(String requestId) {
         // todo: remove /api , just route .bubble to ourselves
         return configuration.getHttp().getBaseUri() + "/.bubble/" + requestId + "/" + getClass().getName() + EP_ASSETS + "/@blockControl.png";
     }
 
-    public String blockActionUri() {
+    public String blockActionUri(String requestId) {
         // todo: remove /api , just route .bubble to ourselves
         return configuration.getHttp().getBaseUri() + "/.bubble/" + requestId + "/" + getClass().getName() + EP_DATA;
     }

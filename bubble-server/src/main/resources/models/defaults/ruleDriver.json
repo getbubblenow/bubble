@@ -8,6 +8,14 @@
     }
   },
   {
+    "name": "JsUserBlocker",
+    "driverClass": "bubble.rule.social.block.JsUserBlocker",
+    "template": true,
+    "userConfig": {
+      "fields": []
+    }
+  },
+  {
     "name": "TrafficAnalytics",
     "driverClass": "bubble.rule.analytics.TrafficAnalytics",
     "template": true,

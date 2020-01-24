@@ -14,6 +14,8 @@ import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.validation.constraints.Size;
 
 import static bubble.ApiConstants.APPS_ENDPOINT;
@@ -62,17 +64,21 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
-    @ECSearchable @ECField(index=50)
+    @Column(nullable=false, length=30)
+    @Enumerated(EnumType.STRING) @ECField(index=50)
+    @Getter @Setter private BubbleAppDataPresentation dataPresentation;
+
+    @ECSearchable @ECField(index=60)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template() { return bool(template); }
 
-    @ECSearchable @ECField(index=60)
+    @ECSearchable @ECField(index=70)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
-    @ECSearchable @ECField(index=70)
+    @ECSearchable @ECField(index=80)
     @ECIndex @Getter @Setter private Boolean needsUpdate = false;
 
     public BubbleApp(Account account, BubbleApp app) {

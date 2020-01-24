@@ -5,6 +5,7 @@ import bubble.model.app.AppData;
 import bubble.model.app.BubbleApp;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -17,11 +18,13 @@ import static org.hibernate.criterion.Restrictions.eq;
 
 @SuppressWarnings("Duplicates")
 @Repository @Slf4j
-public class AppDataDAO extends AppTemplateEntityDAO<AppData> implements AppDataDAOBase {
+public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
 
     @Autowired private BubbleAppDAO appDAO;
 
     @Override protected String getNameField() { return "key"; }
+
+    @Override public Order getDefaultSortOrder() { return Order.asc("key"); }
 
     public String findValueByAppAndSiteAndKey(String app, String site, String key) {
         final AppData found = filterExpired(findByAppAndSiteAndKey(app, site, key));
@@ -30,6 +33,10 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> implements AppData
 
     public AppData findByAppAndSiteAndKey(String app, String site, String key) {
         return filterExpired(findByUniqueFields("app", app, "site", site, "key", key));
+    }
+
+    public List<AppData> findByAccountAndAppAndAndKey(String account, String app, String key) {
+        return filterExpired(findByFields("account", account, "app", app, "key", key));
     }
 
     private AppData filterExpired(AppData data) {

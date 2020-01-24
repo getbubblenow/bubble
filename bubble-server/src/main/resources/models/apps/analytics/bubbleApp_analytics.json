@@ -4,6 +4,7 @@
   "url": "https://bubblev.com/apps/analytics",
   "template": true,
   "enabled": true,
+  "dataPresentation": "app",
   "children": {
     "AppSite": [{
       "name": "All_Sites",

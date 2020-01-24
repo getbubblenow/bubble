@@ -41,7 +41,7 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
         return ok_empty();
     }
 
-    @POST @Path("/{id}/enable")
+    @POST @Path("/{id}"+EP_ENABLE)
     public Response enable(@Context ContainerRequest ctx,
                            @PathParam("id") String id) {
         if (isReadOnly(ctx)) return forbidden();
@@ -50,7 +50,7 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
         return ok(getDao().update(found.setEnabled(true)));
     }
 
-    @POST @Path("/{id}/disable")
+    @POST @Path("/{id}"+EP_DISABLE)
     public Response disable(@Context ContainerRequest ctx,
                             @PathParam("id") String id) {
         if (isReadOnly(ctx)) return forbidden();
