@@ -31,7 +31,7 @@ public class ProxyTest extends ActivatedBubbleModelTestBase {
         final RestResponse response = (RestResponse) getApiRunner().getContext().get("hn_response");
 
         // find block link for user electricEmu
-        final Pattern pattern = Pattern.compile("=electricEmu.+?</span><a\\s*href=\"(.+?)\"");
+        final Pattern pattern = Pattern.compile("=electricEmu.+?</span>\\s*<a\\s*href=\"(.+?)\"");
         final Matcher matcher = pattern.matcher(response.json);
         assertTrue("expected match for user to block", matcher.find());
         final String blockUrl = matcher.group(1);
