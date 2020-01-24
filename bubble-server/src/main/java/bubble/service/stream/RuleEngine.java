@@ -27,10 +27,13 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.http.HttpClosingFilterInputStream;
+import org.cobbzilla.util.http.HttpContentEncodingType;
 import org.cobbzilla.util.http.HttpMethods;
 import org.cobbzilla.util.http.URIBean;
+import org.cobbzilla.util.io.FilterInputStreamViaOutputStream;
 import org.cobbzilla.util.io.NullInputStream;
 import org.cobbzilla.util.io.multi.MultiStream;
+import org.cobbzilla.util.system.Bytes;
 import org.cobbzilla.wizard.stream.ByteStreamingOutput;
 import org.cobbzilla.wizard.stream.SendableResource;
 import org.cobbzilla.wizard.stream.StreamStreamingOutput;
@@ -57,7 +60,6 @@ import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
 import static org.cobbzilla.util.http.HttpStatusCodes.OK;
-import static org.cobbzilla.util.io.StreamUtil.DEFAULT_BUFFER_SIZE;
 import static org.cobbzilla.wizard.resources.ResourceUtil.send;
 
 @Service @Slf4j
@@ -144,6 +146,8 @@ public class RuleEngine {
     private final Map<String, ActiveStreamState> activeProcessors = new ExpirationMap<>(MINUTES.toMillis(5), ExpirationEvictionPolicy.atime);
 
     public Response applyRulesToChunkAndSendResponse(ContainerRequest request,
+                                                     HttpContentEncodingType contentEncoding,
+                                                     Integer contentLength,
                                                      String requestId,
                                                      Account account,
                                                      Device device,
@@ -153,8 +157,8 @@ public class RuleEngine {
         if (empty(matcherIds)) return passthru(request);
 
         // have we seen this request before?
-        final ActiveStreamState state = activeProcessors.computeIfAbsent(requestId, k -> new ActiveStreamState(k, initRules(account, device, matcherIds)));
-        final byte[] chunk = toBytes(request.getEntityStream());
+        final ActiveStreamState state = activeProcessors.computeIfAbsent(requestId, k -> new ActiveStreamState(k, contentEncoding, initRules(account, device, matcherIds)));
+        final byte[] chunk = toBytes(request.getEntityStream(), contentLength);
         if (last) {
             if (log.isDebugEnabled()) log.debug("applyRulesToChunkAndSendResponse: adding LAST stream");
             state.addLastChunk(chunk);
@@ -168,9 +172,12 @@ public class RuleEngine {
         return sendResponse(state.getResponseStream(last));
     }
 
-    public byte[] toBytes(InputStream entityStream) throws IOException {
+    public static final int DEFAULT_BYTE_BUFFER_SIZE = (int) (8 * Bytes.KB);
+    public static final int MAX_BYTE_BUFFER_SIZE = (int) (64 * Bytes.KB);
+
+    public byte[] toBytes(InputStream entityStream, Integer contentLength) throws IOException {
         if (entityStream == null) return EMPTY_BYTE_ARRAY;
-        final ByteArrayOutputStream bout = new ByteArrayOutputStream(8192);
+        final ByteArrayOutputStream bout = new ByteArrayOutputStream(contentLength == null ? DEFAULT_BYTE_BUFFER_SIZE : Math.min(contentLength, MAX_BYTE_BUFFER_SIZE));
         IOUtils.copyLarge(entityStream, bout);
         return bout.toByteArray();
     }
@@ -254,34 +261,36 @@ public class RuleEngine {
     private static class ActiveStreamState {
 
         private String requestId;
+        private HttpContentEncodingType encoding;
         private MultiStream multiStream;
         private AppRuleHarness firstRule;
         private InputStream output = null;
         private long totalBytesWritten = 0;
         private long totalBytesRead = 0;
 
-        public ActiveStreamState(String requestId, List<AppRuleHarness> rules) {
+        public ActiveStreamState(String requestId, HttpContentEncodingType encoding, List<AppRuleHarness> rules) {
             this.requestId = requestId;
+            this.encoding = encoding;
             this.firstRule = rules.get(0);
         }
 
-        public void addChunk(byte[] chunk) {
+        public void addChunk(byte[] chunk) throws IOException {
             if (log.isDebugEnabled()) log.debug("addChunk: adding "+chunk.length+" bytes");
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk));
-                output = firstRule.getDriver().filterResponse(requestId, multiStream);
+                output = outputStream(firstRule.getDriver().filterResponse(requestId, inputStream(multiStream)));
             } else {
                 multiStream.addStream(new ByteArrayInputStream(chunk));
             }
         }
 
-        public void addLastChunk(byte[] chunk) {
+        public void addLastChunk(byte[] chunk) throws IOException {
             if (log.isDebugEnabled()) log.debug("addLastChunk: adding "+chunk.length+" bytes");
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk), true);
-                output = firstRule.getDriver().filterResponse(requestId, multiStream);
+                output = outputStream(firstRule.getDriver().filterResponse(requestId, inputStream(multiStream)));
             } else {
                 multiStream.addLastStream(new ByteArrayInputStream(chunk));
             }
@@ -296,7 +305,7 @@ public class RuleEngine {
             }
 
             // try to read as many bytes as we have written, and have not yet read, less a safety buffer
-            final int bytesToRead = (int) (totalBytesWritten - totalBytesRead - (4*DEFAULT_BUFFER_SIZE));
+            final int bytesToRead = (int) (totalBytesWritten - totalBytesRead - (2*MAX_BYTE_BUFFER_SIZE));
             if (bytesToRead < 0) {
                 // we shouldn't try to read yet, less than 1024 bytes have been written
                 if (log.isDebugEnabled()) log.debug("getResponseStream: not enough data written (bytesToRead="+bytesToRead+"), can't read anything yet");
@@ -316,6 +325,26 @@ public class RuleEngine {
             if (log.isDebugEnabled()) log.debug("getResponseStream: read "+bytesRead+", returning buffer");
             totalBytesRead += bytesRead;
             return new ByteArrayInputStream(buffer, 0, bytesRead);
+        }
+
+        private InputStream inputStream(MultiStream baseStream) throws IOException {
+            if (encoding == null) {
+                if (log.isDebugEnabled()) log.debug("inputStream: returning baseStream unmodified");
+                return baseStream;
+            }
+            final InputStream wrapped = encoding.wrapInput(baseStream);
+            if (log.isDebugEnabled()) log.debug("inputStream: returning baseStream wrapped in "+wrapped.getClass().getSimpleName());
+            return wrapped;
+        }
+
+        private InputStream outputStream(InputStream in) throws IOException {
+            if (encoding == null) {
+                if (log.isDebugEnabled()) log.debug("outputStream: returning baseStream unmodified");
+                return in;
+            }
+            final FilterInputStreamViaOutputStream wrapped = encoding.wrapInputAsOutput(in);
+            if (log.isDebugEnabled()) log.debug("outputStream: returning baseStream wrapped in "+wrapped.getOutputStreamClass().getSimpleName());
+            return wrapped;
         }
     }
 

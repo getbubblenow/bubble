@@ -11,6 +11,7 @@ import bubble.service.stream.RuleEngine;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.ExpirationMap;
+import org.cobbzilla.util.http.HttpContentEncodingType;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,9 @@ import java.util.Map;
 import static bubble.ApiConstants.*;
 import static bubble.resources.stream.FilterMatchersResponse.NO_MATCHERS;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
@@ -132,11 +135,22 @@ public class FilterHttpResource {
                                @PathParam("requestId") String requestId,
                                @QueryParam("device") String deviceId,
                                @QueryParam("matchers") String matchersJson,
+                               @QueryParam("encoding") HttpContentEncodingType contentEncoding,
                                @QueryParam("contentType") String contentType,
                                @QueryParam("last") Boolean last) throws IOException {
 
         final String remoteHost = getRemoteHost(req);
         final String mitmAddr = req.getRemoteAddr();
+
+        // mitmproxy provides Content-Length, which helps us right-size the input byte buffer
+        final String contentLengthHeader = req.getHeader(CONTENT_LENGTH);
+        Integer contentLength;
+        try {
+            contentLength = empty(contentLengthHeader) ? null : Integer.parseInt(contentLengthHeader);
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) log.debug("filterHttp: error parsing Content-Length ("+contentLengthHeader+"): "+shortError(e));
+            contentLength = null;
+        }
 
         // only mitmproxy is allowed to call us, and this should always be a local address
         if (!isLocalIpv4(mitmAddr)) return forbidden();
@@ -191,7 +205,7 @@ public class FilterHttpResource {
         }
 
         final boolean isLast = last != null && last;
-        return ruleEngine.applyRulesToChunkAndSendResponse(request,
+        return ruleEngine.applyRulesToChunkAndSendResponse(request, contentEncoding, contentLength,
                         filterRequest.getId(), filterRequest.getAccount(), filterRequest.getDevice(),
                         filterRequest.getMatchers(), isLast);
     }
