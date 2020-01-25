@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.hibernate.annotations.Type;
 
@@ -43,7 +44,7 @@ public class BubbleBackup extends IdentifiableBase implements HasAccount {
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String network;
 
-    @ECSearchable(filter=true) @ECField(index=30)
+    @ECSearchable(filter=true) @ECField(index=30, type=EntityFieldType.opaque_string)
     @Size(max=2000, message="err.path.length")
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(2000+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String path;
@@ -63,7 +64,7 @@ public class BubbleBackup extends IdentifiableBase implements HasAccount {
     @Getter @Setter private BackupStatus status;
     public boolean success () { return status == BackupStatus.backup_completed; }
 
-    @ECSearchable(filter=true) @ECField(index=60)
+    @ECSearchable(filter=true) @ECField(index=60, type=EntityFieldType.opaque_string)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(ERROR_MAXLEN+ENC_PAD)+")")
     @Getter private String error;
     public BubbleBackup setError (String err) { this.error = ellipsis(err, ERROR_MAXLEN); return this; }

@@ -77,11 +77,11 @@ public class RuleDriver extends IdentifiableBase implements AccountTemplate {
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
-    @ECSearchable(filter=true) @ECField(index=50)
+    @ECSearchable(filter=true) @ECField(index=50, type=EntityFieldType.opaque_string)
     @Column(length=200)
     @Getter @Setter private String author;
 
-    @ECSearchable(filter=true) @ECField(index=60, type=EntityFieldType.http_url)
+    @ECSearchable(filter=true) @ECField(index=60)
     @Column(length=1024)
     @Getter @Setter private String url;
 

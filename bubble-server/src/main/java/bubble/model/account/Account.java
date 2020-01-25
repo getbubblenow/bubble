@@ -18,7 +18,6 @@ import org.cobbzilla.wizard.filters.auth.TokenPrincipal;
 import org.cobbzilla.wizard.model.HashedPassword;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
-import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.model.search.SqlViewSearchResult;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
@@ -104,7 +103,7 @@ public class Account extends IdentifiableBase implements TokenPrincipal, SqlView
     @Getter @Setter private String parent;
     public boolean hasParent () { return parent != null; }
 
-    @ECSearchable(filter=true) @ECField(index=30, type=EntityFieldType.http_url)
+    @ECSearchable(filter=true) @ECField(index=30)
     @Size(max=1024, message="err.url.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(1024+ENC_PAD)+")")
     @Getter @Setter private String url;
@@ -114,7 +113,7 @@ public class Account extends IdentifiableBase implements TokenPrincipal, SqlView
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
-    @ECSearchable @ECField(type=EntityFieldType.locale, index=50)
+    @ECSearchable @ECField(index=50)
     @Size(max=20, message="err.locale.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(20+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String locale = getDEFAULT_LOCALE();

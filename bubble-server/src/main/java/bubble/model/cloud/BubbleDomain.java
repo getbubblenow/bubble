@@ -11,6 +11,7 @@ import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.dns.DnsRecordMatch;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
 import org.cobbzilla.wizard.validation.ValidationResult;
@@ -91,7 +92,7 @@ public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled () { return enabled == null || enabled; }
 
-    @ECSearchable @ECField(index=60)
+    @ECSearchable @ECField(index=60, type=EntityFieldType.reference)
     @ECIndex @Column(updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String delegated;
     public boolean delegated() { return delegated != null; }

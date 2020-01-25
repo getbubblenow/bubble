@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.hibernate.annotations.Type;
 
@@ -51,15 +52,15 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private BillItemType type;
 
-    @ECSearchable @ECField(index=60)
+    @ECSearchable @ECField(index=60, type=EntityFieldType.opaque_string)
     @Column(nullable=false, updatable=false, length=20)
     @ECIndex @Getter @Setter private String periodLabel;
 
-    @ECSearchable @ECField(index=70)
+    @ECSearchable @ECField(index=70, type=EntityFieldType.opaque_string)
     @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private String periodStart;
 
-    @ECSearchable @ECField(index=80)
+    @ECSearchable @ECField(index=80, type=EntityFieldType.opaque_string)
     @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private String periodEnd;
 
@@ -73,7 +74,7 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
     @Getter @Setter private Long price = 0L;
 
-    @ECSearchable @ECField(index=110)
+    @ECSearchable @ECField(index=110, type=EntityFieldType.opaque_string)
     @ECIndex @Column(nullable=false, updatable=false, length=10)
     @Getter @Setter private String currency;
 

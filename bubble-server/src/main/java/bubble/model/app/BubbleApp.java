@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.model.Identifiable;
-import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.IdentifiableBaseParentEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
@@ -54,7 +53,7 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String account;
 
-    @ECSearchable(filter=true) @ECField(index=30, type=EntityFieldType.http_url)
+    @ECSearchable(filter=true) @ECField(index=30)
     @HasValue(message="err.url.required")
     @Size(max=1024, message="err.url.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(1024+ENC_PAD)+") NOT NULL")

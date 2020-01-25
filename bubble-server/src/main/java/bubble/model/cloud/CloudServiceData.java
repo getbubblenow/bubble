@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
 import org.hibernate.annotations.Type;
@@ -61,7 +62,7 @@ public class CloudServiceData extends IdentifiableBase implements HasAccount {
     @Transient public JsonNode getDataJson () { return data == null ? null : json(data, JsonNode.class); }
     public CloudServiceData setDataJson(JsonNode n) { return setData(n == null ? null : json(n)); }
 
-    @ECSearchable @ECField(index=50)
+    @ECSearchable @ECField(index=50, type=EntityFieldType.expiration_time)
     @ECIndex @Getter @Setter private Long expiration;
 
 }

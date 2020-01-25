@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECField;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKey;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECIndex;
@@ -30,7 +31,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 public class NotificationBase extends IdentifiableBase implements HasAccountNoName {
 
     // synchronous requests may include this
-    @ECSearchable @ECField(index=10)
+    @ECSearchable @ECField(index=10, type=EntityFieldType.opaque_string)
     @Column(updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String notificationId;
     public boolean hasId () { return notificationId != null; }
@@ -57,7 +58,7 @@ public class NotificationBase extends IdentifiableBase implements HasAccountNoNa
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String toNode;
 
-    @ECSearchable(filter=true) @ECField(index=60)
+    @ECSearchable(filter=true) @ECField(index=60, type=EntityFieldType.opaque_string)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(1024+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String uri;
 
@@ -82,7 +83,7 @@ public class NotificationBase extends IdentifiableBase implements HasAccountNoNa
     @Transient public NotificationReceipt getReceipt () { return receiptJson == null ? null : json(receiptJson, NotificationReceipt.class); }
     public <T extends NotificationBase> T setReceipt (NotificationReceipt receipt) { return (T) setReceiptJson(receipt == null ? null : json(receiptJson)); }
 
-    @ECSearchable(filter=true) @ECField(index=100)
+    @ECSearchable(filter=true) @ECField(index=100, type=EntityFieldType.opaque_string)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(ERROR_MAXLEN+ENC_PAD)+")")
     @JsonIgnore @Getter private String error;
     public NotificationBase setError (String err) { this.error = ellipsis(err, ERROR_MAXLEN); return this; }

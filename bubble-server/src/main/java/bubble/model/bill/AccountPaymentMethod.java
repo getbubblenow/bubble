@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.filters.Scrubbable;
 import org.cobbzilla.wizard.filters.ScrubbableField;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
@@ -69,7 +70,7 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
     public boolean hasPaymentInfo () { return paymentInfo != null; }
 
     public static final String DEFAULT_MASKED_PAYMENT_INFO = "XXXX-".repeat(3)+"XXXX";
-    @ECSearchable  @ECField(index=40)
+    @ECSearchable @ECField(index=40, type=EntityFieldType.opaque_string)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String maskedPaymentInfo = DEFAULT_MASKED_PAYMENT_INFO;
 

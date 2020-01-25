@@ -112,7 +112,7 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     public boolean closed() { return bool(closed); }
     public boolean notClosed() { return !closed(); }
 
-    @ECSearchable @ECField(index=130)
+    @ECSearchable @ECField(index=130, type=EntityFieldType.reference)
     @ECIndex(unique=true) @Column(length=UUID_MAXLEN)
     @Getter @Setter private String deletedNetwork;
     public boolean hasDeletedNetwork() { return deletedNetwork != null; }
@@ -120,7 +120,7 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @ECSearchable @ECField(index=140) @Column(nullable=false)
     @Getter @Setter private Boolean refundIssued = false;
 
-    @ECSearchable @ECField(index=150)
+    @ECSearchable @ECField(index=150, type=EntityFieldType.opaque_string)
     @Getter @Setter private String refundError;
 
     // Fields below are used when creating a new plan, to also create the network associated with it

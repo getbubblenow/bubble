@@ -30,6 +30,7 @@ import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.wizard.filters.Scrubbable;
 import org.cobbzilla.wizard.filters.ScrubbableField;
 import org.cobbzilla.wizard.model.Identifiable;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.IdentifiableBaseParentEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
@@ -116,7 +117,7 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     public boolean enabled () { return enabled == null || enabled; }
     public boolean disabled () { return !enabled(); }
 
-    @ECSearchable @ECField(index=80)
+    @ECSearchable @ECField(index=80, type=EntityFieldType.reference)
     @ECIndex @Column(updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String delegated;
     public boolean delegated() { return delegated != null; }

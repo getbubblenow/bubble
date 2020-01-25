@@ -93,7 +93,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String domain;
 
-    @ECSearchable(filter=true) @ECField(index=40)
+    @ECSearchable(filter=true) @ECField(index=40, type=EntityFieldType.opaque_string)
     @ECIndex @Column(nullable=false, updatable=false, length=DOMAIN_NAME_MAXLEN)
     @Getter @Setter private String domainName;  // denormalized from BubbleDomain
 
@@ -140,7 +140,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
-    @ECSearchable @ECField(type=EntityFieldType.locale, index=120)
+    @ECSearchable @ECField(index=120)
     @Size(max=20, message="err.locale.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(20+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String locale = getDEFAULT_LOCALE();
@@ -148,7 +148,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
 
     // A unicode timezone alias from: cobbzilla-utils/src/main/resources/org/cobbzilla/util/time/unicode-timezones.xml
     // All unicode aliases are guaranteed to map to a Linux timezone and a Java timezone
-    @ECSearchable @ECField(type=EntityFieldType.time_zone, index=130)
+    @ECSearchable @ECField(index=130)
     @Size(max=100, message="err.timezone.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String timezone = "America/New_York";

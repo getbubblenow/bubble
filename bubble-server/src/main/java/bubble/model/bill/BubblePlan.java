@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.HasPriority;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
 import org.joda.time.format.DateTimeFormat;
@@ -56,7 +57,7 @@ public class BubblePlan extends IdentifiableBase implements HasAccount, HasPrior
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable(filter=true) @ECField(index=30)
+    @ECSearchable(filter=true) @ECField(index=30, type=EntityFieldType.opaque_string)
     @HasValue(message="err.chargeName.required")
     @Size(max=MAX_CHARGENAME_LEN, message="err.chargeName.length")
     @Column(nullable=false, updatable=false, length=MAX_CHARGENAME_LEN)
@@ -85,7 +86,7 @@ public class BubblePlan extends IdentifiableBase implements HasAccount, HasPrior
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Long price;
 
-    @ECSearchable @ECField(index=70)
+    @ECSearchable @ECField(index=70, type=EntityFieldType.opaque_string)
     @ECIndex @Column(nullable=false, length=10)
     @Getter @Setter private String currency = "USD";
 

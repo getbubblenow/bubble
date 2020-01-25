@@ -130,12 +130,12 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String cloud;
 
-    @ECSearchable @ECField(index=80)
+    @ECSearchable @ECField(index=80, type=EntityFieldType.opaque_string)
     @HasValue(message="err.region.required")
     @ECIndex @Column(nullable=false, updatable=false, length=100)
     @Getter @Setter private String region;
 
-    @ECSearchable @ECField(index=90)
+    @ECSearchable @ECField(index=90, type=EntityFieldType.opaque_string)
     @HasValue(message="err.size.required")
     @ECIndex @Column(nullable=false, updatable=false, length=100)
     @Getter @Setter private String size;

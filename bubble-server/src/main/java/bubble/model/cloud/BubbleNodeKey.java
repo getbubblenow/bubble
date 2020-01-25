@@ -89,7 +89,7 @@ public class BubbleNodeKey extends IdentifiableBase implements HasAccountNoName 
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String node;
 
-    @ECSearchable(filter=true) @ECField(index=30)
+    @ECSearchable(filter=true) @ECField(index=30, type=EntityFieldType.opaque_string)
     @Column(length=10000, updatable=false, nullable=false)
     @Getter private String publicKey;
     public BubbleNodeKey setPublicKey (String k) {
