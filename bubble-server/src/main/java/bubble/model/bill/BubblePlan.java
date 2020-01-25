@@ -86,7 +86,7 @@ public class BubblePlan extends IdentifiableBase implements HasAccount, HasPrior
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Long price;
 
-    @ECSearchable @ECField(index=70, type=EntityFieldType.opaque_string)
+    @ECSearchable @ECField(index=70)
     @ECIndex @Column(nullable=false, length=10)
     @Getter @Setter private String currency = "USD";
 

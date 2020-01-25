@@ -120,7 +120,7 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @ECSearchable @ECField(index=140) @Column(nullable=false)
     @Getter @Setter private Boolean refundIssued = false;
 
-    @ECSearchable @ECField(index=150, type=EntityFieldType.opaque_string)
+    @ECSearchable @ECField(index=150, type=EntityFieldType.error)
     @Getter @Setter private String refundError;
 
     // Fields below are used when creating a new plan, to also create the network associated with it

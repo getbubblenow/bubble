@@ -64,7 +64,7 @@ public class BubbleBackup extends IdentifiableBase implements HasAccount {
     @Getter @Setter private BackupStatus status;
     public boolean success () { return status == BackupStatus.backup_completed; }
 
-    @ECSearchable(filter=true) @ECField(index=60, type=EntityFieldType.opaque_string)
+    @ECSearchable(filter=true) @ECField(index=60)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(ERROR_MAXLEN+ENC_PAD)+")")
     @Getter private String error;
     public BubbleBackup setError (String err) { this.error = ellipsis(err, ERROR_MAXLEN); return this; }

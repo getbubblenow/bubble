@@ -83,7 +83,7 @@ public class NotificationBase extends IdentifiableBase implements HasAccountNoNa
     @Transient public NotificationReceipt getReceipt () { return receiptJson == null ? null : json(receiptJson, NotificationReceipt.class); }
     public <T extends NotificationBase> T setReceipt (NotificationReceipt receipt) { return (T) setReceiptJson(receipt == null ? null : json(receiptJson)); }
 
-    @ECSearchable(filter=true) @ECField(index=100, type=EntityFieldType.opaque_string)
+    @ECSearchable(filter=true) @ECField(index=100)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(ERROR_MAXLEN+ENC_PAD)+")")
     @JsonIgnore @Getter private String error;
     public NotificationBase setError (String err) { this.error = ellipsis(err, ERROR_MAXLEN); return this; }

@@ -74,7 +74,7 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
     @Getter @Setter private Long price = 0L;
 
-    @ECSearchable @ECField(index=110, type=EntityFieldType.opaque_string)
+    @ECSearchable @ECField(index=110)
     @ECIndex @Column(nullable=false, updatable=false, length=10)
     @Getter @Setter private String currency;
 

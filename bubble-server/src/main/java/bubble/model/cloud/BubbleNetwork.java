@@ -93,7 +93,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String domain;
 
-    @ECSearchable(filter=true) @ECField(index=40, type=EntityFieldType.opaque_string)
+    @ECSearchable(filter=true) @ECField(index=40, type=EntityFieldType.fqdn)
     @ECIndex @Column(nullable=false, updatable=false, length=DOMAIN_NAME_MAXLEN)
     @Getter @Setter private String domainName;  // denormalized from BubbleDomain
 
