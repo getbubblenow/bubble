@@ -11,10 +11,12 @@ import bubble.model.app.AppMatcher;
 import bubble.model.device.Device;
 import bubble.service.cloud.DeviceIdService;
 import bubble.service.stream.RuleEngine;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.http.HttpContentEncodingType;
+import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
@@ -41,6 +44,7 @@ import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Path(FILTER_HTTP_ENDPOINT)
@@ -53,6 +57,18 @@ public class FilterHttpResource {
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private DeviceIdService deviceIdService;
     @Autowired private AppDataDAO dataDAO;
+
+    @Autowired private RedisService redis;
+
+    private static final long ACTIVE_REQUEST_TIMEOUT = TimeUnit.HOURS.toSeconds(4);
+
+    @Getter(lazy=true) private final RedisService activeRequestCache = redis.prefixNamespace(getClass().getSimpleName()+".requests");
+
+    public FilterHttpRequest getActiveRequest(String requestId) {
+        final String json = getActiveRequestCache().get(requestId);
+        if (json == null) return null;
+        return json(json, FilterHttpRequest.class);
+    }
 
     private Map<String, Account> accountCache = new ExpirationMap<>(MINUTES.toMillis(10));
     public Account findCaller(String accountUuid) {
@@ -130,8 +146,6 @@ public class FilterHttpResource {
         return new FilterMatchersResponse().setMatchers(matchers).setDevice(device.getUuid());
     }
 
-    private Map<String, FilterHttpRequest> activeRequests = new ExpirationMap<>(MINUTES.toMillis(10));
-
     @POST @Path(EP_APPLY+"/{requestId}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.WILDCARD)
@@ -178,7 +192,7 @@ public class FilterHttpResource {
             contentLength = null;
         }
 
-        FilterHttpRequest filterRequest = activeRequests.get(requestId);
+        FilterHttpRequest filterRequest = getActiveRequest(requestId);
         if (filterRequest == null) {
             if (empty(deviceId) || empty(matchersJson) || empty(contentType)) {
                 if (log.isDebugEnabled()) log.debug("filterHttp: filter request not found, and no device/matchers/contentType provided, returning passthru");
@@ -215,7 +229,7 @@ public class FilterHttpResource {
                     .setAccount(caller)
                     .setMatchers(matchers)
                     .setContentType(contentType);
-            activeRequests.put(requestId, filterRequest);
+            getActiveRequestCache().set(requestId, json(filterRequest), EX, ACTIVE_REQUEST_TIMEOUT);
         }
 
         if (log.isTraceEnabled()) {
@@ -286,7 +300,7 @@ public class FilterHttpResource {
         public FilterDataContext(String requestId, String matcherId) {
             if (empty(requestId) || empty(matcherId)) throw notFoundEx();
 
-            request = activeRequests.get(requestId);
+            request = getActiveRequest(requestId);
             if (request == null) throw notFoundEx(requestId);
             if (!request.hasMatcher(matcherId)) throw notFoundEx(matcherId);
 
