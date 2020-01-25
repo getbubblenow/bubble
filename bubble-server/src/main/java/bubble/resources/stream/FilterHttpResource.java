@@ -1,9 +1,12 @@
 package bubble.resources.stream;
 
 import bubble.dao.account.AccountDAO;
+import bubble.dao.app.AppDataDAO;
 import bubble.dao.app.AppMatcherDAO;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
+import bubble.model.app.AppData;
+import bubble.model.app.AppDataFormat;
 import bubble.model.app.AppMatcher;
 import bubble.model.device.Device;
 import bubble.service.cloud.DeviceIdService;
@@ -26,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.resources.stream.FilterMatchersResponse.NO_MATCHERS;
@@ -36,8 +40,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
-import static org.cobbzilla.wizard.resources.ResourceUtil.forbidden;
-import static org.cobbzilla.wizard.resources.ResourceUtil.ok;
+import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Path(FILTER_HTTP_ENDPOINT)
 @Service @Slf4j
@@ -48,6 +51,7 @@ public class FilterHttpResource {
     @Autowired private AppMatcherDAO matcherDAO;
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private DeviceIdService deviceIdService;
+    @Autowired private AppDataDAO dataDAO;
 
     private Map<String, Account> accountCache = new ExpirationMap<>(MINUTES.toMillis(10));
     public Account findCaller(String accountUuid) {
@@ -225,4 +229,65 @@ public class FilterHttpResource {
 
     public Response passthru(@Context ContainerRequest request) { return ruleEngine.passthru(request); }
 
+    @GET @Path(EP_DATA+"/{requestId}/{matcherId}"+EP_READ)
+    @Produces(APPLICATION_JSON)
+    public Response readData(@Context ContainerRequest ctx,
+                             @PathParam("requestId") String requestId,
+                             @PathParam("matcherId") String matcherId,
+                             @QueryParam("format") AppDataFormat format) {
+
+        final FilterDataContext fdc = new FilterDataContext(requestId, matcherId);
+        final List<AppData> data = dataDAO.findEnabledByAccountAndAppAndSite
+                (fdc.request.getAccount().getUuid(), fdc.matcher.getApp(), fdc.matcher.getSite());
+
+        if (format == null) format = AppDataFormat.key;
+        switch (format) {
+            case key:
+                return ok(data.stream().map(AppData::getKey).collect(Collectors.toList()));
+            case value:
+                return ok(data.stream().map(AppData::getData).collect(Collectors.toList()));
+            case key_value:
+                return ok(data.stream().collect(Collectors.toMap(AppData::getKey, AppData::getData)));
+            case full:
+                return ok(data);
+            default:
+                throw notFoundEx(format.name());
+        }
+    }
+
+    @POST @Path(EP_DATA+"/{requestId}/{matcherId}"+EP_WRITE)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    public Response writeData(@Context ContainerRequest ctx,
+                              @PathParam("requestId") String requestId,
+                              @PathParam("matcherId") String matcherId,
+                              AppData data) {
+
+        if (data == null || !data.hasKey()) throw invalidEx("err.key.required");
+
+        final FilterDataContext fdc = new FilterDataContext(requestId, matcherId);
+
+        data.setAccount(fdc.request.getAccount().getUuid());
+        data.setApp(fdc.matcher.getApp());
+        data.setSite(fdc.matcher.getSite());
+        data.setMatcher(fdc.matcher.getUuid());
+
+        return ok(dataDAO.create(data));
+    }
+
+    private class FilterDataContext {
+        public FilterHttpRequest request;
+        public AppMatcher matcher;
+
+        public FilterDataContext(String requestId, String matcherId) {
+            if (empty(requestId) || empty(matcherId)) throw notFoundEx();
+
+            request = activeRequests.get(requestId);
+            if (request == null) throw notFoundEx(requestId);
+            if (!request.hasMatcher(matcherId)) throw notFoundEx(matcherId);
+
+            matcher = matcherDAO.findByAccountAndId(request.getAccount().getUuid(), matcherId);
+            if (matcher == null) throw notFoundEx(matcherId);
+        }
+    }
 }

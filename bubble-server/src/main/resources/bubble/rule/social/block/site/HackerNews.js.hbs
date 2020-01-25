@@ -11,19 +11,14 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
             const indent = parseInt(comment.querySelector('.ind').querySelector('img').width);
             if (blocking) {
                 if (indent > blocking_indent) {
-                    // console.log('removing reply comment by author='+author+', indent='+indent);
                     comment.parentNode.removeChild(comment);
                     i++;
                 } else {
-                    // console.log('new comment detected, adding X button for author='+author+', indent='+indent);
-                    // const ageElement = comment.querySelector('.age');
-                    // ageElement.innerHTML = ageElement.innerHTML + ' [X]';
                     blocking = false;
                     blocking_indent = null;
                 }
             } else {
                 if (blocked_users.includes(author)) {
-                    // console.log('blocking initial comment by author='+author+', indent='+indent);
                     blocking = true;
                     blocking_indent = indent;
                     comment.parentNode.removeChild(comment);

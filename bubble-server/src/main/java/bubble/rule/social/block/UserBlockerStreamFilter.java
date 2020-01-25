@@ -62,11 +62,12 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
         // turn buffer into a stream of PageChunks
         final RegexChunkStreamer pager = new RegexChunkStreamer(buffer, config, eof);
 
+        int matchCount = 0;
         while (pager.hasMoreChunks()) {
             final RegexChunk pageChunk = pager.nextChunk();
             if (pageChunk.isPartial() || (!pager.hasMoreChunks() && !eof)) {
                 // push the last chunk back onto the unprocessed char array, unless we are at eof
-                return new RegexFilterResult(result, pageChunk.getData().length());
+                return new RegexFilterResult(result, pageChunk.getData().length(), 0);
             }
             switch (pageChunk.getType()) {
                 case content:
@@ -74,6 +75,7 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
                     break;
 
                 case chunk:
+                    matchCount++;
                     switch (state) {
                         case seeking_comments:
                             final String userId = pageChunk.getProperty(PROP_USER_ID);
@@ -102,7 +104,7 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
             }
         }
 
-        return new RegexFilterResult(result, 0);
+        return new RegexFilterResult(result, 0, matchCount);
     }
 
     private void append(StringBuilder result, String data) { result.append(data.replace("\0", "")); }

@@ -7,6 +7,7 @@ import bubble.model.app.AppRule;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.github.jknack.handlebars.Handlebars;
 import lombok.Getter;
 import lombok.Setter;
 import org.cobbzilla.util.system.Bytes;
@@ -27,6 +28,8 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
     protected AppRule rule;
     protected Account account;
     protected Device device;
+
+    public Handlebars getHandlebars () { return configuration.getHandlebars(); }
 
     @Override public void init(JsonNode config,
                                JsonNode userConfig,

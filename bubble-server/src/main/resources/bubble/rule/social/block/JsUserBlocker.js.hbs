@@ -11,11 +11,8 @@ function {{JS_PREFIX}}_onReady(callback) {
 }
 
 function {{JS_PREFIX}}_fetch_blocks () {
-    const requestOptions = {
-        method: 'GET',
-        headers: {'X-Bubble-Request': {{JS_PREFIX}}_request_id}
-    };
-    const blocked_users_url = '/.bubble/api/me/apps/JsUserBlocker/sites/{{site}}/data?prefix=blocked_';
+    const requestOptions = { method: 'GET' };
+    const blocked_users_url = '{{{BUBBLE_HOME}}}/api/filter/data/{{BUBBLE_DATA_ID}}/read';
     fetch(blocked_users_url, requestOptions).then(
         response => response.json().then(json => {
             {{JS_PREFIX}}_blocked_users.length = 0;
@@ -30,11 +27,10 @@ function {{JS_PREFIX}}_fetch_blocks () {
 function {{JS_PREFIX}}_block_user (author) {
     {{JS_PREFIX}}_blocked_users.push(author);
     {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
-    const block_user_url = '/.bubble/api/me/apps/JsUserBlocker/sites/{{site}}/data';
+    const block_user_url = '{{{BUBBLE_HOME}}}/api/filter/data/{{BUBBLE_DATA_ID}}/write';
     const requestOptions = {
         method: 'POST',
-        headers: {'X-Bubble-Request': {{JS_PREFIX}}_request_id},
-        body: JSON.stringify({'key': author})
+        body: JSON.stringify({key: author, data: true})
     };
     fetch(block_user_url, requestOptions);
 }
@@ -47,7 +43,7 @@ function {{JS_PREFIX}}_block_user (author) {
     bubbleControlDiv.style.position = 'fixed';
     bubbleControlDiv.style.bottom = '0';
     bubbleControlDiv.style.right = '0';
-    bubbleControlDiv.innerHTML = '<a href="/.bubble/site/apps/JsUserBlocker/sites/{{site}}/data"><img width="64" src="bubble_icon.png"/></a>';
+    bubbleControlDiv.innerHTML = '<a href="{{{BUBBLE_HOME}}}/apps/JsUserBlocker/sites/{{SITE}}/data"><img width="64" src="bubble_icon.png"/></a>';
     document.getElementsByTagName('body')[0].appendChild(bubbleControlDiv);
 
     {{JS_PREFIX}}_fetch_blocks();

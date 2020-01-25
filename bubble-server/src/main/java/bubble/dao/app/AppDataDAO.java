@@ -39,6 +39,10 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
         return filterExpired(findByFields("account", account, "app", app, "key", key));
     }
 
+    public List<AppData> findEnabledByAccountAndAppAndSite(String account, String app, String site) {
+        return filterExpired(findByFields("account", account, "app", app, "site", site, "enabled", true));
+    }
+
     private AppData filterExpired(AppData data) {
         if (data == null) return null;
         if (data.expired()) {
@@ -81,4 +85,5 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
         if (key != null) crits.add(eq("key", key));
         return list(criteria().add(and(crits.toArray(new Criterion[0]))));
     }
+
 }
