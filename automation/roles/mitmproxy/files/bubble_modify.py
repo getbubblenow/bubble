@@ -53,6 +53,10 @@ def bubble_filter_chunks(chunks, req_id, content_encoding, content_type, device,
 def bubble_modify(req_id, content_encoding, content_type, device, matchers):
     return lambda chunks: bubble_filter_chunks(chunks, req_id, content_encoding, content_type, device, matchers)
 
+def send_bubble_response(response):
+    for chunk in response.iter_content(8192):
+        yield chunk
+
 
 def responseheaders(flow):
 
@@ -66,7 +70,7 @@ def responseheaders(flow):
         }
         response = None
         if flow.request.method == 'GET':
-            response = requests.get(uri, headers=headers)
+            response = requests.get(uri, headers=headers, stream=True)
         elif flow.request.method == 'POST':
             bubble_log('responseheaders: special bubble request: POST content is '+str(flow.request.content))
             headers['Content-Length'] = str(len(flow.request.content))
@@ -79,7 +83,7 @@ def responseheaders(flow):
             for key, value in response.headers.items():
                 flow.response.headers[key] = value
             flow.response.status_code = response.status_code
-            flow.response.stream = lambda chunks: response.text
+            flow.response.stream = lambda chunks: send_bubble_response(response)
 
     elif (HEADER_BUBBLE_MATCHERS in flow.request.headers
             and HEADER_BUBBLE_DEVICE in flow.request.headers):
