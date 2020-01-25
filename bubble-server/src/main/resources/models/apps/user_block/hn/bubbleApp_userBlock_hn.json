@@ -10,7 +10,7 @@
     "AppRule": [{
       "name": "hn_user_blocker",
       "template": true,
-      "driver": "JsUserBlocker",
+      "driver": "UserBlocker",
       "config": {
         "blockedCommentCheck": "parseInt(current.get('width')) > parseInt(blocked.get('width'))",
         "blockedCommentReplacement": "{{{chunkStartRegex}}}<td>[comment by {{blockedUser}} has been blocked] <a href=\"{{{unblockUrl}}}\">UNBLOCK</a></td></tr>",
