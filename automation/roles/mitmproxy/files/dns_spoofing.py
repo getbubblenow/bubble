@@ -62,11 +62,12 @@ class Rerouter:
 
         host_header = flow.request.host_header
         bubble_log("dns_spoofing.request: host_header is "+repr(host_header))
-        m = parse_host_header.match(host_header)
-        if m:
-            host_header = m.group("host").strip("[]")
-            if m.group("port"):
-                port = int(m.group("port"))
+        if host_header:
+            m = parse_host_header.match(host_header)
+            if m:
+                host_header = m.group("host").strip("[]")
+                if m.group("port"):
+                    port = int(m.group("port"))
 
         # Determine if this request should be filtered
         if sni or host_header:
