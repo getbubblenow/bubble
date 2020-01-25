@@ -15,7 +15,7 @@ import bubble.model.account.message.ActionTarget;
 import bubble.model.bill.AccountPlan;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
-import bubble.service.AuthenticatorService;
+import bubble.service.account.AuthenticatorService;
 import bubble.service.backup.NetworkKeysService;
 import bubble.service.cloud.NodeProgressMeterTick;
 import bubble.service.cloud.StandardNetworkService;

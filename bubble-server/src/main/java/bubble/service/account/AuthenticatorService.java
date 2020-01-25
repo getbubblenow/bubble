@@ -1,4 +1,4 @@
-package bubble.service;
+package bubble.service.account;
 
 import bubble.dao.SessionDAO;
 import bubble.dao.account.AccountPolicyDAO;

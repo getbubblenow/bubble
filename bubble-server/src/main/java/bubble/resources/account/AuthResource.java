@@ -14,7 +14,7 @@ import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.NetworkKeys;
 import bubble.model.cloud.notify.NotificationReceipt;
 import bubble.server.BubbleConfiguration;
-import bubble.service.AuthenticatorService;
+import bubble.service.account.AuthenticatorService;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.backup.RestoreService;
 import bubble.service.boot.ActivationService;

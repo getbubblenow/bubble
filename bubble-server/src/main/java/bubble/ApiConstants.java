@@ -32,8 +32,6 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @Slf4j
 public class ApiConstants {
 
-    public static final int MAX_SEARCH_PAGE = 50;
-
     public static final String ROOT_NETWORK_UUID = "00000000-0000-0000-0000-000000000000";
 
     public static final String DEFAULT_LOCALE = "en_US";
@@ -179,6 +177,15 @@ public class ApiConstants {
 
     public static final String FILTER_HTTP_ENDPOINT = "/filter";
     public static final String EP_APPLY = "/apply";
+
+    // search constants
+    public static final int MAX_SEARCH_PAGE = 50;
+    public static final String Q_FILTER = "query";
+    public static final String Q_META = "meta";
+    public static final String Q_NOCACHE = "nocache";
+    public static final String Q_PAGE = "page";
+    public static final String Q_SIZE = "size";
+    public static final String Q_SORT = "sort";
 
     public static final int MAX_NOTIFY_LOG = 10000;
     public static final int ERROR_MAXLEN = 4000;

@@ -18,7 +18,7 @@ import bubble.resources.driver.DriversResource;
 import bubble.resources.notify.ReceivedNotificationsResource;
 import bubble.resources.notify.SentNotificationsResource;
 import bubble.server.BubbleConfiguration;
-import bubble.service.AuthenticatorService;
+import bubble.service.account.AuthenticatorService;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.BubbleModelSetupService;

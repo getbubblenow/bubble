@@ -21,7 +21,7 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.CloudService;
 import bubble.resources.account.AccountOwnedResource;
 import bubble.server.BubbleConfiguration;
-import bubble.service.AuthenticatorService;
+import bubble.service.account.AuthenticatorService;
 import bubble.service.cloud.GeoService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.validation.ValidationResult;
