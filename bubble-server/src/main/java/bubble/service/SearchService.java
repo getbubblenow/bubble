@@ -32,7 +32,7 @@ public class SearchService {
 
     private Map<String, DAO> daoCache = new ConcurrentHashMap<>();
 
-    private ExpirationMap<String, Object> _searchCache = new ExpirationMap<String, Object>()
+    private ExpirationMap<String, Object> searchCache = new ExpirationMap<String, Object>()
             .setExpiration(MINUTES.toMillis(2))
             .setMaxExpiration(MINUTES.toMillis(2))
             .setCleanInterval(MINUTES.toMillis(5))
@@ -83,10 +83,10 @@ public class SearchService {
 
         final SearchResults results;
         if (nocache != null && nocache) {
-            results = _search(dao, q, caller);
+            results = search(dao, q, caller);
         } else {
             final String cacheKey = hashOf(caller.getUuid(), type, q);
-            results = (SearchResults) _searchCache.computeIfAbsent(cacheKey, searchKey -> _search(dao, q, caller));
+            results = (SearchResults) searchCache.computeIfAbsent(cacheKey, searchKey -> search(dao, q, caller));
         }
         if (results.hasNextPage(q)) {
             results.setNextPage(requestURI +"?"+ ApiConstants.Q_PAGE+"="+(q.getPageNumber()+1)+"&"+ ApiConstants.Q_SIZE+"="+q.getPageSize());
@@ -94,9 +94,9 @@ public class SearchService {
         return results;
     }
 
-    public static SearchResults _search(DAO dao,
-                                        SearchQuery q,
-                                        Account caller) {
+    public static SearchResults search(DAO dao,
+                                       SearchQuery q,
+                                       Account caller) {
         if (!caller.admin()) {
             final Class entityClass = dao.getEntityClass();
             if (entityClass.equals(Account.class)) {
