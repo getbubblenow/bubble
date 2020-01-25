@@ -68,7 +68,8 @@ def responseheaders(flow):
         if flow.request.method == 'GET':
             response = requests.get(uri, headers=headers)
         elif flow.request.method == 'POST':
-            headers['Content-Length'] = len(flow.request.content)
+            bubble_log('responseheaders: special bubble request: POST content is '+str(flow.request.content))
+            headers['Content-Length'] = str(len(flow.request.content))
             response = requests.post(uri, data=flow.request.content, headers=headers)
         else:
             bubble_log('responseheaders: special bubble request: method '+flow.request.method+' not supported')
