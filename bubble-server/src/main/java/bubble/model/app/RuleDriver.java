@@ -14,6 +14,7 @@ import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.SemanticVersion;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
 
@@ -80,7 +81,7 @@ public class RuleDriver extends IdentifiableBase implements AccountTemplate {
     @Column(length=200)
     @Getter @Setter private String author;
 
-    @ECSearchable(filter=true) @ECField(index=60)
+    @ECSearchable(filter=true) @ECField(index=60, type=EntityFieldType.http_url)
     @Column(length=1024)
     @Getter @Setter private String url;
 

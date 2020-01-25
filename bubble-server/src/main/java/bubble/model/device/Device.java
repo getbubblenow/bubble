@@ -33,7 +33,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 })
 public class Device extends IdentifiableBase implements HasAccount {
 
-    public static final String[] CREATE_FIELDS = { "uuid", "name", "enabled", "totpKey" };
+    public static final String[] CREATE_FIELDS = { UUID, "name", "enabled", "totpKey" };
     public static final String[] UPDATE_FIELDS = { "name", "enabled" };
 
     public static final String UNINITIALIZED_DEVICE = "__uninitialized_device__";

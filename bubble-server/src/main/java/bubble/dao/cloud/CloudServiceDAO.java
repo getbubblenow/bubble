@@ -18,6 +18,7 @@ import java.util.List;
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
 import static bubble.model.cloud.CloudService.testDriver;
+import static org.cobbzilla.wizard.model.Identifiable.UUID;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Repository
@@ -86,7 +87,7 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
     }
 
     public CloudService findByAccountAndTypeAndId(String accountUuid, CloudServiceType csType, String id) {
-        final CloudService found = findByUniqueFields("account", accountUuid, "type", csType, "enabled", true, "uuid", id);
+        final CloudService found = findByUniqueFields("account", accountUuid, "type", csType, "enabled", true, UUID, id);
         return found != null ? found : findByUniqueFields("account", accountUuid, "type", csType, "enabled", true, "name", id);
     }
 

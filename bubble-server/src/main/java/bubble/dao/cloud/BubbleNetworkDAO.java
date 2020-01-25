@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import static bubble.model.cloud.BubbleNetwork.validateHostname;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
+import static org.cobbzilla.wizard.model.Identifiable.UUID;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Repository @Slf4j
@@ -57,7 +58,7 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
     public BubbleNetwork findByDomainAndId(String domainUuid, String id) {
         final List<String> domainUuids = getAllDomainUuids(domainUuid);
 
-        List<BubbleNetwork> found = findByFieldAndFieldIn("uuid", id, "domain", domainUuids);
+        List<BubbleNetwork> found = findByFieldAndFieldIn(UUID, id, "domain", domainUuids);
         if (found != null && !found.isEmpty()) return found.get(0);
 
         found = findByFieldAndFieldIn("name", id, "domain", domainUuids);

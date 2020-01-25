@@ -13,6 +13,8 @@ import java.util.List;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
+import static org.cobbzilla.wizard.model.Identifiable.CTIME;
+import static org.cobbzilla.wizard.model.Identifiable.UUID;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Repository
@@ -37,7 +39,7 @@ public class BubbleBackupDAO extends AccountOwnedEntityDAO<BubbleBackup> {
         return findByFieldAndFieldIn("network", uuid, "status", BackupStatus.STUCK);
     }
 
-    @Override public Order getDefaultSortOrder() { return Order.desc("ctime"); }
+    @Override public Order getDefaultSortOrder() { return Order.desc(CTIME); }
 
     public BubbleBackup findByNetworkAndPath(String networkUuid, String path) {
         return findByNetwork(networkUuid).stream()
@@ -54,7 +56,7 @@ public class BubbleBackupDAO extends AccountOwnedEntityDAO<BubbleBackup> {
     }
 
     public BubbleBackup findByNetworkAndId(String networkUuid, String id) {
-        BubbleBackup found = findByUniqueFields("network", networkUuid, "uuid", id);
+        BubbleBackup found = findByUniqueFields("network", networkUuid, UUID, id);
         if (found != null) return found;
         found = findByNetworkAndPath(networkUuid, id);
         return found != null ? found : findByNetworkAndLabel(networkUuid, id);

@@ -8,6 +8,7 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 
 import javax.persistence.Column;
@@ -69,7 +70,7 @@ public class AppSite extends IdentifiableBase implements AppTemplateEntity {
     @Column(nullable=false, length=10000)
     @Getter @Setter private String description;
 
-    @ECSearchable(filter=true) @ECField(index=70)
+    @ECSearchable(filter=true) @ECField(index=70, type=EntityFieldType.http_url)
     @Column(nullable=false, length=1024)
     @Getter @Setter private String url;
 

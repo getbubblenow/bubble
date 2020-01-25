@@ -6,6 +6,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static org.cobbzilla.wizard.model.Identifiable.UUID;
+
 @Repository
 public class CloudServiceDataDAO extends AccountOwnedEntityDAO<CloudServiceData> {
 
@@ -17,7 +19,7 @@ public class CloudServiceDataDAO extends AccountOwnedEntityDAO<CloudServiceData>
 
     public CloudServiceData findByAccountAndCloudAndId(String accountUuid, String cloudUuid, String id) {
         final CloudServiceData found = findByUniqueFields("account", accountUuid, "cloud", cloudUuid, "key", id);
-        return found != null ? found : findByUniqueFields("account", accountUuid, "cloud", cloudUuid, "uuid", id);
+        return found != null ? found : findByUniqueFields("account", accountUuid, "cloud", cloudUuid, UUID, id);
     }
 
     public CloudServiceData findByCloudAndKey(String cloudUuid, String key) {

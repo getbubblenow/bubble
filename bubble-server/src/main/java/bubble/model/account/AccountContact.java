@@ -29,13 +29,14 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
+import static org.cobbzilla.wizard.model.Identifiable.UUID;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @NoArgsConstructor @Accessors(chain=true) @EqualsAndHashCode(of={"info", "type"}) @ToString @Slf4j
 public class AccountContact implements Serializable {
 
     public static final int MAX_NICK_LENGTH = 100;
-    public static final String[] UPDATE_EXCLUDE_FIELDS = {"uuid", "type", "info"};
+    public static final String[] UPDATE_EXCLUDE_FIELDS = {UUID, "type", "info"};
 
     public AccountContact(AccountContact other) { copy(this, other); }
 

@@ -5,6 +5,8 @@ import bubble.model.app.AppTemplateEntity;
 
 import java.util.List;
 
+import static org.cobbzilla.wizard.model.Identifiable.UUID;
+
 public class AppTemplateEntityDAO<E extends AppTemplateEntity> extends AccountOwnedTemplateDAO<E> {
 
     public E findByAccountAndAppAndName(String accountUuid, String appUuid, String name) {
@@ -16,7 +18,7 @@ public class AppTemplateEntityDAO<E extends AppTemplateEntity> extends AccountOw
     }
 
     public E findByAccountAndAppAndId(String account, String app, String id) {
-        final E found = findByUniqueFields("account", account, "app", app, "uuid", id);
+        final E found = findByUniqueFields("account", account, "app", app, UUID, id);
         if (found != null) return found;
         return findByUniqueFields("account", account, "app", app, getNameField(), id);
     }

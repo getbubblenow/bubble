@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static bubble.model.cloud.BubbleNodeKey.defaultExpiration;
+import static org.cobbzilla.wizard.model.Identifiable.UUID;
 
 @Repository @Slf4j
 public class BubbleNodeKeyDAO extends AccountOwnedEntityDAO<BubbleNodeKey> {
@@ -63,7 +64,7 @@ public class BubbleNodeKeyDAO extends AccountOwnedEntityDAO<BubbleNodeKey> {
     }
 
     public BubbleNodeKey findByNodeAndUuid(String nodeUuid, String keyUuid) {
-        return filterValid(findByUniqueFields("node", nodeUuid, "uuid", keyUuid));
+        return filterValid(findByUniqueFields("node", nodeUuid, UUID, keyUuid));
     }
 
     public String findRemoteHostForNode(String nodeUuid) {

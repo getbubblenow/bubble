@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.wizard.model.Identifiable.MTIME;
 import static org.hibernate.criterion.Restrictions.*;
 
 @Repository @Slf4j
@@ -64,6 +65,6 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
     }
 
     public List<AppMatcher> findAllChangesSince(Long lastMod) {
-        return list(criteria().add(gt("mtime", lastMod)));
+        return list(criteria().add(gt(MTIME, lastMod)));
     }
 }

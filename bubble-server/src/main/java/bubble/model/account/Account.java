@@ -81,7 +81,7 @@ public class Account extends IdentifiableBase implements TokenPrincipal, SqlView
         return masked;
     }
 
-    public static String accountField(String table) { return table.equalsIgnoreCase("account") ? "uuid" : "account"; }
+    public static String accountField(String table) { return table.equalsIgnoreCase("account") ? UUID : "account"; }
 
     @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
@@ -104,7 +104,7 @@ public class Account extends IdentifiableBase implements TokenPrincipal, SqlView
     @Getter @Setter private String parent;
     public boolean hasParent () { return parent != null; }
 
-    @ECSearchable(filter=true) @ECField(index=30)
+    @ECSearchable(filter=true) @ECField(index=30, type=EntityFieldType.http_url)
     @Size(max=1024, message="err.url.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(1024+ENC_PAD)+")")
     @Getter @Setter private String url;
