@@ -43,7 +43,7 @@ function {{JS_PREFIX}}_block_user (author) {
     bubbleControlDiv.style.position = 'fixed';
     bubbleControlDiv.style.bottom = '0';
     bubbleControlDiv.style.right = '0';
-    bubbleControlDiv.innerHTML = '<a href="{{{BUBBLE_HOME}}}/app/UserBlocker/sites/{{SITE}}/data"><img width="64" src="/__bubble/bubble_icon.png"/></a>';
+    bubbleControlDiv.innerHTML = '<a href="{{{BUBBLE_HOME}}}/app/UserBlocker/site/{{SITE}}"><img width="64" src="/__bubble/bubble_icon.png"/></a>';
     document.getElementsByTagName('body')[0].appendChild(bubbleControlDiv);
 
     {{JS_PREFIX}}_fetch_blocks();
