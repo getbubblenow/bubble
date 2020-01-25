@@ -28,7 +28,6 @@ public class JsUserBlocker extends AbstractAppRuleDriver {
     public static final String CTX_JS_PREFIX = "JS_PREFIX";
     public static final String CTX_BUBBLE_REQUEST_ID = "BUBBLE_REQUEST_ID";
     public static final String CTX_BUBBLE_DATA_ID = "BUBBLE_DATA_ID";
-    public static final String CTX_BUBBLE_HOME = "BUBBLE_HOME";
     public static final String CTX_SITE = "SITE";
     public static final String CTX_APPLY_BLOCKS_JS = "APPLY_BLOCKS_JS";
 
@@ -45,7 +44,6 @@ public class JsUserBlocker extends AbstractAppRuleDriver {
         final Map<String, Object> ctx = new HashMap<>();
         ctx.put(CTX_JS_PREFIX, "__bubble_"+sha256_hex(requestId)+"_");
         ctx.put(CTX_BUBBLE_REQUEST_ID, requestId);
-        ctx.put(CTX_BUBBLE_HOME, configuration.getPublicUriBase());
         ctx.put(CTX_SITE, getSiteName(matcher));
         ctx.put(CTX_BUBBLE_DATA_ID, requestId+"/"+matcher.getUuid());
 

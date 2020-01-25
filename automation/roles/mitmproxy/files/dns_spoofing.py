@@ -1,6 +1,6 @@
 import json
 import re
-from bubble_api import bubble_matchers, bubble_log, HEADER_BUBBLE_MATCHERS, HEADER_BUBBLE_DEVICE
+from bubble_api import bubble_matchers, bubble_log, HEADER_BUBBLE_MATCHERS, HEADER_BUBBLE_DEVICE, BUBBLE_URI_PREFIX
 from bubble_config import bubble_host, bubble_host_alias
 from mitmproxy import ctx
 
@@ -14,6 +14,10 @@ class Rerouter:
     @staticmethod
     def get_matchers(flow, host):
         if host is None:
+            return None
+
+        if flow.request.path and flow.request.path.startswith(BUBBLE_URI_PREFIX):
+            bubble_log("get_matchers: not filtering special bubble path: "+flow.request.path)
             return None
 
         remote_addr = str(flow.client_conn.address[0])

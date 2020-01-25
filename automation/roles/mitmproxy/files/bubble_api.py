@@ -1,13 +1,13 @@
-from bubble_config import bubble_network, bubble_port
-from mitmproxy import ctx
 import requests
 import traceback
 import sys
+from bubble_config import bubble_network, bubble_port
 
 HEADER_USER_AGENT = 'User-Agent'
 
 HEADER_BUBBLE_MATCHERS='X-Bubble-Matchers'
 HEADER_BUBBLE_DEVICE='X-Bubble-Device'
+BUBBLE_URI_PREFIX='/__bubble/'
 
 def bubble_log (message):
     print(message, file=sys.stderr)
