@@ -50,24 +50,24 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
     @Override @Transient public String getName() { return getKey(); }
     public AppData setName(String n) { return setKey(n); }
 
-    @ECSearchable @ECField(index=10)
+    @ECField(index=10)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable @ECField(index=20)
+    @ECSearchable(fkDepth=ECForeignKeySearchDepth.none) @ECField(index=20)
     @ECForeignKey(entity=BubbleApp.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String app;
     public boolean hasApp () { return app != null; }
 
-    @ECSearchable @ECField(index=30)
+    @ECSearchable(fkDepth=ECForeignKeySearchDepth.none) @ECField(index=30)
     @ECForeignKey(entity=AppMatcher.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String matcher;
     public boolean hasMatcher() { return matcher != null; }
 
-    @ECSearchable @ECField(index=40)
+    @ECSearchable(fkDepth=ECForeignKeySearchDepth.none) @ECField(index=40)
     @ECForeignKey(entity=AppSite.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String site;

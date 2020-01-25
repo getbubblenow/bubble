@@ -48,7 +48,7 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
 
-    @ECSearchable @ECField(index=20)
+    @ECField(index=20)
     @ECForeignKey(entity=Account.class)
     @Column(length=UUID_MAXLEN, nullable=false, updatable=false)
     @Getter @Setter private String account;

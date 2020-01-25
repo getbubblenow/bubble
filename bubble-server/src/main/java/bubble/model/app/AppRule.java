@@ -51,7 +51,7 @@ public class AppRule extends IdentifiableBaseParentEntity implements AppTemplate
     @ECIndex @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
 
-    @ECSearchable @ECField(index=20)
+    @ECField(index=20)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;

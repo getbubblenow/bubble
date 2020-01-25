@@ -40,7 +40,7 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity {
     public static final String[] VALUE_FIELDS = {"fqdn", "urlRegex", "rule", "template", "enabled"};
     public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS, "name", "site");
 
-    @ECSearchable @ECField(index=10)
+    @ECField(index=10)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
