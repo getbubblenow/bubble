@@ -1,8 +1,10 @@
 package bubble.rule.social.block;
 
+import bubble.model.app.AppMatcher;
 import bubble.rule.AbstractAppRuleDriver;
 import lombok.Getter;
 import org.apache.commons.io.input.ReaderInputStream;
+import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexReplacementFilter;
@@ -44,13 +46,18 @@ public class JsUserBlocker extends AbstractAppRuleDriver {
         ctx.put(CTX_JS_PREFIX, "__bubble_"+sha256_hex(requestId)+"_");
         ctx.put(CTX_BUBBLE_REQUEST_ID, requestId);
         ctx.put(CTX_BUBBLE_HOME, configuration.getPublicUriBase());
-        ctx.put(CTX_SITE, matcher.getSite());
+        ctx.put(CTX_SITE, getSiteName(matcher));
         ctx.put(CTX_BUBBLE_DATA_ID, requestId+"/"+matcher.getUuid());
 
         final String siteJs = HandlebarsUtil.apply(getHandlebars(), getSiteJsTemplate(), ctx);
         ctx.put(CTX_APPLY_BLOCKS_JS, siteJs);
 
         return HandlebarsUtil.apply(getHandlebars(), BUBBLE_JS_TEMPLATE, ctx);
+    }
+
+    private ExpirationMap<String, String> siteNameCache = new ExpirationMap<>();
+    private String getSiteName(AppMatcher matcher) {
+        return siteNameCache.computeIfAbsent(matcher.getSite(), k -> appSiteDAO.findByAccountAndId(matcher.getAccount(), matcher.getSite()).getName());
     }
 
 }

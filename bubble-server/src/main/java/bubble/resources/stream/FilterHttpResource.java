@@ -38,6 +38,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -217,8 +218,8 @@ public class FilterHttpResource {
             activeRequests.put(requestId, filterRequest);
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("filterHttp: starting with requestId="+requestId+", deviceId="+deviceId+", matchersJson="+matchersJson+", contentType="+contentType+", last="+last);
+        if (log.isTraceEnabled()) {
+            log.trace("filterHttp: starting with requestId="+requestId+", deviceId="+deviceId+", matchersJson="+matchersJson+", contentType="+contentType+", last="+last);
         }
 
         final boolean isLast = last != null && last;
@@ -239,6 +240,8 @@ public class FilterHttpResource {
         final FilterDataContext fdc = new FilterDataContext(requestId, matcherId);
         final List<AppData> data = dataDAO.findEnabledByAccountAndAppAndSite
                 (fdc.request.getAccount().getUuid(), fdc.matcher.getApp(), fdc.matcher.getSite());
+
+        if (log.isDebugEnabled()) log.debug("readData: found "+data.size()+" AppData records");
 
         if (format == null) format = AppDataFormat.key;
         switch (format) {
@@ -264,7 +267,7 @@ public class FilterHttpResource {
                               AppData data) {
 
         if (data == null || !data.hasKey()) throw invalidEx("err.key.required");
-
+        if (log.isDebugEnabled()) log.debug("writeData: received data="+json(data, COMPACT_MAPPER));
         final FilterDataContext fdc = new FilterDataContext(requestId, matcherId);
 
         data.setAccount(fdc.request.getAccount().getUuid());
@@ -272,6 +275,7 @@ public class FilterHttpResource {
         data.setSite(fdc.matcher.getSite());
         data.setMatcher(fdc.matcher.getUuid());
 
+        if (log.isDebugEnabled()) log.debug("writeData: recording data="+json(data, COMPACT_MAPPER));
         return ok(dataDAO.create(data));
     }
 

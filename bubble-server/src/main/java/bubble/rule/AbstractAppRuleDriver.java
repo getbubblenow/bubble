@@ -1,6 +1,7 @@
 package bubble.rule;
 
 import bubble.dao.app.AppDataDAO;
+import bubble.dao.app.AppSiteDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
@@ -19,6 +20,7 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
 
     @Autowired protected BubbleConfiguration configuration;
     @Autowired protected AppDataDAO appDataDAO;
+    @Autowired protected AppSiteDAO appSiteDAO;
 
     @Getter @Setter private AppRuleDriver next;
 
