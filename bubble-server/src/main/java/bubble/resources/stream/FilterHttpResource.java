@@ -246,12 +246,13 @@ public class FilterHttpResource {
 
     @GET @Path(EP_DATA+"/{requestId}/{matcherId}"+EP_READ)
     @Produces(APPLICATION_JSON)
-    public Response readData(@Context ContainerRequest ctx,
+    public Response readData(@Context Request req,
+                             @Context ContainerRequest ctx,
                              @PathParam("requestId") String requestId,
                              @PathParam("matcherId") String matcherId,
                              @QueryParam("format") AppDataFormat format) {
 
-        final FilterDataContext fdc = new FilterDataContext(requestId, matcherId);
+        final FilterDataContext fdc = new FilterDataContext(req, requestId, matcherId);
         final List<AppData> data = dataDAO.findEnabledByAccountAndAppAndSite
                 (fdc.request.getAccount().getUuid(), fdc.matcher.getApp(), fdc.matcher.getSite());
 
@@ -275,14 +276,15 @@ public class FilterHttpResource {
     @POST @Path(EP_DATA+"/{requestId}/{matcherId}"+EP_WRITE)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response writeData(@Context ContainerRequest ctx,
+    public Response writeData(@Context Request req,
+                              @Context ContainerRequest ctx,
                               @PathParam("requestId") String requestId,
                               @PathParam("matcherId") String matcherId,
                               AppData data) {
 
         if (data == null || !data.hasKey()) throw invalidEx("err.key.required");
         if (log.isDebugEnabled()) log.debug("writeData: received data="+json(data, COMPACT_MAPPER));
-        final FilterDataContext fdc = new FilterDataContext(requestId, matcherId);
+        final FilterDataContext fdc = new FilterDataContext(req, requestId, matcherId);
 
         data.setAccount(fdc.request.getAccount().getUuid());
         data.setApp(fdc.matcher.getApp());
@@ -297,7 +299,11 @@ public class FilterHttpResource {
         public FilterHttpRequest request;
         public AppMatcher matcher;
 
-        public FilterDataContext(String requestId, String matcherId) {
+        public FilterDataContext(Request req, String requestId, String matcherId) {
+            // only mitmproxy is allowed to call us, and this should always be a local address
+            final String mitmAddr = req.getRemoteAddr();
+            if (!isLocalIpv4(mitmAddr)) throw forbiddenEx();
+
             if (empty(requestId) || empty(matcherId)) throw notFoundEx();
 
             request = getActiveRequest(requestId);
