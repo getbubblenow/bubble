@@ -292,7 +292,7 @@ public class FilterHttpResource {
         data.setMatcher(fdc.matcher.getUuid());
 
         if (log.isDebugEnabled()) log.debug("writeData: recording data="+json(data, COMPACT_MAPPER));
-        return ok(dataDAO.create(data));
+        return ok(dataDAO.set(data));
     }
 
     private class FilterDataContext {

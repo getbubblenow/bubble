@@ -1,5 +1,6 @@
-const {{JS_PREFIX}}_blocked_users = [];
+let {{JS_PREFIX}}_blocked_users = null;
 const {{JS_PREFIX}}_request_id = '{{BUBBLE_REQUEST_ID}}';
+const {{JS_PREFIX}}_interval = 50;
 
 function {{JS_PREFIX}}_onReady(callback) {
     const intervalId = window.setInterval(function() {
@@ -7,22 +8,35 @@ function {{JS_PREFIX}}_onReady(callback) {
             window.clearInterval(intervalId);
             callback.call(this);
         }
-    }, 1000);
+    }, {{JS_PREFIX}}_interval);
 }
 
-function {{JS_PREFIX}}_fetch_blocks () {
+function {{JS_PREFIX}}_fetch_blocks (do_apply) {
     const requestOptions = { method: 'GET' };
     const blocked_users_url = '/__bubble/api/filter/data/{{BUBBLE_DATA_ID}}/read';
     fetch(blocked_users_url, requestOptions)
         .then((resp) => resp.json())
         .then(data => {
-            {{JS_PREFIX}}_blocked_users.length = 0;
+            const blocked_users = [];
             for (let i=0; i<data.length; i++) {
-                {{JS_PREFIX}}_blocked_users.push(data[i]);
+                blocked_users.push(data[i]);
             }
-            {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
+            if ({{JS_PREFIX}}_blocked_users !== null) {
+                {{JS_PREFIX}}_blocked_users = blocked_users;
+                {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
+            } else {
+                const intervalId = window.setInterval(function() {
+                    if ({{JS_PREFIX}}_blocked_users !== null) {
+                        window.clearInterval(intervalId);
+                        {{JS_PREFIX}}_blocked_users = blocked_users;
+                        {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
+                    }
+                }, {{JS_PREFIX}}_interval);
+            }
         });
 }
+
+{{JS_PREFIX}}_fetch_blocks();
 
 function {{JS_PREFIX}}_block_user (author) {
     {{JS_PREFIX}}_blocked_users.push(author);
@@ -38,14 +52,12 @@ function {{JS_PREFIX}}_block_user (author) {
 {{{APPLY_BLOCKS_JS}}}
 
 {{JS_PREFIX}}_onReady(function() {
-
+    {{JS_PREFIX}}_blocked_users = [];
     const bubbleControlDiv = document.createElement('div');
     bubbleControlDiv.style.position = 'fixed';
     bubbleControlDiv.style.bottom = '0';
     bubbleControlDiv.style.right = '0';
     bubbleControlDiv.innerHTML = '<a href="{{{BUBBLE_HOME}}}/app/UserBlocker/site/{{SITE}}"><img width="64" src="/__bubble/bubble_icon.png"/></a>';
     document.getElementsByTagName('body')[0].appendChild(bubbleControlDiv);
-
-    {{JS_PREFIX}}_fetch_blocks();
 });
 
