@@ -63,7 +63,7 @@ public abstract class AccountOwnedEntityDAO<E extends HasAccount>
     public boolean dbFilterIncludeAll() { return false; }
 
     public void handleAccountDeletion(String accountUuid) {
-        findByAccount(accountUuid).forEach(e -> forceDelete(e.getUuid()));
+        getConfiguration().execSql("DELETE FROM "+tableName()+" WHERE account = ?", new Object[] {accountUuid});
     }
 
     public void forceDelete(String uuid) { delete(uuid); }
