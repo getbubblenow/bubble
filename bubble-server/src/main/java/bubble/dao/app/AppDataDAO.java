@@ -86,4 +86,8 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
         return list(criteria().add(and(crits.toArray(new Criterion[0]))));
     }
 
+    protected List<AppData> findByDevice(String uuid) { return findByField("device", uuid); }
+
+    public void deleteDevice(String uuid) { delete(findByDevice(uuid)); }
+
 }

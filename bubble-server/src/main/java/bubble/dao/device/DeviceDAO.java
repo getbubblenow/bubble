@@ -1,6 +1,7 @@
 package bubble.dao.device;
 
 import bubble.dao.account.AccountOwnedEntityDAO;
+import bubble.dao.app.AppDataDAO;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.device.Device;
@@ -25,6 +26,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
     public static final File VPN_REFRESH_USERS_FILE = new File(HOME_DIR, ".algo_refresh_users");
 
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private AppDataDAO dataDAO;
 
     @Override public Order getDefaultSortOrder() { return Order.asc(CTIME); }
 
@@ -80,6 +82,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
     @Override public void delete(String uuid) {
         final Device device = findByUuid(uuid);
         if (device != null) {
+            dataDAO.deleteDevice(uuid);
             super.delete(uuid);
             ensureSpareDevice(device.getAccount(), device.getNetwork(), true);
         }
