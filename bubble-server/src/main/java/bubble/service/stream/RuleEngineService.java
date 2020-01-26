@@ -8,6 +8,7 @@ import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.app.RuleDriver;
 import bubble.model.device.Device;
+import bubble.resources.stream.FilterHttpRequest;
 import bubble.resources.stream.FilterMatchersRequest;
 import bubble.rule.AppRuleDriver;
 import bubble.server.BubbleConfiguration;
@@ -52,7 +53,6 @@ import java.util.List;
 import java.util.Map;
 
 import static bubble.client.BubbleApiClient.newHttpClientBuilder;
-import static java.util.UUID.randomUUID;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
@@ -63,7 +63,7 @@ import static org.cobbzilla.util.http.HttpStatusCodes.OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.send;
 
 @Service @Slf4j
-public class RuleEngine {
+public class RuleEngineService {
 
     @Autowired private AppMatcherDAO matcherDAO;
     @Autowired private AppRuleDAO ruleDAO;
@@ -105,19 +105,17 @@ public class RuleEngine {
     }
 
     public Response applyRulesAndSendResponse(ContainerRequest request,
-                                              Account account,
-                                              Device device,
                                               URIBean ub,
-                                              String[] matcherIds) throws IOException {
+                                              FilterHttpRequest filterRequest) throws IOException {
 
         // sanity check
-        if (empty(matcherIds)) return passthru(request.getEntityStream());
+        if (empty(filterRequest.getMatchers())) return passthru(request.getEntityStream());
 
         // todo: we have at least 1 rule, so add another rule that inserts the global settings controls in the top-left
 
         // initialize drivers -- todo: cache drivers / todo: ensure cache is shorter than session timeout,
         // since drivers that talk thru API will get a session key in their config
-        final List<AppRuleHarness> rules = initRules(account, device, matcherIds);
+        final List<AppRuleHarness> rules = initRules(filterRequest.getAccount(), filterRequest.getDevice(), filterRequest.getMatchers());
         final AppRuleHarness firstRule = rules.get(0);
 
         // filter request
@@ -128,8 +126,7 @@ public class RuleEngine {
         final CloseableHttpResponse proxyResponse = httpClient.execute(get);
 
         // filter response. when stream is closed, close http client
-        final String requestId = randomUUID().toString();
-        final InputStream responseEntity = firstRule.getDriver().filterResponse(requestId, new HttpClosingFilterInputStream(httpClient, proxyResponse));
+        final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest.getId(), new HttpClosingFilterInputStream(httpClient, proxyResponse));
 
         // send response
         return sendResponse(responseEntity, proxyResponse);

@@ -10,7 +10,7 @@ import bubble.model.app.AppDataFormat;
 import bubble.model.app.AppMatcher;
 import bubble.model.device.Device;
 import bubble.service.cloud.DeviceIdService;
-import bubble.service.stream.RuleEngine;
+import bubble.service.stream.RuleEngineService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
@@ -52,7 +52,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 public class FilterHttpResource {
 
     @Autowired private AccountDAO accountDAO;
-    @Autowired private RuleEngine ruleEngine;
+    @Autowired private RuleEngineService ruleEngine;
     @Autowired private AppMatcherDAO matcherDAO;
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private DeviceIdService deviceIdService;
@@ -281,23 +281,62 @@ public class FilterHttpResource {
                               @PathParam("requestId") String requestId,
                               @PathParam("matcherId") String matcherId,
                               AppData data) {
-
         if (data == null || !data.hasKey()) throw invalidEx("err.key.required");
-        if (log.isDebugEnabled()) log.debug("writeData: received data="+json(data, COMPACT_MAPPER));
+        return ok(writeData(req, requestId, matcherId, data));
+    }
+
+    @GET @Path(EP_DATA+"/{requestId}/{matcherId}"+EP_WRITE)
+    @Produces(APPLICATION_JSON)
+    public Response writeData(@Context Request req,
+                              @Context ContainerRequest ctx,
+                              @PathParam("requestId") String requestId,
+                              @PathParam("matcherId") String matcherId,
+                              @QueryParam(Q_DATA) String dataJson,
+                              @QueryParam(Q_REDIRECT) String redirectLocation) {
+        if (empty(dataJson)) throw invalidEx("err.data.required");
+        final AppData data;
+        try {
+            data = json(dataJson, AppData.class);
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) log.debug("writeData: invalid data="+dataJson+": "+shortError(e));
+            throw invalidEx("err.data.invalid");
+        }
+        if (!data.hasKey()) throw invalidEx("err.key.required");
+
+        final FilterDataContext fdc = writeData(req, requestId, matcherId, data);
+
+        if (!empty(redirectLocation)) {
+            if (redirectLocation.trim().equalsIgnoreCase(Boolean.FALSE.toString())) {
+                return ok(data);
+            } else {
+                return redirect(redirectLocation);
+            }
+        } else {
+            final String referer = req.getHeader("Referer");
+            if (referer != null) return redirect(referer);
+            return redirect(".");
+        }
+    }
+
+    private FilterDataContext writeData(Request req, String requestId, String matcherId, AppData data) {
+        if (log.isDebugEnabled()) log.debug("writeData: received data=" + json(data, COMPACT_MAPPER));
         final FilterDataContext fdc = new FilterDataContext(req, requestId, matcherId);
 
         data.setAccount(fdc.request.getAccount().getUuid());
+        data.setDevice(fdc.request.getDevice().getUuid());
         data.setApp(fdc.matcher.getApp());
         data.setSite(fdc.matcher.getSite());
         data.setMatcher(fdc.matcher.getUuid());
 
-        if (log.isDebugEnabled()) log.debug("writeData: recording data="+json(data, COMPACT_MAPPER));
-        return ok(dataDAO.set(data));
+        if (log.isDebugEnabled()) log.debug("writeData: recording data=" + json(data, COMPACT_MAPPER));
+        fdc.data = dataDAO.set(data);
+        return fdc;
     }
 
     private class FilterDataContext {
         public FilterHttpRequest request;
         public AppMatcher matcher;
+        public AppData data;
 
         public FilterDataContext(Request req, String requestId, String matcherId) {
             // only mitmproxy is allowed to call us, and this should always be a local address

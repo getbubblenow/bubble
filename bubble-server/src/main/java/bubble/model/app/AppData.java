@@ -1,6 +1,7 @@
 package bubble.model.app;
 
 import bubble.model.account.Account;
+import bubble.model.device.Device;
 import bubble.rule.RuleConfig;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,7 +46,7 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
     public static final String[] VALUE_FIELDS = {"data", "expiration", "template", "enabled"};
 
     public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS,
-            "account", "app", "site", "matcher", "key");
+            "account", "device", "app", "site", "matcher", "key");
 
     @Override @Transient public String getName() { return getKey(); }
     public AppData setName(String n) { return setKey(n); }
@@ -55,31 +56,36 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable(fkDepth=ECForeignKeySearchDepth.none) @ECField(index=20)
+    @ECSearchable(fkDepth=ECForeignKeySearchDepth.shallow) @ECField(index=20)
+    @ECForeignKey(entity=Device.class)
+    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
+    @Getter @Setter private String device;
+
+    @ECSearchable(fkDepth=ECForeignKeySearchDepth.none) @ECField(index=30)
     @ECForeignKey(entity=BubbleApp.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String app;
     public boolean hasApp () { return app != null; }
 
-    @ECSearchable(fkDepth=ECForeignKeySearchDepth.none) @ECField(index=30)
+    @ECSearchable(fkDepth=ECForeignKeySearchDepth.none) @ECField(index=40)
     @ECForeignKey(entity=AppMatcher.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String matcher;
     public boolean hasMatcher() { return matcher != null; }
 
-    @ECSearchable(fkDepth=ECForeignKeySearchDepth.none) @ECField(index=40)
+    @ECSearchable(fkDepth=ECForeignKeySearchDepth.none) @ECField(index=50)
     @ECForeignKey(entity=AppSite.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String site;
     public boolean hasSite() { return site != null; }
 
-    @ECSearchable(filter=true) @ECField(index=50)
+    @ECSearchable(filter=true) @ECField(index=60)
     @HasValue(message="err.key.required")
     @ECIndex @Column(nullable=false, updatable=false, length=5000)
     @Getter @Setter private String key;
     public boolean hasKey () { return key != null; }
 
-    @ECSearchable(filter=true) @ECField(index=60)
+    @ECSearchable(filter=true) @ECField(index=70)
     @Size(max=100000, message="err.data.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @Getter @Setter private String data;
@@ -94,15 +100,15 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
         return setData(String.valueOf(val+1));
     }
 
-    @ECSearchable(type=EntityFieldType.expiration_time)
+    @ECSearchable(type=EntityFieldType.expiration_time) @ECField(index=80)
     @ECIndex @Getter @Setter private Long expiration;
 
-    @ECSearchable
+    @ECSearchable  @ECField(index=90)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
     public boolean template() { return bool(template); }
 
-    @ECSearchable
+    @ECSearchable  @ECField(index=100)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled() { return bool(enabled); }

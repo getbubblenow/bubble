@@ -33,6 +33,9 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
 
     public Handlebars getHandlebars () { return configuration.getHandlebars(); }
 
+    protected String getDataId(String requestId) { return getDataId(requestId, matcher); }
+    public static String getDataId(String requestId, AppMatcher matcher) { return requestId+"/"+matcher.getUuid(); }
+
     @Override public void init(JsonNode config,
                                JsonNode userConfig,
                                AppRule rule,

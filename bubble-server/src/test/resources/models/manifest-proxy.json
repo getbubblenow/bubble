@@ -1,5 +1,6 @@
 [
   "system/ruleDriver",
+  "system/account_testDevice",
   "manifest-app-user-block-hn",
   "manifest-app-user-block-localhost"
 ]

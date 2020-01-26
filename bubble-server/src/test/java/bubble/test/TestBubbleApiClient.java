@@ -3,6 +3,7 @@ package bubble.test;
 import bubble.client.BubbleApiClient;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.cobbzilla.util.http.ApiConnectionInfo;
 import org.cobbzilla.wizard.auth.AuthResponse;
 import org.cobbzilla.wizard.auth.LoginRequest;
@@ -32,6 +33,10 @@ public class TestBubbleApiClient extends BubbleApiClient {
     public TestBubbleApiClient(RestServerConfiguration configuration) {
         super(new ApiConnectionInfo(configuration.getApiUriBase()));
         setConfiguration(configuration);
+    }
+
+    @Override public HttpClientBuilder getHttpClientBuilder() {
+        return super.getHttpClientBuilder().disableRedirectHandling();
     }
 
     @Getter(lazy=true) private final String superuserToken = initSuperuserToken();

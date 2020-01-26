@@ -34,7 +34,7 @@ public class JsUserBlocker extends AbstractAppRuleDriver {
 
     @Override public InputStream doFilterResponse(String requestId, InputStream in) {
         final String replacement = "<head><script>" + getBubbleJs(requestId) + "</script>";
-        final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", 0, replacement);
+        final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
         final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter).setMaxMatches(1);
         return new ReaderInputStream(reader, UTF8cs);
     }
@@ -47,7 +47,7 @@ public class JsUserBlocker extends AbstractAppRuleDriver {
         ctx.put(CTX_BUBBLE_REQUEST_ID, requestId);
         ctx.put(CTX_BUBBLE_HOME, configuration.getPublicUriBase());
         ctx.put(CTX_SITE, getSiteName(matcher));
-        ctx.put(CTX_BUBBLE_DATA_ID, requestId+"/"+matcher.getUuid());
+        ctx.put(CTX_BUBBLE_DATA_ID, getDataId(requestId));
 
         final String siteJs = HandlebarsUtil.apply(getHandlebars(), getSiteJsTemplate(), ctx);
         ctx.put(CTX_APPLY_BLOCKS_JS, siteJs);

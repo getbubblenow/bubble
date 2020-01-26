@@ -1,13 +1,11 @@
 package bubble.rule.social.block;
 
-import bubble.ApiConstants;
 import bubble.BubbleHandlebars;
 import bubble.dao.app.AppDataDAO;
 import bubble.model.app.AppData;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.ning.http.util.Base64;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
@@ -22,10 +20,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 
+import static bubble.ApiConstants.*;
+import static bubble.rule.AbstractAppRuleDriver.getDataId;
 import static bubble.rule.social.block.UserBlockerConfig.STANDARD_JS_ENGINE;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.string.StringUtil.urlEncode;
 
 @Slf4j
 public class UserBlockerStreamFilter implements RegexStreamFilter {
@@ -39,12 +40,14 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
     private String requestId;
     private AppMatcher matcher;
     private AppRule rule;
+    private String apiBase;
     @Setter private AppDataDAO dataDAO;
 
-    public UserBlockerStreamFilter(String requestId, AppMatcher matcher, AppRule rule) {
+    public UserBlockerStreamFilter(String requestId, AppMatcher matcher, AppRule rule, String apiBase) {
         this.requestId = requestId;
         this.matcher = matcher;
         this.rule = rule;
+        this.apiBase = apiBase;
     }
 
     private enum UserBlockerStreamState { seeking_comments, blocking_comments }
@@ -115,13 +118,11 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
         }
         final String userId = data.getProperty(PROP_USER_ID);
         final AppData appData = new AppData()
-                .setAccount(rule.getAccount())
-                .setApp(rule.getApp())
-                .setMatcher(matcher.getUuid())
-                .setSite(matcher.getSite())
                 .setKey(userId)
                 .setData(Boolean.TRUE.toString());
-        final String blockUrl = ApiConstants.DATA_ENDPOINT + "/"+ Base64.encode(json(appData, COMPACT_MAPPER).getBytes());
+        final String dataId = getDataId(requestId, matcher);
+        final String blockUrl = BUBBLE_FILTER_PASSTHRU + apiBase + FILTER_HTTP_ENDPOINT + EP_DATA + "/" + dataId + EP_WRITE
+                + "?" +Q_DATA + "=" +urlEncode(json(appData, COMPACT_MAPPER));
         final Map<String, Object> ctx = new HashMap<>(data.getProperties());
         ctx.put(PROP_BLOCK_URL, blockUrl);
         return config.getCommentDecorator().decorate(BubbleHandlebars.instance.getHandlebars(), data.getData(), ctx);
@@ -131,13 +132,11 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
         if (!config.hasBlockedCommentReplacement()) return "";
         final Map<String, Object> ctx = new HashMap<>();
         final AppData appData = new AppData()
-                .setAccount(rule.getAccount())
-                .setApp(rule.getApp())
-                .setMatcher(matcher.getUuid())
-                .setSite(matcher.getSite())
                 .setKey(userId)
                 .setData(Boolean.FALSE.toString());
-        final String unblockUrl = ApiConstants.DATA_ENDPOINT+"/"+Base64.encode(json(appData, COMPACT_MAPPER).getBytes());
+        final String dataId = getDataId(requestId, matcher);
+        final String unblockUrl = BUBBLE_FILTER_PASSTHRU + apiBase + FILTER_HTTP_ENDPOINT + EP_DATA + "/" + dataId + EP_WRITE
+                + "?" +Q_DATA + "=" +urlEncode(json(appData, COMPACT_MAPPER));
         ctx.put(PROP_BLOCKED_USER, userId);
         ctx.put(PROP_UNBLOCK_URL, unblockUrl);
 

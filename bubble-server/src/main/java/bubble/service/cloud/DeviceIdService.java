@@ -20,8 +20,7 @@ import java.util.Map;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Service @Slf4j
@@ -33,7 +32,6 @@ public class DeviceIdService {
     public static final FilenamePrefixFilter IP_FILE_FILTER = new FilenamePrefixFilter(IP_FILE_PREFIX);
 
     public static final String DEVICE_FILE_PREFIX = "device_";
-    public static final FilenamePrefixFilter DEVICE_FILE_FILTER = new FilenamePrefixFilter(DEVICE_FILE_PREFIX);
 
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private BubbleConfiguration configuration;
@@ -44,9 +42,7 @@ public class DeviceIdService {
     public Device findDeviceByIp (String ipAddr) {
 
         if (!WG_DEVICES_DIR.exists()) {
-            if (configuration.testMode()) {
-                return new Device().setAccount(accountDAO.getFirstAdmin().getUuid());
-            }
+            if (configuration.testMode()) return findTestDevice(ipAddr);
             throw invalidEx("err.deviceDir.notFound");
         }
 
@@ -92,6 +88,18 @@ public class DeviceIdService {
             return FileUtil.toStringList(deviceFile);
         } catch (IOException e) {
             return die("findIpsByDevice("+deviceUuid+") error: "+e, e);
+        }
+    }
+
+    private Device findTestDevice(String ipAddr) {
+        final String adminUuid = accountDAO.getFirstAdmin().getUuid();
+        final List<Device> adminDevices = deviceDAO.findByAccount(adminUuid);
+        if (empty(adminDevices)) {
+            log.warn("findDeviceByIp("+ipAddr+") test mode and no admin devices, returning dummy device");
+            return new Device().setAccount(adminUuid).setName("dummy");
+        } else {
+            log.warn("findDeviceByIp("+ipAddr+") test mode, returning first admin device");
+            return adminDevices.get(0);
         }
     }
 

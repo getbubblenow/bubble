@@ -18,13 +18,15 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.validation.constraints.Size;
 
+import static bubble.ApiConstants.EP_DEVICES;
 import static java.util.UUID.randomUUID;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
-@Entity @ECType(root=true) @ECTypeCreate(method="DISABLED")
+@Entity @ECType(root=true)
+@ECTypeURIs(baseURI=EP_DEVICES, listFields={"name", "enabled"})
 @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "network", "name"}),

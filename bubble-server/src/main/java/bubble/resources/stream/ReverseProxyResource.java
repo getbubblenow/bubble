@@ -7,7 +7,7 @@ import bubble.model.app.AppMatcher;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.DeviceIdService;
-import bubble.service.stream.RuleEngine;
+import bubble.service.stream.RuleEngineService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.http.URIBean;
@@ -29,9 +29,11 @@ import java.util.TreeSet;
 
 import static bubble.ApiConstants.PROXY_ENDPOINT;
 import static bubble.ApiConstants.getRemoteHost;
+import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.CONTENT_TYPE_ANY;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.EMPTY_ARRAY;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -42,8 +44,9 @@ public class ReverseProxyResource {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AppMatcherDAO matcherDAO;
     @Autowired private AppRuleDAO ruleDAO;
-    @Autowired private RuleEngine ruleEngine;
+    @Autowired private RuleEngineService ruleEngine;
     @Autowired private DeviceIdService deviceIdService;
+    @Autowired private FilterHttpResource filterHttpResource;
 
     @Getter(lazy=true) private final int prefixLength = configuration.getHttp().getBaseUri().length() + PROXY_ENDPOINT.length() + 1;
 
@@ -79,8 +82,16 @@ public class ReverseProxyResource {
                 }
             }
 
+            final FilterHttpRequest filterRequest = new FilterHttpRequest()
+                    .setId(randomUUID().toString())
+                    .setAccount(account)
+                    .setDevice(device)
+                    .setMatchers(matcherIds.toArray(EMPTY_ARRAY));
+
+            filterHttpResource.getActiveRequestCache().set(filterRequest.getId(), json(filterRequest));
+
             // if 'rules' is null or empty, this will passthru
-            return ruleEngine.applyRulesAndSendResponse(request, account, device, ub, matcherIds.toArray(EMPTY_ARRAY));
+            return ruleEngine.applyRulesAndSendResponse(request, ub, filterRequest);
         }
     }
 

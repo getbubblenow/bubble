@@ -1,6 +1,5 @@
 package bubble.test;
 
-import bubble.model.app.AppData;
 import bubble.server.BubbleConfiguration;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.util.RestResponse;
@@ -9,6 +8,8 @@ import org.junit.Test;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static bubble.ApiConstants.BUBBLE_FILTER_PASSTHRU;
+import static org.cobbzilla.util.http.HttpStatusCodes.FOUND;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -35,8 +36,11 @@ public class ProxyTest extends ActivatedBubbleModelTestBase {
         final Matcher matcher = pattern.matcher(response.json);
         assertTrue("expected match for user to block", matcher.find());
         final String blockUrl = matcher.group(1);
-        final AppData blockResponse = getApi().get(blockUrl, AppData.class);
-        assertEquals("expected user block to be saved correctly", "electricEmu", blockResponse.getKey());
+        final String expectedPrefix = BUBBLE_FILTER_PASSTHRU + getConfiguration().getHttp().getBaseUri();
+        assertTrue("expected prefix blockUrl not found", blockUrl.startsWith(expectedPrefix));
+
+        final RestResponse restResponse = getApi().doGet(blockUrl.substring(expectedPrefix.length()));
+        assertEquals("expected redirect", FOUND, restResponse.status);
 
         // second request, verify additional user blocked
         modelTest("filter/user_block/hn_request2");

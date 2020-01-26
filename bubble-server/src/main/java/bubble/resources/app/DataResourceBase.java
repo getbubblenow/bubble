@@ -2,11 +2,13 @@ package bubble.resources.app;
 
 import bubble.dao.account.AccountDAO;
 import bubble.dao.app.*;
+import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppData;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppSite;
 import bubble.model.app.BubbleApp;
+import bubble.model.device.Device;
 import bubble.resources.account.AccountOwnedTemplateResource;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,7 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
 
     @Autowired protected BubbleConfiguration configuration;
     @Autowired protected AccountDAO accountDAO;
+    @Autowired protected DeviceDAO deviceDAO;
     @Autowired protected BubbleAppDAO appDAO;
     @Autowired protected AppDataDAO dataDAO;
     @Autowired protected AppRuleDAO ruleDAO;
@@ -84,6 +87,10 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
         final BubbleApp app = appDAO.findByAccountAndId(caller.getUuid(), request.getApp());
         if (app == null) throw notFoundEx(request.getApp());
         request.setApp(app.getUuid());
+
+        final Device device = deviceDAO.findByAccountAndId(caller.getUuid(), request.getDevice());
+        if (device == null) throw notFoundEx(request.getDevice());
+        request.setDevice(device.getUuid());
 
         final AppSite site = siteDAO.findByAccountAndId(caller.getUuid(), request.getSite());
         if (site == null) throw notFoundEx(request.getSite());

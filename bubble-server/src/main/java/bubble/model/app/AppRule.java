@@ -32,7 +32,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 @ECTypeURIs(baseURI=EP_RULES, listFields={"name", "app", "driver", "configJson"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECTypeChildren(uriPrefix=EP_RULES+"/{AppRule.name}", value={
-        @ECTypeChild(type= AppData.class, backref="rule"),
+        @ECTypeChild(type=AppData.class, backref="rule"),
 })
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "app", "name"}),

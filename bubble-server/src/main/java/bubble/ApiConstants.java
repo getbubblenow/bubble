@@ -37,6 +37,7 @@ public class ApiConstants {
     public static final String DEFAULT_LOCALE = "en_US";
 
     private static final AtomicReference<String> bubbleDefaultDomain = new AtomicReference<>();
+
     private static String initDefaultDomain() {
         final File f = new File(HOME_DIR, ".BUBBLE_DEFAULT_DOMAIN");
         final String domain = FileUtil.toStringOrDie(f);
@@ -178,6 +179,9 @@ public class ApiConstants {
     public static final String FILTER_HTTP_ENDPOINT = "/filter";
     public static final String EP_APPLY = "/apply";
 
+    // requests to a first-party host with this prefix will be forwarded to bubble
+    public static final String BUBBLE_FILTER_PASSTHRU = "/__bubble";
+
     // search constants
     public static final int MAX_SEARCH_PAGE = 50;
     public static final String Q_FILTER = "query";
@@ -186,6 +190,10 @@ public class ApiConstants {
     public static final String Q_PAGE = "page";
     public static final String Q_SIZE = "size";
     public static final String Q_SORT = "sort";
+
+    // param for writing AppData via GET (see FilterHttpResource and UserBlockerStreamFilter)
+    public static final String Q_DATA = "data";
+    public static final String Q_REDIRECT = "redirect";
 
     public static final int MAX_NOTIFY_LOG = 10000;
     public static final int ERROR_MAXLEN = 4000;

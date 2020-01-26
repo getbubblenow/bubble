@@ -15,8 +15,6 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import static bubble.ApiConstants.EP_ASSETS;
-import static bubble.ApiConstants.EP_DATA;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.UTF8cs;
@@ -50,7 +48,7 @@ public class UserBlocker extends AbstractAppRuleDriver {
     protected UserBlockerConfig configObject() { return json(getFullConfig(), UserBlockerConfig.class); }
 
     @Override public InputStream doFilterResponse(String requestId, InputStream in) {
-        final UserBlockerStreamFilter filter = new UserBlockerStreamFilter(requestId, matcher, rule);
+        final UserBlockerStreamFilter filter = new UserBlockerStreamFilter(requestId, matcher, rule, configuration.getHttp().getBaseUri());
         filter.configure(getFullConfig());
         filter.setDataDAO(appDataDAO);
         RegexFilterReader reader = new RegexFilterReader(in, RESPONSE_BUFSIZ, filter).setName("mainFilterReader");
@@ -97,16 +95,6 @@ public class UserBlocker extends AbstractAppRuleDriver {
         }
 
         return new ReaderInputStream(reader, UTF8cs);
-    }
-
-    public String defaultBlockControlImageUri(String requestId) {
-        // todo: remove /api , just route .bubble to ourselves
-        return configuration.getHttp().getBaseUri() + "/.bubble/" + requestId + "/" + getClass().getName() + EP_ASSETS + "/@blockControl.png";
-    }
-
-    public String blockActionUri(String requestId) {
-        // todo: remove /api , just route .bubble to ourselves
-        return configuration.getHttp().getBaseUri() + "/.bubble/" + requestId + "/" + getClass().getName() + EP_DATA;
     }
 
     protected String startElementRegex(String el)     { return "(<\\s*"      + el + "[^>]*>)"; }

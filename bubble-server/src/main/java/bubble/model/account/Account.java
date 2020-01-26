@@ -3,8 +3,14 @@ package bubble.model.account;
 import bubble.dao.account.AccountInitializer;
 import bubble.model.app.AppData;
 import bubble.model.app.BubbleApp;
+import bubble.model.app.RuleDriver;
+import bubble.model.bill.AccountPayment;
+import bubble.model.bill.AccountPaymentMethod;
+import bubble.model.bill.AccountPlan;
+import bubble.model.bill.Bill;
 import bubble.model.boot.ActivationRequest;
 import bubble.model.cloud.*;
+import bubble.model.cloud.notify.ReceivedNotification;
 import bubble.model.cloud.notify.SentNotification;
 import bubble.model.device.Device;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -17,7 +23,7 @@ import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.filters.auth.TokenPrincipal;
 import org.cobbzilla.wizard.model.HashedPassword;
 import org.cobbzilla.wizard.model.Identifiable;
-import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.IdentifiableBaseParentEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.model.search.SqlViewSearchResult;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
@@ -49,20 +55,28 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=ACCOUNTS_ENDPOINT, listFields={"name", "url", "description", "admin", "suspended"}, isDeleteDefined=false)
-@ECTypeChildren(value={
+@ECTypeChildren(uriPrefix=ACCOUNTS_ENDPOINT+"/{Account.name}", value={
         @ECTypeChild(type=Device.class, backref="account"),
+        @ECTypeChild(type=RuleDriver.class, backref="account"),
         @ECTypeChild(type=BubbleApp.class, backref="account"),
         @ECTypeChild(type=AppData.class, backref="account"),
         @ECTypeChild(type=AnsibleRole.class, backref="account"),
         @ECTypeChild(type=CloudService.class, backref="account"),
+        @ECTypeChild(type=BubbleFootprint.class, backref="account"),
         @ECTypeChild(type=BubbleDomain.class, backref="account"),
         @ECTypeChild(type=BubbleNetwork.class, backref="account"),
         @ECTypeChild(type=BubbleNode.class, backref="account"),
-        @ECTypeChild(type=SentNotification.class, backref="account")
+        @ECTypeChild(type=AccountPlan.class, backref="account"),
+        @ECTypeChild(type=AccountSshKey.class, backref="account"),
+        @ECTypeChild(type=Bill.class, backref="account"),
+        @ECTypeChild(type=AccountPaymentMethod.class, backref="account"),
+        @ECTypeChild(type=AccountPayment.class, backref="account"),
+        @ECTypeChild(type=SentNotification.class, backref="account"),
+        @ECTypeChild(type=ReceivedNotification.class, backref="account")
 })
 @ECSearchDepth(fkDepth=none)
 @Entity @NoArgsConstructor @Accessors(chain=true) @Slf4j
-public class Account extends IdentifiableBase implements TokenPrincipal, SqlViewSearchResult {
+public class Account extends IdentifiableBaseParentEntity implements TokenPrincipal, SqlViewSearchResult {
 
     public static final String[] UPDATE_FIELDS = {"url", "description", "autoUpdatePolicy"};
     public static final String[] ADMIN_UPDATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "suspended", "admin");
