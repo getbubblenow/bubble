@@ -1,0 +1,30 @@
+[{
+  "name": "UserBlocker",
+  "children": {
+    "AppSite": [{
+      "name": "HackerNews",
+      "url": "https://news.ycombinator.com",
+      "description": "A blog and discussion site for technology news, operated by YCombinator",
+      "template": true
+    }],
+    "AppRule": [{
+      "name": "hn_user_blocker",
+      "template": true,
+      "driver": "UserBlocker",
+      "config": {
+        "blockedCommentCheck": "parseInt(current.get('width')) > parseInt(blocked.get('width'))",
+        "blockedCommentReplacement": "{{{chunkStartRegex}}}<td>[comment by {{blockedUser}} has been blocked] <a href=\"{{{unblockUrl}}}\">UNBLOCK</a></td></tr>",
+        "chunkStartRegex": "<tr\\s+class='athing\\s+comtr\\s+'\\s+id='\\d+'>",
+        "chunkEndRegex": " </table></td></tr>",
+        "chunkProperties": [
+          {"name": "userId", "value": "<a\\s+href=\"user\\?id=(.+?)\"\\s+class=\"hnuser\">\\s*(.+?)\\s*</a>"},
+          {"name": "width", "value": "<td\\s+class='ind'><img\\s+src=\"s.gif\"\\s+height=\"1\"\\s+width=\"(\\d+?)\"></td>"}
+        ],
+        "commentDecorator": {
+          "regex": "class=\"age\"\\s*>.+?</span>",
+          "insert": " <a href=\"{{{blockUrl}}}\"><b>[X]</b></a> "
+        }
+      }
+    }]
+  }
+}]
