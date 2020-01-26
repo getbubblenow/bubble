@@ -3,6 +3,7 @@ package bubble.dao.account;
 import bubble.cloud.CloudServiceDriver;
 import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.app.*;
+import bubble.dao.bill.BillDAO;
 import bubble.dao.cloud.AnsibleRoleDAO;
 import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.BubbleFootprintDAO;
@@ -10,6 +11,7 @@ import bubble.dao.cloud.CloudServiceDAO;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.*;
 import bubble.model.app.*;
+import bubble.model.bill.Bill;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import bubble.service.boot.SelfNodeService;
@@ -56,6 +58,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private AccountMessageDAO messageDAO;
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private SelfNodeService selfNodeService;
+    @Autowired private BillDAO billDAO;
 
     public Account newAccount(Request req, AccountRegistration request, Account parent) {
         return create(new Account(request)
@@ -238,7 +241,11 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
             throw invalidEx("err.delete.invalid", "cannot delete account ("+account.getUuid()+") that owns current network ("+configuration.getThisNetwork().getUuid()+")", account.getUuid());
         }
 
-        // todo: cannot delete an account that has unpaid bills
+        // cannot delete account with unpaid bills
+        final List<Bill> unpaid = billDAO.findUnpaidByAccount(uuid);
+        if (!unpaid.isEmpty()) {
+            throw invalidEx("err.delete.unpaidBills", "cannot delete account ("+account.getUuid()+") with "+unpaid.size()+" unpaid bills", account.getUuid());
+        }
 
         final AccountPolicy policy = policyDAO.findSingleByAccount(uuid);
 

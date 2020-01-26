@@ -28,6 +28,10 @@ public class BillDAO extends AccountOwnedEntityDAO<Bill> {
         return findByFields("accountPlan", accountPlanUuid, "status", BillStatus.unpaid);
     }
 
+    public List<Bill> findUnpaidByAccount(String accountUuid) {
+        return findByFields("account", accountUuid, "status", BillStatus.unpaid);
+    }
+
     public Bill createFirstBill(BubblePlan plan, AccountPlan accountPlan) {
         return create(newBill(plan, accountPlan, accountPlan.getCtime()));
     }
