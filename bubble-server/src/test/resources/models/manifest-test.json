@@ -5,6 +5,7 @@
   "system/bubblePlan",
   "system/bubbleFootprint",
   "system/ruleDriver",
+  "system/account_testDevice",
   "manifest-app-analytics",
   "manifest-app-user-block-hn",
   "manifest-app-user-block-localhost"
