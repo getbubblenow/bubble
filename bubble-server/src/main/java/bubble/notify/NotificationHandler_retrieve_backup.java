@@ -37,7 +37,6 @@ public class NotificationHandler_retrieve_backup extends ReceivedNotificationHan
         }
         payloadNode.setBackup(backup);
 
-        final String systemAccount = configuration.getThisNode().getAccount();
-        notificationService.notify(systemAccount, node, backup_response, payloadNode);
+        notificationService.notify(node, backup_response, payloadNode);
     }
 }

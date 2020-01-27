@@ -44,11 +44,11 @@ public class NotificationService {
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
     @Autowired private NotificationReceiverService notificationReceiverService;
 
-    public NotificationReceipt notify(String sender, ApiClientBase api, NotificationType type, Object payload) {
-        return notify(sender, api, null, type, payload);
+    public NotificationReceipt notify(ApiClientBase api, NotificationType type, Object payload) {
+        return notify(api, null, type, payload);
     }
 
-    public NotificationReceipt notify(String sender, BubbleNode node, NotificationType type, Object payload) {
+    public NotificationReceipt notify(BubbleNode node, NotificationType type, Object payload) {
         if (nodeKeyDAO.findFirstByNode(node.getUuid()) == null) {
             log.warn("notify: no keys found for node: "+node.getUuid());
             return null;
@@ -57,27 +57,27 @@ public class NotificationService {
                 ? node.getApiQuickClient(configuration)
                 : node.getApiClient(configuration);
         final String toNodeUuid = node.getUuid();
-        return notify(sender, api, toNodeUuid, type, payload);
+        return notify(api, toNodeUuid, type, payload);
     }
 
-    public NotificationReceipt notifyWithEnhancedReceipt(String sender, BubbleNode node, NotificationType type, Object payload) {
+    public NotificationReceipt notifyWithEnhancedReceipt(BubbleNode node, NotificationType type, Object payload) {
         final ApiClientBase api = node.getApiClient(configuration);
         final String toNodeUuid = node.getUuid();
-        return notifyWithEnhancedReceipt(sender, api, toNodeUuid, type, payload);
+        return notifyWithEnhancedReceipt(api, toNodeUuid, type, payload);
     }
 
-    public NotificationReceipt notify(String sender, ApiClientBase api, String toNodeUuid, NotificationType type, Object payload) {
-        return _notify(sender, api, toNodeUuid, type, payload, false);
+    public NotificationReceipt notify(ApiClientBase api, String toNodeUuid, NotificationType type, Object payload) {
+        return _notify(api, toNodeUuid, type, payload, false);
     }
-    public NotificationReceipt notifyWithEnhancedReceipt(String sender, ApiClientBase api, String toNodeUuid, NotificationType type, Object payload) {
-        return _notify(sender, api, toNodeUuid, type, payload, true);
+    public NotificationReceipt notifyWithEnhancedReceipt(ApiClientBase api, String toNodeUuid, NotificationType type, Object payload) {
+        return _notify(api, toNodeUuid, type, payload, true);
     }
-    public NotificationReceipt _notify(String sender, ApiClientBase api, String toNodeUuid, NotificationType type, Object payload, boolean enhancedReceipt) {
+    public NotificationReceipt _notify(ApiClientBase api, String toNodeUuid, NotificationType type, Object payload, boolean enhancedReceipt) {
         final BubbleNode thisNode = configuration.getThisNode();
         final boolean isLocal = toNodeUuid != null && toNodeUuid.equals(thisNode.getUuid());
         final SentNotification notification = sentNotificationDAO.create((SentNotification) new SentNotification()
                 .setNotificationId(getNotificationId(payload))
-                .setAccount(sender)
+                .setAccount(thisNode.getAccount())
                 .setType(type)
                 .setFromNode(thisNode.getUuid())
                 .setToNode(toNodeUuid != null ? toNodeUuid : api.getBaseUri())
@@ -157,7 +157,7 @@ public class NotificationService {
             // register callback for response
             log.debug("notifySync ("+notification.getClass().getSimpleName()+"/"+notification.getId()+"): sending notification: "+activeNotification.getId());
             syncRequests.put(notification.getId(), notification);
-            final NotificationReceipt receipt = _notify(configuration.getThisNode().getAccount(),
+            final NotificationReceipt receipt = _notify(
                     delegate.getApiClient(configuration),
                     delegate.getUuid(),
                     type,

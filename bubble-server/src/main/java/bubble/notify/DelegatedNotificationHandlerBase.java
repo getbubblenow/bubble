@@ -20,7 +20,7 @@ public abstract class DelegatedNotificationHandlerBase extends ReceivedNotificat
             reply.setResponse(json(json(result), JsonNode.class));
         }
 
-        notificationService.notify(configuration.getThisNode().getAccount(), sender, type, reply);
+        notificationService.notify(sender, type, reply);
     }
 
 }

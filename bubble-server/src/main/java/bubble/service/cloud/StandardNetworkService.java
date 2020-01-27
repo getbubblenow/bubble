@@ -475,7 +475,7 @@ public class StandardNetworkService implements NetworkService {
         final String prefix = "isReachable(" + node.id() + "): ";
         try {
             log.info(prefix+"starting");
-            final NotificationReceipt receipt = notificationService.notify(node.getAccount(), node, NotificationType.health_check, null);
+            final NotificationReceipt receipt = notificationService.notify(node, NotificationType.health_check, null);
             if (receipt == null) {
                 log.info(prefix+" health_check failed, checking via cloud");
                 final CloudService cloud = cloudDAO.findByUuid(node.getCloud());

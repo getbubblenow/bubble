@@ -321,7 +321,7 @@ public class StandardSelfNodeService implements SelfNodeService {
         }
 
         log.debug("finalizeRestore: Notifying sage that restore is complete: " + getSageNode());
-        final NotificationReceipt receipt = notificationService.notify(selfNode.getUuid(), sageNode, NotificationType.restore_complete, selfNode);
+        final NotificationReceipt receipt = notificationService.notify(sageNode, NotificationType.restore_complete, selfNode);
         if (!receipt.isSuccess()) {
             return die("finalizeRestore: sage notification failed: "+json(receipt, COMPACT_MAPPER));
         } else {

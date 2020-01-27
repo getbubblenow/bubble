@@ -206,7 +206,7 @@ public class BackupService extends SimpleDaemon {
                         if (sageNode == null) {
                             log.warn("backup: sage node not found, cannot notify");
                         } else {
-                            final NotificationReceipt receipt = notificationService.notify(configuration.getThisNode().getUuid(), sageNode, register_backup, configuration.getThisNode());
+                            final NotificationReceipt receipt = notificationService.notify(sageNode, register_backup, configuration.getThisNode());
                             if (receipt.isSuccess()) {
                                 log.info("backup: sage node notified of backup");
                             } else {

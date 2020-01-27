@@ -40,7 +40,6 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
         // Upstream is telling us about our peers
         final BubbleNode payloadNode = n.getNode();
         final BubbleNode thisNode = configuration.getThisNode();
-        final String systemAccount = configuration.getThisNode().getAccount();
         final List<BubbleNode> peers = payloadNode.getPeers();
         int peerCount = 0;
         boolean foundSelf = false;
@@ -60,12 +59,12 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
                 if (found == null) {
                     log.info("hello_from_sage: creating peer: "+json(peer));
                     nodeDAO.create(peer);
-                    notificationService.notify(systemAccount, peer, peer_hello, thisNode);
+                    notificationService.notify(peer, peer_hello, thisNode);
                 } else {
                     found.upstreamUpdate(peer);
                     log.info("hello_from_sage: updating peer: "+json(peer));
                     nodeDAO.update(found);
-                    notificationService.notify(systemAccount, found, peer_hello, thisNode);
+                    notificationService.notify(found, peer_hello, thisNode);
                 }
                 peerCount++;
             }

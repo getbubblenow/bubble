@@ -59,7 +59,7 @@ public class SageHelloService extends SimpleDaemon {
                 log.error("hello_to_sage: sage node not found: " + c.getSageNode());
             } else {
                 log.info("hello_to_sage: sending hello...");
-                final NotificationReceipt receipt = notificationService.notify(selfNode.getUuid(), sage, hello_to_sage, selfNode);
+                final NotificationReceipt receipt = notificationService.notify(sage, hello_to_sage, selfNode);
                 log.info("hello_to_sage: received reply from sage node: " + json(receipt, COMPACT_MAPPER));
                 if (receipt.isSuccess()) {
                     if (!sageHelloSent.get()) sageHelloSent.set(true);

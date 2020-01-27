@@ -147,7 +147,7 @@ public class AuthResource {
         }
 
         restoreService.registerRestore(restoreKey, keys);
-        final NotificationReceipt receipt = notificationService.notify(thisNode.getUuid(), sageNode, retrieve_backup, thisNode.setRestoreKey(getRestoreKey()));
+        final NotificationReceipt receipt = notificationService.notify(sageNode, retrieve_backup, thisNode.setRestoreKey(getRestoreKey()));
 
         return ok(receipt);
     }
