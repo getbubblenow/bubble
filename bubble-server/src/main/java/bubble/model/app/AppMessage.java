@@ -27,7 +27,8 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_MESSAGES, listFields={"app", "locale"})
 @ECIndexes({
-        @ECIndex(unique=true, of={"app", "locale"})
+        @ECIndex(unique=true, of={"app", "locale"}),
+        @ECIndex(of={"app", "priority"})
 })
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class AppMessage extends IdentifiableBase implements AccountTemplate, HasPriority {
