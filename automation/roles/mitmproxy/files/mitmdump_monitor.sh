@@ -42,6 +42,7 @@ function ensureMitmOff {
 }
 
 log "Watching marker file ${BUBBLE_MITM_MARKER} ..."
+touch ${BUBBLE_MITM_MARKER}  # first time through, always check and set on/off state
 while : ; do
   if [[ $(stat -c %Y ${BUBBLE_MITM_MARKER}) -gt $(stat -c %Y ${ROOT_KEY_MARKER}) ]] ; then
     if [[ ! -z "$(cmp -b ${ROOT_KEY_MARKER} ${BUBBLE_MITM_MARKER})" ]] ; then
