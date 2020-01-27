@@ -32,7 +32,12 @@ public interface AppRuleDriver {
                       Account account,
                       Device device) {}
 
-    default boolean preprocess(AppRuleHarness ruleHarness, FilterMatchersRequest filter, Account account, Request req, ContainerRequest request) {
+    default boolean preprocess(AppRuleHarness ruleHarness,
+                               FilterMatchersRequest filter,
+                               Account account,
+                               Device device,
+                               Request req,
+                               ContainerRequest request) {
         return false;
     }
 

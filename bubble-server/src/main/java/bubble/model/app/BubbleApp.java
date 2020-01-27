@@ -2,6 +2,7 @@ package bubble.model.app;
 
 import bubble.model.account.Account;
 import bubble.model.account.AccountTemplate;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,13 +15,12 @@ import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
+import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
 import static bubble.ApiConstants.APPS_ENDPOINT;
 import static bubble.ApiConstants.EP_APPS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
@@ -31,6 +31,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
         @ECTypeChild(type=AppSite.class, backref="app"),
         @ECTypeChild(type=AppMatcher.class, backref="app"),
         @ECTypeChild(type=AppRule.class, backref="app"),
+        @ECTypeChild(type=AppMessage.class, backref="app"),
         @ECTypeChild(type=AppData.class, backref="app")
 })
 @Entity @NoArgsConstructor @Accessors(chain=true)
@@ -42,6 +43,16 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTemplate {
 
     private static final String[] VALUE_FIELDS = {"url", "description", "template", "enabled"};
+
+    public BubbleApp(Account account, BubbleApp app) {
+        copy(this, app);
+        setAccount(account.getUuid());
+        setUuid(null);
+    }
+
+    public BubbleApp(BubbleApp other) { copy(this, other); setUuid(null); }
+
+    @Override public Identifiable update(Identifiable other) { copy(this, other, VALUE_FIELDS); return this; }
 
     @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
@@ -64,31 +75,22 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
-    @Column(nullable=false, length=30)
-    @Enumerated(EnumType.STRING) @ECField(index=50)
-    @Getter @Setter private BubbleAppDataPresentation dataPresentation;
+    @Column(length=100000, nullable=false) @ECField(index=50)
+    @JsonIgnore @Getter @Setter private String dataConfigJson;
+
+    @Transient public AppDataConfig getDataConfig () { return dataConfigJson == null ? null : json(dataConfigJson, AppDataConfig.class); }
+    public BubbleApp setDataConfig (AppDataConfig adc) { return setDataConfigJson(adc == null ? null : json(adc)); }
+    public boolean hasDataConfig () { return getDataConfig() != null; }
 
     @ECSearchable @ECField(index=60)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
-    public boolean template() { return bool(template); }
 
     @ECSearchable @ECField(index=70)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
-    public boolean enabled () { return enabled == null || enabled; }
 
     @ECSearchable @ECField(index=80)
     @ECIndex @Getter @Setter private Boolean needsUpdate = false;
-
-    public BubbleApp(Account account, BubbleApp app) {
-        copy(this, app);
-        setAccount(account.getUuid());
-        setUuid(null);
-    }
-
-    public BubbleApp(BubbleApp other) { copy(this, other); setUuid(null); }
-
-    @Override public Identifiable update(Identifiable other) { copy(this, other, VALUE_FIELDS); return this; }
 
 }

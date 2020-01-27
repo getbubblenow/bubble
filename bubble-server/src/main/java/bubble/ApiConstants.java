@@ -127,6 +127,7 @@ public class ApiConstants {
     public static final String EP_MATCHERS = "/matchers";
     public static final String EP_DATA = "/data";
     public static final String EP_SITES = "/sites";
+    public static final String EP_MESSAGES = MESSAGES_ENDPOINT;
     public static final String EP_DRIVERS = DRIVERS_ENDPOINT;
     public static final String EP_CLOUDS = CLOUDS_ENDPOINT;
     public static final String EP_REGIONS = "/regions";

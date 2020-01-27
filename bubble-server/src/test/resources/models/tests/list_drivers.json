@@ -6,8 +6,8 @@
       "store": "myDrivers",
       "check": [
         {"condition": "json.length == 2"},
-        {"condition": "_find(json, function (d) { return d.getName() == 'UserBlocker'; }).getDescriptor().getLabels().length == 3"},
-        {"condition": "_find(json, function (d) { return d.getName() == 'TrafficAnalytics'; }).getDescriptor().getLabels().length == 2"}
+        {"condition": "_find(json, function (d) { return d.getName() == 'UserBlocker'; }) != null"},
+        {"condition": "_find(json, function (d) { return d.getName() == 'TrafficAnalytics'; }) != null"}
       ]
     }
   },
@@ -19,8 +19,8 @@
       "store": "allDrivers",
       "check": [
         {"condition": "json.length == 2"},
-        {"condition": "_find(json, function (d) { return d.getName() == 'UserBlocker'; }).getDescriptor().getLabels().length == 3"},
-        {"condition": "_find(json, function (d) { return d.getName() == 'TrafficAnalytics'; }).getDescriptor().getLabels().length == 2"}
+        {"condition": "_find(json, function (d) { return d.getName() == 'UserBlocker'; }) != null"},
+        {"condition": "_find(json, function (d) { return d.getName() == 'TrafficAnalytics'; }) != null"}
       ]
     }
   },

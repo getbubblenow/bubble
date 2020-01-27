@@ -49,6 +49,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private AppMatcherDAO matchDAO;
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private AppDataDAO dataDAO;
+    @Autowired private AppMessageDAO appMessageDAO;
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private AnsibleRoleDAO roleDAO;
     @Autowired private BubbleDomainDAO domainDAO;
@@ -218,6 +219,12 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
             }
             @Override public void postCreate(AppMatcher parentEntity, AppMatcher accountEntity) {
                 matchers.put(parentEntity.getUuid(), accountEntity);
+            }
+        });
+
+        copyTemplateObjects(acct, parent, appMessageDAO, new AccountTemplate.CopyTemplate<>() {
+            @Override public AppMessage preCreate(AppMessage parentEntity, AppMessage accountEntity) {
+                return accountEntity.setApp(apps.get(parentEntity.getApp()).getUuid());
             }
         });
 

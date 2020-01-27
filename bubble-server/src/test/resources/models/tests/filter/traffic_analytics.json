@@ -34,11 +34,11 @@
     "request": { "uri": "me/apps/TrafficAnalytics/data" },
     "response": {
       "check": [
-        {"condition": "json.length == 2"},
-        {"condition": "_find(json, function (d) { return d.getKey().startsWith('foo.example.com') }) != null"},
-        {"condition": "_find(json, function (d) { return d.getKey().startsWith('foo.example.com') }).getData() == 2"},
-        {"condition": "_find(json, function (d) { return d.getKey().startsWith('bar.example.com') }) != null"},
-        {"condition": "_find(json, function (d) { return d.getKey().startsWith('bar.example.com') }).getData() == 1"}
+        {"condition": "json.length == 4"},
+        {"condition": "_find(json, function (d) { return d.getKey().startsWith('log_all_foo.example.com') }) != null"},
+        {"condition": "_find(json, function (d) { return d.getKey().startsWith('log_all_foo.example.com') }).getData() == 2"},
+        {"condition": "_find(json, function (d) { return d.getKey().startsWith('log_all_bar.example.com') }) != null"},
+        {"condition": "_find(json, function (d) { return d.getKey().startsWith('log_all_bar.example.com') }).getData() == 1"}
       ]
     }
   }

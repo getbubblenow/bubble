@@ -1,20 +1,22 @@
 package bubble.model.account;
 
 import bubble.dao.account.AccountOwnedTemplateDAO;
-import org.cobbzilla.wizard.model.NamedEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
 
-public interface AccountTemplate extends HasAccount, NamedEntity {
+public interface AccountTemplate extends HasAccount {
 
-    boolean template();
-    boolean enabled();
+    default boolean template() { return bool(getTemplate()); }
+    default boolean enabled() { return bool(getEnabled()); }
+    default boolean disabled() { return !enabled(); }
 
+    Boolean getEnabled();
     Boolean getTemplate();
-    <T> T setTemplate(Boolean t);
+    <T extends AccountTemplate> T setTemplate(Boolean t);
 
     Logger log = LoggerFactory.getLogger(AccountTemplate.class);
 

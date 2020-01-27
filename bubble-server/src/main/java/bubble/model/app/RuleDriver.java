@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
-import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.SemanticVersion;
@@ -22,13 +21,9 @@ import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
-import java.util.Locale;
 
 import static bubble.ApiConstants.DRIVERS_ENDPOINT;
 import static bubble.ApiConstants.EP_DRIVERS;
-import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
-import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
-import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
@@ -70,12 +65,10 @@ public class RuleDriver extends IdentifiableBase implements AccountTemplate {
     @ECSearchable @ECField(index=30)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
-    public boolean template() { return bool(template); }
 
     @ECSearchable @ECField(index=40)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
-    public boolean enabled () { return enabled == null || enabled; }
 
     @ECSearchable(filter=true) @ECField(index=50, type=EntityFieldType.opaque_string)
     @Column(length=200)
@@ -101,44 +94,5 @@ public class RuleDriver extends IdentifiableBase implements AccountTemplate {
 
     @ECSearchable @ECField(index=90)
     @ECIndex @Getter @Setter private Boolean needsUpdate = false;
-
-    @Transient @Getter @Setter private AppRuleDriverDescriptor descriptor;
-
-    public AppRuleDriverDescriptor getDescriptor(Locale locale) {
-        final String localeString = locale != null ? locale.toString() : getDEFAULT_LOCALE();
-        final AppRuleDriverDescriptor localized;
-        final String prefix = driverClass.replace(".", "/");
-        try {
-            localized = json(stream2string(prefix + "_descriptor_" + localeString + ".json"), AppRuleDriverDescriptor.class);
-        } catch (Exception e) {
-            // no localized version, just the regular
-            return json(stream2string(prefix + "_descriptor.json"), AppRuleDriverDescriptor.class);
-        }
-
-        // we have a localized version, is there a general version?
-        final AppRuleDriverDescriptor descriptor;
-        try {
-            descriptor = json(stream2string(prefix + "_descriptor.json"), AppRuleDriverDescriptor.class);
-        } catch (Exception e) {
-            // only localized version is available
-            return localized;
-        }
-        try {
-            // start with general version, since it has all general settings. but then overwrite
-            // any localized labels
-            if (localized.hasLabels()) {
-                for (NameAndValue label : localized.getLabels()) {
-
-                    descriptor.setLabel(label);
-                }
-            }
-            return descriptor;
-        } catch (Exception e) {
-            // error merging, just return general version
-            return descriptor;
-        }
-    }
-
-    public RuleDriver initDescriptor(Locale locale) { setDescriptor(getDescriptor(locale)); return this; }
 
 }

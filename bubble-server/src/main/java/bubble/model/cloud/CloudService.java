@@ -109,13 +109,10 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     @ECSearchable @ECField(index=60)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
-    public boolean template() { return bool(template); }
 
     @ECSearchable @ECField(index=70)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
-    public boolean enabled () { return enabled == null || enabled; }
-    public boolean disabled () { return !enabled(); }
 
     @ECSearchable @ECField(index=80, type=EntityFieldType.reference)
     @ECIndex @Column(updatable=false, length=UUID_MAXLEN)

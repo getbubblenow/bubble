@@ -90,4 +90,8 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
         getConfiguration().execSql("DELETE FROM "+tableName()+" WHERE device = ?", new Object[] {uuid});
     }
 
+    public void deleteApp(String uuid) {
+        getConfiguration().execSql("DELETE FROM "+tableName()+" WHERE app = ?", new Object[] {uuid});
+    }
+
 }

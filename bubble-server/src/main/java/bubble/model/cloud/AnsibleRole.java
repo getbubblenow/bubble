@@ -21,7 +21,6 @@ import java.util.Arrays;
 
 import static bubble.ApiConstants.EP_ROLES;
 import static bubble.cloud.storage.StorageServiceDriver.STORAGE_PREFIX;
-import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
@@ -95,12 +94,10 @@ public class AnsibleRole extends IdentifiableBase implements AccountTemplate, Ha
     @ECSearchable @ECField(index=60)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
-    public boolean template() { return bool(template); }
 
     @ECSearchable @ECField(index=70)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
-    public boolean enabled () { return enabled == null || enabled; }
 
     @Column(updatable=false, length=10000)
     @JsonIgnore @Getter @Setter private String configJson;

@@ -7,7 +7,6 @@ import bubble.model.account.Account;
 import bubble.model.app.RuleDriver;
 import bubble.resources.account.AccountOwnedTemplateResource;
 import bubble.server.BubbleConfiguration;
-import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.Consumes;
@@ -25,9 +24,5 @@ public class DriversResourceBase extends AccountOwnedTemplateResource<RuleDriver
     @Autowired protected AccountDAO accountDAO;
 
     public DriversResourceBase(Account account) { super(account); }
-
-    @Override protected RuleDriver populate(ContainerRequest ctx, RuleDriver d) {
-        return d.initDescriptor(ctx.getLanguage());
-    }
 
 }

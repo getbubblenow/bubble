@@ -48,6 +48,23 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
     public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS,
             "account", "device", "app", "site", "matcher", "key");
 
+    public AppData(RuleConfig config) {
+        setMatcher(config.getMatcher());
+        setApp(config.getApp());
+    }
+
+    public AppData(AppData other) { copy(this, other, CREATE_FIELDS); }
+
+    @Override public Identifiable update(Identifiable other) {
+        copy(this, other, VALUE_FIELDS);
+        return this;
+    }
+
+    public boolean readable(Account caller) {
+        if (caller == null) return false;
+        return caller.admin() || caller.getUuid().equals(getAccount());
+    }
+
     @Override @Transient public String getName() { return getKey(); }
     public AppData setName(String n) { return setKey(n); }
 
@@ -102,34 +119,14 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
 
     @ECSearchable(type=EntityFieldType.expiration_time) @ECField(index=80)
     @ECIndex @Getter @Setter private Long expiration;
-
-    @ECSearchable  @ECField(index=90)
-    @ECIndex @Column(nullable=false)
-    @Getter @Setter private Boolean template = false;
-    public boolean template() { return bool(template); }
-
-    @ECSearchable  @ECField(index=100)
-    @ECIndex @Column(nullable=false)
-    @Getter @Setter private Boolean enabled = true;
-    public boolean enabled() { return bool(enabled); }
-
-    public AppData(RuleConfig config) {
-        setMatcher(config.getMatcher());
-        setApp(config.getApp());
-    }
-
     public boolean expired () { return expiration != null && now() > expiration; }
 
-    public AppData(AppData other) { copy(this, other, CREATE_FIELDS); }
+    @ECSearchable @ECField(index=90)
+    @ECIndex @Column(nullable=false)
+    @Getter @Setter private Boolean template = false;
 
-    @Override public Identifiable update(Identifiable other) {
-        copy(this, other, VALUE_FIELDS);
-        return this;
-    }
-
-    public boolean readable(Account caller) {
-        if (caller == null) return false;
-        return caller.admin() || caller.getUuid().equals(getAccount());
-    }
+    @ECSearchable @ECField(index=100)
+    @ECIndex @Column(nullable=false)
+    @Getter @Setter private Boolean enabled = true;
 
 }

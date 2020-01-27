@@ -7,18 +7,16 @@ import bubble.model.app.BubbleApp;
 import bubble.resources.account.AccountOwnedTemplateResource;
 import org.glassfish.jersey.server.ContainerRequest;
 
-import javax.ws.rs.*;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-
 import java.util.List;
 
 import static bubble.ApiConstants.*;
-import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
-@Consumes(APPLICATION_JSON)
-@Produces(APPLICATION_JSON)
 public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppSiteDAO> {
 
     private BubbleApp app;

@@ -78,12 +78,10 @@ public class BubbleFootprint extends IdentifiableBase implements AccountTemplate
     @ECSearchable @ECField(index=40)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
-    public boolean template() { return bool(template); }
 
     @ECSearchable @ECField(index=50)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
-    public boolean enabled () { return enabled == null || enabled; }
 
     @ECSearchable @ECField(index=60)
     @Size(max=5000, message="err.allowedCountriesJson.length")

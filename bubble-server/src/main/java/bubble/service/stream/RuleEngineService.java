@@ -77,7 +77,7 @@ public class RuleEngineService {
                               Device device,
                               String matcherUuid) {
         final AppRuleHarness ruleHarness = initRules(account, device, new String[]{ matcherUuid }).get(0);
-        return ruleHarness.getDriver().preprocess(ruleHarness, filter, account, req, request);
+        return ruleHarness.getDriver().preprocess(ruleHarness, filter, account, device, req, request);
     }
 
     public Response passthru(URIBean ub, ContainerRequest request) throws IOException {

@@ -59,12 +59,10 @@ public class AppSite extends IdentifiableBase implements AppTemplateEntity {
     @ECSearchable @ECField(index=40)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
-    public boolean template () { return template == null || template; }
 
     @ECSearchable @ECField(index=50)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
-    public boolean enabled () { return enabled == null || enabled; }
 
     @ECSearchable(filter=true) @ECField(index=60)
     @Column(nullable=false, length=10000)

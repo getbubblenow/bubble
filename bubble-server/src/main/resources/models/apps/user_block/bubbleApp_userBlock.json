@@ -3,5 +3,26 @@
   "description": "UserBlocker App for Bubble",
   "url": "https://bubblev.com/apps/UserBlocker",
   "template": true,
-  "dataPresentation": "site"
+  "dataConfig": {
+    "driverClass": "bubble.app.social.block.UserBlockerApp",
+    "presentation": "site",
+    "fields": ["key", "enabled"],
+    "actions": [
+      {"name": "enable", "when": "!data.enabled()"},
+      {"name": "disable", "when": "data.enabled()"},
+      {"name": "delete"}
+    ],
+    "views": [
+      {"name": "blocked_users"}
+    ]
+  },
+  "children": {
+    "AppMessage": [{
+      "locale": "en_US",
+      "messages": [
+        {"name": "app.description", "value": "User Blocker"},
+        {"name": "view.blocked_users", "value": "Blocked Users"}
+      ]
+    }]
+  }
 }]

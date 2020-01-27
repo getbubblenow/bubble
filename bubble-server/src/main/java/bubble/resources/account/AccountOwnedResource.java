@@ -87,6 +87,13 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
         return getDao().findByAccountAndId(getAccountUuid(ctx), id);
     }
 
+    protected E findAlternate(ContainerRequest ctx, E request) { return null; }
+    protected E findAlternate(ContainerRequest ctx, String id) { return null; }
+
+    protected E findAlternateForCreate(ContainerRequest ctx, E request) { return findAlternate(ctx, request); }
+    protected E findAlternateForUpdate(ContainerRequest ctx, String id) { return findAlternate(ctx, id); }
+    protected E findAlternateForDelete(ContainerRequest ctx, String id) { return findAlternate(ctx, id); }
+
     protected List<E> populate(ContainerRequest ctx, List<E> entities) {
         for (E e : entities) populate(ctx, e);
         return entities;
@@ -101,9 +108,12 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
         final Account caller = userPrincipal(ctx);
         final String accountUuid = getAccountUuid(ctx);
         if (!caller.admin() && !caller.getUuid().equals(accountUuid)) return notFound();
-        final E found = find(ctx, id);
+        E found = find(ctx, id);
 
-        if (found == null) return notFound(id);
+        if (found == null) {
+            found = findAlternate(ctx, id);
+            if (found == null) return notFound(id);
+        }
         if (!found.getAccount().equals(caller.getUuid()) && !caller.admin()) return notFound(id);
 
         return ok(populate(ctx, found));
@@ -116,7 +126,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
         final Account caller = checkEditable(ctx);
         E found = find(ctx, request.getName());
         if (found == null) {
-            found = findAlternate(ctx, request);
+            found = findAlternateForCreate(ctx, request);
         }
         if (found != null) {
             if (!canUpdate(ctx, caller, found, request)) return ok(found);
@@ -131,9 +141,6 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
         return ok(daoCreate(toCreate));
     }
 
-    protected E findAlternate(ContainerRequest ctx, E request) { return null; }
-    protected E findAlternate(ContainerRequest ctx, String id) { return null; }
-
     protected Object daoCreate(E toCreate) { return getDao().create(toCreate); }
 
     protected E setReferences(ContainerRequest ctx, Account caller, E e) { return e; }
@@ -145,7 +152,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
         final Account caller = checkEditable(ctx);
         E found = find(ctx, id);
         if (found == null) {
-            found = findAlternate(ctx, id);
+            found = findAlternateForUpdate(ctx, id);
             if (found == null) return notFound(id);
         }
         if (!(found instanceof HasAccountNoName) && !canChangeName() && request.hasName() && !found.getName().equals(request.getName())) {
@@ -165,7 +172,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
         final Account caller = checkEditable(ctx);
         E found = find(ctx, id);
         if (found == null) {
-            found = findAlternate(ctx, id);
+            found = findAlternateForDelete(ctx, id);
             if (found == null) return notFound(id);
         }
 

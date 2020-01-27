@@ -88,12 +88,10 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity {
     @ECSearchable @ECField(index=90)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
-    public boolean template () { return template == null || template; }
 
     @ECSearchable @ECField(index=100)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
-    public boolean enabled () { return enabled == null || enabled; }
 
     public AppMatcher(AppMatcher other) {
         copy(this, other, CREATE_FIELDS);
