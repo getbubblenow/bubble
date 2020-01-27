@@ -12,6 +12,8 @@ import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 @Repository
 public class AppMessageDAO extends AccountOwnedTemplateDAO<AppMessage> {
 
+    @Override public Boolean getHasNameField() { return false; }
+
     @Override public Order getDefaultSortOrder() { return Order.asc("priority"); }
 
     public AppMessage findByAccountAndAppAndLocale (String account, String app, String locale) {
