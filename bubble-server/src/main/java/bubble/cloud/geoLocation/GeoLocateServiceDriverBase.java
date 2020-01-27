@@ -18,13 +18,16 @@ import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
@@ -32,7 +35,9 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBase<T> implements GeoLocateServiceDriver {
 
     public static final long CACHE_TTL = TimeUnit.DAYS.toSeconds(20);
-    public static final long ERROR_TTL = TimeUnit.SECONDS.toSeconds(20);
+    public static final long ERROR_TTL = SECONDS.toSeconds(20);
+
+    private static final int MAX_FILE_RETRIES = 5;
 
     private static class GeoLocationError extends GeoLocation {
         public GeoLocationError(Exception e) {
@@ -82,7 +87,7 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
             final String key = "urlcache_" + uniq;
             final File archive = cloudDataDAO.getFile(cloud.getUuid(), key);
             if (meta.shouldRefresh(archive)) {
-                HttpUtil.getResponse(request).toFile(archive);
+                downloadDbFile(request, archive);
             }
 
             // create a symlink with the proper extension, so "unroll" can detect the archive type
@@ -107,6 +112,22 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
         } catch (Exception e) {
             throw invalidEx("err.geoLocation.unknownError", "Error initializing "+getClass().getName()+": "+shortError(e));
         }
+    }
+
+    private File downloadDbFile(HttpRequestBean request, File archive) throws IOException {
+        File file = null;
+        RuntimeException lastEx = null;
+        for (int i=0; i<MAX_FILE_RETRIES; i++) {
+            try {
+                return HttpUtil.getResponse(request).toFile(archive);
+            } catch (RuntimeException e) {
+                lastEx = e;
+                log.warn("downloadDbFile: "+shortError(e));
+                sleep(SECONDS.toMillis(2) * (i+1), "initFile: waiting before retry of download: "+request.getUri());
+            }
+        }
+        log.error("downloadDbFile: retries failed, lastEx="+shortError(lastEx));
+        throw lastEx;
     }
 
     public String getExtension(String url) { return FileUtil.extension(url); }
