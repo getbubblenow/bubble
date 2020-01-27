@@ -101,4 +101,4 @@
     dest: /etc/supervisor/conf.d/mitmdump_monitor.conf
 
 - name: Ensure mitmdump_monitor is started
-    shell: supervisorctl restart mitmdump_monitor
+  shell: supervisorctl restart mitmdump_monitor
