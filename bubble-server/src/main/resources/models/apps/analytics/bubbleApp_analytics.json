@@ -8,7 +8,7 @@
     "driverClass": "bubble.app.analytics.TrafficAnalyticsApp",
     "presentation": "app",
     "fields": ["key", "data"],
-    "params": [{"name": "site"}],
+    "params": [{"name": "site", "required": false}],
     "views": [
       {"name": "most_recent"},
       {"name": "today"},
