@@ -2,6 +2,7 @@ package bubble.resources.message;
 
 import bubble.model.account.Account;
 import bubble.server.BubbleConfiguration;
+import bubble.service.message.AppMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.ArrayUtils;
 import org.cobbzilla.util.collection.ArrayUtil;
@@ -34,9 +35,23 @@ public class MessagesResource {
     public static final String RESOURCE_MESSAGES_PROPS = "ResourceMessages.properties";
 
     public static final String[] PRE_AUTH_MESSAGE_GROUPS = {"pre_auth", "countries", "timezones"};
-    public static final String[] ALL_MESSAGE_GROUPS = ArrayUtil.append(PRE_AUTH_MESSAGE_GROUPS, "post_auth");
 
+    public static final String APPS_MESSAGE_GROUP = "apps";
+    public static final String[] ALL_MESSAGE_GROUPS
+            = ArrayUtil.append(PRE_AUTH_MESSAGE_GROUPS, "post_auth", APPS_MESSAGE_GROUP);
+
+    @Autowired private AppMessageService appMessageService;
     @Autowired private BubbleConfiguration configuration;
+
+    private Map<String, Map<String, String>> messageCache = new ConcurrentHashMap<>();
+
+    @DELETE
+    public Response flushMessageCache (@Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        if (!caller.admin()) return forbidden();
+        messageCache.clear();
+        return ok_empty();
+    }
 
     @GET @Path("/{locale}/{group}")
     public Response loadMessagesByGroup(@Context ContainerRequest ctx,
@@ -59,22 +74,29 @@ public class MessagesResource {
 
         for (String loc : locales) {
             try {
-                return ok_utf8(loadMessages(loc, group, format));
+                return ok_utf8(loadMessages(caller, loc, group, format));
             } catch (Exception e) {
-                log.debug("loadMessagesByGroup: error loading group "+group+" for locale "+loc+": "+e);
+                log.debug("loadMessagesByGroup: error loading group "+group+" for locale "+loc+": "+e, e);
             }
         }
         log.error("loadMessagesByGroup: error loading group "+group+" for any locale: "+locales);
         return notFound(locale+"/"+group);
     }
 
-    private Map<String, Map<String, String>> messageCache = new ConcurrentHashMap<>();
+    private Map<String, String> loadMessages(Account caller, String locale, String group, MessageResourceFormat format) throws IOException {
 
-    private Map<String, String> loadMessages(String locale, String group, MessageResourceFormat format) throws IOException {
-        final String cacheKey = locale+"/"+group+"/"+format;
+        final boolean isAppsGroup = group.equalsIgnoreCase(APPS_MESSAGE_GROUP);
+        if (isAppsGroup && caller == null) return Collections.emptyMap();
+
+        final String cacheKey = (isAppsGroup ? caller.getUuid()+"/" : "") + locale + "/" + group + "/" + format;
         if (!messageCache.containsKey(cacheKey)) {
-            final Properties props = new Properties();
-            props.load(new BufferedReader(new InputStreamReader(loadResourceAsStream(MESSAGE_RESOURCE_BASE + locale + MESSAGE_RESOURCE_PATH + group + "/" + RESOURCE_MESSAGES_PROPS), UTF8cs)));
+            final Properties props;
+            if (isAppsGroup) {
+                props = appMessageService.loadAppMessages(caller, locale);
+            } else {
+                props = new Properties();
+                props.load(new BufferedReader(new InputStreamReader(loadResourceAsStream(MESSAGE_RESOURCE_BASE + locale + MESSAGE_RESOURCE_PATH + group + "/" + RESOURCE_MESSAGES_PROPS), UTF8cs)));
+            }
             final Map<String, String> messages = new LinkedHashMap<>();
             props.forEach((key, value) -> messages.put(format.format(key.toString()), value.toString()));
             messageCache.put(cacheKey, messages);

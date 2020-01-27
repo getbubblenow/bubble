@@ -20,8 +20,14 @@
     "AppMessage": [{
       "locale": "en_US",
       "messages": [
-        {"name": "app.description", "value": "User Blocker"},
-        {"name": "view.blocked_users", "value": "Blocked Users"}
+        {"name": "name", "value": "User Blocker"},
+        {"name": "description", "value": "Throw the garbage to the curb!"},
+        {"name": "view.blocked_users", "value": "Blocked Users"},
+        {"name": "field.key", "value": "Username"},
+        {"name": "field.enabled", "value": "Enforce Block"},
+        {"name": "action.enable", "value": "Enforce Block"},
+        {"name": "action.disable", "value": "Disable Block"},
+        {"name": "action.delete", "value": "Delete Block"}
       ]
     }]
   }

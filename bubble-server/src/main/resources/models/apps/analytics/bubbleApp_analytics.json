@@ -13,7 +13,7 @@
       {"name": "most_recent"},
       {"name": "today"},
       {"name": "last_24_hours"},
-      {"name": "last_week"},
+      {"name": "last_7_days"},
       {"name": "last_30_days"}
     ]
   },
@@ -33,13 +33,16 @@
     "AppMessage": [{
       "locale": "en_US",
       "messages": [
-        {"name": "app.description", "value": "Traffic analytics for your Bubble. Manage block lists."},
+        {"name": "name", "value": "Traffic Analytics"},
+        {"name": "description", "value": "Traffic analytics for your Bubble. Manage block lists."},
+        {"name": "field.key", "value": "URL"},
+        {"name": "field.data", "value": "Count"},
         {"name": "param.site", "value": "Site"},
         {"name": "view.most_recent", "value": "Most Recent Traffic"},
         {"name": "view.today", "value": "Today"},
         {"name": "view.last_24_hours", "value": "Last 24 Hours"},
-        {"name": "view.last_week", "value": "Last Week"},
-        {"name": "view.last_30_days", "value": "LAst 30 Days"}
+        {"name": "view.last_7_days", "value": "Last 7 Days"},
+        {"name": "view.last_30_days", "value": "Last 30 Days"}
       ]
     }]
   }

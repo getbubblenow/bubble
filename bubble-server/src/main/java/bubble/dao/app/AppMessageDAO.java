@@ -33,6 +33,14 @@ public class AppMessageDAO extends AccountOwnedTemplateDAO<AppMessage> {
         return messages.isEmpty() ? null : messages.get(0);
     }
 
+    public AppMessage findByAccountAndAppBestEffort (String account, String app, String locale) {
+        AppMessage message = findByAccountAndAppAndLocale(account, app, locale);
+        if (message != null) return message;
+        message = findByAccountAndAppAndDefaultLocale(account, app);
+        if (message != null) return message;
+        return findByAccountAndAppAndHighestPriority(account, app);
+    }
+
     public List<AppMessage> findByApp(String app) { return findByField("app", app); }
 
 }

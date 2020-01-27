@@ -23,8 +23,10 @@ public class AppDataConfig {
     public boolean hasFields () { return !empty(fields); }
 
     @Getter @Setter private EntityFieldConfig[] params;
+    public boolean hasParams () { return !empty(params); }
 
     @Getter @Setter private AppDataAction[] actions;
+    public boolean hasActions () { return !empty(actions); }
 
     @Getter @Setter private AppDataView[] views;
     public boolean hasViews () { return !empty(views); }

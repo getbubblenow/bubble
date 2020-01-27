@@ -42,7 +42,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 })
 public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTemplate {
 
-    private static final String[] VALUE_FIELDS = {"url", "description", "template", "enabled"};
+    private static final String[] VALUE_FIELDS = {"url", "description", "template", "enabled", "dataConfig"};
 
     public BubbleApp(Account account, BubbleApp app) {
         copy(this, app);
