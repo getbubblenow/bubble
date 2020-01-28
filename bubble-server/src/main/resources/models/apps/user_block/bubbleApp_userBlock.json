@@ -6,7 +6,9 @@
   "dataConfig": {
     "driverClass": "bubble.app.social.block.UserBlockerApp",
     "presentation": "site",
-    "fields": ["key", "enabled"],
+    "fields": [
+      {"name": "key"}, {"name": "enabled"}, {"name": "ctime"}
+    ],
     "actions": [
       {"name": "enable", "when": "!data.enabled()"},
       {"name": "disable", "when": "data.enabled()"},

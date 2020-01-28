@@ -2,7 +2,10 @@ package bubble.server.listener;
 
 import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.CloudServiceDAO;
+import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
+import bubble.model.cloud.AnsibleInstallType;
+import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
@@ -24,7 +27,7 @@ import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss;
 @Slf4j
 public class NodeInitializerListener extends RestServerLifecycleListenerBase<BubbleConfiguration> {
 
-    private static final int MIN_WORKER_THREADS = 12;
+    private static final int MIN_WORKER_THREADS = 16;
 
     @Override public void beforeStart(RestServer server) {
         final BubbleConfiguration c = (BubbleConfiguration) server.getConfiguration();
@@ -39,7 +42,7 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
 
         // if we are using the 'http' localNotificationStrategy, ensure we have enough worker threads
         if (!c.getHttp().hasWorkerThreads() || c.getHttp().getWorkerThreads() < MIN_WORKER_THREADS) {
-            log.info("beforeStart: http.workerThreads="+c.getHttp().getWorkerThreads()+" is not set or too low, increasing to "+ MIN_WORKER_THREADS);
+            log.info("beforeStart: http.workerThreads="+c.getHttp().getWorkerThreads()+" is not set or too low, increasing to "+MIN_WORKER_THREADS);
             c.getHttp().setWorkerThreads(MIN_WORKER_THREADS);
         } else {
             log.info("beforeStart: http.workerThreads="+c.getHttp().getWorkerThreads());
@@ -53,7 +56,8 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
         final Map<String, Object> configs = c.getPublicSystemConfigs();
         if (empty(configs)) die("onStart: no system configs found");  // should never happen
 
-        if (!c.getBean(AccountDAO.class).activated()) {
+        final AccountDAO accountDAO = c.getBean(AccountDAO.class);
+        if (!accountDAO.activated()) {
             final File nodeFile = THIS_NODE_FILE;
             if (nodeFile.exists()) {
                 final File backupSelfNode = new File(abs(nodeFile) + ".backup_" + DATE_FORMAT_YYYY_MM_DD_HH_mm_ss.print(now()));
@@ -75,7 +79,7 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
         if (c.isSageLauncher()) c.getBean(NetworkMonitorService.class).start();
 
         // warm up drivers
-        final Account admin = c.getBean(AccountDAO.class).getFirstAdmin();
+        final Account admin = accountDAO.getFirstAdmin();
         if (admin != null) {
             for (CloudService cloud : c.getBean(CloudServiceDAO.class).findPublicTemplates(admin.getUuid())) {
                 try {
@@ -84,6 +88,16 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
                     die("onStart: error initializing driver for cloud: "+cloud.getName()+"/"+cloud.getUuid()+": "+shortError(e), e);
                 }
 //            background(() -> cloud.wireAndSetup(c));
+            }
+        }
+
+        // ensure default devices exist
+        if (thisNode != null) {
+            final BubbleNetwork thisNetwork = c.getThisNetwork();
+            if (thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.node) {
+                for (Account a : accountDAO.findAll()) {
+                    c.getBean(DeviceDAO.class).ensureSpareDevice(a.getUuid(), thisNode.getNetwork(), false);
+                }
             }
         }
 

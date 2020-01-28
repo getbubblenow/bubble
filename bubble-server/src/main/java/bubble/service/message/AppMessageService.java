@@ -51,9 +51,9 @@ public class AppMessageService {
 
                 // Check for field messages
                 if (cfg.hasFields()) {
-                    for (String field : cfg.getFields()) {
-                        final String fieldKey = msgPrefix + MSG_SUFFIX_FIELD + field;
-                        if (!props.containsKey(fieldKey)) props.setProperty(fieldKey, field);
+                    for (EntityFieldConfig field : cfg.getFields()) {
+                        final String fieldKey = msgPrefix + MSG_SUFFIX_FIELD + field.getName();
+                        if (!props.containsKey(fieldKey)) props.setProperty(fieldKey, field.getName());
                     }
                 }
 

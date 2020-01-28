@@ -8,6 +8,7 @@ public class AuthTest extends ActivatedBubbleModelTestBase {
 
     @Override protected String getManifest() { return "manifest-test"; }
 
+    @Test public void testAccountDeletion () throws Exception { modelTest("auth/delete_account"); }
     @Test public void testBasicAuth () throws Exception { modelTest("auth/basic_auth"); }
     @Test public void testAccountCrud () throws Exception { modelTest("auth/account_crud"); }
     @Test public void testDeviceCrud () throws Exception { modelTest("auth/device_crud"); }

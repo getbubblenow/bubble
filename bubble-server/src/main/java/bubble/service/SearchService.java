@@ -81,15 +81,20 @@ public class SearchService {
         }
         if (filter != null) q.setFilter(filter);
 
+        final SearchResults results = search(nocache, caller, dao, q);
+        if (results.hasNextPage(q)) {
+            results.setNextPage(requestURI +"?"+ ApiConstants.Q_PAGE+"="+(q.getPageNumber()+1)+"&"+ ApiConstants.Q_SIZE+"="+q.getPageSize());
+        }
+        return results;
+    }
+
+    public SearchResults search(Boolean nocache, Account caller, DAO dao, SearchQuery q) {
         final SearchResults results;
         if (nocache != null && nocache) {
             results = search(dao, q, caller);
         } else {
-            final String cacheKey = hashOf(caller.getUuid(), type, q);
+            final String cacheKey = hashOf(caller.getUuid(), dao.getClass().getName(), q);
             results = (SearchResults) searchCache.computeIfAbsent(cacheKey, searchKey -> search(dao, q, caller));
-        }
-        if (results.hasNextPage(q)) {
-            results.setNextPage(requestURI +"?"+ ApiConstants.Q_PAGE+"="+(q.getPageNumber()+1)+"&"+ ApiConstants.Q_SIZE+"="+q.getPageSize());
         }
         return results;
     }

@@ -45,6 +45,8 @@ public class Device extends IdentifiableBase implements HasAccount {
 
     public Device (String uuid) { setUuid(uuid); }
 
+    @Override public void beforeCreate() { if (!hasUuid()) super.beforeCreate(); }
+
     public static Device newUninitializedDevice(String networkUuid, String accountUuid) {
         return new Device()
                 .setName(UNINITIALIZED_DEVICE+randomUUID().toString())
@@ -53,18 +55,7 @@ public class Device extends IdentifiableBase implements HasAccount {
                 .initTotpKey();
     }
 
-    public static Device firstDeviceForNewNetwork(BubbleNetwork network) {
-        return new Device(randomUUID().toString())
-                .setName(UNINITIALIZED_DEVICE+randomUUID().toString())
-                .setNetwork(network.getUuid())
-                .setAccount(network.getAccount())
-                .initTotpKey();
-    }
-
-    @Override public Identifiable update(Identifiable thing) {
-        copy(this, thing, UPDATE_FIELDS);
-        return this;
-    }
+    @Override public Identifiable update(Identifiable thing) { copy(this, thing, UPDATE_FIELDS); return this; }
 
     public void initialize (Device other) {
         copy(this, other);

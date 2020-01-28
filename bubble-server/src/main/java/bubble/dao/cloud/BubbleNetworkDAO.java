@@ -131,6 +131,9 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
                     .setDeletedNetwork(network.getUuid()));
         }
 
+        // delete all other dependencies
+        getConfiguration().deleteDependencies(network);
+
         if (force) {
             super.forceDelete(uuid);
         } else {

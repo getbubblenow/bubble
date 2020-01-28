@@ -1,0 +1,58 @@
+[
+  {
+    "comment": "activate service, create account, login",
+    "include": "new_account",
+    "params": {
+      "username": "user-to-delete",
+      "password": "foobar1!",
+      "email": "user-account-deletion@example.com",
+      "verifyEmail": "true"
+    }
+  },
+
+  {
+    "comment": "look up account policy",
+    "request": { "uri": "users/user-to-delete/policy" },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "set deletion policy to full_delete",
+    "request": {
+      "uri": "users/user-to-delete/policy",
+      "data": "policy",
+      "entity": {
+        "deletionPolicy": "full_delete"
+      }
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getDeletionPolicy().name() == 'full_delete'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as root, delete account",
+    "request": {
+      "session": "rootSession",
+      "uri": "users/user-to-delete",
+      "method": "delete"
+    }
+  },
+
+  {
+    "comment": "lookup user, expect not found",
+    "request": {
+      "uri": "users/user-to-delete"
+    },
+    "response": { "status": 404 }
+  }
+]

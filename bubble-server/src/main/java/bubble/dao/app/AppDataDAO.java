@@ -86,12 +86,8 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
         return list(criteria().add(and(crits.toArray(new Criterion[0]))));
     }
 
-    public void deleteDevice(String uuid) {
-        getConfiguration().execSql("DELETE FROM "+tableName()+" WHERE device = ?", new Object[] {uuid});
-    }
+    public void deleteDevice(String uuid) { bulkDelete("device", uuid); }
 
-    public void deleteApp(String uuid) {
-        getConfiguration().execSql("DELETE FROM "+tableName()+" WHERE app = ?", new Object[] {uuid});
-    }
+    public void deleteApp(String uuid) { bulkDelete("app", uuid); }
 
 }

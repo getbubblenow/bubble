@@ -1,6 +1,5 @@
 package bubble.app.social.block;
 
-import bubble.model.app.AppDataDriver;
+import bubble.model.app.AppDataDriverBase;
 
-public class UserBlockerApp implements AppDataDriver {
-}
+public class UserBlockerApp extends AppDataDriverBase {}

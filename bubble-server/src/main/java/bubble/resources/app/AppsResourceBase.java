@@ -38,7 +38,7 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
         if (dataConfig.getPresentation() != AppDataPresentation.none) {
             if (!dataConfig.hasDriverClass()) throw invalidEx("err.dataConfig.driver.required");
             try {
-                AppDataDriver dataDriver = dataConfig.getDriver();
+                AppDataDriver dataDriver = dataConfig.getDriver(configuration);
             } catch (Exception e) {
                 throw invalidEx("err.dataConfig.driver.invalid", "Error initializing data driver: "+shortError(e), dataConfig.getDriverClass());
             }

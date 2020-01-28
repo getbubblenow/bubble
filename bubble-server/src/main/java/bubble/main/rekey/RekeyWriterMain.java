@@ -17,6 +17,7 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
 @Slf4j
@@ -55,7 +56,7 @@ public class RekeyWriterMain extends BaseMain<RekeyOptions> {
                 err("WRITER SocketException: "+e);
                 throw e;
             } catch (Exception e) {
-                err("WRITER error (sleeping then retrying): "+e);
+                err("WRITER error (sleeping then retrying): "+e+"\n"+getStackTrace(e));
                 sleep(RETRY_DELAY);
             }
         }

@@ -17,8 +17,6 @@ import static bubble.ApiConstants.HOME_DIR;
 import static org.cobbzilla.util.reflect.ReflectionUtil.getFirstTypeParam;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.wizard.model.Identifiable.UUID;
-import static org.hibernate.criterion.Restrictions.eq;
-import static org.hibernate.criterion.Restrictions.or;
 
 @Slf4j
 public abstract class AccountOwnedEntityDAO<E extends HasAccount>
@@ -62,19 +60,6 @@ public abstract class AccountOwnedEntityDAO<E extends HasAccount>
 
     public boolean dbFilterIncludeAll() { return false; }
 
-    public void handleAccountDeletion(String accountUuid) {
-        getConfiguration().execSql("DELETE FROM "+tableName()+" WHERE account = ?", new Object[] {accountUuid});
-    }
-
     public void forceDelete(String uuid) { delete(uuid); }
 
-    public List<? extends HasAccount> findByAccountOrParent(Account account) {
-        if (account.hasParent()) {
-            return list(criteria().add(or(
-                    eq("account", account.getUuid()),
-                    eq("account", account.getParent()))));
-        } else {
-            return findByAccount(account.getUuid());
-        }
-    }
 }

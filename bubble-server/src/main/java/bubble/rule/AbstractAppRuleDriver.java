@@ -2,6 +2,8 @@ package bubble.rule;
 
 import bubble.dao.app.AppDataDAO;
 import bubble.dao.app.AppSiteDAO;
+import bubble.dao.cloud.BubbleNetworkDAO;
+import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
@@ -12,6 +14,7 @@ import com.github.jknack.handlebars.Handlebars;
 import lombok.Getter;
 import lombok.Setter;
 import org.cobbzilla.util.system.Bytes;
+import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public abstract class AbstractAppRuleDriver implements AppRuleDriver {
@@ -21,6 +24,9 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
     @Autowired protected BubbleConfiguration configuration;
     @Autowired protected AppDataDAO appDataDAO;
     @Autowired protected AppSiteDAO appSiteDAO;
+    @Autowired protected RedisService redisService;
+    @Autowired protected BubbleNetworkDAO networkDAO;
+    @Autowired protected DeviceDAO deviceDAO;
 
     @Getter @Setter private AppRuleDriver next;
 

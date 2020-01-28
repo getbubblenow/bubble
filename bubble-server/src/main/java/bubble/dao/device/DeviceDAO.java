@@ -2,7 +2,6 @@ package bubble.dao.device;
 
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.dao.app.AppDataDAO;
-import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
@@ -16,7 +15,6 @@ import java.util.List;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static bubble.model.device.Device.*;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.touch;
 
@@ -36,14 +34,6 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
     public Device findByNetworkAndName(String networkUuid, String name) {
         return findByUniqueFields("network", networkUuid, "name", name);
-    }
-
-    @Override public Object preCreate(Device entity) {
-        final BubbleNetwork thisNetwork = configuration.getThisNetwork();
-        if (thisNetwork == null || thisNetwork.getInstallType() != AnsibleInstallType.node) {
-            return die("preCreate: cannot create devices, thisNetwork="+thisNetwork);
-        }
-        return super.preCreate(entity);
     }
 
     @Override public Device create(Device device) {
@@ -91,11 +81,14 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
     @Override public void forceDelete(String uuid) { super.delete(uuid); }
 
     public Device ensureSpareDevice(String account, String network, boolean refreshVpnUsers) {
+        final BubbleNetwork thisNetwork = configuration.getThisNetwork();
         final List<Device> devices = findByAccountAndUninitialized(account);
-        Device uninitialized = null;
+        Device uninitialized;
         if (devices.isEmpty()) {
             log.info("ensureSpareDevice: no uninitialized devices for account " + account + ", creating one");
             uninitialized = create(newUninitializedDevice(network, account));
+        } else {
+            uninitialized = devices.get(0);
         }
         if (refreshVpnUsers) refreshVpnUsers();
         return uninitialized;
@@ -109,4 +102,5 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
     public List<Device> findByAccountAndUninitialized(String accountUuid) {
         return findByFieldEqualAndFieldLike("account", accountUuid, "name", UNINITIALIZED_DEVICE_LIKE);
     }
+
 }

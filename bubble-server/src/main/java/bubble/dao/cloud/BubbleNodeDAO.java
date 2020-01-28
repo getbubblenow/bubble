@@ -30,7 +30,6 @@ public class BubbleNodeDAO extends AccountOwnedEntityDAO<BubbleNode> {
 
     @Autowired private NetworkService networkService;
     @Autowired private BubbleNetworkDAO networkDAO;
-    @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
 
     @Override protected String getNameField() { return "fqdn"; }
 
@@ -61,7 +60,7 @@ public class BubbleNodeDAO extends AccountOwnedEntityDAO<BubbleNode> {
         if (node.isRunning() || networkService.isReachable(node)) {
             throw invalidEx("err.node.running", "Node must be stopped before deleting");
         }
-        nodeKeyDAO.findByNode(uuid).forEach(k -> nodeKeyDAO.delete(k.getUuid()));
+        getConfiguration().deleteDependencies(node);
         super.delete(uuid);
     }
 

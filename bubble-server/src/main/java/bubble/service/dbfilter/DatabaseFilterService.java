@@ -120,9 +120,9 @@ public class DatabaseFilterService {
             while ((reader.isAlive() || writer.isAlive()) && now() - start < DB_FILTER_TIMEOUT) {
                 reader.join(DB_FILTER_CHECK);
                 writer.join(DB_FILTER_CHECK);
-                if (readerError.get() != null) die("copyDatabase: reader error: "+shortError(readerError.get()));
+                if (readerError.get() != null) die("copyDatabase: reader error: "+shortError(readerError.get()), readerError.get());
                 if (writeResult.get() != null && writeResult.get().hasException()) {
-                    die("copyDatabase: writer error: "+shortError(writeResult.get().getException()));
+                    die("copyDatabase: writer error: "+writeResult.get().getStderr()+"\n"+shortError(writeResult.get().getException()));
                 }
             }
             if (reader.isAlive() || writer.isAlive()) {
@@ -147,7 +147,7 @@ public class DatabaseFilterService {
             return newKey;
 
         } catch (Exception e) {
-            return die("copyDatabase: error: "+e);
+            return die("copyDatabase: error: "+e, e);
 
         } finally {
             if (reader != null) stopThread(reader, node, "reader");

@@ -15,11 +15,9 @@ import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH;
 
 public class TrafficAnalytics extends AbstractAppRuleDriver {
 
-    private static final long ANALYTICS_EXPIRATION = DAYS.toMillis(30);
+    private static final long ANALYTICS_EXPIRATION = DAYS.toMillis(32);
 
-    public static final String LOG_PREFIX = "log_";
-    public static final String LOG_ALL_PREFIX = LOG_PREFIX + "all_";
-    public static final String LOG_DEVICE_PREFIX = LOG_PREFIX + "device_";
+    public static final String FQDN_SEP = "@";
 
     @Override public boolean preprocess(AppRuleHarness ruleHarness,
                                         FilterMatchersRequest filter,
@@ -31,13 +29,8 @@ public class TrafficAnalytics extends AbstractAppRuleDriver {
         final String site = ruleHarness.getMatcher().getSite();
         final String fqdn = filter.getFqdn();
 
-        final String keyBase = fqdn + "/" + DATE_FORMAT_YYYY_MM_DD_HH.print(now());
-        final String allKey = LOG_ALL_PREFIX + keyBase;
-        final String deviceKey = LOG_DEVICE_PREFIX + device.getUuid() + "_" + keyBase;
-
-        incr(account, device, app, site, allKey);
-        incr(account, device, app, site, deviceKey);
-
+        incr(account, device, app, site, fqdn + FQDN_SEP + DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
+        incr(account, null, app, site, fqdn + FQDN_SEP + DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
         return true;
     }
 

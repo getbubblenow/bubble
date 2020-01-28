@@ -256,12 +256,9 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
 
         final AccountPolicy policy = policyDAO.findSingleByAccount(uuid);
 
-        configuration.getEntityClassesReverse().forEach(c -> {
-            if (HasAccount.class.isAssignableFrom(c)) {
-                final AccountOwnedEntityDAO dao = (AccountOwnedEntityDAO) configuration.getDaoForEntityClass(c);
-                dao.handleAccountDeletion(uuid);
-            }
-        });
+        log.info("delete ("+Thread.currentThread().getName()+"): starting to delete account-dependent objects");
+        configuration.deleteDependencies(account);
+        log.info("delete: finished deleting account-dependent objects");
 
         switch (policy.getDeletionPolicy()) {
             case full_delete:

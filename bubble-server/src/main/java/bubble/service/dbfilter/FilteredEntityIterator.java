@@ -4,6 +4,7 @@ import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
+import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccount;
 import bubble.model.account.message.AccountMessage;
@@ -20,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static bubble.model.device.Device.firstDeviceForNewNetwork;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 
 @Slf4j
@@ -95,7 +95,7 @@ public class FilteredEntityIterator extends EntityIterator {
 
         // add an initial device so that algo starts properly the first time
         // name and totp key will be overwritten when the device is initialized for use
-        add(firstDeviceForNewNetwork(network));
+        add(configuration.getBean(DeviceDAO.class).ensureSpareDevice(account.getUuid(), network.getUuid(), false));
 
         // in the new DB, the sage's node key must exist, but not its private key
         final BubbleNodeKey sageKey = configuration.getBean(BubbleNodeKeyDAO.class).findFirstByNode(sageNode.getUuid());

@@ -1,6 +1,6 @@
 package bubble.model.app;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import bubble.server.BubbleConfiguration;
 import lombok.Getter;
 import lombok.Setter;
 import org.cobbzilla.wizard.model.entityconfig.EntityFieldConfig;
@@ -19,7 +19,7 @@ public class AppDataConfig {
     @Getter @Setter private String driverClass;
     public boolean hasDriverClass () { return driverClass != null; }
 
-    @Getter @Setter private String[] fields;
+    @Getter @Setter private EntityFieldConfig[] fields;
     public boolean hasFields () { return !empty(fields); }
 
     @Getter @Setter private EntityFieldConfig[] params;
@@ -28,10 +28,24 @@ public class AppDataConfig {
     @Getter @Setter private AppDataAction[] actions;
     public boolean hasActions () { return !empty(actions); }
 
+    public AppDataAction getAction(String actionName) {
+        if (!hasActions()) return null;
+        for (AppDataAction a : getActions()) if (a.getName().equalsIgnoreCase(actionName)) return a;
+        return null;
+    }
+
     @Getter @Setter private AppDataView[] views;
     public boolean hasViews () { return !empty(views); }
 
+    public AppDataView getView(String viewName) {
+        if (!hasViews()) return null;
+        for (AppDataView v : getViews()) if (v.getName().equalsIgnoreCase(viewName)) return v;
+        return null;
+    }
+
     private final Map<String, AppDataDriver> DRIVER_CACHE = new ConcurrentHashMap<>();
-    @JsonIgnore @Getter(lazy=true) private final AppDataDriver driver = DRIVER_CACHE.computeIfAbsent(getDriverClass(), c -> (AppDataDriver) instantiate(c));
+    public AppDataDriver getDriver(BubbleConfiguration configuration) {
+        return DRIVER_CACHE.computeIfAbsent(getDriverClass(), c -> configuration.autowire(instantiate(c)));
+    }
 
 }
