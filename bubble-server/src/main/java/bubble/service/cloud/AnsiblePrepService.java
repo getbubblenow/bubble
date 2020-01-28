@@ -1,6 +1,5 @@
 package bubble.service.cloud;
 
-import bubble.dao.account.AccountSshKeyDAO;
 import bubble.model.account.Account;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.AnsibleRole;
@@ -36,7 +35,6 @@ import static org.cobbzilla.util.string.Base64.DONT_GUNZIP;
 @Service @Slf4j
 public class AnsiblePrepService {
 
-    @Autowired private AccountSshKeyDAO sshKeyDAO;
     @Autowired private DatabaseFilterService dbFilter;
     @Autowired private StandardStorageService storageService;
     @Autowired private BubbleConfiguration configuration;

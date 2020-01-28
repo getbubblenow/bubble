@@ -2,9 +2,12 @@ package bubble.resources.app;
 
 import bubble.dao.app.AppSiteDAO;
 import bubble.model.account.Account;
+import bubble.model.app.AppDataDriver;
+import bubble.model.app.AppDataView;
 import bubble.model.app.AppSite;
 import bubble.model.app.BubbleApp;
 import bubble.resources.account.AccountOwnedTemplateResource;
+import org.cobbzilla.wizard.model.search.SearchQuery;
 import org.glassfish.jersey.server.ContainerRequest;
 
 import javax.ws.rs.POST;
@@ -63,6 +66,24 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
         final AppSite site = find(ctx, id);
         if (site == null) throw notFoundEx(id);
         return configuration.subResource(AppSiteDataResource.class, getAccount(account, ctx), app, site);
+    }
+
+    @POST @Path("/{id}"+EP_VIEW+"/{view}")
+    public Response search(@Context ContainerRequest ctx,
+                           @PathParam("id") String id,
+                           @PathParam("view") String viewName,
+                           SearchQuery query) {
+
+        final Account caller = userPrincipal(ctx);
+        final AppSite site = getDao().findByAccountAndId(getAccountUuid(ctx), id);
+        if (site == null) return notFound(id);
+        if (!app.hasDataConfig()) return notFound(id);
+
+        final AppDataView view = app.getDataConfig().getView(viewName);
+        if (view == null) return notFound(viewName);
+
+        final AppDataDriver driver = app.getDataConfig().getDriver(configuration);
+        return ok(driver.query(caller, site, app.getDataConfig(), view, query));
     }
 
 }

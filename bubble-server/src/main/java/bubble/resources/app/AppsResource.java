@@ -45,7 +45,7 @@ public class AppsResource extends AppsResourceBase {
         if (view == null) return notFound(viewName);
 
         final AppDataDriver driver = app.getDataConfig().getDriver(configuration);
-        return ok(driver.query(caller, app.getDataConfig(), view, query));
+        return ok(driver.query(caller, null, app.getDataConfig(), view, query));
     }
 
 }

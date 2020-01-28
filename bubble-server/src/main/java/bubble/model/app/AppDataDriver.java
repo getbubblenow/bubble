@@ -6,6 +6,6 @@ import org.cobbzilla.wizard.model.search.SearchQuery;
 
 public interface AppDataDriver {
 
-    SearchResults query(Account caller, AppDataConfig dataConfig, AppDataView view, SearchQuery query);
+    SearchResults query(Account caller, AppSite site, AppDataConfig dataConfig, AppDataView view, SearchQuery query);
 
 }

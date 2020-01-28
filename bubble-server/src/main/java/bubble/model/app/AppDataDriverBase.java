@@ -12,7 +12,7 @@ public abstract class AppDataDriverBase implements AppDataDriver {
     @Autowired protected AppDataDAO dataDAO;
     @Autowired protected SearchService searchService;
 
-    @Override public SearchResults query(Account caller, AppDataConfig dataConfig, AppDataView view, SearchQuery query) {
+    @Override public SearchResults query(Account caller, AppSite site, AppDataConfig dataConfig, AppDataView view, SearchQuery query) {
         return searchService.search(false, caller, dataDAO, query);
     }
 
