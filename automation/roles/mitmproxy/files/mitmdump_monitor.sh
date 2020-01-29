@@ -17,12 +17,12 @@ ROOT_KEY_MARKER=/usr/share/bubble/mitmdump_monitor
 
 # Start with MITM proxy turned off
 if [[ ! -f ${BUBBLE_MITM_MARKER} ]] ; then
-  echo off > ${BUBBLE_MITM_MARKER} && chown bubble ${BUBBLE_MITM_MARKER}
+  echo -n off > ${BUBBLE_MITM_MARKER} && chown bubble ${BUBBLE_MITM_MARKER}
 fi
 if [[ ! -f ${ROOT_KEY_MARKER} ]] ; then
   sleep 1s
   mkdir -p "$(dirname ${ROOT_KEY_MARKER})" && chmod 755 "$(dirname ${ROOT_KEY_MARKER})"
-  echo on > ${ROOT_KEY_MARKER} && touch ${ROOT_KEY_MARKER} && chmod 644 ${ROOT_KEY_MARKER}
+  echo -n on > ${ROOT_KEY_MARKER} && touch ${ROOT_KEY_MARKER} && chmod 644 ${ROOT_KEY_MARKER}
 fi
 
 function ensureMitmOn {
