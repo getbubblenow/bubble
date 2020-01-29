@@ -15,6 +15,10 @@ public abstract class AppDataDriverBase implements AppDataDriver {
 
     @Override public SearchResults query(Account caller, Device device, BubbleApp app, AppSite site, AppDataView view, SearchQuery query) {
         query.setBound("app", app.getUuid());
+        if (!query.getHasSortField()) {
+            query.setSortOrder(SearchQuery.SortOrder.ASC);
+            query.setSortField("lower(key)");
+        }
         return searchService.search(false, caller, dataDAO, query);
     }
 
