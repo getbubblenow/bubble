@@ -13,7 +13,7 @@ BUBBLE_URI_PREFIX='/__bubble/'
 def bubble_log (message):
     print(message, file=sys.stderr)
 
-# todo: cache responses by remote_addr+host for a limited time (1 minute?)
+
 def bubble_matchers (remote_addr, flow, host):
     headers = {
         'X-Forwarded-For': remote_addr,
@@ -30,7 +30,11 @@ def bubble_matchers (remote_addr, flow, host):
         bubble_log('bubble_matchers: no Referer header, setting to NONE')
         referer = 'NONE'
     else:
-        referer = flow.request.headers[HEADER_REFERER]
+        try:
+            referer = flow.request.headers[HEADER_REFERER].encode().decode()
+        except Exception as e:
+            bubble_log('bubble_matchers: error parsing Referer header: '+repr(e))
+            referer = 'NONE'
 
     try:
         data = {
