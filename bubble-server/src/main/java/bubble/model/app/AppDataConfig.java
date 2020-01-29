@@ -3,7 +3,6 @@ package bubble.model.app;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
 import lombok.Setter;
-import org.cobbzilla.wizard.model.entityconfig.EntityFieldConfig;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,7 +21,7 @@ public class AppDataConfig {
     @Getter @Setter private AppDataField[] fields;
     public boolean hasFields () { return !empty(fields); }
 
-    @Getter @Setter private EntityFieldConfig[] params;
+    @Getter @Setter private AppDataParam[] params;
     public boolean hasParams () { return !empty(params); }
 
     @Getter @Setter private AppDataAction[] actions;

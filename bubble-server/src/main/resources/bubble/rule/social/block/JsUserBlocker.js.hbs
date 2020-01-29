@@ -1,10 +1,13 @@
 let {{JS_PREFIX}}_blocked_users = null;
+let {{JS_PREFIX}}_doc_ready = false;
 const {{JS_PREFIX}}_request_id = '{{BUBBLE_REQUEST_ID}}';
 const {{JS_PREFIX}}_interval = 50;
+const {{JS_PREFIX}}_idle_interval = 1000;
 
 function {{JS_PREFIX}}_onReady(callback) {
     const intervalId = window.setInterval(function() {
         if (document.getElementsByTagName('body')[0] !== undefined) {
+            {{JS_PREFIX}}_doc_ready = true;
             window.clearInterval(intervalId);
             callback.call(this);
         }
@@ -21,15 +24,21 @@ function {{JS_PREFIX}}_fetch_blocks (do_apply) {
             for (let i=0; i<data.length; i++) {
                 blocked_users.push(data[i]);
             }
-            if ({{JS_PREFIX}}_blocked_users !== null) {
+            if ({{JS_PREFIX}}_doc_ready) {
                 {{JS_PREFIX}}_blocked_users = blocked_users;
                 {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
+                window.setInterval(function () {
+                    {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users)
+                }, {{JS_PREFIX}}_idle_interval);
             } else {
                 const intervalId = window.setInterval(function() {
-                    if ({{JS_PREFIX}}_blocked_users !== null) {
+                    if ({{JS_PREFIX}}_doc_ready) {
                         window.clearInterval(intervalId);
                         {{JS_PREFIX}}_blocked_users = blocked_users;
                         {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
+                        window.setInterval(function () {
+                            {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users)
+                        }, {{JS_PREFIX}}_idle_interval);
                     }
                 }, {{JS_PREFIX}}_interval);
             }

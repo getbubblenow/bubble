@@ -32,10 +32,12 @@ public class TrafficAnalyticsApp extends AppDataDriverBase {
     public static final SearchSort SORT_FQDN_CASE_INSENSITIVE_ASC = new SearchSort("meta2", ASC, "lower");
 
     @Override public SearchResults query(Account caller, Device device, BubbleApp app, AppSite site, AppDataView view, SearchQuery query) {
-        final String deviceBound = device == null
-                ? SearchBoundComparison.is_null.name() + OP_SEP
-                : SearchBoundComparison.eq.name() + OP_SEP + device.getUuid();
-        query.setBound("device", deviceBound);
+        if (!query.hasBound("device")) {
+            final String deviceBound = device == null
+                    ? SearchBoundComparison.is_null.name() + OP_SEP
+                    : SearchBoundComparison.eq.name() + OP_SEP + device.getUuid();
+            query.setBound("device", deviceBound);
+        }
         query.setBound("key", getKeyBound(view));
         if (!query.hasSorts()) {
             query.addSort(SORT_TSTAMP_ASC);
