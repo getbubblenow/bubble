@@ -84,7 +84,7 @@ public class MitmControlService {
         }
     }
 
-    public String getCurrentValue() throws IOException { return FileUtil.toString(MITM_CONTROL_FILE); }
-    public String getRootValue() throws IOException { return FileUtil.toString(MITM_ROOT_CONTROL_FILE); }
+    public String getCurrentValue() throws IOException { return FileUtil.toString(MITM_CONTROL_FILE).trim(); }
+    public String getRootValue() throws IOException { return FileUtil.toString(MITM_ROOT_CONTROL_FILE).trim(); }
 
 }
