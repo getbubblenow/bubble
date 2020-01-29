@@ -22,5 +22,13 @@
     "userConfig": {
       "fields": []
     }
+  },
+  {
+    "name": "BubbleBlock",
+    "driverClass": "bubble.rule.bblock.BubbleBlock",
+    "template": true,
+    "userConfig": {
+      "fields": []
+    }
   }
 ]

@@ -1,0 +1,14 @@
+[{
+  "name": "BBlock",
+  "children": {
+    "AppMatcher": [{
+      "name": "BubbleBlockMatcher",
+      "template": true,
+      "site": "All_Sites",
+      "fqdn": "*",
+      "urlRegex": ".*",
+      "rule": "bubble_block",
+      "priority": -1000
+    }]
+  }
+}]

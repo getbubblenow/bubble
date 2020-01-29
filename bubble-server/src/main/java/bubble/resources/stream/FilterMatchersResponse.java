@@ -13,6 +13,7 @@ public class FilterMatchersResponse {
 
     public static final FilterMatchersResponse NO_MATCHERS = new FilterMatchersResponse();
 
+    @Getter @Setter private Integer abort;
     @Getter @Setter private String device;
     @Getter @Setter private List<AppMatcher> matchers;
 

@@ -6,7 +6,7 @@ import time
 from mitmproxy import http
 from mitmproxy.net.http import Headers
 from bubble_config import bubble_port, bubble_host_alias
-from bubble_api import HEADER_BUBBLE_MATCHERS, HEADER_BUBBLE_DEVICE, BUBBLE_URI_PREFIX, bubble_log
+from bubble_api import HEADER_BUBBLE_MATCHERS, HEADER_BUBBLE_DEVICE, HEADER_BUBBLE_ABORT, BUBBLE_URI_PREFIX, bubble_log
 
 BUFFER_SIZE = 4096
 HEADER_CONTENT_TYPE = 'Content-Type'
@@ -84,6 +84,13 @@ def responseheaders(flow):
                 flow.response.headers[key] = value
             flow.response.status_code = response.status_code
             flow.response.stream = lambda chunks: send_bubble_response(response)
+
+    elif HEADER_BUBBLE_ABORT in flow.request.headers:
+        abort_code = int(flow.request.headers[HEADER_BUBBLE_ABORT])
+        bubble_log('responseheaders: aborting request with HTTP status '+abort_code)
+        flow.response.headers = Headers()
+        flow.response.status_code = abort_code
+        flow.response.stream = lambda chunks: None
 
     elif (HEADER_BUBBLE_MATCHERS in flow.request.headers
             and HEADER_BUBBLE_DEVICE in flow.request.headers):

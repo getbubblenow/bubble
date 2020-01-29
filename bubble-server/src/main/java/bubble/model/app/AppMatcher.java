@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
+import org.cobbzilla.util.collection.HasPriority;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
@@ -35,10 +36,17 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
         @ECIndex(of={"account", "template", "enabled"}),
         @ECIndex(of={"template", "enabled"})
 })
-public class AppMatcher extends IdentifiableBase implements AppTemplateEntity {
+public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, HasPriority {
 
-    public static final String[] VALUE_FIELDS = {"fqdn", "urlRegex", "rule", "template", "enabled"};
+    public static final String[] VALUE_FIELDS = {"fqdn", "urlRegex", "rule", "template", "enabled", "priority"};
     public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS, "name", "site");
+
+    public AppMatcher(AppMatcher other) {
+        copy(this, other, CREATE_FIELDS);
+        setUuid(null);
+    }
+
+    @Override public Identifiable update(Identifiable other) { copy(this, other, VALUE_FIELDS); return this; }
 
     @ECField(index=10)
     @ECForeignKey(entity=Account.class)
@@ -93,11 +101,8 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity {
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
-    public AppMatcher(AppMatcher other) {
-        copy(this, other, CREATE_FIELDS);
-        setUuid(null);
-    }
-
-    @Override public Identifiable update(Identifiable other) { copy(this, other, VALUE_FIELDS); return this; }
+    @ECSearchable @ECField(index=110)
+    @Column(nullable=false)
+    @Getter @Setter private Integer priority = 0;
 
 }

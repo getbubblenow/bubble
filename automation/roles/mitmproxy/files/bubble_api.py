@@ -8,6 +8,7 @@ HEADER_REFERER = 'Referer'
 
 HEADER_BUBBLE_MATCHERS='X-Bubble-Matchers'
 HEADER_BUBBLE_DEVICE='X-Bubble-Device'
+HEADER_BUBBLE_ABORT='X-Bubble-Abort'
 BUBBLE_URI_PREFIX='/__bubble/'
 
 def bubble_log (message):

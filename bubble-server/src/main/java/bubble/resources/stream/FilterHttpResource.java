@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.http.HttpContentEncodingType;
+import org.cobbzilla.util.http.HttpStatusCodes;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -50,6 +51,9 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 @Path(FILTER_HTTP_ENDPOINT)
 @Service @Slf4j
 public class FilterHttpResource {
+
+    public static final FilterMatchersResponse ABORT_OK = new FilterMatchersResponse().setAbort(HttpStatusCodes.OK);
+    public static final FilterMatchersResponse ABORT_NOT_FOUND = new FilterMatchersResponse().setAbort(HttpStatusCodes.NOT_FOUND);
 
     @Autowired private AccountDAO accountDAO;
     @Autowired private RuleEngineService ruleEngine;
@@ -134,8 +138,12 @@ public class FilterHttpResource {
             removeMatchers = new ArrayList<>();
             for (AppMatcher matcher : matchers) {
                 if (matcher.matches(uri)) {
-                    if (ruleEngine.preprocess(filterRequest, req, request, caller, device, matcher.getUuid())) {
-                        removeMatchers.add(matcher);
+                    switch (ruleEngine.preprocess(filterRequest, req, request, caller, device, matcher.getUuid())) {
+                        case no_match:
+                            removeMatchers.add(matcher);
+                            break;
+                        case abort_ok:        return ABORT_OK;
+                        case abort_not_found: return ABORT_NOT_FOUND;
                     }
                 }
             }
