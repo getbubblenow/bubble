@@ -4,6 +4,9 @@
     state: present
     update_cache: yes
 
+- name: Set system timezone
+  shell: timedatectl set-timezone {{ time_zone }}
+
 - import_tasks: postgresql.yml
 
 - name: Create bubble user

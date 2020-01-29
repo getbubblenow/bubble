@@ -11,6 +11,7 @@
     {"name": "sage_node", "value": "[[sageNode]]"},
     {"name": "install_type", "value": "[[installType]]"},
     {"name": "default_locale", "value": "[[network.locale]]"},
+    {"name": "time_zone", "value": "[[network.timezone]]"},
     {"name": "bubble_version", "value": "[[configuration.version]]"},
     {"name": "bubble_host", "value": "[[node.fqdn]]"},
     {"name": "bubble_cname", "value": "[[network.networkDomain]]"},
