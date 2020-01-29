@@ -25,6 +25,7 @@ public class TrafficRecord {
     @Getter @Setter private String fqdn;
     @Getter @Setter private String uri;
     @Getter @Setter private String userAgent;
+    @Getter @Setter private String referer;
 
     public TrafficRecord(FilterMatchersRequest filter, Account account, Device device, Request req) {
         setAccountName(account == null ? null : account.getName());
@@ -35,5 +36,7 @@ public class TrafficRecord {
         setFqdn(filter.getFqdn());
         setUri(filter.getUri());
         setUserAgent(filter.getUserAgent());
+        setReferer(filter.getReferer());
     }
+
 }

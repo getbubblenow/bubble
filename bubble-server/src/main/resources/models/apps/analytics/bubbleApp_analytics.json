@@ -16,6 +16,7 @@
       {"name": "fqdn"},
       {"name": "uri", "when": "view === \"recent\""},
       {"name": "userAgent", "when": "view === \"recent\""},
+      {"name": "referer", "when": "view === \"recent\""},
       {"name": "device", "when": "view !== \"recent\""},
       {"name": "data", "when": "view !== \"recent\""}
     ],
@@ -57,6 +58,7 @@
         {"name": "field.ip", "value": "From IP"},
         {"name": "field.uri", "value": "Path"},
         {"name": "field.userAgent", "value": "User Agent"},
+        {"name": "field.referer", "value": "Referer"},
         {"name": "field.data", "value": "Count"},
         {"name": "param.meta2", "value": "Site"},
         {"name": "param.device", "value": "Device"},

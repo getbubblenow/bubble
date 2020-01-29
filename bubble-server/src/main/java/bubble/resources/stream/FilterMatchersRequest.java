@@ -13,8 +13,9 @@ public class FilterMatchersRequest {
     @Getter @Setter private String fqdn;
     @Getter @Setter private String uri;
     @Getter @Setter private String userAgent;
+    @Getter @Setter private String referer;
     @Getter @Setter private String remoteAddr;
 
-    public String cacheKey() { return hashOf(fqdn, uri, userAgent, remoteAddr); }
+    public String cacheKey() { return hashOf(fqdn, uri, userAgent, referer, remoteAddr); }
 
 }

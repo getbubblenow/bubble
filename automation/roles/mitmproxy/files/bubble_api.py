@@ -4,6 +4,7 @@ import sys
 from bubble_config import bubble_network, bubble_port
 
 HEADER_USER_AGENT = 'User-Agent'
+HEADER_REFERER = 'Referer'
 
 HEADER_BUBBLE_MATCHERS='X-Bubble-Matchers'
 HEADER_BUBBLE_DEVICE='X-Bubble-Device'
@@ -24,11 +25,19 @@ def bubble_matchers (remote_addr, flow, host):
         user_agent = 'UNKNOWN'
     else:
         user_agent = flow.request.headers[HEADER_USER_AGENT]
+
+    if HEADER_REFERER not in flow.request.headers:
+        bubble_log('bubble_matchers: no Referer header, setting to NONE')
+        referer = 'NONE'
+    else:
+        referer = flow.request.headers[HEADER_REFERER]
+
     try:
         data = {
             'fqdn': host,
             'uri': flow.request.path,
             'userAgent': user_agent,
+            'referer': referer,
             'remoteAddr': remote_addr
         }
         response = requests.post('http://127.0.0.1:'+bubble_port+'/api/filter/matchers', headers=headers, json=data)
