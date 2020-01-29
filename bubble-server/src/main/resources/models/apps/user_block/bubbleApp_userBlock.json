@@ -27,6 +27,7 @@
         {"name": "view.blocked_users", "value": "Manage Blocked Users"},
         {"name": "field.key", "value": "Username"},
         {"name": "field.enabled", "value": "Enforce Block"},
+        {"name": "field.ctime", "value": "Created"},
         {"name": "action.enable", "value": "Enforce Block"},
         {"name": "action.disable", "value": "Disable Block"},
         {"name": "action.delete", "value": "Delete Block"}

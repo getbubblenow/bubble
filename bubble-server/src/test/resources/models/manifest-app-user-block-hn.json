@@ -1,6 +1,6 @@
 [
   "apps/user_block/bubbleApp_userBlock",
-  "apps/user_block/hn/bubbleApp_userBlock_hn",
-  "apps/user_block/hn/bubbleApp_userBlock_hn_matchers",
-  "apps/user_block/hn/bubbleApp_userBlock_hn_data"
+  "apps/user_block/hn_test/bubbleApp_userBlock_hn",
+  "apps/user_block/hn_test/bubbleApp_userBlock_hn_matchers",
+  "apps/user_block/hn_test/bubbleApp_userBlock_hn_data"
 ]
