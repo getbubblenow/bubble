@@ -8,12 +8,15 @@
     "driverClass": "bubble.app.analytics.TrafficAnalyticsApp",
     "presentation": "app",
     "fields": [
-      {"name": "ctime"},
-      {"name": "URL"},
+      {"name": "timeInterval"},
+      {"name": "fqdn"},
       {"name": "device"},
-      {"name": "count"}
+      {"name": "data"}
     ],
-    "params": [{"name": "site", "required": false}],
+    "params": [
+      {"name": "site", "required": false},
+      {"name": "device", "required": false}
+    ],
     "views": [
       {"name": "last_24_hours"},
       {"name": "last_7_days"},
@@ -38,10 +41,12 @@
       "messages": [
         {"name": "name", "value": "Traffic Analytics"},
         {"name": "description", "value": "Traffic analytics for your Bubble. Manage block lists."},
-        {"name": "field.key", "value": "URL"},
+        {"name": "field.timeInterval", "value": "When"},
+        {"name": "field.fqdn", "value": "URL"},
         {"name": "field.device", "value": "Device"},
         {"name": "field.data", "value": "Count"},
         {"name": "param.site", "value": "Site"},
+        {"name": "param.device", "value": "Device"},
         {"name": "view.last_24_hours", "value": "Last 24 Hours"},
         {"name": "view.last_7_days", "value": "Last 7 Days"},
         {"name": "view.last_30_days", "value": "Last 30 Days"}

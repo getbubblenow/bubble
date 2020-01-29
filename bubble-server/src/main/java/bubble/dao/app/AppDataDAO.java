@@ -36,6 +36,10 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
         return filterExpired(findByUniqueFields("app", app, "site", site, "key", key));
     }
 
+    public AppData findByAppAndSiteAndKeyAndDevice(String app, String site, String key, String device) {
+        return filterExpired(findByUniqueFields("app", app, "site", site, "key", key, "device", device));
+    }
+
     public List<AppData> findByAccountAndAppAndAndKey(String account, String app, String key) {
         return filterExpired(findByFields("account", account, "app", app, "key", key));
     }

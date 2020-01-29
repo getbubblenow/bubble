@@ -40,7 +40,7 @@ public class TrafficAnalytics extends AbstractAppRuleDriver {
     // if the underlying db driver gets into an upset state because of the concurrent updates. We will cross
     // that bridge when we get to it.
     private synchronized void incr(Account account, Device device, String app, String site, String key) {
-        final AppData found = appDataDAO.findByAppAndSiteAndKey(app, site, key);
+        final AppData found = appDataDAO.findByAppAndSiteAndKeyAndDevice(app, site, key, device == null ? null : device.getUuid());
         if (found == null) {
             appDataDAO.create(new AppData()
                     .setApp(app)
@@ -48,7 +48,7 @@ public class TrafficAnalytics extends AbstractAppRuleDriver {
                     .setMatcher(matcher.getUuid())
                     .setKey(key)
                     .setAccount(account.getUuid())
-                    .setDevice(device.getUuid())
+                    .setDevice(device == null ? null : device.getUuid())
                     .setExpiration(now() + ANALYTICS_EXPIRATION)
                     .setData("1"));
         } else {

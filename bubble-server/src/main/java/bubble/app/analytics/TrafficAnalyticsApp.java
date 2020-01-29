@@ -53,7 +53,7 @@ public class TrafficAnalyticsApp extends AppDataDriverBase {
         b = new StringBuilder();
         for (int i = 0; i< limit; i++) {
             if (b.length() > 0) b.append(ILIKE_SEP);
-            b.append(PCT + FQDN_SEP).append(DATE_FORMAT_YYYY_MM_DD_HH.print(now - HOURS.toMillis(i))).append("-").append(PCT);
+            b.append(PCT + FQDN_SEP).append(DATE_FORMAT_YYYY_MM_DD_HH.print(now - HOURS.toMillis(i))).append(PCT);
         }
 
         return SearchBoundComparison.like_any.name() + OP_SEP + b.toString();
