@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static bubble.ApiConstants.*;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
 import static org.cobbzilla.util.string.StringUtil.UTF8cs;
@@ -87,6 +88,7 @@ public class MessagesResource {
 
         final boolean isAppsGroup = group.equalsIgnoreCase(APPS_MESSAGE_GROUP);
         if (isAppsGroup && caller == null) return Collections.emptyMap();
+        locale = normalizeLocale(locale);
 
         final String cacheKey = (isAppsGroup ? caller.getUuid()+"/" : "") + locale + "/" + group + "/" + format;
         if (!messageCache.containsKey(cacheKey)) {
@@ -102,6 +104,14 @@ public class MessagesResource {
             messageCache.put(cacheKey, messages);
         }
         return messageCache.get(cacheKey);
+    }
+
+    private String normalizeLocale(String locale) {
+        if (empty(locale)) return locale;
+        final int uPos = locale.indexOf('_');
+        if (uPos == -1) return locale;
+        if (uPos == locale.length()-1) return locale.substring(locale.length()-1);
+        return locale.substring(0, uPos).toLowerCase()+'_'+locale.substring(uPos+1).toUpperCase();
     }
 
 }
