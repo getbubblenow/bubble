@@ -15,7 +15,7 @@ public class BubblePlanDAO extends AccountOwnedEntityDAO<BubblePlan> {
 
     @Override public boolean dbFilterIncludeAll() { return true; }
 
-    @Override public Order getDefaultSortOrder() { return Order.asc("priority"); }
+    @Override public Order getDefaultSortOrder() { return PRIORITY_ASC; }
 
     @Override public BubblePlan findByUuid(String uuid) {
         final BubblePlan plan = super.findByUuid(uuid);

@@ -21,11 +21,13 @@ import static org.hibernate.criterion.Restrictions.eq;
 @Repository @Slf4j
 public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
 
+    public static final Order KEY_ASC = Order.asc("key");
+
     @Autowired private BubbleAppDAO appDAO;
 
     @Override protected String getNameField() { return "key"; }
 
-    @Override public Order getDefaultSortOrder() { return Order.asc("key"); }
+    @Override public Order getDefaultSortOrder() { return KEY_ASC; }
 
     public String findValueByAppAndSiteAndKey(String app, String site, String key) {
         final AppData found = filterExpired(findByAppAndSiteAndKey(app, site, key));

@@ -13,7 +13,6 @@ import java.util.List;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
-import static org.cobbzilla.wizard.model.Identifiable.CTIME;
 import static org.cobbzilla.wizard.model.Identifiable.UUID;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
@@ -39,7 +38,7 @@ public class BubbleBackupDAO extends AccountOwnedEntityDAO<BubbleBackup> {
         return findByFieldAndFieldIn("network", uuid, "status", BackupStatus.STUCK);
     }
 
-    @Override public Order getDefaultSortOrder() { return Order.desc(CTIME); }
+    @Override public Order getDefaultSortOrder() { return ORDER_CTIME_DESC; }
 
     public BubbleBackup findByNetworkAndPath(String networkUuid, String path) {
         return findByNetwork(networkUuid).stream()

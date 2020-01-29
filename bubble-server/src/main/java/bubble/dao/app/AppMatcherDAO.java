@@ -6,6 +6,7 @@ import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.app.BubbleApp;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -21,6 +22,8 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
     @Autowired private AccountDAO accountDAO;
     @Autowired private BubbleAppDAO appDAO;
     @Autowired private AppRuleDAO ruleDAO;
+
+    @Override public Order getDefaultSortOrder() { return PRIORITY_ASC; }
 
     @Override public AppMatcher postUpdate(AppMatcher matcher, Object context) {
         final BubbleApp app = appDAO.findByUuid(matcher.getApp());

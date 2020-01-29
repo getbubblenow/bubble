@@ -8,13 +8,11 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-import static org.cobbzilla.wizard.model.Identifiable.CTIME;
-
 @Repository
 public class AccountPaymentDAO extends AccountOwnedEntityDAO<AccountPayment> {
 
     // newest first
-    @Override public Order getDefaultSortOrder() { return Order.desc(CTIME); }
+    @Override public Order getDefaultSortOrder() { return ORDER_CTIME_DESC; }
 
     public List<AccountPayment> findByAccountAndPlan(String accountUuid, String accountPlanUuid) {
         return findByFields("account", accountUuid, "plan", accountPlanUuid);

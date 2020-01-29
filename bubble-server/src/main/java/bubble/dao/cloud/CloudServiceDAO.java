@@ -27,7 +27,7 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
     @Autowired private AccountDAO accountDAO;
     @Autowired private BubbleConfiguration configuration;
 
-    @Override public Order getDefaultSortOrder() { return Order.desc("priority"); }
+    @Override public Order getDefaultSortOrder() { return PRIORITY_ASC; }
 
     @Override public Object preCreate(CloudService cloud) {
         if (cloud.getType() == CloudServiceType.storage) {

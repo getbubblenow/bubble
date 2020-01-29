@@ -36,7 +36,7 @@ public class AnsibleRoleDAO extends AccountOwnedTemplateDAO<AnsibleRole> {
     @Autowired private StorageService storageService;
     @Autowired private BubbleConfiguration configuration;
 
-    @Override public Order getDefaultSortOrder() { return Order.asc("priority"); }
+    @Override public Order getDefaultSortOrder() { return PRIORITY_ASC; }
 
     @Override public Object preCreate(AnsibleRole role) {
 

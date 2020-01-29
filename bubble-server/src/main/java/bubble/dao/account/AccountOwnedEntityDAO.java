@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.dao.AbstractCRUDDAO;
 import org.cobbzilla.wizard.dao.SqlViewSearchableDAO;
+import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
@@ -22,6 +23,9 @@ import static org.cobbzilla.wizard.model.Identifiable.UUID;
 public abstract class AccountOwnedEntityDAO<E extends HasAccount>
         extends AbstractCRUDDAO<E>
         implements SqlViewSearchableDAO<E> {
+
+    public static final Order PRIORITY_ASC = Order.asc("priority");
+    public static final Order PRIORITY_DESC = Order.desc("priority");
 
     @Autowired private BubbleConfiguration configuration;
 

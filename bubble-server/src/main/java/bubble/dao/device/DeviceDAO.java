@@ -26,7 +26,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AppDataDAO dataDAO;
 
-    @Override public Order getDefaultSortOrder() { return Order.asc(CTIME); }
+    @Override public Order getDefaultSortOrder() { return ORDER_CTIME_DESC; }
 
     public Device findByAccountAndName(String accountUuid, String name) {
         return findByUniqueFields("account", accountUuid, "name", name);

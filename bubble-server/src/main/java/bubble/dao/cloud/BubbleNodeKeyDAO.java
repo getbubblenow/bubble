@@ -18,9 +18,11 @@ import static org.cobbzilla.wizard.model.Identifiable.UUID;
 @Repository @Slf4j
 public class BubbleNodeKeyDAO extends AccountOwnedEntityDAO<BubbleNodeKey> {
 
+    public static final Order EXPIRATION_DESC = Order.desc("expiration");
+
     @Autowired private SelfNodeService selfNodeService;
 
-    @Override public Order getDefaultSortOrder() { return Order.desc("expiration"); }
+    @Override public Order getDefaultSortOrder() { return EXPIRATION_DESC; }
 
     @Override public Object preCreate(BubbleNodeKey key) {
         if (key.getExpiration() == null) key.setExpiration(defaultExpiration());

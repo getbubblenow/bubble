@@ -14,7 +14,7 @@ public class AppMessageDAO extends AccountOwnedTemplateDAO<AppMessage> {
 
     @Override public Boolean getHasNameField() { return false; }
 
-    @Override public Order getDefaultSortOrder() { return Order.asc("priority"); }
+    @Override public Order getDefaultSortOrder() { return PRIORITY_ASC; }
 
     public AppMessage findByAccountAndAppAndLocale (String account, String app, String locale) {
         return findByUniqueFields("account", account, "app", app, "locale", locale, "enabled", true);
