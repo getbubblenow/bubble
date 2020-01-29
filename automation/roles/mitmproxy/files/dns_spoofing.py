@@ -72,7 +72,7 @@ class Rerouter:
         # Determine if this request should be filtered
         if sni or host_header:
             matcher_response = self.get_matchers(flow, sni or host_header)
-            if matcher_response and 'matchers' in matcher_response and 'device' in matcher_response:
+            if matcher_response and 'matchers' in matcher_response and 'device' in matcher_response and len(matcher_response['matchers']) > 0:
                 bubble_log("dns_spoofing.request: found matchers: " + ' '.join(matcher_response['matchers']))
                 flow.request.headers[HEADER_BUBBLE_MATCHERS] = json.dumps(matcher_response['matchers'])
                 flow.request.headers[HEADER_BUBBLE_DEVICE] = matcher_response['device']

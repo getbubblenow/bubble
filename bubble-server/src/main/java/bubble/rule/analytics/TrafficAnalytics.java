@@ -6,18 +6,28 @@ import bubble.model.device.Device;
 import bubble.resources.stream.FilterMatchersRequest;
 import bubble.rule.AbstractAppRuleDriver;
 import bubble.service.stream.AppRuleHarness;
+import lombok.Getter;
+import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 
 import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 public class TrafficAnalytics extends AbstractAppRuleDriver {
 
     private static final long ANALYTICS_EXPIRATION = DAYS.toMillis(32);
-
+    private static final long RECENT_TRAFFIC_EXPIRATION = HOURS.toSeconds(1);
     public static final String FQDN_SEP = "@";
+
+    public static final String RECENT_TRAFFIC_PREFIX = TrafficAnalytics.class.getSimpleName() + ".recent";
+
+    @Getter(lazy=true) private final RedisService recentTraffic = redis.prefixNamespace(RECENT_TRAFFIC_PREFIX);
 
     @Override public boolean preprocess(AppRuleHarness ruleHarness,
                                         FilterMatchersRequest filter,
@@ -29,6 +39,7 @@ public class TrafficAnalytics extends AbstractAppRuleDriver {
         final String site = ruleHarness.getMatcher().getSite();
         final String fqdn = filter.getFqdn();
 
+        getRecentTraffic().set(now()+"_"+randomAlphanumeric(10), json(new TrafficRecord(filter, account, device, req)), EX, RECENT_TRAFFIC_EXPIRATION);
         incr(account, device, app, site, fqdn, DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
         incr(account, null, app, site, fqdn, DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
         return true;

@@ -34,13 +34,13 @@
     <logger name="org.glassfish.jersey.grizzly" level="WARN" />
     <logger name="bubble.cloud.email.SmtpEmailDriver" level="WARN" />
     <logger name="org.cobbzilla.wizard.dao.AbstractCRUDDAO" level="WARN" />
-    <logger name="org.cobbzilla.wizard.dao.SqlViewSearchHelper" level="DEBUG" />
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
     <logger name="bubble.service.notify.NotificationService" level="WARN" />
-    <logger name="bubble.resources.stream" level="DEBUG" />
+    <logger name="bubble.resources.stream" level="INFO" />
     <logger name="bubble.service.stream" level="INFO" />
-    <logger name="bubble.resources.message" level="DEBUG" />
-    <logger name="org.cobbzilla.util.io.regex.RegexFilterReader" level="DEBUG" />
+    <logger name="bubble.resources.message" level="INFO" />
+    <logger name="bubble.app.analytics" level="DEBUG" />
+    <logger name="org.cobbzilla.util.io.regex.RegexFilterReader" level="WARN" />
     <logger name="org.cobbzilla.util.io.multi" level="INFO" />
     <logger name="bubble.rule.social.block" level="INFO" />
 <!--    <logger name="bubble.service.cloud.StandardNetworkService" level="INFO" />-->

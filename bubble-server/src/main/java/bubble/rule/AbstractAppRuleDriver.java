@@ -24,7 +24,7 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
     @Autowired protected BubbleConfiguration configuration;
     @Autowired protected AppDataDAO appDataDAO;
     @Autowired protected AppSiteDAO appSiteDAO;
-    @Autowired protected RedisService redisService;
+    @Autowired protected RedisService redis;
     @Autowired protected BubbleNetworkDAO networkDAO;
     @Autowired protected DeviceDAO deviceDAO;
 

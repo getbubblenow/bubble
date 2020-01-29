@@ -8,16 +8,23 @@
     "driverClass": "bubble.app.analytics.TrafficAnalyticsApp",
     "presentation": "app",
     "fields": [
-      {"name": "ctime", "customFormat": true},
+      {"name": "ctime", "customFormat": true, "when": "view !== \"recent\""},
+      {"name": "requestTime", "customFormat": true, "when": "view === \"recent\""},
+      {"name": "accountName", "when": "view === \"recent\""},
+      {"name": "deviceName", "when": "view === \"recent\""},
+      {"name": "ip", "when": "view === \"recent\""},
       {"name": "fqdn"},
-      {"name": "device"},
-      {"name": "data"}
+      {"name": "uri", "when": "view === \"recent\""},
+      {"name": "userAgent", "when": "view === \"recent\""},
+      {"name": "device", "when": "view !== \"recent\""},
+      {"name": "data", "when": "view !== \"recent\""}
     ],
     "params": [
-      {"name": "device", "required": false, "index": 10},
-      {"name": "meta2", "required": false, "operator": "like", "index": 20}
+      {"name": "device", "required": false, "index": 10, "when": "view !== \"recent\""},
+      {"name": "meta2", "required": false, "operator": "like", "index": 20, "when": "view !== \"recent\""}
     ],
     "views": [
+      {"name": "recent"},
       {"name": "last_24_hours"},
       {"name": "last_7_days"},
       {"name": "last_30_days"}
@@ -42,11 +49,19 @@
         {"name": "name", "value": "Traffic Analytics"},
         {"name": "description", "value": "Traffic analytics for your Bubble. Manage block lists."},
         {"name": "field.ctime", "value": "When"},
+        {"name": "field.requestTime", "value": "When"},
+        {"name": "field.accountName", "value": "Account"},
         {"name": "field.fqdn", "value": "URL"},
         {"name": "field.device", "value": "Device"},
+        {"name": "field.deviceName", "value": "Device"},
+        {"name": "field.ip", "value": "From IP"},
+        {"name": "field.uri", "value": "Path"},
+        {"name": "field.userAgent", "value": "User Agent"},
         {"name": "field.data", "value": "Count"},
         {"name": "param.meta2", "value": "Site"},
         {"name": "param.device", "value": "Device"},
+        {"name": "view.recent", "value": "Recent Traffic"},
+        {"name": "view.recent.requestTime.format", "value": "{{MM}} {{d}} @ {{h}}:{{m}}:{{s}} {{a}}"},
         {"name": "view.last_24_hours", "value": "Last 24 Hours"},
         {"name": "view.last_24_hours.ctime.format", "value": "{{MM}} {{d}} @ {{h}}{{a}}"},
         {"name": "view.last_7_days", "value": "Last 7 Days"},
