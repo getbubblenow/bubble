@@ -4,6 +4,7 @@ import bubble.model.account.Account;
 import bubble.model.app.AppData;
 import bubble.model.app.BubbleApp;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.SingletonList;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,6 +78,10 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
     }
 
     public List<AppData> findByExample(Account account, AppData basis, String key) {
+        // try by uuid first
+        final AppData byUuid = findByAccountAndId(account.getUuid(), key);
+        if (byUuid != null) return new SingletonList<>(byUuid);
+
         final List<Criterion> crits = new ArrayList<>();
         if (account != null) crits.add(eq("account", account.getUuid()));
         if (basis.hasApp()) crits.add(eq("app", basis.getApp()));

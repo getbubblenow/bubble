@@ -10,8 +10,8 @@
       {"name": "key"}, {"name": "enabled"}, {"name": "ctime"}
     ],
     "actions": [
-      {"name": "enable", "when": "!data.enabled()"},
-      {"name": "disable", "when": "data.enabled()"},
+      {"name": "enable", "when": "!data.enabled"},
+      {"name": "disable", "when": "data.enabled"},
       {"name": "delete"}
     ],
     "views": [

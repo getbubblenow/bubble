@@ -22,8 +22,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-import static bubble.ApiConstants.EP_DISABLE;
-import static bubble.ApiConstants.EP_ENABLE;
+import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -41,10 +40,12 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
     @Autowired protected AppMatcherDAO matcherDAO;
     @Autowired protected AppSiteDAO siteDAO;
 
+    protected BubbleApp app;
     protected AppData basis;
 
-    public DataResourceBase (Account account, AppData basis) {
+    public DataResourceBase (Account account, BubbleApp app, AppData basis) {
         super(account);
+        this.app = app;
         this.basis = basis;
     }
 
@@ -78,6 +79,21 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
             getDao().update(d.setEnabled(false));
         }
         return ok(found);
+    }
+
+    @POST @Path("/{id}"+EP_ACTIONS+"/{action}")
+    public Response takeAction(@Context ContainerRequest ctx,
+                               @PathParam("id") String id,
+                               @PathParam("action") String action) {
+        if (isReadOnly(ctx)) return forbidden();
+        switch (action) {
+            case "enable": return enable(ctx, id);
+            case "disable": return disable(ctx, id);
+            case "delete": return delete(ctx, id);
+            default:
+                app.getDataConfig().getDriver(configuration).takeAction(id, action);
+                return ok();
+        }
     }
 
     @Override protected AppData setReferences(ContainerRequest ctx, Account caller, AppData request) {

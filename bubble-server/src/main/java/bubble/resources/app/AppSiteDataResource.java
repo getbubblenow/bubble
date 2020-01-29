@@ -8,7 +8,7 @@ import bubble.model.app.BubbleApp;
 public class AppSiteDataResource extends DataResourceBase {
 
     public AppSiteDataResource(Account account, BubbleApp app, AppSite site) {
-        super(account, new AppData()
+        super(account, app, new AppData()
                 .setApp(app.getUuid())
                 .setSite(site.getUuid())
                 .setAccount(account == null ? null : account.getUuid()));
