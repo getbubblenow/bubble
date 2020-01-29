@@ -6,9 +6,13 @@ import bubble.model.app.AppDataDriver;
 import bubble.model.app.AppDataView;
 import bubble.model.app.AppSite;
 import bubble.model.app.BubbleApp;
+import bubble.model.device.Device;
 import bubble.resources.account.AccountOwnedTemplateResource;
+import bubble.service.cloud.DeviceIdService;
 import org.cobbzilla.wizard.model.search.SearchQuery;
+import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -23,6 +27,8 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppSiteDAO> {
 
     private BubbleApp app;
+
+    @Autowired private DeviceIdService deviceIdService;
 
     public AppSitesResource(Account account, BubbleApp app) {
         super(account);
@@ -69,7 +75,8 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
     }
 
     @POST @Path("/{id}"+EP_VIEW+"/{view}")
-    public Response search(@Context ContainerRequest ctx,
+    public Response search(@Context Request req,
+                           @Context ContainerRequest ctx,
                            @PathParam("id") String id,
                            @PathParam("view") String viewName,
                            SearchQuery query) {
@@ -82,8 +89,11 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
         final AppDataView view = app.getDataConfig().getView(viewName);
         if (view == null) return notFound(viewName);
 
+        final String remoteHost = getRemoteHost(req);
+        final Device device = deviceIdService.findDeviceByIp(remoteHost);
+
         final AppDataDriver driver = app.getDataConfig().getDriver(configuration);
-        return ok(driver.query(caller, site, app.getDataConfig(), view, query));
+        return ok(driver.query(caller, device, app, site, view, query));
     }
 
 }

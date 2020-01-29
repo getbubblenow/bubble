@@ -29,6 +29,10 @@ public class DelegatedPaymentDriver extends DelegatedCloudServiceDriverBase impl
             log.warn("getPaymentMethodType: delegated driver has non-delegated cloud: "+cloud.getUuid());
             return cloud.getPaymentDriver(configuration).getPaymentMethodType();
         }
+        if (!configuration.paymentsEnabled()) {
+            log.warn("getPaymentMethodType: payments not enabled, returning null");
+            return null;
+        };
         final CloudService delegate = cloudDAO.findByUuid(cloud.getDelegated());
         if (delegate == null) throw invalidEx("err.paymentService.notFound");
         return delegate.getPaymentDriver(configuration).getPaymentMethodType();

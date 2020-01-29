@@ -22,6 +22,7 @@ import static bubble.ApiConstants.HOME_DIR;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.cobbzilla.wizard.server.RestServerBase.reportError;
 
 @Service @Slf4j
 public class DeviceIdService {
@@ -43,7 +44,8 @@ public class DeviceIdService {
 
         if (!WG_DEVICES_DIR.exists()) {
             if (configuration.testMode()) return findTestDevice(ipAddr);
-            throw invalidEx("err.deviceDir.notFound");
+            reportError("findDeviceByIp: err.deviceDir.notFound");
+            return null;
         }
 
         return deviceCache.computeIfAbsent(ipAddr, ip -> {

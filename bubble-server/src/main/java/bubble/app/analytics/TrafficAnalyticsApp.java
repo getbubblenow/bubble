@@ -2,6 +2,7 @@ package bubble.app.analytics;
 
 import bubble.model.account.Account;
 import bubble.model.app.*;
+import bubble.model.device.Device;
 import org.cobbzilla.wizard.dao.SearchResults;
 import org.cobbzilla.wizard.model.search.SearchBoundComparison;
 import org.cobbzilla.wizard.model.search.SearchQuery;
@@ -23,7 +24,7 @@ public class TrafficAnalyticsApp extends AppDataDriverBase {
     public static final String VIEW_last_7_days = "last_7_days";
     public static final String VIEW_last_30_days = "last_30_days";
 
-    @Override public SearchResults query(Account caller, AppSite site, AppDataConfig dataConfig, AppDataView view, SearchQuery query) {
+    @Override public SearchResults query(Account caller, Device device, BubbleApp app, AppSite site, AppDataView view, SearchQuery query) {
         query = query.setBound("key", getBound(view));
         return processResults(searchService.search(false, caller, dataDAO, query));
     }

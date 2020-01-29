@@ -34,6 +34,7 @@
     <logger name="org.glassfish.jersey.grizzly" level="WARN" />
     <logger name="bubble.cloud.email.SmtpEmailDriver" level="WARN" />
     <logger name="org.cobbzilla.wizard.dao.AbstractCRUDDAO" level="WARN" />
+    <logger name="org.cobbzilla.wizard.dao.SqlViewSearchHelper" level="DEBUG" />
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
     <logger name="bubble.service.notify.NotificationService" level="WARN" />
     <logger name="bubble.resources.stream" level="DEBUG" />
