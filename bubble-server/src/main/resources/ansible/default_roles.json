@@ -24,16 +24,19 @@
     "priority": 300,
     "template": true,
     "config": [
-      {"name": "dns_port", "value": "[[configuration.dnsPort]]"},
       {"name": "node_uuid", "value": "[[node.uuid]]"},
       {"name": "network_uuid", "value": "[[node.network]]"},
       {"name": "admin_port", "value": "[[node.adminPort]]"},
       {"name": "ssl_port", "value": "[[node.sslPort]]"},
+      {"name": "public_base_uri", "value": "[[publicBaseUri]]"},
       {"name": "sage_node", "value": "[[sageNode]]"},
       {"name": "install_type", "value": "[[installType]]"},
+      {"name": "default_locale", "value": "[[network.locale]]"},
+      {"name": "time_zone", "value": "[[network.timezone]]"},
       {"name": "bubble_version", "value": "[[configuration.version]]"},
       {"name": "bubble_host", "value": "[[node.fqdn]]"},
-      {"name": "admin_user", "value": "[[node.user]]"},
+      {"name": "bubble_cname", "value": "[[network.networkDomain]]"},
+      {"name": "admin_user", "value": "[[node.ansibleUser]]"},
       {"name": "db_encoding", "value": "UTF-8"},
       {"name": "db_locale", "value": "en_US"},
       {"name": "db_user", "value": "bubble"},
@@ -43,9 +46,12 @@
       {"name": "is_fork", "value": "[[fork]]"},
       {"name": "restore_key", "value": "[[restoreKey]]"},
       {"name": "restore_timeout", "value": "[[restoreTimeoutSeconds]]"},
-      {"name": "test_mode", "value": "[[testMode]]"}
+      {"name": "test_mode", "value": "[[testMode]]"},
+      {"name": "errbit_url", "value": "[[#compare fork '==' true]][[configuration.errorApi.url]][[/compare]]"},
+      {"name": "errbit_key", "value": "[[#compare fork '==' true]][[configuration.errorApi.key]][[/compare]]"},
+      {"name": "errbit_env", "value": "[[#compare fork '==' true]][[node.fqdn]][[/compare]]"}
     ],
-    "optionalConfigNames": ["restore_key", "restore_timeout"],
+    "optionalConfigNames": ["restore_key", "restore_timeout", "errbit_url", "errbit_key", "errbit_env"],
     "tgzB64": ""
   },
   {

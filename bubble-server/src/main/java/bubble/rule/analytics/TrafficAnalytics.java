@@ -29,8 +29,8 @@ public class TrafficAnalytics extends AbstractAppRuleDriver {
         final String site = ruleHarness.getMatcher().getSite();
         final String fqdn = filter.getFqdn();
 
-        incr(account, device, app, site, fqdn + FQDN_SEP + DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
-        incr(account, null, app, site, fqdn + FQDN_SEP + DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
+        incr(account, device, app, site, fqdn, DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
+        incr(account, null, app, site, fqdn, DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
         return true;
     }
 
@@ -39,7 +39,8 @@ public class TrafficAnalytics extends AbstractAppRuleDriver {
     // is that we miss a few increments, hopefully not a huge deal in the big picture. The real bad case is
     // if the underlying db driver gets into an upset state because of the concurrent updates. We will cross
     // that bridge when we get to it.
-    private synchronized void incr(Account account, Device device, String app, String site, String key) {
+    private synchronized void incr(Account account, Device device, String app, String site, String fqdn, String tstamp) {
+        final String key = fqdn + FQDN_SEP + tstamp;
         final AppData found = appDataDAO.findByAppAndSiteAndKeyAndDevice(app, site, key, device == null ? null : device.getUuid());
         if (found == null) {
             appDataDAO.create(new AppData()
@@ -47,6 +48,8 @@ public class TrafficAnalytics extends AbstractAppRuleDriver {
                     .setSite(matcher.getSite())
                     .setMatcher(matcher.getUuid())
                     .setKey(key)
+                    .setMeta1(tstamp)
+                    .setMeta2(fqdn)
                     .setAccount(account.getUuid())
                     .setDevice(device == null ? null : device.getUuid())
                     .setExpiration(now() + ANALYTICS_EXPIRATION)

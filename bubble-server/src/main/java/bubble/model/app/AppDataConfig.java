@@ -19,7 +19,7 @@ public class AppDataConfig {
     @Getter @Setter private String driverClass;
     public boolean hasDriverClass () { return driverClass != null; }
 
-    @Getter @Setter private EntityFieldConfig[] fields;
+    @Getter @Setter private AppDataField[] fields;
     public boolean hasFields () { return !empty(fields); }
 
     @Getter @Setter private EntityFieldConfig[] params;

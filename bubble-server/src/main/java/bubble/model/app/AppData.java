@@ -27,6 +27,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
+import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySearchDepth.shallow;
 
 @ECType(root=true, pluralDisplayName="App Data")
 @ECTypeURIs(baseURI= EP_DATA, listFields={"app", "key", "data", "expiration"})
@@ -75,7 +76,7 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable(fkDepth=ECForeignKeySearchDepth.shallow) @ECField(index=20)
+    @ECSearchable(fkDepth=shallow) @ECField(index=20)
     @ECForeignKey(entity=Device.class)
     @Column(updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String device;
@@ -136,6 +137,15 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
     @ECSearchable @ECField(index=110)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
+
+    @ECSearchable @ECField(index=120)
+    @Column(length=1000) @Getter @Setter private String meta1;
+
+    @ECSearchable @ECField(index=130)
+    @Column(length=1000) @Getter @Setter private String meta2;
+
+    @ECSearchable @ECField(index=140)
+    @Column(length=1000) @Getter @Setter private String meta3;
 
     @JsonProperty @Override public long getCtime () { return super.getCtime(); }
     @JsonProperty @Override public long getMtime () { return super.getMtime(); }

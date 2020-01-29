@@ -23,6 +23,7 @@ import static bubble.ApiConstants.EP_MESSAGES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
+import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySearchDepth.shallow;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_MESSAGES, listFields={"app", "locale"})
@@ -45,7 +46,7 @@ public class AppMessage extends IdentifiableBase implements AccountTemplate, Has
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable(fkDepth=ECForeignKeySearchDepth.shallow) @ECField(index=20)
+    @ECSearchable(fkDepth=shallow) @ECField(index=20)
     @ECForeignKey(entity=BubbleApp.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String app;

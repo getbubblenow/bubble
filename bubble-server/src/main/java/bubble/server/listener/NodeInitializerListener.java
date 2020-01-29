@@ -12,6 +12,7 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.NetworkMonitorService;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.wizard.dao.AbstractDAO;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
 
@@ -51,6 +52,13 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
 
     @Override public void onStart(RestServer server) {
         final BubbleConfiguration c = (BubbleConfiguration) server.getConfiguration();
+
+        // ensure all search views can be created
+        if (!c.testMode()) {
+            c.getAllDAOs().stream()
+                    .filter(dao -> dao instanceof AbstractDAO)
+                    .forEach(dao -> ((AbstractDAO) dao).getSearchView());
+        }
 
         // ensure system configs can be loaded properly
         final Map<String, Object> configs = c.getPublicSystemConfigs();
