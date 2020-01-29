@@ -33,7 +33,7 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
 
     @Override protected List<Device> list(ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
-        if (caller.admin() && ctx.getRequestUri().getQuery().contains("all")) {
+        if (caller.admin() && ctx.getRequestUri().getQuery() != null && ctx.getRequestUri().getQuery().contains("all")) {
             return getDao().findAll().stream().filter(Device::initialized).collect(Collectors.toList());
         } else {
             return super.list(ctx).stream().filter(Device::initialized).collect(Collectors.toList());
