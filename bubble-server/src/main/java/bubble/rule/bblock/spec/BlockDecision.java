@@ -9,9 +9,9 @@ import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class BlockDecision {
@@ -20,29 +20,15 @@ public class BlockDecision {
     public static final BlockDecision ALLOW = new BlockDecision().setDecisionType(BlockDecisionType.allow);
 
     @Getter @Setter BlockDecisionType decisionType = BlockDecisionType.allow;
-    @Getter @Setter List<String> selectors;
-    @Getter @Setter List<String> options;
+    @Getter @Setter List<BlockSpec> specs;
 
-    public BlockDecision add(BlockSpec block) {
-        if (block.hasSelector()) {
-            if (selectors == null) selectors = new ArrayList<>();
-            selectors.add(block.getSelector());
+    public BlockDecision add(BlockSpec spec) {
+        if (specs == null) specs = new ArrayList<>();
+        specs.add(spec);
+        if (decisionType != BlockDecisionType.block && (spec.hasTypeMatches() || spec.hasSelector())) {
+            decisionType = BlockDecisionType.filter;
         }
-        if (block.hasOptions()) {
-            if (options == null) options = new ArrayList<>();
-            options.addAll(block.getOptions());
-        }
-        if (!empty(selectors) || !empty(options)) decisionType = BlockDecisionType.filter;
         return this;
-    }
-
-    public FilterMatchDecision getFilterMatchDecision() {
-        switch (decisionType) {
-            case block: return FilterMatchDecision.abort_not_found;
-            case allow: return FilterMatchDecision.no_match;
-            case filter: return FilterMatchDecision.match;
-        }
-        return die("getFilterMatchDecision: invalid decisionType: "+decisionType);
     }
 
     public FilterMatchResponse getFilterMatchResponse() {
@@ -51,8 +37,7 @@ public class BlockDecision {
             case allow: return FilterMatchResponse.NO_MATCH;
             case filter: return new FilterMatchResponse()
                     .setDecision(FilterMatchDecision.match)
-                    .setOptions(getOptions())
-                    .setSelectors(getSelectors());
+                    .setFilters(specs == null ? null : getSpecs().stream().map(BlockSpec::getLine).collect(Collectors.toList()));
         }
         return die("getFilterMatchResponse: invalid decisionType: "+decisionType);
     }

@@ -131,8 +131,7 @@ public class FilterHttpResource {
         final List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabled(accountUuid, fqdn);
         if (log.isDebugEnabled()) log.debug("findMatchers: found "+matchers.size()+" candidate matchers");
         final List<AppMatcher> removeMatchers;
-        List<String> options = null;
-        List<String> selectors = null;
+        List<String> filters = null;
         if (matchers.isEmpty()) {
             removeMatchers = Collections.emptyList();
         } else {
@@ -148,13 +147,9 @@ public class FilterHttpResource {
                             removeMatchers.add(matcher);
                             break;
                         case match:
-                            if (matchResponse.hasOptions()) {
-                                if (options == null) options = new ArrayList<>();
-                                options.addAll(matchResponse.getOptions());
-                            }
-                            if (matchResponse.hasSelectors()) {
-                                if (selectors == null) selectors = new ArrayList<>();
-                                selectors.addAll(matchResponse.getSelectors());
+                            if (matchResponse.hasFilters()) {
+                                if (filters == null) filters = new ArrayList<>();
+                                filters.addAll(matchResponse.getFilters());
                             }
                             break;
                     }
@@ -168,8 +163,7 @@ public class FilterHttpResource {
         return response
                 .setMatchers(matchers)
                 .setDevice(device.getUuid())
-                .setOptions(options)
-                .setSelectors(selectors);
+                .setFilters(filters);
     }
 
     @POST @Path(EP_APPLY+"/{requestId}")

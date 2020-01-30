@@ -16,7 +16,6 @@ public class FilterMatchersResponse {
     @Getter @Setter private Integer abort;
     @Getter @Setter private String device;
     @Getter @Setter private List<AppMatcher> matchers;
-    @Getter @Setter private List<String> options;
-    @Getter @Setter private List<String> selectors;
+    @Getter @Setter private List<String> filters;
 
 }

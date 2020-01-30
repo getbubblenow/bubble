@@ -8,6 +8,8 @@ import lombok.experimental.Accessors;
 
 import java.util.List;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+
 @NoArgsConstructor @Accessors(chain=true)
 public class FilterMatchResponse {
 
@@ -18,10 +20,7 @@ public class FilterMatchResponse {
 
     @Getter @Setter private FilterMatchDecision decision;
 
-    @Getter @Setter private List<String> options;
-    public boolean hasOptions () { return options != null && !options.isEmpty(); }
-
-    @Getter @Setter private List<String> selectors;
-    public boolean hasSelectors () { return selectors != null && !selectors.isEmpty(); }
+    @Getter @Setter private List<String> filters;
+    public boolean hasFilters() { return !empty(filters); }
 
 }
