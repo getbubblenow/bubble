@@ -1,5 +1,6 @@
 package bubble.service.cloud;
 
+import bubble.cloud.compute.ComputeServiceDriver;
 import bubble.model.account.Account;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.AnsibleRole;
@@ -44,6 +45,7 @@ public class AnsiblePrepService {
                                            Account account,
                                            BubbleNetwork network,
                                            BubbleNode node,
+                                           ComputeServiceDriver computeDriver,
                                            List<AnsibleRole> roles,
                                            ValidationResult errors,
                                            File tarballDir,
@@ -64,6 +66,7 @@ public class AnsiblePrepService {
         ctx.put("configuration", configuration);
         ctx.put("fork", fork);
         ctx.put("installType", installType.name());
+        ctx.put("nodeSize", computeDriver.getSize(node.getSizeType()));
         if (restoreKey != null) {
             ctx.put("restoreKey", restoreKey);
             ctx.put("restoreTimeoutSeconds", RESTORE_MONITOR_SCRIPT_TIMEOUT_SECONDS);

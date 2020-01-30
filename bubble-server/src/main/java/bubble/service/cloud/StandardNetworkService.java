@@ -244,7 +244,7 @@ public class StandardNetworkService implements NetworkService {
             // We must wait until after server is started, because some roles require ip4 in vars
             progressMeter.write(METER_TICK_PREPARING_ROLES);
             final Map<String, Object> ctx = ansiblePrep.prepAnsible(
-                    automation, bubbleFilesDir, account, network, node,
+                    automation, bubbleFilesDir, account, network, node, computeDriver,
                     roles, errors, roleTgzDir, nn.fork(), nn.getRestoreKey());
             if (errors.isInvalid()) {
                 progressMeter.error(METER_ERROR_ROLE_VALIDATION_ERRORS);

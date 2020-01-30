@@ -27,8 +27,8 @@
   when: install_type == 'node'
 
 - name: Install bubble supervisor conf file
-  copy:
-    src: supervisor_bubble.conf
+  template:
+    src: "supervisor_bubble.conf.j2"
     dest: /etc/supervisor/conf.d/bubble.conf
 
 # We cannot receive notifications until nginx is running, so start bubble API as the very last step
