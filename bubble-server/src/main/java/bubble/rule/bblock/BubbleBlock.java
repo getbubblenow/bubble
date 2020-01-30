@@ -13,16 +13,27 @@ import bubble.rule.bblock.spec.BlockListSource;
 import bubble.service.stream.AppRuleHarness;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.input.ReaderInputStream;
+import org.cobbzilla.util.handlebars.HandlebarsUtil;
+import org.cobbzilla.util.io.regex.RegexFilterReader;
+import org.cobbzilla.util.io.regex.RegexReplacementFilter;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
+import static org.cobbzilla.util.string.StringUtil.UTF8cs;
+import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 
 @Slf4j
 public class BubbleBlock extends TrafficAnalytics {
@@ -77,8 +88,26 @@ public class BubbleBlock extends TrafficAnalytics {
         }
     }
 
-    @Override public InputStream doFilterResponse(String requestId, InputStream in) {
-        // todo : insert selector-based block JS
-        return in;
+    @Override public InputStream doFilterResponse(String requestId, String[] filters, InputStream in) {
+        if (empty(filters)) return in;
+        final String replacement = "<head><script>" + getBubbleJs(requestId, filters) + "</script>";
+        final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
+        final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter).setMaxMatches(1);
+        return new ReaderInputStream(reader, UTF8cs);
     }
+
+    public static final Class<BubbleBlock> BB = BubbleBlock.class;
+    public static final String BUBBLE_JS_TEMPLATE = stream2string(getPackagePath(BB)+"/"+ BB.getSimpleName()+".js.hbs");
+    private static final String CTX_BUBBLE_FILTERS = "BUBBLE_FILTERS";
+
+    private String getBubbleJs(String requestId, String[] filters) {
+        final Map<String, Object> ctx = new HashMap<>();
+        ctx.put(CTX_JS_PREFIX, "__bubble_block_"+sha256_hex(requestId)+"_");
+        ctx.put(CTX_BUBBLE_REQUEST_ID, requestId);
+        ctx.put(CTX_BUBBLE_HOME, configuration.getPublicUriBase());
+        ctx.put(CTX_BUBBLE_DATA_ID, getDataId(requestId));
+        ctx.put(CTX_BUBBLE_FILTERS, filters);
+        return HandlebarsUtil.apply(getHandlebars(), BUBBLE_JS_TEMPLATE, ctx);
+    }
+
 }

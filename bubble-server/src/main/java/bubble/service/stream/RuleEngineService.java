@@ -127,7 +127,7 @@ public class RuleEngineService {
         final CloseableHttpResponse proxyResponse = httpClient.execute(get);
 
         // filter response. when stream is closed, close http client
-        final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest.getId(), new HttpClosingFilterInputStream(httpClient, proxyResponse));
+        final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest.getId(), filterRequest.getFilters(), new HttpClosingFilterInputStream(httpClient, proxyResponse));
 
         // send response
         return sendResponse(responseEntity, proxyResponse);
@@ -146,16 +146,14 @@ public class RuleEngineService {
     public Response applyRulesToChunkAndSendResponse(ContainerRequest request,
                                                      HttpContentEncodingType contentEncoding,
                                                      Integer contentLength,
-                                                     String requestId,
-                                                     Account account,
-                                                     Device device,
-                                                     String[] matcherIds,
+                                                     FilterHttpRequest filterRequest,
                                                      boolean last) throws IOException {
 
-        if (empty(matcherIds)) return passthru(request);
+        if (!filterRequest.hasMatchers()) return passthru(request);
 
         // have we seen this request before?
-        final ActiveStreamState state = activeProcessors.computeIfAbsent(requestId, k -> new ActiveStreamState(k, contentEncoding, initRules(account, device, matcherIds)));
+        final ActiveStreamState state = activeProcessors.computeIfAbsent(filterRequest.getId(),
+                k -> new ActiveStreamState(k, contentEncoding, filterRequest.getFilters(), initRules(filterRequest.getAccount(), filterRequest.getDevice(), filterRequest.getMatchers())));
         final byte[] chunk = toBytes(request.getEntityStream(), contentLength);
         if (last) {
             if (log.isDebugEnabled()) log.debug("applyRulesToChunkAndSendResponse: adding LAST stream");
@@ -260,15 +258,20 @@ public class RuleEngineService {
 
         private String requestId;
         private HttpContentEncodingType encoding;
+        private String[] filters;
         private MultiStream multiStream;
         private AppRuleHarness firstRule;
         private InputStream output = null;
         private long totalBytesWritten = 0;
         private long totalBytesRead = 0;
 
-        public ActiveStreamState(String requestId, HttpContentEncodingType encoding, List<AppRuleHarness> rules) {
+        public ActiveStreamState(String requestId,
+                                 HttpContentEncodingType encoding,
+                                 String[] filters,
+                                 List<AppRuleHarness> rules) {
             this.requestId = requestId;
             this.encoding = encoding;
+            this.filters = filters;
             this.firstRule = rules.get(0);
         }
 
@@ -277,7 +280,7 @@ public class RuleEngineService {
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk));
-                output = outputStream(firstRule.getDriver().filterResponse(requestId, inputStream(multiStream)));
+                output = outputStream(firstRule.getDriver().filterResponse(requestId, filters, inputStream(multiStream)));
             } else {
                 multiStream.addStream(new ByteArrayInputStream(chunk));
             }
@@ -288,7 +291,7 @@ public class RuleEngineService {
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk), true);
-                output = outputStream(firstRule.getDriver().filterResponse(requestId, inputStream(multiStream)));
+                output = outputStream(firstRule.getDriver().filterResponse(requestId, filters, inputStream(multiStream)));
             } else {
                 multiStream.addLastStream(new ByteArrayInputStream(chunk));
             }

@@ -21,6 +21,12 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
 
     public static final int RESPONSE_BUFSIZ = (int) (64 * Bytes.KB);
 
+    public static final String CTX_JS_PREFIX = "JS_PREFIX";
+    public static final String CTX_BUBBLE_REQUEST_ID = "BUBBLE_REQUEST_ID";
+    public static final String CTX_BUBBLE_DATA_ID = "BUBBLE_DATA_ID";
+    public static final String CTX_BUBBLE_HOME = "BUBBLE_HOME";
+    public static final String CTX_SITE = "SITE";
+
     @Autowired protected BubbleConfiguration configuration;
     @Autowired protected AppDataDAO appDataDAO;
     @Autowired protected AppSiteDAO appSiteDAO;

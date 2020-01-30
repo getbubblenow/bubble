@@ -1,0 +1,33 @@
+let {{JS_PREFIX}}_doc_ready = false;
+const {{JS_PREFIX}}_request_id = '{{BUBBLE_REQUEST_ID}}';
+const {{JS_PREFIX}}_interval = 50;
+const {{JS_PREFIX}}_idle_interval = 1000;
+
+const {{JS_PREFIX}}_filters = [
+{{#each BUBBLE_FILTERS}}{{#unless @first}},
+{{/unless}}'{{this}}'{{/each}}
+];
+
+function {{JS_PREFIX}}_onReady(callback) {
+    const intervalId = window.setInterval(function() {
+        if (document.getElementsByTagName('body')[0] !== undefined) {
+            {{JS_PREFIX}}_doc_ready = true;
+            window.clearInterval(intervalId);
+            callback.call(this);
+        }
+    }, {{JS_PREFIX}}_interval);
+}
+
+function {{JS_PREFIX}}_process_filter(f) {
+    console.log('process_filter: received '+f);
+}
+
+function {{JS_PREFIX}}_process_filters() {
+    for (let i=0; i<{{JS_PREFIX}}_filters.length; i++) {
+        {{JS_PREFIX}}_process_filter({{JS_PREFIX}}_filters[i]);
+    }
+}
+
+{{JS_PREFIX}}_onReady(function() {
+    {{JS_PREFIX}}_process_filters();
+});

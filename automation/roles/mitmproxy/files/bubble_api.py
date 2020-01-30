@@ -9,13 +9,14 @@ HEADER_REFERER = 'Referer'
 HEADER_BUBBLE_MATCHERS='X-Bubble-Matchers'
 HEADER_BUBBLE_DEVICE='X-Bubble-Device'
 HEADER_BUBBLE_ABORT='X-Bubble-Abort'
+HEADER_BUBBLE_REQUEST_ID='X-Bubble-RequestId'
 BUBBLE_URI_PREFIX='/__bubble/'
 
 def bubble_log (message):
     print(message, file=sys.stderr)
 
 
-def bubble_matchers (remote_addr, flow, host):
+def bubble_matchers (req_id, remote_addr, flow, host):
     headers = {
         'X-Forwarded-For': remote_addr,
         'Accept' : 'application/json',
@@ -39,6 +40,7 @@ def bubble_matchers (remote_addr, flow, host):
 
     try:
         data = {
+            'requestId': req_id,
             'fqdn': host,
             'uri': flow.request.path,
             'userAgent': user_agent,

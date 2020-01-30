@@ -6,7 +6,7 @@ import time
 from mitmproxy import http
 from mitmproxy.net.http import Headers
 from bubble_config import bubble_port, bubble_host_alias
-from bubble_api import HEADER_BUBBLE_MATCHERS, HEADER_BUBBLE_DEVICE, HEADER_BUBBLE_ABORT, BUBBLE_URI_PREFIX, bubble_log
+from bubble_api import HEADER_BUBBLE_MATCHERS, HEADER_BUBBLE_DEVICE, HEADER_BUBBLE_ABORT, BUBBLE_URI_PREFIX, HEADER_BUBBLE_REQUEST_ID, bubble_log
 
 BUFFER_SIZE = 4096
 HEADER_CONTENT_TYPE = 'Content-Type'
@@ -94,7 +94,7 @@ def responseheaders(flow):
 
     elif (HEADER_BUBBLE_MATCHERS in flow.request.headers
             and HEADER_BUBBLE_DEVICE in flow.request.headers):
-        req_id = str(uuid.uuid4()) + '.' + str(time.time())
+        req_id = flow.request.headers[HEADER_BUBBLE_REQUEST_ID]
         matchers = flow.request.headers[HEADER_BUBBLE_MATCHERS]
         device = flow.request.headers[HEADER_BUBBLE_DEVICE]
         if HEADER_CONTENT_TYPE in flow.response.headers:

@@ -86,21 +86,28 @@ public class FilterHttpResource {
 
     private Map<String, FilterMatchersResponse> matchersCache = new ExpirationMap<>(MINUTES.toMillis(5));
 
+    private static final long REQUEST_FILTERS_TIMEOUT = MINUTES.toSeconds(1);
+    @Getter(lazy=true) private final RedisService filtersForRequest = redis.prefixNamespace(getClass().getSimpleName()+".filters");
+
     @POST @Path(EP_MATCHERS)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response matchersForFqdn(@Context Request req,
-                                    @Context ContainerRequest request,
-                                    FilterMatchersRequest filterRequest) {
+    public Response selectMatchers(@Context Request req,
+                                   @Context ContainerRequest request,
+                                   FilterMatchersRequest filterRequest) {
         final String remoteHost = getRemoteHost(req);
         final String mitmAddr = req.getRemoteAddr();
-        if (log.isDebugEnabled()) log.debug("matchersForFqdn: starting for remoteHost=" + remoteHost + ", mitmAddr=" + mitmAddr+", filterRequest="+json(filterRequest));
+        if (log.isDebugEnabled()) log.debug("selectMatchers: starting for remoteHost=" + remoteHost + ", mitmAddr=" + mitmAddr+", filterRequest="+json(filterRequest));
 
         // only mitmproxy is allowed to call us, and this should always be a local address
         if (!isLocalIpv4(mitmAddr)) return forbidden();
 
         final String cacheKey = remoteHost+":"+filterRequest.cacheKey();
         final FilterMatchersResponse response = matchersCache.computeIfAbsent(cacheKey, k -> findMatchers(filterRequest, req, request));
+
+        if (response.hasFilters()) {
+            getFiltersForRequest().set(filterRequest.getRequestId(), json(response.getFilters()), EX, REQUEST_FILTERS_TIMEOUT);
+        }
 
         return ok(response);
     }
@@ -256,10 +263,18 @@ public class FilterHttpResource {
             log.trace("filterHttp: starting with requestId="+requestId+", deviceId="+deviceId+", matchersJson="+matchersJson+", contentType="+contentType+", last="+last);
         }
 
+        // check for filters
+        try {
+            final String filtersJson = getFiltersForRequest().get(requestId);
+            if (filtersJson != null) {
+                filterRequest.setFilters(json(filtersJson, String[].class));
+            }
+        } catch (Exception e) {
+            log.error("filterHttp: error reading pageFilters: "+shortError(e));
+        }
+
         final boolean isLast = last != null && last;
-        return ruleEngine.applyRulesToChunkAndSendResponse(request, encoding, contentLength,
-                        filterRequest.getId(), filterRequest.getAccount(), filterRequest.getDevice(),
-                        filterRequest.getMatchers(), isLast);
+        return ruleEngine.applyRulesToChunkAndSendResponse(request, encoding, contentLength, filterRequest, isLast);
     }
 
     public Response passthru(@Context ContainerRequest request) { return ruleEngine.passthru(request); }
