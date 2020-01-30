@@ -36,6 +36,7 @@ import static bubble.model.cloud.BubbleNetworkState.created;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.http.HttpSchemes.SCHEME_HTTPS;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.string.ValidationRegexes.HOST_PART_PATTERN;
 import static org.cobbzilla.util.string.ValidationRegexes.validateRegexMatches;
@@ -103,7 +104,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @Getter @Setter private Integer sslPort;
 
     @Transient @JsonIgnore public String getPublicUri() {
-        return "https://" + getNetworkDomain() + (getSslPort() == 443 ? "" : ":"+getSslPort());
+        return SCHEME_HTTPS + getNetworkDomain() + (getSslPort() == 443 ? "" : ":"+getSslPort());
     }
 
     public String getPublicUri(BubbleConfiguration configuration) {

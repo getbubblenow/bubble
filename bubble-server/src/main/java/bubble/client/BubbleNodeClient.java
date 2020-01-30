@@ -24,6 +24,7 @@ import static bubble.server.BubbleServer.getRestoreKey;
 import static bubble.server.BubbleServer.isRestoreMode;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.notSupported;
+import static org.cobbzilla.util.http.HttpSchemes.SCHEME_HTTPS;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 
@@ -67,7 +68,7 @@ public class BubbleNodeClient extends BubbleApiClient {
 
     private static String baseUri(BubbleNode node, BubbleConfiguration configuration) {
         final HttpConfiguration http = configuration.getHttp();
-        return "https://" + node.getFqdn() + ":" + node.getSslPort() + http.getBaseUri();
+        return SCHEME_HTTPS + node.getFqdn() + ":" + node.getSslPort() + http.getBaseUri();
     }
 
     @Override protected <T> void setRequestEntity(HttpEntityEnclosingRequest entityRequest, T data, ContentType contentType) {
