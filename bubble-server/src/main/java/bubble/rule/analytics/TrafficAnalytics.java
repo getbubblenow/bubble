@@ -3,9 +3,9 @@ package bubble.rule.analytics;
 import bubble.model.account.Account;
 import bubble.model.app.AppData;
 import bubble.model.device.Device;
+import bubble.resources.stream.FilterMatchResponse;
 import bubble.resources.stream.FilterMatchersRequest;
 import bubble.rule.AbstractAppRuleDriver;
-import bubble.rule.PreprocessDecision;
 import bubble.service.stream.AppRuleHarness;
 import lombok.Getter;
 import org.cobbzilla.wizard.cache.redis.RedisService;
@@ -30,12 +30,12 @@ public class TrafficAnalytics extends AbstractAppRuleDriver {
 
     @Getter(lazy=true) private final RedisService recentTraffic = redis.prefixNamespace(RECENT_TRAFFIC_PREFIX);
 
-    @Override public PreprocessDecision preprocess(AppRuleHarness ruleHarness,
-                                                   FilterMatchersRequest filter,
-                                                   Account account,
-                                                   Device device,
-                                                   Request req,
-                                                   ContainerRequest request) {
+    @Override public FilterMatchResponse preprocess(AppRuleHarness ruleHarness,
+                                                    FilterMatchersRequest filter,
+                                                    Account account,
+                                                    Device device,
+                                                    Request req,
+                                                    ContainerRequest request) {
         final String app = ruleHarness.getRule().getApp();
         final String site = ruleHarness.getMatcher().getSite();
         final String fqdn = filter.getFqdn();
@@ -43,7 +43,7 @@ public class TrafficAnalytics extends AbstractAppRuleDriver {
         getRecentTraffic().set(now()+"_"+randomAlphanumeric(10), json(new TrafficRecord(filter, account, device, req)), EX, RECENT_TRAFFIC_EXPIRATION);
         incr(account, device, app, site, fqdn, DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
         incr(account, null, app, site, fqdn, DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
-        return PreprocessDecision.no_match; // we are done, don't need to look at/modify stream
+        return FilterMatchResponse.NO_MATCH; // we are done, don't need to look at/modify stream
     }
 
     // we use synchronized here but in a multi-node scenario this is not sufficient, we still have some risk

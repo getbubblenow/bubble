@@ -9,9 +9,9 @@ import bubble.model.app.AppRule;
 import bubble.model.app.RuleDriver;
 import bubble.model.device.Device;
 import bubble.resources.stream.FilterHttpRequest;
+import bubble.resources.stream.FilterMatchResponse;
 import bubble.resources.stream.FilterMatchersRequest;
 import bubble.rule.AppRuleDriver;
-import bubble.rule.PreprocessDecision;
 import bubble.server.BubbleConfiguration;
 import lombok.Cleanup;
 import lombok.Getter;
@@ -71,12 +71,12 @@ public class RuleEngineService {
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private BubbleConfiguration configuration;
 
-    public PreprocessDecision preprocess(FilterMatchersRequest filter,
-                                         Request req,
-                                         ContainerRequest request,
-                                         Account account,
-                                         Device device,
-                                         String matcherUuid) {
+    public FilterMatchResponse preprocess(FilterMatchersRequest filter,
+                                          Request req,
+                                          ContainerRequest request,
+                                          Account account,
+                                          Device device,
+                                          String matcherUuid) {
         final AppRuleHarness ruleHarness = initRules(account, device, new String[]{ matcherUuid }).get(0);
         return ruleHarness.getDriver().preprocess(ruleHarness, filter, account, device, req, request);
     }

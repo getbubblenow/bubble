@@ -4,6 +4,7 @@ import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.device.Device;
+import bubble.resources.stream.FilterMatchResponse;
 import bubble.service.stream.AppRuleHarness;
 import bubble.resources.stream.FilterMatchersRequest;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,13 +33,13 @@ public interface AppRuleDriver {
                       Account account,
                       Device device) {}
 
-    default PreprocessDecision preprocess(AppRuleHarness ruleHarness,
-                                          FilterMatchersRequest filter,
-                                          Account account,
-                                          Device device,
-                                          Request req,
-                                          ContainerRequest request) {
-        return PreprocessDecision.match;
+    default FilterMatchResponse preprocess(AppRuleHarness ruleHarness,
+                                           FilterMatchersRequest filter,
+                                           Account account,
+                                           Device device,
+                                           Request req,
+                                           ContainerRequest request) {
+        return FilterMatchResponse.MATCH;
     }
 
     default InputStream filterRequest(InputStream in) {

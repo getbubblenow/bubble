@@ -38,7 +38,7 @@
       "priority": -1000,
       "config": {
         "blockLists": [
-
+          "https://v.firebog.net/hosts/Easylist.txt"
         ]
       }
     }],

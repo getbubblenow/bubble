@@ -131,6 +131,8 @@ public class FilterHttpResource {
         final List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabled(accountUuid, fqdn);
         if (log.isDebugEnabled()) log.debug("findMatchers: found "+matchers.size()+" candidate matchers");
         final List<AppMatcher> removeMatchers;
+        List<String> options = null;
+        List<String> selectors = null;
         if (matchers.isEmpty()) {
             removeMatchers = Collections.emptyList();
         } else {
@@ -138,12 +140,23 @@ public class FilterHttpResource {
             removeMatchers = new ArrayList<>();
             for (AppMatcher matcher : matchers) {
                 if (matcher.matches(uri)) {
-                    switch (ruleEngine.preprocess(filterRequest, req, request, caller, device, matcher.getUuid())) {
+                    final FilterMatchResponse matchResponse = ruleEngine.preprocess(filterRequest, req, request, caller, device, matcher.getUuid());
+                    switch (matchResponse.getDecision()) {
+                        case abort_ok:        return ABORT_OK;
+                        case abort_not_found: return ABORT_NOT_FOUND;
                         case no_match:
                             removeMatchers.add(matcher);
                             break;
-                        case abort_ok:        return ABORT_OK;
-                        case abort_not_found: return ABORT_NOT_FOUND;
+                        case match:
+                            if (matchResponse.hasOptions()) {
+                                if (options == null) options = new ArrayList<>();
+                                options.addAll(matchResponse.getOptions());
+                            }
+                            if (matchResponse.hasSelectors()) {
+                                if (selectors == null) selectors = new ArrayList<>();
+                                selectors.addAll(matchResponse.getSelectors());
+                            }
+                            break;
                     }
                 }
             }
@@ -151,7 +164,12 @@ public class FilterHttpResource {
         matchers.removeAll(removeMatchers);
 
         if (log.isDebugEnabled()) log.debug("findMatchers: after pre-processing, returning "+matchers.size()+" matchers");
-        return new FilterMatchersResponse().setMatchers(matchers).setDevice(device.getUuid());
+        final FilterMatchersResponse response = new FilterMatchersResponse();
+        return response
+                .setMatchers(matchers)
+                .setDevice(device.getUuid())
+                .setOptions(options)
+                .setSelectors(selectors);
     }
 
     @POST @Path(EP_APPLY+"/{requestId}")
