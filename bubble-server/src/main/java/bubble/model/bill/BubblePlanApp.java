@@ -20,7 +20,9 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_APPS, listFields={"plan", "app"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
-@ECIndexes({ @ECIndex(unique=true, of={"account", "plan", "app"}) })
+@ECIndexes({
+        @ECIndex(unique=true, of={"plan", "app"})
+})
 public class BubblePlanApp extends IdentifiableBase implements HasAccountNoName {
 
     public static final String[] CREATE_FIELDS = {"plan", "app"};

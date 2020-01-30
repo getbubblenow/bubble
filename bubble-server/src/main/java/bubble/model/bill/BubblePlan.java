@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.HasPriority;
-import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
+import org.cobbzilla.wizard.model.entityconfig.IdentifiableBaseParentEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
 import org.joda.time.format.DateTimeFormat;
@@ -35,7 +35,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 })
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({ @ECIndex(unique=true, of={"account", "name"}) })
-public class BubblePlan extends IdentifiableBase implements HasAccount, HasPriority {
+public class BubblePlan extends IdentifiableBaseParentEntity implements HasAccount, HasPriority {
 
     public static final int MAX_CHARGENAME_LEN = 12;
 

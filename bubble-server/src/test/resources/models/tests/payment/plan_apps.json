@@ -1,0 +1,104 @@
+[
+  {
+    "comment": "create a user account",
+    "request": {
+      "uri": "users",
+      "method": "put",
+      "entity": {
+        "name": "test_user_free",
+        "password": "password",
+        "contact": {"type": "email", "info": "test-user@example.com"}
+      }
+    }
+  },
+
+  {
+    "before": "sleep 22s",  // wait for account objects to be created
+    "comment": "login as new user",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "test_user_free",
+        "password": "password"
+      }
+    },
+    "response": {
+      "store": "testAccount",
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "get plans",
+    "request": { "uri": "plans" },
+    "response": {
+      "store": "plans",
+      "check": [{"condition": "json.length >= 1"}]
+    }
+  },
+
+  {
+    "comment": "add basic plan, using 'free' payment method",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "{{plans.[0].name}}",
+        "footprint": "US",
+        "paymentMethodObject": {
+          "paymentMethodType": "free",
+          "paymentInfo": "free"
+        }
+      }
+    },
+    "response": {
+      "store": "accountPlan"
+    }
+  },
+
+  {
+    "comment": "get plan apps, should be 1",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/apps" },
+    "response": {
+      "check": [{"condition": "json.length == 1"}]
+    }
+  },
+
+  {
+    "comment": "add plus plan, using 'free' payment method",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "{{plans.[1].name}}",
+        "footprint": "US",
+        "paymentMethodObject": {
+          "paymentMethodType": "free",
+          "paymentInfo": "free"
+        }
+      }
+    },
+    "response": {
+      "store": "accountPlan2"
+    }
+  },
+
+  {
+    "comment": "get plan apps, should be 2",
+    "request": { "uri": "me/plans/{{accountPlan2.uuid}}/apps" },
+    "response": {
+      "check": [{"condition": "json.length == 2"}]
+    }
+  }
+
+]

@@ -90,7 +90,7 @@ public class AnsiblePrepService {
         if (configuration.paymentsEnabled()) {
             final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(account.getUuid(), network.getUuid());
             if (accountPlan == null) return die("prepAnsible: no AccountPlan found for network: "+network.getUuid());
-            planApps = planAppDAO.findByAccountAndPlan(account.getUuid(), accountPlan.getPlan());
+            planApps = planAppDAO.findByPlan(accountPlan.getPlan());
         } else {
             planApps = null;
         }

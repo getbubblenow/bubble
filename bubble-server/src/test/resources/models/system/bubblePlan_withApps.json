@@ -9,7 +9,12 @@
     "storageGbIncluded": 15,
     "additionalStoragePerGbPrice": 2,
     "bandwidthGbIncluded": 500,
-    "additionalBandwidthPerGbPrice": 2
+    "additionalBandwidthPerGbPrice": 2,
+    "children": {
+      "BubblePlanApp": [
+        {"app": "UserBlocker"}
+      ]
+    }
   },
   {
     "name": "bubble_plus",
@@ -21,6 +26,12 @@
     "storageGbIncluded": 40,
     "additionalStoragePerGbPrice": 2,
     "bandwidthGbIncluded": 1000,
-    "additionalBandwidthPerGbPrice": 2
+    "additionalBandwidthPerGbPrice": 2,
+    "children": {
+      "BubblePlanApp": [
+        {"app": "TrafficAnalytics"},
+        {"app": "UserBlocker"}
+      ]
+    }
   }
 ]

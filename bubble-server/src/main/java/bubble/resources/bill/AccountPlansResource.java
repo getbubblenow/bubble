@@ -256,4 +256,24 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         return paymentMethod == null ? notFound() : ok(paymentMethod);
     }
 
+    @GET @Path("/{id}"+EP_PLAN)
+    public Response getBubblePlan(@Context ContainerRequest ctx,
+                                  @PathParam("id") String id) {
+        final AccountPlan accountPlan = find(ctx, id);
+        if (accountPlan == null) return notFound(id);
+
+        final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
+        return plan == null ? notFound() : ok(plan);
+    }
+
+    @Path("/{id}"+EP_APPS)
+    public BubblePlanAppsResource getApps(@Context ContainerRequest ctx,
+                                          @PathParam("id") String id) {
+        final AccountPlan accountPlan = find(ctx, id);
+        if (accountPlan == null) throw notFoundEx(id);
+        final Account account = accountDAO.findByUuid(getAccountUuid(ctx));
+        final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
+        return configuration.subResource(BubblePlanAppsResource.class, account, plan);
+    }
+
 }

@@ -14,4 +14,6 @@ public class PaymentTest extends PaymentTestBase {
         modelTest("payment/pay_credit_refund_and_restart");
     }
 
+    @Test public void testAppsForPlan () throws Exception { modelTest("payment/plan_apps"); }
+
 }
