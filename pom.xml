@@ -74,6 +74,7 @@ This code is available under the GNU Affero General Public License, version 3: h
                         <include>bubble.test.TrafficAnalyticsTest</include>
                         <include>bubble.test.BackupTest</include>
                         <include>bubble.test.NetworkTest</include>
+                        <include>bubble.rule.bblock.spec.BlockListTest</include>
                     </includes>
                 </configuration>
             </plugin>
