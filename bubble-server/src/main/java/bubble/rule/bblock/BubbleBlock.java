@@ -21,10 +21,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH;
 
 @Slf4j
 public class BubbleBlock extends TrafficAnalytics {
@@ -70,8 +68,7 @@ public class BubbleBlock extends TrafficAnalytics {
         final BlockDecision decision = blockList.getDecision(filter.getFqdn(), filter.getUri());
         switch (decision.getDecisionType()) {
             case block:
-                incr(account, device, app, site, fqdn, DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
-                incr(account, null, app, site, fqdn, DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
+                incrementCounters(account, device, app, site, fqdn);
                 return FilterMatchResponse.ABORT_NOT_FOUND;  // block this request
             case allow: default:
                 return FilterMatchResponse.NO_MATCH;

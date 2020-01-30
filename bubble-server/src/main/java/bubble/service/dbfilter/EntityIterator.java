@@ -3,6 +3,9 @@ package bubble.service.dbfilter;
 import bubble.cloud.storage.local.LocalStorageConfig;
 import bubble.cloud.storage.local.LocalStorageDriver;
 import bubble.model.account.AccountSshKey;
+import bubble.model.app.AppTemplateEntity;
+import bubble.model.app.BubbleApp;
+import bubble.model.bill.BubblePlanApp;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
@@ -72,16 +75,32 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
     public void addEntities(Class<? extends Identifiable> c,
                             List<? extends Identifiable> entities,
                             BubbleNetwork network,
-                            BubbleNode node) {
+                            BubbleNode node,
+                            List<BubblePlanApp> planApps) {
         if (CloudService.class.isAssignableFrom(c)) {
             entities.forEach(e -> add(setLocalStoragePath((CloudService) e)));
 
         } else if (AccountSshKey.class.isAssignableFrom(c)) {
             entities.forEach(e -> add(setInstallKey((AccountSshKey) e, network)));
 
+        } else if (planApps != null && BubbleApp.class.isAssignableFrom(c)) {
+            // only copy enabled apps
+            entities.stream().filter(e -> planAppEnabled(e.getUuid(), planApps))
+                    .forEach(this::add);
+
+        } else if (planApps != null && AppTemplateEntity.class.isAssignableFrom(c)) {
+            // only copy app-related entities for enabled apps
+            entities.stream()
+                    .filter(e -> planAppEnabled(((AppTemplateEntity) e).getApp(), planApps))
+                    .forEach(this::add);
+
         } else {
             entities.forEach(this::add);
         }
+    }
+
+    private boolean planAppEnabled(String appUuid, List<BubblePlanApp> planApps) {
+        return planApps == null || planApps.stream().anyMatch(planApp -> planApp.getApp().equals(appUuid));
     }
 
     private AccountSshKey setInstallKey(AccountSshKey sshKey, BubbleNetwork network) {

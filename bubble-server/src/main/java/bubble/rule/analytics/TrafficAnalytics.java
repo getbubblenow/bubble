@@ -17,6 +17,7 @@ import static java.util.concurrent.TimeUnit.HOURS;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD;
 import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
@@ -27,6 +28,8 @@ public class TrafficAnalytics extends AbstractAppRuleDriver {
     public static final String FQDN_SEP = "@";
 
     public static final String RECENT_TRAFFIC_PREFIX = TrafficAnalytics.class.getSimpleName() + ".recent";
+    public static final String PREFIX_HOURLY = "hourly_";
+    public static final String PREFIX_DAILY = "daily_";
 
     @Getter(lazy=true) private final RedisService recentTraffic = redis.prefixNamespace(RECENT_TRAFFIC_PREFIX);
 
@@ -41,9 +44,15 @@ public class TrafficAnalytics extends AbstractAppRuleDriver {
         final String fqdn = filter.getFqdn();
 
         getRecentTraffic().set(now()+"_"+randomAlphanumeric(10), json(new TrafficRecord(filter, account, device, req)), EX, RECENT_TRAFFIC_EXPIRATION);
-        incr(account, device, app, site, fqdn, DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
-        incr(account, null, app, site, fqdn, DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
+        incrementCounters(account, device, app, site, fqdn);
         return FilterMatchResponse.NO_MATCH; // we are done, don't need to look at/modify stream
+    }
+
+    public void incrementCounters(Account account, Device device, String app, String site, String fqdn) {
+        incr(account, device, app, site, fqdn, PREFIX_HOURLY, DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
+        incr(account, null, app, site, fqdn, PREFIX_HOURLY, DATE_FORMAT_YYYY_MM_DD_HH.print(now()));
+        incr(account, device, app, site, fqdn, PREFIX_DAILY, DATE_FORMAT_YYYY_MM_DD.print(now()));
+        incr(account, null, app, site, fqdn, PREFIX_DAILY, DATE_FORMAT_YYYY_MM_DD.print(now()));
     }
 
     // we use synchronized here but in a multi-node scenario this is not sufficient, we still have some risk
@@ -51,8 +60,8 @@ public class TrafficAnalytics extends AbstractAppRuleDriver {
     // is that we miss a few increments, hopefully not a huge deal in the big picture. The real bad case is
     // if the underlying db driver gets into an upset state because of the concurrent updates. We will cross
     // that bridge when we get to it.
-    protected synchronized void incr(Account account, Device device, String app, String site, String fqdn, String tstamp) {
-        final String key = fqdn + FQDN_SEP + tstamp;
+    protected synchronized void incr(Account account, Device device, String app, String site, String fqdn, String prefix, String tstamp) {
+        final String key = fqdn + FQDN_SEP + prefix + tstamp;
         final AppData found = appDataDAO.findByAppAndSiteAndKeyAndDevice(app, site, key, device == null ? null : device.getUuid());
         if (found == null) {
             appDataDAO.create(new AppData()

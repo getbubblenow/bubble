@@ -1,7 +1,11 @@
 package bubble.service.cloud;
 
 import bubble.cloud.compute.ComputeServiceDriver;
+import bubble.dao.bill.AccountPlanDAO;
+import bubble.dao.bill.BubblePlanAppDAO;
 import bubble.model.account.Account;
+import bubble.model.bill.AccountPlan;
+import bubble.model.bill.BubblePlanApp;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.AnsibleRole;
 import bubble.model.cloud.BubbleNetwork;
@@ -39,6 +43,8 @@ public class AnsiblePrepService {
     @Autowired private DatabaseFilterService dbFilter;
     @Autowired private StandardStorageService storageService;
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private AccountPlanDAO accountPlanDAO;
+    @Autowired private BubblePlanAppDAO planAppDAO;
 
     public Map<String, Object> prepAnsible(TempDir automation,
                                            File bubbleFilesDir,
@@ -79,9 +85,19 @@ public class AnsiblePrepService {
         ctx.put("roles", installRoles.stream().map(AnsibleRole::getRoleName).collect(Collectors.toList()));
         ctx.put("testMode", !fork && configuration.testMode());
 
+        // Determine which apps should be copied based on plan
+        final List<BubblePlanApp> planApps;
+        if (configuration.paymentsEnabled()) {
+            final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(account.getUuid(), network.getUuid());
+            if (accountPlan == null) return die("prepAnsible: no AccountPlan found for network: "+network.getUuid());
+            planApps = planAppDAO.findByAccountAndPlan(account.getUuid(), accountPlan.getPlan());
+        } else {
+            planApps = null;
+        }
+
         // Copy database with new encryption key
         if (installRoles.stream().anyMatch(r->r.getName().startsWith("bubble-"))) {
-            final String key = dbFilter.copyDatabase(fork, network, node, account, new File(bubbleFilesDir, "bubble.sql.gz"));
+            final String key = dbFilter.copyDatabase(fork, network, node, account, planApps, new File(bubbleFilesDir, "bubble.sql.gz"));
             ctx.put("dbEncryptionKey", key);
 
             // if this is a fork, and current server is local, then sage will be self

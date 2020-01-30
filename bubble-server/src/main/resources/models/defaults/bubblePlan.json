@@ -1,25 +1,63 @@
-[{
-  "name": "bubble",
-  "priority": 1000,
-  "chargeName": "BubbleVPN",
-  "computeSizeType": "small",
-  "nodesIncluded": 1,
-  "additionalPerNodePrice": 0,
-  "price": 0,
-  "storageGbIncluded": 15,
-  "additionalStoragePerGbPrice": 0,
-  "bandwidthGbIncluded": 500,
-  "additionalBandwidthPerGbPrice": 0
-}, {
-  "name": "bubble_plus",
-  "priority": 2000,
-  "chargeName": "BubblePlus",
-  "computeSizeType": "medium",
-  "nodesIncluded": 1,
-  "additionalPerNodePrice": 0,
-  "price": 0,
-  "storageGbIncluded": 40,
-  "additionalStoragePerGbPrice": 0,
-  "bandwidthGbIncluded": 1000,
-  "additionalBandwidthPerGbPrice": 0
-}]
+[
+  {
+    "name": "bubble",
+    "priority": 1000,
+    "chargeName": "BubbleVPNP",
+    "computeSizeType": "small",
+    "nodesIncluded": 1,
+    "additionalPerNodePrice": 0,
+    "price": 0,
+    "storageGbIncluded": 15,
+    "additionalStoragePerGbPrice": 0,
+    "bandwidthGbIncluded": 500,
+    "additionalBandwidthPerGbPrice": 0,
+    "children": {
+      "BubblePlanApp": [
+        {"app": "BubbleBlock"},
+        {"app": "UserBlocker"}
+      ]
+    }
+  },
+
+  {
+    "name": "bubble_plus",
+    "priority": 2000,
+    "chargeName": "BubblePlus",
+    "computeSizeType": "medium",
+    "nodesIncluded": 1,
+    "additionalPerNodePrice": 0,
+    "price": 0,
+    "storageGbIncluded": 40,
+    "additionalStoragePerGbPrice": 0,
+    "bandwidthGbIncluded": 1000,
+    "additionalBandwidthPerGbPrice": 0,
+    "children": {
+      "BubblePlanApp": [
+        {"app": "TrafficAnalytics"},
+        {"app": "BubbleBlock"},
+        {"app": "UserBlocker"}
+      ]
+    }
+  },
+
+  {
+    "name": "bubble_super",
+    "priority": 3000,
+    "chargeName": "BubbleSuper",
+    "computeSizeType": "large",
+    "nodesIncluded": 1,
+    "additionalPerNodePrice": 0,
+    "price": 0,
+    "storageGbIncluded": 65,
+    "additionalStoragePerGbPrice": 0,
+    "bandwidthGbIncluded": 2000,
+    "additionalBandwidthPerGbPrice": 0,
+    "children": {
+      "BubblePlanApp": [
+        {"app": "TrafficAnalytics"},
+        {"app": "BubbleBlock"},
+        {"app": "UserBlocker"}
+      ]
+    }
+  }
+]

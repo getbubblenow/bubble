@@ -30,7 +30,8 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_PLANS, listFields={"name", "domain", "description", "account", "enabled"})
 @ECTypeChildren(uriPrefix=EP_PLANS+"/{BubblePlan.name}", value={
-        @ECTypeChild(type=BubbleNetwork.class, backref="plan")
+        @ECTypeChild(type=BubbleNetwork.class, backref="plan"),
+        @ECTypeChild(type=BubblePlanApp.class, backref="plan")
 })
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({ @ECIndex(unique=true, of={"account", "name"}) })

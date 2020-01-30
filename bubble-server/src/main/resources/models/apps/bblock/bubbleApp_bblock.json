@@ -1,6 +1,6 @@
 [{
   "name": "BubbleBlock",
-  "description": "URL Blocker",
+  "description": "Adware and Malware Blocker",
   "url": "https://bubblev.com/apps/bblock",
   "template": true,
   "enabled": true,
@@ -38,7 +38,8 @@
       "priority": -1000,
       "config": {
         "blockLists": [
-          "https://v.firebog.net/hosts/Easylist.txt"
+          "https://v.firebog.net/hosts/Easylist.txt",
+          "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareABP.txt"
         ]
       }
     }],
@@ -46,7 +47,7 @@
       "locale": "en_US",
       "messages": [
         {"name": "name", "value": "BubbleBlock"},
-        {"name": "description", "value": "Block URLs"},
+        {"name": "description", "value": "Adware and Malware Blocker"},
         {"name": "field.ctime", "value": "When"},
         {"name": "field.fqdn", "value": "URL"},
         {"name": "field.device", "value": "Device"},

@@ -5,6 +5,7 @@ import bubble.main.RekeyDatabaseOptions;
 import bubble.main.rekey.RekeyOptions;
 import bubble.main.rekey.RekeyReaderMain;
 import bubble.model.account.Account;
+import bubble.model.bill.BubblePlanApp;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.server.BubbleConfiguration;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPOutputStream;
@@ -48,7 +50,12 @@ public class DatabaseFilterService {
 
     @Autowired private BubbleConfiguration configuration;
 
-    public String copyDatabase(boolean fork, BubbleNetwork network, BubbleNode node, Account account, File pgDumpFile) {
+    public String copyDatabase(boolean fork,
+                               BubbleNetwork network,
+                               BubbleNode node,
+                               Account account,
+                               List<BubblePlanApp> planApps,
+                               File pgDumpFile) {
         final String dbName = ("bubble_slice_"+randomAlphanumeric(8)+"_"+now()).toLowerCase();
         log.info("copyDatabase: starting with dbName: "+dbName);
 
@@ -99,7 +106,7 @@ public class DatabaseFilterService {
                 @Override protected Iterator<Identifiable> getEntityProducer(BubbleConfiguration fromConfig, AtomicReference<Exception> error) {
                     return fork
                             ? new FullEntityIterator(configuration, network, readerError)
-                            : new FilteredEntityIterator(configuration, account, network, node, readerError);
+                            : new FilteredEntityIterator(configuration, account, network, node, planApps, readerError);
                 }
             }.runInBackground(readerError::set);
 

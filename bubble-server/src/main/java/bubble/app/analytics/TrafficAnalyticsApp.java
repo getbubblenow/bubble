@@ -3,6 +3,7 @@ package bubble.app.analytics;
 import bubble.model.account.Account;
 import bubble.model.app.*;
 import bubble.model.device.Device;
+import bubble.rule.analytics.TrafficAnalytics;
 import bubble.rule.analytics.TrafficRecord;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -13,20 +14,25 @@ import org.cobbzilla.wizard.model.search.SearchQuery;
 import org.cobbzilla.wizard.model.search.SearchSort;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static bubble.rule.analytics.TrafficAnalytics.FQDN_SEP;
 import static bubble.rule.analytics.TrafficAnalytics.RECENT_TRAFFIC_PREFIX;
+import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.PCT;
+import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD;
 import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH;
 import static org.cobbzilla.wizard.model.search.SearchBoundComparison.Constants.ILIKE_SEP;
 import static org.cobbzilla.wizard.model.search.SearchField.OP_SEP;
 import static org.cobbzilla.wizard.model.search.SortOrder.ASC;
+import static org.cobbzilla.wizard.model.search.SortOrder.DESC;
 
 @Slf4j
 public class TrafficAnalyticsApp extends AppDataDriverBase {
@@ -36,7 +42,7 @@ public class TrafficAnalyticsApp extends AppDataDriverBase {
     public static final String VIEW_last_7_days = "last_7_days";
     public static final String VIEW_last_30_days = "last_30_days";
 
-    public static final SearchSort SORT_TSTAMP_ASC = new SearchSort("meta1");
+    public static final SearchSort SORT_TSTAMP_DESC = new SearchSort("meta1", DESC);
     public static final SearchSort SORT_FQDN_CASE_INSENSITIVE_ASC = new SearchSort("meta2", ASC, "lower");
 
     @Getter(lazy=true) private final RedisService recentTraffic = redis.prefixNamespace(RECENT_TRAFFIC_PREFIX);
@@ -78,7 +84,7 @@ public class TrafficAnalyticsApp extends AppDataDriverBase {
         }
         query.setBound("key", getKeyBound(view));
         if (!query.hasSorts()) {
-            query.addSort(SORT_TSTAMP_ASC);
+            query.addSort(SORT_TSTAMP_DESC);
             query.addSort(SORT_FQDN_CASE_INSENSITIVE_ASC);
         }
         return processResults(searchService.search(false, caller, dataDAO, query));
@@ -95,20 +101,40 @@ public class TrafficAnalyticsApp extends AppDataDriverBase {
     }
 
     private String getKeyBound(AppDataView view) {
-        final StringBuilder b;
-        final long now = now();
         final int limit;
+        final DateTimeFormatter format;
+        final TimeUnit increment;
+        final String prefix;
         switch (view.getName()) {
             default:
-            case VIEW_last_24_hours: limit = 24; break;
-            case VIEW_last_7_days:   limit = 24 * 7; break;
-            case VIEW_last_30_days:  limit = 24 * 30; break;
+            case VIEW_last_24_hours:
+                prefix = TrafficAnalytics.PREFIX_HOURLY;
+                limit = 24;
+                format = DATE_FORMAT_YYYY_MM_DD_HH;
+                increment = HOURS;
+                break;
+            case VIEW_last_7_days:
+                prefix = TrafficAnalytics.PREFIX_DAILY;
+                limit = 7;
+                format = DATE_FORMAT_YYYY_MM_DD;
+                increment = DAYS;
+                break;
+            case VIEW_last_30_days:
+                prefix = TrafficAnalytics.PREFIX_DAILY;
+                limit = 30;
+                format = DATE_FORMAT_YYYY_MM_DD;
+                increment = DAYS;
+                break;
         }
 
-        b = new StringBuilder();
+        final long now = now();
+        final StringBuilder b = new StringBuilder();
         for (int i = 0; i< limit; i++) {
             if (b.length() > 0) b.append(ILIKE_SEP);
-            b.append(PCT + FQDN_SEP).append(DATE_FORMAT_YYYY_MM_DD_HH.print(new DateTime().withZone(DateTimeZone.UTC).plus(-1 * HOURS.toMillis(i)))).append(PCT);
+            b.append(PCT + FQDN_SEP)
+                    .append(prefix)
+                    .append(format.print(new DateTime(now).withZone(DateTimeZone.UTC).plus(-1 * increment.toMillis(i))))
+                    .append(PCT);
         }
 
         return SearchBoundComparison.like_any.name() + OP_SEP + b.toString();

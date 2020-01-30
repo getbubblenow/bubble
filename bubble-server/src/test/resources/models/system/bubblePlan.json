@@ -1,6 +1,6 @@
 [{
   "name": "bubble",
-  "chargeName": "BubbleVPN",
+  "chargeName": "BubbleVPNP",
   "computeSizeType": "small",
   "nodesIncluded": 1,
   "additionalPerNodePrice": 1200,

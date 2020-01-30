@@ -55,7 +55,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 })
 public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBubbleTags<BubbleNetwork> {
 
-    public static final String[] UPDATE_FIELDS = {"footprint", "description", "locale", "timezone", "plan", "state"};
+    public static final String[] UPDATE_FIELDS = {"footprint", "description", "locale", "timezone", "state"};
     public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "name", "domain");
 
     public static final String TAG_ALLOW_REGISTRATION = "allowRegistration";
