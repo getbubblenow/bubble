@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.lang.ArrayUtils;
+import org.cobbzilla.util.collection.NameAndValue;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
@@ -16,7 +17,7 @@ public class FilterHttpRequest {
     @Getter @Setter private String id;
     @Getter @Setter private Device device;
     @Getter @Setter private Account account;
-    @Getter @Setter private String[] filters;
+    @Getter @Setter private NameAndValue[] meta;
     @Getter @Setter private String contentType;
 
     @Getter @Setter private String[] matchers;

@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.ExpirationMap;
+import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.http.HttpContentEncodingType;
 import org.cobbzilla.util.http.HttpStatusCodes;
 import org.cobbzilla.wizard.cache.redis.RedisService;
@@ -87,7 +88,7 @@ public class FilterHttpResource {
     private Map<String, FilterMatchersResponse> matchersCache = new ExpirationMap<>(MINUTES.toMillis(5));
 
     private static final long REQUEST_FILTERS_TIMEOUT = MINUTES.toSeconds(1);
-    @Getter(lazy=true) private final RedisService filtersForRequest = redis.prefixNamespace(getClass().getSimpleName()+".filters");
+    @Getter(lazy=true) private final RedisService requestMeta = redis.prefixNamespace(getClass().getSimpleName()+".filters");
 
     @POST @Path(EP_MATCHERS)
     @Consumes(APPLICATION_JSON)
@@ -105,8 +106,8 @@ public class FilterHttpResource {
         final String cacheKey = remoteHost+":"+filterRequest.cacheKey();
         final FilterMatchersResponse response = matchersCache.computeIfAbsent(cacheKey, k -> findMatchers(filterRequest, req, request));
 
-        if (response.hasFilters()) {
-            getFiltersForRequest().set(filterRequest.getRequestId(), json(response.getFilters()), EX, REQUEST_FILTERS_TIMEOUT);
+        if (response.hasMeta()) {
+            getRequestMeta().set(filterRequest.getRequestId(), json(response.getMeta()), EX, REQUEST_FILTERS_TIMEOUT);
         }
 
         return ok(response);
@@ -138,7 +139,7 @@ public class FilterHttpResource {
         final List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabled(accountUuid, fqdn);
         if (log.isDebugEnabled()) log.debug("findMatchers: found "+matchers.size()+" candidate matchers");
         final List<AppMatcher> removeMatchers;
-        List<String> filters = null;
+        NameAndValue[] meta = null;
         if (matchers.isEmpty()) {
             removeMatchers = Collections.emptyList();
         } else {
@@ -154,9 +155,9 @@ public class FilterHttpResource {
                             removeMatchers.add(matcher);
                             break;
                         case match:
-                            if (matchResponse.hasFilters()) {
-                                if (filters == null) filters = new ArrayList<>();
-                                filters.addAll(matchResponse.getFilters());
+                            if (matchResponse.hasMeta()) {
+                                if (meta == null) meta = NameAndValue.EMPTY_ARRAY;
+                                meta = ArrayUtil.concat(meta, matchResponse.getMeta());
                             }
                             break;
                     }
@@ -170,7 +171,7 @@ public class FilterHttpResource {
         return response
                 .setMatchers(matchers)
                 .setDevice(device.getUuid())
-                .setFilters(filters);
+                .setMeta(meta);
     }
 
     @POST @Path(EP_APPLY+"/{requestId}")
@@ -265,9 +266,9 @@ public class FilterHttpResource {
 
         // check for filters
         try {
-            final String filtersJson = getFiltersForRequest().get(requestId);
+            final String filtersJson = getRequestMeta().get(requestId);
             if (filtersJson != null) {
-                filterRequest.setFilters(json(filtersJson, String[].class));
+                filterRequest.setMeta(json(filtersJson, NameAndValue[].class));
             }
         } catch (Exception e) {
             log.error("filterHttp: error reading pageFilters: "+shortError(e));

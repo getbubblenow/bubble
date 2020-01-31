@@ -5,6 +5,7 @@ import bubble.rule.AbstractAppRuleDriver;
 import lombok.Getter;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.cobbzilla.util.collection.ExpirationMap;
+import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexReplacementFilter;
@@ -27,7 +28,7 @@ public class JsUserBlocker extends AbstractAppRuleDriver {
 
     public static final String CTX_APPLY_BLOCKS_JS = "APPLY_BLOCKS_JS";
 
-    @Override public InputStream doFilterResponse(String requestId, String contentType, String[] filters, InputStream in) {
+    @Override public InputStream doFilterResponse(String requestId, String contentType, NameAndValue[] meta, InputStream in) {
         if (!isHtml(contentType)) return in;
 
         final String replacement = "<head><script>" + getBubbleJs(requestId) + "</script>";

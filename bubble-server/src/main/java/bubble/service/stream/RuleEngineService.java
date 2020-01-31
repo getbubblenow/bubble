@@ -28,6 +28,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
+import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.http.HttpClosingFilterInputStream;
 import org.cobbzilla.util.http.HttpContentEncodingType;
 import org.cobbzilla.util.http.HttpMethods;
@@ -130,7 +131,7 @@ public class RuleEngineService {
         // filter response. when stream is closed, close http client
         final Header contentTypeHeader = proxyResponse.getFirstHeader(CONTENT_TYPE);
         final String contentType = contentTypeHeader == null ? null : contentTypeHeader.getValue();
-        final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest.getId(), contentType, filterRequest.getFilters(), new HttpClosingFilterInputStream(httpClient, proxyResponse));
+        final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest.getId(), contentType, filterRequest.getMeta(), new HttpClosingFilterInputStream(httpClient, proxyResponse));
 
         // send response
         return sendResponse(responseEntity, proxyResponse);
@@ -157,7 +158,7 @@ public class RuleEngineService {
 
         // have we seen this request before?
         final ActiveStreamState state = activeProcessors.computeIfAbsent(filterRequest.getId(),
-                k -> new ActiveStreamState(k, contentEncoding, contentType, filterRequest.getFilters(),
+                k -> new ActiveStreamState(k, contentEncoding, contentType, filterRequest.getMeta(),
                         initRules(filterRequest.getAccount(), filterRequest.getDevice(), filterRequest.getMatchers())));
         final byte[] chunk = toBytes(request.getEntityStream(), contentLength);
         if (last) {
@@ -264,7 +265,7 @@ public class RuleEngineService {
         private String requestId;
         private HttpContentEncodingType encoding;
         private String contentType;
-        private String[] filters;
+        private NameAndValue[] meta;
         private MultiStream multiStream;
         private AppRuleHarness firstRule;
         private InputStream output = null;
@@ -274,12 +275,12 @@ public class RuleEngineService {
         public ActiveStreamState(String requestId,
                                  HttpContentEncodingType encoding,
                                  String contentType,
-                                 String[] filters,
+                                 NameAndValue[] meta,
                                  List<AppRuleHarness> rules) {
             this.requestId = requestId;
             this.encoding = encoding;
             this.contentType = contentType;
-            this.filters = filters;
+            this.meta = meta;
             this.firstRule = rules.get(0);
         }
 
@@ -288,7 +289,7 @@ public class RuleEngineService {
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk));
-                output = outputStream(firstRule.getDriver().filterResponse(requestId, contentType, filters, inputStream(multiStream)));
+                output = outputStream(firstRule.getDriver().filterResponse(requestId, contentType, meta, inputStream(multiStream)));
             } else {
                 multiStream.addStream(new ByteArrayInputStream(chunk));
             }
@@ -299,7 +300,7 @@ public class RuleEngineService {
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk), true);
-                output = outputStream(firstRule.getDriver().filterResponse(requestId, contentType, filters, inputStream(multiStream)));
+                output = outputStream(firstRule.getDriver().filterResponse(requestId, contentType, meta, inputStream(multiStream)));
             } else {
                 multiStream.addLastStream(new ByteArrayInputStream(chunk));
             }

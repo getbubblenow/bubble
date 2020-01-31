@@ -9,6 +9,7 @@ import bubble.service.stream.AppRuleHarness;
 import bubble.resources.stream.FilterMatchersRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
+import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -49,12 +50,12 @@ public interface AppRuleDriver {
 
     default InputStream doFilterRequest(InputStream in) { return in; }
 
-    default InputStream filterResponse(String requestId, String contentType, String[] filters, InputStream in) {
-        if (hasNext()) return doFilterResponse(requestId, contentType, filters, getNext().filterResponse(requestId, contentType, filters, in));
-        return doFilterResponse(requestId, contentType, filters, in);
+    default InputStream filterResponse(String requestId, String contentType, NameAndValue[] meta, InputStream in) {
+        if (hasNext()) return doFilterResponse(requestId, contentType, meta, getNext().filterResponse(requestId, contentType, meta, in));
+        return doFilterResponse(requestId, contentType, meta, in);
     }
 
-    default InputStream doFilterResponse(String requestId, String contentType, String[] filters, InputStream in) { return in; }
+    default InputStream doFilterResponse(String requestId, String contentType, NameAndValue[] meta, InputStream in) { return in; }
 
     default String resolveResource(String res, Map<String, Object> ctx) {
         final String resource = locateResource(res);

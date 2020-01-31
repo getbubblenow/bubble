@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.collection.NameAndValue;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class FilterMatchersResponse {
     @Getter @Setter private Integer abort;
     @Getter @Setter private String device;
     @Getter @Setter private List<AppMatcher> matchers;
-    @Getter @Setter private List<String> filters;
-    public boolean hasFilters () { return !empty(filters); }
+    @Getter @Setter private NameAndValue[] meta;
+    public boolean hasMeta() { return !empty(meta); }
 
 }

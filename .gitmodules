@@ -16,3 +16,6 @@
 [submodule "bubble-web"]
 	path = bubble-web
 	url = git@git.bubblev.org:bubblev/bubble-web.git
+[submodule "utils/abp-parser"]
+	path = utils/abp-parser
+	url = git@git.bubblev.org:bubblev/abp-parser.git

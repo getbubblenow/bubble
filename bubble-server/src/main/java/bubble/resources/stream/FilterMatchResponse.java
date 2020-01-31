@@ -5,8 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-
-import java.util.List;
+import org.cobbzilla.util.collection.NameAndValue;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
@@ -20,7 +19,7 @@ public class FilterMatchResponse {
 
     @Getter @Setter private FilterMatchDecision decision;
 
-    @Getter @Setter private List<String> filters;
-    public boolean hasFilters() { return !empty(filters); }
+    @Getter @Setter private NameAndValue[] meta;
+    public boolean hasMeta() { return !empty(meta); }
 
 }
