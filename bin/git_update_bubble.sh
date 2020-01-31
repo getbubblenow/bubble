@@ -41,6 +41,7 @@ cobbzilla-utils
 restex
 templated-mail-sender
 cobbzilla-wizard
+abp-parser
 "
 pushd utils
 for repo in ${UTIL_REPOS} ; do
