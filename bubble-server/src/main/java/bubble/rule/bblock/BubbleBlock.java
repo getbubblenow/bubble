@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.util.string.StringUtil.UTF8cs;
@@ -105,7 +106,7 @@ public class BubbleBlock extends TrafficAnalytics {
                 } else {
                     return new FilterMatchResponse()
                             .setDecision(FilterMatchDecision.match)
-                            .setMeta(new NameAndValue[]{new NameAndValue(META_BLOCK_FILTERS, json(specs))});
+                            .setMeta(new NameAndValue[]{new NameAndValue(META_BLOCK_FILTERS, json(specs, COMPACT_MAPPER))});
                 }
         }
         return die("getFilterMatchResponse: invalid decisionType: "+decision.getDecisionType());
