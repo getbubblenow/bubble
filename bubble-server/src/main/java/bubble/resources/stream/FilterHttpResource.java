@@ -274,7 +274,7 @@ public class FilterHttpResource {
         }
 
         final boolean isLast = last != null && last;
-        return ruleEngine.applyRulesToChunkAndSendResponse(request, encoding, contentLength, filterRequest, isLast);
+        return ruleEngine.applyRulesToChunkAndSendResponse(request, encoding, contentLength, contentType, filterRequest, isLast);
     }
 
     public Response passthru(@Context ContainerRequest request) { return ruleEngine.passthru(request); }

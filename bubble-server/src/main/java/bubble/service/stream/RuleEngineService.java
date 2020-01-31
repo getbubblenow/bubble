@@ -58,6 +58,7 @@ import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
 import static org.cobbzilla.util.http.HttpStatusCodes.OK;
@@ -127,7 +128,9 @@ public class RuleEngineService {
         final CloseableHttpResponse proxyResponse = httpClient.execute(get);
 
         // filter response. when stream is closed, close http client
-        final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest.getId(), filterRequest.getFilters(), new HttpClosingFilterInputStream(httpClient, proxyResponse));
+        final Header contentTypeHeader = proxyResponse.getFirstHeader(CONTENT_TYPE);
+        final String contentType = contentTypeHeader == null ? null : contentTypeHeader.getValue();
+        final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest.getId(), contentType, filterRequest.getFilters(), new HttpClosingFilterInputStream(httpClient, proxyResponse));
 
         // send response
         return sendResponse(responseEntity, proxyResponse);
@@ -146,6 +149,7 @@ public class RuleEngineService {
     public Response applyRulesToChunkAndSendResponse(ContainerRequest request,
                                                      HttpContentEncodingType contentEncoding,
                                                      Integer contentLength,
+                                                     String contentType,
                                                      FilterHttpRequest filterRequest,
                                                      boolean last) throws IOException {
 
@@ -153,7 +157,8 @@ public class RuleEngineService {
 
         // have we seen this request before?
         final ActiveStreamState state = activeProcessors.computeIfAbsent(filterRequest.getId(),
-                k -> new ActiveStreamState(k, contentEncoding, filterRequest.getFilters(), initRules(filterRequest.getAccount(), filterRequest.getDevice(), filterRequest.getMatchers())));
+                k -> new ActiveStreamState(k, contentEncoding, contentType, filterRequest.getFilters(),
+                        initRules(filterRequest.getAccount(), filterRequest.getDevice(), filterRequest.getMatchers())));
         final byte[] chunk = toBytes(request.getEntityStream(), contentLength);
         if (last) {
             if (log.isDebugEnabled()) log.debug("applyRulesToChunkAndSendResponse: adding LAST stream");
@@ -258,6 +263,7 @@ public class RuleEngineService {
 
         private String requestId;
         private HttpContentEncodingType encoding;
+        private String contentType;
         private String[] filters;
         private MultiStream multiStream;
         private AppRuleHarness firstRule;
@@ -267,10 +273,12 @@ public class RuleEngineService {
 
         public ActiveStreamState(String requestId,
                                  HttpContentEncodingType encoding,
+                                 String contentType,
                                  String[] filters,
                                  List<AppRuleHarness> rules) {
             this.requestId = requestId;
             this.encoding = encoding;
+            this.contentType = contentType;
             this.filters = filters;
             this.firstRule = rules.get(0);
         }
@@ -280,7 +288,7 @@ public class RuleEngineService {
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk));
-                output = outputStream(firstRule.getDriver().filterResponse(requestId, filters, inputStream(multiStream)));
+                output = outputStream(firstRule.getDriver().filterResponse(requestId, contentType, filters, inputStream(multiStream)));
             } else {
                 multiStream.addStream(new ByteArrayInputStream(chunk));
             }
@@ -291,7 +299,7 @@ public class RuleEngineService {
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk), true);
-                output = outputStream(firstRule.getDriver().filterResponse(requestId, filters, inputStream(multiStream)));
+                output = outputStream(firstRule.getDriver().filterResponse(requestId, contentType, filters, inputStream(multiStream)));
             } else {
                 multiStream.addLastStream(new ByteArrayInputStream(chunk));
             }

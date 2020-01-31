@@ -88,8 +88,10 @@ public class BubbleBlock extends TrafficAnalytics {
         }
     }
 
-    @Override public InputStream doFilterResponse(String requestId, String[] filters, InputStream in) {
-        if (empty(filters)) return in;
+    @Override public InputStream doFilterResponse(String requestId, String contentType, String[] filters, InputStream in) {
+
+        if (empty(filters) || !isHtml(contentType)) return in;
+
         final String replacement = "<head><script>" + getBubbleJs(requestId, filters) + "</script>";
         final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
         final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter).setMaxMatches(1);

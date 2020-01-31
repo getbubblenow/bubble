@@ -27,7 +27,9 @@ public class JsUserBlocker extends AbstractAppRuleDriver {
 
     public static final String CTX_APPLY_BLOCKS_JS = "APPLY_BLOCKS_JS";
 
-    @Override public InputStream doFilterResponse(String requestId, String[] filters, InputStream in) {
+    @Override public InputStream doFilterResponse(String requestId, String contentType, String[] filters, InputStream in) {
+        if (!isHtml(contentType)) return in;
+
         final String replacement = "<head><script>" + getBubbleJs(requestId) + "</script>";
         final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
         final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter).setMaxMatches(1);
