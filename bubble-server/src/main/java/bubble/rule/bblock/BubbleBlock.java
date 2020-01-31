@@ -1,9 +1,9 @@
 package bubble.rule.bblock;
 
-import bubble.abp.spec.BlockDecision;
-import bubble.abp.spec.BlockList;
-import bubble.abp.spec.BlockListSource;
-import bubble.abp.spec.BlockSpec;
+import bubble.abp.BlockDecision;
+import bubble.abp.BlockList;
+import bubble.abp.BlockListSource;
+import bubble.abp.BlockSpec;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
