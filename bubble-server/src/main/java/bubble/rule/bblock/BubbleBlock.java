@@ -1,6 +1,9 @@
 package bubble.rule.bblock;
 
-import bubble.abp.*;
+import bubble.abp.BlockDecision;
+import bubble.abp.BlockList;
+import bubble.abp.BlockListSource;
+import bubble.abp.BlockSpec;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
@@ -40,7 +43,6 @@ import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 public class BubbleBlock extends TrafficAnalytics {
 
     private static final String META_REQUEST = "__bubble_request";
-    private static final String META_BLOCK_FILTERS = "__bubble_block_filters";
 
     private BubbleBlockConfig bubbleBlockConfig;
 
@@ -152,14 +154,13 @@ public class BubbleBlock extends TrafficAnalytics {
                 return EMPTY_STREAM;
         }
 
-
         if (!isHtml(contentType)) {
             log.warn("doFilterRequest: cannot filter non-html response ("+request.getUrl()+"), returning as-is: "+contentType);
             return in;
         }
 
-        final String blockSpecJson = json(filters, COMPACT_MAPPER);
-        final String replacement = "<head><script>" + getBubbleJs(requestId, blockSpecJson) + "</script>";
+        final String selectorsJson = json(decision.getSelectors(), COMPACT_MAPPER);
+        final String replacement = "<head><script>" + getBubbleJs(requestId, selectorsJson) + "</script>";
         final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
         final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter).setMaxMatches(1);
         return new ReaderInputStream(reader, UTF8cs);
@@ -167,7 +168,7 @@ public class BubbleBlock extends TrafficAnalytics {
 
     public static final Class<BubbleBlock> BB = BubbleBlock.class;
     public static final String BUBBLE_JS_TEMPLATE = stream2string(getPackagePath(BB)+"/"+ BB.getSimpleName()+".js.hbs");
-    private static final String CTX_BUBBLE_BLOCK_SPEC_JSON = "BUBBLE_BLOCK_SPEC_JSON";
+    private static final String CTX_BUBBLE_SELECTORS = "BUBBLE_SELECTORS_JSON";
 
     private String getBubbleJs(String requestId, String blockSpecJson) {
         final Map<String, Object> ctx = new HashMap<>();
@@ -175,7 +176,7 @@ public class BubbleBlock extends TrafficAnalytics {
         ctx.put(CTX_BUBBLE_REQUEST_ID, requestId);
         ctx.put(CTX_BUBBLE_HOME, configuration.getPublicUriBase());
         ctx.put(CTX_BUBBLE_DATA_ID, getDataId(requestId));
-        ctx.put(CTX_BUBBLE_BLOCK_SPEC_JSON, blockSpecJson);
+        ctx.put(CTX_BUBBLE_SELECTORS, blockSpecJson);
         return HandlebarsUtil.apply(getHandlebars(), BUBBLE_JS_TEMPLATE, ctx);
     }
 

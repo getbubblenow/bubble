@@ -3,10 +3,7 @@ const {{JS_PREFIX}}_request_id = '{{BUBBLE_REQUEST_ID}}';
 const {{JS_PREFIX}}_interval = 50;
 const {{JS_PREFIX}}_idle_interval = 1000;
 
-const {{JS_PREFIX}}_filters = [
-{{#each BUBBLE_FILTERS}}{{#unless @first}},
-{{/unless}}'{{this}}'{{/each}}
-];
+const {{JS_PREFIX}}_filters = {{{BUBBLE_SELECTORS_JSON}}};
 
 function {{JS_PREFIX}}_onReady(callback) {
     const intervalId = window.setInterval(function() {
@@ -18,16 +15,206 @@ function {{JS_PREFIX}}_onReady(callback) {
     }, {{JS_PREFIX}}_interval);
 }
 
-function {{JS_PREFIX}}_process_filter(f) {
-    console.log('process_filter: received '+f);
+function {{JS_PREFIX}}_style_prop_match(e, styleVal, comparison, value) {
+    if (styleVal === null || styleVal === '') return false;
+    switch (comparison) {
+        case 'equals': case 'exact':
+            return styleVal.toLowerCase() === value.toLowerCase();
+        case 'startsWith':
+            return styleVal.toLowerCase().startsWith(value.toLowerCase());
+        case 'endsWith':
+            return styleVal.toLowerCase().endsWith(value.toLowerCase());
+        case 'contains':
+            return styleVal.toLowerCase().includes(value.toLowerCase());
+        case 'wildcard':
+            return styleVal.toLowerCase().match(value.toLowerCase()) !== null;
+    }
+    return false;
+}
+
+function {{JS_PREFIX}}_literal_styles_string(e) {
+    const matches = new RegExp(/.+?\s+style\s*=\s*"([^"]+)"/g).exec(e.outerHTML);
+    if (matches !== null && matches.length >= 1) {
+        return matches[1];
+    }
+    return '';
+}
+
+function {{JS_PREFIX}}_literal_styles(e) {
+    const styles = [];
+    const literal = {{JS_PREFIX}}_literal_styles_string(e).split(';');
+    for (let i=0; i<literal.length; i++) {
+        const prop = literal[i].trim();
+        if (prop.length > 0) {
+            const colon = prop.indexOf(':');
+            if (colon !== -1 && colon !== 0 && colon !== prop.length-1) {
+                styles.push({name: prop.substring(0, colon).trim(), value: prop.substring(colon+1).trim()});
+            }
+        }
+    }
+    return styles;
+}
+
+function {{JS_PREFIX}}_style_match(e, comparison, propName, propValue) {
+    if (comparison === 'regex') {
+        if (e.style.cssText.toLowerCase().match(propValue.toLowerCase()) !== null) return true;
+        return {{JS_PREFIX}}_literal_styles_string(e).toLowerCase().match(propValue.toLowerCase()) !== null;
+    }
+    const style = window.getComputedStyle(e);
+    for (let i=0; i<style.length; i++) {
+        if (style[i].toLowerCase() === propName.toLowerCase()) {
+            let styleVal = style[style[i]];
+            if ({{JS_PREFIX}}_style_prop_match(e, styleVal, comparison, propValue)) return true;
+        }
+    }
+    const literalStyles = {{JS_PREFIX}}_literal_styles(e);
+    for (let i=0; i<literalStyles.length; i++) {
+        if (literalStyles[i].name.toLowerCase() === propName.toLowerCase()) {
+            let styleVal = literalStyles[i].value;
+            if ({{JS_PREFIX}}_style_prop_match(e, styleVal, comparison, propValue)) return true;
+        }
+    }
+    return false;
+}
+
+function {{JS_PREFIX}}_attribute_match(e, attr) {
+    if (attr.style) {
+        for (let i=0; i<attr.style.length; i++) {
+            const prop = attr.style[i];
+            if (!{{JS_PREFIX}}_style_match(e, attr.comparison, prop.name, prop.value)) return false;
+        }
+        return true;
+
+    } else {
+        if (!e.hasAttribute(attr.name)) return false;
+        const attrVal = e.getAttribute(attr.name);
+        switch (attr.comparison) {
+            case 'equals':
+                return '' + attrVal === attr.value;
+            case 'startsWith':
+                return (''+attrVal).toLowerCase().startsWith(attr.value.toLowerCase());
+            case 'endsWith':
+                return (''+attrVal).toLowerCase().endsWith(attr.value.toLowerCase());
+            case 'contains':
+                return (''+attrVal).toLowerCase().includes(attr.value.toLowerCase());
+        }
+    }
+    return false;
+}
+
+function {{JS_PREFIX}}_abp_match_properties(e, props) {
+    for (let i=0; i<props.length; i++) {
+        const prop = props[i];
+        if (!{{JS_PREFIX}}_style_match(e, prop.type, prop.name, prop.value)) return false;
+    }
+    return true;
+}
+
+function {{JS_PREFIX}}_abp_match_contains(e, contains) {
+    switch (contains.type) {
+        case 'literal': return e.innerText.includes(contains.value);
+        case 'regex': return e.innerText.toLowerCase().match(contains.value.toLowerCase()) !== null;
+        case 'selector': return {{JS_PREFIX}}_process_filter(contains.selector, e).length > 0;
+        default: return false;
+    }
+}
+
+function {{JS_PREFIX}}_has_class(e, cls) {
+    if (e === null || typeof e.classList === 'undefined' || e.classList === null || e.classList.length === 0) return false;
+    for (let i=0; i<e.classList.length; i++) {
+        if (e.classList[i].toLowerCase() === cls.toLowerCase()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function {{JS_PREFIX}}_abp_match(e, abp) {
+    switch (abp.type) {
+        case 'properties': return {{JS_PREFIX}}_abp_match_properties(e, abp.properties);
+        case 'contains': return {{JS_PREFIX}}_abp_match_contains(e, abp.contains);
+        case 'has': return {{JS_PREFIX}}_process_filter(abp.selector, e).length > 0;
+        default: return false;
+    }
+}
+
+function {{JS_PREFIX}}_process_filter(f, startElement) {
+    let elements = null;
+    let candidates = [];
+    switch (f.type) {
+        case 'cls':
+            elements = startElement.getElementsByClassName(f.name);
+            for (let i=0; i<elements.length; i++) {
+                candidates.push(elements[i]);
+            }
+            break;
+        case 'tag':
+            elements = startElement.getElementsByTagName(f.name);
+            for (let i=0; i<elements.length; i++) {
+                candidates.push(elements[i]);
+            }
+            break;
+        case 'id':
+            const e = document.getElementById(f.name);
+            if (e !== null) candidates = [ e ];
+            break;
+        case 'id_and_cls':
+            let elt = document.getElementById(f.name);
+            if (elt !== null) {
+                if ({{JS_PREFIX}}_has_class(elt, f.cls)) candidates.push(elt);
+            }
+            break;
+        case 'tag_and_cls':
+            elements = startElement.getElementsByTagName(f.name);
+            for (let i=0; i<elements.length; i++) {
+                const e = elements[i];
+                if ({{JS_PREFIX}}_has_class(e, f.cls)) candidates.push(e);
+            }
+            break;
+        default: return [];
+    }
+
+    if (candidates.length === 0) return candidates;
+    if (typeof f.attributes !== 'undefined') {
+        for (let i=0; i<f.attributes.length; i++) {
+            candidates = candidates.filter(e => {{JS_PREFIX}}_attribute_match(e, f.attributes[i]));
+        }
+    }
+
+    if (candidates.length === 0) return candidates;
+    if (typeof f.abp !== 'undefined') {
+        candidates = candidates.filter(e => {{JS_PREFIX}}_abp_match(e, f.abp));
+    }
+
+    if (candidates.length === 0) return candidates;
+    if (typeof f.operator !== 'undefined') {
+        switch (f.operator) {
+            case 'next':
+                candidates = candidates.filter(e => {{JS_PREFIX}}_process_filter(f.next, e.nextSibling).length > 0);
+                break;
+            case 'encloses':
+                candidates = candidates.filter(e => {{JS_PREFIX}}_process_filter(f.next, e).length > 0);
+                break;
+        }
+    }
+
+    return candidates;
 }
 
 function {{JS_PREFIX}}_process_filters() {
     for (let i=0; i<{{JS_PREFIX}}_filters.length; i++) {
-        {{JS_PREFIX}}_process_filter({{JS_PREFIX}}_filters[i]);
+        let filter = {{JS_PREFIX}}_filters[i];
+        const elementsToRemove = {{JS_PREFIX}}_process_filter(filter, document);
+        for (let i=0; i<elementsToRemove.length; i++) {
+            const e = elementsToRemove[i];
+            console.log('removing element: '+e.outerHTML);
+            e.parentNode.removeChild(e);
+        }
     }
+    console.log('{{JS_PREFIX}}_process_filters: finished processing '+{{JS_PREFIX}}_filters.length+' filters');
 }
 
 {{JS_PREFIX}}_onReady(function() {
     {{JS_PREFIX}}_process_filters();
+    window.setInterval({{JS_PREFIX}}_process_filters, {{JS_PREFIX}}_idle_interval);
 });
