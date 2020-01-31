@@ -1,5 +1,6 @@
 package bubble.resources.stream;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,5 +21,7 @@ public class FilterMatchersRequest {
     // note: we do *not* include the requestId in the cache, if we did then the
     // FilterHttpResource.matchersCache cache would be useless, since every cache entry would be unique
     public String cacheKey() { return hashOf(fqdn, uri, userAgent, referer, remoteAddr); }
+
+    @JsonIgnore public String getUrl() { return fqdn + "/" + uri; }
 
 }

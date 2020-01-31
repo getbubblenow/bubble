@@ -14,6 +14,7 @@ import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Map;
 
@@ -22,6 +23,8 @@ import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 
 public interface AppRuleDriver {
+
+    InputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[0]);
 
     AppRuleDriver getNext();
     void setNext(AppRuleDriver next);

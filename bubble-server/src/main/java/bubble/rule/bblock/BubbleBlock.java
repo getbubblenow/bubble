@@ -1,9 +1,6 @@
 package bubble.rule.bblock;
 
-import bubble.abp.BlockDecision;
-import bubble.abp.BlockList;
-import bubble.abp.BlockListSource;
-import bubble.abp.BlockSpec;
+import bubble.abp.*;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
@@ -42,6 +39,7 @@ import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 @Slf4j
 public class BubbleBlock extends TrafficAnalytics {
 
+    private static final String META_REQUEST = "__bubble_request";
     private static final String META_BLOCK_FILTERS = "__bubble_block_filters";
 
     private BubbleBlockConfig bubbleBlockConfig;
@@ -90,11 +88,11 @@ public class BubbleBlock extends TrafficAnalytics {
             case allow: default:
                 return FilterMatchResponse.NO_MATCH;
             case filter:
-                return getFilterMatchResponse(decision);
+                return getFilterMatchResponse(filter, decision);
         }
     }
 
-    public FilterMatchResponse getFilterMatchResponse(BlockDecision decision) {
+    public FilterMatchResponse getFilterMatchResponse(FilterMatchersRequest filter, BlockDecision decision) {
         switch (decision.getDecisionType()) {
             case block: return FilterMatchResponse.ABORT_NOT_FOUND;
             case allow: return FilterMatchResponse.NO_MATCH;
@@ -106,7 +104,9 @@ public class BubbleBlock extends TrafficAnalytics {
                 } else {
                     return new FilterMatchResponse()
                             .setDecision(FilterMatchDecision.match)
-                            .setMeta(new NameAndValue[]{new NameAndValue(META_BLOCK_FILTERS, json(specs, COMPACT_MAPPER))});
+                            .setMeta(new NameAndValue[]{
+                                    new NameAndValue(META_REQUEST, json(filter, COMPACT_MAPPER))
+                            });
                 }
         }
         return die("getFilterMatchResponse: invalid decisionType: "+decision.getDecisionType());
@@ -114,9 +114,51 @@ public class BubbleBlock extends TrafficAnalytics {
 
     @Override public InputStream doFilterResponse(String requestId, String contentType, NameAndValue[] meta, InputStream in) {
 
-        final String blockSpecJson = NameAndValue.find(meta, META_BLOCK_FILTERS);
-        if (empty(blockSpecJson) || !isHtml(contentType)) return in;
+        final String requestJson = NameAndValue.find(meta, META_REQUEST);
+        if (requestJson == null) {
+            log.error("doFilterResponse: no request found, returning EMPTY_STREAM");
+            return EMPTY_STREAM;
+        }
 
+        final FilterMatchersRequest request;
+        try {
+            request = json(requestJson, FilterMatchersRequest.class);
+        } catch (Exception e) {
+            log.error("doFilterResponse: error parsing request, returning EMPTY_STREAM: "+shortError(e));
+            return EMPTY_STREAM;
+        }
+
+        // Now that we know the content type, re-check the BlockList
+        final BlockDecision decision = blockList.getDecision(request.getFqdn(), request.getUri(), contentType);
+        final List<BlockSpec> filters;
+        switch (decision.getDecisionType()) {
+            case block:
+                log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was block, returning EMPTY_STREAM");
+                return EMPTY_STREAM;
+            case allow:
+                log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was allow, returning as-is");
+                return in;
+            case filter:
+                if (!decision.hasSpecs()) {
+                    // should never happen
+                    log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was filtered, but no filters provided, returning as-is");
+                    return in;
+                }
+                filters = decision.getSpecs();
+                break;
+            default:
+                // should never happen
+                log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was invalid, returning EMPTY_STREAM");
+                return EMPTY_STREAM;
+        }
+
+
+        if (!isHtml(contentType)) {
+            log.warn("doFilterRequest: cannot filter non-html response ("+request.getUrl()+"), returning as-is: "+contentType);
+            return in;
+        }
+
+        final String blockSpecJson = json(filters, COMPACT_MAPPER);
         final String replacement = "<head><script>" + getBubbleJs(requestId, blockSpecJson) + "</script>";
         final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
         final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter).setMaxMatches(1);
