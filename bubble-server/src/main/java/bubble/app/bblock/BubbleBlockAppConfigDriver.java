@@ -10,12 +10,15 @@ import bubble.model.app.config.AppConfigDriver;
 import bubble.rule.bblock.BubbleBlockConfig;
 import bubble.rule.bblock.BubbleBlockList;
 import bubble.rule.bblock.BubbleBlockRuleDriver;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -63,10 +66,52 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
             final RuleDriver driver = driverDAO.findByAccountAndId(account.getUuid(), rule.getDriver());
             if (driver != null && driver.getDriverClass().equals(BubbleBlockRuleDriver.class.getName())) {
                 final BubbleBlockConfig blockConfig = json(rule.getConfigJson(), BubbleBlockConfig.class);
-                blockLists.addAll(asList(blockConfig.getBlockLists()));
+                blockLists.addAll( Arrays.stream(blockConfig.getBlockLists())
+                        .map(list -> list.setRule(rule))
+                        .collect(Collectors.toList()) );
             }
         }
         return blockLists;
     }
 
+    public static final String ACTION_enable_list = "enable_list";
+    public static final String ACTION_disable_list = "disable_list";
+    public static final String ACTION_manage_list = "manage_list";
+    public static final String ACTION_remove_list = "remove_list";
+    public static final String ACTION_add_list = "add_list";
+    public static final String ACTION_manage_list_entries = "manage_list_entries";
+    public static final String ACTION_remove_rule = "remove_rule";
+    public static final String ACTION_create_rule = "create_rule";
+    public static final String ACTION_test_url = "test_url";
+
+    @Override public Object takeItemAction(Account account,
+                                           BubbleApp app,
+                                           String view,
+                                           String action,
+                                           String id,
+                                           Map<String, String> queryParams,
+                                           JsonNode data) {
+        BubbleBlockList list;
+
+        switch (action) {
+            case ACTION_enable_list:
+                list = loadList(account, app, id);
+                if (list == null) throw notFoundEx(id);
+                return updateList(list.setEnabled(true));
+
+            case ACTION_disable_list:
+                list = loadList(account, app, id);
+                if (list == null) throw notFoundEx(id);
+                return updateList(list.setEnabled(false));
+        }
+
+        throw notFoundEx(action);
+    }
+
+    private BubbleBlockList updateList(BubbleBlockList list) {
+        final AppRule rule = list.getRule();
+        final BubbleBlockConfig blockConfig = json(rule.getConfigJson(), BubbleBlockConfig.class);
+        ruleDAO.update(rule.setConfigJson(json(blockConfig.updateList(list))));
+        return list;
+    }
 }

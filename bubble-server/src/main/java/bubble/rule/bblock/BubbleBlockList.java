@@ -1,5 +1,7 @@
 package bubble.rule.bblock;
 
+import bubble.model.app.AppRule;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,5 +34,7 @@ public class BubbleBlockList {
 
     @Getter @Setter private Boolean enabled = true;
     public boolean enabled() { return enabled != null && enabled; }
+
+    @JsonIgnore @Getter @Setter private AppRule rule;
 
 }
