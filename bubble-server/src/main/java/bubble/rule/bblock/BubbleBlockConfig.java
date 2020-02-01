@@ -7,6 +7,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class BubbleBlockConfig {
 
-    @Getter @Setter private String[] blockLists;
+    @Getter @Setter private BubbleBlockList[] blockLists;
 
 }

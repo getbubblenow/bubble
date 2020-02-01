@@ -22,7 +22,50 @@
       {"name": "last_24_hours"},
       {"name": "last_7_days"},
       {"name": "last_30_days"}
-    ]
+    ],
+    "configViews": [{
+      "name": "manage_blocklists",
+      "type": "list",
+      "columns": ["name", "description", "url", "enabled", "tags"],
+      "actions": [
+        {"name": "enable", "when": "!item.enabled"},
+        {"name": "disable", "when": "item.enabled"},
+        {"name": "manage_blocklist", "view": "manage_blocklist"},
+        {"name": "remove"},
+        {"name": "add", "type": "new", "view": "manage_blocklist"}
+      ]
+    }, {
+      "name": "manage_blocklist",
+      "type": "item",
+      "fields": [
+        {"name": "name"},
+        {"name": "description", "control": "textarea"},
+        {"name": "url", "type": "http_url"},
+        {"name": "tags"},
+        {"name": "enabled", "type": "flag"}
+      ],
+      "actions": [
+        {"name": "enable", "when": "!item.enabled"},
+        {"name": "disable", "when": "item.enabled"},
+        {"name": "remove", "when": "item.id !== null"},
+        {"name": "create", "when": "item.id === null"},
+        {"name": "update", "when": "item.id !== null"},
+        {"name": "manage_entries", "when": "item.id !== null"}
+      ]
+    }, {
+      "name": "manage_entries",
+      "type": "list",
+      "columns": ["block_rule"],
+      "actions": [
+        {"name": "remove"},
+        {"name": "add", "type": "new", "view": "add_entry"}
+      ]
+    }, {
+      "name": "add_entry",
+      "type": "item",
+      "fields": [ {"name": "block_rule"} ],
+      "actions": ["create"]
+    }]
   },
   "children": {
     "AppSite": [{
@@ -38,8 +81,27 @@
       "priority": -1000,
       "config": {
         "blockLists": [
-          "https://v.firebog.net/hosts/Easylist.txt",
-          "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareABP.txt"
+          {
+            "name": "EasyList",
+            "id": "easylist",
+            "url": "https://v.firebog.net/hosts/Easylist.txt",
+            "description": "EasyList is the primary filter list that removes most adverts from international web pages, including unwanted frames, images, and objects. It is the most popular list used by many ad blockers and forms the basis of over a dozen combination and supplementary filter lists.",
+            "tags": ["ads"]
+          },
+          {
+            "name": "Dandelion Sprout's Anti-Malware List",
+            "id": "dandelion_sprouts_anti_malware_list",
+            "url": "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareABP.txt",
+            "description": "Most anti-malware lists are pretty big and can cover a 5- or 6-digit amount of specific domains. But my list hereby claims to remove more than 25% of all known malware sites with just a 2-digit amount of entries. This is mostly done by blocking top-level domains that have become devastatingly abused by spammers, usually because they allowed for free and uncontrolled domain registrations. There's also additional categories that cover unusual malware and phishing domains that very few other lists seem to cover.",
+            "tags": ["malware", "phishing"]
+          },
+          {
+            "name": "Bubble Custom List",
+            "id": "local",
+            "url": "",
+            "description": "A place to maintain your own block rules for this Bubble.",
+            "tags": ["custom"]
+          }
         ]
       }
     }],
@@ -58,7 +120,14 @@
         {"name": "view.last_7_days", "value": "Last 7 Days"},
         {"name": "view.last_7_days.ctime.format", "value": "{{MM}} {{d}}, {{YYYY}}"},
         {"name": "view.last_30_days", "value": "Last 30 Days"},
-        {"name": "view.last_30_days.ctime.format", "value": "{{MM}} {{d}}, {{YYYY}}"}
+        {"name": "view.last_30_days.ctime.format", "value": "{{MM}} {{d}}, {{YYYY}}"},
+
+        {"name": "list.easylist.name", "value": "EasyList"},
+        {"name": "list.easylist.description", "value": "EasyList is the primary filter list that removes most adverts from international web pages, including unwanted frames, images, and objects. It is the most popular list used by many ad blockers and forms the basis of over a dozen combination and supplementary filter lists."},
+        {"name": "list.local.name", "value": "Bubble Custom List"},
+        {"name": "list.local.description", "value": "A place to maintain your own block rules for this Bubble."},
+        {"name": "list.dandelion_sprouts_anti_malware_list.name", "value": "Dandelion Sprout's Anti-Malware List"},
+        {"name": "list.dandelion_sprouts_anti_malware_list.description", "value": "Most anti-malware lists are pretty big and can cover a 5- or 6-digit amount of specific domains. But my list hereby claims to remove more than 25% of all known malware sites with just a 2-digit amount of entries. This is mostly done by blocking top-level domains that have become devastatingly abused by spammers, usually because they allowed for free and uncontrolled domain registrations. There's also additional categories that cover unusual malware and phishing domains that very few other lists seem to cover."}
       ]
     }]
   }

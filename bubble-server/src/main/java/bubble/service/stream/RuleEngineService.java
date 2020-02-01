@@ -186,6 +186,8 @@ public class RuleEngineService {
 
     private ExpirationMap<String, List<AppRuleHarness>> ruleCache = new ExpirationMap<>(HOURS.toMillis(1), ExpirationEvictionPolicy.atime);
 
+    public void flushRuleCache () { ruleCache.clear(); }
+
     private List<AppRuleHarness> initRules(Account account, Device device, String[] matcherIds) {
         final String cacheKey = hashOf(account.getUuid(), device.getUuid(), matcherIds);
         return ruleCache.computeIfAbsent(cacheKey, k -> {

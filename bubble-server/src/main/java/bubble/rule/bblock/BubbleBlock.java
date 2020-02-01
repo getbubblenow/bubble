@@ -54,19 +54,27 @@ public class BubbleBlock extends TrafficAnalytics {
         super.init(config, userConfig, rule, matcher, account, device);
 
         bubbleBlockConfig = json(json(config), BubbleBlockConfig.class);
-        for (String listUrl : bubbleBlockConfig.getBlockLists()) {
-            BlockListSource blockListSource = blockListCache.get(listUrl);
-            if (blockListSource == null || blockListSource.age() > TimeUnit.DAYS.toMillis(5)) {
-                try {
-                    final BlockListSource newList = new BlockListSource()
-                            .setUrl(listUrl)
-                            .download();
-                    blockListCache.put(listUrl, newList);
-                    blockListSource = newList;
-                } catch (Exception e) {
-                    log.error("init: error downloading blocklist "+listUrl+": "+shortError(e));
-                    continue;
+        for (BubbleBlockList list : bubbleBlockConfig.getBlockLists()) {
+            if (!list.enabled()) continue;
+
+            BlockListSource blockListSource = blockListCache.get(list.getId());
+            if (list.hasUrl()) {
+                final String listUrl = list.getUrl();
+                if (blockListSource == null || blockListSource.age() > TimeUnit.DAYS.toMillis(5)) {
+                    try {
+                        final BlockListSource newList = new BlockListSource()
+                                .setUrl(listUrl)
+                                .download();
+                        blockListCache.put(list.getId(), newList);
+                        blockListSource = newList;
+                    } catch (Exception e) {
+                        log.error("init: error downloading blocklist " + listUrl + ": " + shortError(e));
+                        continue;
+                    }
                 }
+            }
+            if (list.hasAdditionalEntries()) {
+                blockListSource.addEntries(list.getAdditionalEntries());
             }
             blockList.merge(blockListSource.getBlockList());
         }
