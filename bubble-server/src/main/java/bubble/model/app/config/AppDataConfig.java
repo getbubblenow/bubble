@@ -1,5 +1,6 @@
-package bubble.model.app;
+package bubble.model.app.config;
 
+import bubble.model.app.*;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
 import lombok.Setter;
@@ -7,7 +8,7 @@ import lombok.Setter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static bubble.model.app.AppDataPresentation.none;
+import static bubble.model.app.config.AppDataPresentation.none;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
 
@@ -39,6 +40,15 @@ public class AppDataConfig {
     public AppDataView getView(String viewName) {
         if (!hasViews()) return null;
         for (AppDataView v : getViews()) if (v.getName().equalsIgnoreCase(viewName)) return v;
+        return null;
+    }
+
+    @Getter @Setter private AppConfigView[] configViews;
+    public boolean hasConfigViews () { return !empty(configViews); }
+
+    public AppConfigView getConfigView(String viewName) {
+        if (!hasConfigViews()) return null;
+        for (AppConfigView v : getConfigViews()) if (v.getName().equalsIgnoreCase(viewName)) return v;
         return null;
     }
 

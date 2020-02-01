@@ -2,6 +2,7 @@ package bubble.model.app;
 
 import bubble.dao.app.AppDataDAO;
 import bubble.model.account.Account;
+import bubble.model.app.config.AppDataView;
 import bubble.model.device.Device;
 import bubble.service.SearchService;
 import org.cobbzilla.wizard.cache.redis.RedisService;

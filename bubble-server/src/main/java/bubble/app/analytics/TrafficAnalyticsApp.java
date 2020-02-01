@@ -2,6 +2,7 @@ package bubble.app.analytics;
 
 import bubble.model.account.Account;
 import bubble.model.app.*;
+import bubble.model.app.config.AppDataView;
 import bubble.model.device.Device;
 import bubble.rule.analytics.TrafficAnalytics;
 import bubble.rule.analytics.TrafficRecord;

@@ -3,7 +3,7 @@ package bubble.resources.app;
 import bubble.dao.app.AppSiteDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppDataDriver;
-import bubble.model.app.AppDataView;
+import bubble.model.app.config.AppDataView;
 import bubble.model.app.AppSite;
 import bubble.model.app.BubbleApp;
 import bubble.model.device.Device;

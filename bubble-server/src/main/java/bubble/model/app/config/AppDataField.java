@@ -1,4 +1,4 @@
-package bubble.model.app;
+package bubble.model.app.config;
 
 import lombok.Getter;
 import lombok.Setter;

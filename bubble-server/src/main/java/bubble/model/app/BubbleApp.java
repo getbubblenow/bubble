@@ -2,6 +2,7 @@ package bubble.model.app;
 
 import bubble.model.account.Account;
 import bubble.model.account.AccountTemplate;
+import bubble.model.app.config.AppDataConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

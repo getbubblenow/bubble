@@ -28,11 +28,11 @@
       "type": "list",
       "columns": ["name", "description", "url", "enabled", "tags"],
       "actions": [
-        {"name": "enable", "when": "!item.enabled"},
-        {"name": "disable", "when": "item.enabled"},
+        {"name": "enable_blocklist", "when": "!item.enabled"},
+        {"name": "disable_blocklist", "when": "item.enabled"},
         {"name": "manage_blocklist", "view": "manage_blocklist"},
-        {"name": "remove"},
-        {"name": "add", "type": "new", "view": "manage_blocklist"}
+        {"name": "remove_blocklist"},
+        {"name": "add_blocklist", "type": "create", "view": "manage_blocklist"}
       ]
     }, {
       "name": "manage_blocklist",
@@ -45,26 +45,26 @@
         {"name": "enabled", "type": "flag"}
       ],
       "actions": [
-        {"name": "enable", "when": "!item.enabled"},
-        {"name": "disable", "when": "item.enabled"},
-        {"name": "remove", "when": "item.id !== null"},
-        {"name": "create", "when": "item.id === null"},
-        {"name": "update", "when": "item.id !== null"},
-        {"name": "manage_entries", "when": "item.id !== null"}
+        {"name": "enable_blocklist", "when": "!item.enabled"},
+        {"name": "disable_blocklist", "when": "item.enabled"},
+        {"name": "remove_blocklist", "when": "item.id !== null"},
+        {"name": "create_blocklist", "when": "item.id === null"},
+        {"name": "update_blocklist", "when": "item.id !== null"},
+        {"name": "manage_blocklist_entries", "when": "item.id !== null"}
       ]
     }, {
       "name": "manage_entries",
       "type": "list",
       "columns": ["block_rule"],
       "actions": [
-        {"name": "remove"},
-        {"name": "add", "type": "new", "view": "add_entry"}
+        {"name": "remove_rule"},
+        {"name": "add_rule", "type": "create", "view": "add_entry"}
       ]
     }, {
       "name": "add_entry",
       "type": "item",
       "fields": [ {"name": "block_rule"} ],
-      "actions": ["create"]
+      "actions": ["create_rule"]
     }]
   },
   "children": {
@@ -122,12 +122,32 @@
         {"name": "view.last_30_days", "value": "Last 30 Days"},
         {"name": "view.last_30_days.ctime.format", "value": "{{MM}} {{d}}, {{YYYY}}"},
 
-        {"name": "list.easylist.name", "value": "EasyList"},
-        {"name": "list.easylist.description", "value": "EasyList is the primary filter list that removes most adverts from international web pages, including unwanted frames, images, and objects. It is the most popular list used by many ad blockers and forms the basis of over a dozen combination and supplementary filter lists."},
-        {"name": "list.local.name", "value": "Bubble Custom List"},
-        {"name": "list.local.description", "value": "A place to maintain your own block rules for this Bubble."},
-        {"name": "list.dandelion_sprouts_anti_malware_list.name", "value": "Dandelion Sprout's Anti-Malware List"},
-        {"name": "list.dandelion_sprouts_anti_malware_list.description", "value": "Most anti-malware lists are pretty big and can cover a 5- or 6-digit amount of specific domains. But my list hereby claims to remove more than 25% of all known malware sites with just a 2-digit amount of entries. This is mostly done by blocking top-level domains that have become devastatingly abused by spammers, usually because they allowed for free and uncontrolled domain registrations. There's also additional categories that cover unusual malware and phishing domains that very few other lists seem to cover."}
+        {"name": "config.field.name", "value": "Name"},
+        {"name": "config.field.description", "value": "Description"},
+        {"name": "config.field.url", "value": "URL"},
+        {"name": "config.field.tags", "value": "Tags"},
+        {"name": "config.field.tags.description", "value": "A comma-separated list of tags: "},
+        {"name": "config.field.enabled", "value": "Enabled"},
+        {"name": "config.field.block_rule", "value": "Rule"},
+
+        {"name": "config.action.enable_blocklist", "value": "Enable"},
+        {"name": "config.action.disable_blocklist", "value": "Disable"},
+        {"name": "config.action.manage_blocklist", "value": "Manage List"},
+        {"name": "config.action.remove_blocklist", "value": "Remove List"},
+        {"name": "config.action.add_blocklist", "value": "Add New List"},
+        {"name": "config.action.create_blocklist", "value": "Create List"},
+        {"name": "config.action.update_blocklist", "value": "Update List"},
+        {"name": "config.action.manage_blocklist_entries", "value": "Manage Entries"},
+        {"name": "config.action.remove_rule", "value": "Remove Rule"},
+        {"name": "config.action.add_rule", "value": "Add New Rule"},
+        {"name": "config.action.create_rule", "value": "Create Rule"},
+
+        {"name": "config.item.easylist.name", "value": "EasyList"},
+        {"name": "config.item.easylist.description", "value": "EasyList is the primary filter list that removes most adverts from international web pages, including unwanted frames, images, and objects. It is the most popular list used by many ad blockers and forms the basis of over a dozen combination and supplementary filter lists."},
+        {"name": "config.item.local.name", "value": "Bubble Custom List"},
+        {"name": "config.item.local.description", "value": "A place to maintain your own block rules for this Bubble."},
+        {"name": "config.item.dandelion_sprouts_anti_malware_list.name", "value": "Dandelion Sprout's Anti-Malware List"},
+        {"name": "config.item.dandelion_sprouts_anti_malware_list.description", "value": "Most anti-malware lists are pretty big and can cover a 5- or 6-digit amount of specific domains. But my list hereby claims to remove more than 25% of all known malware sites with just a 2-digit amount of entries. This is mostly done by blocking top-level domains that have become devastatingly abused by spammers, usually because they allowed for free and uncontrolled domain registrations. There's also additional categories that cover unusual malware and phishing domains that very few other lists seem to cover."}
       ]
     }]
   }
