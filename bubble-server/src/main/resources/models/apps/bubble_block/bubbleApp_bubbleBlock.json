@@ -30,6 +30,7 @@
         {"name": "url", "type": "http_url"},
         {"name": "testUrl", "type": "http_url"},
         {"name": "tags"},
+        {"name": "tagString"},
         {"name": "enabled", "type": "flag", "mode": "readOnly"},
         {"name": "rule"}
     ],
@@ -57,7 +58,7 @@
     }, {
       "name": "manageList",
       "scope": "item",
-      "fields": ["name", "description", "url", "tags", "enabled"],
+      "fields": ["name", "description", "url", "tagString", "enabled"],
       "actions": [
         {"name": "updateList", "index": 10},
         {"name": "enableList", "when": "!item.enabled", "index": 20},
@@ -148,8 +149,8 @@
         {"name": "config.field.url", "value": "URL"},
         {"name": "config.field.url.description", "value": "URL of the Filter List"},
         {"name": "config.field.tagString", "value": "Tags"},
+        {"name": "config.field.tagString.description", "value": "A comma-separated list of tags"},
         {"name": "config.field.tags", "value": "Tags"},
-        {"name": "config.field.tags.description", "value": "A comma-separated list of tags"},
         {"name": "config.field.enabled", "value": "Enabled"},
         {"name": "config.field.rule", "value": "Rule"},
         {"name": "config.field.testUrl", "value": "Test URL"},
