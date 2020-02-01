@@ -3,7 +3,7 @@
   "children": {
     "AppRule": [{
       "name": "local_user_blocker",
-      "driver": "UserBlocker",
+      "driver": "UserBlockerRuleDriver",
       "template": true,
       "config": {
         "blockedCommentCheck": "parseInt(current.get('width')) > parseInt(blocked.get('width'))",

@@ -1,7 +1,8 @@
 [
-  "defaults/bubbleFootprint",
-  "defaults/bubblePlan",
   "defaults/ruleDriver",
+  "defaults/bubbleFootprint",
   "manifest-app-analytics",
-  "manifest-app-user-block"
+  "manifest-app-user-block",
+  "manifest-app-bubble-block",
+  "defaults/bubblePlan"
 ]

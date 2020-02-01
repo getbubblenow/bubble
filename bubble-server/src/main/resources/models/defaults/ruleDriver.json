@@ -1,6 +1,6 @@
 [
   {
-    "name": "UserBlocker",
+    "name": "UserBlockerRuleDriver",
     "driverClass": "bubble.rule.social.block.UserBlockerRuleDriver",
     "template": true,
     "userConfig": {
@@ -8,7 +8,7 @@
     }
   },
   {
-    "name": "JsUserBlocker",
+    "name": "JsUserBlockerRuleDriver",
     "driverClass": "bubble.rule.social.block.JsUserBlockerRuleDriver",
     "template": true,
     "userConfig": {
@@ -16,7 +16,7 @@
     }
   },
   {
-    "name": "TrafficAnalytics",
+    "name": "TrafficAnalyticsRuleDriver",
     "driverClass": "bubble.rule.analytics.TrafficAnalyticsRuleDriver",
     "template": true,
     "userConfig": {
@@ -24,7 +24,7 @@
     }
   },
   {
-    "name": "BubbleBlock",
+    "name": "BubbleBlockRuleDriver",
     "driverClass": "bubble.rule.bblock.BubbleBlockRuleDriver",
     "template": true,
     "userConfig": {
