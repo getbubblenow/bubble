@@ -132,7 +132,6 @@ public class BubbleBlock extends TrafficAnalytics {
 
         // Now that we know the content type, re-check the BlockList
         final BlockDecision decision = blockList.getDecision(request.getFqdn(), request.getUri(), contentType);
-        final List<BlockSpec> filters;
         switch (decision.getDecisionType()) {
             case block:
                 log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was block, returning EMPTY_STREAM");
@@ -146,7 +145,6 @@ public class BubbleBlock extends TrafficAnalytics {
                     log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was filtered, but no filters provided, returning as-is");
                     return in;
                 }
-                filters = decision.getSpecs();
                 break;
             default:
                 // should never happen
@@ -159,8 +157,7 @@ public class BubbleBlock extends TrafficAnalytics {
             return in;
         }
 
-        final String selectorsJson = json(decision.getSelectors(), COMPACT_MAPPER);
-        final String replacement = "<head><script>" + getBubbleJs(requestId, selectorsJson) + "</script>";
+        final String replacement = "<head><script>" + getBubbleJs(requestId, decision) + "</script>";
         final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
         final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter).setMaxMatches(1);
         return new ReaderInputStream(reader, UTF8cs);
@@ -169,14 +166,19 @@ public class BubbleBlock extends TrafficAnalytics {
     public static final Class<BubbleBlock> BB = BubbleBlock.class;
     public static final String BUBBLE_JS_TEMPLATE = stream2string(getPackagePath(BB)+"/"+ BB.getSimpleName()+".js.hbs");
     private static final String CTX_BUBBLE_SELECTORS = "BUBBLE_SELECTORS_JSON";
+    private static final String CTX_BUBBLE_BLACKLIST = "BUBBLE_BLACKLIST_JSON";
+    private static final String CTX_BUBBLE_WHITELIST = "BUBBLE_WHITELIST_JSON";
 
-    private String getBubbleJs(String requestId, String blockSpecJson) {
+    private String getBubbleJs(String requestId, BlockDecision decision) {
+
         final Map<String, Object> ctx = new HashMap<>();
         ctx.put(CTX_JS_PREFIX, "__bubble_block_"+sha256_hex(requestId)+"_");
         ctx.put(CTX_BUBBLE_REQUEST_ID, requestId);
         ctx.put(CTX_BUBBLE_HOME, configuration.getPublicUriBase());
         ctx.put(CTX_BUBBLE_DATA_ID, getDataId(requestId));
-        ctx.put(CTX_BUBBLE_SELECTORS, blockSpecJson);
+        ctx.put(CTX_BUBBLE_SELECTORS, json(decision.getSelectors(), COMPACT_MAPPER));
+        ctx.put(CTX_BUBBLE_WHITELIST, json(blockList.getWhitelistDomains(), COMPACT_MAPPER));
+        ctx.put(CTX_BUBBLE_BLACKLIST, json(blockList.getBlacklistDomains(), COMPACT_MAPPER));
         return HandlebarsUtil.apply(getHandlebars(), BUBBLE_JS_TEMPLATE, ctx);
     }
 

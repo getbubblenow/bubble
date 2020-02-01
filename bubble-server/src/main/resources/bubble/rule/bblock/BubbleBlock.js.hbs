@@ -3,7 +3,95 @@ const {{JS_PREFIX}}_request_id = '{{BUBBLE_REQUEST_ID}}';
 const {{JS_PREFIX}}_interval = 50;
 const {{JS_PREFIX}}_idle_interval = 1000;
 
+const {{JS_PREFIX}}_blacklist = {{{BUBBLE_BLACKLIST_JSON}}};
+const {{JS_PREFIX}}_whitelist = {{{BUBBLE_WHITELIST_JSON}}};
+
 const {{JS_PREFIX}}_filters = {{{BUBBLE_SELECTORS_JSON}}};
+
+function {{JS_PREFIX}}_check_entry_exclusions_and_types(entry, url, type) {
+    if (typeof entry.domainExclusions !== 'undefined' && entry.domainExclusions !== null) {
+        for (let i=0; i<entry.domainExclusions.length; i++) {
+            if (entry.domainExclusions[i] === url.hostname) return false;
+        }
+    }
+    if (typeof type !== 'undefined' && type !== null) {
+        if (typeof entry.typeExclusions !== 'undefined' && entry.typeExclusions !== null) {
+            for (let i=0; i<entry.typeExclusions.length; i++) {
+                if (entry.typeExclusions[i] === type) return false;
+            }
+        }
+        if (typeof entry.typeMatches !== 'undefined' && entry.typeMatches !== null) {
+            for (let i=0; i<entry.typeExclusions.length; i++) {
+                if (entry.typeMatches[i] === type) return true;
+            }
+            return false;
+        }
+    }
+    return true;
+}
+
+function {{JS_PREFIX}}_entry_matches(entry, url, type) {
+    const target = entry.target;
+    if (typeof target.domainRegex !== 'undefined' && target.domainRegex !== null && url.hostname.matches(target.domainRegex) !== null) {
+        return {{JS_PREFIX}}_check_entry_exclusions_and_types(entry, url, type);
+    }
+    if (typeof target.regex !== 'undefined' && target.regex !== null && (url.hostname.matches(target.regex) !== null || url.pathname.matches(target.regex) !== null)) {
+        return {{JS_PREFIX}}_check_entry_exclusions_and_types(entry, url, type);
+    }
+}
+
+function {{JS_PREFIX}}_block_target(url, type) {
+    if (typeof url === 'undefined' || url == null) return false;
+    let u;
+    try {
+        u = new URL(url);
+    } catch (e) {
+        return false;
+    }
+    if (typeof type === 'undefined' || type === null) {
+        if (url.pathname.endsWith('.png')
+            || url.pathname.endsWith('.gif')
+            || url.pathname.endsWith('.jpeg')
+            || url.pathname.endsWith('.jpg')) {
+        type = 'image';
+    } else if (url.pathname.endsWith('.css')) {
+        type = 'stylesheet';
+    } else if (url.pathname.endsWith('.js')) {
+        type = 'script';
+    } else {
+        type = null;
+    }
+    for (let i=0; i<{{JS_PREFIX}}_whitelist.length; i++) {
+        const entry = {{JS_PREFIX}}_whitelist[i];
+        if ({{JS_PREFIX}}_entry_matches(entry, u, type)) return false;
+    }
+    for (let i=0; i<{{JS_PREFIX}}_blacklist.length; i++) {
+        const entry = {{JS_PREFIX}}_blacklist[i];
+        if ({{JS_PREFIX}}_entry_matches(entry, u, type)) return true;
+    }
+    return false;
+}
+
+window.f = Element.prototype.appendChild;
+Element.prototype.appendChild = function() {
+    let type = null;
+    if (arguments[0] instance HTMLImageElement) {
+        type = 'image';
+    }
+    if (typeof arguments[0].src !== 'undefined') {
+        if ({{JS_PREFIX}}_block_target(arguments[0].src, type)) {
+            console.log('BLOCKING appendChild for '+arguments[0]+', src='+arguments[0].src);
+            return;
+        }
+    }
+    if (typeof arguments[0].href !== 'undefined') {
+        if ({{JS_PREFIX}}_block_target(arguments[0].href, type)) {
+            console.log('BLOCKING appendChild for '+arguments[0]+', src='+arguments[0].href);
+            return;
+        }
+    }
+    return window.f.apply(this, arguments);
+};
 
 function {{JS_PREFIX}}_onReady(callback) {
     const intervalId = window.setInterval(function() {
@@ -212,6 +300,24 @@ function {{JS_PREFIX}}_process_filters() {
         }
     }
     console.log('{{JS_PREFIX}}_process_filters: finished processing '+{{JS_PREFIX}}_filters.length+' filters');
+
+    const images = document.getElementsByTagName('img');
+    for (let i=0; i<images.length; i++) {
+        const image = images[i];
+        if ({{JS_PREFIX}}_block_target(image.src, 'image')) {
+            console.log('removing image: '+image.outerHTML);
+            image.parentNode.removeChild(image);
+        }
+    }
+    const anchors = document.getElementsByTagName('a');
+    for (let i=0; i<anchors.length; i++) {
+        const anchor = anchors[i];
+        if ({{JS_PREFIX}}_block_target(anchor.href)) {
+            console.log('removing anchor: '+anchor.outerHTML);
+            anchor.parentNode.removeChild(anchor);
+        }
+    }
+
 }
 
 {{JS_PREFIX}}_onReady(function() {
