@@ -34,6 +34,9 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
             if (rule == null) return die("postUpdate("+ matcher.getUuid()+"): rule not found: "+ matcher.getRule());
 
             for (Account account : accountDAO.findAll()) {
+                if (account.getUuid().equals(matcher.getAccount())) {
+                    continue;
+                }
                 final BubbleApp accountApp = appDAO.findByAccountAndId(account.getUuid(), app.getName());
                 if (accountApp == null) {
                     // todo: log this?

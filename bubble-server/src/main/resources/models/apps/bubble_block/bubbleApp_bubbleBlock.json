@@ -117,7 +117,7 @@
     "AppMessage": [{
       "locale": "en_US",
       "messages": [
-        {"name": "name", "value": "BubbleBlock"},
+        {"name": "name", "value": "Bubble Filter"},
         {"name": "description", "value": "Network Filter: Blocks adware, malware, phishing/scam sites, and much more"},
         {"name": "field.ctime", "value": "When"},
         {"name": "field.fqdn", "value": "URL"},

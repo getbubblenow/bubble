@@ -10,7 +10,7 @@ public class AppConfigView {
     @Getter @Setter private String name;
     @Getter @Setter private AppConfigScope scope;
 
-    @Getter @Setter private Boolean root = true;
+    @Getter @Setter private Boolean root = false;
     public boolean root() { return root != null && root; }
 
     @Getter @Setter private String[] columns;

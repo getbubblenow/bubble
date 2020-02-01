@@ -1,5 +1,5 @@
 [{
-  "name": "BBlock",
+  "name": "BubbleBlock",
   "children": {
     "AppMatcher": [{
       "name": "BubbleBlockMatcher",
