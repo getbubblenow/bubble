@@ -33,42 +33,42 @@
         {"name": "rule"}
     ],
     "configViews": [{
-      "name": "manage_lists",
+      "name": "manageLists",
       "scope": "app",
       "root": "true",
       "fields": ["name", "description", "url", "enabled", "tagString"],
       "actions": [
-        {"name": "enable_list", "when": "!item.enabled"},
-        {"name": "disable_list", "when": "item.enabled"},
-        {"name": "manage_list", "view": "manage_list"},
-        {"name": "remove_list"},
+        {"name": "enableList", "when": "!item.enabled"},
+        {"name": "disableList", "when": "item.enabled"},
+        {"name": "manageList", "view": "manageList"},
+        {"name": "removeList"},
         {
-          "name": "create_list", "scope": "app", "view": "manage_list",
+          "name": "createList", "scope": "app", "view": "manageList",
           "params": [{"name": "url", "type": "http_url"}],
-          "button": "create_list"
+          "button": "createList"
         }
       ]
     }, {
-      "name": "manage_list",
+      "name": "manageList",
       "scope": "item",
       "fields": ["name", "description", "url", "tags", "enabled"],
       "actions": [
-        {"name": "enable_list", "when": "!item.enabled"},
-        {"name": "disable_list", "when": "item.enabled"},
-        {"name": "remove_list"},
-        {"name": "update_list"},
-        {"name": "manage_list_rules"}
+        {"name": "enableList", "when": "!item.enabled"},
+        {"name": "disableList", "when": "item.enabled"},
+        {"name": "removeList"},
+        {"name": "updateList"},
+        {"name": "manageListRules"}
       ]
     }, {
-      "name": "manage_rules",
+      "name": "manageRules",
       "scope": "item",
       "fields": ["rule"],
       "actions": [
-        {"name": "remove_rule"},
+        {"name": "removeRule"},
         {
-          "name": "create_rule",
+          "name": "createRule",
           "params": [{"name": "url", "type": "http_url"}],
-          "button": "create_rule"
+          "button": "createRule"
         },
         {
           "name": "test_url",
@@ -133,9 +133,9 @@
         {"name": "view.last_30_days", "value": "Last 30 Days"},
         {"name": "view.last_30_days.ctime.format", "value": "{{MM}} {{d}}, {{YYYY}}"},
 
-        {"name": "config.view.manage_lists", "value": "Manage Filter Lists"},
-        {"name": "config.view.manage_list", "value": "Manage Filter List"},
-        {"name": "config.view.manage_rules", "value": "Manage Filter Rules"},
+        {"name": "config.view.manageLists", "value": "Manage Filter Lists"},
+        {"name": "config.view.manageList", "value": "Manage Filter List"},
+        {"name": "config.view.manageRules", "value": "Manage Filter Rules"},
 
         {"name": "config.field.name", "value": "Name"},
         {"name": "config.field.description", "value": "Description"},
@@ -147,26 +147,19 @@
         {"name": "config.field.enabled", "value": "Enabled"},
         {"name": "config.field.rule", "value": "Rule"},
 
-        {"name": "config.action.enable_list", "value": "Enable"},
-        {"name": "config.action.disable_list", "value": "Disable"},
-        {"name": "config.action.manage_list", "value": "Manage List"},
-        {"name": "config.action.remove_list", "value": "Remove List"},
-        {"name": "config.action.create_list", "value": "Add New List"},
-        {"name": "config.button.create_list", "value": "Add"},
-        {"name": "config.action.update_list", "value": "Update List"},
-        {"name": "config.action.manage_list_rules", "value": "Manage Rules"},
-        {"name": "config.action.remove_rule", "value": "Remove Rule"},
-        {"name": "config.action.create_rule", "value": "Add New Rule"},
-        {"name": "config.button.create_rule", "value": "Add"},
+        {"name": "config.action.enableList", "value": "Enable"},
+        {"name": "config.action.disableList", "value": "Disable"},
+        {"name": "config.action.manageList", "value": "Manage List"},
+        {"name": "config.action.removeList", "value": "Remove List"},
+        {"name": "config.action.createList", "value": "Add New List"},
+        {"name": "config.button.createList", "value": "Add"},
+        {"name": "config.action.updateList", "value": "Update List"},
+        {"name": "config.action.manageListRules", "value": "Manage Rules"},
+        {"name": "config.action.removeRule", "value": "Remove Rule"},
+        {"name": "config.action.createRule", "value": "Add New Rule"},
+        {"name": "config.button.createRule", "value": "Add"},
         {"name": "config.action.test_url", "value": "Test URL"},
-        {"name": "config.button.test_url", "value": "Test"},
-
-        {"name": "config.item.easylist.name", "value": "EasyList"},
-        {"name": "config.item.easylist.description", "value": "EasyList is the primary filter list that removes most adverts from international web pages, including unwanted frames, images, and objects. It is the most popular list used by many ad blockers and forms the basis of over a dozen combination and supplementary filter lists."},
-        {"name": "config.item.local.name", "value": "Bubble Custom List"},
-        {"name": "config.item.local.description", "value": "A place to maintain your own block rules for this Bubble."},
-        {"name": "config.item.dandelion_sprouts_anti_malware_list.name", "value": "Dandelion Sprout's Anti-Malware List"},
-        {"name": "config.item.dandelion_sprouts_anti_malware_list.description", "value": "Most anti-malware lists are pretty big and can cover a 5- or 6-digit amount of specific domains. But my list hereby claims to remove more than 25% of all known malware sites with just a 2-digit amount of entries. This is mostly done by blocking top-level domains that have become devastatingly abused by spammers, usually because they allowed for free and uncontrolled domain registrations. There's also additional categories that cover unusual malware and phishing domains that very few other lists seem to cover."}
+        {"name": "config.button.test_url", "value": "Test"}
       ]
     }]
   }

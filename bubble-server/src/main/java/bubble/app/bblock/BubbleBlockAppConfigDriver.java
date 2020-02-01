@@ -28,8 +28,8 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
 public class BubbleBlockAppConfigDriver implements AppConfigDriver {
 
-    public static final String VIEW_manage_lists = "manage_lists";
-    public static final String VIEW_manage_list = "manage_list";
+    public static final String VIEW_manageLists = "manageLists";
+    public static final String VIEW_manageList = "manageList";
     public static final String VIEW_manage_entries = "manage_entries";
 
     @Autowired private RuleDriverDAO driverDAO;
@@ -38,10 +38,10 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     @Override public Object getView(Account account, BubbleApp app, String view, Map<String, String> params) {
         final String id = params.get(PARAM_ID);
         switch (view) {
-            case VIEW_manage_lists:
+            case VIEW_manageLists:
                 return loadAllLists(account, app);
 
-            case VIEW_manage_list:
+            case VIEW_manageList:
                 if (empty(id)) throw notFoundEx(id);
                 return loadList(account, app, id);
 
@@ -89,14 +89,14 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
         return rules.get(0);
     }
 
-    public static final String ACTION_enable_list = "enable_list";
-    public static final String ACTION_disable_list = "disable_list";
-    public static final String ACTION_create_list = "create_list";
-    public static final String ACTION_remove_list = "remove_list";
-    public static final String ACTION_manage_list = "manage_list";
-    public static final String ACTION_manage_list_rules = "manage_list_rules";
-    public static final String ACTION_create_rule = "create_rule";
-    public static final String ACTION_remove_rule = "remove_rule";
+    public static final String ACTION_enableList = "enableList";
+    public static final String ACTION_disableList = "disableList";
+    public static final String ACTION_createList = "createList";
+    public static final String ACTION_removeList = "removeList";
+    public static final String ACTION_manageList = "manageList";
+    public static final String ACTION_manageListRules = "manageListRules";
+    public static final String ACTION_createRule = "createRule";
+    public static final String ACTION_removeRule = "removeRule";
     public static final String ACTION_test_url = "test_url";
 
     public static final String PARAM_URL = "url";
@@ -108,7 +108,7 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
                                           Map<String, String> params,
                                           JsonNode data) {
         switch (action) {
-            case ACTION_create_list:
+            case ACTION_createList:
                 return addList(account, app, data);
         }
         throw notFoundEx(action);
@@ -176,19 +176,23 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
         BubbleBlockList list;
 
         switch (action) {
-            case ACTION_enable_list:
+            case ACTION_enableList:
                 list = loadList(account, app, id);
                 if (list == null) throw notFoundEx(id);
                 return updateList(list.setEnabled(true));
 
-            case ACTION_disable_list:
+            case ACTION_disableList:
                 list = loadList(account, app, id);
                 if (list == null) throw notFoundEx(id);
                 return updateList(list.setEnabled(false));
 
-            case ACTION_remove_list:
+            case ACTION_removeList:
                 list = loadList(account, app, id);
                 if (list == null) throw notFoundEx(id);
+                if (empty(list.getUrl())) {
+                    // only one empty-URL list is allowed (the custom bubble list) and it cannot be removed
+                    throw invalidEx("err.removeList.cannotRemoveBuiltinList");
+                }
                 return removeList(list);
         }
 
