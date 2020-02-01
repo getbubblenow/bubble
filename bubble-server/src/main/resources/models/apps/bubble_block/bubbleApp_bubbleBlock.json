@@ -30,7 +30,7 @@
         {"name": "url", "type": "http_url"},
         {"name": "testUrl", "type": "http_url"},
         {"name": "tags"},
-        {"name": "enabled", "type": "flag"},
+        {"name": "enabled", "type": "flag", "mode": "readOnly"},
         {"name": "rule"}
     ],
     "configViews": [{
