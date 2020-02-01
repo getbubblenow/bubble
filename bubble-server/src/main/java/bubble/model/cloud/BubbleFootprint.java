@@ -23,8 +23,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
+import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static bubble.ApiConstants.EP_FOOTPRINTS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
@@ -90,7 +90,7 @@ public class BubbleFootprint extends IdentifiableBase implements AccountTemplate
     public boolean hasAllowedCountries () { return allowedCountriesJson != null; }
 
     @Transient public String[] getAllowedCountries () { return allowedCountriesJson == null ? null : json(allowedCountriesJson, String[].class); }
-    public BubbleFootprint setAllowedCountries (String[] countries) { return setAllowedCountriesJson(countries == null ? null : json(countries)); }
+    public BubbleFootprint setAllowedCountries (String[] countries) { return setAllowedCountriesJson(countries == null ? null : json(countries, DB_JSON_MAPPER)); }
 
     @ECSearchable @ECField(index=70)
     @Size(max=5000, message="err.disallowedCountriesJson.length")
@@ -99,7 +99,7 @@ public class BubbleFootprint extends IdentifiableBase implements AccountTemplate
     public boolean hasDisallowedCountries () { return disallowedCountriesJson != null; }
 
     @Transient public String[] getDisallowedCountries () { return disallowedCountriesJson == null ? null : json(disallowedCountriesJson, String[].class); }
-    public BubbleFootprint setDisallowedCountries (String[] countries) { return setDisallowedCountriesJson(countries == null ? null : json(countries)); }
+    public BubbleFootprint setDisallowedCountries (String[] countries) { return setDisallowedCountriesJson(countries == null ? null : json(countries, DB_JSON_MAPPER)); }
 
     public void addDisallowedCountries(String[] countries) {
         final Set<String> disallowed = hasDisallowedCountries() ? new HashSet<>(Arrays.asList(getDisallowedCountries())) : new HashSet<>();

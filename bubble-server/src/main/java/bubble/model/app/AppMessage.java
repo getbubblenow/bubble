@@ -19,6 +19,7 @@ import javax.persistence.Entity;
 import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
+import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static bubble.ApiConstants.EP_MESSAGES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -57,11 +58,12 @@ public class AppMessage extends IdentifiableBase implements AccountTemplate, Has
     @Getter @Setter private String locale;
     public boolean hasLocale () { return !empty(locale); }
 
+    @Size(max=100000, message="err.appMessages.length")
     @ECSearchable @ECField(index=40) @Column(length=100000, nullable=false)
     @JsonIgnore @Getter @Setter private String messagesJson;
 
     @Transient public NameAndValue[] getMessages () { return messagesJson == null ? null : json(messagesJson, NameAndValue[].class); }
-    public AppMessage setMessages(NameAndValue[] messages) { return setMessagesJson(messages == null ? null : json(messages));}
+    public AppMessage setMessages(NameAndValue[] messages) { return setMessagesJson(messages == null ? null : json(messages, DB_JSON_MAPPER));}
 
     @ECSearchable @ECField(index=50) @Column(nullable=false)
     @ECIndex @Getter @Setter private Integer priority = 1;

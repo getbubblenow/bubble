@@ -19,6 +19,7 @@ import javax.persistence.Entity;
 import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
+import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static bubble.ApiConstants.EP_DATA;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
@@ -60,7 +61,7 @@ public class CloudServiceData extends IdentifiableBase implements HasAccount {
     @Getter @Setter private String data;
 
     @Transient public JsonNode getDataJson () { return data == null ? null : json(data, JsonNode.class); }
-    public CloudServiceData setDataJson(JsonNode n) { return setData(n == null ? null : json(n)); }
+    public CloudServiceData setDataJson(JsonNode n) { return setData(n == null ? null : json(n, DB_JSON_MAPPER)); }
 
     @ECSearchable @ECField(index=50, type=EntityFieldType.expiration_time)
     @ECIndex @Getter @Setter private Long expiration;

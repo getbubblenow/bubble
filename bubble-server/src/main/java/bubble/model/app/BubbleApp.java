@@ -18,8 +18,7 @@ import javax.persistence.Entity;
 import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
-import static bubble.ApiConstants.APPS_ENDPOINT;
-import static bubble.ApiConstants.EP_APPS;
+import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
@@ -79,7 +78,7 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @JsonIgnore @Getter @Setter private String dataConfigJson;
 
     @Transient public AppDataConfig getDataConfig () { return dataConfigJson == null ? null : json(dataConfigJson, AppDataConfig.class); }
-    public BubbleApp setDataConfig (AppDataConfig adc) { return setDataConfigJson(adc == null ? null : json(adc)); }
+    public BubbleApp setDataConfig (AppDataConfig adc) { return setDataConfigJson(adc == null ? null : json(adc, DB_JSON_MAPPER)); }
     public boolean hasDataConfig () { return getDataConfig() != null; }
 
     @ECSearchable @ECField(index=60)

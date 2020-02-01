@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static bubble.ApiConstants.EP_DOMAINS;
 import static bubble.model.cloud.AnsibleRole.sameRoleName;
 import static org.apache.commons.lang3.StringUtils.countMatches;
@@ -104,7 +105,7 @@ public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
     public boolean hasRoles () { return !empty(getRoles()); }
 
     @Transient public String[] getRoles () { return rolesJson == null ? null : json(rolesJson, String[].class); }
-    public BubbleDomain setRoles (String[] roles) { return setRolesJson(roles == null ? null : json(roles)); }
+    public BubbleDomain setRoles (String[] roles) { return setRolesJson(roles == null ? null : json(roles, DB_JSON_MAPPER)); }
 
     public String findRole(String r) { return AnsibleRole.findRole(getRoles(), r); }
 

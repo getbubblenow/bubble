@@ -22,6 +22,7 @@ import javax.persistence.Entity;
 import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
+import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static bubble.ApiConstants.EP_RULES;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
@@ -108,6 +109,6 @@ public class AppRule extends IdentifiableBaseParentEntity implements AppTemplate
     @Override public Identifiable update(Identifiable other) { copy(this, other, UPDATE_FIELDS); return this; }
 
     @Transient public JsonNode getConfig () { return json(configJson, JsonNode.class); }
-    public AppRule setConfig(JsonNode config) { return setConfigJson(json(config)); }
+    public AppRule setConfig(JsonNode config) { return setConfigJson(json(config, DB_JSON_MAPPER)); }
 
 }

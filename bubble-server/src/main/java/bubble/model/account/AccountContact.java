@@ -23,10 +23,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
+import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static bubble.ApiConstants.G_AUTH;
 import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
-import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.Identifiable.UUID;
@@ -143,7 +143,7 @@ public class AccountContact implements Serializable {
 
     public static String getTotpInfo(Account account, BubbleConfiguration configuration) {
         final GoogleAuthenticatorKey creds = G_AUTH.createCredentials();
-        return json(new TotpBean(creds, account, configuration), COMPACT_MAPPER);
+        return json(new TotpBean(creds, account, configuration), DB_JSON_MAPPER);
     }
 
     private static void checkNickInUse(AccountContact c, AccountContact[] contacts) {

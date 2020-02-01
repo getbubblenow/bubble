@@ -2,6 +2,7 @@ package bubble;
 
 import bubble.model.cloud.BubbleNode;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ import static org.apache.http.HttpHeaders.USER_AGENT;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.*;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -37,6 +39,8 @@ public class ApiConstants {
     public static final String DEFAULT_LOCALE = "en_US";
 
     private static final AtomicReference<String> bubbleDefaultDomain = new AtomicReference<>();
+
+    public static final ObjectMapper DB_JSON_MAPPER = COMPACT_MAPPER;
 
     private static String initDefaultDomain() {
         final File f = new File(HOME_DIR, ".BUBBLE_DEFAULT_DOMAIN");

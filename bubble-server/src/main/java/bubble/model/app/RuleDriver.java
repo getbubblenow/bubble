@@ -22,8 +22,7 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 
-import static bubble.ApiConstants.DRIVERS_ENDPOINT;
-import static bubble.ApiConstants.EP_DRIVERS;
+import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
@@ -85,7 +84,7 @@ public class RuleDriver extends IdentifiableBase implements AccountTemplate {
     @Column(length=100000) @ECField(index=80)
     @JsonIgnore @Getter @Setter private String userConfigJson;
 
-    @Transient public RuleDriver setUserConfig (JsonNode json) { return setUserConfigJson(json(json)); }
+    @Transient public RuleDriver setUserConfig (JsonNode json) { return setUserConfigJson(json(json, DB_JSON_MAPPER)); }
     public JsonNode getUserConfig () { return json(userConfigJson, JsonNode.class); }
 
     @Transient @JsonIgnore @Getter(lazy=true) private final AppRuleDriver driver = instantiate(this.driverClass);

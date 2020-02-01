@@ -19,6 +19,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.Arrays;
 
+import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static bubble.ApiConstants.EP_ROLES;
 import static bubble.cloud.storage.StorageServiceDriver.STORAGE_PREFIX;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -104,14 +105,14 @@ public class AnsibleRole extends IdentifiableBase implements AccountTemplate, Ha
     public boolean hasConfig () { return configJson != null; }
 
     @Transient public NameAndValue[] getConfig () { return configJson == null ? null : json(configJson, NameAndValue[].class); }
-    public AnsibleRole setConfig(NameAndValue[] config) { return setConfigJson(config == null ? null : json(config)); }
+    public AnsibleRole setConfig(NameAndValue[] config) { return setConfigJson(config == null ? null : json(config, DB_JSON_MAPPER)); }
 
     @Column(updatable=false, length=1000) @ECField(index=80)
     @JsonIgnore @Getter @Setter private String optionalConfigNamesJson;
     public boolean hasOptionalConfigNames () { return optionalConfigNamesJson != null; }
 
     @Transient public String[] getOptionalConfigNames() { return optionalConfigNamesJson == null ? null : json(optionalConfigNamesJson, String[].class); }
-    public AnsibleRole setOptionalConfigNames(String[] names) { return setOptionalConfigNamesJson(name == null ? null : json(names)); }
+    public AnsibleRole setOptionalConfigNames(String[] names) { return setOptionalConfigNamesJson(name == null ? null : json(names, DB_JSON_MAPPER)); }
 
     // The Base64-encoded .tgz archive for the role directory. all paths should start with roles/<role-name>/...
     // Then after it is stored (in AnsibleRoleDAO.preCreate), this becomes storage://CloudServiceName/path

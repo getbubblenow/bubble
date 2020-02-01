@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static bubble.model.account.AccountContact.contactMatch;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -105,7 +106,7 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
     }
 
     @Transient public AccountContact[] getAccountContacts () { return accountContactsJson == null ? null : json(accountContactsJson, AccountContact[].class); }
-    public AccountPolicy setAccountContacts(AccountContact[] contacts) { return setAccountContactsJson(contacts == null ? null : json(contacts)); }
+    public AccountPolicy setAccountContacts(AccountContact[] contacts) { return setAccountContactsJson(contacts == null ? null : json(contacts, DB_JSON_MAPPER)); }
 
     public AccountPolicy setContact(AccountContact c) { return setContact(c, null, null); }
 

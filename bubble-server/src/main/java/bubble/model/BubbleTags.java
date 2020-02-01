@@ -16,6 +16,7 @@ import javax.validation.constraints.Size;
 
 import java.io.Serializable;
 
+import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
@@ -28,7 +29,7 @@ public class BubbleTags implements Serializable {
     @JsonIgnore @Getter @Setter private String tagsJson;
 
     @Transient public NameAndValue[] getTags() { return tagsJson == null ? null : json(tagsJson, NameAndValue[].class); }
-    public BubbleTags setTags(NameAndValue[] tags) { return setTagsJson(tags == null ? null : json(tags)); }
+    public BubbleTags setTags(NameAndValue[] tags) { return setTagsJson(tags == null ? null : json(tags, DB_JSON_MAPPER)); }
 
     public String getTag (String name) {
         final NameAndValue[] tags = getTags();

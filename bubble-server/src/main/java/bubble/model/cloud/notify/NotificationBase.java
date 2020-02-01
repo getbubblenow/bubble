@@ -19,6 +19,7 @@ import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 
+import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static bubble.ApiConstants.ERROR_MAXLEN;
 import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.errorString;
@@ -68,7 +69,7 @@ public class NotificationBase extends IdentifiableBase implements HasAccountNoNa
     public boolean hasPayload () { return payloadJson != null; }
 
     @Transient public JsonNode getPayload () { return json(payloadJson, JsonNode.class); }
-    public <T extends NotificationBase> T setPayload (JsonNode payload) { return (T) setPayloadJson(json(payload)); }
+    public <T extends NotificationBase> T setPayload (JsonNode payload) { return (T) setPayloadJson(json(payload, DB_JSON_MAPPER)); }
 
     @Transient @JsonIgnore public BubbleNode getNode() { return json(payloadJson, BubbleNode.class); }
 
@@ -81,7 +82,7 @@ public class NotificationBase extends IdentifiableBase implements HasAccountNoNa
     @JsonIgnore @Getter @Setter private String receiptJson;
 
     @Transient public NotificationReceipt getReceipt () { return receiptJson == null ? null : json(receiptJson, NotificationReceipt.class); }
-    public <T extends NotificationBase> T setReceipt (NotificationReceipt receipt) { return (T) setReceiptJson(receipt == null ? null : json(receiptJson)); }
+    public <T extends NotificationBase> T setReceipt (NotificationReceipt receipt) { return (T) setReceiptJson(receipt == null ? null : json(receiptJson, DB_JSON_MAPPER)); }
 
     @ECSearchable(filter=true) @ECField(index=100)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(ERROR_MAXLEN+ENC_PAD)+")")

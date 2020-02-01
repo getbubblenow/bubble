@@ -44,6 +44,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static bubble.ApiConstants.EP_CLOUDS;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -144,14 +145,14 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     public boolean hasDriverConfig () { return !empty(driverConfigJson); }
 
     @Transient public JsonNode getDriverConfig () { return json(driverConfigJson, JsonNode.class); }
-    public CloudService setDriverConfig (JsonNode node) { return setDriverConfigJson(node == null ? null : json(node)); }
+    public CloudService setDriverConfig (JsonNode node) { return setDriverConfigJson(node == null ? null : json(node, DB_JSON_MAPPER)); }
 
     @Size(max=10000, message="err.credentialsJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String credentialsJson;
 
     @Transient public CloudCredentials getCredentials () { return credentialsJson == null ? null : json(credentialsJson, CloudCredentials.class); }
-    public CloudService setCredentials (CloudCredentials credentials) { return setCredentialsJson(credentials == null ? null : json(credentials)); }
+    public CloudService setCredentials (CloudCredentials credentials) { return setCredentialsJson(credentials == null ? null : json(credentials, DB_JSON_MAPPER)); }
     public boolean hasCredentials () {
         final CloudCredentials creds = getCredentials();
         return creds != null && !empty(creds.getParams());
