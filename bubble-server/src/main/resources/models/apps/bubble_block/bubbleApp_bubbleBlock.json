@@ -71,9 +71,9 @@
           "button": "createRule"
         },
         {
-          "name": "test_url",
+          "name": "testUrl",
           "params": [{"name": "url", "type": "http_url"}],
-          "button": "test_url"
+          "button": "testUrl"
         }
       ]
     }]
@@ -158,8 +158,8 @@
         {"name": "config.action.removeRule", "value": "Remove Rule"},
         {"name": "config.action.createRule", "value": "Add New Rule"},
         {"name": "config.button.createRule", "value": "Add"},
-        {"name": "config.action.test_url", "value": "Test URL"},
-        {"name": "config.button.test_url", "value": "Test"}
+        {"name": "config.action.testUrl", "value": "Test URL"},
+        {"name": "config.button.testUrl", "value": "Test"}
       ]
     }]
   }
