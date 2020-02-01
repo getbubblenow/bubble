@@ -5,7 +5,7 @@
   "template": true,
   "enabled": true,
   "dataConfig": {
-    "dataDriver": "bubble.app.bblock.BubbleBlockApp",
+    "dataDriver": "bubble.app.bblock.BubbleBlockAppDataDriver",
     "presentation": "app",
     "fields": [
       {"name": "ctime", "customFormat": true},
@@ -59,7 +59,7 @@
       ]
     }, {
       "name": "manage_entries",
-      "type": "list",
+      "scope": "item",
       "columns": ["block_rule"],
       "actions": [
         {"name": "remove_rule"},
