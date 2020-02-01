@@ -43,7 +43,7 @@
         {"name": "manage_list", "view": "manage_list"},
         {"name": "remove_list"},
         {
-          "name": "add_list", "scope": "app", "view": "manage_list",
+          "name": "create_list", "scope": "app", "view": "manage_list",
           "params": [{"name": "url", "type": "http_url"}],
           "button": "create_list"
         }
@@ -57,10 +57,10 @@
         {"name": "disable_list", "when": "item.enabled"},
         {"name": "remove_list"},
         {"name": "update_list"},
-        {"name": "manage_list_entries"}
+        {"name": "manage_list_rules"}
       ]
     }, {
-      "name": "manage_entries",
+      "name": "manage_rules",
       "scope": "item",
       "fields": ["rule"],
       "actions": [
@@ -135,7 +135,7 @@
 
         {"name": "config.view.manage_lists", "value": "Manage Filter Lists"},
         {"name": "config.view.manage_list", "value": "Manage Filter List"},
-        {"name": "config.view.manage_entries", "value": "Manage Filter Rules"},
+        {"name": "config.view.manage_rules", "value": "Manage Filter Rules"},
 
         {"name": "config.field.name", "value": "Name"},
         {"name": "config.field.description", "value": "Description"},
@@ -154,7 +154,7 @@
         {"name": "config.action.create_list", "value": "Add New List"},
         {"name": "config.button.create_list", "value": "Add"},
         {"name": "config.action.update_list", "value": "Update List"},
-        {"name": "config.action.manage_list_entries", "value": "Manage Entries"},
+        {"name": "config.action.manage_list_rules", "value": "Manage Rules"},
         {"name": "config.action.remove_rule", "value": "Remove Rule"},
         {"name": "config.action.create_rule", "value": "Add New Rule"},
         {"name": "config.button.create_rule", "value": "Add"},

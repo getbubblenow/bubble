@@ -6,16 +6,28 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.cobbzilla.util.string.StringUtil;
 
 import static org.cobbzilla.util.collection.ArrayUtil.arrayToString;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
+import static org.cobbzilla.util.string.StringUtil.EMPTY_ARRAY;
+import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class BubbleBlockList {
 
+    public BubbleBlockList(String url) {
+        setId(sha256_hex(url));
+        setName(url);
+        setUrl(url);
+        setDescription("");
+        setTags(EMPTY_ARRAY);
+    }
+
     @Getter @Setter private String id;
     public boolean hasId(String id) { return this.id != null && this.id.equals(id); }
+
+    public String id() { return getId()+"/"+getName()+"/"+getUrl(); }
 
     @Getter @Setter private String name;
     @Getter @Setter private String description;
@@ -23,7 +35,7 @@ public class BubbleBlockList {
 
     public String getTagString() { return arrayToString(tags, ", ", "", false); }
     public BubbleBlockList setTagString (String val) {
-        return setTags(StringUtil.splitAndTrim(val, ",").toArray(StringUtil.EMPTY_ARRAY));
+        return setTags(splitAndTrim(val, ",").toArray(EMPTY_ARRAY));
     }
 
     @Getter @Setter private String url;

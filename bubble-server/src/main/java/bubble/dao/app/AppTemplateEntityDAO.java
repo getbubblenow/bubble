@@ -17,6 +17,10 @@ public class AppTemplateEntityDAO<E extends AppTemplateEntity> extends AccountOw
         return findByFields("account", account, "app", app);
     }
 
+    public List<E> findByAccountAndAppAndEnabled(String account, String app) {
+        return findByFields("account", account, "app", app, "enabled", true);
+    }
+
     public E findByAccountAndAppAndId(String account, String app, String id) {
         final E found = findByUniqueFields("account", account, "app", app, UUID, id);
         if (found != null) return found;

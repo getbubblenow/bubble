@@ -12,6 +12,13 @@ public interface AppConfigDriver {
 
     Object getView(Account account, BubbleApp app, String view, Map<String, String> params);
 
+    Object takeAppAction(Account account,
+                         BubbleApp app,
+                         String view,
+                         String action,
+                         Map<String, String> params,
+                         JsonNode data);
+
     Object takeItemAction(Account account,
                           BubbleApp app,
                           String view,
@@ -19,5 +26,4 @@ public interface AppConfigDriver {
                           String id,
                           Map<String, String> params,
                           JsonNode data);
-
 }

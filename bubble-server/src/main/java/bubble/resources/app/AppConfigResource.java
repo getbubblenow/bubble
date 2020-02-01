@@ -64,6 +64,27 @@ public class AppConfigResource {
         return ok(configDriver.getView(account, app, view, queryParams));
     }
 
+    @PUT @Path("/{view}"+EP_ACTIONS+"/{action}")
+    public Response takeConfigAppAction(@Context Request req,
+                                         @Context ContainerRequest ctx,
+                                         @PathParam("view") String view,
+                                         @PathParam("action") String action,
+                                         JsonNode data) {
+
+        final Account caller = userPrincipal(ctx);
+        if (!caller.admin() && !caller.getUuid().equals(account.getUuid())) return forbidden();
+
+        final AppConfigView configView = app.getDataConfig().getConfigView(view);
+        if (configView == null) return notFound(view);
+
+        if (empty(action)) return invalid("err.action.required");
+
+        final Map<String, String> queryParams = queryParams(req.getQueryString());
+
+        final AppConfigDriver configDriver = getConfigDriver();
+        return ok(configDriver.takeAppAction(account, app, view, action, queryParams, data));
+    }
+
     @POST @Path("/{view}"+EP_ACTIONS+"/{action}")
     public Response takeConfigItemAction(@Context Request req,
                                          @Context ContainerRequest ctx,
