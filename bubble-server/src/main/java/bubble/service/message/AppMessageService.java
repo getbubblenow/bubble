@@ -86,17 +86,17 @@ public class AppMessageService {
                     }
                 }
 
+                final String cfgKeyPrefix = msgPrefix + MSG_CONFIG;
+                if (cfg.hasConfigFields()) {
+                    for (AppDataField field : cfg.getConfigFields()) {
+                        ensureFieldNameAndDescription(props, cfgKeyPrefix, field.getName());
+                    }
+                }
+
                 if (cfg.hasConfigViews()) {
-                    final String cfgKeyPrefix = msgPrefix + MSG_CONFIG;
                     for (AppConfigView configView : cfg.getConfigViews()) {
                         final String viewKey = cfgKeyPrefix + MSG_SUFFIX_VIEW + configView.getName();
                         if (!props.containsKey(viewKey)) props.setProperty(viewKey, configView.getName());
-
-                        if (configView.hasColumns()) {
-                            for (String column : configView.getColumns()) {
-                                ensureFieldNameAndDescription(props, cfgKeyPrefix, column);
-                            }
-                        }
 
                         if (configView.hasActions()) {
                             for (AppConfigAction action : configView.getActions()) {
@@ -113,12 +113,6 @@ public class AppMessageService {
                                         ensureFieldNameAndDescription(props, cfgKeyPrefix, param.getName());
                                     }
                                 }
-                            }
-                        }
-
-                        if (configView.hasFields()) {
-                            for (AppDataField field : configView.getFields()) {
-                                ensureFieldNameAndDescription(props, cfgKeyPrefix, field.getName());
                             }
                         }
                     }

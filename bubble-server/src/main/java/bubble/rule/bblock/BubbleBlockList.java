@@ -1,10 +1,15 @@
 package bubble.rule.bblock;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.Accessors;
+import org.cobbzilla.util.string.StringUtil;
 
+import static org.cobbzilla.util.collection.ArrayUtil.arrayToString;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
+@NoArgsConstructor @Accessors(chain=true)
 public class BubbleBlockList {
 
     @Getter @Setter private String id;
@@ -13,6 +18,11 @@ public class BubbleBlockList {
     @Getter @Setter private String name;
     @Getter @Setter private String description;
     @Getter @Setter private String[] tags;
+
+    public String getTagString() { return arrayToString(tags, ", ", "", false); }
+    public BubbleBlockList setTagString (String val) {
+        return setTags(StringUtil.splitAndTrim(val, ",").toArray(StringUtil.EMPTY_ARRAY));
+    }
 
     @Getter @Setter private String url;
     public boolean hasUrl () { return !empty(url); }

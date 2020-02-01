@@ -45,6 +45,9 @@ public class AppDataConfig {
     @Getter @Setter private String configDriver;
     public boolean hasConfigDriver () { return configDriver != null; }
 
+    @Getter @Setter private AppDataField[] configFields;
+    public boolean hasConfigFields () { return !empty(configFields); }
+
     @Getter @Setter private AppConfigView[] configViews;
     public boolean hasConfigViews () { return !empty(configViews); }
 

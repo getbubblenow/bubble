@@ -13,10 +13,7 @@ public class AppConfigView {
     @Getter @Setter private Boolean root = false;
     public boolean root() { return root != null && root; }
 
-    @Getter @Setter private String[] columns;
-    public boolean hasColumns () { return !empty(columns); }
-
-    @Getter @Setter private AppDataField[] fields;
+    @Getter @Setter private String[] fields;
     public boolean hasFields () { return !empty(fields); }
 
     @Getter @Setter private AppConfigAction[] actions;

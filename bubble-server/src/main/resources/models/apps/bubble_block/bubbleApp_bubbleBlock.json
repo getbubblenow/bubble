@@ -24,11 +24,19 @@
       {"name": "last_30_days"}
     ],
     "configDriver": "bubble.app.bblock.BubbleBlockAppConfigDriver",
+    "configFields": [
+        {"name": "name"},
+        {"name": "description", "control": "textarea"},
+        {"name": "url", "type": "http_url"},
+        {"name": "tags"},
+        {"name": "enabled", "type": "flag"},
+        {"name": "rule"}
+    ],
     "configViews": [{
       "name": "manage_lists",
       "scope": "app",
       "root": "true",
-      "columns": ["name", "description", "url", "enabled", "tags"],
+      "fields": ["name", "description", "url", "enabled", "tagString"],
       "actions": [
         {"name": "enable_list", "when": "!item.enabled"},
         {"name": "disable_list", "when": "item.enabled"},
@@ -43,13 +51,7 @@
     }, {
       "name": "manage_list",
       "scope": "item",
-      "fields": [
-        {"name": "name"},
-        {"name": "description", "control": "textarea"},
-        {"name": "url", "type": "http_url"},
-        {"name": "tags"},
-        {"name": "enabled", "type": "flag"}
-      ],
+      "fields": ["name", "description", "url", "tags", "enabled"],
       "actions": [
         {"name": "enable_list", "when": "!item.enabled"},
         {"name": "disable_list", "when": "item.enabled"},
@@ -60,7 +62,7 @@
     }, {
       "name": "manage_entries",
       "scope": "item",
-      "columns": ["rule"],
+      "fields": ["rule"],
       "actions": [
         {"name": "remove_rule"},
         {
@@ -139,6 +141,7 @@
         {"name": "config.field.description", "value": "Description"},
         {"name": "config.field.url", "value": "URL"},
         {"name": "config.field.url.description", "value": "URL of the Filter List"},
+        {"name": "config.field.tagString", "value": "Tags"},
         {"name": "config.field.tags", "value": "Tags"},
         {"name": "config.field.tags.description", "value": "A comma-separated list of tags: "},
         {"name": "config.field.enabled", "value": "Enabled"},
