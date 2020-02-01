@@ -1,7 +1,7 @@
 package bubble.resources.app;
 
 import bubble.model.account.Account;
-import bubble.model.app.AppDataDriver;
+import bubble.model.app.config.AppDataDriver;
 import bubble.model.app.config.AppDataView;
 import bubble.model.app.BubbleApp;
 import bubble.model.device.Device;
@@ -56,7 +56,7 @@ public class AppsResource extends AppsResourceBase {
         final String remoteHost = getRemoteHost(req);
         final Device device = deviceIdService.findDeviceByIp(remoteHost);
 
-        final AppDataDriver driver = app.getDataConfig().getDriver(configuration);
+        final AppDataDriver driver = app.getDataConfig().getDataDriver(configuration);
         return ok(driver.query(caller, device, app, null, view, query));
     }
 

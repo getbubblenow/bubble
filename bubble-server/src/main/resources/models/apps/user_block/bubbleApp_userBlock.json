@@ -4,7 +4,7 @@
   "url": "https://bubblev.com/apps/UserBlocker",
   "template": true,
   "dataConfig": {
-    "driverClass": "bubble.app.social.block.UserBlockerApp",
+    "dataDriver": "bubble.app.social.block.UserBlockerAppDataDriver",
     "presentation": "site",
     "fields": [
       {"name": "key"}, {"name": "enabled"}, {"name": "ctime"}

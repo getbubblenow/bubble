@@ -1,7 +1,8 @@
-package bubble.model.app;
+package bubble.model.app.config;
 
 import bubble.model.account.Account;
-import bubble.model.app.config.AppDataView;
+import bubble.model.app.AppSite;
+import bubble.model.app.BubbleApp;
 import bubble.model.device.Device;
 import org.cobbzilla.wizard.dao.SearchResults;
 import org.cobbzilla.wizard.model.search.SearchQuery;

@@ -1,6 +1,5 @@
 package bubble.rule.bblock;
 
-import bubble.abp.BlockListType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +10,7 @@ public class BubbleBlockList {
     @Getter @Setter private String id;
     @Getter @Setter private String name;
     @Getter @Setter private String description;
-    @Getter @Setter private BlockListType[] tags;
+    @Getter @Setter private String[] tags;
 
     @Getter @Setter private String url;
     public boolean hasUrl () { return !empty(url); }

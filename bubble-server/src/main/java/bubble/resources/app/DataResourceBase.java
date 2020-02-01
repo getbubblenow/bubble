@@ -91,7 +91,7 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
             case "disable": return disable(ctx, id);
             case "delete": return delete(ctx, id);
             default:
-                app.getDataConfig().getDriver(configuration).takeAction(id, action);
+                app.getDataConfig().getDataDriver(configuration).takeAction(id, action);
                 return ok();
         }
     }

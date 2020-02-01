@@ -3,10 +3,9 @@ package bubble.service.message;
 import bubble.dao.app.AppMessageDAO;
 import bubble.dao.app.BubbleAppDAO;
 import bubble.model.account.Account;
-import bubble.model.app.*;
-import bubble.model.app.config.AppDataAction;
-import bubble.model.app.config.AppDataConfig;
-import bubble.model.app.config.AppDataView;
+import bubble.model.app.AppMessage;
+import bubble.model.app.BubbleApp;
+import bubble.model.app.config.*;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.wizard.model.entityconfig.EntityFieldConfig;
@@ -15,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.Properties;
+
+import static org.cobbzilla.util.string.StringUtil.EMPTY;
 
 @Service @Slf4j
 public class AppMessageService {
@@ -26,6 +27,8 @@ public class AppMessageService {
     public static final String MSG_SUFFIX_PARAM = "param.";
     public static final String MSG_SUFFIX_VIEW = "view.";
     public static final String MSG_SUFFIX_ACTION = "action.";
+    public static final String MSG_SUFFIX_BUTTON = "button.";
+    public static final String MSG_CONFIG = "config.";
 
     @Autowired private BubbleAppDAO appDAO;
     @Autowired private AppMessageDAO appMessageDAO;
@@ -55,8 +58,7 @@ public class AppMessageService {
                 // Check for field messages
                 if (cfg.hasFields()) {
                     for (EntityFieldConfig field : cfg.getFields()) {
-                        final String fieldKey = msgPrefix + MSG_SUFFIX_FIELD + field.getName();
-                        if (!props.containsKey(fieldKey)) props.setProperty(fieldKey, field.getName());
+                        ensureFieldNameAndDescription(props,msgPrefix + MSG_SUFFIX_FIELD, field.getName());
                     }
                 }
 
@@ -83,9 +85,55 @@ public class AppMessageService {
                         if (!props.containsKey(actionKey)) props.setProperty(actionKey, action.getName());
                     }
                 }
+
+                if (cfg.hasConfigViews()) {
+                    final String cfgKeyPrefix = msgPrefix + MSG_CONFIG;
+                    for (AppConfigView configView : cfg.getConfigViews()) {
+                        final String viewKey = cfgKeyPrefix + MSG_SUFFIX_VIEW + configView.getName();
+                        if (!props.containsKey(viewKey)) props.setProperty(viewKey, configView.getName());
+
+                        if (configView.hasColumns()) {
+                            for (String column : configView.getColumns()) {
+                                ensureFieldNameAndDescription(props, cfgKeyPrefix, column);
+                            }
+                        }
+
+                        if (configView.hasActions()) {
+                            for (AppConfigAction action : configView.getActions()) {
+                                final String actionKey = cfgKeyPrefix + MSG_SUFFIX_ACTION + action;
+                                if (!props.containsKey(actionKey)) props.setProperty(actionKey, action.getName());
+
+                                if (action.hasButton()) {
+                                    final String buttonKey = cfgKeyPrefix + MSG_SUFFIX_BUTTON + action;
+                                    if (!props.containsKey(buttonKey)) props.setProperty(buttonKey, action.getButton());
+                                }
+
+                                if (action.hasParams()) {
+                                    for (AppDataField param : action.getParams()) {
+                                        ensureFieldNameAndDescription(props, cfgKeyPrefix, param.getName());
+                                    }
+                                }
+                            }
+                        }
+
+                        if (configView.hasFields()) {
+                            for (AppDataField field : configView.getFields()) {
+                                ensureFieldNameAndDescription(props, cfgKeyPrefix, field.getName());
+                            }
+                        }
+                    }
+                }
             }
         }
         return props;
+    }
+
+    public void ensureFieldNameAndDescription(Properties props, String prefix, String name) {
+        final String fieldKey = prefix + MSG_SUFFIX_FIELD + name;
+        if (!props.containsKey(fieldKey)) props.setProperty(fieldKey, name);
+
+        final String descKey = prefix + MSG_SUFFIX_FIELD + name + "." + MSG_SUFFIX_DESCRIPTION;
+        if (!props.containsKey(descKey)) props.setProperty(descKey, EMPTY);
     }
 
 }

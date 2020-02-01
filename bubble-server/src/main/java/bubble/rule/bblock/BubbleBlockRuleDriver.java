@@ -11,7 +11,7 @@ import bubble.model.device.Device;
 import bubble.resources.stream.FilterMatchResponse;
 import bubble.resources.stream.FilterMatchersRequest;
 import bubble.rule.FilterMatchDecision;
-import bubble.rule.analytics.TrafficAnalytics;
+import bubble.rule.analytics.TrafficAnalyticsRuleDriver;
 import bubble.service.stream.AppRuleHarness;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,7 @@ import static org.cobbzilla.util.string.StringUtil.UTF8cs;
 import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 
 @Slf4j
-public class BubbleBlock extends TrafficAnalytics {
+public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
 
     private static final String META_REQUEST = "__bubble_request";
 
@@ -171,7 +171,7 @@ public class BubbleBlock extends TrafficAnalytics {
         return new ReaderInputStream(reader, UTF8cs);
     }
 
-    public static final Class<BubbleBlock> BB = BubbleBlock.class;
+    public static final Class<BubbleBlockRuleDriver> BB = BubbleBlockRuleDriver.class;
     public static final String BUBBLE_JS_TEMPLATE = stream2string(getPackagePath(BB)+"/"+ BB.getSimpleName()+".js.hbs");
     private static final String CTX_BUBBLE_SELECTORS = "BUBBLE_SELECTORS_JSON";
     private static final String CTX_BUBBLE_BLACKLIST = "BUBBLE_BLACKLIST_JSON";

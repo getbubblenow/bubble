@@ -2,9 +2,10 @@ package bubble.app.analytics;
 
 import bubble.model.account.Account;
 import bubble.model.app.*;
+import bubble.model.app.config.AppDataDriverBase;
 import bubble.model.app.config.AppDataView;
 import bubble.model.device.Device;
-import bubble.rule.analytics.TrafficAnalytics;
+import bubble.rule.analytics.TrafficAnalyticsRuleDriver;
 import bubble.rule.analytics.TrafficRecord;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +21,8 @@ import org.joda.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static bubble.rule.analytics.TrafficAnalytics.FQDN_SEP;
-import static bubble.rule.analytics.TrafficAnalytics.RECENT_TRAFFIC_PREFIX;
+import static bubble.rule.analytics.TrafficAnalyticsRuleDriver.FQDN_SEP;
+import static bubble.rule.analytics.TrafficAnalyticsRuleDriver.RECENT_TRAFFIC_PREFIX;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
@@ -36,7 +37,7 @@ import static org.cobbzilla.wizard.model.search.SortOrder.ASC;
 import static org.cobbzilla.wizard.model.search.SortOrder.DESC;
 
 @Slf4j
-public class TrafficAnalyticsApp extends AppDataDriverBase {
+public class TrafficAnalyticsAppDataDriver extends AppDataDriverBase {
 
     public static final String VIEW_recent = "recent";
     public static final String VIEW_last_24_hours = "last_24_hours";
@@ -109,19 +110,19 @@ public class TrafficAnalyticsApp extends AppDataDriverBase {
         switch (view.getName()) {
             default:
             case VIEW_last_24_hours:
-                prefix = TrafficAnalytics.PREFIX_HOURLY;
+                prefix = TrafficAnalyticsRuleDriver.PREFIX_HOURLY;
                 limit = 24;
                 format = DATE_FORMAT_YYYY_MM_DD_HH;
                 increment = HOURS;
                 break;
             case VIEW_last_7_days:
-                prefix = TrafficAnalytics.PREFIX_DAILY;
+                prefix = TrafficAnalyticsRuleDriver.PREFIX_DAILY;
                 limit = 7;
                 format = DATE_FORMAT_YYYY_MM_DD;
                 increment = DAYS;
                 break;
             case VIEW_last_30_days:
-                prefix = TrafficAnalytics.PREFIX_DAILY;
+                prefix = TrafficAnalyticsRuleDriver.PREFIX_DAILY;
                 limit = 30;
                 format = DATE_FORMAT_YYYY_MM_DD;
                 increment = DAYS;

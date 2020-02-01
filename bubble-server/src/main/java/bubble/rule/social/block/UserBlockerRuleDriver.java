@@ -21,7 +21,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.UTF8cs;
 
 @Slf4j
-public class UserBlocker extends AbstractAppRuleDriver {
+public class UserBlockerRuleDriver extends AbstractAppRuleDriver {
 
     // This gets called after autowiring, so `configuration` object will be non-null by now
     @Getter(lazy=true) private final JsonNode fullConfig = initFullConfig();

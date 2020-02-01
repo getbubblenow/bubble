@@ -2,7 +2,7 @@ package bubble.resources.app;
 
 import bubble.dao.app.AppSiteDAO;
 import bubble.model.account.Account;
-import bubble.model.app.AppDataDriver;
+import bubble.model.app.config.AppDataDriver;
 import bubble.model.app.config.AppDataView;
 import bubble.model.app.AppSite;
 import bubble.model.app.BubbleApp;
@@ -92,7 +92,7 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
         final String remoteHost = getRemoteHost(req);
         final Device device = deviceIdService.findDeviceByIp(remoteHost);
 
-        final AppDataDriver driver = app.getDataConfig().getDriver(configuration);
+        final AppDataDriver driver = app.getDataConfig().getDataDriver(configuration);
         return ok(driver.query(caller, device, app, site, view, query));
     }
 

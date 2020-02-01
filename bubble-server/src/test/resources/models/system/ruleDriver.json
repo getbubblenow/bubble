@@ -1,7 +1,7 @@
 [
   {
     "name": "UserBlocker",
-    "driverClass": "bubble.rule.social.block.UserBlocker",
+    "driverClass": "bubble.rule.social.block.UserBlockerRuleDriver",
     "template": true,
     "userConfig": {
       "fields": []
@@ -9,7 +9,7 @@
   },
   {
     "name": "TrafficAnalytics",
-    "driverClass": "bubble.rule.analytics.TrafficAnalytics",
+    "driverClass": "bubble.rule.analytics.TrafficAnalyticsRuleDriver",
     "template": true,
     "userConfig": {
       "fields": []

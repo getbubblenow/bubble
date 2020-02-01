@@ -5,7 +5,7 @@ import bubble.dao.app.AppRuleDAO;
 import bubble.dao.app.BubbleAppDAO;
 import bubble.model.account.Account;
 import bubble.model.app.config.AppDataConfig;
-import bubble.model.app.AppDataDriver;
+import bubble.model.app.config.AppDataDriver;
 import bubble.model.app.config.AppDataPresentation;
 import bubble.model.app.BubbleApp;
 import bubble.resources.account.AccountOwnedTemplateResource;
@@ -36,11 +36,11 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
         if (!request.hasDataConfig()) throw invalidEx("err.dataConfig.required");
         final AppDataConfig dataConfig = request.getDataConfig();
         if (dataConfig.getPresentation() != AppDataPresentation.none) {
-            if (!dataConfig.hasDriverClass()) throw invalidEx("err.dataConfig.driver.required");
+            if (!dataConfig.hasDataDriver()) throw invalidEx("err.dataConfig.driver.required");
             try {
-                AppDataDriver dataDriver = dataConfig.getDriver(configuration);
+                AppDataDriver dataDriver = dataConfig.getDataDriver(configuration);
             } catch (Exception e) {
-                throw invalidEx("err.dataConfig.driver.invalid", "Error initializing data driver: "+shortError(e), dataConfig.getDriverClass());
+                throw invalidEx("err.dataConfig.driver.invalid", "Error initializing data driver: "+shortError(e), dataConfig.getDataDriver());
             }
             if (!dataConfig.hasViews()) throw invalidEx("err.dataConfig.views.required");
             if (!dataConfig.hasFields()) throw invalidEx("err.dataConfig.fields.required");

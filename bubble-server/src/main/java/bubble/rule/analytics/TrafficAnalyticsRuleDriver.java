@@ -21,13 +21,13 @@ import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD;
 import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
-public class TrafficAnalytics extends AbstractAppRuleDriver {
+public class TrafficAnalyticsRuleDriver extends AbstractAppRuleDriver {
 
     private static final long ANALYTICS_EXPIRATION = DAYS.toMillis(32);
     private static final long RECENT_TRAFFIC_EXPIRATION = HOURS.toSeconds(1);
     public static final String FQDN_SEP = "@";
 
-    public static final String RECENT_TRAFFIC_PREFIX = TrafficAnalytics.class.getSimpleName() + ".recent";
+    public static final String RECENT_TRAFFIC_PREFIX = TrafficAnalyticsRuleDriver.class.getSimpleName() + ".recent";
     public static final String PREFIX_HOURLY = "hourly_";
     public static final String PREFIX_DAILY = "daily_";
 

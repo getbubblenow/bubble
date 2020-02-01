@@ -10,7 +10,7 @@
     "AppRule": [{
       "name": "hn_user_blocker",
       "template": true,
-      "driver": "JsUserBlocker",
+      "driver": "JsUserBlockerRuleDriver",
       "config": {
         "siteJsTemplate": "bubble/rule/social/block/site/HackerNews.js.hbs"
       }

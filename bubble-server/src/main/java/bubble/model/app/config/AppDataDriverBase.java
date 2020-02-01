@@ -1,8 +1,9 @@
-package bubble.model.app;
+package bubble.model.app.config;
 
 import bubble.dao.app.AppDataDAO;
 import bubble.model.account.Account;
-import bubble.model.app.config.AppDataView;
+import bubble.model.app.AppSite;
+import bubble.model.app.BubbleApp;
 import bubble.model.device.Device;
 import bubble.service.SearchService;
 import org.cobbzilla.wizard.cache.redis.RedisService;

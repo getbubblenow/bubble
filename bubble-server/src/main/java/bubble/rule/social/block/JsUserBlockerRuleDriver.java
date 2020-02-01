@@ -21,9 +21,9 @@ import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.util.string.StringUtil.UTF8cs;
 import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 
-public class JsUserBlocker extends AbstractAppRuleDriver {
+public class JsUserBlockerRuleDriver extends AbstractAppRuleDriver {
 
-    public static final Class<JsUserBlocker> JSB = JsUserBlocker.class;
+    public static final Class<JsUserBlockerRuleDriver> JSB = JsUserBlockerRuleDriver.class;
     public static final String BUBBLE_JS_TEMPLATE = stream2string(getPackagePath(JSB)+"/"+ JSB.getSimpleName()+".js.hbs");
 
     public static final String CTX_APPLY_BLOCKS_JS = "APPLY_BLOCKS_JS";

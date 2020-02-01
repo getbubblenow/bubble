@@ -5,7 +5,7 @@
   "template": true,
   "enabled": true,
   "dataConfig": {
-    "driverClass": "bubble.app.analytics.TrafficAnalyticsApp",
+    "dataDriver": "bubble.app.analytics.TrafficAnalyticsAppDataDriver",
     "presentation": "app",
     "fields": [
       {"name": "ctime", "customFormat": true, "when": "view !== \"recent\""},
@@ -41,7 +41,7 @@
     "AppRule": [{
       "name": "traffic_analytics",
       "template": true,
-      "driver": "TrafficAnalytics",
+      "driver": "TrafficAnalyticsRuleDriver",
       "config": {}
     }],
     "AppMessage": [{

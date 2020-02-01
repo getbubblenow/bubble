@@ -1,6 +1,5 @@
 package bubble.model.app.config;
 
-import bubble.model.app.*;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,8 +15,8 @@ public class AppDataConfig {
 
     @Getter @Setter private AppDataPresentation presentation = none;
 
-    @Getter @Setter private String driverClass;
-    public boolean hasDriverClass () { return driverClass != null; }
+    @Getter @Setter private String dataDriver;
+    public boolean hasDataDriver () { return dataDriver != null; }
 
     @Getter @Setter private AppDataField[] fields;
     public boolean hasFields () { return !empty(fields); }
@@ -43,6 +42,9 @@ public class AppDataConfig {
         return null;
     }
 
+    @Getter @Setter private String configDriver;
+    public boolean hasConfigDriver () { return configDriver != null; }
+
     @Getter @Setter private AppConfigView[] configViews;
     public boolean hasConfigViews () { return !empty(configViews); }
 
@@ -52,9 +54,13 @@ public class AppDataConfig {
         return null;
     }
 
-    private final Map<String, AppDataDriver> DRIVER_CACHE = new ConcurrentHashMap<>();
-    public AppDataDriver getDriver(BubbleConfiguration configuration) {
-        return DRIVER_CACHE.computeIfAbsent(getDriverClass(), c -> configuration.autowire(instantiate(c)));
+    private final Map<String, AppDataDriver> DATA_DRIVER_CACHE = new ConcurrentHashMap<>();
+    public AppDataDriver getDataDriver(BubbleConfiguration configuration) {
+        return DATA_DRIVER_CACHE.computeIfAbsent(getDataDriver(), c -> configuration.autowire(instantiate(c)));
     }
 
+    private final Map<String, AppConfigDriver> CONFIG_DRIVER_CACHE = new ConcurrentHashMap<>();
+    public AppConfigDriver getConfigDriver(BubbleConfiguration configuration) {
+        return CONFIG_DRIVER_CACHE.computeIfAbsent(getConfigDriver(), c -> configuration.autowire(instantiate(c)));
+    }
 }

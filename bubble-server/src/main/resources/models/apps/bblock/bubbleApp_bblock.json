@@ -5,7 +5,7 @@
   "template": true,
   "enabled": true,
   "dataConfig": {
-    "driverClass": "bubble.app.bblock.BubbleBlockApp",
+    "dataDriver": "bubble.app.bblock.BubbleBlockApp",
     "presentation": "app",
     "fields": [
       {"name": "ctime", "customFormat": true},
@@ -23,20 +23,26 @@
       {"name": "last_7_days"},
       {"name": "last_30_days"}
     ],
+    "configDriver": "bubble.app.bblock.BubbleBlockAppConfig",
     "configViews": [{
-      "name": "manage_blocklists",
-      "type": "list",
+      "name": "manage_lists",
+      "scope": "app",
+      "root": "true",
       "columns": ["name", "description", "url", "enabled", "tags"],
       "actions": [
-        {"name": "enable_blocklist", "when": "!item.enabled"},
-        {"name": "disable_blocklist", "when": "item.enabled"},
-        {"name": "manage_blocklist", "view": "manage_blocklist"},
-        {"name": "remove_blocklist"},
-        {"name": "add_blocklist", "type": "create", "view": "manage_blocklist"}
+        {"name": "enable_list", "when": "!item.enabled"},
+        {"name": "disable_list", "when": "item.enabled"},
+        {"name": "manage_list", "view": "manage_list"},
+        {"name": "remove_list"},
+        {
+          "name": "add_list", "scope": "app", "view": "manage_list",
+          "params": [{"name": "url", "type": "http_url"}],
+          "button": "create_list"
+        }
       ]
     }, {
-      "name": "manage_blocklist",
-      "type": "item",
+      "name": "manage_list",
+      "scope": "item",
       "fields": [
         {"name": "name"},
         {"name": "description", "control": "textarea"},
@@ -45,12 +51,11 @@
         {"name": "enabled", "type": "flag"}
       ],
       "actions": [
-        {"name": "enable_blocklist", "when": "!item.enabled"},
-        {"name": "disable_blocklist", "when": "item.enabled"},
-        {"name": "remove_blocklist", "when": "item.id !== null"},
-        {"name": "create_blocklist", "when": "item.id === null"},
-        {"name": "update_blocklist", "when": "item.id !== null"},
-        {"name": "manage_blocklist_entries", "when": "item.id !== null"}
+        {"name": "enable_list", "when": "!item.enabled"},
+        {"name": "disable_list", "when": "item.enabled"},
+        {"name": "remove_list"},
+        {"name": "update_list"},
+        {"name": "manage_list_entries"}
       ]
     }, {
       "name": "manage_entries",
@@ -58,13 +63,17 @@
       "columns": ["block_rule"],
       "actions": [
         {"name": "remove_rule"},
-        {"name": "add_rule", "type": "create", "view": "add_entry"}
+        {
+          "name": "create_rule",
+          "params": [{"name": "url", "type": "http_url"}],
+          "button": "create_rule"
+        },
+        {
+          "name": "test_url",
+          "params": [{"name": "url", "type": "http_url"}],
+          "button": "test_url"
+        }
       ]
-    }, {
-      "name": "add_entry",
-      "type": "item",
-      "fields": [ {"name": "block_rule"} ],
-      "actions": ["create_rule"]
     }]
   },
   "children": {
@@ -77,7 +86,7 @@
     "AppRule": [{
       "name": "bubble_block",
       "template": true,
-      "driver": "BubbleBlock",
+      "driver": "BubbleBlockRuleDriver",
       "priority": -1000,
       "config": {
         "blockLists": [
@@ -109,7 +118,7 @@
       "locale": "en_US",
       "messages": [
         {"name": "name", "value": "BubbleBlock"},
-        {"name": "description", "value": "Adware and Malware Blocker"},
+        {"name": "description", "value": "Network Filter: Blocks adware, malware, phishing/scam sites, and much more"},
         {"name": "field.ctime", "value": "When"},
         {"name": "field.fqdn", "value": "URL"},
         {"name": "field.device", "value": "Device"},
@@ -122,25 +131,32 @@
         {"name": "view.last_30_days", "value": "Last 30 Days"},
         {"name": "view.last_30_days.ctime.format", "value": "{{MM}} {{d}}, {{YYYY}}"},
 
+        {"name": "config.view.manage_lists", "value": "Manage Filter Lists"},
+        {"name": "config.view.manage_list", "value": "Manage Filter List"},
+        {"name": "config.view.manage_entries", "value": "Manage Filter Rules"},
+
         {"name": "config.field.name", "value": "Name"},
         {"name": "config.field.description", "value": "Description"},
         {"name": "config.field.url", "value": "URL"},
+        {"name": "config.field.url.description", "value": "URL of the Filter List"},
         {"name": "config.field.tags", "value": "Tags"},
         {"name": "config.field.tags.description", "value": "A comma-separated list of tags: "},
         {"name": "config.field.enabled", "value": "Enabled"},
         {"name": "config.field.block_rule", "value": "Rule"},
 
-        {"name": "config.action.enable_blocklist", "value": "Enable"},
-        {"name": "config.action.disable_blocklist", "value": "Disable"},
-        {"name": "config.action.manage_blocklist", "value": "Manage List"},
-        {"name": "config.action.remove_blocklist", "value": "Remove List"},
-        {"name": "config.action.add_blocklist", "value": "Add New List"},
-        {"name": "config.action.create_blocklist", "value": "Create List"},
-        {"name": "config.action.update_blocklist", "value": "Update List"},
-        {"name": "config.action.manage_blocklist_entries", "value": "Manage Entries"},
+        {"name": "config.action.enable_list", "value": "Enable"},
+        {"name": "config.action.disable_list", "value": "Disable"},
+        {"name": "config.action.manage_list", "value": "Manage List"},
+        {"name": "config.action.remove_list", "value": "Remove List"},
+        {"name": "config.action.create_list", "value": "Add New List"},
+        {"name": "config.button.create_list", "value": "Add"},
+        {"name": "config.action.update_list", "value": "Update List"},
+        {"name": "config.action.manage_list_entries", "value": "Manage Entries"},
         {"name": "config.action.remove_rule", "value": "Remove Rule"},
-        {"name": "config.action.add_rule", "value": "Add New Rule"},
-        {"name": "config.action.create_rule", "value": "Create Rule"},
+        {"name": "config.action.create_rule", "value": "Add New Rule"},
+        {"name": "config.button.create_rule", "value": "Add"},
+        {"name": "config.action.test_url", "value": "Test URL"},
+        {"name": "config.button.test_url", "value": "Test"},
 
         {"name": "config.item.easylist.name", "value": "EasyList"},
         {"name": "config.item.easylist.description", "value": "EasyList is the primary filter list that removes most adverts from international web pages, including unwanted frames, images, and objects. It is the most popular list used by many ad blockers and forms the basis of over a dozen combination and supplementary filter lists."},
