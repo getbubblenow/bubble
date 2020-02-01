@@ -23,7 +23,7 @@
       {"name": "last_7_days"},
       {"name": "last_30_days"}
     ],
-    "configDriver": "bubble.app.bblock.BubbleBlockAppConfig",
+    "configDriver": "bubble.app.bblock.BubbleBlockAppConfigDriver",
     "configViews": [{
       "name": "manage_lists",
       "scope": "app",
@@ -60,7 +60,7 @@
     }, {
       "name": "manage_entries",
       "scope": "item",
-      "columns": ["block_rule"],
+      "columns": ["rule"],
       "actions": [
         {"name": "remove_rule"},
         {
@@ -142,7 +142,7 @@
         {"name": "config.field.tags", "value": "Tags"},
         {"name": "config.field.tags.description", "value": "A comma-separated list of tags: "},
         {"name": "config.field.enabled", "value": "Enabled"},
-        {"name": "config.field.block_rule", "value": "Rule"},
+        {"name": "config.field.rule", "value": "Rule"},
 
         {"name": "config.action.enable_list", "value": "Enable"},
         {"name": "config.action.disable_list", "value": "Disable"},

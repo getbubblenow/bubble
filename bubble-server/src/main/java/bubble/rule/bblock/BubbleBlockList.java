@@ -8,6 +8,8 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 public class BubbleBlockList {
 
     @Getter @Setter private String id;
+    public boolean hasId(String id) { return this.id != null && this.id.equals(id); }
+
     @Getter @Setter private String name;
     @Getter @Setter private String description;
     @Getter @Setter private String[] tags;

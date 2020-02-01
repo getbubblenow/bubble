@@ -127,4 +127,12 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
         return configuration.subResource(AppDataResource.class, getAccount(account, ctx), app);
     }
 
+    @Path("/{id}"+EP_CONFIG)
+    public AppConfigResource getConfigResource(@Context ContainerRequest ctx,
+                                             @PathParam("id") String id) {
+        final BubbleApp app = find(ctx, id);
+        if (app == null || !app.hasDataConfig() || !app.getDataConfig().hasConfigViews()) throw notFoundEx(id);
+        return configuration.subResource(AppConfigResource.class, getAccount(account, ctx), app);
+    }
+
 }
