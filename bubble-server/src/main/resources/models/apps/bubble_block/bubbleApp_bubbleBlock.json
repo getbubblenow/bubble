@@ -28,6 +28,7 @@
         {"name": "name"},
         {"name": "description", "control": "textarea"},
         {"name": "url", "type": "http_url"},
+        {"name": "testUrl", "type": "http_url"},
         {"name": "tags"},
         {"name": "enabled", "type": "flag"},
         {"name": "rule"}
@@ -38,14 +39,19 @@
       "root": "true",
       "fields": ["name", "description", "url", "enabled", "tagString"],
       "actions": [
-        {"name": "enableList", "when": "!item.enabled"},
-        {"name": "disableList", "when": "item.enabled"},
-        {"name": "manageList", "view": "manageList"},
-        {"name": "removeList"},
+        {"name": "enableList", "when": "!item.enabled", "index": 10},
+        {"name": "disableList", "when": "item.enabled", "index": 20},
+        {"name": "manageList", "view": "manageList", "index": 30},
+        {"name": "removeList", "index": 40},
         {
-          "name": "createList", "scope": "app", "view": "manageList",
-          "params": [{"name": "url", "type": "http_url"}],
+          "name": "createList", "scope": "app", "view": "manageList", "index": 10,
+          "params": ["url"],
           "button": "createList"
+        },
+        {
+          "name": "testUrl", "scope": "app", "index": 20,
+          "params": ["testUrl"],
+          "button": "testUrl"
         }
       ]
     }, {
@@ -53,26 +59,26 @@
       "scope": "item",
       "fields": ["name", "description", "url", "tags", "enabled"],
       "actions": [
-        {"name": "enableList", "when": "!item.enabled"},
-        {"name": "disableList", "when": "item.enabled"},
-        {"name": "removeList"},
-        {"name": "updateList"},
-        {"name": "manageListRules"}
+        {"name": "updateList", "index": 10},
+        {"name": "enableList", "when": "!item.enabled", "index": 20},
+        {"name": "disableList", "when": "item.enabled", "index": 30},
+        {"name": "manageListRules", "view": "manageRules", "index": 40},
+        {"name": "removeList", "index": 50}
       ]
     }, {
       "name": "manageRules",
       "scope": "item",
       "fields": ["rule"],
       "actions": [
-        {"name": "removeRule"},
+        {"name": "removeRule", "index": 10},
         {
-          "name": "createRule",
-          "params": [{"name": "url", "type": "http_url"}],
+          "name": "createRule", "scope": "app", "index": 10,
+          "params": ["url"],
           "button": "createRule"
         },
         {
-          "name": "testUrl",
-          "params": [{"name": "url", "type": "http_url"}],
+          "name": "testUrl", "scope": "app", "index": 20,
+          "params": ["testUrl"],
           "button": "testUrl"
         }
       ]
@@ -143,9 +149,11 @@
         {"name": "config.field.url.description", "value": "URL of the Filter List"},
         {"name": "config.field.tagString", "value": "Tags"},
         {"name": "config.field.tags", "value": "Tags"},
-        {"name": "config.field.tags.description", "value": "A comma-separated list of tags: "},
+        {"name": "config.field.tags.description", "value": "A comma-separated list of tags"},
         {"name": "config.field.enabled", "value": "Enabled"},
         {"name": "config.field.rule", "value": "Rule"},
+        {"name": "config.field.testUrl", "value": "Test URL"},
+        {"name": "config.field.testUrl.description", "value": "URL to check against filters"},
 
         {"name": "config.action.enableList", "value": "Enable"},
         {"name": "config.action.disableList", "value": "Disable"},

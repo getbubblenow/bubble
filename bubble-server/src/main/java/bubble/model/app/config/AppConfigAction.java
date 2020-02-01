@@ -11,8 +11,9 @@ public class AppConfigAction {
     @Getter @Setter private AppConfigScope scope = AppConfigScope.item;
     @Getter @Setter private String when;
     @Getter @Setter private String view;
+    @Getter @Setter private Integer index = 0;
 
-    @Getter @Setter private AppDataField[] params;
+    @Getter @Setter private String[] params;
     public boolean hasParams () { return !empty(params); }
 
     @Getter @Setter private String button;

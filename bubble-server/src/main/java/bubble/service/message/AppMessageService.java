@@ -100,17 +100,20 @@ public class AppMessageService {
 
                         if (configView.hasActions()) {
                             for (AppConfigAction action : configView.getActions()) {
-                                final String actionKey = cfgKeyPrefix + MSG_SUFFIX_ACTION + action.getName();
-                                if (!props.containsKey(actionKey)) props.setProperty(actionKey, action.getName());
+                                final String actionName = action.getName();
+                                final String actionKey = cfgKeyPrefix + MSG_SUFFIX_ACTION + actionName;
+                                if (!props.containsKey(actionKey)) props.setProperty(actionKey, actionName);
 
+                                final String buttonKey = cfgKeyPrefix + MSG_SUFFIX_BUTTON + actionName;
                                 if (action.hasButton()) {
-                                    final String buttonKey = cfgKeyPrefix + MSG_SUFFIX_BUTTON + action.getName();
                                     if (!props.containsKey(buttonKey)) props.setProperty(buttonKey, action.getButton());
+                                } else {
+                                    props.setProperty(buttonKey, props.getProperty(cfgKeyPrefix+MSG_SUFFIX_ACTION+ actionName));
                                 }
 
                                 if (action.hasParams()) {
-                                    for (AppDataField param : action.getParams()) {
-                                        ensureFieldNameAndDescription(props, cfgKeyPrefix, param.getName());
+                                    for (String param : action.getParams()) {
+                                        ensureFieldNameAndDescription(props, cfgKeyPrefix, param);
                                     }
                                 }
                             }
