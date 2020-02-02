@@ -17,7 +17,6 @@ import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.http.HttpContentEncodingType;
-import org.cobbzilla.util.http.HttpStatusCodes;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -33,16 +32,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.resources.stream.FilterMatchersResponse.NO_MATCHERS;
+import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.NOT_FOUND;
+import static org.cobbzilla.util.http.HttpStatusCodes.OK;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
@@ -53,8 +54,8 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 @Service @Slf4j
 public class FilterHttpResource {
 
-    public static final FilterMatchersResponse ABORT_OK = new FilterMatchersResponse().setAbort(HttpStatusCodes.OK);
-    public static final FilterMatchersResponse ABORT_NOT_FOUND = new FilterMatchersResponse().setAbort(HttpStatusCodes.NOT_FOUND);
+    public static final FilterMatchersResponse ABORT_OK = new FilterMatchersResponse().setAbort(OK);
+    public static final FilterMatchersResponse ABORT_NOT_FOUND = new FilterMatchersResponse().setAbort(NOT_FOUND);
 
     @Autowired private AccountDAO accountDAO;
     @Autowired private RuleEngineService ruleEngine;
@@ -65,7 +66,7 @@ public class FilterHttpResource {
 
     @Autowired private RedisService redis;
 
-    private static final long ACTIVE_REQUEST_TIMEOUT = TimeUnit.HOURS.toSeconds(4);
+    private static final long ACTIVE_REQUEST_TIMEOUT = HOURS.toSeconds(4);
 
     @Getter(lazy=true) private final RedisService activeRequestCache = redis.prefixNamespace(getClass().getSimpleName()+".requests");
 
