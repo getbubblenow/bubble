@@ -27,6 +27,8 @@ public abstract class AccountOwnedEntityDAO<E extends HasAccount>
     public static final Order PRIORITY_ASC = Order.asc("priority");
     public static final Order PRIORITY_DESC = Order.desc("priority");
 
+    public static final Order NAME_ASC = Order.asc("name");
+
     @Autowired private BubbleConfiguration configuration;
 
     @Getter(lazy=true) private final Boolean hasNameField = !HasAccountNoName.class.isAssignableFrom(getFirstTypeParam(getClass()));

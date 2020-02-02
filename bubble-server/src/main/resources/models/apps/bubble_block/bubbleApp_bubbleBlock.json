@@ -1,6 +1,6 @@
 [{
   "name": "BubbleBlock",
-  "description": "Adware and Malware Blocker",
+  "description": "Block Adware, Malware and More",
   "url": "https://bubblev.com/apps/bblock",
   "template": true,
   "enabled": true,
@@ -46,7 +46,7 @@
         {"name": "disableList", "when": "item.enabled", "index": 20},
         {"name": "manageList", "view": "manageList", "index": 30},
         {"name": "manageRules", "view": "manageRules", "when": "item.url === ''", "index": 40},
-        {"name": "removeList", "index": 50},
+        {"name": "removeList", "index": 50, "when": "item.url !==''"},
         {
           "name": "createList", "scope": "app", "view": "manageList", "index": 10,
           "params": ["url"],
@@ -56,7 +56,7 @@
           "name": "testUrl", "scope": "app", "index": 20,
           "params": ["testUrl", "testUrlPrimary"],
           "button": "testUrl",
-          "successMessage": "response.decisionType"
+          "successMessage": "decisionType"
         }
       ]
     }, {
@@ -131,8 +131,8 @@
     "AppMessage": [{
       "locale": "en_US",
       "messages": [
-        {"name": "name", "value": "Bubble Filter"},
-        {"name": "description", "value": "Network Filter: Blocks adware, malware, phishing/scam sites, and much more"},
+        {"name": "name", "value": "BlockParty!"},
+        {"name": "description", "value": "Block adware, malware, phishing/scam sites, and much more"},
         {"name": "field.ctime", "value": "When"},
         {"name": "field.fqdn", "value": "URL"},
         {"name": "field.device", "value": "Device"},
@@ -167,12 +167,12 @@
 
         {"name": "config.action.enableList", "value": "Enable"},
         {"name": "config.action.disableList", "value": "Disable"},
-        {"name": "config.action.manageList", "value": "Manage List"},
-        {"name": "config.action.removeList", "value": "Remove List"},
-        {"name": "config.action.createList", "value": "Add New List"},
+        {"name": "config.action.manageList", "value": "Edit"},
+        {"name": "config.action.removeList", "value": "Remove"},
+        {"name": "config.action.createList", "value": "Add New"},
         {"name": "config.button.createList", "value": "Add"},
-        {"name": "config.action.updateList", "value": "Update List"},
-        {"name": "config.action.manageRules", "value": "Manage Rules"},
+        {"name": "config.action.updateList", "value": "Update"},
+        {"name": "config.action.manageRules", "value": "Rules"},
         {"name": "config.action.removeRule", "value": "Remove Rule"},
         {"name": "config.action.createRule", "value": "Add New Rule"},
         {"name": "config.button.createRule", "value": "Add"},

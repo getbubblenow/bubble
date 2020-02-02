@@ -47,8 +47,8 @@
     "AppMessage": [{
       "locale": "en_US",
       "messages": [
-        {"name": "name", "value": "Traffic Analytics"},
-        {"name": "description", "value": "Traffic analytics for your Bubble. Manage block lists."},
+        {"name": "name", "value": "Stoolpidgeon"},
+        {"name": "description", "value": "Review recent internet traffic for your devices. Block stuff that looks off."},
         {"name": "field.ctime", "value": "When"},
         {"name": "field.requestTime", "value": "When"},
         {"name": "field.accountName", "value": "Account"},

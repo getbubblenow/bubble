@@ -1,6 +1,6 @@
 [{
   "name": "UserBlocker",
-  "description": "UserBlocker App for Bubble",
+  "description": "ShadowBan User Blocker",
   "url": "https://bubblev.com/apps/UserBlocker",
   "template": true,
   "dataConfig": {
@@ -22,7 +22,7 @@
     "AppMessage": [{
       "locale": "en_US",
       "messages": [
-        {"name": "name", "value": "User Blocker"},
+        {"name": "name", "value": "ShadowBan"},
         {"name": "description", "value": "Throw the garbage to the curb!"},
         {"name": "view.blocked_users", "value": "Manage Blocked Users"},
         {"name": "field.key", "value": "Username"},

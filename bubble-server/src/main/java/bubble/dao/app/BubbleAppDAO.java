@@ -2,6 +2,7 @@ package bubble.dao.app;
 
 import bubble.dao.account.AccountOwnedTemplateDAO;
 import bubble.model.app.BubbleApp;
+import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -12,6 +13,8 @@ public class BubbleAppDAO extends AccountOwnedTemplateDAO<BubbleApp> {
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private AppMessageDAO messageDAO;
     @Autowired private AppDataDAO dataDAO;
+
+    @Override public Order getDefaultSortOrder() { return NAME_ASC; }
 
     @Override public void delete(String uuid) {
         final BubbleApp app = findByUuid(uuid);
