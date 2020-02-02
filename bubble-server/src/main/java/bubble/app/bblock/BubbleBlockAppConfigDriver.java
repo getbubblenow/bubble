@@ -1,5 +1,7 @@
 package bubble.app.bblock;
 
+import bubble.abp.BlockListSource;
+import bubble.abp.BlockSpec;
 import bubble.dao.app.AppRuleDAO;
 import bubble.dao.app.RuleDriverDAO;
 import bubble.model.account.Account;
@@ -11,16 +13,18 @@ import bubble.rule.bblock.BubbleBlockConfig;
 import bubble.rule.bblock.BubbleBlockList;
 import bubble.rule.bblock.BubbleBlockRuleDriver;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
-import static org.cobbzilla.util.http.HttpUtil.url2string;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.ValidationRegexes.HTTPS_PATTERN;
 import static org.cobbzilla.util.string.ValidationRegexes.HTTP_PATTERN;
@@ -28,11 +32,12 @@ import static org.cobbzilla.wizard.model.BasicConstraintConstants.URL_MAXLEN;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
+@Slf4j
 public class BubbleBlockAppConfigDriver implements AppConfigDriver {
 
     public static final String VIEW_manageLists = "manageLists";
     public static final String VIEW_manageList = "manageList";
-    public static final String VIEW_manage_entries = "manage_entries";
+    public static final String VIEW_manageRules = "manageRules";
 
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private AppRuleDAO ruleDAO;
@@ -47,7 +52,7 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
                 if (empty(id)) throw notFoundEx(id);
                 return loadList(account, app, id);
 
-            case VIEW_manage_entries:
+            case VIEW_manageRules:
                 if (empty(id)) throw notFoundEx(id);
                 return loadListEntries(account, app, id);
         }
@@ -56,7 +61,13 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
 
     private List<BlockListEntry> loadListEntries(Account account, BubbleApp app, String id) {
         final BubbleBlockList list = loadList(account, app, id);
-        return list == null || !list.hasAdditionalEntries() ? emptyList() : Arrays.stream(list.getAdditionalEntries()).map(BlockListEntry::new).collect(Collectors.toList());
+        if (list == null) throw notFoundEx(id);
+        if (list.hasAdditionalEntries()) {
+            return Arrays.stream(list.getAdditionalEntries())
+                    .map(BlockListEntry::additionalRule)
+                    .collect(Collectors.toList());
+        }
+        return emptyList();
     }
 
     private BubbleBlockList loadList(Account account, BubbleApp app, String id) {
@@ -101,12 +112,12 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     public static final String ACTION_createList = "createList";
     public static final String ACTION_removeList = "removeList";
     public static final String ACTION_updateList = "updateList";
-    public static final String ACTION_manageListRules = "manageListRules";
     public static final String ACTION_createRule = "createRule";
     public static final String ACTION_removeRule = "removeRule";
     public static final String ACTION_test_url = "test_url";
 
     public static final String PARAM_URL = "url";
+    public static final String PARAM_RULE = "rule";
 
     @Override public Object takeAppAction(Account account,
                                           BubbleApp app,
@@ -117,11 +128,38 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
         switch (action) {
             case ACTION_createList:
                 return addList(account, app, data);
+            case ACTION_createRule:
+                return addRule(account, app, params, data);
         }
         throw notFoundEx(action);
     }
 
-    public Object addList(Account account, BubbleApp app, JsonNode data) {
+    private BubbleBlockList addRule(Account account, BubbleApp app, Map<String, String> params, JsonNode data) {
+
+        final String id = params.get(PARAM_ID);
+        if (id == null) throw invalidEx("err.id.required");
+
+        final JsonNode rule = data.get(PARAM_RULE);
+        if (rule == null || rule.textValue() == null) throw invalidEx("err.rule.required");
+
+        final String line = rule.textValue().trim();
+        final BubbleBlockList list = loadList(account, app, id);
+        if (list == null) throw notFoundEx(id);
+        if (list.hasAdditionalEntries()) {
+            if (list.hasEntry(line)) {
+                throw invalidEx("err.rule.alreadyExists");
+            }
+        }
+        try {
+            BlockSpec.parse(line);
+        } catch (Exception e) {
+            log.warn("addRule: invalid line ("+line+"): "+shortError(e));
+            throw invalidEx("err.rule.invalid", "Error parsing rule", e.getMessage());
+        }
+        return updateList(list.addEntry(line));
+    }
+
+    public BubbleBlockList addList(Account account, BubbleApp app, JsonNode data) {
 
         final JsonNode urlNode = data.get(PARAM_URL);
         if (urlNode == null) throw invalidEx("err.url.required");
@@ -136,37 +174,13 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
             throw invalidEx("err.url.alreadyExists");
         }
 
-        final BubbleBlockList list = new BubbleBlockList(url);
-        final String content;
+        final BlockListSource source = new BlockListSource().setUrl(url);
         try {
-            content = url2string(url);
-            if (empty(content)) throw new IllegalStateException("error fetching url (empty content): "+url);
+            source.download();
         } catch (Exception e) {
             throw invalidEx("err.url.invalid");
         }
-
-        // check first few lines for a title and description
-        final StringTokenizer st = new StringTokenizer(content, "\n");
-        int i=0;
-        boolean foundName = false;
-        boolean foundDescription = false;
-        while (st.hasMoreTokens() && i < 20) {
-            i++;
-            final String line = st.nextToken().trim();
-            if (line.startsWith("!")) {
-                if (line.replace(" ", "").startsWith("!Title:")) {
-                    int colonPos = line.indexOf(":");
-                    list.setName(line.substring(colonPos + 1));
-                    foundName = true;
-                } else if (line.replace(" ", "").startsWith("!Description:")) {
-                    int colonPos = line.indexOf(":");
-                    list.setDescription(line.substring(colonPos + 1));
-                    foundDescription = true;
-                }
-                if (foundName && foundDescription) break;
-            }
-        }
-
+        final BubbleBlockList list = new BubbleBlockList(source);
         final AppRule rule = loadRule(account, app);
         final BubbleBlockConfig blockConfig = json(rule.getConfigJson(), BubbleBlockConfig.class);
         ruleDAO.update(rule.setConfigJson(json(blockConfig.updateList(list))));
@@ -207,32 +221,50 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
                 list = findList(allLists, id);
                 if (list == null) throw notFoundEx(id);
                 final BubbleBlockList update = json(data, BubbleBlockList.class);
-                final ValidationResult errors = validate(update, allLists);
+                final ValidationResult errors = validate(list, update, allLists);
                 if (errors.isInvalid()) throw invalidEx(errors);
                 return updateList(list.update(update));
+
+            case ACTION_removeRule:
+                return removeRule(account, app, id);
         }
 
         throw notFoundEx(action);
     }
 
-    private ValidationResult validate(BubbleBlockList list, List<BubbleBlockList> allLists) {
+    private BubbleBlockList removeRule(Account account, BubbleApp app, String id) {
+        final List<BubbleBlockList> customLists = loadAllLists(account, app).stream().filter(list -> !list.hasUrl()).collect(Collectors.toList());
+        if (customLists.isEmpty()) throw invalidEx("err.removeRule.noCustomList");
+        if (customLists.size() > 1) throw invalidEx("err.removeRule.multipleCustomLists");
+        final BubbleBlockList builtin = customLists.get(0);
+        return updateList(builtin.removeRule(id));
+    }
+
+    private ValidationResult validate(BubbleBlockList list, BubbleBlockList request, List<BubbleBlockList> allLists) {
         final ValidationResult errors = new ValidationResult();
-        if (empty(list.getName())) {
+        if (empty(request.getName())) {
             errors.addViolation("err.name.required");
-        } else if (list.getName().length() > 300) {
+        } else if (request.getName().length() > 300) {
             errors.addViolation("err.name.tooLong");
-        } else if (allLists.stream().anyMatch(l -> !l.getId().equals(list.getId()) && l.getName().equals(list.getName()))) {
+        } else if (allLists.stream().anyMatch(l -> !l.getId().equals(request.getId()) && l.getName().equals(request.getName()))) {
             errors.addViolation("err.name.alreadyInUse");
         }
-        if (!empty(list.getDescription()) && list.getDescription().length() > 4000) {
+        if (!empty(request.getDescription()) && request.getDescription().length() > 4000) {
             errors.addViolation("err.description.length");
         }
-        if (empty(list.getUrl())) {
-            errors.addViolation("err.url.required");
-        } else if (list.getUrl().length() > URL_MAXLEN) {
-            errors.addViolation("err.url.length");
+        if (!list.hasUrl()) {
+            // this is the built-in list
+            if (!empty(request.getUrl())) {
+                errors.addViolation("err.url.cannotSetOnBuiltinList");
+            }
+        } else {
+            if (empty(request.getUrl())) {
+                errors.addViolation("err.url.required");
+            } else if (request.getUrl().length() > URL_MAXLEN) {
+                errors.addViolation("err.url.length");
+            }
         }
-        if (list.hasTags() && list.getTagString().length() > 1000) {
+        if (request.hasTags() && request.getTagString().length() > 1000) {
             errors.addViolation("err.tagString.length");
         }
         return errors;

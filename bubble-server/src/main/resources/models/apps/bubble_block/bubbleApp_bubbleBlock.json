@@ -25,14 +25,15 @@
     ],
     "configDriver": "bubble.app.bblock.BubbleBlockAppConfigDriver",
     "configFields": [
-        {"name": "name"},
-        {"name": "description", "control": "textarea"},
-        {"name": "url", "type": "http_url"},
-        {"name": "testUrl", "type": "http_url"},
-        {"name": "tags"},
-        {"name": "tagString"},
-        {"name": "enabled", "type": "flag", "mode": "readOnly"},
-        {"name": "rule"}
+      {"name": "name"},
+      {"name": "description", "control": "textarea"},
+      {"name": "url", "type": "http_url"},
+      {"name": "testUrl", "type": "http_url"},
+      {"name": "tags"},
+      {"name": "tagString"},
+      {"name": "enabled", "type": "flag", "mode": "readOnly"},
+      {"name": "rule"},
+      {"name": "ruleType", "mode": "readOnly"}
     ],
     "configViews": [{
       "name": "manageLists",
@@ -43,7 +44,8 @@
         {"name": "enableList", "when": "!item.enabled", "index": 10},
         {"name": "disableList", "when": "item.enabled", "index": 20},
         {"name": "manageList", "view": "manageList", "index": 30},
-        {"name": "removeList", "index": 40},
+        {"name": "manageRules", "view": "manageRules", "when": "item.url === ''", "index": 40},
+        {"name": "removeList", "index": 50},
         {
           "name": "createList", "scope": "app", "view": "manageList", "index": 10,
           "params": ["url"],
@@ -63,8 +65,8 @@
         {"name": "updateList", "index": 10, "successView": "manageLists"},
         {"name": "enableList", "when": "!item.enabled", "index": 20},
         {"name": "disableList", "when": "item.enabled", "index": 30},
-        {"name": "manageListRules", "view": "manageRules", "index": 40},
-        {"name": "removeList", "index": 50, "successView": "manageLists"}
+        {"name": "manageRules", "view": "manageRules", "when": "item.url === ''", "index": 40},
+        {"name": "removeList", "index": 50, "when": "item.url !== ''", "successView": "manageLists"}
       ]
     }, {
       "name": "manageRules",
@@ -74,7 +76,7 @@
         {"name": "removeRule", "index": 10},
         {
           "name": "createRule", "scope": "app", "index": 10,
-          "params": ["url"],
+          "params": ["rule"],
           "button": "createRule"
         },
         {
@@ -153,6 +155,8 @@
         {"name": "config.field.tags", "value": "Tags"},
         {"name": "config.field.enabled", "value": "Enabled"},
         {"name": "config.field.rule", "value": "Rule"},
+        {"name": "config.field.rule.description", "value": "Enter a rule. Can be a hostname, or use AdBlockPlus format"},
+        {"name": "config.field.ruleType", "value": "Rule Type"},
         {"name": "config.field.testUrl", "value": "Test URL"},
         {"name": "config.field.testUrl.description", "value": "URL to check against filters"},
 
@@ -163,7 +167,7 @@
         {"name": "config.action.createList", "value": "Add New List"},
         {"name": "config.button.createList", "value": "Add"},
         {"name": "config.action.updateList", "value": "Update List"},
-        {"name": "config.action.manageListRules", "value": "Manage Rules"},
+        {"name": "config.action.manageRules", "value": "Manage Rules"},
         {"name": "config.action.removeRule", "value": "Remove Rule"},
         {"name": "config.action.createRule", "value": "Add New Rule"},
         {"name": "config.button.createRule", "value": "Add"},

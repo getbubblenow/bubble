@@ -1,11 +1,19 @@
 package bubble.rule.bblock;
 
+import bubble.abp.BlockListSource;
+import bubble.app.bblock.BlockListEntry;
 import bubble.model.app.AppRule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.ArrayUtil;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.cobbzilla.util.collection.ArrayUtil.arrayToString;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
@@ -14,16 +22,16 @@ import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.util.string.StringUtil.EMPTY_ARRAY;
 import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 
-@NoArgsConstructor @Accessors(chain=true)
+@NoArgsConstructor @Accessors(chain=true) @Slf4j
 public class BubbleBlockList {
 
     public static final String[] UPDATE_FIELDS = {"name", "url", "description", "tags"};
 
-    public BubbleBlockList(String url) {
-        setId(sha256_hex(url));
-        setName(url);
-        setUrl(url);
-        setDescription("");
+    public BubbleBlockList(BlockListSource source) {
+        setId(sha256_hex(source.getUrl()));
+        setName(source.hasTitle() ? source.getTitle() : source.getUrl());
+        setUrl(source.getUrl());
+        setDescription(source.getDescription());
         setTags(EMPTY_ARRAY);
     }
 
@@ -57,5 +65,30 @@ public class BubbleBlockList {
     public boolean enabled() { return enabled != null && enabled; }
 
     @JsonIgnore @Getter @Setter private AppRule rule;
+
+    public boolean hasEntry(String line) {
+        return hasAdditionalEntries() && Arrays.asList(getAdditionalEntries()).contains(line);
+    }
+
+    public BubbleBlockList addEntry(String line) {
+        if (!hasAdditionalEntries()) {
+            setAdditionalEntries(new String[] {line});
+        } else if (hasEntry(line)) {
+            return this;
+        } else {
+            setAdditionalEntries(ArrayUtil.append(getAdditionalEntries(), line));
+        }
+        return this;
+    }
+
+    public BubbleBlockList removeRule(String id) {
+        if (!hasAdditionalEntries()) return this;
+        final List<String> retained = Arrays.stream(getAdditionalEntries()).filter(e -> !BlockListEntry.idFor(e).equals(id)).collect(Collectors.toList());
+        if (retained.size() == getAdditionalEntries().length) {
+            log.warn("removeRule: rule with id not found, nothing removed: "+id);
+            return this;
+        }
+        return setAdditionalEntries(retained.toArray(EMPTY_ARRAY));
+    }
 
 }
