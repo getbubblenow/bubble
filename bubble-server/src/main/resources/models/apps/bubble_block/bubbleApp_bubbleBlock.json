@@ -60,11 +60,11 @@
       "scope": "item",
       "fields": ["name", "description", "url", "tagString", "enabled"],
       "actions": [
-        {"name": "updateList", "index": 10},
+        {"name": "updateList", "index": 10, "successView": "manageLists"},
         {"name": "enableList", "when": "!item.enabled", "index": 20},
         {"name": "disableList", "when": "item.enabled", "index": 30},
         {"name": "manageListRules", "view": "manageRules", "index": 40},
-        {"name": "removeList", "index": 50}
+        {"name": "removeList", "index": 50, "successView": "manageLists"}
       ]
     }, {
       "name": "manageRules",

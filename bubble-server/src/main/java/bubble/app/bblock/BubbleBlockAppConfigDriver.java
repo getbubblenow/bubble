@@ -11,6 +11,7 @@ import bubble.rule.bblock.BubbleBlockConfig;
 import bubble.rule.bblock.BubbleBlockList;
 import bubble.rule.bblock.BubbleBlockRuleDriver;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
@@ -23,6 +24,7 @@ import static org.cobbzilla.util.http.HttpUtil.url2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.ValidationRegexes.HTTPS_PATTERN;
 import static org.cobbzilla.util.string.ValidationRegexes.HTTP_PATTERN;
+import static org.cobbzilla.wizard.model.BasicConstraintConstants.URL_MAXLEN;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
@@ -58,7 +60,12 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     }
 
     private BubbleBlockList loadList(Account account, BubbleApp app, String id) {
-        return loadAllLists(account, app).stream().filter(list -> list.hasId(id)).findFirst().orElse(null);
+        final List<BubbleBlockList> allLists = loadAllLists(account, app);
+        return findList(allLists, id);
+    }
+
+    private BubbleBlockList findList(List<BubbleBlockList> allLists, String id) {
+        return allLists.stream().filter(list -> list.hasId(id)).findFirst().orElse(null);
     }
 
     private List<BubbleBlockList> loadAllLists(Account account, BubbleApp app) {
@@ -93,7 +100,7 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     public static final String ACTION_disableList = "disableList";
     public static final String ACTION_createList = "createList";
     public static final String ACTION_removeList = "removeList";
-    public static final String ACTION_manageList = "manageList";
+    public static final String ACTION_updateList = "updateList";
     public static final String ACTION_manageListRules = "manageListRules";
     public static final String ACTION_createRule = "createRule";
     public static final String ACTION_removeRule = "removeRule";
@@ -115,6 +122,7 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     }
 
     public Object addList(Account account, BubbleApp app, JsonNode data) {
+
         final JsonNode urlNode = data.get(PARAM_URL);
         if (urlNode == null) throw invalidEx("err.url.required");
         final String url = urlNode.textValue().trim();
@@ -123,11 +131,10 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
             throw invalidEx("err.url.invalid");
         }
 
-        final BubbleBlockList existing = loadAllLists(account, app)
-                .stream()
-                .filter(list -> list.getUrl().equals(url))
-                .findAny().orElse(null);
-        if (existing != null) throw invalidEx("err.url.alreadyExists");
+        final List<BubbleBlockList> allLists = loadAllLists(account, app);
+        if (allLists.stream().anyMatch(list -> list.getUrl().equals(url))) {
+            throw invalidEx("err.url.alreadyExists");
+        }
 
         final BubbleBlockList list = new BubbleBlockList(url);
         final String content;
@@ -194,9 +201,41 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
                     throw invalidEx("err.removeList.cannotRemoveBuiltinList");
                 }
                 return removeList(list);
+
+            case ACTION_updateList:
+                final List<BubbleBlockList> allLists = loadAllLists(account, app);
+                list = findList(allLists, id);
+                if (list == null) throw notFoundEx(id);
+                final BubbleBlockList update = json(data, BubbleBlockList.class);
+                final ValidationResult errors = validate(update, allLists);
+                if (errors.isInvalid()) throw invalidEx(errors);
+                return updateList(list.update(update));
         }
 
         throw notFoundEx(action);
+    }
+
+    private ValidationResult validate(BubbleBlockList list, List<BubbleBlockList> allLists) {
+        final ValidationResult errors = new ValidationResult();
+        if (empty(list.getName())) {
+            errors.addViolation("err.name.required");
+        } else if (list.getName().length() > 300) {
+            errors.addViolation("err.name.tooLong");
+        } else if (allLists.stream().anyMatch(l -> !l.getId().equals(list.getId()) && l.getName().equals(list.getName()))) {
+            errors.addViolation("err.name.alreadyInUse");
+        }
+        if (!empty(list.getDescription()) && list.getDescription().length() > 4000) {
+            errors.addViolation("err.description.length");
+        }
+        if (empty(list.getUrl())) {
+            errors.addViolation("err.url.required");
+        } else if (list.getUrl().length() > URL_MAXLEN) {
+            errors.addViolation("err.url.length");
+        }
+        if (list.hasTags() && list.getTagString().length() > 1000) {
+            errors.addViolation("err.tagString.length");
+        }
+        return errors;
     }
 
     private BubbleBlockList removeList(BubbleBlockList list) {
