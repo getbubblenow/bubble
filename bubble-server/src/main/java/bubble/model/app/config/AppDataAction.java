@@ -7,5 +7,6 @@ public class AppDataAction {
 
     @Getter @Setter private String name;
     @Getter @Setter private String when;
+    @Getter @Setter private String route;
 
 }

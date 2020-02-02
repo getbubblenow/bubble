@@ -3,11 +3,13 @@ package bubble.model.app;
 import bubble.model.account.Account;
 import bubble.model.account.AccountTemplate;
 import bubble.model.app.config.AppDataConfig;
+import bubble.model.app.config.AppDataField;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.entityconfig.IdentifiableBaseParentEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
@@ -78,9 +80,18 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @Column(length=100000, nullable=false) @ECField(index=50)
     @JsonIgnore @Getter @Setter private String dataConfigJson;
 
-    @Transient public AppDataConfig getDataConfig () { return dataConfigJson == null ? null : json(dataConfigJson, AppDataConfig.class); }
+    @Transient public AppDataConfig getDataConfig () { return dataConfigJson == null ? null : ensureDefaults(json(dataConfigJson, AppDataConfig.class)); }
     public BubbleApp setDataConfig (AppDataConfig adc) { return setDataConfigJson(adc == null ? null : json(adc, DB_JSON_MAPPER)); }
     public boolean hasDataConfig () { return getDataConfig() != null; }
+
+    private AppDataConfig ensureDefaults(AppDataConfig adc) {
+        for (AppDataField field : adc.getFields()) {
+            if (!adc.hasConfigField(field)) {
+                adc.setConfigFields(ArrayUtil.append(adc.getConfigFields(), field));
+            }
+        }
+        return adc;
+    }
 
     @ECSearchable @ECField(index=60)
     @ECIndex @Column(nullable=false)

@@ -100,8 +100,9 @@ public class DeviceIdService {
             log.warn("findDeviceByIp("+ipAddr+") test mode and no admin devices, returning dummy device");
             return new Device().setAccount(adminUuid).setName("dummy");
         } else {
-            log.warn("findDeviceByIp("+ipAddr+") test mode, returning first admin device");
-            return adminDevices.get(0);
+            log.warn("findDeviceByIp("+ipAddr+") test mode, returning and possibly initializing first admin device");
+            final Device device = adminDevices.get(0);
+            return device.uninitialized() ? deviceDAO.update(device.initTotpKey()) : device;
         }
     }
 

@@ -24,8 +24,19 @@
       {"name": "device", "required": false, "index": 10, "when": "view !== \"recent\""},
       {"name": "meta2", "required": false, "operator": "like", "index": 20, "when": "view !== \"recent\""}
     ],
+    "actions": [
+      {
+        "name": "filterHost",
+        "when": "view === \"recent\"",
+        "route": "/app/BubbleBlock/config/manageRules/local?action=createRule&rule={{fqdn}}"
+      }, {
+        "name": "filterUrl",
+        "when": "view === \"recent\"",
+        "route": "/app/BubbleBlock/config/manageRules/local?action=createRule&rule={{ encodeURIComponent( fqdn + (uri.startsWith('/') ? uri : '/'+uri) ) }}"
+      }
+    ],
     "views": [
-      {"name": "recent"},
+      {"name": "recent", "layout": "tiles"},
       {"name": "last_24_hours"},
       {"name": "last_7_days"},
       {"name": "last_30_days"}
@@ -47,12 +58,13 @@
     "AppMessage": [{
       "locale": "en_US",
       "messages": [
-        {"name": "name", "value": "Stoolpidgeon"},
-        {"name": "description", "value": "Review recent internet traffic for your devices. Block stuff that looks off."},
+        {"name": "name", "value": "Castigator"},
+        {"name": "summary", "value": "Network Analytics and Filter Creator"},
+        {"name": "description", "value": "Review recent internet traffic for your devices. Block stuff that you don't like."},
         {"name": "field.ctime", "value": "When"},
         {"name": "field.requestTime", "value": "When"},
         {"name": "field.accountName", "value": "Account"},
-        {"name": "field.fqdn", "value": "URL"},
+        {"name": "field.fqdn", "value": "Host"},
         {"name": "field.device", "value": "Device"},
         {"name": "field.deviceName", "value": "Device"},
         {"name": "field.ip", "value": "From IP"},
@@ -62,6 +74,8 @@
         {"name": "field.data", "value": "Count"},
         {"name": "param.meta2", "value": "Site"},
         {"name": "param.device", "value": "Device"},
+        {"name": "action.filterHost", "value": "Block Host"},
+        {"name": "action.filterUrl", "value": "Block URL"},
         {"name": "view.recent", "value": "Recent Traffic"},
         {"name": "view.recent.requestTime.format", "value": "{{MM}} {{d}} @ {{h}}:{{m}}:{{s}} {{a}}"},
         {"name": "view.last_24_hours", "value": "Last 24 Hours"},

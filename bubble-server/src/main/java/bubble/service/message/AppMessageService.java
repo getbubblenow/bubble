@@ -92,7 +92,6 @@ public class AppMessageService {
                         ensureFieldNameAndDescription(props, cfgKeyPrefix, field.getName());
                     }
                 }
-
                 if (cfg.hasConfigViews()) {
                     for (AppConfigView configView : cfg.getConfigViews()) {
                         final String viewKey = cfgKeyPrefix + MSG_SUFFIX_VIEW + configView.getName();
@@ -119,6 +118,11 @@ public class AppMessageService {
                             }
                         }
                     }
+                }
+
+                // anything from data fields not yet defined, copy as config field name/desc
+                for (AppDataField field : cfg.getFields()) {
+                    ensureFieldNameAndDescription(props, cfgKeyPrefix, field.getName());
                 }
             }
         }

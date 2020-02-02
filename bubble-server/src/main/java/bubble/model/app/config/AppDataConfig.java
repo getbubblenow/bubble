@@ -4,6 +4,7 @@ import bubble.server.BubbleConfiguration;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -47,6 +48,10 @@ public class AppDataConfig {
 
     @Getter @Setter private AppDataField[] configFields;
     public boolean hasConfigFields () { return !empty(configFields); }
+
+    public boolean hasConfigField(AppDataField field) {
+        return hasConfigFields() && Arrays.stream(getConfigFields()).anyMatch(f -> f.getName().equals(field.getName()));
+    }
 
     @Getter @Setter private AppConfigView[] configViews;
     public boolean hasConfigViews () { return !empty(configViews); }

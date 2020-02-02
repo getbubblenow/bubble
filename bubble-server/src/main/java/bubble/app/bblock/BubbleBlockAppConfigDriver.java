@@ -55,7 +55,7 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     @Autowired private BubbleConfiguration configuration;
 
     @Override public Object getView(Account account, BubbleApp app, String view, Map<String, String> params) {
-        final String id = params.get(PARAM_ID);
+        String id = params.get(PARAM_ID);
         switch (view) {
             case VIEW_manageLists:
                 return loadAllLists(account, app);
@@ -65,7 +65,11 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
                 return loadList(account, app, id);
 
             case VIEW_manageRules:
-                if (empty(id)) throw notFoundEx(id);
+                if (empty(id)) {
+                    final BubbleBlockList builtinList = getBuiltinList(account, app);
+                    if (builtinList == null) throw notFoundEx(id);
+                    id = builtinList.getId();
+                }
                 return loadListEntries(account, app, id);
         }
         throw notFoundEx(view);

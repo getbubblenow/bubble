@@ -43,9 +43,16 @@ public class TrafficAnalyticsRuleDriver extends AbstractAppRuleDriver {
         final String site = ruleHarness.getMatcher().getSite();
         final String fqdn = filter.getFqdn();
 
-        getRecentTraffic().set(now()+"_"+randomAlphanumeric(10), json(new TrafficRecord(filter, account, device, req)), EX, RECENT_TRAFFIC_EXPIRATION);
+        final TrafficRecord rec = new TrafficRecord(filter, account, device, req);
+        recordRecentTraffic(rec);
         incrementCounters(account, device, app, site, fqdn);
         return FilterMatchResponse.NO_MATCH; // we are done, don't need to look at/modify stream
+    }
+
+    public void recordRecentTraffic(TrafficRecord rec) { recordRecentTraffic(rec, getRecentTraffic()); }
+
+    public static void recordRecentTraffic(TrafficRecord rec, RedisService recentTraffic) {
+        recentTraffic.set(now() + "_" + randomAlphanumeric(10), json(rec), EX, RECENT_TRAFFIC_EXPIRATION);
     }
 
     public void incrementCounters(Account account, Device device, String app, String site, String fqdn) {

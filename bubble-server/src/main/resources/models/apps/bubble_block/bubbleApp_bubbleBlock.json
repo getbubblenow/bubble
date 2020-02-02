@@ -46,7 +46,7 @@
         {"name": "disableList", "when": "item.enabled", "index": 20},
         {"name": "manageList", "view": "manageList", "index": 30},
         {"name": "manageRules", "view": "manageRules", "when": "item.url === ''", "index": 40},
-        {"name": "removeList", "index": 50, "when": "item.url !==''"},
+        {"name": "removeList", "index": 50, "when": "item.url !== ''"},
         {
           "name": "createList", "scope": "app", "view": "manageList", "index": 10,
           "params": ["url"],
@@ -131,7 +131,8 @@
     "AppMessage": [{
       "locale": "en_US",
       "messages": [
-        {"name": "name", "value": "BlockParty!"},
+        {"name": "name", "value": "Block Party!"},
+        {"name": "summary", "value": "Network Filter and Content Blocker"},
         {"name": "description", "value": "Block adware, malware, phishing/scam sites, and much more"},
         {"name": "field.ctime", "value": "When"},
         {"name": "field.fqdn", "value": "URL"},

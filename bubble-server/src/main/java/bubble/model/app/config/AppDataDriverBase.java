@@ -5,6 +5,7 @@ import bubble.model.account.Account;
 import bubble.model.app.AppSite;
 import bubble.model.app.BubbleApp;
 import bubble.model.device.Device;
+import bubble.server.BubbleConfiguration;
 import bubble.service.SearchService;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.dao.SearchResults;
@@ -24,6 +25,7 @@ public abstract class AppDataDriverBase implements AppDataDriver {
     @Autowired protected AppDataDAO dataDAO;
     @Autowired protected SearchService searchService;
     @Autowired protected RedisService redis;
+    @Autowired protected BubbleConfiguration configuration;
 
     @Override public SearchResults query(Account caller, Device device, BubbleApp app, AppSite site, AppDataView view, SearchQuery query) {
         query.setBound("app", app.getUuid());

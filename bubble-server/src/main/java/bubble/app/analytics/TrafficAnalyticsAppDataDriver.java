@@ -1,7 +1,9 @@
 package bubble.app.analytics;
 
 import bubble.model.account.Account;
-import bubble.model.app.*;
+import bubble.model.app.AppData;
+import bubble.model.app.AppSite;
+import bubble.model.app.BubbleApp;
 import bubble.model.app.config.AppDataDriverBase;
 import bubble.model.app.config.AppDataView;
 import bubble.model.device.Device;
@@ -9,6 +11,7 @@ import bubble.rule.analytics.TrafficAnalyticsRuleDriver;
 import bubble.rule.analytics.TrafficRecord;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.network.NetworkUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.dao.SearchResults;
 import org.cobbzilla.wizard.model.search.SearchBoundComparison;
@@ -18,15 +21,20 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
-import static bubble.rule.analytics.TrafficAnalyticsRuleDriver.FQDN_SEP;
-import static bubble.rule.analytics.TrafficAnalyticsRuleDriver.RECENT_TRAFFIC_PREFIX;
+import static bubble.rule.analytics.TrafficAnalyticsRuleDriver.*;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.HOURS;
+import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static org.cobbzilla.util.http.HttpContentTypes.TYPICAL_WEB_TYPES;
+import static org.cobbzilla.util.http.HttpContentTypes.fileExt;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.PCT;
 import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD;
@@ -35,6 +43,7 @@ import static org.cobbzilla.wizard.model.search.SearchBoundComparison.Constants.
 import static org.cobbzilla.wizard.model.search.SearchField.OP_SEP;
 import static org.cobbzilla.wizard.model.search.SortOrder.ASC;
 import static org.cobbzilla.wizard.model.search.SortOrder.DESC;
+import static org.cobbzilla.wizard.util.TestNames.*;
 
 @Slf4j
 public class TrafficAnalyticsAppDataDriver extends AppDataDriverBase {
@@ -47,9 +56,13 @@ public class TrafficAnalyticsAppDataDriver extends AppDataDriverBase {
     public static final SearchSort SORT_TSTAMP_DESC = new SearchSort("meta1", DESC);
     public static final SearchSort SORT_FQDN_CASE_INSENSITIVE_ASC = new SearchSort("meta2", ASC, "lower");
 
+    public static final int MAX_RECENT_PAGE_SIZE = 50;
+
     @Getter(lazy=true) private final RedisService recentTraffic = redis.prefixNamespace(RECENT_TRAFFIC_PREFIX);
 
     @Override public SearchResults query(Account caller, Device device, BubbleApp app, AppSite site, AppDataView view, SearchQuery query) {
+
+        if (configuration.testMode()) recordTestTraffic(caller, device);
 
         if (view.getName().equals(VIEW_recent)) {
             final RedisService traffic = getRecentTraffic();
@@ -57,6 +70,9 @@ public class TrafficAnalyticsAppDataDriver extends AppDataDriverBase {
             keys.addAll(traffic.keys("*"));
             final List<TrafficRecord> records = new ArrayList<>();
             int i = 0;
+            if (query.getPageSize() > MAX_RECENT_PAGE_SIZE) {
+                query.setPageSize(MAX_RECENT_PAGE_SIZE);
+            }
             for (String key : keys) {
                 if (i < query.getPageOffset()) {
                     i++;
@@ -73,8 +89,12 @@ public class TrafficAnalyticsAppDataDriver extends AppDataDriverBase {
                         log.warn("query: error parsing TrafficRecord: "+shortError(e));
                     }
                 }
+                if (records.size() >= query.getPageSize()) {
+                    log.info("query: max page size reached "+query.getPageSize()+", breaking");
+                }
                 i++;
             }
+            log.info("query: VIEW_recent: returning "+records.size()+" / "+keys.size()+" recent traffic records");
             return new SearchResults(records, keys.size());
         }
 
@@ -90,6 +110,21 @@ public class TrafficAnalyticsAppDataDriver extends AppDataDriverBase {
             query.addSort(SORT_FQDN_CASE_INSENSITIVE_ASC);
         }
         return processResults(searchService.search(false, caller, dataDAO, query));
+    }
+
+    private void recordTestTraffic(Account caller, Device device) {
+        recordRecentTraffic(new TrafficRecord()
+                        .setRequestTime(now())
+                        .setIp(NetworkUtil.getFirstPublicIpv4())
+                        .setFqdn(safeNationality()+".example.com")
+                        .setUri("/traffic/"+safeColor()+"/"+ safeAnimal()
+                                + fileExt(TYPICAL_WEB_TYPES[nextInt(0, TYPICAL_WEB_TYPES.length)]))
+                        .setReferer("NONE")
+                        .setAccountUuid(caller.getUuid())
+                        .setAccountName(caller.getName())
+                        .setDeviceUuid(device.getUuid())
+                        .setDeviceName(device.getName()),
+                getRecentTraffic());
     }
 
     private SearchResults processResults(SearchResults searchResults) {

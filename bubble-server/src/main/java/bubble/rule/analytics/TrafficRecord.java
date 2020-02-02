@@ -6,13 +6,14 @@ import bubble.resources.stream.FilterMatchersRequest;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.glassfish.grizzly.http.server.Request;
 
 import static bubble.ApiConstants.getRemoteHost;
 import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 
-@NoArgsConstructor
+@NoArgsConstructor @Accessors(chain=true)
 public class TrafficRecord {
 
     @Getter @Setter private String uuid = randomUUID().toString();
