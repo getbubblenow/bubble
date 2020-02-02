@@ -1,19 +1,24 @@
 package bubble.app.bblock;
 
+import bubble.abp.BlockDecision;
 import bubble.abp.BlockListSource;
 import bubble.abp.BlockSpec;
 import bubble.dao.app.AppRuleDAO;
 import bubble.dao.app.RuleDriverDAO;
 import bubble.model.account.Account;
+import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.app.BubbleApp;
 import bubble.model.app.RuleDriver;
 import bubble.model.app.config.AppConfigDriver;
+import bubble.model.device.Device;
 import bubble.rule.bblock.BubbleBlockConfig;
 import bubble.rule.bblock.BubbleBlockList;
 import bubble.rule.bblock.BubbleBlockRuleDriver;
+import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.string.ValidationRegexes;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -25,6 +30,10 @@ import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.http.HttpSchemes.SCHEME_HTTPS;
+import static org.cobbzilla.util.http.HttpSchemes.isHttpOrHttps;
+import static org.cobbzilla.util.http.URIUtil.getHost;
+import static org.cobbzilla.util.http.URIUtil.getPath;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.ValidationRegexes.HTTPS_PATTERN;
 import static org.cobbzilla.util.string.ValidationRegexes.HTTP_PATTERN;
@@ -38,9 +47,12 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     public static final String VIEW_manageLists = "manageLists";
     public static final String VIEW_manageList = "manageList";
     public static final String VIEW_manageRules = "manageRules";
+    public static final AppMatcher TEST_MATCHER = new AppMatcher();
+    public static final Device TEST_DEVICE = new Device();
 
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private AppRuleDAO ruleDAO;
+    @Autowired private BubbleConfiguration configuration;
 
     @Override public Object getView(Account account, BubbleApp app, String view, Map<String, String> params) {
         final String id = params.get(PARAM_ID);
@@ -114,10 +126,12 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     public static final String ACTION_updateList = "updateList";
     public static final String ACTION_createRule = "createRule";
     public static final String ACTION_removeRule = "removeRule";
-    public static final String ACTION_test_url = "test_url";
+    public static final String ACTION_testUrl = "testUrl";
 
     public static final String PARAM_URL = "url";
     public static final String PARAM_RULE = "rule";
+    public static final String PARAM_TEST_URL = "testUrl";
+    public static final String PARAM_TEST_URL_PRIMARY = "testUrlPrimary";
 
     @Override public Object takeAppAction(Account account,
                                           BubbleApp app,
@@ -130,8 +144,45 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
                 return addList(account, app, data);
             case ACTION_createRule:
                 return addRule(account, app, params, data);
+            case ACTION_testUrl:
+                return testUrl(account, app, data);
         }
         throw notFoundEx(action);
+    }
+
+    private BubbleBlockList testUrl(Account account, BubbleApp app, JsonNode data) {
+        final JsonNode testUrlNode = data.get(PARAM_TEST_URL);
+        if (testUrlNode == null || empty(testUrlNode.textValue())) throw invalidEx("err.testUrl.required");
+        String testUrl = testUrlNode.textValue();
+
+        final JsonNode testUrlPrimaryNode = data.get(PARAM_TEST_URL_PRIMARY);
+        final boolean primary = testUrlPrimaryNode == null || testUrlPrimaryNode.booleanValue();
+
+        if (!isHttpOrHttps(testUrl)) testUrl = SCHEME_HTTPS + testUrl;
+
+        final String host;
+        final String path;
+        try {
+            host = getHost(testUrl);
+            path = getPath(testUrl);
+        } catch (Exception e) {
+            throw invalidEx("err.testUrl.invalid", "Test URL was not valid", shortError(e));
+        }
+        if (empty(host) || !ValidationRegexes.HOST_PATTERN.matcher(host).matches()) {
+            throw invalidEx("err.testUrl.invalidHostname", "Test URL was not valid");
+        }
+
+        try {
+            final AppRule rule = loadRule(account, app);
+            final RuleDriver ruleDriver = loadDriver(account, rule);
+            final BubbleBlockRuleDriver unwiredDriver = (BubbleBlockRuleDriver) rule.initDriver(ruleDriver, TEST_MATCHER, account, TEST_DEVICE);
+            final BubbleBlockRuleDriver driver = configuration.autowire(unwiredDriver);
+            final BlockDecision decision = driver.getDecision(host, path, primary);
+            return getBuiltinList(account, app).setResponse(decision);
+
+        } catch (Exception e) {
+            throw invalidEx("err.testRule.loadingTestDriver", "Error loading test driver", shortError(e));
+        }
     }
 
     private BubbleBlockList addRule(Account account, BubbleApp app, Map<String, String> params, JsonNode data) {
@@ -151,7 +202,8 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
             }
         }
         try {
-            BlockSpec.parse(line);
+            final List<BlockSpec> specs = BlockSpec.parse(line);
+            if (log.isDebugEnabled()) log.debug("addRule: parsed line ("+line+"): "+json(specs));
         } catch (Exception e) {
             log.warn("addRule: invalid line ("+line+"): "+shortError(e));
             throw invalidEx("err.rule.invalid", "Error parsing rule", e.getMessage());
@@ -233,11 +285,15 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     }
 
     private BubbleBlockList removeRule(Account account, BubbleApp app, String id) {
+        final BubbleBlockList builtin = getBuiltinList(account, app);
+        return updateList(builtin.removeRule(id));
+    }
+
+    private BubbleBlockList getBuiltinList(Account account, BubbleApp app) {
         final List<BubbleBlockList> customLists = loadAllLists(account, app).stream().filter(list -> !list.hasUrl()).collect(Collectors.toList());
         if (customLists.isEmpty()) throw invalidEx("err.removeRule.noCustomList");
         if (customLists.size() > 1) throw invalidEx("err.removeRule.multipleCustomLists");
-        final BubbleBlockList builtin = customLists.get(0);
-        return updateList(builtin.removeRule(id));
+        return customLists.get(0);
     }
 
     private ValidationResult validate(BubbleBlockList list, BubbleBlockList request, List<BubbleBlockList> allLists) {

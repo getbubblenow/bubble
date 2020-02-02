@@ -12,6 +12,7 @@ public class AppConfigAction {
     @Getter @Setter private String when;
     @Getter @Setter private String view;
     @Getter @Setter private String successView;
+    @Getter @Setter private String successMessage;
     @Getter @Setter private Integer index = 0;
 
     @Getter @Setter private String[] params;

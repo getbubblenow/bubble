@@ -75,13 +75,14 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                 }
             }
             if (list.hasAdditionalEntries()) {
+                if (blockListSource == null) blockListSource = new BlockListSource(); // might be built-in source
                 try {
                     blockListSource.addEntries(list.getAdditionalEntries());
                 } catch (IOException e) {
                     log.error("init: error adding additional entries: "+shortError(e));
                 }
             }
-            blockList.merge(blockListSource.getBlockList());
+            if (blockListSource != null) blockList.merge(blockListSource.getBlockList());
         }
     }
 
@@ -95,7 +96,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final String site = ruleHarness.getMatcher().getSite();
         final String fqdn = filter.getFqdn();
 
-        final BlockDecision decision = blockList.getDecision(filter.getFqdn(), filter.getUri());
+        final BlockDecision decision = getDecision(filter.getFqdn(), filter.getUri());
         switch (decision.getDecisionType()) {
             case block:
                 incrementCounters(account, device, app, site, fqdn);
@@ -106,6 +107,10 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                 return getFilterMatchResponse(filter, decision);
         }
     }
+
+    public BlockDecision getDecision(String fqdn, String uri) { return blockList.getDecision(fqdn, uri, false); }
+
+    public BlockDecision getDecision(String fqdn, String uri, boolean primary) { return blockList.getDecision(fqdn, uri, primary); }
 
     public FilterMatchResponse getFilterMatchResponse(FilterMatchersRequest filter, BlockDecision decision) {
         switch (decision.getDecisionType()) {
@@ -144,7 +149,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         }
 
         // Now that we know the content type, re-check the BlockList
-        final BlockDecision decision = blockList.getDecision(request.getFqdn(), request.getUri(), contentType);
+        final BlockDecision decision = blockList.getDecision(request.getFqdn(), request.getUri(), contentType, true);
         switch (decision.getDecisionType()) {
             case block:
                 log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was block, returning EMPTY_STREAM");

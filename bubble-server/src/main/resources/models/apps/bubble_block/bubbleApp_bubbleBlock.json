@@ -28,12 +28,13 @@
       {"name": "name"},
       {"name": "description", "control": "textarea"},
       {"name": "url", "type": "http_url"},
-      {"name": "testUrl", "type": "http_url"},
       {"name": "tags"},
       {"name": "tagString"},
       {"name": "enabled", "type": "flag", "mode": "readOnly"},
       {"name": "rule"},
-      {"name": "ruleType", "mode": "readOnly"}
+      {"name": "ruleType", "mode": "readOnly"},
+      {"name": "testUrl", "type": "http_url"},
+      {"name": "testUrlPrimary", "type": "flag"}
     ],
     "configViews": [{
       "name": "manageLists",
@@ -53,8 +54,9 @@
         },
         {
           "name": "testUrl", "scope": "app", "index": 20,
-          "params": ["testUrl"],
-          "button": "testUrl"
+          "params": ["testUrl", "testUrlPrimary"],
+          "button": "testUrl",
+          "successMessage": "response.decisionType"
         }
       ]
     }, {
@@ -81,8 +83,9 @@
         },
         {
           "name": "testUrl", "scope": "app", "index": 20,
-          "params": ["testUrl"],
-          "button": "testUrl"
+          "params": ["testUrl", "testUrlPrimary"],
+          "button": "testUrl",
+          "successMessage": "decisionType"
         }
       ]
     }]
@@ -159,6 +162,8 @@
         {"name": "config.field.ruleType", "value": "Rule Type"},
         {"name": "config.field.testUrl", "value": "Test URL"},
         {"name": "config.field.testUrl.description", "value": "URL to check against filters"},
+        {"name": "config.field.testUrlPrimary", "value": "Primary"},
+        {"name": "config.field.testUrlPrimary.description", "value": "A primary request will receive either an ALLOW or BLOCK decision from your Bubble. A non-primary request (for example a request for a webpage) may additionally receive a FILTER decision. This means the request will be permitted, but the response will be instrumented with Bubble filters to remove ads, malware and blocked elements."},
 
         {"name": "config.action.enableList", "value": "Enable"},
         {"name": "config.action.disableList", "value": "Disable"},
@@ -172,7 +177,13 @@
         {"name": "config.action.createRule", "value": "Add New Rule"},
         {"name": "config.button.createRule", "value": "Add"},
         {"name": "config.action.testUrl", "value": "Test URL"},
-        {"name": "config.button.testUrl", "value": "Test"}
+        {"name": "config.button.testUrl", "value": "Test"},
+        {"name": "config.response.block", "value": "Block"},
+        {"name": "config.response.block.description", "value": "Requests to this URL would be blocked by your Bubble"},
+        {"name": "config.response.allow", "value": "Allow"},
+        {"name": "config.response.allow.description", "value": "Requests to this URL would be allowed by your Bubble, and would not be filtered"},
+        {"name": "config.response.filter", "value": "Filter"},
+        {"name": "config.response.filter.description", "value": "Requests to this URL would be allowed by your Bubble, but would be filtered"}
       ]
     }]
   }

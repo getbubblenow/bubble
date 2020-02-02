@@ -212,7 +212,7 @@ public class RuleEngineService {
         for (AppRuleHarness h : rules) {
             final RuleDriver ruleDriver = driverDAO.findByUuid(h.getRule().getDriver());
             if (ruleDriver == null) {
-                log.warn("get: driver not found: "+h.getRule().getDriver());
+                log.warn("initRules: driver not found: "+h.getRule().getDriver());
                 continue;
             }
             final AppRuleDriver unwiredDriver = h.getRule().initDriver(ruleDriver, h.getMatcher(), account, device);

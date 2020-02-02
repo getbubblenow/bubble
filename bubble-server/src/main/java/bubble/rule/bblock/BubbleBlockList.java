@@ -11,6 +11,7 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
 
+import javax.persistence.Transient;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -65,6 +66,8 @@ public class BubbleBlockList {
     public boolean enabled() { return enabled != null && enabled; }
 
     @JsonIgnore @Getter @Setter private AppRule rule;
+
+    @Transient @Getter @Setter private Object response;  // non-standard config response (test URL) uses this
 
     public boolean hasEntry(String line) {
         return hasAdditionalEntries() && Arrays.asList(getAdditionalEntries()).contains(line);
