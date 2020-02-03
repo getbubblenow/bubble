@@ -237,7 +237,20 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     public boolean sendWelcomeEmail() { return sendWelcomeEmail != null && sendWelcomeEmail; }
 
     @Transient @Getter @Setter private transient String loginRequest;
-    @Transient @Getter @Setter private transient AccountContact[] multifactorAuth;
+    @Transient @Getter private transient AccountContact[] multifactorAuth;
+    public Account setMultifactorAuth(AccountContact[] mfa) {
+        if (!empty(mfa)) {
+            final AccountContact[] masked = new AccountContact[mfa.length];
+            for (int i=0; i<mfa.length; i++) masked[i] = mfa[i].mask();
+            this.multifactorAuth = masked;
+        } else {
+            this.multifactorAuth = null;
+        }
+        return this;
+    }
+    public Account setMultifactorAuthList (List<AccountContact> mfa) {
+        return setMultifactorAuth(empty(mfa) ? null : mfa.stream().map(AccountContact::mask).toArray(AccountContact[]::new));
+    }
 
     @Transient @Getter @Setter private transient String remoteHost;
     @Transient @JsonIgnore @Getter @Setter private transient Boolean verifyContact;

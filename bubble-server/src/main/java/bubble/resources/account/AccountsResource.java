@@ -1,6 +1,7 @@
 package bubble.resources.account;
 
 import bubble.cloud.CloudServiceType;
+import bubble.dao.SessionDAO;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
 import bubble.dao.account.message.AccountMessageDAO;
@@ -26,6 +27,8 @@ import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.StandardNetworkService;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.wizard.auth.ChangePasswordRequest;
+import org.cobbzilla.wizard.model.HashedPassword;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
@@ -43,6 +46,7 @@ import java.util.Map;
 import static bubble.ApiConstants.*;
 import static bubble.model.account.Account.ADMIN_UPDATE_FIELDS;
 import static bubble.model.account.Account.validatePassword;
+import static bubble.resources.account.AuthResource.forgotPasswordMessage;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -60,6 +64,7 @@ public class AccountsResource {
     @Autowired private AccountDownloadService downloadService;
     @Autowired private AuthenticatorService authenticatorService;
     @Autowired private SelfNodeService selfNodeService;
+    @Autowired private SessionDAO sessionDAO;
 
     @GET
     public Response list(@Context ContainerRequest ctx) {
@@ -308,6 +313,54 @@ public class AccountsResource {
                 .setNetwork(selfNodeService.getThisNetwork().getUuid())
                 .setName(c.account.getUuid())
                 .setRemoteHost(getRemoteHost(req))));
+    }
+
+
+    @POST @Path("/{id}"+EP_CHANGE_PASSWORD)
+    public Response rootChangePassword(@Context Request req,
+                                       @Context ContainerRequest ctx,
+                                       @PathParam("id") String id,
+                                       ChangePasswordRequest request) {
+        final AccountContext c = new AccountContext(ctx, id);
+        if (!c.caller.admin()) return forbidden();
+
+        final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
+        if (policy != null && request.hasTotpToken()) {
+            authenticatorService.authenticate(c.account, policy, new AuthenticatorRequest()
+                    .setAccount(c.account.getUuid())
+                    .setAuthenticate(true)
+                    .setToken(request.getTotpToken()));
+        }
+
+        if (c.caller.getUuid().equals(c.account.getUuid()) || c.account.admin()) {
+            if (policy != null) authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
+            if (!c.account.getHashedPassword().isCorrectPassword(request.getOldPassword())) {
+                return invalid("err.currentPassword.invalid", "current password was invalid", "");
+            }
+        }
+
+        final ConstraintViolationBean passwordViolation = validatePassword(request.getNewPassword());
+        if (passwordViolation != null) return invalid(passwordViolation);
+
+        if (policy != null) {
+            final AccountMessage forgotPasswordMessage = forgotPasswordMessage(req, c.account, configuration);
+            final List<AccountContact> requiredApprovals = policy.getRequiredExternalApprovals(forgotPasswordMessage);
+            if (!requiredApprovals.isEmpty()) {
+                messageDAO.create(forgotPasswordMessage);
+                return ok(c.account.setMultifactorAuthList(requiredApprovals));
+            }
+        }
+
+        c.account.setHashedPassword(new HashedPassword(request.getNewPassword()));
+
+        // Update account
+        final Account updated = accountDAO.update(c.account);
+        if (c.caller.getUuid().equals(c.account.getUuid())) {
+            sessionDAO.update(c.caller.getApiToken(), updated);
+        } else {
+            sessionDAO.invalidateAllSessions(c.account.getUuid());
+        }
+        return ok(updated);
     }
 
     @DELETE @Path("/{id}")

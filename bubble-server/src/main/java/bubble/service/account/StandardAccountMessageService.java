@@ -259,8 +259,6 @@ public class StandardAccountMessageService implements AccountMessageService {
                 .collect(Collectors.toList());
 
         // return masked list of contacts remaining to approve
-        return new Account().setMultifactorAuth(remainingApprovals.stream()
-                .map(AccountContact::mask)
-                .toArray(AccountContact[]::new));
+        return new Account().setMultifactorAuthList(remainingApprovals);
     }
 }

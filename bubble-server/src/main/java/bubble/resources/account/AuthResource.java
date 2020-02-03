@@ -262,15 +262,19 @@ public class AuthResource {
         final Account account = accountDAO.findById(request.getName());
         if (account == null) return ok();
 
-        accountMessageDAO.create(new AccountMessage()
+        accountMessageDAO.create(forgotPasswordMessage(req, account, configuration));
+        return ok();
+    }
+
+    public static AccountMessage forgotPasswordMessage(Request req, Account account, BubbleConfiguration configuration) {
+        return new AccountMessage()
                 .setAccount(account.getUuid())
                 .setNetwork(configuration.getThisNetwork().getUuid())
                 .setName(account.getUuid())
                 .setMessageType(AccountMessageType.request)
                 .setAction(AccountAction.password)
                 .setTarget(ActionTarget.account)
-                .setRemoteHost(getRemoteHost(req)));
-        return ok();
+                .setRemoteHost(getRemoteHost(req));
     }
 
     @POST @Path(EP_APPROVE+"/{token}")

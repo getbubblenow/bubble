@@ -3,8 +3,11 @@ package bubble.resources.account;
 import bubble.dao.SessionDAO;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
+import bubble.dao.account.message.AccountMessageDAO;
 import bubble.model.account.Account;
+import bubble.model.account.AccountContact;
 import bubble.model.account.AccountPolicy;
+import bubble.model.account.AuthenticatorRequest;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
@@ -36,6 +39,7 @@ import org.cobbzilla.wizard.client.script.ApiRunnerListener;
 import org.cobbzilla.wizard.client.script.ApiRunnerListenerStreamLogger;
 import org.cobbzilla.wizard.client.script.ApiScript;
 import org.cobbzilla.wizard.model.HashedPassword;
+import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -49,9 +53,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.Locale;
 
 import static bubble.ApiConstants.*;
+import static bubble.model.account.Account.validatePassword;
+import static bubble.resources.account.AuthResource.forgotPasswordMessage;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.errorString;
 import static org.cobbzilla.util.http.HttpContentTypes.*;
@@ -70,6 +77,7 @@ public class MeResource {
     @Autowired private AccountDownloadService downloadService;
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AuthenticatorService authenticatorService;
+    @Autowired private AccountMessageDAO messageDAO;
 
     @GET
     public Response me(@Context ContainerRequest ctx) {
@@ -104,13 +112,34 @@ public class MeResource {
     }
 
     @POST @Path(EP_CHANGE_PASSWORD)
-    public Response changePassword(@Context ContainerRequest ctx,
+    public Response changePassword(@Context Request req,
+                                   @Context ContainerRequest ctx,
                                    ChangePasswordRequest request) {
         final Account caller = userPrincipal(ctx);
-        authenticatorService.ensureAuthenticated(ctx, ActionTarget.account);
-        if (!caller.getHashedPassword().isCorrectPassword(request.getOldPassword())) {
-            return invalid("err.oldPassword.invalid", "old password was invalid");
+
+        final AccountPolicy policy = policyDAO.findSingleByAccount(caller.getUuid());
+        if (policy != null && request.hasTotpToken()) {
+            authenticatorService.authenticate(caller, policy, new AuthenticatorRequest()
+                    .setAccount(caller.getUuid())
+                    .setAuthenticate(true)
+                    .setToken(request.getTotpToken()));
         }
+        if (policy != null) authenticatorService.ensureAuthenticated(ctx, ActionTarget.account);
+        if (!caller.getHashedPassword().isCorrectPassword(request.getOldPassword())) {
+            return invalid("err.currentPassword.invalid", "current password was invalid", "");
+        }
+        final ConstraintViolationBean passwordViolation = validatePassword(request.getNewPassword());
+        if (passwordViolation != null) return invalid(passwordViolation);
+
+        if (policy != null) {
+            final AccountMessage forgotPasswordMessage = forgotPasswordMessage(req, caller, configuration);
+            final List<AccountContact> requiredApprovals = policy.getRequiredExternalApprovals(forgotPasswordMessage);
+            if (!requiredApprovals.isEmpty()) {
+                messageDAO.create(forgotPasswordMessage);
+                return ok(caller.setMultifactorAuthList(requiredApprovals));
+            }
+        }
+
         caller.setHashedPassword(new HashedPassword(request.getNewPassword()));
 
         // Update account, and write back to session

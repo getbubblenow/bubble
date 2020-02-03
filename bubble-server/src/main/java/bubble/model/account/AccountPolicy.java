@@ -141,6 +141,13 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
         }
     }
 
+    public List<AccountContact> getRequiredExternalApprovals(AccountMessage message) {
+        final List<AccountContact> required = getRequiredApprovals(message);
+        return required.isEmpty() ? required : required.stream()
+                .filter(AccountContact::isNotAuthenticator)
+                .collect(Collectors.toList());
+    }
+
     public List<AccountContact> requiredAuthFactors() {
         return Arrays.stream(getAccountContacts())
                 .filter(AccountContact::requiredAuthFactor)
