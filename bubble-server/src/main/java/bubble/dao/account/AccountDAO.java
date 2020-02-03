@@ -14,6 +14,7 @@ import bubble.model.app.*;
 import bubble.model.bill.Bill;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
+import bubble.service.SearchService;
 import bubble.service.boot.SelfNodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.cache.Refreshable;
@@ -60,6 +61,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private SelfNodeService selfNodeService;
     @Autowired private BillDAO billDAO;
+    @Autowired private SearchService searchService;
 
     public Account newAccount(Request req, AccountRegistration request, Account parent) {
         return create(new Account(request)
@@ -84,11 +86,30 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         if (account.getAutoUpdatePolicy() == null) {
             account.setAutoUpdatePolicy(new AutoUpdatePolicy());
         }
+
+        ensureThisNodeExists();
         return super.preCreate(account);
     }
 
-    @Override public Account postCreate(Account account, Object context) {
+    private void ensureThisNodeExists() {
+        BubbleNode thisNode = selfNodeService.getThisNode();
+        if (thisNode == null) {
+            log.warn("copyTemplates: thisNode not set, checking if only one node is defined");
+            thisNode = selfNodeService.getSoleNode();
+            if (thisNode == null) {
+                throw invalidEx("err.user.noSoleNode", "copyTemplates: thisNode was null and no sole node, cannot proceed");
+            } else {
+                selfNodeService.setActivated(thisNode);
+                thisNode = selfNodeService.getThisNode();
+                if (thisNode == null) {
+                    throw invalidEx("err.user.setSelfNodeFailed", "copyTemplates: thisNode not set, setActivated did not set node, cannot proceed");
+                }
+            }
+        }
+    }
 
+    @Override public Account postCreate(Account account, Object context) {
+        searchService.flushCache(this);
         final String accountUuid = account.getUuid();
         if (account.hasPolicy()) {
             policyDAO.create(new AccountPolicy(account.getPolicy()).setAccount(accountUuid));
@@ -114,6 +135,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     }
 
     @Override public Account postUpdate(Account account, Object context) {
+        searchService.flushCache(this);
         if (account.hasPolicy()) {
             final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
             policy.update(account.getPolicy());
@@ -142,7 +164,6 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
                 clouds.put(parentEntity.getUuid(), accountEntity);
             }
         });
-
         copyTemplateObjects(acct, parent, footprintDAO);
 
         //noinspection Convert2Diamond -- compilation breaks with <>
@@ -269,11 +290,13 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
                         .setAdmin(null)
                         .setSuspended(null)
                         .setDescription(null)
+                        .setDeleted()
                         .setUrl(null)
                         .setAutoUpdatePolicy(EMPTY_AUTO_UPDATE_POLICY)
                         .setHashedPassword(HashedPassword.DELETED));
                 break;
         }
+        searchService.flushCache(this);
     }
 
     // once activated (any accounts exist), you can never go back

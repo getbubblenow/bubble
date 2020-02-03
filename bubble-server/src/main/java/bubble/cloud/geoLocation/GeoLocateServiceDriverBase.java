@@ -115,19 +115,20 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
     }
 
     private File downloadDbFile(HttpRequestBean request, File archive) throws IOException {
-        File file = null;
-        RuntimeException lastEx = null;
+        Exception lastEx = null;
         for (int i=0; i<MAX_FILE_RETRIES; i++) {
             try {
                 return HttpUtil.getResponse(request).toFile(archive);
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 lastEx = e;
                 log.warn("downloadDbFile: "+shortError(e));
                 sleep(SECONDS.toMillis(2) * (i+1), "initFile: waiting before retry of download: "+request.getUri());
             }
         }
-        log.error("downloadDbFile: retries failed, lastEx="+shortError(lastEx));
-        throw lastEx;
+        final String msg = "downloadDbFile: retries failed, lastEx=" + shortError(lastEx);
+        log.error(msg);
+        if (lastEx instanceof RuntimeException) throw (RuntimeException) lastEx;
+        throw new IllegalStateException(msg, lastEx);
     }
 
     public String getExtension(String url) { return FileUtil.extension(url); }

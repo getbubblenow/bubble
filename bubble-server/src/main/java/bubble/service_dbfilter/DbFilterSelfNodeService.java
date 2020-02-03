@@ -18,4 +18,8 @@ public class DbFilterSelfNodeService implements SelfNodeService {
 
     @Override public void refreshThisNetwork() { notSupported("refreshThisNetwork"); }
 
+    @Override public BubbleNode getSoleNode() { return notSupported("getSoleNode"); }
+
+    @Override public void setActivated(BubbleNode thisNode) { notSupported("setActivated"); }
+
 }

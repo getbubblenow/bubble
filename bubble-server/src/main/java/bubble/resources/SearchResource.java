@@ -1,7 +1,7 @@
 package bubble.resources;
 
 import bubble.model.account.Account;
-import bubble.service.SearchService;
+import bubble.service.StandardSearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.model.search.SearchQuery;
 import org.glassfish.grizzly.http.server.Request;
@@ -24,7 +24,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.userPrincipal;
 @Service @Slf4j
 public class SearchResource {
 
-    @Autowired private SearchService searchService;
+    @Autowired private StandardSearchService searchService;
 
     @GET @Path("/{type}")
     public Response search(@Context Request req,

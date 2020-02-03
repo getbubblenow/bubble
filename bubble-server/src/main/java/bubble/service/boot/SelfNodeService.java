@@ -13,4 +13,7 @@ public interface SelfNodeService {
 
     void refreshThisNetwork ();
 
+    BubbleNode getSoleNode();
+
+    void setActivated(BubbleNode thisNode);
 }

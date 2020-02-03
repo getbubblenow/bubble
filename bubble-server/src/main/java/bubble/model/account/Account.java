@@ -23,6 +23,8 @@ import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.filters.auth.TokenPrincipal;
 import org.cobbzilla.wizard.model.HashedPassword;
 import org.cobbzilla.wizard.model.Identifiable;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldMode;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.IdentifiableBaseParentEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.model.search.SqlViewSearchResult;
@@ -113,21 +115,21 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     // make this updatable if we ever want accounts to be able to change parents
     // there might be a lot more involved in that action though (read-only parent objects that will no longer be visible, must be copied in?)
-    @ECIndex @Column(length=UUID_MAXLEN, updatable=false) @ECField(index=20)
+    @ECIndex @Column(length=UUID_MAXLEN, updatable=false) @ECField(index=20, mode=EntityFieldMode.readOnly)
     @Getter @Setter private String parent;
     public boolean hasParent () { return parent != null; }
 
-    @ECSearchable(filter=true) @ECField(index=30)
+    @ECSearchable @ECField(index=30)
     @Size(max=1024, message="err.url.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(1024+ENC_PAD)+")")
     @Getter @Setter private String url;
 
-    @ECSearchable(filter=true) @ECField(index=40)
+    @ECSearchable @ECField(index=40)
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
-    @ECSearchable @ECField(index=50)
+    @ECSearchable @ECField(index=50, required=EntityFieldRequired.optional)
     @Size(max=20, message="err.locale.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(20+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String locale = getDEFAULT_LOCALE();
@@ -144,6 +146,15 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     @ECSearchable @ECField(index=80)
     @Getter @Setter private Boolean locked = false;
     public boolean locked () { return bool(locked); }
+
+    @ECSearchable @ECField(index=90, type=EntityFieldType.epoch_time, mode=EntityFieldMode.readOnly)
+    @Getter @Setter private Long deleted;
+    public boolean deleted () { return deleted != null; }
+    public Account setDeleted() { return setDeleted(now()); }
+
+    @ECSearchable @ECField(index=100, type=EntityFieldType.epoch_time, mode=EntityFieldMode.readOnly)
+    @Getter @Setter private Long lastLogin;
+    public Account setLastLogin() { return setLastLogin(now()); }
 
     @JsonIgnore @Embedded @Getter @Setter private HashedPassword hashedPassword;
 
@@ -221,6 +232,9 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     @Transient @Getter @Setter private transient AccountPolicy policy;
     public boolean hasPolicy() { return policy != null; }
+
+    @Transient @Getter @Setter private transient Boolean sendWelcomeEmail = false;
+    public boolean sendWelcomeEmail() { return sendWelcomeEmail != null && sendWelcomeEmail; }
 
     @Transient @Getter @Setter private transient String loginRequest;
     @Transient @Getter @Setter private transient AccountContact[] multifactorAuth;

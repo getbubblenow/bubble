@@ -4,6 +4,7 @@ import bubble.model.account.Account;
 import bubble.model.account.HasAccount;
 import bubble.model.account.HasAccountNoName;
 import bubble.server.BubbleConfiguration;
+import bubble.service.SearchService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.dao.AbstractCRUDDAO;
@@ -12,6 +13,7 @@ import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
 import static bubble.ApiConstants.HOME_DIR;
@@ -30,8 +32,19 @@ public abstract class AccountOwnedEntityDAO<E extends HasAccount>
     public static final Order NAME_ASC = Order.asc("name");
 
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private SearchService searchService;
 
     @Getter(lazy=true) private final Boolean hasNameField = !HasAccountNoName.class.isAssignableFrom(getFirstTypeParam(getClass()));
+
+    @Override public E postCreate(E entity, Object context) {
+        searchService.flushCache(this);
+        return super.postCreate(entity, context);
+    }
+
+    @Override public E postUpdate(E entity, Object context) {
+        searchService.flushCache(this);
+        return super.postUpdate(entity, context);
+    }
 
     public List<E> findByAccount(String accountUuid) { return findByField("account", accountUuid); }
 
@@ -65,6 +78,16 @@ public abstract class AccountOwnedEntityDAO<E extends HasAccount>
     }
 
     public boolean dbFilterIncludeAll() { return false; }
+
+    @Override public void delete(String uuid) {
+        super.delete(uuid);
+        searchService.flushCache(this);
+    }
+
+    @Override public void delete(Collection<E> entities) {
+        super.delete(entities);
+        searchService.flushCache(this);
+    }
 
     public void forceDelete(String uuid) { delete(uuid); }
 

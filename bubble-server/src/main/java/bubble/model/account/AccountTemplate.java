@@ -40,7 +40,7 @@ public interface AccountTemplate extends HasAccount {
                 E accountEntity = dao.findByAccountAndId(accountUuid, parentEntity.getName());
                 if (accountEntity == null) {
                     accountEntity = ((E) instantiate(parentEntity.getClass(), parentEntity)).setAccount(accountUuid);
-                    if (copy != null) accountEntity= copy.preCreate(parentEntity, accountEntity);
+                    if (copy != null) accountEntity = copy.preCreate(parentEntity, accountEntity);
                     if (accountEntity == null) {
                         log.warn("copyTemplateObjects: preCreate returned null for parentEntity: " + parentEntity);
                         return;

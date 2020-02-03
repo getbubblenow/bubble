@@ -6,7 +6,7 @@ import bubble.model.app.AppSite;
 import bubble.model.app.BubbleApp;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
-import bubble.service.SearchService;
+import bubble.service.StandardSearchService;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.dao.SearchResults;
 import org.cobbzilla.wizard.model.search.SearchQuery;
@@ -23,7 +23,7 @@ public abstract class AppDataDriverBase implements AppDataDriver {
     public static final SearchSort DEFAULT_SORT = CASE_INSENSITIVE_KEY_SORT_ASC;
 
     @Autowired protected AppDataDAO dataDAO;
-    @Autowired protected SearchService searchService;
+    @Autowired protected StandardSearchService searchService;
     @Autowired protected RedisService redis;
     @Autowired protected BubbleConfiguration configuration;
 

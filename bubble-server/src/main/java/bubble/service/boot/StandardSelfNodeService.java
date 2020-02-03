@@ -136,6 +136,11 @@ public class StandardSelfNodeService implements SelfNodeService {
         return true;
     }
 
+    @Override public BubbleNode getSoleNode() {
+        final List<BubbleNode> all = nodeDAO.findAll();
+        return all.size() == 1 ? all.get(0) : null;
+    }
+
     public void setActivated(BubbleNode node) {
         // only called by ActivationService on a brand-new instance
         log.info("setActivated: setting thisNode="+node.id());

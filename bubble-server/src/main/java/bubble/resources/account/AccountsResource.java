@@ -4,14 +4,12 @@ import bubble.cloud.CloudServiceType;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
 import bubble.dao.account.message.AccountMessageDAO;
-import bubble.model.account.Account;
-import bubble.model.account.AccountContact;
-import bubble.model.account.AccountPolicy;
-import bubble.model.account.AccountRegistration;
+import bubble.model.account.*;
 import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
+import bubble.model.cloud.BubbleNetwork;
 import bubble.resources.app.AppsResource;
 import bubble.resources.bill.AccountPaymentMethodsResource;
 import bubble.resources.bill.AccountPaymentsResource;
@@ -28,6 +26,8 @@ import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.StandardNetworkService;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.wizard.validation.ConstraintViolationBean;
+import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +42,7 @@ import java.util.Map;
 
 import static bubble.ApiConstants.*;
 import static bubble.model.account.Account.ADMIN_UPDATE_FIELDS;
+import static bubble.model.account.Account.validatePassword;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -79,10 +80,32 @@ public class AccountsResource {
                                AccountRegistration request) {
 
         final AccountContext c = new AccountContext(ctx, request.getName(), true);
-        if (c.account != null) return invalid("err.user.exists", "User with name "+request.getName()+" already exists", request.getName());
-        if (!request.hasContact()) return invalid("err.user.noContact", "No contact information provided", request.getName());
 
-        final String parentUuid = request.hasParent() ? request.getParent() : configuration.getThisNetwork().getAccount();
+        final ValidationResult errors = new ValidationResult();
+        if (c.account != null) return invalid("err.user.exists", "User with name "+request.getName()+" already exists", request.getName());
+
+        final ConstraintViolationBean passwordViolation = validatePassword(request.getPassword());
+        if (passwordViolation != null) errors.addViolation(passwordViolation);
+        if (!request.hasContact()) {
+            errors.addViolation("err.contact.required", "No contact information provided", request.getName());
+        } else {
+            request.getContact().validate(errors);
+        }
+        if (errors.isInvalid()) return invalid(errors);
+
+        final String parentUuid;
+        if (request.hasParent()) {
+            parentUuid = request.getParent();
+        } else {
+            final BubbleNetwork thisNetwork = configuration.getThisNetwork();
+            if (thisNetwork != null) {
+                parentUuid = thisNetwork.getAccount();
+            } else {
+                final Account firstAdmin = accountDAO.getFirstAdmin();
+                if (firstAdmin == null) return invalid("err.user.noAdmin");
+                parentUuid = firstAdmin.getUuid();
+            }
+        }
         final Account parent = parentUuid.equalsIgnoreCase(c.caller.getUuid()) ? c.caller : accountDAO.findByUuid(parentUuid);
         if (parent == null) return invalid("err.parent.notFound", "Parent account does not exist: "+parentUuid);
 
@@ -298,6 +321,18 @@ public class AccountsResource {
 
         authenticatorService.ensureAuthenticated(ctx, ActionTarget.account);
 
+        if (c.account.deleted()) {
+            // admin is deleting an account that is already flagged 'deleted'
+            // force a full deletion
+            final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
+            if (policy != null) {
+                policyDAO.update(policy.setDeletionPolicy(AccountDeletionPolicy.full_delete));
+            } else {
+                policyDAO.create(new AccountPolicy()
+                        .setAccount(c.account.getUuid())
+                        .setDeletionPolicy(AccountDeletionPolicy.full_delete));
+            }
+        }
         accountDAO.delete(c.account.getUuid());
         return ok(c.account);
     }

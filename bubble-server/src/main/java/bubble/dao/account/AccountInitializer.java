@@ -63,15 +63,17 @@ public class AccountInitializer implements Runnable {
                 }
             }
             if (!success) throw lastEx;
-            final BubbleNetwork thisNetwork = selfNodeService.getThisNetwork();
-            messageDAO.create(new AccountMessage()
-                    .setRemoteHost(account.getRemoteHost())
-                    .setAccount(account.getUuid())
-                    .setName(account.getUuid())
-                    .setNetwork(thisNetwork.getUuid())
-                    .setMessageType(AccountMessageType.notice)
-                    .setAction(AccountAction.welcome)
-                    .setTarget(ActionTarget.account));
+            if (account.sendWelcomeEmail()) {
+                final BubbleNetwork thisNetwork = selfNodeService.getThisNetwork();
+                messageDAO.create(new AccountMessage()
+                        .setRemoteHost(account.getRemoteHost())
+                        .setAccount(account.getUuid())
+                        .setName(account.getUuid())
+                        .setNetwork(thisNetwork.getUuid())
+                        .setMessageType(AccountMessageType.notice)
+                        .setAction(AccountAction.welcome)
+                        .setTarget(ActionTarget.account));
+            }
         } catch (Exception e) {
             error.set(e);
             // todo: send to errbit

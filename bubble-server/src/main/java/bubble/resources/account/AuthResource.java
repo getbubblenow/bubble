@@ -72,6 +72,10 @@ public class AuthResource {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AuthenticatorService authenticatorService;
 
+    public Account updateLastLogin(Account account) { return accountDAO.update(account.setLastLogin()); }
+
+    public String newLoginSession(Account account) { return sessionDAO.create(updateLastLogin(account)); }
+
     @GET @Path(EP_CONFIGS)
     public Response getPublicSystemConfigs(@Context ContainerRequest ctx) {
         return ok(configuration.getPublicSystemConfigs());
@@ -107,7 +111,7 @@ public class AuthResource {
         final Account account = accountDAO.create(new Account(request).setRemoteHost(getRemoteHost(req)));
         activationService.bootstrapThisNode(account, request);
 
-        return ok(account.setToken(sessionDAO.create(account)));
+        return ok(account.setToken(newLoginSession(account)));
     }
 
     @Autowired private NotificationService notificationService;
@@ -196,7 +200,7 @@ public class AuthResource {
         if (parent == null) return invalid("err.parent.notFound", "Parent account does not exist: "+parentUuid);
 
         final Account account = accountDAO.newAccount(req, request, parent);
-        return ok(account.waitForAccountInit().setToken(sessionDAO.create(account)));
+        return ok(account.waitForAccountInit().setToken(newLoginSession(account)));
     }
 
     @POST @Path(EP_LOGIN)
@@ -248,7 +252,7 @@ public class AuthResource {
             }
         }
 
-        return ok(account.setToken(sessionDAO.create(account)));
+        return ok(account.setToken(newLoginSession(account)));
     }
 
     @POST @Path(EP_FORGOT_PASSWORD)
@@ -293,7 +297,7 @@ public class AuthResource {
         if (approval.getMessageType() == AccountMessageType.confirmation) {
             if (account == null) return invalid("err.approvalToken.invalid");
             if (approval.getAction() == AccountAction.login) {
-                return ok(account.setToken(sessionDAO.create(account)));
+                return ok(account.setToken(newLoginSession(account)));
             } else {
                 return ok_empty();
             }
@@ -348,7 +352,7 @@ public class AuthResource {
 
         if (approval.getMessageType() == AccountMessageType.confirmation) {
             // OK we can log in!
-            return ok(account.setToken(sessionToken));
+            return ok(updateLastLogin(account).setToken(sessionToken));
         } else {
             return ok(messageService.determineRemainingApprovals(approval));
         }
