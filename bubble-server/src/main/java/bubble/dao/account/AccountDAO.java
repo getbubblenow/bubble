@@ -92,17 +92,19 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     }
 
     private void ensureThisNodeExists() {
-        BubbleNode thisNode = selfNodeService.getThisNode();
-        if (thisNode == null) {
-            log.warn("copyTemplates: thisNode not set, checking if only one node is defined");
-            thisNode = selfNodeService.getSoleNode();
+        if (activated()) {
+            BubbleNode thisNode = selfNodeService.getThisNode();
             if (thisNode == null) {
-                throw invalidEx("err.user.noSoleNode", "copyTemplates: thisNode was null and no sole node, cannot proceed");
-            } else {
-                selfNodeService.setActivated(thisNode);
-                thisNode = selfNodeService.getThisNode();
+                log.warn("copyTemplates: thisNode not set, checking if only one node is defined");
+                thisNode = selfNodeService.getSoleNode();
                 if (thisNode == null) {
-                    throw invalidEx("err.user.setSelfNodeFailed", "copyTemplates: thisNode not set, setActivated did not set node, cannot proceed");
+                    throw invalidEx("err.user.noSoleNode", "copyTemplates: thisNode was null and no sole node, cannot proceed");
+                } else {
+                    selfNodeService.setActivated(thisNode);
+                    thisNode = selfNodeService.getThisNode();
+                    if (thisNode == null) {
+                        throw invalidEx("err.user.setSelfNodeFailed", "copyTemplates: thisNode not set, setActivated did not set node, cannot proceed");
+                    }
                 }
             }
         }

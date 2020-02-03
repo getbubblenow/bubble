@@ -233,8 +233,8 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     @Transient @Getter @Setter private transient AccountPolicy policy;
     public boolean hasPolicy() { return policy != null; }
 
-    @Transient @Getter @Setter private transient Boolean sendWelcomeEmail = false;
-    public boolean sendWelcomeEmail() { return sendWelcomeEmail != null && sendWelcomeEmail; }
+    @Transient @Getter @Setter private transient Boolean sendWelcomeEmail = null;
+    public boolean sendWelcomeEmail() { return sendWelcomeEmail == null || sendWelcomeEmail; }
 
     @Transient @Getter @Setter private transient String loginRequest;
     @Transient @Getter private transient AccountContact[] multifactorAuth;
@@ -249,7 +249,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
         return this;
     }
     public Account setMultifactorAuthList (List<AccountContact> mfa) {
-        return setMultifactorAuth(empty(mfa) ? null : mfa.stream().map(AccountContact::mask).toArray(AccountContact[]::new));
+        return setMultifactorAuth(empty(mfa) ? null : mfa.toArray(new AccountContact[0]));
     }
 
     @Transient @Getter @Setter private transient String remoteHost;
