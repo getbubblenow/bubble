@@ -7,7 +7,7 @@
       "uri": "auth/activate",
       "entity": {
         "name": "root2",
-        "password": "pass"
+        "password": "pass123!@x"
       }
     },
     "response": {

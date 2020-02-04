@@ -4,7 +4,7 @@
     "include": "_defaults",
     "params": {
       "rootUsername": "root",
-      "rootPassword": "password",
+      "rootPassword": "password1!",
       "sageFqdn": "_required",
       "sageConnectionVar": "sageConnection",
       "username": "user-<<rand 5>>",

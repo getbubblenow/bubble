@@ -4,7 +4,7 @@
     "include": "_defaults",
     "params": {
       "rootUsername": "root",
-      "rootPassword": "password",
+      "rootPassword": "password1!",
       "email": "user-<<rand 5>>@example.com",
       "planVar": "plan",
       "forkHost": "api-<<rand 5>>",
