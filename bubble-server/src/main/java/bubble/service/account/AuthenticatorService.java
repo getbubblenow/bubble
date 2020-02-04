@@ -60,15 +60,15 @@ public class AuthenticatorService {
     public void ensureAuthenticated(ContainerRequest ctx, ActionTarget target) {
         final Account account = userPrincipal(ctx);
         final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
-        checkAuth(account, policy, target);
+        ensureAuthenticated(account, policy, target);
     }
 
     public void ensureAuthenticated(ContainerRequest ctx, AccountPolicy policy, ActionTarget target) {
         final Account account = userPrincipal(ctx);
-        checkAuth(account, policy, target);
+        ensureAuthenticated(account, policy, target);
     }
 
-    private void checkAuth(Account account, AccountPolicy policy, ActionTarget target) {
+    public void ensureAuthenticated(Account account, AccountPolicy policy, ActionTarget target) {
         if (policy == null || !policy.hasVerifiedAuthenticator()) return;
         if (target != null) {
             final AccountContact authenticator = policy.getAuthenticator();

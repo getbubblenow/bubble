@@ -3,6 +3,8 @@
 
 serverName: bubble-api
 
+bcryptRounds: 2
+
 #publicUriBase: https://127.0.0.1
 publicUriBase: {{PUBLIC_BASE_URI}}
 

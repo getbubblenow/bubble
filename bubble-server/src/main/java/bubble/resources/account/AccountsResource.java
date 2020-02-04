@@ -28,6 +28,7 @@ import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.StandardNetworkService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.auth.ChangePasswordRequest;
+import org.cobbzilla.wizard.model.HashedPassword;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
@@ -326,21 +327,42 @@ public class AccountsResource {
                                        ChangePasswordRequest request) {
         final AccountContext c = new AccountContext(ctx, id);
         if (!c.caller.admin()) return forbidden();
+        final Account caller = accountDAO.findByUuid(c.caller.getUuid()).setToken(c.caller.getToken());
 
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
 
-        if (c.caller.getUuid().equals(c.account.getUuid()) || c.account.admin()) {
-            if (policy != null) authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
+        // if there was a totp token provided, try it
+        final String authSession;
+        if (request.hasTotpToken()) {
+            c.account.setToken(authenticatorService.authenticate(caller, policy, new AuthenticatorRequest()
+                    .setAccount(c.account.getUuid())
+                    .setAuthenticate(true)
+                    .setToken(request.getTotpToken())));
+        } else {
+            authSession = null;
         }
 
-        if (policy != null) {
+        // older admin, or self (since ctime would be equal)
+        final boolean olderAdmin = c.account.admin() && caller.getCtime() >= c.account.getCtime();
+
+        // admins created earlier can do anything to admins created later
+        // if admins created later try to change password of admins created earlier, we go through approvals
+        if (policy != null && olderAdmin) {
+            // ensure authenticator has been provided for account
+            authenticatorService.ensureAuthenticated(c.account, policy, ActionTarget.account);
+
+            // if caller is younger admin, they must know the current password of the admin whose password they're trying to change
+            if (!c.account.getHashedPassword().isCorrectPassword(request.getOldPassword())) {
+                return invalid("err.currentPassword.invalid", "current password was invalid", "");
+            }
+
             final AccountMessage forgotPasswordMessage = forgotPasswordMessage(req, c.account, configuration);
             final List<AccountContact> requiredApprovals = policy.getRequiredApprovals(forgotPasswordMessage);
             final List<AccountContact> requiredExternalApprovals = policy.getRequiredExternalApprovals(forgotPasswordMessage);
             if (!requiredApprovals.isEmpty()) {
                 if (requiredApprovals.stream().anyMatch(AccountContact::isAuthenticator)) {
                     if (!request.hasTotpToken()) return invalid("err.totpToken.required");
-                    authenticatorService.authenticate(c.account, policy, new AuthenticatorRequest()
+                    authenticatorService.authenticate(caller, policy, new AuthenticatorRequest()
                             .setAccount(c.account.getUuid())
                             .setAuthenticate(true)
                             .setToken(request.getTotpToken()));
@@ -352,16 +374,14 @@ public class AccountsResource {
             }
         }
 
-        if (!c.account.getHashedPassword().isCorrectPassword(request.getOldPassword())) {
-            return invalid("err.currentPassword.invalid", "current password was invalid", "");
-        }
+        // validate new password
         final ConstraintViolationBean passwordViolation = validatePassword(request.getNewPassword());
         if (passwordViolation != null) return invalid(passwordViolation);
 
-        // Update account
-        final Account updated = accountDAO.update(c.account);
-        if (c.caller.getUuid().equals(c.account.getUuid())) {
-            sessionDAO.update(c.caller.getApiToken(), updated);
+        // Set password, update account. Update session if caller is targeting self, otherwise invalidate all sessions
+        final Account updated = accountDAO.update(c.account.setHashedPassword(new HashedPassword(request.getNewPassword())));
+        if (caller.getUuid().equals(c.account.getUuid())) {
+            sessionDAO.update(caller.getApiToken(), updated);
         } else {
             sessionDAO.invalidateAllSessions(c.account.getUuid());
         }

@@ -154,10 +154,8 @@ public class MeResource {
         final ConstraintViolationBean passwordViolation = validatePassword(request.getNewPassword());
         if (passwordViolation != null) return invalid(passwordViolation);
 
-        caller.setHashedPassword(new HashedPassword(request.getNewPassword()));
-
-        // Update account, and write back to session
-        final Account updated = accountDAO.update(caller);
+        // Set new password, update account, and write back to session
+        final Account updated = accountDAO.update(caller.setHashedPassword(new HashedPassword(request.getNewPassword())));
         sessionDAO.update(caller.getApiToken(), updated);
 
         return ok(updated);

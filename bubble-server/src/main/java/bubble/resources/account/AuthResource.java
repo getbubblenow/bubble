@@ -237,25 +237,32 @@ public class AuthResource {
                 final AccountContact authenticator = authFactors.stream().filter(AccountContact::isAuthenticator).findFirst().orElse(null);
                 if (authenticator != null && request.hasTotpToken()) {
                     // try totp token now
-                    authenticatorService.authenticate(account, policy, new AuthenticatorRequest()
+                    account.setToken(authenticatorService.authenticate(account, policy, new AuthenticatorRequest()
                             .setAccount(account.getUuid())
                             .setAuthenticate(true)
-                            .setToken(request.getTotpToken()));
+                            .setToken(request.getTotpToken())));
                     authFactors.removeIf(AccountContact::isAuthenticator);
                 }
                 if (!empty(authFactors)) {
-                    final AccountMessage loginRequest = accountMessageDAO.create(new AccountMessage()
-                            .setAccount(account.getUuid())
-                            .setNetwork(configuration.getThisNetwork().getUuid())
-                            .setName(account.getUuid())
-                            .setMessageType(AccountMessageType.request)
-                            .setAction(AccountAction.login)
-                            .setTarget(ActionTarget.account)
-                            .setRemoteHost(getRemoteHost(req))
-                    );
+                    final AccountMessage loginRequest;
+                    if (authFactors.size() == 1 && authFactors.get(0) == authenticator) {
+                        // we have already authenticated, unless we didn't have a token
+                        if (!request.hasTotpToken()) return invalid("err.totpToken.required");
+                        loginRequest = null; // should never happen
+                    } else {
+                        loginRequest = accountMessageDAO.create(new AccountMessage()
+                                .setAccount(account.getUuid())
+                                .setNetwork(configuration.getThisNetwork().getUuid())
+                                .setName(account.getUuid())
+                                .setMessageType(AccountMessageType.request)
+                                .setAction(AccountAction.login)
+                                .setTarget(ActionTarget.account)
+                                .setRemoteHost(getRemoteHost(req))
+                        );
+                    }
                     return ok(new Account()
                             .setName(account.getName())
-                            .setLoginRequest(loginRequest.getUuid())
+                            .setLoginRequest(loginRequest != null ? loginRequest.getUuid() : null)
                             .setMultifactorAuth(AccountContact.mask(authFactors)));
                 }
             }
@@ -417,10 +424,22 @@ public class AuthResource {
         final Account account = optionalUserPrincipal(ctx);
         if (account == null) return invalid("err.logout.noSession");
         if (all != null && all) {
-            sessionDAO.invalidateAllSessions(account.getApiToken());
+            sessionDAO.invalidateAllSessions(account.getUuid());
         } else {
             sessionDAO.invalidate(account.getApiToken());
         }
+        return ok_empty();
+    }
+
+    @POST @Path(EP_LOGOUT+"/{id}")
+    public Response logoutUserEverywhere(@Context ContainerRequest ctx,
+                                         @PathParam("id") String id) {
+        final Account account = optionalUserPrincipal(ctx);
+        if (account == null) return invalid("err.logout.noSession");
+        if (!account.admin()) return forbidden();
+        final Account target = accountDAO.findById(id);
+        if (target == null) return notFound(id);
+        sessionDAO.invalidateAllSessions(id);
         return ok_empty();
     }
 

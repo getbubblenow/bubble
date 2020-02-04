@@ -52,7 +52,9 @@ jersey:
    - org.cobbzilla.wizard.filters
   providerPackages:
    - org.cobbzilla.wizard.exceptionmappers
-  requestFilters: [ bubble.auth.BubbleAuthFilter ]
+  requestFilters:
+   - bubble.auth.BubbleAuthFilter
+   - bubble.filters.BubbleRateLimitFilter
   responseFilters:
    - org.cobbzilla.wizard.filters.ScrubbableScrubber
    - org.cobbzilla.wizard.filters.EntityTypeHeaderResponseFilter
@@ -72,3 +74,10 @@ letsencryptEmail: {{LETSENCRYPT_EMAIL}}
 localStorageDir: {{LOCALSTORAGE_BASE_DIR}}
 
 disallowedCountries: {{DISALLOWED_COUNTRIES}}
+
+rateLimits:
+  - { limit: 200, interval: 3s, block: 5m }
+  - { limit: 10000, interval: 1m, block: 5m }
+  - { limit: 25000, interval: 10m, block: 1h }
+  - { limit: 100000, interval: 1h, block: 24h }
+  - { limit: 500000, interval: 6h, block: 96h }
