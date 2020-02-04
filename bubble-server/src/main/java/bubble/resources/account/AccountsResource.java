@@ -325,12 +325,6 @@ public class AccountsResource {
         if (!c.caller.admin()) return forbidden();
 
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
-        if (policy != null && request.hasTotpToken()) {
-            authenticatorService.authenticate(c.account, policy, new AuthenticatorRequest()
-                    .setAccount(c.account.getUuid())
-                    .setAuthenticate(true)
-                    .setToken(request.getTotpToken()));
-        }
 
         if (c.caller.getUuid().equals(c.account.getUuid()) || c.account.admin()) {
             if (policy != null) authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
@@ -342,12 +336,22 @@ public class AccountsResource {
         final ConstraintViolationBean passwordViolation = validatePassword(request.getNewPassword());
         if (passwordViolation != null) return invalid(passwordViolation);
 
-        if (policy != null) {
+        if (policy != null && !c.caller.admin()) {
             final AccountMessage forgotPasswordMessage = forgotPasswordMessage(req, c.account, configuration);
-            final List<AccountContact> requiredApprovals = policy.getRequiredExternalApprovals(forgotPasswordMessage);
+            final List<AccountContact> requiredApprovals = policy.getRequiredApprovals(forgotPasswordMessage);
+            final List<AccountContact> requiredExternalApprovals = policy.getRequiredExternalApprovals(forgotPasswordMessage);
             if (!requiredApprovals.isEmpty()) {
-                messageDAO.create(forgotPasswordMessage);
-                return ok(c.account.setMultifactorAuthList(requiredApprovals));
+                if (requiredApprovals.stream().anyMatch(AccountContact::isAuthenticator)) {
+                    if (!request.hasTotpToken()) return invalid("err.totpToken.required");
+                    authenticatorService.authenticate(c.account, policy, new AuthenticatorRequest()
+                            .setAccount(c.account.getUuid())
+                            .setAuthenticate(true)
+                            .setToken(request.getTotpToken()));
+                }
+                if (!requiredExternalApprovals.isEmpty()) {
+                    messageDAO.create(forgotPasswordMessage);
+                    return ok(c.account.setMultifactorAuthList(requiredApprovals));
+                }
             }
         }
 

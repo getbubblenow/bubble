@@ -8,7 +8,8 @@
       "email": "user-{{rand 5}}@example.com",
       "userSessionName": "userSession",
       "userVar": "userAccount",
-      "verifyEmail": "false"
+      "verifyEmail": "false",
+      "admin": false
     }
   },
 
@@ -20,6 +21,7 @@
       "entity": {
         "name": "<<username>>",
         "password": "<<password>>",
+        "admin": "<<admin>>",
         "contact": {"type": "email", "info": "<<email>>"}
       }
     },

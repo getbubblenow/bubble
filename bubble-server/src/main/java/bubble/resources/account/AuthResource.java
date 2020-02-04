@@ -233,7 +233,16 @@ public class AuthResource {
         if (!isUnlock) {
             final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
             if (policy != null) {
-                final List<AccountContact> authFactors = policy.getAuthFactors();
+                List<AccountContact> authFactors = policy.getAuthFactors();
+                final AccountContact authenticator = authFactors.stream().filter(AccountContact::isAuthenticator).findFirst().orElse(null);
+                if (authenticator != null && request.hasTotpToken()) {
+                    // try totp token now
+                    authenticatorService.authenticate(account, policy, new AuthenticatorRequest()
+                            .setAccount(account.getUuid())
+                            .setAuthenticate(true)
+                            .setToken(request.getTotpToken()));
+                    authFactors.removeIf(AccountContact::isAuthenticator);
+                }
                 if (!empty(authFactors)) {
                     final AccountMessage loginRequest = accountMessageDAO.create(new AccountMessage()
                             .setAccount(account.getUuid())

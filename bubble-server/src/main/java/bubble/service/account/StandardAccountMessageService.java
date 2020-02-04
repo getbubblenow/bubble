@@ -238,7 +238,7 @@ public class StandardAccountMessageService implements AccountMessageService {
                 .setAction(amc.getMessage().getAction())
                 .setTarget(amc.getMessage().getTarget());
 
-        if (data != null && !getCompletionHandler(toCreate).validate(toCreate, data)) {
+        if (!getCompletionHandler(toCreate).validate(toCreate, data)) {
             throw invalidEx("err.approvalToken.invalid", type+" request was invalid", json(data));
         }
 
@@ -254,7 +254,7 @@ public class StandardAccountMessageService implements AccountMessageService {
     public Account determineRemainingApprovals(AccountMessage approval) {
         final List<AccountMessage> approvals = messageDAO.findOperationApprovals(approval);
         final AccountPolicy policy = policyDAO.findSingleByAccount(approval.getAccount());
-        final List<AccountContact> remainingApprovals = policy.getAuthFactors().stream()
+        final List<AccountContact> remainingApprovals = policy.getRequiredApprovals(approval.getRequest()).stream()
                 .filter(c -> approvals.stream().noneMatch(a -> a.isSameContact(c.getUuid())))
                 .collect(Collectors.toList());
 

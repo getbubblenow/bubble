@@ -4,7 +4,7 @@
     "include": "_defaults",
     "params": {
       "userId": "_required",
-      "authFactor": null,
+      "authFactor": "",
       "authenticatorVar": "authenticator"
     }
   },
@@ -31,7 +31,7 @@
       "uri": "auth/authenticator",
       "entity": {
         "account": "<<userId>>",
-        "token": "{{authenticator_token authenticator.totpKey}}",
+        "token": "{{authenticator_token <<authenticatorVar>>.totpKey}}",
         "verify": true
       }
     }
@@ -39,10 +39,10 @@
 
   {
     "comment": "set authenticator auth factor to <<authFactor>>",
-    "onlyIf": "'<<authFactor>>' != '",
+    "onlyIf": "'<<authFactor>>' != ''",
     "request": {
       "uri": "users/<<userId>>/policy/contacts",
-      "data": "authenticator",
+      "data": "<<authenticatorVar>>",
       "entity": {
         "authFactor": "<<authFactor>>"
       }

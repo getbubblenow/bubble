@@ -116,6 +116,9 @@ public class MeResource {
                                    @Context ContainerRequest ctx,
                                    ChangePasswordRequest request) {
         final Account caller = userPrincipal(ctx);
+        final Account callerAccount = accountDAO.findByUuid(caller.getUuid());  // refresh caller to ensure HashedPassword is populated
+        if (callerAccount == null) return notFound();
+        caller.setHashedPassword(callerAccount.getHashedPassword());
 
         final AccountPolicy policy = policyDAO.findSingleByAccount(caller.getUuid());
         if (policy != null && request.hasTotpToken()) {
@@ -125,6 +128,7 @@ public class MeResource {
                     .setToken(request.getTotpToken()));
         }
         if (policy != null) authenticatorService.ensureAuthenticated(ctx, ActionTarget.account);
+
         if (!caller.getHashedPassword().isCorrectPassword(request.getOldPassword())) {
             return invalid("err.currentPassword.invalid", "current password was invalid", "");
         }
@@ -133,10 +137,20 @@ public class MeResource {
 
         if (policy != null) {
             final AccountMessage forgotPasswordMessage = forgotPasswordMessage(req, caller, configuration);
-            final List<AccountContact> requiredApprovals = policy.getRequiredExternalApprovals(forgotPasswordMessage);
+            final List<AccountContact> requiredApprovals = policy.getRequiredApprovals(forgotPasswordMessage);
+            final List<AccountContact> requiredExternalApprovals = policy.getRequiredExternalApprovals(forgotPasswordMessage);
             if (!requiredApprovals.isEmpty()) {
-                messageDAO.create(forgotPasswordMessage);
-                return ok(caller.setMultifactorAuthList(requiredApprovals));
+                if (requiredApprovals.stream().anyMatch(AccountContact::isAuthenticator)) {
+                    if (!request.hasTotpToken()) return invalid("err.totpToken.required");
+                    authenticatorService.authenticate(caller, policy, new AuthenticatorRequest()
+                            .setAccount(caller.getUuid())
+                            .setAuthenticate(true)
+                            .setToken(request.getTotpToken()));
+                }
+                if (!requiredExternalApprovals.isEmpty()) {
+                    messageDAO.create(forgotPasswordMessage);
+                    return ok(caller.setMultifactorAuthList(requiredApprovals));
+                }
             }
         }
 

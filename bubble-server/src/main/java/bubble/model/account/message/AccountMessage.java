@@ -82,6 +82,8 @@ public class AccountMessage extends IdentifiableBase implements HasAccount {
     @Transient @Getter @Setter private transient AccountMessage request;
     @Transient @Getter @Setter private transient AccountContact requestContact;
 
+    public String redisPrefix() { return getUuid() + ":"; }
+
     public String templateName(String basename) { return getMessageType()+"/"+ getAction()+"/"+getTarget()+"/"+basename+".hbs"; }
 
     public long tokenTimeoutSeconds(AccountPolicy policy) {

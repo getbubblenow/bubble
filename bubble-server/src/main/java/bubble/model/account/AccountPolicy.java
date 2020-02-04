@@ -125,7 +125,7 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
         if (!hasAccountContacts()) return Collections.emptyList();
         switch (message.getTarget()) {
             case account:
-                if (message.getAction() == AccountAction.password || message.getAction() == AccountAction.login) {
+                if (message.getAction() == AccountAction.login) {
                     return requiredAuthFactors();
                 } else {
                     return Arrays.stream(getAccountContacts())

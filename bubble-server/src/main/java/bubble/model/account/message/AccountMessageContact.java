@@ -17,6 +17,6 @@ public class AccountMessageContact implements Serializable {
 
     public boolean valid () { return message != null && message.hasUuid() && contact != null && contact.hasUuid(); }
 
-    public String key() { return message.getUuid()+":"+contact.getUuid(); }
+    public String key() { return message.redisPrefix() + contact.getUuid(); }
 
 }

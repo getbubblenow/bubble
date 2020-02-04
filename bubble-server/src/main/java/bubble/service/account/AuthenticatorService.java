@@ -37,9 +37,12 @@ public class AuthenticatorService {
         final String secret = authenticator.totpInfo().getKey();
         if (G_AUTH.authorize(secret, code)) {
             final String sessionToken = request.startSession() ? sessionDAO.create(account) : account.getToken();
-            if (sessionToken == null) throw invalidEx("err.totpToken.noSession");
-            markAsAuthenticated(sessionToken, policy);
-            return sessionToken;
+            if (sessionToken == null && request.startSession()) throw invalidEx("err.totpToken.noSession");
+            if (sessionToken != null) {
+                markAsAuthenticated(sessionToken, policy);
+                return sessionToken;
+            }
+            return null;
 
         } else {
             throw invalidEx("err.totpToken.invalid");
