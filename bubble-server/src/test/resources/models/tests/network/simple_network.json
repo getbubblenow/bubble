@@ -14,7 +14,7 @@
       "method": "put",
       "entity": {
         "name": "test_user_simple_net",
-        "password": "password",
+        "password": "password1!",
         "contact": {"type": "email", "info": "test-user@example.com"}
       }
     },
@@ -31,7 +31,7 @@
       "uri": "auth/login",
       "entity": {
         "name": "{{testAccount.name}}",
-        "password": "password"
+        "password": "password1!"
       }
     },
     "response": {
@@ -273,7 +273,7 @@
       "uri": "auth/login",
       "entity": {
         "name": "{{testAccount.name}}",
-        "password": "password"
+        "password": "password1!"
       }
     },
     "response": {
@@ -291,7 +291,7 @@
       "uri": "auth/login?k={{emailInbox.[0].ctx.message.data}}",
       "entity": {
         "name": "{{testAccount.name}}",
-        "password": "password"
+        "password": "password1!"
       }
     },
     "response": {

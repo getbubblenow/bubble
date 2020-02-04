@@ -42,7 +42,7 @@ import static org.cobbzilla.wizard.model.entityconfig.ModelSetup.scrubSpecial;
 @Slf4j
 public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
 
-    public static final String ROOT_PASSWORD = "password";
+    public static final String ROOT_PASSWORD = "password1!";
     public static final String ROOT_SESSION = "rootSession";
     public static final String ROOT_USER_VAR = "rootUser";
 

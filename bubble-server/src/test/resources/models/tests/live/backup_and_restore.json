@@ -10,7 +10,7 @@
       "uri": "auth/login",
       "entity": {
         "username": "root",
-        "password": "password"
+        "password": "password1!"
       }
     },
     "response": {

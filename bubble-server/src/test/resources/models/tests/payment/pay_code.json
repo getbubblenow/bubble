@@ -6,7 +6,7 @@
       "method": "put",
       "entity": {
         "name": "test_user_code",
-        "password": "password",
+        "password": "password1!",
         "contact": {"type": "email", "info": "test-user@example.com"}
       }
     }
@@ -20,7 +20,7 @@
       "uri": "auth/login",
       "entity": {
         "name": "test_user_code",
-        "password": "password"
+        "password": "password1!"
       }
     },
     "response": {

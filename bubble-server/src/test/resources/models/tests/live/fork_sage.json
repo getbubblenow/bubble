@@ -23,7 +23,7 @@
       "uri": "auth/login",
       "entity": {
         "name": "root",
-        "password": "password"
+        "password": "password1!"
       }
     },
     "response": {
