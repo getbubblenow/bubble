@@ -129,12 +129,6 @@ public class MeResource {
         }
         if (policy != null) authenticatorService.ensureAuthenticated(ctx, ActionTarget.account);
 
-        if (!caller.getHashedPassword().isCorrectPassword(request.getOldPassword())) {
-            return invalid("err.currentPassword.invalid", "current password was invalid", "");
-        }
-        final ConstraintViolationBean passwordViolation = validatePassword(request.getNewPassword());
-        if (passwordViolation != null) return invalid(passwordViolation);
-
         if (policy != null) {
             final AccountMessage forgotPasswordMessage = forgotPasswordMessage(req, caller, configuration);
             final List<AccountContact> requiredApprovals = policy.getRequiredApprovals(forgotPasswordMessage);
@@ -153,6 +147,12 @@ public class MeResource {
                 }
             }
         }
+
+        if (!caller.getHashedPassword().isCorrectPassword(request.getOldPassword())) {
+            return invalid("err.currentPassword.invalid", "current password was invalid", "");
+        }
+        final ConstraintViolationBean passwordViolation = validatePassword(request.getNewPassword());
+        if (passwordViolation != null) return invalid(passwordViolation);
 
         caller.setHashedPassword(new HashedPassword(request.getNewPassword()));
 

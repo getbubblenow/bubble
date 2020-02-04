@@ -28,7 +28,6 @@ import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.StandardNetworkService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.auth.ChangePasswordRequest;
-import org.cobbzilla.wizard.model.HashedPassword;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
@@ -90,9 +89,9 @@ public class AccountsResource {
         // regular users must use AuthResource.register
         if (!c.caller.admin()) return forbidden();
 
-        final ValidationResult errors = new ValidationResult();
         if (c.account != null) return invalid("err.user.exists", "User with name "+request.getName()+" already exists", request.getName());
 
+        final ValidationResult errors = new ValidationResult();
         final ConstraintViolationBean passwordViolation = validatePassword(request.getPassword());
         if (passwordViolation != null) errors.addViolation(passwordViolation);
         if (!request.hasContact()) {
@@ -332,15 +331,9 @@ public class AccountsResource {
 
         if (c.caller.getUuid().equals(c.account.getUuid()) || c.account.admin()) {
             if (policy != null) authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
-            if (!c.account.getHashedPassword().isCorrectPassword(request.getOldPassword())) {
-                return invalid("err.currentPassword.invalid", "current password was invalid", "");
-            }
         }
 
-        final ConstraintViolationBean passwordViolation = validatePassword(request.getNewPassword());
-        if (passwordViolation != null) return invalid(passwordViolation);
-
-        if (policy != null && !c.caller.admin()) {
+        if (policy != null) {
             final AccountMessage forgotPasswordMessage = forgotPasswordMessage(req, c.account, configuration);
             final List<AccountContact> requiredApprovals = policy.getRequiredApprovals(forgotPasswordMessage);
             final List<AccountContact> requiredExternalApprovals = policy.getRequiredExternalApprovals(forgotPasswordMessage);
@@ -359,7 +352,11 @@ public class AccountsResource {
             }
         }
 
-        c.account.setHashedPassword(new HashedPassword(request.getNewPassword()));
+        if (!c.account.getHashedPassword().isCorrectPassword(request.getOldPassword())) {
+            return invalid("err.currentPassword.invalid", "current password was invalid", "");
+        }
+        final ConstraintViolationBean passwordViolation = validatePassword(request.getNewPassword());
+        if (passwordViolation != null) return invalid(passwordViolation);
 
         // Update account
         final Account updated = accountDAO.update(c.account);
