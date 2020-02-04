@@ -6,8 +6,8 @@
       "store": "myDrivers",
       "check": [
         {"condition": "json.length == 2"},
-        {"condition": "_find(json, function (d) { return d.getName() == 'UserBlocker'; }) != null"},
-        {"condition": "_find(json, function (d) { return d.getName() == 'TrafficAnalytics'; }) != null"}
+        {"condition": "_find(json, function (d) { return d.getName() == 'UserBlockerRuleDriver'; }) != null"},
+        {"condition": "_find(json, function (d) { return d.getName() == 'TrafficAnalyticsRuleDriver'; }) != null"}
       ]
     }
   },
@@ -19,28 +19,28 @@
       "store": "allDrivers",
       "check": [
         {"condition": "json.length == 2"},
-        {"condition": "_find(json, function (d) { return d.getName() == 'UserBlocker'; }) != null"},
-        {"condition": "_find(json, function (d) { return d.getName() == 'TrafficAnalytics'; }) != null"}
+        {"condition": "_find(json, function (d) { return d.getName() == 'UserBlockerRuleDriver'; }) != null"},
+        {"condition": "_find(json, function (d) { return d.getName() == 'TrafficAnalyticsRuleDriver'; }) != null"}
       ]
     }
   },
 
   {
     "comment": "view a single driver",
-    "request": { "uri": "me/drivers/{{find myDrivers 'name' 'UserBlocker' 'driverClass'}}" },
+    "request": { "uri": "me/drivers/{{find myDrivers 'name' 'UserBlockerRuleDriver' 'driverClass'}}" },
     "response": {
       "check": [
-        {"condition": "json.getName() == 'UserBlocker'"}
+        {"condition": "json.getName() == 'UserBlockerRuleDriver'"}
       ]
     }
   },
 
   {
     "comment": "view a single public driver",
-    "request": { "uri": "drivers/{{find allDrivers 'name' 'TrafficAnalytics' 'uuid'}}" },
+    "request": { "uri": "drivers/{{find allDrivers 'name' 'TrafficAnalyticsRuleDriver' 'uuid'}}" },
     "response": {
       "check": [
-        {"condition": "json.getName() == 'TrafficAnalytics'"}
+        {"condition": "json.getName() == 'TrafficAnalyticsRuleDriver'"}
       ]
     }
   },
@@ -56,7 +56,7 @@
   },
 
   {
-    "comment": "list data for a public driver",
+    "comment": "list data for an app that uses a rule with this driver",
     "request": { "uri": "apps/UserBlocker/data" },
     "response": {
       "check": [
