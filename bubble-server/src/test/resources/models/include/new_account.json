@@ -6,6 +6,7 @@
       "username": "user-{{rand 10}}",
       "password": "foobar1!",
       "email": "user-{{rand 5}}@example.com",
+      "rootSessionName": "rootSession",
       "userSessionName": "userSession",
       "userVar": "userAccount",
       "verifyEmail": "false",
@@ -16,6 +17,7 @@
   {
     "comment": "as root, create a new account",
     "request": {
+      "session": "<<rootSessionName>>",
       "uri": "users",
       "method": "put",
       "entity": {

@@ -199,7 +199,7 @@ public class AuthResource {
         final Account parent = accountDAO.findByUuid(parentUuid);
         if (parent == null) return invalid("err.parent.notFound", "Parent account does not exist: "+parentUuid);
 
-        final Account account = accountDAO.newAccount(req, request, parent);
+        final Account account = accountDAO.newAccount(req, null, request, parent);
         return ok(account.waitForAccountInit().setToken(newLoginSession(account)));
     }
 

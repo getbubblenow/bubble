@@ -63,8 +63,9 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private BillDAO billDAO;
     @Autowired private SearchService searchService;
 
-    public Account newAccount(Request req, AccountRegistration request, Account parent) {
+    public Account newAccount(Request req, Account caller, AccountRegistration request, Account parent) {
         return create(new Account(request)
+                .setAdmin(caller != null && caller.admin() && request.admin())   // only admins can create other admins
                 .setRemoteHost(getRemoteHost(req))
                 .setParent(parent.getUuid())
                 .setPolicy(new AccountPolicy().setContact(request.getContact())));

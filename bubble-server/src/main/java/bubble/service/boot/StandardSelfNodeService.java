@@ -277,7 +277,8 @@ public class StandardSelfNodeService implements SelfNodeService {
         log.debug("initSelf: starting with selfNode="+selfNode.id());
         final BubbleNode foundByUuid = nodeDAO.findByUuid(selfNode.getUuid());
         final BubbleNode foundByFqdn = nodeDAO.findByFqdn(selfNode.getFqdn());
-        if (foundByUuid == null && foundByFqdn == null) {
+        final BubbleNode foundByIp4 = nodeDAO.findByIp4(selfNode.getIp4());
+        if (foundByUuid == null && foundByFqdn == null && foundByIp4 == null) {
             // node exists in JSON but not in DB: write it to DB
             return ensureRunning(nodeDAO.create(selfNode));
 
@@ -293,10 +294,15 @@ public class StandardSelfNodeService implements SelfNodeService {
             nodeDAO.delete(foundByFqdn.getUuid());
             return ensureRunning(nodeDAO.create(selfNode));
 
-        } else if (foundByUuid == null) {
-            // found by fqdn but not uuid, remove fqdn and add
+        } else if (foundByUuid == null && foundByIp4 == null) {
+            // found by fqdn but not uuid or ip4, remove fqdn and add
             nodeDAO.delete(foundByFqdn.getUuid());
             return ensureRunning(nodeDAO.create(selfNode));
+
+        } else if (foundByIp4 != null) {
+            // OK, use the one we found by ip4
+            return foundByIp4;
+
         } else {
             // found by uuid but not fqdn, error
             return die("initSelf: wrong FQDN (expected "+selfNode.getFqdn()+") in foundByUuid="+foundByUuid.id());

@@ -86,6 +86,10 @@ public class AccountsResource {
 
         final AccountContext c = new AccountContext(ctx, request.getName(), true);
 
+        // only admins can use this endpoint
+        // regular users must use AuthResource.register
+        if (!c.caller.admin()) return forbidden();
+
         final ValidationResult errors = new ValidationResult();
         if (c.account != null) return invalid("err.user.exists", "User with name "+request.getName()+" already exists", request.getName());
 
@@ -117,7 +121,7 @@ public class AccountsResource {
         final AccountRegistration reg = (AccountRegistration) request
                 .setRemoteHost(getRemoteHost(req))
                 .setVerifyContact(true);
-        final Account created = accountDAO.newAccount(req, reg, parent);
+        final Account created = accountDAO.newAccount(req, c.caller, reg, parent);
         return ok(created.waitForAccountInit());
     }
 
