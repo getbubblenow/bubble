@@ -199,8 +199,8 @@
         {"condition": "json[0].getAmount() < {{bills.[0].total}}"},
         // not sure if current month has 28, 29, 30 or 31 days, so let's make some reasonable bounds
         // we should only have a refund for all but one day
-        {"condition": "json[0].getAmount() > bills[0].getTotal() - (bills[0].getTotal() / (bills[0].daysInPeriod() - 1))"},
-        {"condition": "json[0].getAmount() <= bills[0].getTotal() - (bills[0].getTotal() / bills[0].daysInPeriod())"}
+        {"condition": "json[0].getAmount() > Math.round(bills[0].getTotal() - (bills[0].getTotal() / (bills[0].daysInPeriod() - 1)))"},
+        {"condition": "json[0].getAmount() <= Math.round(bills[0].getTotal() - (bills[0].getTotal() / bills[0].daysInPeriod()))"}
       ]
     }
   },
@@ -218,8 +218,8 @@
         {"condition": "json[0].getRefundedAmount() < {{bills.[0].total}}"},
         // not sure if current month has 28, 29, 30 or 31 days, so let's make some reasonable bounds
         // we should only have a refund for all but one day
-        {"condition": "json[0].getRefundedAmount() > bills[0].getTotal() - (bills[0].getTotal() / (bills[0].daysInPeriod() - 1))"},
-        {"condition": "json[0].getRefundedAmount() <= bills[0].getTotal() - (bills[0].getTotal() / bills[0].daysInPeriod())"}
+        {"condition": "json[0].getRefundedAmount() > Math.round(bills[0].getTotal() - (bills[0].getTotal() / (bills[0].daysInPeriod() - 1)))"},
+        {"condition": "json[0].getRefundedAmount() <= Math.round(bills[0].getTotal() - (bills[0].getTotal() / bills[0].daysInPeriod()))"}
       ]
     }
   },
