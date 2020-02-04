@@ -10,7 +10,7 @@ import bubble.model.app.AppDataFormat;
 import bubble.model.app.AppMatcher;
 import bubble.model.device.Device;
 import bubble.service.cloud.DeviceIdService;
-import bubble.service.stream.RuleEngineService;
+import bubble.service.stream.StandardRuleEngineService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
@@ -58,7 +58,7 @@ public class FilterHttpResource {
     public static final FilterMatchersResponse ABORT_NOT_FOUND = new FilterMatchersResponse().setAbort(NOT_FOUND);
 
     @Autowired private AccountDAO accountDAO;
-    @Autowired private RuleEngineService ruleEngine;
+    @Autowired private StandardRuleEngineService ruleEngine;
     @Autowired private AppMatcherDAO matcherDAO;
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private DeviceIdService deviceIdService;

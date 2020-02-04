@@ -7,7 +7,7 @@ import bubble.model.app.AppMatcher;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.DeviceIdService;
-import bubble.service.stream.RuleEngineService;
+import bubble.service.stream.StandardRuleEngineService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.http.URIBean;
@@ -44,7 +44,7 @@ public class ReverseProxyResource {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AppMatcherDAO matcherDAO;
     @Autowired private AppRuleDAO ruleDAO;
-    @Autowired private RuleEngineService ruleEngine;
+    @Autowired private StandardRuleEngineService ruleEngine;
     @Autowired private DeviceIdService deviceIdService;
     @Autowired private FilterHttpResource filterHttpResource;
 
