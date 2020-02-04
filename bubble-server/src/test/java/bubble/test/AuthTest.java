@@ -1,12 +1,23 @@
 package bubble.test;
 
+import bubble.dao.account.AccountDAO;
+import bubble.model.account.Account;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.wizard.model.HashedPassword;
+import org.junit.Before;
 import org.junit.Test;
 
 @Slf4j
 public class AuthTest extends ActivatedBubbleModelTestBase {
 
     @Override protected String getManifest() { return "manifest-test"; }
+
+    @Before public void resetRootPassword () {
+        // reset root password, some tests change it
+        final AccountDAO accountDAO = getConfiguration().getBean(AccountDAO.class);
+        final Account rootUser = accountDAO.findFirstAdmin();
+        accountDAO.update(rootUser.setHashedPassword(new HashedPassword(ROOT_PASSWORD)));
+    }
 
     @Test public void testAccountDeletion () throws Exception { modelTest("auth/delete_account"); }
     @Test public void testBasicAuth () throws Exception { modelTest("auth/basic_auth"); }
