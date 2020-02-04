@@ -1,7 +1,6 @@
 package bubble.model.app;
 
 import bubble.model.account.Account;
-import bubble.model.account.AccountTemplate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,7 +32,7 @@ import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySe
         @ECIndex(of={"app", "priority"})
 })
 @Entity @NoArgsConstructor @Accessors(chain=true)
-public class AppMessage extends IdentifiableBase implements AccountTemplate, HasPriority {
+public class AppMessage extends IdentifiableBase implements AppTemplateEntity, HasPriority {
 
     public static final String[] UPDATE_FIELDS = {"messages", "template", "enabled"};
     public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "app", "locale");
