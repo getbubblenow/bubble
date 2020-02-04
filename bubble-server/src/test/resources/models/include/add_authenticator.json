@@ -48,7 +48,6 @@
       }
     },
     "response": {
-      "store": "<<authenticatorVar>>",
       "check": [
         {"condition": "json.getType().name() == 'authenticator'"}
       ]
