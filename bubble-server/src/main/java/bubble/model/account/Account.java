@@ -135,24 +135,24 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     @Getter @Setter private String locale = getDEFAULT_LOCALE();
     public boolean hasLocale () { return !empty(locale); }
 
-    @ECSearchable @ECField(index=60)
+    @ECIndex @ECSearchable @ECField(index=60)
     @Getter @Setter private Boolean admin = false;
     public boolean admin () { return bool(admin); }
 
-    @ECSearchable @ECField(index=70)
+    @ECIndex @ECSearchable @ECField(index=70)
     @Getter @Setter private Boolean suspended = false;
     public boolean suspended () { return bool(suspended); }
 
-    @ECSearchable @ECField(index=80)
+    @ECIndex @ECSearchable @ECField(index=80)
     @Getter @Setter private Boolean locked = false;
     public boolean locked () { return bool(locked); }
 
-    @ECSearchable @ECField(index=90, type=EntityFieldType.epoch_time, mode=EntityFieldMode.readOnly)
+    @ECIndex @ECSearchable @ECField(index=90, type=EntityFieldType.epoch_time, mode=EntityFieldMode.readOnly)
     @Getter @Setter private Long deleted;
     public boolean deleted () { return deleted != null; }
     public Account setDeleted() { return setDeleted(now()); }
 
-    @ECSearchable @ECField(index=100, type=EntityFieldType.epoch_time, mode=EntityFieldMode.readOnly)
+    @ECIndex @ECSearchable @ECField(index=100, type=EntityFieldType.epoch_time, mode=EntityFieldMode.readOnly)
     @Getter @Setter private Long lastLogin;
     public Account setLastLogin() { return setLastLogin(now()); }
 
