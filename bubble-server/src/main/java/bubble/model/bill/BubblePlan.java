@@ -3,6 +3,7 @@ package bubble.model.bill;
 import bubble.cloud.compute.ComputeNodeSizeType;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccount;
+import bubble.model.app.BubbleApp;
 import bubble.model.cloud.BubbleNetwork;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,11 +17,9 @@ import org.cobbzilla.wizard.validation.HasValue;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
+import java.util.List;
 
 import static bubble.ApiConstants.EP_PLANS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
@@ -122,5 +121,7 @@ public class BubblePlan extends IdentifiableBaseParentEntity implements HasAccou
     @ECSearchable @ECField(index=150)
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer additionalBandwidthPerGbPrice;
+
+    @Transient @Getter @Setter private transient List<BubbleApp> apps;
 
 }
