@@ -22,7 +22,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 @ECType(root=true) @ECTypeCreate(method="DISABLED")
 @ECTypeURIs(listFields={"account", "paymentMethod", "amount"})
 @ECIndexes({
-        @ECIndex(name="account_payment_uniq_bill_success", unique=true, of={"bill"}, where="status = 'success'")
+        @ECIndex(name="account_payment_uniq_bill_type_success", unique=true, of={"bill", "type"}, where="status = 'success'")
 })
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class AccountPayment extends IdentifiableBase implements HasAccountNoName {
@@ -52,15 +52,15 @@ public class AccountPayment extends IdentifiableBase implements HasAccountNoName
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String bill;
 
-    @ECSearchable @ECField(index=60)
+    @ECIndex @ECSearchable @ECField(index=60)
     @Enumerated(EnumType.STRING) @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private AccountPaymentType type;
 
-    @ECSearchable @ECField(index=70)
+    @ECIndex @ECSearchable @ECField(index=70)
     @Enumerated(EnumType.STRING) @Column(nullable=false, length=20)
     @Getter @Setter private AccountPaymentStatus status;
 
-    @ECSearchable @ECField(index=80)
+    @ECIndex @ECSearchable @ECField(index=80)
     @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
     @Getter @Setter private Long amount = 0L;
 
