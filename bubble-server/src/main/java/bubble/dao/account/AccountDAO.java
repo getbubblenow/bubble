@@ -347,7 +347,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         return admins.get(0);
     }
 
-    @Transactional
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void unlock() {
         synchronized (unlocked) {
             final int count = bulkUpdate("locked", false);

@@ -222,11 +222,6 @@ public class AuthResource {
             if (!accountDAO.locked()) {
                 log.info("login: account "+account.getName()+" was locked, but system is unlocked, unlocking again");
                 accountDAO.unlock();
-                final Account unlockedAccount = accountDAO.findByUuid(account.getUuid());
-                if (unlockedAccount.locked()) {
-                    log.info("login: account "+account.getName()+" was still locked after unlocking system, cannot proceed");
-                    return invalid("err.account.locked");
-                }
 
             } else {
                 if (empty(unlockKey)) return invalid("err.account.locked");
@@ -236,6 +231,7 @@ public class AuthResource {
                 log.info("login: Unlock key was valid, unlocking accounts");
                 accountDAO.unlock();
             }
+            accountDAO.update(account.setLocked(false));
         }
 
         if (!isUnlock) {
