@@ -127,7 +127,6 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
         } else if (planApps != null && AppTemplateEntity.class.isAssignableFrom(c)) {
             // only copy app-related entities for enabled apps, make them all templates
             entities.stream()
-                    .filter(e -> planAppEnabled(((AppTemplateEntity) e).getApp(), planApps))
                     .map(app -> (AppTemplateEntity) ((AppTemplateEntity) app).setTemplate(true))
                     .forEach(this::add);
 
