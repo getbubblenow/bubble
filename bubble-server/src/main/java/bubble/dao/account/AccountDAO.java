@@ -350,11 +350,8 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Transactional
     public void unlock() {
         synchronized (unlocked) {
-            final List<Account> all = findAll();
-            for (Account account : all) {
-                update(account.setLocked(false));
-            }
-            log.info("unlock: " + all.size() + " accounts unlocked");
+            final int count = bulkUpdate("locked", false);
+            log.info("unlock: " + count + " accounts unlocked");
             unlocked.set(true);
             configuration.refreshPublicSystemConfigs();
         }
