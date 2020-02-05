@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.cobbzilla.util.collection.NameAndValue;
+import org.cobbzilla.util.http.HttpContentTypes;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexInsertionFilter;
 import org.cobbzilla.util.io.regex.RegexStreamFilter;
@@ -49,7 +50,7 @@ public class UserBlockerRuleDriver extends AbstractAppRuleDriver {
     protected UserBlockerConfig configObject() { return json(getFullConfig(), UserBlockerConfig.class); }
 
     @Override public InputStream doFilterResponse(String requestId, String contentType, NameAndValue[] meta, InputStream in) {
-        if (!isHtml(contentType)) return in;
+        if (!HttpContentTypes.isHtml(contentType)) return in;
 
         final UserBlockerStreamFilter filter = new UserBlockerStreamFilter(requestId, matcher, rule, configuration.getHttp().getBaseUri());
         filter.configure(getFullConfig());

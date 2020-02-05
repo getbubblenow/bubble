@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
+import org.cobbzilla.util.http.HttpContentTypes;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexReplacementFilter;
 import org.glassfish.grizzly.http.server.Request;
@@ -99,11 +100,14 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final BlockDecision decision = getDecision(filter.getFqdn(), filter.getUri());
         switch (decision.getDecisionType()) {
             case block:
+                if (log.isDebugEnabled()) log.debug("preprocess: decision is BLOCK");
                 incrementCounters(account, device, app, site, fqdn);
                 return FilterMatchResponse.ABORT_NOT_FOUND;  // block this request
             case allow: default:
+                if (log.isDebugEnabled()) log.debug("preprocess: decision is ALLOW");
                 return FilterMatchResponse.NO_MATCH;
             case filter:
+                if (log.isDebugEnabled()) log.debug("preprocess: decision is FILTER");
                 return getFilterMatchResponse(filter, decision);
         }
     }
@@ -152,15 +156,15 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final BlockDecision decision = blockList.getDecision(request.getFqdn(), request.getUri(), contentType, true);
         switch (decision.getDecisionType()) {
             case block:
-                log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was block, returning EMPTY_STREAM");
+                log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was block (contentType="+contentType+"), returning EMPTY_STREAM");
                 return EMPTY_STREAM;
             case allow:
-                log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was allow, returning as-is");
+                log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was allow (contentType="+contentType+"), returning as-is");
                 return in;
             case filter:
                 if (!decision.hasSpecs()) {
                     // should never happen
-                    log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was filtered, but no filters provided, returning as-is");
+                    log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was filtered (contentType="+contentType+"), but no filters provided, returning as-is");
                     return in;
                 }
                 break;
@@ -170,7 +174,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                 return EMPTY_STREAM;
         }
 
-        if (!isHtml(contentType)) {
+        if (!HttpContentTypes.isHtml(contentType)) {
             log.warn("doFilterRequest: cannot filter non-html response ("+request.getUrl()+"), returning as-is: "+contentType);
             return in;
         }
@@ -178,6 +182,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final String replacement = "<head><script>" + getBubbleJs(requestId, decision) + "</script>";
         final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
         final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter).setMaxMatches(1);
+        if (log.isDebugEnabled()) log.debug("doFilterResponse: filtering response for "+request.getUri()+" - replacement.length = "+replacement.length());
         return new ReaderInputStream(reader, UTF8cs);
     }
 
@@ -188,7 +193,6 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
     private static final String CTX_BUBBLE_WHITELIST = "BUBBLE_WHITELIST_JSON";
 
     private String getBubbleJs(String requestId, BlockDecision decision) {
-
         final Map<String, Object> ctx = new HashMap<>();
         ctx.put(CTX_JS_PREFIX, "__bubble_block_"+sha256_hex(requestId)+"_");
         ctx.put(CTX_BUBBLE_REQUEST_ID, requestId);

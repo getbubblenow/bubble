@@ -51,11 +51,6 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
     protected String getDataId(String requestId) { return getDataId(requestId, matcher); }
     public static String getDataId(String requestId, AppMatcher matcher) { return requestId+"/"+matcher.getUuid(); }
 
-    public boolean isHtml (String contentType) {
-        final HttpContentTypeAndCharset type = new HttpContentTypeAndCharset(contentType);
-        return type.isContentType(TEXT_HTML);
-    }
-
     @Override public void init(JsonNode config,
                                JsonNode userConfig,
                                AppRule rule,
