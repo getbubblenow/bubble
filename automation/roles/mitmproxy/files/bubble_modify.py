@@ -1,8 +1,6 @@
 import requests
 import urllib
 import json
-import uuid
-import time
 from mitmproxy import http
 from mitmproxy.net.http import Headers
 from bubble_config import bubble_port, bubble_host_alias

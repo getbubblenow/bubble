@@ -1,5 +1,7 @@
 import json
 import re
+import time
+import uuid
 from bubble_api import bubble_matchers, bubble_log, HEADER_BUBBLE_MATCHERS, HEADER_BUBBLE_DEVICE, BUBBLE_URI_PREFIX, HEADER_BUBBLE_ABORT, HEADER_BUBBLE_REQUEST_ID
 from bubble_config import bubble_host, bubble_host_alias
 from mitmproxy import ctx
@@ -78,8 +80,8 @@ class Rerouter:
         if sni or host_header:
             matcher_response = self.get_matchers(flow, sni or host_header)
             if matcher_response:
-                if 'abort' in matcher_response:
-                    bubble_log('dns_spoofing.request: found abort code: ' + matcher_response['abort'] + ', aborting')
+                if 'abort' in matcher_response and matcher_response['abort'] is not None:
+                    bubble_log('dns_spoofing.request: found abort code: ' + str(matcher_response['abort']) + ', aborting')
                     flow.request.headers[HEADER_BUBBLE_ABORT] = str(matcher_response['abort'])
 
                 elif 'matchers' in matcher_response and 'device' in matcher_response and len(matcher_response['matchers']) > 0:
