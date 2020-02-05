@@ -29,6 +29,7 @@ import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -228,6 +229,29 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             result.addViolation("err.storage.unavailable");
             return null;
         }
+    }
+
+    // If the accountPlan is not found, look for an orphaned network
+    @DELETE @Path("/{id}")
+    @Override public Response delete(@Context ContainerRequest ctx,
+                                     @PathParam("id") String id) {
+        final Account caller = checkEditable(ctx);
+        AccountPlan found = find(ctx, id);
+        if (found == null) {
+            found = findAlternateForDelete(ctx, id);
+            if (found == null) {
+                final BubbleNetwork orphan = networkDAO.findByAccountAndId(getAccountUuid(ctx), id);
+                if (orphan == null) return notFound(id);
+                log.warn("delete: deleting orphaned network: "+orphan.getUuid()+"/"+orphan.getNetworkDomain());
+                networkDAO.delete(orphan.getUuid());
+                return ok_empty();
+            }
+        }
+
+        if (!canDelete(ctx, caller, found)) return forbidden();
+
+        getDao().delete(found.getUuid());
+        return ok(found);
     }
 
     @Path("/{id}"+EP_BILLS)

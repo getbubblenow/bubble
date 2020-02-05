@@ -147,7 +147,10 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
         final Map<String, Object> chargeParams = new LinkedHashMap<>();;
         final RedisService authCache = getAuthCache();
         try {
-            chargeParams.put("amount", plan.getPrice()); // Amount in cents
+            final Long price = plan.getPrice();
+            if (price <= 0) throw invalidEx("err.purchase.priceInvalid");
+
+            chargeParams.put("amount", price); // Amount in cents
             chargeParams.put("currency", plan.getCurrency().toLowerCase());
             chargeParams.put("customer", paymentMethod.getPaymentInfo());
             chargeParams.put("description", plan.chargeDescription());

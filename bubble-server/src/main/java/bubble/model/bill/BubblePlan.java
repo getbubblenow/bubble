@@ -9,7 +9,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.HasPriority;
+import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.IdentifiableBaseParentEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
@@ -38,14 +40,18 @@ public class BubblePlan extends IdentifiableBaseParentEntity implements HasAccou
 
     public static final int MAX_CHARGENAME_LEN = 12;
 
-    public static final String[] CREATE_FIELDS = {
-            "name", "chargeName", "enabled", "priority", "price", "period",
-            "computeSizeType", "nodesIncluded", "additionalPerNodePrice",
-            "storageGbIncluded", "additionalStoragePerGbPrice",
-            "bandwidthGbIncluded", "additionalBandwidthPerGbPrice"
+    public static final String[] UPDATE_FIELDS = {
+            "enabled", "price", "additionalPerNodePrice", "additionalStoragePerGbPrice", "additionalBandwidthPerGbPrice"
     };
 
+    public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS,
+            "name", "chargeName", "priority", "period", "computeSizeType",
+            "nodesIncluded", "storageGbIncluded", "bandwidthGbIncluded"
+    );
+
     public BubblePlan (BubblePlan other) { copy(this, other, CREATE_FIELDS); }
+
+    @Override public Identifiable update(Identifiable other) { copy(this, other, UPDATE_FIELDS); return this; }
 
     @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
