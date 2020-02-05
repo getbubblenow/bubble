@@ -13,6 +13,7 @@ import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Transient;
 
 import static bubble.ApiConstants.EP_APPS;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
@@ -46,5 +47,7 @@ public class BubblePlanApp extends IdentifiableBase implements HasAccountNoName 
     @ECForeignKey(entity= BubbleApp.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String app;
+
+    @Transient @Getter @Setter private transient BubbleApp appObject;
 
 }

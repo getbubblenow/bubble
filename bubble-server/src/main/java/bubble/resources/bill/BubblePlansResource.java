@@ -10,6 +10,7 @@ import bubble.model.bill.BubblePlanApp;
 import bubble.resources.account.AccountOwnedResource;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationMap;
+import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,31 @@ public class BubblePlansResource extends AccountOwnedResource<BubblePlan, Bubble
         return super.setReferences(ctx, caller, bubblePlan);
     }
 
+    // BubblePlan objects are global, no need to qualify by account
+    @Override protected BubblePlan find(ContainerRequest ctx, String id) { return getDao().findById(id); }
+    @Override protected List<BubblePlan> list(ContainerRequest ctx) { return getDao().findAll(); }
+
+    // only admins can create
+    @Override protected boolean canCreate(Request req, ContainerRequest ctx, Account caller, BubblePlan request) {
+        return caller.admin();
+    }
+
+    // only owner can edit
+    @Override protected boolean canUpdate(ContainerRequest ctx, Account caller, BubblePlan found, BubblePlan request) {
+        return caller.admin() && caller.getUuid().equals(found.getAccount());
+    }
+
+    // only owner can delete
+    @Override protected boolean canDelete(ContainerRequest ctx, Account caller, BubblePlan found) {
+        return caller.admin() && caller.getUuid().equals(found.getAccount());
+    }
+
+    @Override protected BubblePlan populate(ContainerRequest ctx, BubblePlan plan) {
+        final List<BubbleApp> apps = getAppsForPlan(plan);
+        plan.setApps(apps);
+        return super.populate(ctx, plan);
+    }
+
     @Path("/{id}"+EP_APPS)
     public BubblePlanAppsResource getApps(@Context ContainerRequest ctx,
                                           @PathParam("id") String id) {
@@ -49,12 +75,6 @@ public class BubblePlansResource extends AccountOwnedResource<BubblePlan, Bubble
         if (plan == null) throw notFoundEx(id);
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(BubblePlanAppsResource.class, caller, plan);
-    }
-
-    @Override protected BubblePlan populate(ContainerRequest ctx, BubblePlan plan) {
-        final List<BubbleApp> apps = getAppsForPlan(plan);
-        plan.setApps(apps);
-        return super.populate(ctx, plan);
     }
 
     private Map<String, List<BubbleApp>> appCache = new ExpirationMap<>();

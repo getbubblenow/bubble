@@ -10,6 +10,7 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.model.Identifiable;
 
 import java.util.Iterator;
@@ -23,7 +24,9 @@ import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE_STANDA
 import static bubble.service.dbfilter.EndOfEntityStream.END_OF_ENTITY_STREAM;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.model.NamedEntity.names;
 
+@Slf4j
 public abstract class EntityIterator implements Iterator<Identifiable> {
 
     private static final int MAX_QUEUE_SIZE = 100;
@@ -32,6 +35,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
 
     @Getter private final Thread thread;
     @Getter private final AtomicReference<Exception> error;
+    private List<BubbleApp> userApps;
 
     public EntityIterator(AtomicReference<Exception> error) {
         this.error = error;
@@ -84,14 +88,46 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
             entities.forEach(e -> add(setInstallKey((AccountSshKey) e, network)));
 
         } else if (planApps != null && BubbleApp.class.isAssignableFrom(c)) {
-            // only copy enabled apps
+            // only copy enabled apps, make them templates
             entities.stream().filter(e -> planAppEnabled(e.getUuid(), planApps))
+                    .map(app -> ((BubbleApp) app).setTemplate(true))
                     .forEach(this::add);
 
+            // save these for later, we will need them when copying BubblePlanApps below
+            userApps = (List<BubbleApp>) entities;
+
+        } else if (planApps != null && BubblePlanApp.class.isAssignableFrom(c)) {
+            // the only BubblePlanApps we will see here are the ones associated with the system BubblePlans
+            // and the system/template BubbleApps.
+            // But for this new node, the BubbleApps that are associated with the first user (admin of new node)
+            // will become the new system/template apps.
+            // So we rewrite the "app" field to refer to the BubbleApp owned by the user.
+
+            // Unless for some odd reason we are deploying a node with NO apps, in which case we can skip this section entirely
+            if (planApps.isEmpty()) {
+                log.warn("addEntities: no BubblePlanApps enabled, none will be copied to new node");
+
+            } else {
+                for (Identifiable e : entities) {
+                    final BubblePlanApp systemPlanApp = (BubblePlanApp) e;
+                    final BubbleApp userApp = userApps.stream()
+                            .filter(app -> app.getTemplateApp().equals(systemPlanApp.getApp()))
+                            .findFirst().orElse(null);
+                    if (userApp == null) {
+                        log.info("addEntities: system BubblePlanApp " + systemPlanApp.getName() + " not found in userApps (not adding): " + names(userApps));
+                    } else {
+                        // systemPlanApp will now be associated with "root"'s BubblePlan, but user's BubbleApp
+                        log.info("addEntities: rewrite ");
+                        systemPlanApp.setApp(userApp.getUuid());
+                    }
+                }
+            }
+
         } else if (planApps != null && AppTemplateEntity.class.isAssignableFrom(c)) {
-            // only copy app-related entities for enabled apps
+            // only copy app-related entities for enabled apps, make them all templates
             entities.stream()
                     .filter(e -> planAppEnabled(((AppTemplateEntity) e).getApp(), planApps))
+                    .map(app -> (AppTemplateEntity) ((AppTemplateEntity) app).setTemplate(true))
                     .forEach(this::add);
 
         } else {

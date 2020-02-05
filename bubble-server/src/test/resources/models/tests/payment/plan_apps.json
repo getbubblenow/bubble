@@ -35,7 +35,25 @@
     "request": { "uri": "plans" },
     "response": {
       "store": "plans",
-      "check": [{"condition": "json.length >= 1"}]
+      "check": [
+        {"condition": "json.length >= 1"},
+        {"condition": "json[0].getApps().length >= 1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "get plan apps for a system plan, we actually see our apps underneath",
+    "request": { "uri": "plans/{{plans.[0].name}}/apps" },
+    "response": {
+      "store": "planApps",
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getAppObject().getTemplateApp() !== null"},
+        {"condition": "json[0].getAppObject().template() === false"},
+        {"condition": "json[0].getAppObject().getUuid() !== json[0].getApp()"},
+        {"condition": "json[0].getAppObject().getTemplateApp() === json[0].getApp()"}
+      ]
     }
   },
 
@@ -63,10 +81,17 @@
   },
 
   {
-    "comment": "get plan apps, should be 1",
+    "comment": "get plan apps, should be 1 and should have templateApp",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/apps" },
     "response": {
-      "check": [{"condition": "json.length == 1"}]
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getAppObject().getTemplateApp() !== null"},
+        {"condition": "json[0].getAppObject().getName() === 'UserBlocker'"},
+        {"condition": "json[0].getAppObject().getUuid() !== json[0].getApp()"},
+        {"condition": "json[0].getAppObject().getTemplateApp() === json[0].getApp()"},
+        {"condition": "json[0].getAppObject().template() === false"}
+      ]
     }
   },
 
@@ -97,7 +122,7 @@
     "comment": "get plan apps, should be 2",
     "request": { "uri": "me/plans/{{accountPlan2.uuid}}/apps" },
     "response": {
-      "check": [{"condition": "json.length == 2"}]
+      "check": [{"condition": "json.length === 2"}]
     }
   }
 

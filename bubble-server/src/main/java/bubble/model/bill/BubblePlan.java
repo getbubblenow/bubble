@@ -35,7 +35,6 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
         @ECTypeChild(type=BubblePlanApp.class, backref="plan")
 })
 @Entity @NoArgsConstructor @Accessors(chain=true)
-@ECIndexes({ @ECIndex(unique=true, of={"account", "name"}) })
 public class BubblePlan extends IdentifiableBaseParentEntity implements HasAccount, HasPriority {
 
     public static final int MAX_CHARGENAME_LEN = 12;
@@ -55,7 +54,7 @@ public class BubblePlan extends IdentifiableBaseParentEntity implements HasAccou
 
     @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
-    @ECIndex @Column(nullable=false, updatable=false, length=200)
+    @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=200)
     @Getter @Setter private String name;
 
     @ECSearchable @ECField(index=20)

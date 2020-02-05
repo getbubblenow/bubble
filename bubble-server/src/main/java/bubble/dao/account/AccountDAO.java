@@ -206,6 +206,9 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
 
         final Map<String, BubbleApp> apps = new HashMap<>();
         copyTemplateObjects(acct, parent, appDAO, new AccountTemplate.CopyTemplate<>() {
+            @Override public BubbleApp preCreate(BubbleApp parentApp, BubbleApp accountApp) {
+                return accountApp.setTemplateApp(parentApp.getUuid());
+            }
             @Override public void postCreate(BubbleApp parentApp, BubbleApp accountApp) {
                 apps.put(parentApp.getUuid(), accountApp);
             }

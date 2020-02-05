@@ -39,6 +39,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "name"}),
+        @ECIndex(unique=true, of={"account", "templateApp"}),
         @ECIndex(of={"account", "template", "enabled"}),
         @ECIndex(of={"template", "enabled"})
 })
@@ -93,15 +94,23 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
         return adc;
     }
 
-    @ECSearchable @ECField(index=60)
-    @ECIndex @Column(nullable=false)
-    @Getter @Setter private Boolean template = false;
+    // We do NOT add @ECForeignKey here, since the template BubbleApp will not be copied
+    // to a new node. This App will become a template/root BubbleApp for a new node, if it
+    // is owned by a user and applicable to the BubblePlan (via BubblePlanApp)
+    // For system apps, this can be null
+    @ECField(index=60)
+    @Column(length=UUID_MAXLEN, updatable=false)
+    @Getter @Setter private String templateApp;
 
     @ECSearchable @ECField(index=70)
     @ECIndex @Column(nullable=false)
-    @Getter @Setter private Boolean enabled = true;
+    @Getter @Setter private Boolean template = false;
 
     @ECSearchable @ECField(index=80)
+    @ECIndex @Column(nullable=false)
+    @Getter @Setter private Boolean enabled = true;
+
+    @ECSearchable @ECField(index=90)
     @ECIndex @Getter @Setter private Boolean needsUpdate = false;
 
 }

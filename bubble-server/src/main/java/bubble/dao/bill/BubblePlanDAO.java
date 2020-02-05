@@ -30,4 +30,12 @@ public class BubblePlanDAO extends AccountOwnedEntityDAO<BubblePlan> {
         return null;
     }
 
+    public BubblePlan findByName(String name) { return findByUniqueField("name", name); }
+
+    public BubblePlan findById(String id) {
+        final BubblePlan plan = findByUuid(id);
+        if (plan != null) return plan;
+        return findByName(id);
+    }
+
 }

@@ -25,4 +25,8 @@ public class BubbleAppDAO extends AccountOwnedTemplateDAO<BubbleApp> {
         super.delete(uuid);
     }
 
+    public BubbleApp findByAccountAndTemplateApp(String accountUuid, String templateAppUuid) {
+        return findByUniqueFields("account", accountUuid, "templateApp", templateAppUuid);
+    }
+
 }

@@ -28,12 +28,19 @@ public class BubblePlanAppsResource extends AccountOwnedResource<BubblePlanApp, 
 
     @Autowired private BubbleAppDAO appDAO;
 
-    @Override protected List<BubblePlanApp> list(ContainerRequest ctx) {
-        return getDao().findByPlan(plan.getUuid());
-    }
+    @Override protected List<BubblePlanApp> list(ContainerRequest ctx) { return getDao().findByPlan(plan.getUuid()); }
 
-    @Override protected BubblePlanApp find(ContainerRequest ctx, String id) {
-        return getDao().findByAccountAndPlanAndId(account.getUuid(), plan.getUuid(), id);
+    @Override protected BubblePlanApp find(ContainerRequest ctx, String id) { return getDao().findByPlanAndId(plan, id); }
+
+    @Override protected BubblePlanApp populate(ContainerRequest ctx, BubblePlanApp planApp) {
+        final BubbleApp globalApp = appDAO.findByAccountAndId(planApp.getAccount(), planApp.getApp());
+        if (globalApp == null) {
+            log.warn("populate: globalApp "+planApp.getApp()+" not found for planApp: "+planApp.getUuid());
+        } else {
+            final BubbleApp userApp = appDAO.findByAccountAndTemplateApp(getAccountUuid(ctx), globalApp.getUuid());
+            planApp.setAppObject(userApp);
+        }
+        return super.populate(ctx, planApp);
     }
 
     @Override protected boolean canCreate(Request req, ContainerRequest ctx, Account caller, BubblePlanApp request) {

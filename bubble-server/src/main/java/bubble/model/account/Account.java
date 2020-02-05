@@ -115,7 +115,8 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     // make this updatable if we ever want accounts to be able to change parents
     // there might be a lot more involved in that action though (read-only parent objects that will no longer be visible, must be copied in?)
-    @ECIndex @Column(length=UUID_MAXLEN, updatable=false) @ECField(index=20, mode=EntityFieldMode.readOnly)
+    @ECForeignKey(entity=Account.class) @ECField(index=20, mode=EntityFieldMode.readOnly)
+    @Column(length=UUID_MAXLEN, updatable=false)
     @Getter @Setter private String parent;
     public boolean hasParent () { return parent != null; }
 
