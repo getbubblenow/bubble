@@ -165,7 +165,6 @@ public class DatabaseFilterService {
             } catch (Exception e) {
                 log.warn("copyDatabase: error dropping database: "+dbName+": "+e);
             }
-            log.info("copyDatabase: retaining database: "+dbName);
         }
     }
 

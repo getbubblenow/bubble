@@ -68,6 +68,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
     protected abstract void iterate();
 
     protected void add(Identifiable from) {
+        if (log.isDebugEnabled()) log.debug("add: "+from.getClass().getSimpleName()+"/"+from.getUuid());
         try {
             queue.put(from);
         } catch (InterruptedException e) {
@@ -89,7 +90,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
 
         } else if (planApps != null && BubbleApp.class.isAssignableFrom(c)) {
             // only copy enabled apps, make them templates
-            entities.stream().filter(e -> planAppEnabled(e.getUuid(), planApps))
+            entities.stream().filter(app -> planAppEnabled(((BubbleApp) app).getTemplateApp(), planApps))
                     .map(app -> ((BubbleApp) app).setTemplate(true))
                     .forEach(this::add);
 
@@ -114,11 +115,11 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
                             .filter(app -> app.getTemplateApp().equals(systemPlanApp.getApp()))
                             .findFirst().orElse(null);
                     if (userApp == null) {
-                        log.info("addEntities: system BubblePlanApp " + systemPlanApp.getName() + " not found in userApps (not adding): " + names(userApps));
+                        log.info("addEntities: system BubblePlanApp " + systemPlanApp.getUuid() + ": no matching BubbleApp not found in userApps (not adding): " + names(userApps));
                     } else {
                         // systemPlanApp will now be associated with "root"'s BubblePlan, but user's BubbleApp
-                        log.info("addEntities: rewrite ");
-                        systemPlanApp.setApp(userApp.getUuid());
+                        log.info("addEntities: rewrote app for "+systemPlanApp.getUuid()+" -> "+userApp.getName()+"/"+userApp.getUuid());
+                        add(systemPlanApp.setApp(userApp.getUuid()));
                     }
                 }
             }
