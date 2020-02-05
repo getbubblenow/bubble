@@ -14,6 +14,8 @@ public class BubblePlanAppDAO extends AccountOwnedEntityDAO<BubblePlanApp> {
 
     @Autowired private BubbleAppDAO appDAO;
 
+    @Override public boolean dbFilterIncludeAll() { return true; }
+
     public List<BubblePlanApp> findByPlan(String bubblePlan) {
         return findByField("plan", bubblePlan);
     }
