@@ -83,7 +83,7 @@ public class DatabaseFilterService {
                 if (!schemaResult.isZeroExitStatus()) return die("copyDatabase: error populating schema for "+dbName+": "+schemaResult);
             }
 
-            log.info("copyDatabase: copying/filtering data into new database: "+dbName);
+            log.info("copyDatabase: copying/filtering data into new database: "+dbName+", "+planApps.size()+" apps enabled") ;
             final int port = PortPicker.pickOrDie();
 
             final Map<String, String> env = new HashMap<>(configuration.pgEnv());

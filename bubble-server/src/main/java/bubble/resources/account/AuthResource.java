@@ -219,15 +219,23 @@ public class AuthResource {
 
         boolean isUnlock = false;
         if (account.locked()) {
-            if (empty(unlockKey)) return invalid("err.account.locked");
-            if (!unlockKey.equals(configuration.getUnlockKey())) return invalid("err.unlockKey.invalid");
-            // unlock all accounts
-            isUnlock = true;
-            log.info("Unlock key was valid, unlocking accounts");
-            accountDAO.unlock();
+            if (!accountDAO.locked()) {
+                log.info("login: account "+account.getName()+" was locked, but system is unlocked, unlocking again");
+                accountDAO.unlock();
+                final Account unlockedAccount = accountDAO.findByUuid(account.getUuid());
+                if (unlockedAccount.locked()) {
+                    log.info("login: account "+account.getName()+" was still locked after unlocking system, cannot proceed");
+                    return invalid("err.account.locked");
+                }
 
-            // refresh system configs, we are now unlocked
-            configuration.refreshPublicSystemConfigs();
+            } else {
+                if (empty(unlockKey)) return invalid("err.account.locked");
+                if (!unlockKey.equals(configuration.getUnlockKey())) return invalid("err.unlockKey.invalid");
+                // unlock all accounts
+                isUnlock = true;
+                log.info("login: Unlock key was valid, unlocking accounts");
+                accountDAO.unlock();
+            }
         }
 
         if (!isUnlock) {

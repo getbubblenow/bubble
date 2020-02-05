@@ -319,11 +319,13 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     private static final AtomicBoolean unlocked = new AtomicBoolean(false);
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public boolean locked() {
-        if (unlocked.get()) return false;
-        // if any admins are unlocked, the bubble is unlocked
-        final boolean anyAdminUnlocked = !findByFields("admin", true, "locked", false).isEmpty();
-        if (anyAdminUnlocked) unlocked.set(true);
-        return !anyAdminUnlocked;
+        synchronized (unlocked) {
+            if (unlocked.get()) return false;
+            // if any admins are unlocked, the bubble is unlocked
+            final boolean anyAdminUnlocked = !findByFields("admin", true, "locked", false).isEmpty();
+            if (anyAdminUnlocked) unlocked.set(true);
+            return !anyAdminUnlocked;
+        }
     }
 
     // The admin with the lowest ctime is 'root'
@@ -342,9 +344,17 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         return admins.get(0);
     }
 
+    @Transactional
     public void unlock() {
-        findAll().forEach(a -> update(a.setLocked(false)));
-        unlocked.set(true);
+        synchronized (unlocked) {
+            final List<Account> all = findAll();
+            for (Account account : all) {
+                update(account.setLocked(false));
+            }
+            log.info("unlock: " + all.size() + " accounts unlocked");
+            unlocked.set(true);
+            configuration.refreshPublicSystemConfigs();
+        }
     }
 
 }

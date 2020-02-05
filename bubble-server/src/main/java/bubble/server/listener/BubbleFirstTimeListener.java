@@ -44,10 +44,10 @@ public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<Bub
         final BubbleConfiguration configuration = (BubbleConfiguration) server.getConfiguration();
         redis.set(configuration.getBean(RedisService.class));
 
+        final AccountDAO accountDAO = configuration.getBean(AccountDAO.class);
         if (FIRST_TIME_FILE.exists()) {
             try {
                 // final FirstTimeType firstTimeType = FirstTimeType.fromString(FileUtil.toStringOrDie(FIRST_TIME_FILE));
-                final AccountDAO accountDAO = configuration.getBean(AccountDAO.class);
                 final Account adminAccount = accountDAO.getFirstAdmin();
                 if (adminAccount == null) {
                     log.error("onStart: no admin account found, cannot send first time install message, unlocking now");
@@ -78,6 +78,11 @@ public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<Bub
                 if (!FIRST_TIME_FILE.delete()) {
                     log.error("onStart: error deleting: "+abs(FIRST_TIME_FILE));
                 }
+            }
+        } else {
+            if (!accountDAO.locked()) {
+                log.info("onStart: system is not locked, ensuring all accounts are unlocked");
+                accountDAO.unlock();
             }
         }
     }
