@@ -75,7 +75,7 @@ function {{JS_PREFIX}}_block_target(url, type) {
 window.f = Element.prototype.appendChild;
 Element.prototype.appendChild = function() {
     let type = null;
-    if (arguments[0] instance HTMLImageElement) {
+    if (arguments[0] instanceof HTMLImageElement) {
         type = 'image';
     }
     if (typeof arguments[0].src !== 'undefined') {
