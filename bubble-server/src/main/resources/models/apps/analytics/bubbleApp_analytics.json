@@ -77,13 +77,13 @@
         {"name": "action.filterHost", "value": "Block Host"},
         {"name": "action.filterUrl", "value": "Block URL"},
         {"name": "view.recent", "value": "Recent Traffic"},
-        {"name": "view.recent.requestTime.format", "value": "{{MM}} {{d}} @ {{h}}:{{m}}:{{s}} {{a}}"},
+        {"name": "view.recent.requestTime.format", "value": "{{MMM}} {{d}} @ {{h}}:{{m}}:{{s}} {{a}}"},
         {"name": "view.last_24_hours", "value": "Last 24 Hours"},
-        {"name": "view.last_24_hours.ctime.format", "value": "{{MM}} {{d}} @ {{h}}{{a}}"},
+        {"name": "view.last_24_hours.ctime.format", "value": "{{MMM}} {{d}} @ {{h}}{{a}}"},
         {"name": "view.last_7_days", "value": "Last 7 Days"},
-        {"name": "view.last_7_days.ctime.format", "value": "{{MM}} {{d}}, {{YYYY}}"},
+        {"name": "view.last_7_days.ctime.format", "value": "{{MMM}} {{d}}, {{YYYY}}"},
         {"name": "view.last_30_days", "value": "Last 30 Days"},
-        {"name": "view.last_30_days.ctime.format", "value": "{{MM}} {{d}}, {{YYYY}}"}
+        {"name": "view.last_30_days.ctime.format", "value": "{{MMM}} {{d}}, {{YYYY}}"}
       ]
     }]
   }

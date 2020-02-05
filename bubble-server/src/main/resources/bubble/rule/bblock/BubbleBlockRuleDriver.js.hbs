@@ -32,10 +32,10 @@ function {{JS_PREFIX}}_check_entry_exclusions_and_types(entry, url, type) {
 
 function {{JS_PREFIX}}_entry_matches(entry, url, type) {
     const target = entry.target;
-    if (typeof target.domainRegex !== 'undefined' && target.domainRegex !== null && url.hostname.matches(target.domainRegex) !== null) {
+    if (typeof target.domainRegex !== 'undefined' && target.domainRegex !== null && url.hostname.match(target.domainRegex) !== null) {
         return {{JS_PREFIX}}_check_entry_exclusions_and_types(entry, url, type);
     }
-    if (typeof target.regex !== 'undefined' && target.regex !== null && (url.hostname.matches(target.regex) !== null || url.pathname.matches(target.regex) !== null)) {
+    if (typeof target.regex !== 'undefined' && target.regex !== null && (url.hostname.match(target.regex) !== null || url.pathname.match(target.regex) !== null)) {
         return {{JS_PREFIX}}_check_entry_exclusions_and_types(entry, url, type);
     }
 }
@@ -49,17 +49,18 @@ function {{JS_PREFIX}}_block_target(url, type) {
         return false;
     }
     if (typeof type === 'undefined' || type === null) {
-        if (url.pathname.endsWith('.png')
-            || url.pathname.endsWith('.gif')
-            || url.pathname.endsWith('.jpeg')
-            || url.pathname.endsWith('.jpg')) {
-        type = 'image';
-    } else if (url.pathname.endsWith('.css')) {
-        type = 'stylesheet';
-    } else if (url.pathname.endsWith('.js')) {
-        type = 'script';
-    } else {
-        type = null;
+        if (u.pathname.endsWith('.png')
+            || u.pathname.endsWith('.gif')
+            || u.pathname.endsWith('.jpeg')
+            || u.pathname.endsWith('.jpg')) {
+            type = 'image';
+        } else if (u.pathname.endsWith('.css')) {
+            type = 'stylesheet';
+        } else if (u.pathname.endsWith('.js')) {
+            type = 'script';
+        } else {
+            type = null;
+        }
     }
     for (let i=0; i<{{JS_PREFIX}}_whitelist.length; i++) {
         const entry = {{JS_PREFIX}}_whitelist[i];
