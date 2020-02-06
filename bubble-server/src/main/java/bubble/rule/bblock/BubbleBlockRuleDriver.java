@@ -169,9 +169,9 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
         final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in, UTF8cs), filter).setMaxMatches(1);
         if (log.isDebugEnabled()) {
-            log.debug(prefix+"filtering response for "+request.getUri()+" - replacement.length = "+replacement.length());
+            log.debug(prefix+"filtering response for "+request.getUrl()+" - replacement.length = "+replacement.length());
         } else if (log.isInfoEnabled()) {
-            log.info(prefix+"filtering response for "+request.getUri());
+            log.info(prefix+"filtering response for "+request.getUrl());
         }
         return new ReaderInputStream(reader, UTF8cs);
     }
