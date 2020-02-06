@@ -107,16 +107,16 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final BlockDecision decision = getDecision(filter.getFqdn(), filter.getUri());
         switch (decision.getDecisionType()) {
             case block:
-                if (log.isDebugEnabled()) log.debug(prefix+"decision is BLOCK");
+                if (log.isInfoEnabled()) log.info(prefix+"decision is BLOCK");
                 incrementCounters(account, device, app, site, fqdn);
                 return FilterMatchDecision.abort_not_found;  // block this request
 
             case allow: default:
-                if (log.isDebugEnabled()) log.debug(prefix+"decision is ALLOW");
+                if (log.isInfoEnabled()) log.info(prefix+"decision is ALLOW");
                 return FilterMatchDecision.no_match;
 
             case filter:
-                if (log.isDebugEnabled()) log.debug(prefix+"decision is FILTER");
+                if (log.isInfoEnabled()) log.info(prefix+"decision is FILTER");
                 final List<BlockSpec> specs = decision.getSpecs();
                 if (empty(specs)) {
                     log.warn(prefix+"decision was 'filter' but no specs were found, returning no_match");
@@ -168,7 +168,11 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final String replacement = "<head><script>" + getBubbleJs(filterRequest.getId(), decision) + "</script>";
         final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
         final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in, UTF8cs), filter).setMaxMatches(1);
-        if (log.isDebugEnabled()) log.debug("doFilterResponse: filtering response for "+request.getUri()+" - replacement.length = "+replacement.length());
+        if (log.isDebugEnabled()) {
+            log.debug(prefix+"filtering response for "+request.getUri()+" - replacement.length = "+replacement.length());
+        } else if (log.isInfoEnabled()) {
+            log.info(prefix+"filtering response for "+request.getUri());
+        }
         return new ReaderInputStream(reader, UTF8cs);
     }
 

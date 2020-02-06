@@ -190,11 +190,18 @@ public class FilterHttpResource {
             }
         }
 
-        if (log.isDebugEnabled()) log.debug(prefix+"after pre-processing, returning "+retainMatchers.size()+" matchers");
-        return new FilterMatchersResponse()
+        final FilterMatchersResponse response = new FilterMatchersResponse()
                 .setDecision(empty(retainMatchers) ? FilterMatchDecision.no_match : FilterMatchDecision.match)
                 .setRequest(filterRequest)
                 .setMatchers(new ArrayList<>(retainMatchers.values()));
+
+        if (log.isDebugEnabled()) {
+            log.debug(prefix+"after pre-processing, returning "+retainMatchers.size()+" matchers");
+        } else if (log.isInfoEnabled()) {
+            log.info(prefix+"preprocess decision for "+filterRequest.getUrl()+": "+response.getDecision());
+        }
+
+        return response;
     }
 
     @POST @Path(EP_APPLY+"/{requestId}")
