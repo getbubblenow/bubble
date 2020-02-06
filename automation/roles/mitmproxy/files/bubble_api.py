@@ -47,7 +47,7 @@ def bubble_matchers (req_id, remote_addr, flow, host):
             'referer': referer,
             'remoteAddr': remote_addr
         }
-        response = requests.post('http://127.0.0.1:'+bubble_port+'/api/filter/matchers', headers=headers, json=data)
+        response = requests.post('http://127.0.0.1:'+bubble_port+'/api/filter/matchers/'+req_id, headers=headers, json=data)
         if response.ok:
             return response.json()
         bubble_log('bubble_matchers response not OK, returning empty matchers array: '+str(response.status_code)+' / '+repr(response.text))

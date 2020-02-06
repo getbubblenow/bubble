@@ -26,20 +26,23 @@ class Rerouter:
         try:
             host = host.decode()
         except (UnicodeDecodeError, AttributeError):
-            bubble_log("get_matchers: host "+str(host)+" could not be decoded, type="+str(type(host)))
-            return None
+            try:
+                host = str(host)
+            except Exception as e:
+                bubble_log("get_matchers: host "+repr(host)+" could not be decoded, type="+str(type(host))+" e="+repr(e))
+                return None
 
         if host == bubble_host or host == bubble_host_alias:
             bubble_log("get_matchers: request is for bubble itself ("+host+"), not matching")
             return None
 
-        req_id = str(uuid.uuid4()) + '.' + str(time.time())
+        req_id = str(host) + '.' + str(uuid.uuid4()) + '.' + str(time.time())
         resp = bubble_matchers(req_id, remote_addr, flow, host)
         if resp and 'abort' in resp and resp['abort'] is not None:
             bubble_log("get_matchers: received abort code for remote_addr/host: "+remote_addr+'/'+str(host)+': '+str(resp['abort']))
             return {'abort': resp['abort']}
 
-        if (not resp) or (not 'matchers' in resp):
+        if (not resp) or (not 'matchers' in resp) or (resp['matchers'] is None):
             bubble_log("get_matchers: no matchers for remote_addr/host: "+remote_addr+'/'+str(host))
             return None
         matcher_ids = []
@@ -87,9 +90,10 @@ class Rerouter:
                 elif ('matchers' in matcher_response
                       and 'request_id' in matcher_response
                       and len(matcher_response['matchers']) > 0):
-                    bubble_log("dns_spoofing.request: found request_id: " + ' '.join(matcher_response['matchers']))
+                    req_id = matcher_response['request_id']
+                    bubble_log("dns_spoofing.request: found request_id: " + req_id + ' with matchers: ' + ' '.join(matcher_response['matchers']))
                     flow.request.headers[HEADER_BUBBLE_MATCHERS] = json.dumps(matcher_response['matchers'])
-                    flow.request.headers[HEADER_BUBBLE_REQUEST_ID] = matcher_response['request_id']
+                    flow.request.headers[HEADER_BUBBLE_REQUEST_ID] = req_id
                 else:
                     bubble_log('dns_spoofing.request: no rules returned, passing thru...')
             else:

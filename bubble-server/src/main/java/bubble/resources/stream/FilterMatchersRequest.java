@@ -13,19 +13,22 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
 public class FilterMatchersRequest {
 
     @Getter @Setter private String requestId;
+    public boolean hasRequestId () { return !empty(requestId); }
+
     @Getter @Setter private String device;
+    public boolean hasDevice() { return !empty(device); }
+
     @Getter @Setter private String fqdn;
     @Getter @Setter private String uri;
     @Getter @Setter private String userAgent;
     @Getter @Setter private String referer;
     @Getter @Setter private String remoteAddr;
+    public boolean hasRemoteAddr() { return !empty(remoteAddr); }
 
     // note: we do *not* include the requestId in the cache, if we did then the
     // FilterHttpResource.matchersCache cache would be useless, since every cache entry would be unique
     public String cacheKey() { return hashOf(device, fqdn, uri, userAgent, referer, remoteAddr); }
 
     @JsonIgnore public String getUrl() { return fqdn + "/" + uri; }
-
-    public boolean hasDevice() { return !empty(device); }
 
 }

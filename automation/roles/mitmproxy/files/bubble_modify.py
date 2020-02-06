@@ -91,6 +91,7 @@ def responseheaders(flow):
     elif HEADER_BUBBLE_MATCHERS in flow.request.headers and HEADER_BUBBLE_REQUEST_ID in flow.request.headers:
         req_id = flow.request.headers[HEADER_BUBBLE_REQUEST_ID]
         matchers = flow.request.headers[HEADER_BUBBLE_MATCHERS]
+        bubble_log('responseheaders: req_id='+req_id+' with matchers: '+matchers)
         if HEADER_CONTENT_TYPE in flow.response.headers:
             content_type = flow.response.headers[HEADER_CONTENT_TYPE]
             if matchers:
@@ -98,16 +99,15 @@ def responseheaders(flow):
                     content_encoding = flow.response.headers[HEADER_CONTENT_ENCODING]
                 else:
                     content_encoding = None
-                bubble_log("responseheaders: content_encoding="+repr(content_encoding)
-                           + ", content_type="+repr(content_type)
-                           +", req_id=" + req_id)
+                bubble_log('responseheaders: req_id='+req_id+' content_encoding='+repr(content_encoding)
+                           + ', content_type='+repr(content_type))
                 flow.response.stream = bubble_modify(req_id, content_encoding, content_type)
             else:
-                bubble_log("responseheaders: no matchers, passing thru")
+                bubble_log('responseheaders: no matchers, passing thru')
                 pass
         else:
-            bubble_log("responseheaders: no "+HEADER_CONTENT_TYPE +" header, passing thru")
+            bubble_log('responseheaders: no '+HEADER_CONTENT_TYPE +' header, passing thru')
             pass
     else:
-        bubble_log("responseheaders: no "+HEADER_BUBBLE_MATCHERS +" header, passing thru")
+        bubble_log('responseheaders: no '+HEADER_BUBBLE_MATCHERS +' header, passing thru')
         pass

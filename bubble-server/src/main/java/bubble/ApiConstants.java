@@ -21,8 +21,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
-import static org.apache.http.HttpHeaders.ACCEPT_LANGUAGE;
-import static org.apache.http.HttpHeaders.USER_AGENT;
+import static org.apache.http.HttpHeaders.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
@@ -234,6 +233,7 @@ public class ApiConstants {
     }
 
     public static String getUserAgent(ContainerRequest ctx) { return ctx.getHeaderString(USER_AGENT); }
+    public static String getReferer(ContainerRequest ctx) { return ctx.getHeaderString(REFERER); }
 
     public static final String DETECT_LOCALE = "detect";
 

@@ -43,7 +43,7 @@ public class TrafficAnalyticsRuleDriver extends AbstractAppRuleDriver {
         final String site = ruleHarness.getMatcher().getSite();
         final String fqdn = filter.getFqdn();
 
-        final TrafficRecord rec = new TrafficRecord(filter, account, device, req);
+        final TrafficRecord rec = new TrafficRecord(filter, account, device);
         recordRecentTraffic(rec);
         incrementCounters(account, device, app, site, fqdn);
         return FilterMatchDecision.no_match; // we are done, don't need to look at/modify stream

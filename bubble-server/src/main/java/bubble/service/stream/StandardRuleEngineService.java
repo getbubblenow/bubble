@@ -29,6 +29,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.collection.NameAndValue;
+import org.cobbzilla.util.collection.SingletonList;
 import org.cobbzilla.util.http.HttpClosingFilterInputStream;
 import org.cobbzilla.util.http.HttpContentEncodingType;
 import org.cobbzilla.util.http.HttpMethods;
@@ -55,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 
 import static bubble.client.BubbleApiClient.newHttpClientBuilder;
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
@@ -78,8 +80,8 @@ public class StandardRuleEngineService implements RuleEngineService {
                                           ContainerRequest request,
                                           Account account,
                                           Device device,
-                                          String matcherUuid) {
-        final AppRuleHarness ruleHarness = initRules(account, device, new String[]{ matcherUuid }).get(0);
+                                          AppMatcher matcher) {
+        final AppRuleHarness ruleHarness = initRules(account, device, new SingletonList<AppMatcher>(matcher)).get(0);
         return ruleHarness.getDriver().preprocess(ruleHarness, filter, account, device, req, request);
     }
 
@@ -147,22 +149,25 @@ public class StandardRuleEngineService implements RuleEngineService {
                                                      FilterHttpRequest filterRequest,
                                                      Integer contentLength,
                                                      boolean last) throws IOException {
-
-        if (!filterRequest.hasMatchers()) return passthru(request);
+        final String prefix = "applyRulesToChunkAndSendResponse("+filterRequest.getId()+"): ";
+        if (!filterRequest.hasMatchers()) {
+            if (log.isDebugEnabled()) log.debug(prefix+"adding no matchers, returning passthru");
+            return passthru(request);
+        }
 
         // have we seen this request before?
         final ActiveStreamState state = activeProcessors.computeIfAbsent(filterRequest.getId(),
                 k -> new ActiveStreamState(filterRequest, initRules(filterRequest)));
         final byte[] chunk = toBytes(request.getEntityStream(), contentLength);
         if (last) {
-            if (log.isDebugEnabled()) log.debug("applyRulesToChunkAndSendResponse: adding LAST stream");
+            if (log.isDebugEnabled()) log.debug(prefix+"adding LAST stream");
             state.addLastChunk(chunk);
         } else {
-            if (log.isDebugEnabled()) log.debug("applyRulesToChunkAndSendResponse: adding a stream");
+            if (log.isDebugEnabled()) log.debug(prefix+"adding a stream");
             state.addChunk(chunk);
         }
 
-        if (log.isDebugEnabled()) log.debug("applyRulesToChunkAndSendResponse: sending as much filtered data as we can right now (which may be nothing)");
+        if (log.isDebugEnabled()) log.debug(prefix+"sending as much filtered data as we can right now (which may be nothing)");
 //        return sendResponse(new ByteArrayInputStream(chunk)); // noop for testing
         return sendResponse(state.getResponseStream(last));
     }
@@ -185,13 +190,10 @@ public class StandardRuleEngineService implements RuleEngineService {
         return initRules(filterRequest.getAccount(), filterRequest.getDevice(), filterRequest.getMatchers());
     }
 
-    private List<AppRuleHarness> initRules(Account account, Device device, String[] matcherIds) {
-        final String cacheKey = hashOf(account.getUuid(), device.getUuid(), matcherIds);
+    private List<AppRuleHarness> initRules(Account account, Device device, List<AppMatcher> matchers) {
+        if (empty(matchers)) return emptyList();
+        final String cacheKey = hashOf(account.getUuid(), device.getUuid(), matchers);
         return ruleCache.computeIfAbsent(cacheKey, k -> {
-            final List<AppMatcher> matchers = matcherDAO.findByUuids(matcherIds);
-            if (matchers.size() != matcherIds.length) {
-                log.warn("initRules: duplicate rules, or could not resolve some rule(s)");
-            }
             final List<AppRuleHarness> ruleHarnesses = new ArrayList<>();
             for (AppMatcher m : matchers) {
                 final AppRule rule = ruleDAO.findByUuid(m.getRule());
@@ -201,11 +203,11 @@ public class StandardRuleEngineService implements RuleEngineService {
                 }
                 ruleHarnesses.add(new AppRuleHarness(m, rule));
             }
-            return initRules(account, device, ruleHarnesses);
+            return initRuleHarnesses(account, device, ruleHarnesses);
         });
     }
 
-    private List<AppRuleHarness> initRules(Account account, Device device, List<AppRuleHarness> rules) {
+    private List<AppRuleHarness> initRuleHarnesses(Account account, Device device, List<AppRuleHarness> rules) {
         for (AppRuleHarness h : rules) {
             final RuleDriver ruleDriver = driverDAO.findByUuid(h.getRule().getDriver());
             if (ruleDriver == null) {
@@ -282,8 +284,10 @@ public class StandardRuleEngineService implements RuleEngineService {
             this.firstRule = rules.get(0);
         }
 
+        private String prefix(String s) { return s+"("+requestId+"): "; }
+
         public void addChunk(byte[] chunk) throws IOException {
-            if (log.isDebugEnabled()) log.debug("addChunk: adding "+chunk.length+" bytes");
+            if (log.isDebugEnabled()) log.debug(prefix("addChunk")+"adding "+chunk.length+" bytes");
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk));
@@ -294,7 +298,7 @@ public class StandardRuleEngineService implements RuleEngineService {
         }
 
         public void addLastChunk(byte[] chunk) throws IOException {
-            if (log.isDebugEnabled()) log.debug("addLastChunk: adding "+chunk.length+" bytes");
+            if (log.isDebugEnabled()) log.debug(prefix("addLastChunk")+"adding "+chunk.length+" bytes");
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk), true);
@@ -305,10 +309,11 @@ public class StandardRuleEngineService implements RuleEngineService {
         }
 
         public InputStream getResponseStream(boolean last) throws IOException {
-            if (log.isDebugEnabled()) log.debug("getResponseStream: starting with last="+last+", totalBytesWritten="+totalBytesWritten+", totalBytesRead="+totalBytesRead);
+            final String prefix = prefix("getResponseStream");
+            if (log.isDebugEnabled()) log.debug(prefix+"starting with last="+last+", totalBytesWritten="+totalBytesWritten+", totalBytesRead="+totalBytesRead);
             // read to end of all streams, there is no more data coming in
             if (last) {
-                if (log.isDebugEnabled()) log.debug("getResponseStream: last==true, returning full output");
+                if (log.isDebugEnabled()) log.debug(prefix+"last==true, returning full output");
                 return output;
             }
 
@@ -316,47 +321,49 @@ public class StandardRuleEngineService implements RuleEngineService {
             final int bytesToRead = (int) (totalBytesWritten - totalBytesRead - (2*MAX_BYTE_BUFFER_SIZE));
             if (bytesToRead < 0) {
                 // we shouldn't try to read yet, less than 1024 bytes have been written
-                if (log.isDebugEnabled()) log.debug("getResponseStream: not enough data written (bytesToRead="+bytesToRead+"), can't read anything yet");
+                if (log.isDebugEnabled()) log.debug(prefix+"not enough data written (bytesToRead="+bytesToRead+"), can't read anything yet");
                 return NullInputStream.instance;
             }
 
-            if (log.isDebugEnabled()) log.debug("getResponseStream: trying to read "+bytesToRead+" bytes");
+            if (log.isDebugEnabled()) log.debug(prefix+"trying to read "+bytesToRead+" bytes");
             final byte[] buffer = new byte[bytesToRead];
             final int bytesRead = output.read(buffer);
-            if (log.isDebugEnabled()) log.debug("getResponseStream: actually read "+bytesRead+" bytes");
+            if (log.isDebugEnabled()) log.debug(prefix+"actually read "+bytesRead+" bytes");
             if (bytesRead == -1) {
                 // nothing to return
-                if (log.isDebugEnabled()) log.debug("getResponseStream: end of stream, returning NullInputStream");
+                if (log.isDebugEnabled()) log.debug(prefix+"end of stream, returning NullInputStream");
                 return NullInputStream.instance;
             }
 
-            if (log.isDebugEnabled()) log.debug("getResponseStream: read "+bytesRead+", returning buffer");
+            if (log.isDebugEnabled()) log.debug(prefix+"read "+bytesRead+", returning buffer");
             totalBytesRead += bytesRead;
             return new ByteArrayInputStream(buffer, 0, bytesRead);
         }
 
         private InputStream inputStream(MultiStream baseStream) throws IOException {
+            final String prefix = prefix("inputStream");
             if (encoding == null) {
-                if (log.isDebugEnabled()) log.debug("inputStream: returning baseStream unmodified");
+                if (log.isDebugEnabled()) log.debug(prefix+"returning baseStream unmodified");
                 return baseStream;
             }
             try {
                 final InputStream wrapped = encoding.wrapInput(baseStream);
-                if (log.isDebugEnabled()) log.debug("inputStream: returning baseStream wrapped in " + wrapped.getClass().getSimpleName());
+                if (log.isDebugEnabled()) log.debug(prefix+"returning baseStream wrapped in " + wrapped.getClass().getSimpleName());
                 return wrapped;
             } catch (IOException e) {
-                if (log.isWarnEnabled()) log.warn("inputStream: error wrapping with "+encoding+", sending as-is (perhaps missing a byte or two)");
+                if (log.isWarnEnabled()) log.warn(prefix+"error wrapping with "+encoding+", sending as-is (perhaps missing a byte or two)");
                 return baseStream;
             }
         }
 
         private InputStream outputStream(InputStream in) throws IOException {
+            final String prefix = prefix("outputStream");
             if (encoding == null) {
-                if (log.isDebugEnabled()) log.debug("outputStream: returning baseStream unmodified");
+                if (log.isDebugEnabled()) log.debug(prefix+"returning baseStream unmodified");
                 return in;
             }
             final FilterInputStreamViaOutputStream wrapped = encoding.wrapInputAsOutput(in);
-            if (log.isDebugEnabled()) log.debug("outputStream: returning baseStream wrapped in "+wrapped.getOutputStreamClass().getSimpleName());
+            if (log.isDebugEnabled()) log.debug(prefix+"returning baseStream wrapped in "+wrapped.getOutputStreamClass().getSimpleName());
             return wrapped;
         }
     }

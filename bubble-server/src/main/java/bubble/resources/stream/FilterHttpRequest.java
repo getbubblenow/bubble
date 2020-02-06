@@ -1,14 +1,17 @@
 package bubble.resources.stream;
 
 import bubble.model.account.Account;
+import bubble.model.app.AppMatcher;
 import bubble.model.device.Device;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.apache.commons.lang.ArrayUtils;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.http.HttpContentEncodingType;
+
+import java.util.List;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
@@ -23,12 +26,13 @@ public class FilterHttpRequest {
     @Getter @Setter private NameAndValue[] meta;
     @Getter @Setter private String contentType;
 
-    @Getter @Setter private String[] matchers;
-
-    public boolean hasMatchers() { return !empty(matchers); }
-
     public boolean hasMatcher (String matcherId) {
-        if (empty(matcherId) || empty(matchers)) return false;
-        return ArrayUtils.contains(matchers, matcherId);
+        if (empty(matcherId) || !hasMatchers()) return false;
+        return matchersResponse.getMatchers().stream().anyMatch(m -> m.getUuid().equals(matcherId));
     }
+
+    public boolean hasMatchers() { return matchersResponse != null && matchersResponse.hasMatchers(); }
+
+    @JsonIgnore public List<AppMatcher> getMatchers() { return !hasMatchers() ? null : matchersResponse.getMatchers(); }
+
 }

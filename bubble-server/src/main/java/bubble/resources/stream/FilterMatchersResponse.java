@@ -20,6 +20,7 @@ public class FilterMatchersResponse {
     public static final FilterMatchersResponse ABORT_NOT_FOUND = new FilterMatchersResponse().setDecision(FilterMatchDecision.abort_not_found);
 
     @Getter @Setter private FilterMatchersRequest request;
+    public boolean hasRequest () { return request != null; }
 
     @Getter @Setter private FilterMatchDecision decision;
 

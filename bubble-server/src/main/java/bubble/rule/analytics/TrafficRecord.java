@@ -7,9 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.glassfish.grizzly.http.server.Request;
 
-import static bubble.ApiConstants.getRemoteHost;
 import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 
@@ -28,12 +26,12 @@ public class TrafficRecord {
     @Getter @Setter private String userAgent;
     @Getter @Setter private String referer;
 
-    public TrafficRecord(FilterMatchersRequest filter, Account account, Device device, Request req) {
+    public TrafficRecord(FilterMatchersRequest filter, Account account, Device device) {
         setAccountName(account == null ? null : account.getName());
         setAccountUuid(account == null ? null : account.getUuid());
         setDeviceName(device == null ? null : device.getName());
         setDeviceUuid(device == null ? null : device.getUuid());
-        setIp(getRemoteHost(req));
+        setIp(filter.getRemoteAddr());
         setFqdn(filter.getFqdn());
         setUri(filter.getUri());
         setUserAgent(filter.getUserAgent());

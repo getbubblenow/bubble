@@ -96,23 +96,24 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final String app = ruleHarness.getRule().getApp();
         final String site = ruleHarness.getMatcher().getSite();
         final String fqdn = filter.getFqdn();
+        final String prefix = "preprocess("+filter.getRequestId()+"): ";
 
         final BlockDecision decision = getDecision(filter.getFqdn(), filter.getUri());
         switch (decision.getDecisionType()) {
             case block:
-                if (log.isDebugEnabled()) log.debug("preprocess: decision is BLOCK");
+                if (log.isDebugEnabled()) log.debug(prefix+"decision is BLOCK");
                 incrementCounters(account, device, app, site, fqdn);
                 return FilterMatchDecision.abort_not_found;  // block this request
 
             case allow: default:
-                if (log.isDebugEnabled()) log.debug("preprocess: decision is ALLOW");
+                if (log.isDebugEnabled()) log.debug(prefix+"decision is ALLOW");
                 return FilterMatchDecision.no_match;
 
             case filter:
-                if (log.isDebugEnabled()) log.debug("preprocess: decision is FILTER");
+                if (log.isDebugEnabled()) log.debug(prefix+"decision is FILTER");
                 final List<BlockSpec> specs = decision.getSpecs();
                 if (empty(specs)) {
-                    log.warn("getFilterMatchResponse: decision was 'filter' but no specs were found, returning no_match");
+                    log.warn(prefix+"decision was 'filter' but no specs were found, returning no_match");
                     return FilterMatchDecision.no_match;
                 } else {
                     return FilterMatchDecision.match;
@@ -127,32 +128,34 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
     @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
 
         final FilterMatchersRequest request = filterRequest.getMatchersResponse().getRequest();
+        final String prefix = "doFilterResponse("+filterRequest.getId()+"): ";
 
         // Now that we know the content type, re-check the BlockList
         final String contentType = filterRequest.getContentType();
         final BlockDecision decision = blockList.getDecision(request.getFqdn(), request.getUri(), contentType, true);
+        if (log.isDebugEnabled()) log.debug(prefix+"preprocess decision was "+decision+", but now we know contentType="+contentType);
         switch (decision.getDecisionType()) {
             case block:
-                log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was block (contentType="+contentType+"), returning EMPTY_STREAM");
+                log.warn(prefix+"preprocessed request was filtered, but ultimate decision was block (contentType="+contentType+"), returning EMPTY_STREAM");
                 return EMPTY_STREAM;
             case allow:
-                log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was allow (contentType="+contentType+"), returning as-is");
+                log.warn(prefix+"preprocessed request was filtered, but ultimate decision was allow (contentType="+contentType+"), returning as-is");
                 return in;
             case filter:
                 if (!decision.hasSpecs()) {
                     // should never happen
-                    log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was filtered (contentType="+contentType+"), but no filters provided, returning as-is");
+                    log.warn(prefix+"preprocessed request was filtered, but ultimate decision was filtered (contentType="+contentType+"), but no filters provided, returning as-is");
                     return in;
                 }
                 break;
             default:
                 // should never happen
-                log.warn("doFilterRequest: preprocessed request was filtered, but ultimate decision was invalid, returning EMPTY_STREAM");
+                log.warn(prefix+"preprocessed request was filtered, but ultimate decision was invalid, returning EMPTY_STREAM");
                 return EMPTY_STREAM;
         }
 
         if (!HttpContentTypes.isHtml(contentType)) {
-            log.warn("doFilterRequest: cannot request non-html response ("+request.getUrl()+"), returning as-is: "+contentType);
+            log.warn(prefix+"cannot request non-html response ("+request.getUrl()+"), returning as-is: "+contentType);
             return in;
         }
 

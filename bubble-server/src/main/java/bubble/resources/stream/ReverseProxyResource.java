@@ -5,6 +5,7 @@ import bubble.dao.app.AppRuleDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.device.Device;
+import bubble.rule.FilterMatchDecision;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.DeviceIdService;
 import bubble.service.stream.StandardRuleEngineService;
@@ -22,19 +23,14 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.TreeSet;
+import java.util.*;
 
-import static bubble.ApiConstants.PROXY_ENDPOINT;
-import static bubble.ApiConstants.getRemoteHost;
+import static bubble.ApiConstants.*;
 import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.CONTENT_TYPE_ANY;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.string.StringUtil.EMPTY_ARRAY;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Path(PROXY_ENDPOINT)
@@ -69,7 +65,7 @@ public class ReverseProxyResource {
             return ruleEngine.passthru(ub, request);
         } else {
             // find rules by regex
-            final Set<String> matcherIds = new TreeSet<>();
+            final Map<String, AppMatcher> matchedMatchers = new HashMap<>();
             for (AppMatcher m : matchers) {
                 // check for regex match
                 if (m.matches(ub.getFullPath())) {
@@ -78,15 +74,27 @@ public class ReverseProxyResource {
                         log.debug("get: matcher("+m.getUuid()+") blocks request, returning 404 Not Found for "+ub.getFullPath());
                         return notFound(ub.getFullPath());
                     }
-                    matcherIds.add(m.getUuid());
+                    matchedMatchers.put(m.getUuid(), m);
                 }
             }
 
+            final String id = randomUUID().toString();
             final FilterHttpRequest filterRequest = new FilterHttpRequest()
-                    .setId(randomUUID().toString())
+                    .setId(id)
                     .setAccount(account)
                     .setDevice(device)
-                    .setMatchers(matcherIds.toArray(EMPTY_ARRAY));
+                    .setMatchersResponse(new FilterMatchersResponse()
+                            .setRequest(new FilterMatchersRequest()
+                                    .setRequestId(id)
+                                    .setFqdn(ub.getHost())
+                                    .setUri(ub.getFullPath())
+                                    .setUserAgent(getUserAgent(request))
+                                    .setReferer(getReferer(request))
+                                    .setRemoteAddr(remoteHost)
+                                    .setDevice(device.getUuid()))
+                            .setRequestId(id)
+                            .setDecision(FilterMatchDecision.match)
+                            .setMatchers(new ArrayList<>(matchedMatchers.values())));
 
             filterHttpResource.getActiveRequestCache().set(filterRequest.getId(), json(filterRequest));
 
