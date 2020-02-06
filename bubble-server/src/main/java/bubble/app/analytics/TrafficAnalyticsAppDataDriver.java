@@ -109,7 +109,7 @@ public class TrafficAnalyticsAppDataDriver extends AppDataDriverBase {
             query.addSort(SORT_TSTAMP_DESC);
             query.addSort(SORT_FQDN_CASE_INSENSITIVE_ASC);
         }
-        return processResults(searchService.search(false, caller, dataDAO, query));
+        return processResults(super.query(caller, device, app, site, view, query));
     }
 
     private void recordTestTraffic(Account caller, Device device) {

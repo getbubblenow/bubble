@@ -28,7 +28,7 @@ public abstract class AppDataDriverBase implements AppDataDriver {
     @Autowired protected BubbleConfiguration configuration;
 
     @Override public SearchResults query(Account caller, Device device, BubbleApp app, AppSite site, AppDataView view, SearchQuery query) {
-        query.setBound("app", app.getUuid());
+        if (!query.hasBound("app")) query.setBound("app", app.getUuid());
         if (site != null) query.setBound("site", site.getUuid());
         if (!query.hasSorts()) query.addSort(DEFAULT_SORT);
         return searchService.search(false, caller, dataDAO, query);

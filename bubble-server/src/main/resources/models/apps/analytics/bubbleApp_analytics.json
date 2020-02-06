@@ -77,7 +77,7 @@
         {"name": "action.filterHost", "value": "Block Host"},
         {"name": "action.filterUrl", "value": "Block URL"},
         {"name": "view.recent", "value": "Recent Traffic"},
-        {"name": "view.recent.requestTime.format", "value": "{{MMM}} {{d}} @ {{h}}:{{m}}:{{s}} {{a}}"},
+        {"name": "view.recent.requestTime.format", "value": "{{MMM}} {{d}} @ {{h}}:{{m}}:{{s}}{{a}}"},
         {"name": "view.last_24_hours", "value": "Last 24 Hours"},
         {"name": "view.last_24_hours.ctime.format", "value": "{{MMM}} {{d}} @ {{h}}{{a}}"},
         {"name": "view.last_7_days", "value": "Last 7 Days"},
