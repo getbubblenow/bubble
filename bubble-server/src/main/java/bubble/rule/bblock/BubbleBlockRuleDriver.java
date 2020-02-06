@@ -19,15 +19,14 @@ import org.apache.commons.io.input.ReaderInputStream;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexReplacementFilter;
+import org.cobbzilla.util.string.StringUtil;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -44,8 +43,6 @@ import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 @Slf4j
 public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
 
-    private static final String META_REQUEST = "__bubble_request";
-
     private BubbleBlockConfig bubbleBlockConfig;
 
     private BlockList blockList = new BlockList();
@@ -54,9 +51,14 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
 
     @Override public void init(JsonNode config, JsonNode userConfig, AppRule rule, AppMatcher matcher, Account account, Device device) {
         super.init(config, userConfig, rule, matcher, account, device);
-
         bubbleBlockConfig = json(json(config), BubbleBlockConfig.class);
-        for (BubbleBlockList list : bubbleBlockConfig.getBlockLists()) {
+        refreshBlockLists();
+    }
+
+    public void refreshBlockLists() {
+        final BubbleBlockList[] blockLists = bubbleBlockConfig.getBlockLists();
+        final Set<String> refreshed = new HashSet<>();
+        for (BubbleBlockList list : blockLists) {
             if (!list.enabled()) continue;
 
             BlockListSource blockListSource = blockListCache.get(list.getId());
@@ -69,11 +71,14 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                                 .download();
                         blockListCache.put(list.getId(), newList);
                         blockListSource = newList;
+                        refreshed.add(newList.getUrl());
                     } catch (Exception e) {
                         log.error("init: error downloading blocklist " + listUrl + ": " + shortError(e));
                         continue;
                     }
                 }
+            } else {
+                refreshed.add(list.getName());
             }
             if (list.hasAdditionalEntries()) {
                 if (blockListSource == null) blockListSource = new BlockListSource(); // might be built-in source
@@ -85,6 +90,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
             }
             if (blockListSource != null) blockList.merge(blockListSource.getBlockList());
         }
+        log.info("refreshBlockLists: refreshed "+refreshed.size()+" block lists: "+StringUtil.toString(refreshed));
     }
 
     @Override public FilterMatchDecision preprocess(AppRuleHarness ruleHarness,
