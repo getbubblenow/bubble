@@ -1,5 +1,6 @@
 package bubble.rule.social.block;
 
+import bubble.resources.stream.FilterHttpRequest;
 import bubble.rule.AbstractAppRuleDriver;
 import bubble.rule.RequestDecorator;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -7,8 +8,6 @@ import com.github.jknack.handlebars.Handlebars;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.cobbzilla.util.collection.NameAndValue;
-import org.cobbzilla.util.http.HttpContentTypes;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexInsertionFilter;
 import org.cobbzilla.util.io.regex.RegexStreamFilter;
@@ -18,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.UTF8cs;
 
@@ -49,9 +49,10 @@ public class UserBlockerRuleDriver extends AbstractAppRuleDriver {
 
     protected UserBlockerConfig configObject() { return json(getFullConfig(), UserBlockerConfig.class); }
 
-    @Override public InputStream doFilterResponse(String requestId, String contentType, NameAndValue[] meta, InputStream in) {
-        if (!HttpContentTypes.isHtml(contentType)) return in;
+    @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
+        if (!isHtml(filterRequest.getContentType())) return in;
 
+        final String requestId = filterRequest.getId();
         final UserBlockerStreamFilter filter = new UserBlockerStreamFilter(requestId, matcher, rule, configuration.getHttp().getBaseUri());
         filter.configure(getFullConfig());
         filter.setDataDAO(appDataDAO);

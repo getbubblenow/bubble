@@ -2,7 +2,7 @@ import json
 import re
 import time
 import uuid
-from bubble_api import bubble_matchers, bubble_log, HEADER_BUBBLE_MATCHERS, HEADER_BUBBLE_DEVICE, BUBBLE_URI_PREFIX, HEADER_BUBBLE_ABORT, HEADER_BUBBLE_REQUEST_ID
+from bubble_api import bubble_matchers, bubble_log, HEADER_BUBBLE_MATCHERS, BUBBLE_URI_PREFIX, HEADER_BUBBLE_ABORT, HEADER_BUBBLE_REQUEST_ID
 from bubble_config import bubble_host, bubble_host_alias
 from mitmproxy import ctx
 
@@ -39,8 +39,8 @@ class Rerouter:
             bubble_log("get_matchers: received abort code for remote_addr/host: "+remote_addr+'/'+str(host)+': '+str(resp['abort']))
             return {'abort': resp['abort']}
 
-        if (not resp) or (not 'matchers' in resp) or (not 'device' in resp):
-            bubble_log("get_matchers: no matchers/device for remote_addr/host: "+remote_addr+'/'+str(host))
+        if (not resp) or (not 'matchers' in resp):
+            bubble_log("get_matchers: no matchers for remote_addr/host: "+remote_addr+'/'+str(host))
             return None
         matcher_ids = []
         for m in resp['matchers']:
@@ -53,7 +53,7 @@ class Rerouter:
                 bubble_log('get_matchers: rule matched, adding rule: '+m['rule'])
                 matcher_ids.append(m['uuid'])
 
-        matcher_response = { 'device': resp['device'], 'matchers': matcher_ids, 'request_id': req_id }
+        matcher_response = { 'matchers': matcher_ids, 'request_id': req_id }
         bubble_log("get_matchers: returning "+repr(matcher_response))
         return matcher_response
 
@@ -86,11 +86,9 @@ class Rerouter:
 
                 elif ('matchers' in matcher_response
                       and 'request_id' in matcher_response
-                      and 'device' in matcher_response
                       and len(matcher_response['matchers']) > 0):
-                    bubble_log("dns_spoofing.request: found matchers: " + ' '.join(matcher_response['matchers']))
+                    bubble_log("dns_spoofing.request: found request_id: " + ' '.join(matcher_response['matchers']))
                     flow.request.headers[HEADER_BUBBLE_MATCHERS] = json.dumps(matcher_response['matchers'])
-                    flow.request.headers[HEADER_BUBBLE_DEVICE] = matcher_response['device']
                     flow.request.headers[HEADER_BUBBLE_REQUEST_ID] = matcher_response['request_id']
                 else:
                     bubble_log('dns_spoofing.request: no rules returned, passing thru...')

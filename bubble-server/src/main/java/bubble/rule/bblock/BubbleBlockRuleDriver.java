@@ -8,7 +8,7 @@ import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.device.Device;
-import bubble.resources.stream.FilterMatchResponse;
+import bubble.resources.stream.FilterHttpRequest;
 import bubble.resources.stream.FilterMatchersRequest;
 import bubble.rule.FilterMatchDecision;
 import bubble.rule.analytics.TrafficAnalyticsRuleDriver;
@@ -16,7 +16,6 @@ import bubble.service.stream.AppRuleHarness;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.http.HttpContentTypes;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
@@ -33,7 +32,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -87,7 +87,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         }
     }
 
-    @Override public FilterMatchResponse preprocess(AppRuleHarness ruleHarness,
+    @Override public FilterMatchDecision preprocess(AppRuleHarness ruleHarness,
                                                     FilterMatchersRequest filter,
                                                     Account account,
                                                     Device device,
@@ -102,13 +102,21 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
             case block:
                 if (log.isDebugEnabled()) log.debug("preprocess: decision is BLOCK");
                 incrementCounters(account, device, app, site, fqdn);
-                return FilterMatchResponse.ABORT_NOT_FOUND;  // block this request
+                return FilterMatchDecision.abort_not_found;  // block this request
+
             case allow: default:
                 if (log.isDebugEnabled()) log.debug("preprocess: decision is ALLOW");
-                return FilterMatchResponse.NO_MATCH;
+                return FilterMatchDecision.no_match;
+
             case filter:
                 if (log.isDebugEnabled()) log.debug("preprocess: decision is FILTER");
-                return getFilterMatchResponse(filter, decision);
+                final List<BlockSpec> specs = decision.getSpecs();
+                if (empty(specs)) {
+                    log.warn("getFilterMatchResponse: decision was 'filter' but no specs were found, returning no_match");
+                    return FilterMatchDecision.no_match;
+                } else {
+                    return FilterMatchDecision.match;
+                }
         }
     }
 
@@ -116,43 +124,12 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
 
     public BlockDecision getDecision(String fqdn, String uri, boolean primary) { return blockList.getDecision(fqdn, uri, primary); }
 
-    public FilterMatchResponse getFilterMatchResponse(FilterMatchersRequest filter, BlockDecision decision) {
-        switch (decision.getDecisionType()) {
-            case block: return FilterMatchResponse.ABORT_NOT_FOUND;
-            case allow: return FilterMatchResponse.NO_MATCH;
-            case filter:
-                final List<BlockSpec> specs = decision.getSpecs();
-                if (empty(specs)) {
-                    log.warn("getFilterMatchResponse: decision was 'filter' but no specs were found, returning no_match");
-                    return FilterMatchResponse.NO_MATCH;
-                } else {
-                    return new FilterMatchResponse()
-                            .setDecision(FilterMatchDecision.match)
-                            .setMeta(new NameAndValue[]{
-                                    new NameAndValue(META_REQUEST, json(filter, COMPACT_MAPPER))
-                            });
-                }
-        }
-        return die("getFilterMatchResponse: invalid decisionType: "+decision.getDecisionType());
-    }
+    @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
 
-    @Override public InputStream doFilterResponse(String requestId, String contentType, NameAndValue[] meta, InputStream in) {
-
-        final String requestJson = NameAndValue.find(meta, META_REQUEST);
-        if (requestJson == null) {
-            log.error("doFilterResponse: no request found, returning EMPTY_STREAM");
-            return EMPTY_STREAM;
-        }
-
-        final FilterMatchersRequest request;
-        try {
-            request = json(requestJson, FilterMatchersRequest.class);
-        } catch (Exception e) {
-            log.error("doFilterResponse: error parsing request, returning EMPTY_STREAM: "+shortError(e));
-            return EMPTY_STREAM;
-        }
+        final FilterMatchersRequest request = filterRequest.getMatchersResponse().getRequest();
 
         // Now that we know the content type, re-check the BlockList
+        final String contentType = filterRequest.getContentType();
         final BlockDecision decision = blockList.getDecision(request.getFqdn(), request.getUri(), contentType, true);
         switch (decision.getDecisionType()) {
             case block:
@@ -175,11 +152,11 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         }
 
         if (!HttpContentTypes.isHtml(contentType)) {
-            log.warn("doFilterRequest: cannot filter non-html response ("+request.getUrl()+"), returning as-is: "+contentType);
+            log.warn("doFilterRequest: cannot request non-html response ("+request.getUrl()+"), returning as-is: "+contentType);
             return in;
         }
 
-        final String replacement = "<head><script>" + getBubbleJs(requestId, decision) + "</script>";
+        final String replacement = "<head><script>" + getBubbleJs(filterRequest.getId(), decision) + "</script>";
         final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
         final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter).setMaxMatches(1);
         if (log.isDebugEnabled()) log.debug("doFilterResponse: filtering response for "+request.getUri()+" - replacement.length = "+replacement.length());

@@ -1,13 +1,12 @@
 package bubble.rule.social.block;
 
 import bubble.model.app.AppMatcher;
+import bubble.resources.stream.FilterHttpRequest;
 import bubble.rule.AbstractAppRuleDriver;
 import lombok.Getter;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.cobbzilla.util.collection.ExpirationMap;
-import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
-import org.cobbzilla.util.http.HttpContentTypes;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexReplacementFilter;
 
@@ -16,6 +15,7 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
@@ -29,10 +29,10 @@ public class JsUserBlockerRuleDriver extends AbstractAppRuleDriver {
 
     public static final String CTX_APPLY_BLOCKS_JS = "APPLY_BLOCKS_JS";
 
-    @Override public InputStream doFilterResponse(String requestId, String contentType, NameAndValue[] meta, InputStream in) {
-        if (!HttpContentTypes.isHtml(contentType)) return in;
+    @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
+        if (!isHtml(filterRequest.getContentType())) return in;
 
-        final String replacement = "<head><script>" + getBubbleJs(requestId) + "</script>";
+        final String replacement = "<head><script>" + getBubbleJs(filterRequest.getId()) + "</script>";
         final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
         final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter).setMaxMatches(1);
         return new ReaderInputStream(reader, UTF8cs);

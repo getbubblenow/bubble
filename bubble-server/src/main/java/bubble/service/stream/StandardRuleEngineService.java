@@ -9,9 +9,9 @@ import bubble.model.app.AppRule;
 import bubble.model.app.RuleDriver;
 import bubble.model.device.Device;
 import bubble.resources.stream.FilterHttpRequest;
-import bubble.resources.stream.FilterMatchResponse;
 import bubble.resources.stream.FilterMatchersRequest;
 import bubble.rule.AppRuleDriver;
+import bubble.rule.FilterMatchDecision;
 import bubble.server.BubbleConfiguration;
 import lombok.Cleanup;
 import lombok.Getter;
@@ -73,7 +73,7 @@ public class StandardRuleEngineService implements RuleEngineService {
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private BubbleConfiguration configuration;
 
-    public FilterMatchResponse preprocess(FilterMatchersRequest filter,
+    public FilterMatchDecision preprocess(FilterMatchersRequest filter,
                                           Request req,
                                           ContainerRequest request,
                                           Account account,
@@ -118,7 +118,7 @@ public class StandardRuleEngineService implements RuleEngineService {
 
         // initialize drivers -- todo: cache drivers / todo: ensure cache is shorter than session timeout,
         // since drivers that talk thru API will get a session key in their config
-        final List<AppRuleHarness> rules = initRules(filterRequest.getAccount(), filterRequest.getDevice(), filterRequest.getMatchers());
+        final List<AppRuleHarness> rules = initRules(filterRequest);
         final AppRuleHarness firstRule = rules.get(0);
 
         // filter request
@@ -131,7 +131,7 @@ public class StandardRuleEngineService implements RuleEngineService {
         // filter response. when stream is closed, close http client
         final Header contentTypeHeader = proxyResponse.getFirstHeader(CONTENT_TYPE);
         final String contentType = contentTypeHeader == null ? null : contentTypeHeader.getValue();
-        final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest.getId(), contentType, filterRequest.getMeta(), new HttpClosingFilterInputStream(httpClient, proxyResponse));
+        final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest, new HttpClosingFilterInputStream(httpClient, proxyResponse));
 
         // send response
         return sendResponse(responseEntity, proxyResponse);
@@ -148,18 +148,15 @@ public class StandardRuleEngineService implements RuleEngineService {
     private final Map<String, ActiveStreamState> activeProcessors = new ExpirationMap<>(MINUTES.toMillis(5), ExpirationEvictionPolicy.atime);
 
     public Response applyRulesToChunkAndSendResponse(ContainerRequest request,
-                                                     HttpContentEncodingType contentEncoding,
-                                                     Integer contentLength,
-                                                     String contentType,
                                                      FilterHttpRequest filterRequest,
+                                                     Integer contentLength,
                                                      boolean last) throws IOException {
 
         if (!filterRequest.hasMatchers()) return passthru(request);
 
         // have we seen this request before?
         final ActiveStreamState state = activeProcessors.computeIfAbsent(filterRequest.getId(),
-                k -> new ActiveStreamState(k, contentEncoding, contentType, filterRequest.getMeta(),
-                        initRules(filterRequest.getAccount(), filterRequest.getDevice(), filterRequest.getMatchers())));
+                k -> new ActiveStreamState(filterRequest, initRules(filterRequest)));
         final byte[] chunk = toBytes(request.getEntityStream(), contentLength);
         if (last) {
             if (log.isDebugEnabled()) log.debug("applyRulesToChunkAndSendResponse: adding LAST stream");
@@ -187,6 +184,10 @@ public class StandardRuleEngineService implements RuleEngineService {
     private ExpirationMap<String, List<AppRuleHarness>> ruleCache = new ExpirationMap<>(HOURS.toMillis(1), ExpirationEvictionPolicy.atime);
 
     public void flushRuleCache () { ruleCache.clear(); }
+
+    private List<AppRuleHarness> initRules(FilterHttpRequest filterRequest) {
+        return initRules(filterRequest.getAccount(), filterRequest.getDevice(), filterRequest.getMatchers());
+    }
 
     private List<AppRuleHarness> initRules(Account account, Device device, String[] matcherIds) {
         final String cacheKey = hashOf(account.getUuid(), device.getUuid(), matcherIds);
@@ -264,6 +265,7 @@ public class StandardRuleEngineService implements RuleEngineService {
 
     private static class ActiveStreamState {
 
+        private FilterHttpRequest request;
         private String requestId;
         private HttpContentEncodingType encoding;
         private String contentType;
@@ -274,15 +276,13 @@ public class StandardRuleEngineService implements RuleEngineService {
         private long totalBytesWritten = 0;
         private long totalBytesRead = 0;
 
-        public ActiveStreamState(String requestId,
-                                 HttpContentEncodingType encoding,
-                                 String contentType,
-                                 NameAndValue[] meta,
+        public ActiveStreamState(FilterHttpRequest request,
                                  List<AppRuleHarness> rules) {
-            this.requestId = requestId;
-            this.encoding = encoding;
-            this.contentType = contentType;
-            this.meta = meta;
+            this.request = request;
+            this.requestId = request.getId();
+            this.encoding = request.getEncoding();
+            this.contentType = request.getContentType();
+            this.meta = request.getMeta();
             this.firstRule = rules.get(0);
         }
 
@@ -291,7 +291,7 @@ public class StandardRuleEngineService implements RuleEngineService {
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk));
-                output = outputStream(firstRule.getDriver().filterResponse(requestId, contentType, meta, inputStream(multiStream)));
+                output = outputStream(firstRule.getDriver().filterResponse(request, inputStream(multiStream)));
             } else {
                 multiStream.addStream(new ByteArrayInputStream(chunk));
             }
@@ -302,7 +302,7 @@ public class StandardRuleEngineService implements RuleEngineService {
             totalBytesWritten += chunk.length;
             if (multiStream == null) {
                 multiStream = new MultiStream(new ByteArrayInputStream(chunk), true);
-                output = outputStream(firstRule.getDriver().filterResponse(requestId, contentType, meta, inputStream(multiStream)));
+                output = outputStream(firstRule.getDriver().filterResponse(request, inputStream(multiStream)));
             } else {
                 multiStream.addLastStream(new ByteArrayInputStream(chunk));
             }
@@ -344,9 +344,14 @@ public class StandardRuleEngineService implements RuleEngineService {
                 if (log.isDebugEnabled()) log.debug("inputStream: returning baseStream unmodified");
                 return baseStream;
             }
-            final InputStream wrapped = encoding.wrapInput(baseStream);
-            if (log.isDebugEnabled()) log.debug("inputStream: returning baseStream wrapped in "+wrapped.getClass().getSimpleName());
-            return wrapped;
+            try {
+                final InputStream wrapped = encoding.wrapInput(baseStream);
+                if (log.isDebugEnabled()) log.debug("inputStream: returning baseStream wrapped in " + wrapped.getClass().getSimpleName());
+                return wrapped;
+            } catch (IOException e) {
+                if (log.isWarnEnabled()) log.warn("inputStream: error wrapping with "+encoding+", sending as-is (perhaps missing a byte or two)");
+                return baseStream;
+            }
         }
 
         private InputStream outputStream(InputStream in) throws IOException {

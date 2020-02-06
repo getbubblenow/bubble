@@ -3,9 +3,9 @@ package bubble.rule.analytics;
 import bubble.model.account.Account;
 import bubble.model.app.AppData;
 import bubble.model.device.Device;
-import bubble.resources.stream.FilterMatchResponse;
 import bubble.resources.stream.FilterMatchersRequest;
 import bubble.rule.AbstractAppRuleDriver;
+import bubble.rule.FilterMatchDecision;
 import bubble.service.stream.AppRuleHarness;
 import lombok.Getter;
 import org.cobbzilla.wizard.cache.redis.RedisService;
@@ -33,7 +33,7 @@ public class TrafficAnalyticsRuleDriver extends AbstractAppRuleDriver {
 
     @Getter(lazy=true) private final RedisService recentTraffic = redis.prefixNamespace(RECENT_TRAFFIC_PREFIX);
 
-    @Override public FilterMatchResponse preprocess(AppRuleHarness ruleHarness,
+    @Override public FilterMatchDecision preprocess(AppRuleHarness ruleHarness,
                                                     FilterMatchersRequest filter,
                                                     Account account,
                                                     Device device,
@@ -46,7 +46,7 @@ public class TrafficAnalyticsRuleDriver extends AbstractAppRuleDriver {
         final TrafficRecord rec = new TrafficRecord(filter, account, device, req);
         recordRecentTraffic(rec);
         incrementCounters(account, device, app, site, fqdn);
-        return FilterMatchResponse.NO_MATCH; // we are done, don't need to look at/modify stream
+        return FilterMatchDecision.no_match; // we are done, don't need to look at/modify stream
     }
 
     public void recordRecentTraffic(TrafficRecord rec) { recordRecentTraffic(rec, getRecentTraffic()); }

@@ -1,25 +1,45 @@
 package bubble.resources.stream;
 
 import bubble.model.app.AppMatcher;
+import bubble.rule.FilterMatchDecision;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.cobbzilla.util.collection.NameAndValue;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
-@NoArgsConstructor @Accessors(chain=true)
+@NoArgsConstructor @Accessors(chain=true) @Slf4j
 public class FilterMatchersResponse {
 
-    public static final FilterMatchersResponse NO_MATCHERS = new FilterMatchersResponse();
+    public static final FilterMatchersResponse NO_MATCHERS = new FilterMatchersResponse().setDecision(FilterMatchDecision.no_match);
+    public static final FilterMatchersResponse ABORT_OK = new FilterMatchersResponse().setDecision(FilterMatchDecision.abort_ok);
+    public static final FilterMatchersResponse ABORT_NOT_FOUND = new FilterMatchersResponse().setDecision(FilterMatchDecision.abort_not_found);
 
-    @Getter @Setter private Integer abort;
-    @Getter @Setter private String device;
+    @Getter @Setter private FilterMatchersRequest request;
+
+    @Getter @Setter private FilterMatchDecision decision;
+
     @Getter @Setter private List<AppMatcher> matchers;
-    @Getter @Setter private NameAndValue[] meta;
-    public boolean hasMeta() { return !empty(meta); }
+    public boolean hasMatchers() { return !empty(matchers); }
+
+    public FilterMatchersResponse setRequestId(String requestId) {
+        if (request == null) {
+            if (log.isWarnEnabled()) log.warn("setRequestId("+requestId+"): request is null, cannot set");
+        } else {
+            request.setRequestId(requestId);
+        }
+        return this;
+    }
+
+    public boolean hasAbort() {
+        return decision == FilterMatchDecision.abort_ok || decision == FilterMatchDecision.abort_not_found;
+    }
+
+    public int httpStatus() { return decision.httpStatus(); }
+
 
 }

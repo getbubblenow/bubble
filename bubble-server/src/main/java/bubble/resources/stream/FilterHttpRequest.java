@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.lang.ArrayUtils;
 import org.cobbzilla.util.collection.NameAndValue;
+import org.cobbzilla.util.http.HttpContentEncodingType;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
@@ -15,7 +16,9 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 public class FilterHttpRequest {
 
     @Getter @Setter private String id;
+    @Getter @Setter private FilterMatchersResponse matchersResponse;
     @Getter @Setter private Device device;
+    @Getter @Setter private HttpContentEncodingType encoding;
     @Getter @Setter private Account account;
     @Getter @Setter private NameAndValue[] meta;
     @Getter @Setter private String contentType;

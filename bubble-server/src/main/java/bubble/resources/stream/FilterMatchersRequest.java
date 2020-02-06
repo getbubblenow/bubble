@@ -6,12 +6,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class FilterMatchersRequest {
 
     @Getter @Setter private String requestId;
+    @Getter @Setter private String device;
     @Getter @Setter private String fqdn;
     @Getter @Setter private String uri;
     @Getter @Setter private String userAgent;
@@ -20,8 +22,10 @@ public class FilterMatchersRequest {
 
     // note: we do *not* include the requestId in the cache, if we did then the
     // FilterHttpResource.matchersCache cache would be useless, since every cache entry would be unique
-    public String cacheKey() { return hashOf(fqdn, uri, userAgent, referer, remoteAddr); }
+    public String cacheKey() { return hashOf(device, fqdn, uri, userAgent, referer, remoteAddr); }
 
     @JsonIgnore public String getUrl() { return fqdn + "/" + uri; }
+
+    public boolean hasDevice() { return !empty(device); }
 
 }

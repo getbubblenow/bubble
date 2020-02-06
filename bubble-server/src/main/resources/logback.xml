@@ -37,7 +37,7 @@
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
     <logger name="bubble.service.notify.NotificationService" level="WARN" />
     <logger name="bubble.rule.bblock.BubbleBlockRuleDriver" level="DEBUG" />
-    <logger name="bubble.resources.stream" level="INFO" />
+    <logger name="bubble.resources.stream" level="DEBUG" />
     <logger name="bubble.service.stream" level="INFO" />
     <logger name="bubble.resources.message" level="INFO" />
     <logger name="bubble.app.analytics" level="DEBUG" />

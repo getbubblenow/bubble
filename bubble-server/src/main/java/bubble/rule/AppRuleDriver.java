@@ -4,12 +4,11 @@ import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.device.Device;
-import bubble.resources.stream.FilterMatchResponse;
-import bubble.service.stream.AppRuleHarness;
+import bubble.resources.stream.FilterHttpRequest;
 import bubble.resources.stream.FilterMatchersRequest;
+import bubble.service.stream.AppRuleHarness;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
-import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -37,13 +36,13 @@ public interface AppRuleDriver {
                       Account account,
                       Device device) {}
 
-    default FilterMatchResponse preprocess(AppRuleHarness ruleHarness,
+    default FilterMatchDecision preprocess(AppRuleHarness ruleHarness,
                                            FilterMatchersRequest filter,
                                            Account account,
                                            Device device,
                                            Request req,
                                            ContainerRequest request) {
-        return FilterMatchResponse.MATCH;
+        return FilterMatchDecision.match;
     }
 
     default InputStream filterRequest(InputStream in) {
@@ -53,12 +52,12 @@ public interface AppRuleDriver {
 
     default InputStream doFilterRequest(InputStream in) { return in; }
 
-    default InputStream filterResponse(String requestId, String contentType, NameAndValue[] meta, InputStream in) {
-        if (hasNext()) return doFilterResponse(requestId, contentType, meta, getNext().filterResponse(requestId, contentType, meta, in));
-        return doFilterResponse(requestId, contentType, meta, in);
+    default InputStream filterResponse(FilterHttpRequest filterRequest, InputStream in) {
+        if (hasNext()) return doFilterResponse(filterRequest, getNext().filterResponse(filterRequest, in));
+        return doFilterResponse(filterRequest, in);
     }
 
-    default InputStream doFilterResponse(String requestId, String contentType, NameAndValue[] meta, InputStream in) { return in; }
+    default InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) { return in; }
 
     default String resolveResource(String res, Map<String, Object> ctx) {
         final String resource = locateResource(res);

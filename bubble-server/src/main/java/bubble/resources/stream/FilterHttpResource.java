@@ -9,13 +9,12 @@ import bubble.model.app.AppData;
 import bubble.model.app.AppDataFormat;
 import bubble.model.app.AppMatcher;
 import bubble.model.device.Device;
+import bubble.rule.FilterMatchDecision;
 import bubble.service.cloud.DeviceIdService;
 import bubble.service.stream.StandardRuleEngineService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.ExpirationMap;
-import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.http.HttpContentEncodingType;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
@@ -39,11 +38,8 @@ import static bubble.resources.stream.FilterMatchersResponse.NO_MATCHERS;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
-import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
-import static org.cobbzilla.util.http.HttpStatusCodes.NOT_FOUND;
-import static org.cobbzilla.util.http.HttpStatusCodes.OK;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
@@ -53,9 +49,6 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 @Path(FILTER_HTTP_ENDPOINT)
 @Service @Slf4j
 public class FilterHttpResource {
-
-    public static final FilterMatchersResponse ABORT_OK = new FilterMatchersResponse().setAbort(OK);
-    public static final FilterMatchersResponse ABORT_NOT_FOUND = new FilterMatchersResponse().setAbort(NOT_FOUND);
 
     @Autowired private AccountDAO accountDAO;
     @Autowired private StandardRuleEngineService ruleEngine;
@@ -86,10 +79,34 @@ public class FilterHttpResource {
         return deviceCache.computeIfAbsent(deviceUuid, uuid -> deviceDAO.findByUuid(uuid));
     }
 
-    private Map<String, FilterMatchersResponse> matchersCache = new ExpirationMap<>(MINUTES.toMillis(5));
+    public static final long MATCHERS_CACHE_TIMEOUT = MINUTES.toSeconds(15);
+    @Getter(lazy=true) private final RedisService matchersCache = redis.prefixNamespace(getClass().getSimpleName()+".matchers");
 
-    private static final long REQUEST_FILTERS_TIMEOUT = MINUTES.toSeconds(1);
-    @Getter(lazy=true) private final RedisService requestMeta = redis.prefixNamespace(getClass().getSimpleName()+".filters");
+    private FilterMatchersResponse getMatchersResponse(FilterMatchersRequest filterRequest,
+                                                       Request req,
+                                                       ContainerRequest request) {
+        final RedisService cache = getMatchersCache();
+
+        final String requestId = filterRequest.getRequestId();
+        final String cacheKey = filterRequest.cacheKey();
+        final String matchersJson = cache.get(cacheKey);
+        if (matchersJson != null) {
+            return json(matchersJson, FilterMatchersResponse.class)
+                    .setRequestId(requestId);
+        }
+
+        final FilterMatchersResponse response = findMatchers(filterRequest, req, request);
+        cache.set(cacheKey, json(response), EX, MATCHERS_CACHE_TIMEOUT);
+        cache.set(requestId, json(response), EX, MATCHERS_CACHE_TIMEOUT);
+        return response;
+    }
+
+    private FilterMatchersResponse getMatchersResponseByRequestId(String requestId) {
+        final RedisService cache = getMatchersCache();
+        final String matchersJson = cache.get(requestId);
+        if (matchersJson != null) return json(matchersJson, FilterMatchersResponse.class);
+        return null;
+    }
 
     @POST @Path(EP_MATCHERS)
     @Consumes(APPLICATION_JSON)
@@ -99,36 +116,35 @@ public class FilterHttpResource {
                                    FilterMatchersRequest filterRequest) {
         final String remoteHost = getRemoteHost(req);
         final String mitmAddr = req.getRemoteAddr();
-        if (log.isDebugEnabled()) log.debug("selectMatchers: starting for remoteHost=" + remoteHost + ", mitmAddr=" + mitmAddr+", filterRequest="+json(filterRequest));
+        if (log.isDebugEnabled()) log.debug("selectMatchers: starting for remoteHost=" + remoteHost + ", mitmAddr=" + mitmAddr+", filterRequest="+json(filterRequest, COMPACT_MAPPER));
 
         // only mitmproxy is allowed to call us, and this should always be a local address
         if (!isLocalIpv4(mitmAddr)) return forbidden();
 
-        final String cacheKey = remoteHost+":"+filterRequest.cacheKey();
-        final FilterMatchersResponse response = matchersCache.computeIfAbsent(cacheKey, k -> findMatchers(filterRequest, req, request));
-
-        if (response.hasMeta()) {
-            getRequestMeta().set(filterRequest.getRequestId(), json(response.getMeta()), EX, REQUEST_FILTERS_TIMEOUT);
-        }
-
-        return ok(response);
-    }
-
-    private FilterMatchersResponse findMatchers(FilterMatchersRequest filterRequest, Request req, ContainerRequest request) {
         final String vpnAddr = filterRequest.getRemoteAddr();
         if (empty(vpnAddr)) {
             if (log.isDebugEnabled()) log.debug("findMatchers: no VPN address provided, returning no matchers");
-            return NO_MATCHERS;
+            return ok(NO_MATCHERS);
         }
 
         final Device device = deviceIdService.findDeviceByIp(vpnAddr);
         if (device == null) {
             if (log.isDebugEnabled()) log.debug("findMatchers: device not found for IP "+vpnAddr+", returning no matchers");
-            return NO_MATCHERS;
+            return ok(NO_MATCHERS);
         } else if (log.isDebugEnabled()) {
             log.debug("findMatchers: found device "+device.id()+" for IP "+vpnAddr);
         }
+        filterRequest.setDevice(device.getUuid());
+        return ok(getMatchersResponse(filterRequest, req, request));
+    }
 
+    private FilterMatchersResponse findMatchers(FilterMatchersRequest filterRequest, Request req, ContainerRequest request) {
+
+        final Device device = findDevice(filterRequest.getDevice());
+        if (device == null) {
+            if (log.isDebugEnabled()) log.debug("findMatchers: findDevice("+ filterRequest.getDevice() +") returned null, returning no matchers");
+            return NO_MATCHERS;
+        }
         final String accountUuid = device.getAccount();
         final Account caller = findCaller(accountUuid);
         if (caller == null) {
@@ -140,7 +156,6 @@ public class FilterHttpResource {
         final List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabled(accountUuid, fqdn);
         if (log.isDebugEnabled()) log.debug("findMatchers: found "+matchers.size()+" candidate matchers");
         final List<AppMatcher> removeMatchers;
-        NameAndValue[] meta = null;
         if (matchers.isEmpty()) {
             removeMatchers = Collections.emptyList();
         } else {
@@ -148,18 +163,14 @@ public class FilterHttpResource {
             removeMatchers = new ArrayList<>();
             for (AppMatcher matcher : matchers) {
                 if (matcher.matches(uri)) {
-                    final FilterMatchResponse matchResponse = ruleEngine.preprocess(filterRequest, req, request, caller, device, matcher.getUuid());
-                    switch (matchResponse.getDecision()) {
-                        case abort_ok:        return ABORT_OK;
-                        case abort_not_found: return ABORT_NOT_FOUND;
+                    final FilterMatchDecision matchResponse = ruleEngine.preprocess(filterRequest, req, request, caller, device, matcher.getUuid());
+                    switch (matchResponse) {
+                        case abort_ok:        return FilterMatchersResponse.ABORT_OK;
+                        case abort_not_found: return FilterMatchersResponse.ABORT_NOT_FOUND;
                         case no_match:
                             removeMatchers.add(matcher);
                             break;
                         case match:
-                            if (matchResponse.hasMeta()) {
-                                if (meta == null) meta = NameAndValue.EMPTY_ARRAY;
-                                meta = ArrayUtil.concat(meta, matchResponse.getMeta());
-                            }
                             break;
                     }
                 }
@@ -168,11 +179,9 @@ public class FilterHttpResource {
         matchers.removeAll(removeMatchers);
 
         if (log.isDebugEnabled()) log.debug("findMatchers: after pre-processing, returning "+matchers.size()+" matchers");
-        final FilterMatchersResponse response = new FilterMatchersResponse();
-        return response
-                .setMatchers(matchers)
-                .setDevice(device.getUuid())
-                .setMeta(meta);
+        return new FilterMatchersResponse()
+                .setDecision(empty(matchers) ? FilterMatchDecision.no_match : FilterMatchDecision.match)
+                .setMatchers(matchers);
     }
 
     @POST @Path(EP_APPLY+"/{requestId}")
@@ -181,8 +190,6 @@ public class FilterHttpResource {
     public Response filterHttp(@Context Request req,
                                @Context ContainerRequest request,
                                @PathParam("requestId") String requestId,
-                               @QueryParam("device") String deviceId,
-                               @QueryParam("matchers") String matchersJson,
                                @QueryParam("encoding") String contentEncoding,
                                @QueryParam("contentType") String contentType,
                                @QueryParam("last") Boolean last) throws IOException {
@@ -197,6 +204,8 @@ public class FilterHttpResource {
             if (log.isDebugEnabled()) log.debug("filterHttp: no requestId provided, returning passthru");
             return passthru(request);
         }
+
+        final boolean isLast = bool(last);
 
         // can we handle the encoding?
         final HttpContentEncodingType encoding;
@@ -221,28 +230,35 @@ public class FilterHttpResource {
             contentLength = null;
         }
 
+        final FilterMatchersResponse matchersResponse = getMatchersResponseByRequestId(requestId);
+        if (matchersResponse == null) {
+            if (log.isWarnEnabled()) log.warn("filterHttp: FilterMatchersResponse not found, returning passthru");
+            return passthru(request);
+
+        } else if (matchersResponse.hasAbort()) {
+            if (log.isWarnEnabled()) log.warn("filterHttp: FilterMatchersResponse has abort code "+matchersResponse.httpStatus()+", MITM should have aborted. We are aborting now.");
+            return status(matchersResponse.httpStatus());
+
+        } else if (!matchersResponse.getRequest().hasDevice()) {
+            if (log.isWarnEnabled()) log.warn("filterHttp: FilterMatchersResponse has no device, returning passthru");
+            return passthru(request);
+
+        } else if (!matchersResponse.hasMatchers()) {
+            if (log.isWarnEnabled()) log.warn("filterHttp: FilterMatchersResponse has no matchers, returning passthru");
+            return passthru(request);
+        }
+        matchersResponse.setRequestId(requestId);
+
         FilterHttpRequest filterRequest = getActiveRequest(requestId);
         if (filterRequest == null) {
-            if (empty(deviceId) || empty(matchersJson) || empty(contentType)) {
-                if (log.isDebugEnabled()) log.debug("filterHttp: filter request not found, and no device/matchers/contentType provided, returning passthru");
+            if (empty(contentType)) {
+                if (log.isDebugEnabled()) log.debug("filterHttp: filter request not found, and contentType provided, returning passthru");
                 return passthru(request);
             }
-            final String[] matchers;
-            try {
-                matchers = json(matchersJson, String[].class);
-            } catch (Exception e) {
-                if (log.isDebugEnabled()) log.debug("filterHttp: error parsing matchers ("+matchersJson+"), returning passthru");
-                return passthru(request);
-            }
-            if (matchers.length == 0) {
-                if (log.isDebugEnabled()) log.debug("filterHttp: empty matchers array, returning passthru");
-                return passthru(request);
-            } else {
-                if (log.isDebugEnabled()) log.debug("filterHttp: found matchers: "+ArrayUtil.arrayToString(matchers)+" ... ");
-            }
-            final Device device = findDevice(deviceId);
+
+            final Device device = findDevice(matchersResponse.getRequest().getDevice());
             if (device == null) {
-                if (log.isDebugEnabled()) log.debug("filterHttp: device "+deviceId+" not found, returning passthru");
+                if (log.isDebugEnabled()) log.debug("filterHttp: device "+matchersResponse.getRequest().getDevice()+" not found, returning passthru");
                 return passthru(request);
             } else {
                 if (log.isDebugEnabled()) log.debug("filterHttp: found device: "+device.id()+" ... ");
@@ -254,29 +270,24 @@ public class FilterHttpResource {
             }
             filterRequest = new FilterHttpRequest()
                     .setId(requestId)
+                    .setMatchersResponse(matchersResponse)
                     .setDevice(device)
                     .setAccount(caller)
-                    .setMatchers(matchers)
+                    .setEncoding(encoding)
                     .setContentType(contentType);
-            getActiveRequestCache().set(requestId, json(filterRequest), EX, ACTIVE_REQUEST_TIMEOUT);
-        }
-
-        if (log.isTraceEnabled()) {
-            log.trace("filterHttp: starting with requestId="+requestId+", deviceId="+deviceId+", matchersJson="+matchersJson+", contentType="+contentType+", last="+last);
-        }
-
-        // check for filters
-        try {
-            final String filtersJson = getRequestMeta().get(requestId);
-            if (filtersJson != null) {
-                filterRequest.setMeta(json(filtersJson, NameAndValue[].class));
+            if (log.isDebugEnabled()) log.trace("filterHttp: start filterRequest="+json(filterRequest, COMPACT_MAPPER));
+            getActiveRequestCache().set(requestId, json(filterRequest, COMPACT_MAPPER), EX, ACTIVE_REQUEST_TIMEOUT);
+        } else {
+            if (log.isTraceEnabled()) {
+                if (isLast) {
+                    log.trace("filterHttp: last filterRequest=" + json(filterRequest, COMPACT_MAPPER));
+                } else {
+                    log.trace("filterHttp: continuing filterRequest=" + json(filterRequest, COMPACT_MAPPER));
+                }
             }
-        } catch (Exception e) {
-            log.error("filterHttp: error reading pageFilters: "+shortError(e));
         }
 
-        final boolean isLast = last != null && last;
-        return ruleEngine.applyRulesToChunkAndSendResponse(request, encoding, contentLength, contentType, filterRequest, isLast);
+        return ruleEngine.applyRulesToChunkAndSendResponse(request, filterRequest, contentLength, isLast);
     }
 
     public Response passthru(@Context ContainerRequest request) { return ruleEngine.passthru(request); }

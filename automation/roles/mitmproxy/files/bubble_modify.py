@@ -4,7 +4,7 @@ import json
 from mitmproxy import http
 from mitmproxy.net.http import Headers
 from bubble_config import bubble_port, bubble_host_alias
-from bubble_api import HEADER_BUBBLE_MATCHERS, HEADER_BUBBLE_DEVICE, HEADER_BUBBLE_ABORT, BUBBLE_URI_PREFIX, HEADER_BUBBLE_REQUEST_ID, bubble_log
+from bubble_api import HEADER_BUBBLE_MATCHERS, HEADER_BUBBLE_ABORT, BUBBLE_URI_PREFIX, HEADER_BUBBLE_REQUEST_ID, bubble_log
 
 BUFFER_SIZE = 4096
 HEADER_CONTENT_TYPE = 'Content-Type'
@@ -12,13 +12,11 @@ HEADER_CONTENT_ENCODING = 'Content-Encoding'
 BINARY_DATA_HEADER = {HEADER_CONTENT_TYPE: 'application/octet-stream'}
 
 
-def filter_chunk(chunk, req_id, content_encoding=None, content_type=None, device=None, matchers=None):
+def filter_chunk(chunk, req_id, content_encoding=None, content_type=None):
     url = 'http://127.0.0.1:' + bubble_port + '/api/filter/apply/' + req_id
-    if device and matchers and content_type and chunk:
+    if content_type and chunk:
         url = (url
-               + '?device=' + device
-               + '&matchers=' + urllib.parse.quote_plus(matchers)
-               + '&contentType=' + urllib.parse.quote_plus(content_type))
+               + '?contentType=' + urllib.parse.quote_plus(content_type))
         if content_encoding:
             url = url + '&encoding=' + urllib.parse.quote_plus(content_encoding)
     elif not chunk:
@@ -34,22 +32,22 @@ def filter_chunk(chunk, req_id, content_encoding=None, content_type=None, device
     return response.content
 
 
-def bubble_filter_chunks(chunks, req_id, content_encoding, content_type, device, matchers):
+def bubble_filter_chunks(chunks, req_id, content_encoding, content_type):
     """
     chunks is a generator that can be used to iterate over all chunks.
     """
     first = True
     for chunk in chunks:
         if first:
-            yield filter_chunk(chunk, req_id, content_encoding, content_type, device, matchers)
+            yield filter_chunk(chunk, req_id, content_encoding, content_type)
             first = False
         else:
             yield filter_chunk(chunk, req_id)
     yield filter_chunk(None, req_id)  # get the last bits of data
 
 
-def bubble_modify(req_id, content_encoding, content_type, device, matchers):
-    return lambda chunks: bubble_filter_chunks(chunks, req_id, content_encoding, content_type, device, matchers)
+def bubble_modify(req_id, content_encoding, content_type):
+    return lambda chunks: bubble_filter_chunks(chunks, req_id, content_encoding, content_type)
 
 def send_bubble_response(response):
     for chunk in response.iter_content(8192):
@@ -90,11 +88,9 @@ def responseheaders(flow):
         flow.response.status_code = abort_code
         flow.response.stream = lambda chunks: None
 
-    elif (HEADER_BUBBLE_MATCHERS in flow.request.headers
-            and HEADER_BUBBLE_DEVICE in flow.request.headers):
+    elif HEADER_BUBBLE_MATCHERS in flow.request.headers and HEADER_BUBBLE_REQUEST_ID in flow.request.headers:
         req_id = flow.request.headers[HEADER_BUBBLE_REQUEST_ID]
         matchers = flow.request.headers[HEADER_BUBBLE_MATCHERS]
-        device = flow.request.headers[HEADER_BUBBLE_DEVICE]
         if HEADER_CONTENT_TYPE in flow.response.headers:
             content_type = flow.response.headers[HEADER_CONTENT_TYPE]
             if matchers:
@@ -104,14 +100,8 @@ def responseheaders(flow):
                     content_encoding = None
                 bubble_log("responseheaders: content_encoding="+repr(content_encoding)
                            + ", content_type="+repr(content_type)
-                           +", req_id=" + req_id
-                           + ", device=" + device
-                           + ", matchers: " + repr(json.loads(matchers)))
-                flow.response.stream = bubble_modify(req_id,
-                                                     content_encoding,
-                                                     content_type,
-                                                     device,
-                                                     matchers)
+                           +", req_id=" + req_id)
+                flow.response.stream = bubble_modify(req_id, content_encoding, content_type)
             else:
                 bubble_log("responseheaders: no matchers, passing thru")
                 pass
