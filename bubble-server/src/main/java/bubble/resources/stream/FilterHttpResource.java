@@ -27,14 +27,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.resources.stream.FilterMatchersResponse.NO_MATCHERS;
+import static java.util.Collections.emptyMap;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
@@ -171,34 +169,32 @@ public class FilterHttpResource {
         final String fqdn = filterRequest.getFqdn();
         final List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabled(accountUuid, fqdn);
         if (log.isDebugEnabled()) log.debug(prefix+"found "+matchers.size()+" candidate matchers");
-        final List<AppMatcher> removeMatchers;
+        final Map<String, AppMatcher> retainMatchers;
         if (matchers.isEmpty()) {
-            removeMatchers = Collections.emptyList();
+            retainMatchers = emptyMap();
         } else {
             final String uri = filterRequest.getUri();
-            removeMatchers = new ArrayList<>();
+            retainMatchers = new HashMap<>();
             for (AppMatcher matcher : matchers) {
+                if (retainMatchers.containsKey(matcher.getUuid())) continue;
                 if (matcher.matches(uri)) {
+                    if (log.isDebugEnabled()) log.debug(prefix+"matcher "+matcher.getName()+" with pattern "+matcher.getUrlRegex()+" found match for uri: '"+uri+"'");
                     final FilterMatchDecision matchResponse = ruleEngine.preprocess(filterRequest, req, request, caller, device, matcher);
                     switch (matchResponse) {
                         case abort_ok:        return FilterMatchersResponse.ABORT_OK;
                         case abort_not_found: return FilterMatchersResponse.ABORT_NOT_FOUND;
-                        case no_match:
-                            removeMatchers.add(matcher);
-                            break;
-                        case match:
-                            break;
+                        case no_match:        break;
+                        case match:           retainMatchers.put(matcher.getUuid(), matcher); break;
                     }
                 }
             }
         }
-        matchers.removeAll(removeMatchers);
 
-        if (log.isDebugEnabled()) log.debug(prefix+"after pre-processing, returning "+matchers.size()+" matchers");
+        if (log.isDebugEnabled()) log.debug(prefix+"after pre-processing, returning "+retainMatchers.size()+" matchers");
         return new FilterMatchersResponse()
                 .setDecision(empty(matchers) ? FilterMatchDecision.no_match : FilterMatchDecision.match)
                 .setRequest(filterRequest)
-                .setMatchers(matchers);
+                .setMatchers(new ArrayList<>(retainMatchers.values()));
     }
 
     @POST @Path(EP_APPLY+"/{requestId}")

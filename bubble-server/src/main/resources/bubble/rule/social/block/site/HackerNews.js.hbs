@@ -1,6 +1,14 @@
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
     const commentTable = document.querySelector('table.comment-tree');
+    if (commentTable === null) {
+        console.warn('commentTable not found, not filtering');
+        return;
+    }
     const comments = commentTable.querySelectorAll('tr');
+    if (comments === null || comments.length === 0) {
+        console.warn('No comments found, not filtering');
+        return;
+    }
     let blocking = false;
     let blocking_indent = null;
     for (let i=0; i<comments.length; i++) {
