@@ -76,7 +76,7 @@ localStorageDir: {{LOCALSTORAGE_BASE_DIR}}
 disallowedCountries: {{DISALLOWED_COUNTRIES}}
 
 rateLimits:
-  - { limit: 200, interval: 3s, block: 5m }
+  - { limit: 500, interval: 3s, block: 5m }
   - { limit: 10000, interval: 1m, block: 5m }
   - { limit: 25000, interval: 10m, block: 1h }
   - { limit: 100000, interval: 1h, block: 24h }
