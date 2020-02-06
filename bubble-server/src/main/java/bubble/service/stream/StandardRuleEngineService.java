@@ -130,7 +130,7 @@ public class StandardRuleEngineService implements RuleEngineService {
 
         // filter response. when stream is closed, close http client
         final Header contentTypeHeader = proxyResponse.getFirstHeader(CONTENT_TYPE);
-        final String contentType = contentTypeHeader == null ? null : contentTypeHeader.getValue();
+        filterRequest.setContentType(contentTypeHeader == null ? null : contentTypeHeader.getValue());
         final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest, new HttpClosingFilterInputStream(httpClient, proxyResponse));
 
         // send response
