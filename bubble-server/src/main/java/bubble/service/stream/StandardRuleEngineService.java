@@ -114,10 +114,6 @@ public class StandardRuleEngineService implements RuleEngineService {
         // sanity check
         if (empty(filterRequest.getMatchers())) return passthru(request.getEntityStream());
 
-        // todo: we have at least 1 rule, so add another rule that inserts the global settings controls in the top-left
-
-        // initialize drivers -- todo: cache drivers / todo: ensure cache is shorter than session timeout,
-        // since drivers that talk thru API will get a session key in their config
         final List<AppRuleHarness> rules = initRules(filterRequest);
         final AppRuleHarness firstRule = rules.get(0);
 
