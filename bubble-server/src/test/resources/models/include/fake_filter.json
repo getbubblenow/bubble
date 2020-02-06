@@ -7,15 +7,17 @@
       "uri": "/",
       "userAgent": "Test-User-Agent 1.0.0",
       "remoteAddr": "127.0.0.1",
-      "jsCheck": "true"
+      "jsCheck": "true",
+      "timestamp": "<<now>>"
     }
   },
 
   {
     "comment": "make request to <<fqdn>><<uri>>",
     "request": {
-      "uri":"filter/matchers",
+      "uri":"filter/matchers/<<fqdn>>.<<timestamp>>",
       "entity": {
+        "requestId": "<<fqdn>>.<<timestamp>>",
         "fqdn": "<<fqdn>>",
         "uri": "<<uri>>",
         "userAgent": "<<userAgent>>",
