@@ -228,7 +228,6 @@ public class StandardRuleEngineService implements RuleEngineService {
     public Response sendResponse(InputStream stream) { return sendResponse(stream, null); }
 
     public Response sendResponse(InputStream stream, CloseableHttpResponse proxyResponse) {
-
         final SendableResource actualResponse = new SendableResource(new StreamStreamingOutput(stream))
                 .setStatus(proxyResponse == null ? OK : proxyResponse.getStatusLine().getStatusCode());
 

@@ -24,7 +24,7 @@ public class ProxyTest extends ActivatedBubbleModelTestBase {
 
     @Override protected String getManifest() { return MANIFEST_PROXY; }
 
-    @Test public void testSimple () throws Exception { modelTest("proxy"); }
+    @Test public void testSimple () throws Exception { modelTest("filter/proxy"); }
     @Test public void testSimpleUserBlock () throws Exception { modelTest("filter/simple_user_block"); }
 
     @Test public void testHN () throws Exception {

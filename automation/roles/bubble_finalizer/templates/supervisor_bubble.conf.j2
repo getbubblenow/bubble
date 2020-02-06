@@ -3,7 +3,7 @@
 stdout_logfile = /home/bubble/logs/bubble-out.log
 stderr_logfile = /home/bubble/logs/bubble-err.log
 command=sudo -u bubble bash -c "/usr/bin/java \
-  -Djava.net.preferIPv4Stack=true {{ bubble_java_opts }} \
+  -Dfile.encoding=UTF-8 -Djava.net.preferIPv4Stack=true {{ bubble_java_opts }} \
   -cp /home/bubble/current/bubble.jar \
   bubble.server.BubbleServer \
   /home/bubble/current/bubble.env"

@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
-import org.cobbzilla.util.http.HttpContentTypes;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexReplacementFilter;
 import org.glassfish.grizzly.http.server.Request;
@@ -34,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -154,14 +154,14 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                 return EMPTY_STREAM;
         }
 
-        if (!HttpContentTypes.isHtml(contentType)) {
+        if (!isHtml(contentType)) {
             log.warn(prefix+"cannot request non-html response ("+request.getUrl()+"), returning as-is: "+contentType);
             return in;
         }
 
         final String replacement = "<head><script>" + getBubbleJs(filterRequest.getId(), decision) + "</script>";
         final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
-        final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter).setMaxMatches(1);
+        final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in, UTF8cs), filter).setMaxMatches(1);
         if (log.isDebugEnabled()) log.debug("doFilterResponse: filtering response for "+request.getUri()+" - replacement.length = "+replacement.length());
         return new ReaderInputStream(reader, UTF8cs);
     }

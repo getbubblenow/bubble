@@ -25,7 +25,7 @@ def filter_chunk(chunk, req_id, content_encoding=None, content_type=None):
 
     response = requests.post(url, data=chunk, headers=BINARY_DATA_HEADER)
     if not response.ok:
-        err_message = "filter_chunk: Error fetching " + url + ", HTTP status " + str(response.status_code)
+        err_message = 'filter_chunk: Error fetching ' + url + ', HTTP status ' + str(response.status_code)
         bubble_log(err_message)
         return b''
 
