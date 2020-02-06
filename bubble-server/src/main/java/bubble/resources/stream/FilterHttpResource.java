@@ -192,7 +192,7 @@ public class FilterHttpResource {
 
         if (log.isDebugEnabled()) log.debug(prefix+"after pre-processing, returning "+retainMatchers.size()+" matchers");
         return new FilterMatchersResponse()
-                .setDecision(empty(matchers) ? FilterMatchDecision.no_match : FilterMatchDecision.match)
+                .setDecision(empty(retainMatchers) ? FilterMatchDecision.no_match : FilterMatchDecision.match)
                 .setRequest(filterRequest)
                 .setMatchers(new ArrayList<>(retainMatchers.values()));
     }
