@@ -143,25 +143,30 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         switch (decision.getDecisionType()) {
             case block:
                 log.warn(prefix+"preprocessed request was filtered, but ultimate decision was block (contentType="+contentType+"), returning EMPTY_STREAM");
+                if (log.isInfoEnabled()) log.info(prefix+"SEND: empty response (decision: block) for "+request.getUrl());
                 return EMPTY_STREAM;
             case allow:
                 log.warn(prefix+"preprocessed request was filtered, but ultimate decision was allow (contentType="+contentType+"), returning as-is");
+                if (log.isInfoEnabled()) log.info(prefix+"SEND: unfiltered response (decision: allow) for "+request.getUrl());
                 return in;
             case filter:
                 if (!decision.hasSpecs()) {
                     // should never happen
                     log.warn(prefix+"preprocessed request was filtered, but ultimate decision was filtered (contentType="+contentType+"), but no filters provided, returning as-is");
+                    if (log.isInfoEnabled()) log.info(prefix+"SEND: unfiltered response (decision: filter, but no filters) for "+request.getUrl());
                     return in;
                 }
                 break;
             default:
                 // should never happen
                 log.warn(prefix+"preprocessed request was filtered, but ultimate decision was invalid, returning EMPTY_STREAM");
+                if (log.isInfoEnabled()) log.info(prefix+"SEND: unfiltered response (decision: invalid) for "+request.getUrl());
                 return EMPTY_STREAM;
         }
 
         if (!isHtml(contentType)) {
             log.warn(prefix+"cannot request non-html response ("+request.getUrl()+"), returning as-is: "+contentType);
+            if (log.isInfoEnabled()) log.info(prefix+"SEND: unfiltered response (non-html content-type) for "+request.getUrl());
             return in;
         }
 
@@ -171,7 +176,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         if (log.isDebugEnabled()) {
             log.debug(prefix+"filtering response for "+request.getUrl()+" - replacement.length = "+replacement.length());
         } else if (log.isInfoEnabled()) {
-            log.info(prefix+"filtering response for "+request.getUrl());
+            log.info(prefix+"SEND: filtering response for "+request.getUrl());
         }
         return new ReaderInputStream(reader, UTF8cs);
     }
