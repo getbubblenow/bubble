@@ -22,7 +22,7 @@ function {{JS_PREFIX}}_consider_block(comments, blocked_users) {
                 if (userElement.parentNode.querySelector('.bubble_block') === null) {
                     const blockNode = document.createElement('span');
                     blockNode.className = "bubble_block";
-                    blockNode.innerHTML = ' [<b><a href="#" onclick="{{JS_PREFIX}}_bubble_block_user(\'' + author.replace("'", "\\\'") + '\'); return false;">X</a></b>]&nbsp;&nbsp;';
+                    blockNode.innerHTML = ' [<b><a href="#" onclick="{{JS_PREFIX}}_block_user(\'' + author.replace("'", "\\\'") + '\'); return false;">X</a></b>]&nbsp;&nbsp;';
                     console.log('inserting block control...');
                     userElement.parentNode.insertBefore(blockNode, userElement);
                 }
