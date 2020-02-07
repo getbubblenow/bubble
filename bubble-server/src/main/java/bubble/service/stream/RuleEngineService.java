@@ -2,6 +2,6 @@ package bubble.service.stream;
 
 public interface RuleEngineService {
 
-    default void flushRuleCache () {}
+    default int flushRuleCache () { return 0; }
 
 }

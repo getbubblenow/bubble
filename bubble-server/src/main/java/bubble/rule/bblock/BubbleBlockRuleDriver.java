@@ -170,7 +170,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
             return in;
         }
 
-        final String replacement = "<head><script>" + getBubbleJs(filterRequest.getId(), decision) + "</script>";
+        final String replacement = "<head><meta charset=\"UTF-8\"><script>" + getBubbleJs(filterRequest.getId(), decision) + "</script>";
         final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
         final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in, UTF8cs), filter).setMaxMatches(1);
         if (log.isDebugEnabled()) {

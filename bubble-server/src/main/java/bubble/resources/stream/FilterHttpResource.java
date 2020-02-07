@@ -12,6 +12,7 @@ import bubble.service.stream.StandardRuleEngineService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationMap;
+import org.cobbzilla.util.collection.MapBuilder;
 import org.cobbzilla.util.http.HttpContentEncodingType;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
@@ -24,10 +25,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
@@ -232,6 +230,23 @@ public class FilterHttpResource {
         return matchers;
     }
 
+    @DELETE
+    @Produces(APPLICATION_JSON)
+    public Response flushCaches(@Context ContainerRequest request) {
+        final Account caller = userPrincipal(request);
+        if (!caller.admin()) return forbidden();
+
+        final RedisService matchersCache = getMatchersCache();
+        final Collection<String> keys = matchersCache.keys("*");
+        for (String key : keys) matchersCache.del_withPrefix(key);
+
+        final int ruleEngineCacheSize = ruleEngine.flushRuleCache();
+        return ok(MapBuilder.build(new Object[][] {
+                {"matchersCache", keys.size()},
+                {"ruleEngineCache", ruleEngineCacheSize}
+        }));
+    }
+
     @POST @Path(EP_APPLY+"/{requestId}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.WILDCARD)
@@ -286,7 +301,7 @@ public class FilterHttpResource {
             return passthru(request);
 
         }
-        if (log.isDebugEnabled()) log.debug(prefix+"found FilterMatchersResponse: "+json(matchersResponse, COMPACT_MAPPER));
+        if (log.isTraceEnabled()) log.trace(prefix+"found FilterMatchersResponse: "+json(matchersResponse, COMPACT_MAPPER));
         if (matchersResponse.hasAbort()) {
             if (log.isWarnEnabled()) log.warn(prefix+"FilterMatchersResponse has abort code "+matchersResponse.httpStatus()+", MITM should have aborted. We are aborting now.");
             return status(matchersResponse.httpStatus());
@@ -326,7 +341,7 @@ public class FilterHttpResource {
         if (filterRequest == null) {
             if (log.isDebugEnabled()) log.debug(prefix+"filterRequest not found, initiating...");
             if (empty(contentType)) {
-                if (log.isDebugEnabled()) log.debug(prefix+"filter request not found, and no contentType provided, returning passthru");
+                if (log.isDebugEnabled()) log.debug(prefix+"filterRequest not found, and no contentType provided, returning passthru");
                 return passthru(request);
             }
 
@@ -335,7 +350,7 @@ public class FilterHttpResource {
                 if (log.isDebugEnabled()) log.debug(prefix+"device "+matchersResponse.getRequest().getDevice()+" not found, returning passthru");
                 return passthru(request);
             } else {
-                if (log.isDebugEnabled()) log.debug(prefix+"found device: "+device.id()+" ... ");
+                if (log.isTraceEnabled()) log.trace(prefix+"found device: "+device.id()+" ... ");
             }
             final Account caller = findCaller(device.getAccount());
             if (caller == null) {
@@ -352,7 +367,6 @@ public class FilterHttpResource {
             if (log.isDebugEnabled()) log.trace(prefix+"start filterRequest="+json(filterRequest, COMPACT_MAPPER));
             getActiveRequestCache().set(requestId, json(filterRequest, COMPACT_MAPPER), EX, ACTIVE_REQUEST_TIMEOUT);
         } else {
-            if (log.isDebugEnabled()) log.debug(prefix+"filterRequest found, continuing...");
             if (log.isTraceEnabled()) {
                 if (isLast) {
                     log.trace(prefix+"last filterRequest=" + json(filterRequest, COMPACT_MAPPER));

@@ -29,6 +29,6 @@ public class FilterMatchersRequest {
     // FilterHttpResource.matchersCache cache would be useless, since every cache entry would be unique
     public String cacheKey() { return hashOf(device, fqdn, uri, userAgent, referer, remoteAddr); }
 
-    @JsonIgnore public String getUrl() { return fqdn + "/" + uri; }
+    @JsonIgnore public String getUrl() { return fqdn + uri; }
 
 }

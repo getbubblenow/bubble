@@ -6,7 +6,14 @@
       "site": "MarginalRevolution",
       "template": true,
       "fqdn": "marginalrevolution.com",
-      "urlRegex": "marginalrevolution//20\\d{2}/\\d{2}/\\w+",
+      "urlRegex": "marginalrevolution/20\\d{2}/\\d{2}/\\w+",
+      "rule": "mr_user_blocker"
+    }, {
+      "name": "MRTestMatcher",
+      "site": "MarginalRevolution",
+      "template": true,
+      "fqdn": "kyuss.org",
+      "urlRegex": "/20\\d{2}/\\d{2}/\\w+",
       "rule": "mr_user_blocker"
     }]
   }

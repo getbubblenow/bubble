@@ -28,7 +28,11 @@ public class BlockListEntry implements Comparable<BlockListEntry> {
     @Override public int compareTo(BlockListEntry o) {
         if (rule == null) return o.rule == null ? 0 : -1;
         if (o.rule == null) return 1;
-        return safeFunctionName(rule).compareTo(safeFunctionName(o.rule));
+        return normalizedString(rule).compareTo(normalizedString(o.rule));
+    }
+
+    public String normalizedString(String rule) {
+        return safeFunctionName(rule.replace("www.", ""));
     }
 
 }

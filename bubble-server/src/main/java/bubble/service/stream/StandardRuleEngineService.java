@@ -184,7 +184,12 @@ public class StandardRuleEngineService implements RuleEngineService {
 
     private ExpirationMap<String, List<AppRuleHarness>> ruleCache = new ExpirationMap<>(HOURS.toMillis(1), ExpirationEvictionPolicy.atime);
 
-    public void flushRuleCache () { ruleCache.clear(); }
+    public int flushRuleCache () {
+        final int size = ruleCache.size();
+        ruleCache.clear();
+        log.info("flushRuleCache: flushed "+size+" ruleCache entries");
+        return size;
+    }
 
     private List<AppRuleHarness> initRules(FilterHttpRequest filterRequest) {
         return initRules(filterRequest.getAccount(), filterRequest.getDevice(), filterRequest.getMatchers());
