@@ -34,7 +34,9 @@ public class BubbleRateLimitFilter extends RateLimitFilter {
     // super-admins have unlimited API usage. helpful when populating models
     @Override protected boolean allowUnlimitedUse(Principal user, ContainerRequestContext request) {
         try {
-            return ((Account) user).admin() || request.getUriInfo().getPath().startsWith(getFilterPrefix());
+            final boolean allowUnlimited = ((Account) user).admin() || request.getUriInfo().getPath().startsWith(getFilterPrefix());
+            if (log.isTraceEnabled()) log.trace("allowUnlimitedUse: allowUnlimited="+allowUnlimited+", admin="+((Account) user).admin()+", path="+request.getUriInfo().getPath()+", filterPrefix="+getFilterPrefix());
+            return allowUnlimited;
         } catch (Exception e) {
             log.warn("allowUnlimitedUse: "+shortError(e));
             return false;
