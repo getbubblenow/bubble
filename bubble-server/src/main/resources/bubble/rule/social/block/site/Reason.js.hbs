@@ -1,4 +1,5 @@
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
+    console.log('apply_blocks: starting...');
     const comments = document.querySelector('comment-list');
     if (comments === null || comments.length === 0) {
         console.warn('No comments found, not filtering');

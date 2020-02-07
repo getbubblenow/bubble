@@ -5,6 +5,7 @@ import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.app.BubbleApp;
+import bubble.service.stream.RuleEngineService;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +23,25 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
     @Autowired private AccountDAO accountDAO;
     @Autowired private BubbleAppDAO appDAO;
     @Autowired private AppRuleDAO ruleDAO;
+    @Autowired private RuleEngineService ruleEngineService;
 
     @Override public Order getDefaultSortOrder() { return PRIORITY_ASC; }
+
+    public List<AppMatcher> findByAccountAndFqdnAndEnabled(String account, String fqdn) {
+        return list(criteria().add(
+                and(
+                        eq("account", account),
+                        eq("enabled", true),
+                        or(
+                                eq("fqdn", fqdn),
+                                eq("fqdn", "*")
+                        ))
+        ).addOrder(PRIORITY_ASC));
+    }
+
+    public List<AppMatcher> findAllChangesSince(Long lastMod) {
+        return list(criteria().add(gt(MTIME, lastMod)));
+    }
 
     @Override public AppMatcher postUpdate(AppMatcher matcher, Object context) {
         final BubbleApp app = appDAO.findByUuid(matcher.getApp());
@@ -55,22 +73,12 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
                 }
             }
         }
+        ruleEngineService.flushRuleCache();
         return super.postUpdate(matcher, context);
     }
 
-    public List<AppMatcher> findByAccountAndFqdnAndEnabled(String account, String fqdn) {
-        return list(criteria().add(
-                and(
-                        eq("account", account),
-                        eq("enabled", true),
-                        or(
-                                eq("fqdn", fqdn),
-                                eq("fqdn", "*")
-                        ))
-        ).addOrder(PRIORITY_ASC));
-    }
-
-    public List<AppMatcher> findAllChangesSince(Long lastMod) {
-        return list(criteria().add(gt(MTIME, lastMod)));
+    @Override public void delete(String uuid) {
+        super.delete(uuid);
+        ruleEngineService.flushRuleCache();
     }
 }

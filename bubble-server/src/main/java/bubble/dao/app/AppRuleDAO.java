@@ -11,9 +11,14 @@ import org.springframework.stereotype.Repository;
 
     @Override public AppRule postUpdate(AppRule entity, Object context) {
 
-        ruleEngineService.flushRuleCache();  // ensure latest rules are used
+        ruleEngineService.flushRuleCache();
 
         // todo: update entities based on this template if account has updates enabled
         return super.postUpdate(entity, context);
+    }
+
+    @Override public void delete(String uuid) {
+        super.delete(uuid);
+        ruleEngineService.flushRuleCache();
     }
 }

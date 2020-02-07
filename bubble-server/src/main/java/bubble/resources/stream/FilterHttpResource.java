@@ -3,6 +3,8 @@ package bubble.resources.stream;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.app.AppDataDAO;
 import bubble.dao.app.AppMatcherDAO;
+import bubble.dao.app.AppSiteDAO;
+import bubble.dao.app.BubbleAppDAO;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppData;
@@ -51,6 +53,8 @@ public class FilterHttpResource {
     @Autowired private AccountDAO accountDAO;
     @Autowired private StandardRuleEngineService ruleEngine;
     @Autowired private AppMatcherDAO matcherDAO;
+    @Autowired private BubbleAppDAO appDAO;
+    @Autowired private AppSiteDAO siteDAO;
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private DeviceIdService deviceIdService;
     @Autowired private AppDataDAO dataDAO;
@@ -167,7 +171,10 @@ public class FilterHttpResource {
         }
 
         final String fqdn = filterRequest.getFqdn();
-        final List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabled(accountUuid, fqdn);
+        final List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabled(accountUuid, fqdn).stream()
+                .filter(m -> appDAO.findByAccountAndId(accountUuid, m.getApp()).enabled())
+                .filter(m -> siteDAO.findByAccountAndAppAndId(accountUuid, m.getApp(), m.getSite()).enabled())
+                .collect(Collectors.toList());
         if (log.isDebugEnabled()) log.debug(prefix+"found "+matchers.size()+" candidate matchers");
         final Map<String, AppMatcher> retainMatchers;
         if (matchers.isEmpty()) {
