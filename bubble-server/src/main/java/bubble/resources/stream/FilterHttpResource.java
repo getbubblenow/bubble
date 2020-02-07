@@ -1,15 +1,10 @@
 package bubble.resources.stream;
 
 import bubble.dao.account.AccountDAO;
-import bubble.dao.app.AppDataDAO;
-import bubble.dao.app.AppMatcherDAO;
-import bubble.dao.app.AppSiteDAO;
-import bubble.dao.app.BubbleAppDAO;
+import bubble.dao.app.*;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
-import bubble.model.app.AppData;
-import bubble.model.app.AppDataFormat;
-import bubble.model.app.AppMatcher;
+import bubble.model.app.*;
 import bubble.model.device.Device;
 import bubble.rule.FilterMatchDecision;
 import bubble.service.cloud.DeviceIdService;
@@ -29,7 +24,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
@@ -44,6 +42,7 @@ import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
+import static org.cobbzilla.wizard.model.NamedEntity.names;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Path(FILTER_HTTP_ENDPOINT)
@@ -55,6 +54,7 @@ public class FilterHttpResource {
     @Autowired private AppMatcherDAO matcherDAO;
     @Autowired private BubbleAppDAO appDAO;
     @Autowired private AppSiteDAO siteDAO;
+    @Autowired private AppRuleDAO ruleDAO;
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private DeviceIdService deviceIdService;
     @Autowired private AppDataDAO dataDAO;
@@ -157,7 +157,8 @@ public class FilterHttpResource {
 
     private FilterMatchersResponse findMatchers(FilterMatchersRequest filterRequest, Request req, ContainerRequest request) {
 
-        final String prefix = "findMatchers("+filterRequest.getRequestId()+"): ";
+        final String requestId = filterRequest.getRequestId();
+        final String prefix = "findMatchers("+ requestId +"): ";
         final Device device = findDevice(filterRequest.getDevice());
         if (device == null) {
             if (log.isDebugEnabled()) log.debug(prefix+"findDevice("+ filterRequest.getDevice() +") returned null, returning no matchers");
@@ -171,11 +172,7 @@ public class FilterHttpResource {
         }
 
         final String fqdn = filterRequest.getFqdn();
-        final List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabled(accountUuid, fqdn).stream()
-                .filter(m -> appDAO.findByAccountAndId(accountUuid, m.getApp()).enabled())
-                .filter(m -> siteDAO.findByAccountAndAppAndId(accountUuid, m.getApp(), m.getSite()).enabled())
-                .collect(Collectors.toList());
-        if (log.isDebugEnabled()) log.debug(prefix+"found "+matchers.size()+" candidate matchers");
+        final List<AppMatcher> matchers = getEnabledMatchers(requestId, accountUuid, fqdn);
         final Map<String, AppMatcher> retainMatchers;
         if (matchers.isEmpty()) {
             retainMatchers = emptyMap();
@@ -202,13 +199,37 @@ public class FilterHttpResource {
                 .setRequest(filterRequest)
                 .setMatchers(new ArrayList<>(retainMatchers.values()));
 
-        if (log.isDebugEnabled()) {
-            log.debug(prefix+"after pre-processing, returning "+retainMatchers.size()+" matchers");
-        } else if (log.isInfoEnabled()) {
-            log.info(prefix+"preprocess decision for "+filterRequest.getUrl()+": "+response.getDecision());
-        }
+        if (log.isInfoEnabled()) log.info(prefix+"preprocess decision for "+filterRequest.getUrl()+": "+response);
 
         return response;
+    }
+
+    private List<AppMatcher> getEnabledMatchers(String requestId, String accountUuid, String fqdn) {
+        final String prefix = "getEnabledMatchers("+requestId+"): ";
+        List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabled(accountUuid, fqdn);
+        if (log.isTraceEnabled()) log.trace(prefix+"checking all enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
+        matchers = matchers.stream()
+                .filter(m -> appDAO.findByAccountAndId(accountUuid, m.getApp()).enabled()).collect(Collectors.toList());
+        matchers = matchers.stream()
+                .filter(m -> {
+                    final AppSite site = siteDAO.findByAccountAndAppAndId(accountUuid, m.getApp(), m.getSite());
+                    if (site == null) {
+                        log.warn(prefix+"site "+m.getSite()+" not found for matcher "+m.getName()+"/"+m.getUuid());
+                        return false;
+                    }
+                    return site.enabled();
+                }).collect(Collectors.toList());
+        matchers = matchers.stream()
+                .filter(m -> {
+                    final AppRule rule = ruleDAO.findByAccountAndAppAndId(accountUuid, m.getApp(), m.getRule());
+                    if (rule == null) {
+                        log.warn(prefix+"rule "+m.getRule()+" not found for matcher "+m.getName()+"/"+m.getUuid());
+                        return false;
+                    }
+                    return rule.enabled();
+                }).collect(Collectors.toList());
+        if (log.isDebugEnabled()) log.debug(prefix+"found "+matchers.size()+" candidate matchers: "+names(matchers));
+        return matchers;
     }
 
     @POST @Path(EP_APPLY+"/{requestId}")

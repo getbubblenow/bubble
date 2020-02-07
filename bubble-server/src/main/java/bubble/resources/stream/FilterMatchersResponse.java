@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.wizard.model.NamedEntity.names;
 
 @NoArgsConstructor @Accessors(chain=true) @Slf4j
 public class FilterMatchersResponse {
@@ -42,5 +43,8 @@ public class FilterMatchersResponse {
 
     public int httpStatus() { return decision.httpStatus(); }
 
+    @Override public String toString () {
+        return "FilterMatchersResponse{"+decision+(hasMatchers() ? ", matchers="+names(matchers) : "")+"}";
+    }
 
 }
