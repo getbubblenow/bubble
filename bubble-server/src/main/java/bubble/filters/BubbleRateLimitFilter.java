@@ -1,9 +1,12 @@
 package bubble.filters;
 
 import bubble.model.account.Account;
+import bubble.server.BubbleConfiguration;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.filters.RateLimitFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.container.ContainerRequestContext;
@@ -24,10 +27,14 @@ public class BubbleRateLimitFilter extends RateLimitFilter {
         return super.getKeys(request);
     }
 
+    @Autowired private BubbleConfiguration configuration;
+
+    @Getter(lazy=true) private final String filterPrefix = configuration.getHttp().getBaseUri() + FILTER_HTTP_ENDPOINT;
+
     // super-admins have unlimited API usage. helpful when populating models
     @Override protected boolean allowUnlimitedUse(Principal user, ContainerRequestContext request) {
         try {
-            return ((Account) user).admin() || request.getUriInfo().getPath().startsWith(FILTER_HTTP_ENDPOINT);
+            return ((Account) user).admin() || request.getUriInfo().getPath().startsWith(getFilterPrefix());
         } catch (Exception e) {
             log.warn("allowUnlimitedUse: "+shortError(e));
             return false;

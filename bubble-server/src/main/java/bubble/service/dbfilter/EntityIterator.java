@@ -3,7 +3,7 @@ package bubble.service.dbfilter;
 import bubble.cloud.storage.local.LocalStorageConfig;
 import bubble.cloud.storage.local.LocalStorageDriver;
 import bubble.model.account.AccountSshKey;
-import bubble.model.app.AppTemplateEntity;
+import bubble.model.account.AccountTemplate;
 import bubble.model.app.BubbleApp;
 import bubble.model.bill.BubblePlanApp;
 import bubble.model.cloud.BubbleNetwork;
@@ -124,10 +124,10 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
                 }
             }
 
-        } else if (planApps != null && AppTemplateEntity.class.isAssignableFrom(c)) {
+        } else if (planApps != null && AccountTemplate.class.isAssignableFrom(c)) {
             // only copy app-related entities for enabled apps, make them all templates
             entities.stream()
-                    .map(app -> (AppTemplateEntity) ((AppTemplateEntity) app).setTemplate(true))
+                    .map(app -> (AccountTemplate) ((AccountTemplate) app).setTemplate(true))
                     .forEach(this::add);
 
         } else {

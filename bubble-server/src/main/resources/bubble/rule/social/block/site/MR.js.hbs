@@ -1,17 +1,16 @@
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
-    const comments = document.querySelector('comment-list');
+    const comments = document.querySelector('#comments');
     if (comments === null || comments.length === 0) {
         console.warn('No comments found, not filtering');
         return;
     }
-    {{JS_PREFIX}}_consider_block(comments.querySelector('li.comment'), blocked_users);
+    {{JS_PREFIX}}_consider_block(comments.querySelector('article.blog-comment'), blocked_users);
 }
 
 function {{JS_PREFIX}}_consider_block(comments, blocked_users) {
-    console.log('consider_block: considering '+comments.length+' comments...');
     for (let i=0; i<comments.length; i++) {
         const comment = comments[i];
-        const userElement = comment.querySelector('cite.fn strong');
+        const userElement = comment.querySelector('h3.comment-author');
         if (userElement !== null) {
             const author = userElement.innerText;
             if (blocked_users !== null && blocked_users.includes(author)) {
@@ -23,11 +22,6 @@ function {{JS_PREFIX}}_consider_block(comments, blocked_users) {
             blockNode.className = "bubble_block";
             blockNode.innerHTML = ' [<b><a href="#" onclick="{{JS_PREFIX}}_block_user(\''+author+'\'); return false;">X</a></b>]';
             userElement.parentNode.insertBefore(blockNode, userElement.nextSibling);
-
-            const replies = comment.querySelector('ol.children');
-            if (replies !== null) {
-                {{JS_PREFIX}}_consider_block(replies.querySelector('li.comment'));
-            }
         }
     }
 }

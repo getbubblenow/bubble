@@ -1,0 +1,19 @@
+[{
+  "name": "UserBlocker",
+  "children": {
+    "AppSite": [{
+      "name": "MarginalRevolution",
+      "url": "https://marginalrevolution.com",
+      "description": "An economics blog by Tyler Cowen and Alex Tabarrok, professors at George Mason University",
+      "template": true
+    }],
+    "AppRule": [{
+      "name": "mr_user_blocker",
+      "template": true,
+      "driver": "JsUserBlockerRuleDriver",
+      "config": {
+        "siteJsTemplate": "bubble/rule/social/block/site/MR.js.hbs"
+      }
+    }]
+  }
+}]
