@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.http.HttpContentEncodingType;
 
 import java.util.List;
@@ -23,7 +22,6 @@ public class FilterHttpRequest {
     @Getter @Setter private Device device;
     @Getter @Setter private HttpContentEncodingType encoding;
     @Getter @Setter private Account account;
-    @Getter @Setter private NameAndValue[] meta;
     @Getter @Setter private String contentType;
 
     public boolean hasMatcher (String matcherId) {
@@ -35,4 +33,7 @@ public class FilterHttpRequest {
 
     @JsonIgnore public List<AppMatcher> getMatchers() { return !hasMatchers() ? null : matchersResponse.getMatchers(); }
 
+    @JsonIgnore public String getUrl() {
+        return !hasMatchers() || !matchersResponse.hasRequest() ? null : matchersResponse.getRequest().getUrl();
+    }
 }

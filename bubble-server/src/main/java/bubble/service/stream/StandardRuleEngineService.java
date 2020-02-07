@@ -28,7 +28,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
-import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.collection.SingletonList;
 import org.cobbzilla.util.http.HttpClosingFilterInputStream;
 import org.cobbzilla.util.http.HttpContentEncodingType;
@@ -54,6 +53,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static bubble.client.BubbleApiClient.newHttpClientBuilder;
 import static java.util.Collections.emptyList;
@@ -265,8 +265,6 @@ public class StandardRuleEngineService implements RuleEngineService {
         private FilterHttpRequest request;
         private String requestId;
         private HttpContentEncodingType encoding;
-        private String contentType;
-        private NameAndValue[] meta;
         private MultiStream multiStream;
         private AppRuleHarness firstRule;
         private InputStream output = null;
@@ -278,8 +276,6 @@ public class StandardRuleEngineService implements RuleEngineService {
             this.request = request;
             this.requestId = request.getId();
             this.encoding = request.getEncoding();
-            this.contentType = request.getContentType();
-            this.meta = request.getMeta();
             this.firstRule = rules.get(0);
         }
 
@@ -339,10 +335,21 @@ public class StandardRuleEngineService implements RuleEngineService {
             return new ByteArrayInputStream(buffer, 0, bytesRead);
         }
 
+        private Map<String, String> doNotWrap = new ExpirationMap<>(TimeUnit.DAYS.toMillis(1), ExpirationEvictionPolicy.atime);
+
         private InputStream inputStream(MultiStream baseStream) throws IOException {
             final String prefix = prefix("inputStream");
+            final String url = request.getUrl();
             if (encoding == null) {
-                if (log.isDebugEnabled()) log.debug(prefix+"returning baseStream unmodified");
+                if (log.isDebugEnabled()) log.debug(prefix + "no encoding, returning baseStream unmodified");
+                return baseStream;
+            } else if (encoding == HttpContentEncodingType.identity) {
+                if (log.isDebugEnabled()) log.debug(prefix+"identity encoding, returning baseStream unmodified");
+                return baseStream;
+
+            } else if (doNotWrap.containsKey(url)) {
+                if (log.isDebugEnabled()) log.debug(prefix+"previous error wrapping encoding, returning baseStream unmodified");
+                encoding = null;
                 return baseStream;
             }
             try {
@@ -351,6 +358,7 @@ public class StandardRuleEngineService implements RuleEngineService {
                 return wrapped;
             } catch (IOException e) {
                 if (log.isWarnEnabled()) log.warn(prefix+"error wrapping with "+encoding+", sending as-is (perhaps missing a byte or two)");
+                doNotWrap.put(url, url);
                 return baseStream;
             }
         }
@@ -358,7 +366,10 @@ public class StandardRuleEngineService implements RuleEngineService {
         private InputStream outputStream(InputStream in) throws IOException {
             final String prefix = prefix("outputStream");
             if (encoding == null) {
-                if (log.isDebugEnabled()) log.debug(prefix+"returning baseStream unmodified");
+                if (log.isDebugEnabled()) log.debug(prefix+"no encoding, returning baseStream unmodified");
+                return in;
+            } else if (encoding == HttpContentEncodingType.identity) {
+                if (log.isDebugEnabled()) log.debug(prefix+"identity encoding, returning baseStream unmodified");
                 return in;
             }
             final FilterInputStreamViaOutputStream wrapped = encoding.wrapInputAsOutput(in);

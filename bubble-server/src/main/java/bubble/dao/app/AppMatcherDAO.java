@@ -67,7 +67,7 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
                                 eq("fqdn", fqdn),
                                 eq("fqdn", "*")
                         ))
-        ));
+        ).addOrder(PRIORITY_ASC));
     }
 
     public List<AppMatcher> findAllChangesSince(Long lastMod) {
