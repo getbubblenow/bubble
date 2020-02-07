@@ -4,6 +4,7 @@ import lombok.*;
 import lombok.experimental.Accessors;
 
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
+import static org.cobbzilla.util.string.StringUtil.safeFunctionName;
 
 @NoArgsConstructor @AllArgsConstructor @Accessors(chain=true) @EqualsAndHashCode(of={"rule"})
 public class BlockListEntry implements Comparable<BlockListEntry> {
@@ -27,7 +28,7 @@ public class BlockListEntry implements Comparable<BlockListEntry> {
     @Override public int compareTo(BlockListEntry o) {
         if (rule == null) return o.rule == null ? 0 : -1;
         if (o.rule == null) return 1;
-        return rule.compareTo(o.rule);
+        return safeFunctionName(rule).compareTo(safeFunctionName(o.rule));
     }
 
 }
