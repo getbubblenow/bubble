@@ -132,7 +132,7 @@
       "locale": "en_US",
       "messages": [
         {"name": "name", "value": "Block Party!"},
-        {"name": "summary", "value": "Network Filter and Content Blocker"},
+        {"name": "summary", "value": "Network Filter"},
         {"name": "description", "value": "Block adware, malware, phishing/scam sites, and much more"},
         {"name": "field.ctime", "value": "When"},
         {"name": "field.fqdn", "value": "URL"},

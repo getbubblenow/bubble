@@ -58,9 +58,9 @@
     "AppMessage": [{
       "locale": "en_US",
       "messages": [
-        {"name": "name", "value": "Castigator"},
-        {"name": "summary", "value": "Network Analytics and Filter Creator"},
-        {"name": "description", "value": "Review recent internet traffic for your devices. Block stuff that you don't like."},
+        {"name": "name", "value": "Snitcher"},
+        {"name": "summary", "value": "Traffic Analytics"},
+        {"name": "description", "value": "Review recent traffic for your devices. Block stuff that you don't like."},
         {"name": "field.ctime", "value": "When"},
         {"name": "field.requestTime", "value": "When"},
         {"name": "field.accountName", "value": "Account"},
