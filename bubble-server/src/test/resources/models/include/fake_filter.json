@@ -8,16 +8,16 @@
       "userAgent": "Test-User-Agent 1.0.0",
       "remoteAddr": "127.0.0.1",
       "jsCheck": "true",
-      "timestamp": "<<now>>"
+      "requestSuffix": "<<rand 10>>"
     }
   },
 
   {
     "comment": "make request to <<fqdn>><<uri>>",
     "request": {
-      "uri":"filter/matchers/<<fqdn>>.<<timestamp>>",
+      "uri":"filter/matchers/<<fqdn>>.<<requestSuffix>>",
       "entity": {
-        "requestId": "<<fqdn>>.<<timestamp>>",
+        "requestId": "<<fqdn>>.<<requestSuffix>>",
         "fqdn": "<<fqdn>>",
         "uri": "<<uri>>",
         "userAgent": "<<userAgent>>",

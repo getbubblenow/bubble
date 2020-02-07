@@ -1,15 +1,12 @@
 package bubble.app.bblock;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.Accessors;
 
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 
-@NoArgsConstructor @AllArgsConstructor @Accessors(chain=true)
-public class BlockListEntry {
+@NoArgsConstructor @AllArgsConstructor @Accessors(chain=true) @EqualsAndHashCode(of={"rule"})
+public class BlockListEntry implements Comparable<BlockListEntry> {
 
     public static BlockListEntry sourceRule(String rule) {
         return new BlockListEntry(BlockListEntryType.builtin, rule);
@@ -26,5 +23,11 @@ public class BlockListEntry {
 
     @Getter @Setter private BlockListEntryType ruleType;
     @Getter @Setter private String rule;
+
+    @Override public int compareTo(BlockListEntry o) {
+        if (rule == null) return o.rule == null ? 0 : -1;
+        if (o.rule == null) return 1;
+        return rule.compareTo(o.rule);
+    }
 
 }

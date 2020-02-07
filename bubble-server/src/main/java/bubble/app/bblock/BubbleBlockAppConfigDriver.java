@@ -22,13 +22,10 @@ import org.cobbzilla.util.string.ValidationRegexes;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpSchemes.SCHEME_HTTPS;
 import static org.cobbzilla.util.http.HttpSchemes.isHttpOrHttps;
@@ -75,15 +72,14 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
         throw notFoundEx(view);
     }
 
-    private List<BlockListEntry> loadListEntries(Account account, BubbleApp app, String id) {
+    private Set<BlockListEntry> loadListEntries(Account account, BubbleApp app, String id) {
         final BubbleBlockList list = loadList(account, app, id);
         if (list == null) throw notFoundEx(id);
         if (list.hasAdditionalEntries()) {
             return Arrays.stream(list.getAdditionalEntries())
-                    .map(BlockListEntry::additionalRule)
-                    .collect(Collectors.toList());
+                    .map(BlockListEntry::additionalRule).collect(Collectors.toCollection(TreeSet::new));
         }
-        return emptyList();
+        return emptySet();
     }
 
     private BubbleBlockList loadList(Account account, BubbleApp app, String id) {
