@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.HasPriority;
@@ -28,7 +29,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @ECType(root=true)
 @ECTypeURIs(baseURI=EP_MATCHERS, listFields={"name", "app", "fqdn", "urlRegex", "rule"})
-@Entity @NoArgsConstructor @Accessors(chain=true)
+@Entity @NoArgsConstructor @Accessors(chain=true) @ToString
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "app", "name"}),
         @ECIndex(of={"account", "name"}),

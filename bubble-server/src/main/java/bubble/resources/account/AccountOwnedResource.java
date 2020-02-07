@@ -7,6 +7,7 @@ import bubble.model.account.HasAccount;
 import bubble.model.account.HasAccountNoName;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
+@Slf4j
 public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwnedEntityDAO<E>> {
 
     @Autowired protected AccountDAO accountDAO;
@@ -123,6 +125,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     public Response create(@Context Request req,
                            @Context ContainerRequest ctx,
                            E request) {
+        if (request == null) return invalid("err.request.invalid");
         final Account caller = checkEditable(ctx);
         E found = find(ctx, request.getName());
         if (found == null) {
@@ -149,13 +152,14 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     public Response update(@Context ContainerRequest ctx,
                            @PathParam("id") String id,
                            E request) {
+        if (request == null) return invalid("err.request.invalid");
         final Account caller = checkEditable(ctx);
         E found = find(ctx, id);
         if (found == null) {
             found = findAlternateForUpdate(ctx, id);
             if (found == null) return notFound(id);
         }
-        if (!(found instanceof HasAccountNoName) && !canChangeName() && request.hasName() && !found.getName().equals(request.getName())) {
+        if (!(found instanceof HasAccountNoName) && !canChangeName() && request.hasName() && !request.getName().equals(found.getName())) {
             return notFound(id+"/"+request.getName());
         }
 

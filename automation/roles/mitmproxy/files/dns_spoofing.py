@@ -55,6 +55,8 @@ class Rerouter:
             if re.match(m['urlRegex'], flow.request.path):
                 bubble_log('get_matchers: rule matched, adding rule: '+m['rule'])
                 matcher_ids.append(m['uuid'])
+            else:
+                bubble_log('get_matchers: rule (regex='+m['urlRegex']+') did NOT match, skipping rule: '+m['rule'])
 
         matcher_response = { 'matchers': matcher_ids, 'request_id': req_id }
         bubble_log("get_matchers: returning "+repr(matcher_response))

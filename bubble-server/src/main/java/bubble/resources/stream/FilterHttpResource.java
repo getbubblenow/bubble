@@ -144,8 +144,8 @@ public class FilterHttpResource {
         if (device == null) {
             if (log.isDebugEnabled()) log.debug(prefix+"device not found for IP "+vpnAddr+", returning no matchers");
             return ok(NO_MATCHERS);
-        } else if (log.isDebugEnabled()) {
-            log.debug(prefix+"found device "+device.id()+" for IP "+vpnAddr);
+        } else if (log.isTraceEnabled()) {
+            log.trace(prefix+"found device "+device.id()+" for IP "+vpnAddr);
         }
         filterRequest.setDevice(device.getUuid());
         final FilterMatchersResponse response = getMatchersResponse(filterRequest, req, request);
@@ -188,6 +188,8 @@ public class FilterHttpResource {
                         case no_match:        break;
                         case match:           retainMatchers.put(matcher.getUuid(), matcher); break;
                     }
+                } else {
+                    if (log.isDebugEnabled()) log.debug(prefix+"matcher "+matcher.getName()+" with pattern "+matcher.getUrlRegex()+" did NOT match uri: '"+uri+"'");
                 }
             }
         }
@@ -208,6 +210,7 @@ public class FilterHttpResource {
         if (log.isTraceEnabled()) log.trace(prefix+"checking all enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
         matchers = matchers.stream()
                 .filter(m -> appDAO.findByAccountAndId(accountUuid, m.getApp()).enabled()).collect(Collectors.toList());
+        if (log.isTraceEnabled()) log.trace(prefix+"after removing disabled apps, enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
         matchers = matchers.stream()
                 .filter(m -> {
                     final AppSite site = siteDAO.findByAccountAndAppAndId(accountUuid, m.getApp(), m.getSite());
@@ -217,6 +220,7 @@ public class FilterHttpResource {
                     }
                     return site.enabled();
                 }).collect(Collectors.toList());
+        if (log.isTraceEnabled()) log.trace(prefix+"after removing disabled sites, enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
         matchers = matchers.stream()
                 .filter(m -> {
                     final AppRule rule = ruleDAO.findByAccountAndAppAndId(accountUuid, m.getApp(), m.getRule());
@@ -226,7 +230,8 @@ public class FilterHttpResource {
                     }
                     return rule.enabled();
                 }).collect(Collectors.toList());
-        if (log.isDebugEnabled()) log.debug(prefix+"found "+matchers.size()+" candidate matchers: "+names(matchers));
+        if (log.isTraceEnabled()) log.trace(prefix+"after removing disabled rules, enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
+        else if (log.isDebugEnabled()) log.debug(prefix+"found "+matchers.size()+" candidate matchers: "+names(matchers));
         return matchers;
     }
 
