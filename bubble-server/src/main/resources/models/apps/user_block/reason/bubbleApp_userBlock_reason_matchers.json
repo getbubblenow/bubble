@@ -6,7 +6,7 @@
       "site": "Reason",
       "template": true,
       "fqdn": "reason.com",
-      "urlRegex": "/20\\d{2}/\\d{2}/\\d{2}/\\w+",
+      "urlRegex": "/20\\d{2}/\\d{2}/\\d{2}/[-\\w]+/",
       "rule": "reason_user_blocker"
     }]
   }

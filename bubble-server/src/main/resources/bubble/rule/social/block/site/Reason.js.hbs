@@ -1,6 +1,5 @@
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
-    console.log('apply_blocks: starting...');
-    const comments = document.querySelector('comment-list');
+    const comments = document.querySelector('.comment-list');
     if (comments === null || comments.length === 0) {
         console.warn('No comments found, not filtering');
         return;
@@ -9,7 +8,6 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
 }
 
 function {{JS_PREFIX}}_consider_block(comments, blocked_users) {
-    console.log('consider_block: considering '+comments.length+' comments...');
     for (let i=0; i<comments.length; i++) {
         const comment = comments[i];
         const userElement = comment.querySelector('cite.fn strong');
@@ -20,14 +18,16 @@ function {{JS_PREFIX}}_consider_block(comments, blocked_users) {
                 continue;
             }
 
-            const blockNode = document.createElement('span');
-            blockNode.className = "bubble_block";
-            blockNode.innerHTML = ' [<b><a href="#" onclick="{{JS_PREFIX}}_block_user(\''+author+'\'); return false;">X</a></b>]';
-            userElement.parentNode.insertBefore(blockNode, userElement.nextSibling);
+            if (userElement.parentNode.querySelector('.bubble_block') === null) {
+                const blockNode = document.createElement('span');
+                blockNode.className = "bubble_block";
+                blockNode.innerHTML = ' [<b><a href="#" onclick="{{JS_PREFIX}}_block_user(\'' + author.replace("'", "\\\'") + '\'); return false;">X</a></b>]&nbsp;&nbsp;';
+                userElement.parentNode.insertBefore(blockNode, userElement.nextSibling);
 
-            const replies = comment.querySelector('ol.children');
-            if (replies !== null) {
-                {{JS_PREFIX}}_consider_block(replies.querySelector('li.comment'));
+                const replies = comment.querySelector('ol.children');
+                if (replies !== null) {
+                    {{JS_PREFIX}}_consider_block(replies.querySelector('li.comment'));
+                }
             }
         }
     }

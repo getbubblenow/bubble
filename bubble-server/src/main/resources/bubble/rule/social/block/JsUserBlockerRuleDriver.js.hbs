@@ -18,7 +18,7 @@ function {{JS_PREFIX}}_fetch_blocks (do_apply) {
     const requestOptions = { method: 'GET' };
     const blocked_users_url = '/__bubble/api/filter/data/{{BUBBLE_DATA_ID}}/read';
     fetch(blocked_users_url, requestOptions)
-        .then((resp) => resp.json())
+        .then(resp => resp.json())
         .then(data => {
             const blocked_users = [];
             for (let i=0; i<data.length; i++) {
