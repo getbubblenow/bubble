@@ -29,13 +29,14 @@ public class BubbleRateLimitFilter extends RateLimitFilter {
 
     @Autowired private BubbleConfiguration configuration;
 
-    @Getter(lazy=true) private final String filterPrefix = configuration.getHttp().getBaseUri() + FILTER_HTTP_ENDPOINT;
+    @Getter private static final String FILTER_PREFIX = FILTER_HTTP_ENDPOINT.substring(1);
 
     // super-admins have unlimited API usage. helpful when populating models
+    // also, the filter endpoint has unlimited API usage, since its tied to end-user usage of the VPN
     @Override protected boolean allowUnlimitedUse(Principal user, ContainerRequestContext request) {
         try {
-            final boolean allowUnlimited = (user != null && ((Account) user).admin()) || request.getUriInfo().getPath().startsWith(getFilterPrefix());
-            if (log.isTraceEnabled()) log.trace("allowUnlimitedUse: allowUnlimited="+allowUnlimited+", admin="+(user == null ? "null" : ""+((Account) user).admin())+", path="+request.getUriInfo().getPath()+", filterPrefix="+getFilterPrefix());
+            final boolean allowUnlimited = (user != null && ((Account) user).admin()) || getPath(request).startsWith(FILTER_PREFIX);
+            if (log.isTraceEnabled()) log.trace("allowUnlimitedUse: allowUnlimited="+allowUnlimited+", admin="+(user == null ? "null" : ""+((Account) user).admin())+", path="+ getPath(request) +", filterPrefix="+FILTER_PREFIX);
             return allowUnlimited;
         } catch (Exception e) {
             log.warn("allowUnlimitedUse: "+shortError(e));

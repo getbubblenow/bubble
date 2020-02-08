@@ -8,7 +8,9 @@ from bubble_api import HEADER_BUBBLE_MATCHERS, HEADER_BUBBLE_ABORT, BUBBLE_URI_P
 
 BUFFER_SIZE = 4096
 HEADER_CONTENT_TYPE = 'Content-Type'
+HEADER_CONTENT_LENGTH = 'Content-Length'
 HEADER_CONTENT_ENCODING = 'Content-Encoding'
+HEADER_TRANSFER_ENCODING = 'Transfer-Encoding'
 BINARY_DATA_HEADER = {HEADER_CONTENT_TYPE: 'application/octet-stream'}
 
 
@@ -32,7 +34,7 @@ def filter_chunk(chunk, req_id, content_encoding=None, content_type=None):
     return response.content
 
 
-def bubble_filter_chunks(chunks, req_id, content_encoding, content_type):
+def bubble_filter_chunks(flow, chunks, req_id, content_encoding, content_type):
     """
     chunks is a generator that can be used to iterate over all chunks.
     """
@@ -46,8 +48,8 @@ def bubble_filter_chunks(chunks, req_id, content_encoding, content_type):
     yield filter_chunk(None, req_id)  # get the last bits of data
 
 
-def bubble_modify(req_id, content_encoding, content_type):
-    return lambda chunks: bubble_filter_chunks(chunks, req_id, content_encoding, content_type)
+def bubble_modify(flow, req_id, content_encoding, content_type):
+    return lambda chunks: bubble_filter_chunks(flow, chunks, req_id, content_encoding, content_type)
 
 def send_bubble_response(response):
     for chunk in response.iter_content(8192):
@@ -99,9 +101,11 @@ def responseheaders(flow):
                     content_encoding = flow.response.headers[HEADER_CONTENT_ENCODING]
                 else:
                     content_encoding = None
-                bubble_log('responseheaders: req_id='+req_id+' content_encoding='+repr(content_encoding)
-                           + ', content_type='+repr(content_type))
-                flow.response.stream = bubble_modify(req_id, content_encoding, content_type)
+
+                flow.response.headers.pop(HEADER_CONTENT_LENGTH, None)
+                bubble_log('responseheaders: req_id='+req_id+' content_encoding='+repr(content_encoding) + ', content_type='+repr(content_type))
+                # flow.response.headers[HEADER_TRANSFER_ENCODING] = 'chunked'
+                flow.response.stream = bubble_modify(flow, req_id, content_encoding, content_type)
             else:
                 bubble_log('responseheaders: no matchers, passing thru')
                 pass
