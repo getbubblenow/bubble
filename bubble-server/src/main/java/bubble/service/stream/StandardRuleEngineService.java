@@ -1,6 +1,5 @@
 package bubble.service.stream;
 
-import bubble.dao.app.AppMatcherDAO;
 import bubble.dao.app.AppRuleDAO;
 import bubble.dao.app.RuleDriverDAO;
 import bubble.model.account.Account;
@@ -63,7 +62,6 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.send;
 @Service @Slf4j
 public class StandardRuleEngineService implements RuleEngineService {
 
-    @Autowired private AppMatcherDAO matcherDAO;
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private BubbleConfiguration configuration;
