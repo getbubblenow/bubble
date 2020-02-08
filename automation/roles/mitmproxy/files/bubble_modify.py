@@ -113,7 +113,7 @@ def responseheaders(flow):
             bubble_log('responseheaders: aborting request with HTTP status '+str(abort_code))
             flow.response.headers = Headers()
             flow.response.status_code = abort_code
-            flow.response.stream = lambda chunks: None
+            flow.response.stream = lambda chunks: []
 
         else:
             req_id = get_flow_ctx(flow, CTX_BUBBLE_REQUEST_ID)

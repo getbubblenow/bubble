@@ -35,28 +35,34 @@ class Rerouter:
             return None
 
         req_id = str(host) + '.' + str(uuid.uuid4()) + '.' + str(time.time())
+        bubble_log("get_matchers: requesting match decision for req_id="+req_id)
         resp = bubble_matchers(req_id, remote_addr, flow, host)
-        if resp and 'abort' in resp and resp['abort'] is not None:
-            bubble_log('get_matchers: received abort code for remote_addr/host: '+remote_addr+'/'+str(host)+': '+str(resp['abort']))
-            return {'abort': resp['abort']}
 
-        if (not resp) or (not 'matchers' in resp) or (resp['matchers'] is None):
-            bubble_log('get_matchers: no matchers for remote_addr/host: '+remote_addr+'/'+str(host))
+        if not resp:
+            bubble_log('get_matchers: no response for remote_addr/host: '+remote_addr+'/'+str(host))
             return None
-        matchers = []
-        for m in resp['matchers']:
-            if 'urlRegex' in m:
-                bubble_log('get_matchers: checking for match of path='+flow.request.path+' against regex: '+m['urlRegex'])
-            else:
-                bubble_log('get_matchers: checking for match of path='+flow.request.path+' -- NO regex, skipping')
-                continue
-            if re.match(m['urlRegex'], flow.request.path):
-                bubble_log('get_matchers: rule matched, adding rule: '+m['rule'])
-                matchers.append(m)
-            else:
-                bubble_log('get_matchers: rule (regex='+m['urlRegex']+') did NOT match, skipping rule: '+m['rule'])
 
-        matcher_response = { 'matchers': matchers, 'request_id': req_id }
+        matchers = []
+        if 'matchers' in resp and resp['matchers'] is not None:
+            for m in resp['matchers']:
+                if 'urlRegex' in m:
+                    bubble_log('get_matchers: checking for match of path='+flow.request.path+' against regex: '+m['urlRegex'])
+                else:
+                    bubble_log('get_matchers: checking for match of path='+flow.request.path+' -- NO regex, skipping')
+                    continue
+                if re.match(m['urlRegex'], flow.request.path):
+                    bubble_log('get_matchers: rule matched, adding rule: '+m['rule'])
+                    matchers.append(m)
+                else:
+                    bubble_log('get_matchers: rule (regex='+m['urlRegex']+') did NOT match, skipping rule: '+m['rule'])
+        else:
+            bubble_log('get_matchers: no matchers. response='+repr(resp))
+
+        decision = None
+        if 'decision' in resp:
+            decision = resp['decision']
+
+        matcher_response = { 'decision': decision, 'matchers': matchers, 'request_id': req_id }
         bubble_log("get_matchers: returning "+repr(matcher_response))
         return matcher_response
 
@@ -83,9 +89,21 @@ class Rerouter:
         if sni or host_header:
             matcher_response = self.get_matchers(flow, sni or host_header)
             if matcher_response:
-                if 'abort' in matcher_response and matcher_response['abort'] is not None:
-                    bubble_log('dns_spoofing.request: found abort code: ' + str(matcher_response['abort']) + ', aborting')
-                    add_flow_ctx(flow, CTX_BUBBLE_ABORT, matcher_response['abort'])
+                if 'decision' in matcher_response and matcher_response['decision'] is not None and matcher_response['decision'].startswith('abort_'):
+                    bubble_log('dns_spoofing.request: found abort code: ' + str(matcher_response['decision']) + ', aborting')
+                    if matcher_response['decision'] == 'abort_ok':
+                        abort_code = 200
+                    elif matcher_response['decision'] == 'abort_not_found':
+                        abort_code = 404
+                    else:
+                        bubble_log('dns_spoofing.request: unknown abort code: ' + str(matcher_response['decision']) + ', aborting with 404 Not Found')
+                        abort_code = 404
+                    add_flow_ctx(flow, CTX_BUBBLE_ABORT, abort_code)
+                    return
+
+                elif 'decision' in matcher_response and matcher_response['decision'] is not None and matcher_response['decision'] == 'no_match':
+                    bubble_log('dns_spoofing.request: decision was no_match, passing thru...')
+                    return
 
                 elif ('matchers' in matcher_response
                       and 'request_id' in matcher_response
