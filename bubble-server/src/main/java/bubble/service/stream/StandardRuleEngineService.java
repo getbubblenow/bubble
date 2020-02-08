@@ -27,10 +27,12 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
+import org.cobbzilla.util.collection.MapBuilder;
 import org.cobbzilla.util.collection.SingletonList;
 import org.cobbzilla.util.http.HttpClosingFilterInputStream;
 import org.cobbzilla.util.http.HttpMethods;
 import org.cobbzilla.util.http.URIBean;
+import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.stream.ByteStreamingOutput;
 import org.cobbzilla.wizard.stream.SendableResource;
 import org.cobbzilla.wizard.stream.StreamStreamingOutput;
@@ -44,6 +46,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -65,6 +68,10 @@ public class StandardRuleEngineService implements RuleEngineService {
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private RedisService redis;
+
+    public static final long MATCHERS_CACHE_TIMEOUT = MINUTES.toSeconds(15);
+    @Getter(lazy=true) private final RedisService matchersCache = redis.prefixNamespace(getClass().getSimpleName()+".matchers");
 
     public FilterMatchDecision preprocess(FilterMatchersRequest filter,
                                           Request req,
@@ -164,11 +171,23 @@ public class StandardRuleEngineService implements RuleEngineService {
 
     private ExpirationMap<String, List<AppRuleHarness>> ruleCache = new ExpirationMap<>(HOURS.toMillis(1), ExpirationEvictionPolicy.atime);
 
-    public int flushRuleCache () {
-        final int size = ruleCache.size();
+    public Map<Object, Object> flushCaches() {
+        final int ruleEngineCacheSize = ruleCache.size();
         ruleCache.clear();
-        log.info("flushRuleCache: flushed "+size+" ruleCache entries");
-        return size;
+        log.info("flushCaches: flushed "+ruleEngineCacheSize+" ruleCache entries");
+
+        final RedisService matchersCache = getMatchersCache();
+        final Collection<String> keys = matchersCache.keys("*");
+        for (String key : keys) {
+            if (log.isTraceEnabled()) log.trace("flushCaches: deleting key: "+key);
+            matchersCache.del_withPrefix(key);
+        }
+        log.info("flushCaches: flushed "+keys.size()+" matchersCache entries");
+
+        return MapBuilder.build(new Object[][] {
+                {"matchersCache", keys.size()},
+                {"ruleEngineCache", ruleEngineCacheSize}
+        });
     }
 
     private List<AppRuleHarness> initRules(FilterHttpRequest filterRequest) {

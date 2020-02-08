@@ -73,12 +73,12 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
                 }
             }
         }
-        ruleEngineService.flushRuleCache();
+        ruleEngineService.flushCaches();
         return super.postUpdate(matcher, context);
     }
 
     @Override public void delete(String uuid) {
         super.delete(uuid);
-        ruleEngineService.flushRuleCache();
+        ruleEngineService.flushCaches();
     }
 }

@@ -113,6 +113,4 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @ECSearchable @ECField(index=90)
     @ECIndex @Getter @Setter private Boolean needsUpdate = false;
 
-    @JsonIgnore @Transient @Getter @Setter private transient boolean flushRuleCache = false;
-
 }

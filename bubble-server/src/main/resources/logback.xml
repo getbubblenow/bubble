@@ -43,7 +43,7 @@
 <!--    <logger name="bubble.service.stream.StandardRuleEngineService" level="DEBUG" />-->
     <logger name="bubble.service.stream.ActiveStreamState" level="INFO" />
     <logger name="bubble.resources.stream" level="DEBUG" />
-    <logger name="bubble.resources.stream.FilterHttpResource" level="INFO" />
+    <logger name="bubble.resources.stream.FilterHttpResource" level="TRACE" />
     <logger name="bubble.service.stream" level="INFO" />
     <logger name="bubble.resources.message" level="INFO" />
     <logger name="bubble.app.analytics" level="DEBUG" />

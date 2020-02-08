@@ -7,8 +7,6 @@ import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-
 @Repository
 public class BubbleAppDAO extends AccountOwnedTemplateDAO<BubbleApp> {
 
@@ -20,15 +18,8 @@ public class BubbleAppDAO extends AccountOwnedTemplateDAO<BubbleApp> {
 
     @Override public Order getDefaultSortOrder() { return NAME_ASC; }
 
-    @Override public Object preUpdate(BubbleApp app) {
-        final BubbleApp existing = findByUuid(app.getUuid());
-        if (existing == null) return die("preUpdate: app does not exist: "+app.getUuid());
-        if (existing.enabled() != app.enabled()) app.setFlushRuleCache(true);
-        return super.preUpdate(app);
-    }
-
     @Override public BubbleApp postUpdate(BubbleApp app, Object context) {
-        if (app.isFlushRuleCache()) ruleEngineService.flushRuleCache();
+        ruleEngineService.flushCaches();
         return super.postUpdate(app, context);
     }
 
@@ -39,7 +30,7 @@ public class BubbleAppDAO extends AccountOwnedTemplateDAO<BubbleApp> {
         messageDAO.delete(messageDAO.findByApp(app.getUuid()));
         dataDAO.deleteApp(uuid);
         super.delete(uuid);
-        ruleEngineService.flushRuleCache();
+        ruleEngineService.flushCaches();
     }
 
     public BubbleApp findByAccountAndTemplateApp(String accountUuid, String templateAppUuid) {

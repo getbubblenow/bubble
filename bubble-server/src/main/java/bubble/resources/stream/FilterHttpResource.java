@@ -12,7 +12,6 @@ import bubble.service.stream.StandardRuleEngineService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationMap;
-import org.cobbzilla.util.collection.MapBuilder;
 import org.cobbzilla.util.http.HttpContentEncodingType;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
@@ -25,11 +24,15 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.resources.stream.FilterMatchersResponse.NO_MATCHERS;
+import static bubble.service.stream.StandardRuleEngineService.MATCHERS_CACHE_TIMEOUT;
 import static java.util.Collections.emptyMap;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -80,13 +83,10 @@ public class FilterHttpResource {
         return deviceCache.computeIfAbsent(deviceUuid, uuid -> deviceDAO.findByUuid(uuid));
     }
 
-    public static final long MATCHERS_CACHE_TIMEOUT = MINUTES.toSeconds(15);
-    @Getter(lazy=true) private final RedisService matchersCache = redis.prefixNamespace(getClass().getSimpleName()+".matchers");
-
     private FilterMatchersResponse getMatchersResponse(FilterMatchersRequest filterRequest,
                                                        Request req,
                                                        ContainerRequest request) {
-        final RedisService cache = getMatchersCache();
+        final RedisService cache = ruleEngine.getMatchersCache();
 
         final String requestId = filterRequest.getRequestId();
         final String prefix = "getMatchersResponse("+requestId+"): ";
@@ -107,7 +107,7 @@ public class FilterHttpResource {
     }
 
     private FilterMatchersResponse getMatchersResponseByRequestId(String requestId) {
-        final RedisService cache = getMatchersCache();
+        final RedisService cache = ruleEngine.getMatchersCache();
         final String matchersJson = cache.get(requestId);
         if (matchersJson != null) return json(matchersJson, FilterMatchersResponse.class);
         if (log.isTraceEnabled()) log.trace("getMatchersResponseByRequestId: no FilterMatchersResponse for requestId: "+requestId);
@@ -200,7 +200,7 @@ public class FilterHttpResource {
                 .setRequest(filterRequest)
                 .setMatchers(new ArrayList<>(retainMatchers.values()));
 
-        if (log.isInfoEnabled()) log.info(prefix+"preprocess decision for "+filterRequest.getUrl()+": "+response);
+        if (log.isDebugEnabled()) log.debug(prefix+"preprocess decision for "+filterRequest.getUrl()+": "+response+", retainMatchers="+names(retainMatchers.values()));
 
         return response;
     }
@@ -241,16 +241,7 @@ public class FilterHttpResource {
     public Response flushCaches(@Context ContainerRequest request) {
         final Account caller = userPrincipal(request);
         if (!caller.admin()) return forbidden();
-
-        final RedisService matchersCache = getMatchersCache();
-        final Collection<String> keys = matchersCache.keys("*");
-        for (String key : keys) matchersCache.del_withPrefix(key);
-
-        final int ruleEngineCacheSize = ruleEngine.flushRuleCache();
-        return ok(MapBuilder.build(new Object[][] {
-                {"matchersCache", keys.size()},
-                {"ruleEngineCache", ruleEngineCacheSize}
-        }));
+        return ok(ruleEngine.flushCaches());
     }
 
     @POST @Path(EP_APPLY+"/{requestId}")

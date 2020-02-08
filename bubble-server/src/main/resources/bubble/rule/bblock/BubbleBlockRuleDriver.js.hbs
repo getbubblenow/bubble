@@ -1,7 +1,7 @@
 let {{JS_PREFIX}}_doc_ready = false;
 const {{JS_PREFIX}}_request_id = '{{BUBBLE_REQUEST_ID}}';
-const {{JS_PREFIX}}_interval = 50;
-const {{JS_PREFIX}}_idle_interval = 5000;
+const {{JS_PREFIX}}_interval = 100;
+const {{JS_PREFIX}}_idle_interval = 15000;
 
 const {{JS_PREFIX}}_blacklist = {{{BUBBLE_BLACKLIST_JSON}}};
 const {{JS_PREFIX}}_whitelist = {{{BUBBLE_WHITELIST_JSON}}};
@@ -73,26 +73,27 @@ function {{JS_PREFIX}}_block_target(url, type) {
     return false;
 }
 
-window.f = Element.prototype.appendChild;
-Element.prototype.appendChild = function() {
-    let type = null;
-    if (arguments[0] instanceof HTMLImageElement) {
-        type = 'image';
-    }
-    if (typeof arguments[0].src !== 'undefined') {
-        if ({{JS_PREFIX}}_block_target(arguments[0].src, type)) {
-            console.log('BLOCKING appendChild for '+arguments[0]+', src='+arguments[0].src);
-            return;
-        }
-    }
-    if (typeof arguments[0].href !== 'undefined') {
-        if ({{JS_PREFIX}}_block_target(arguments[0].href, type)) {
-            console.log('BLOCKING appendChild for '+arguments[0]+', src='+arguments[0].href);
-            return;
-        }
-    }
-    return window.f.apply(this, arguments);
-};
+// // this seems to slow down pages quite a bit. disabling until we can find a better/faster way
+// window.f = Element.prototype.appendChild;
+// Element.prototype.appendChild = function() {
+//     let type = null;
+//     if (arguments[0] instanceof HTMLImageElement) {
+//         type = 'image';
+//     }
+//     if (typeof arguments[0].src !== 'undefined') {
+//         if ({{JS_PREFIX}}_block_target(arguments[0].src, type)) {
+//             console.log('BLOCKING appendChild for '+arguments[0]+', src='+arguments[0].src);
+//             return;
+//         }
+//     }
+//     if (typeof arguments[0].href !== 'undefined') {
+//         if ({{JS_PREFIX}}_block_target(arguments[0].href, type)) {
+//             console.log('BLOCKING appendChild for '+arguments[0]+', src='+arguments[0].href);
+//             return;
+//         }
+//     }
+//     return window.f.apply(this, arguments);
+// };
 
 function {{JS_PREFIX}}_onReady(callback) {
     const intervalId = window.setInterval(function() {

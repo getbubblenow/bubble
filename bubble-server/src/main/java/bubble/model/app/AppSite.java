@@ -1,7 +1,6 @@
 package bubble.model.app;
 
 import bubble.model.account.Account;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,7 +13,6 @@ import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Transient;
 
 import static bubble.ApiConstants.EP_SITES;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
@@ -74,7 +72,5 @@ public class AppSite extends IdentifiableBase implements AppTemplateEntity {
     @ECSearchable(filter=true) @ECField(index=70, type=EntityFieldType.opaque_string)
     @Column(nullable=false, length=1024)
     @Getter @Setter private String url;
-
-    @JsonIgnore @Transient @Getter @Setter private transient boolean flushRuleCache = false;
 
 }
