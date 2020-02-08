@@ -6,6 +6,8 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
         if (commentTable === null) {
             console.warn('commentTable not found and hnmain table not found, not filtering');
             return;
+        } else {
+            commentTable = commentTable[0];
         }
     }
     const comments = commentTable.querySelectorAll('tr');
