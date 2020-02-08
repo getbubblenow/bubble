@@ -4,7 +4,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
         console.warn('No comments found, not filtering');
         return;
     }
-    {{JS_PREFIX}}_consider_block(comments.querySelector('li.comment'), blocked_users);
+    {{JS_PREFIX}}_consider_block(comments.querySelectorAll('li.comment'), blocked_users);
 }
 
 function {{JS_PREFIX}}_consider_block(comments, blocked_users) {

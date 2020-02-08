@@ -12,6 +12,9 @@ import java.util.List;
 @NoArgsConstructor @Slf4j
 public class BubbleBlockConfig {
 
+    @Getter @Setter private Boolean inPageBlocks;
+    public boolean inPageBlocks() { return inPageBlocks != null && inPageBlocks; }
+
     @Getter @Setter private BubbleBlockList[] blockLists;
 
     public BubbleBlockConfig updateList(BubbleBlockList list) {

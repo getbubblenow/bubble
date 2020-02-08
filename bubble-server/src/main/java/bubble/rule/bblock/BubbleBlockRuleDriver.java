@@ -116,12 +116,16 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                 return FilterMatchDecision.no_match;
 
             case filter:
-                if (log.isInfoEnabled()) log.info(prefix+"decision is FILTER");
                 final List<BlockSpec> specs = decision.getSpecs();
                 if (empty(specs)) {
                     log.warn(prefix+"decision was 'filter' but no specs were found, returning no_match");
                     return FilterMatchDecision.no_match;
                 } else {
+                    if (!bubbleBlockConfig.inPageBlocks()) {
+                        log.info(prefix+"decision was FILTER but inPageBlocks are disabled (returning no_match)");
+                        return FilterMatchDecision.no_match;
+                    }
+                    if (log.isInfoEnabled()) log.info(prefix+"decision is FILTER (returning match)");
                     return FilterMatchDecision.match;
                 }
         }
