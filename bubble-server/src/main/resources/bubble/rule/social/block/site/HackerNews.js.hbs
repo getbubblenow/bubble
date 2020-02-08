@@ -2,7 +2,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
     let commentTable = document.querySelector('table.comment-tree');
     if (commentTable === null) {
         console.warn('commentTable not found, looking for hnmain table');
-        const commentTable = document.querySelectorAll('#hnmain tbody');
+        commentTable = document.querySelectorAll('#hnmain tbody');
         if (commentTable === null) {
             console.warn('commentTable not found and hnmain table not found, not filtering');
             return;
