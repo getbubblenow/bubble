@@ -68,7 +68,7 @@ public class ReverseProxyResource {
             final Map<String, AppMatcher> matchedMatchers = new HashMap<>();
             for (AppMatcher m : matchers) {
                 // check for regex match
-                if (m.matches(ub.getFullPath())) {
+                if (m.matchesUrl(ub.getFullPath())) {
                     // is this a total block?
                     if (m.blocked()) {
                         log.debug("get: matcher("+m.getUuid()+") blocks request, returning 404 Not Found for "+ub.getFullPath());

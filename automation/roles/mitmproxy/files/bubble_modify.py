@@ -1,3 +1,4 @@
+import re
 import requests
 import urllib
 import traceback
@@ -42,7 +43,7 @@ def filter_chunk(chunk, req_id, last, content_encoding=None, content_type=None, 
     return response.content
 
 
-def bubble_filter_chunks(flow, chunks, req_id, content_encoding, content_type, content_length):
+def bubble_filter_chunks(flow, chunks, req_id, content_encoding, content_type):
     """
     chunks is a generator that can be used to iterate over all chunks.
     """
@@ -54,6 +55,7 @@ def bubble_filter_chunks(flow, chunks, req_id, content_encoding, content_type, c
                 bytes_sent = get_flow_ctx(flow, CTX_CONTENT_LENGTH_SENT)
                 chunk_len = len(chunk)
                 last = chunk_len + bytes_sent >= content_length
+                bubble_log('bubble_filter_chunks: content_length = '+str(content_length)+', bytes_sent = '+str(bytes_sent))
                 add_flow_ctx(flow, CTX_CONTENT_LENGTH_SENT, bytes_sent + chunk_len)
             else:
                 last = False
@@ -70,8 +72,8 @@ def bubble_filter_chunks(flow, chunks, req_id, content_encoding, content_type, c
         yield None
 
 
-def bubble_modify(flow, req_id, content_encoding, content_type, content_length):
-    return lambda chunks: bubble_filter_chunks(flow, chunks, req_id, content_encoding, content_type, content_length)
+def bubble_modify(flow, req_id, content_encoding, content_type):
+    return lambda chunks: bubble_filter_chunks(flow, chunks, req_id, content_encoding, content_type)
 
 
 def send_bubble_response(response):
@@ -121,6 +123,20 @@ def responseheaders(flow):
                 if HEADER_CONTENT_TYPE in flow.response.headers:
                     content_type = flow.response.headers[HEADER_CONTENT_TYPE]
                     if matchers:
+                        any_content_type_matches = False
+                        for m in matchers:
+                            if 'contentTypeRegex' in m:
+                                typeRegex = m['contentTypeRegex']
+                                if typeRegex is None:
+                                    typeRegex = '^text/html.*'
+                                if re.match(typeRegex, content_type):
+                                    any_content_type_matches = True
+                                    bubble_log('responseheaders: req_id='+req_id+' found at least one matcher for content_type ('+content_type+'), filtering')
+                                    break
+                        if not any_content_type_matches:
+                            bubble_log('responseheaders: req_id='+req_id+' no matchers for content_type ('+content_type+'), passing thru')
+                            return
+
                         if HEADER_CONTENT_ENCODING in flow.response.headers:
                             content_encoding = flow.response.headers[HEADER_CONTENT_ENCODING]
                         else:
@@ -128,7 +144,7 @@ def responseheaders(flow):
 
                         content_length_value = flow.response.headers.pop(HEADER_CONTENT_LENGTH, None)
                         bubble_log('responseheaders: req_id='+req_id+' content_encoding='+repr(content_encoding) + ', content_type='+repr(content_type))
-                        flow.response.stream = bubble_modify(flow, req_id, content_encoding, content_type, content_length_value)
+                        flow.response.stream = bubble_modify(flow, req_id, content_encoding, content_type)
                         if content_length_value:
                             flow.response.headers['transfer-encoding'] = 'chunked'
                             # find server_conn to set fake_chunks on

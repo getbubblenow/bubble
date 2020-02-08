@@ -180,7 +180,7 @@ public class FilterHttpResource {
             retainMatchers = new HashMap<>();
             for (AppMatcher matcher : matchers) {
                 if (retainMatchers.containsKey(matcher.getUuid())) continue;
-                if (matcher.matches(uri)) {
+                if (matcher.matchesUrl(uri)) {
                     if (log.isDebugEnabled()) log.debug(prefix+"matcher "+matcher.getName()+" with pattern "+matcher.getUrlRegex()+" found match for uri: '"+uri+"'");
                     final FilterMatchDecision matchResponse = ruleEngine.preprocess(filterRequest, req, request, caller, device, matcher);
                     switch (matchResponse) {
@@ -352,6 +352,10 @@ public class FilterHttpResource {
                 if (log.isDebugEnabled()) log.debug(prefix+"filterRequest not found, and no contentType provided, returning passthru");
                 return passthru(request);
             }
+            if (!isContentTypeMatch(matchersResponse, contentType)) {
+                if (log.isInfoEnabled()) log.info(prefix+"none of the "+matchersResponse.getMatchers().size()+" matchers matched contentType="+contentType+", returning passthru");
+                return passthru(request);
+            }
 
             final Device device = findDevice(matchersResponse.getRequest().getDevice());
             if (device == null) {
@@ -376,6 +380,11 @@ public class FilterHttpResource {
             if (log.isDebugEnabled()) log.trace(prefix+"start filterRequest="+json(filterRequest, COMPACT_MAPPER));
             getActiveRequestCache().set(requestId, json(filterRequest, COMPACT_MAPPER), EX, ACTIVE_REQUEST_TIMEOUT);
         } else {
+            if (!isContentTypeMatch(matchersResponse, filterRequest.getContentType())) {
+                if (log.isInfoEnabled()) log.info(prefix+"none of the "+matchersResponse.getMatchers().size()+" matchers matched contentType="+filterRequest.getContentType()+", returning passthru");
+                return passthru(request);
+            }
+
             if (log.isTraceEnabled()) {
                 if (isLast) {
                     log.trace(prefix+"last filterRequest=" + json(filterRequest, COMPACT_MAPPER));
@@ -386,6 +395,18 @@ public class FilterHttpResource {
         }
 
         return ruleEngine.applyRulesToChunkAndSendResponse(request, filterRequest, chunkLength, isLast);
+    }
+
+    public boolean isContentTypeMatch(FilterMatchersResponse matchersResponse, String ct) {
+        final String prefix = "isContentTypeMatch("+matchersResponse.getRequest().getRequestId()+"): ";
+        final List<AppMatcher> matchers = matchersResponse.getMatchers();
+        for (AppMatcher m : matchers) {
+            if (log.isDebugEnabled()) log.debug(prefix+"checking contentType match, matcher.contentTypeRegex="+m.getContentTypeRegex()+", contentType="+ct);
+            if (m.getContentTypePattern().matcher(ct).matches()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public Response passthru(@Context ContainerRequest request) { return ruleEngine.passthru(request); }

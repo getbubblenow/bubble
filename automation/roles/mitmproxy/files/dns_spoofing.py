@@ -43,7 +43,7 @@ class Rerouter:
         if (not resp) or (not 'matchers' in resp) or (resp['matchers'] is None):
             bubble_log('get_matchers: no matchers for remote_addr/host: '+remote_addr+'/'+str(host))
             return None
-        matcher_ids = []
+        matchers = []
         for m in resp['matchers']:
             if 'urlRegex' in m:
                 bubble_log('get_matchers: checking for match of path='+flow.request.path+' against regex: '+m['urlRegex'])
@@ -52,11 +52,11 @@ class Rerouter:
                 continue
             if re.match(m['urlRegex'], flow.request.path):
                 bubble_log('get_matchers: rule matched, adding rule: '+m['rule'])
-                matcher_ids.append(m['uuid'])
+                matchers.append(m)
             else:
                 bubble_log('get_matchers: rule (regex='+m['urlRegex']+') did NOT match, skipping rule: '+m['rule'])
 
-        matcher_response = { 'matchers': matcher_ids, 'request_id': req_id }
+        matcher_response = { 'matchers': matchers, 'request_id': req_id }
         bubble_log("get_matchers: returning "+repr(matcher_response))
         return matcher_response
 
@@ -91,7 +91,7 @@ class Rerouter:
                       and 'request_id' in matcher_response
                       and len(matcher_response['matchers']) > 0):
                     req_id = matcher_response['request_id']
-                    bubble_log("dns_spoofing.request: found request_id: " + req_id + ' with matchers: ' + ' '.join(matcher_response['matchers']))
+                    bubble_log("dns_spoofing.request: found request_id: " + req_id + ' with matchers: ' + repr(matcher_response['matchers']))
                     add_flow_ctx(flow, CTX_BUBBLE_MATCHERS, matcher_response['matchers'])
                     add_flow_ctx(flow, CTX_BUBBLE_REQUEST_ID, req_id)
                 else:

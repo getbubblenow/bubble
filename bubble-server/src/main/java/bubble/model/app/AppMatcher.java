@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 
 import static bubble.ApiConstants.EP_MATCHERS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
@@ -41,6 +42,8 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
 
     public static final String[] VALUE_FIELDS = {"fqdn", "urlRegex", "template", "enabled", "priority"};
     public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS, "name", "site", "rule");
+
+    public static final Pattern DEFAULT_CONTENT_TYPE_PATTERN = Pattern.compile("^text/html.*", Pattern.CASE_INSENSITIVE);
 
     public AppMatcher(AppMatcher other) {
         copy(this, other, CREATE_FIELDS);
@@ -77,32 +80,42 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
     @ECSearchable(filter=true) @ECField(index=60)
     @HasValue(message="err.urlRegex.required")
     @Size(max=1024, message="err.urlRegex.length")
-    @Type(type=ENCRYPTED_STRING) @Column(nullable=false, columnDefinition="varchar("+(1024+ENC_PAD)+") UNIQUE")
+    @Type(type=ENCRYPTED_STRING) @Column(nullable=false, columnDefinition="varchar("+(1024+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String urlRegex;
 
-    @Transient @JsonIgnore public Pattern getPattern () { return Pattern.compile(getUrlRegex()); }
+    @Transient @JsonIgnore public Pattern getUrlPattern() { return Pattern.compile(getUrlRegex()); }
+    public boolean matchesUrl (String value) { return getUrlPattern().matcher(value).find(); }
 
-    public boolean matches (String value) { return getPattern().matcher(value).find(); }
+    @ECSearchable(filter=true) @ECField(index=70)
+    @Size(max=1024, message="err.contentTypeRegex.length")
+    @Type(type=ENCRYPTED_STRING) @Column(nullable=false, columnDefinition="varchar("+(200+ENC_PAD)+")")
+    @Getter @Setter private String contentTypeRegex;
+    public boolean hasContentTypeRegex() { return !empty(contentTypeRegex); }
 
-    @ECSearchable @ECField(index=70)
+    @Transient @JsonIgnore public Pattern getContentTypePattern () {
+        return hasContentTypeRegex() ? Pattern.compile(getContentTypeRegex()) : DEFAULT_CONTENT_TYPE_PATTERN;
+    }
+    public boolean matchesContentType (String value) { return getContentTypePattern().matcher(value).find(); }
+
+    @ECSearchable @ECField(index=80)
     @ECForeignKey(entity=AppRule.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String rule;
 
-    @ECSearchable @ECField(index=80)
+    @ECSearchable @ECField(index=90)
     @Column(nullable=false)
     @Getter @Setter private Boolean blocked = false;
     public boolean blocked() { return bool(blocked); }
 
-    @ECSearchable @ECField(index=90)
+    @ECSearchable @ECField(index=100)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
 
-    @ECSearchable @ECField(index=100)
+    @ECSearchable @ECField(index=110)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
-    @ECSearchable @ECField(index=110)
+    @ECSearchable @ECField(index=120)
     @Column(nullable=false)
     @Getter @Setter private Integer priority = 0;
 
