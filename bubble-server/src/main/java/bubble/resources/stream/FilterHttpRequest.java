@@ -24,6 +24,9 @@ public class FilterHttpRequest {
     @Getter @Setter private Account account;
     @Getter @Setter private String contentType;
 
+    @Getter @Setter private Long contentLength;
+    public boolean hasContentLength () { return contentLength != null; }
+
     public boolean hasMatcher (String matcherId) {
         if (empty(matcherId) || !hasMatchers()) return false;
         return matchersResponse.getMatchers().stream().anyMatch(m -> m.getUuid().equals(matcherId));

@@ -1,22 +1,24 @@
 import requests
 import traceback
 import sys
+import datetime
 from bubble_config import bubble_network, bubble_port
 
 HEADER_USER_AGENT = 'User-Agent'
 HEADER_REFERER = 'Referer'
 
-HEADER_BUBBLE_MATCHERS='X-Bubble-Matchers'
-HEADER_BUBBLE_DEVICE='X-Bubble-Device'
-HEADER_BUBBLE_ABORT='X-Bubble-Abort'
-HEADER_BUBBLE_REQUEST_ID='X-Bubble-RequestId'
+CTX_BUBBLE_MATCHERS='X-Bubble-Matchers'
+CTX_BUBBLE_ABORT='X-Bubble-Abort'
+CTX_BUBBLE_REQUEST_ID='X-Bubble-RequestId'
+CTX_CONTENT_LENGTH='X-Bubble-Content-Length'
+CTX_CONTENT_LENGTH_SENT='X-Bubble-Content-Length-Sent'
 BUBBLE_URI_PREFIX='/__bubble/'
 
-def bubble_log (message):
-    print(message, file=sys.stderr)
+def bubble_log(message):
+    print(str(datetime.datetime.time(datetime.datetime.now()))+': ' + message, file=sys.stderr)
 
 
-def bubble_matchers (req_id, remote_addr, flow, host):
+def bubble_matchers(req_id, remote_addr, flow, host):
     headers = {
         'X-Forwarded-For': remote_addr,
         'Accept' : 'application/json',
@@ -55,3 +57,15 @@ def bubble_matchers (req_id, remote_addr, flow, host):
         bubble_log('bubble_matchers API call failed: '+repr(e))
         traceback.print_exc()
     return None
+
+def add_flow_ctx(flow, name, value):
+    if not hasattr(flow, 'bubble_ctx'):
+        flow.bubble_ctx = {}
+    flow.bubble_ctx[name] = value
+
+def get_flow_ctx(flow, name):
+    if not hasattr(flow, 'bubble_ctx'):
+        return None
+    if not name in flow.bubble_ctx:
+        return None
+    return flow.bubble_ctx[name]

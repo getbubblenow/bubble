@@ -1,10 +1,8 @@
-import json
 import re
 import time
 import uuid
-from bubble_api import bubble_matchers, bubble_log, HEADER_BUBBLE_MATCHERS, BUBBLE_URI_PREFIX, HEADER_BUBBLE_ABORT, HEADER_BUBBLE_REQUEST_ID
+from bubble_api import bubble_matchers, bubble_log, CTX_BUBBLE_MATCHERS, BUBBLE_URI_PREFIX, CTX_BUBBLE_ABORT, CTX_BUBBLE_REQUEST_ID, add_flow_ctx
 from bubble_config import bubble_host, bubble_host_alias
-from mitmproxy import ctx
 
 # This regex extracts splits the host header into host and port.
 # Handles the edge case of IPv6 addresses containing colons.
@@ -29,21 +27,21 @@ class Rerouter:
             try:
                 host = str(host)
             except Exception as e:
-                bubble_log("get_matchers: host "+repr(host)+" could not be decoded, type="+str(type(host))+" e="+repr(e))
+                bubble_log('get_matchers: host '+repr(host)+' could not be decoded, type='+str(type(host))+' e='+repr(e))
                 return None
 
         if host == bubble_host or host == bubble_host_alias:
-            bubble_log("get_matchers: request is for bubble itself ("+host+"), not matching")
+            bubble_log('get_matchers: request is for bubble itself ('+host+'), not matching')
             return None
 
         req_id = str(host) + '.' + str(uuid.uuid4()) + '.' + str(time.time())
         resp = bubble_matchers(req_id, remote_addr, flow, host)
         if resp and 'abort' in resp and resp['abort'] is not None:
-            bubble_log("get_matchers: received abort code for remote_addr/host: "+remote_addr+'/'+str(host)+': '+str(resp['abort']))
+            bubble_log('get_matchers: received abort code for remote_addr/host: '+remote_addr+'/'+str(host)+': '+str(resp['abort']))
             return {'abort': resp['abort']}
 
         if (not resp) or (not 'matchers' in resp) or (resp['matchers'] is None):
-            bubble_log("get_matchers: no matchers for remote_addr/host: "+remote_addr+'/'+str(host))
+            bubble_log('get_matchers: no matchers for remote_addr/host: '+remote_addr+'/'+str(host))
             return None
         matcher_ids = []
         for m in resp['matchers']:
@@ -87,15 +85,15 @@ class Rerouter:
             if matcher_response:
                 if 'abort' in matcher_response and matcher_response['abort'] is not None:
                     bubble_log('dns_spoofing.request: found abort code: ' + str(matcher_response['abort']) + ', aborting')
-                    flow.request.headers[HEADER_BUBBLE_ABORT] = str(matcher_response['abort'])
+                    add_flow_ctx(flow, CTX_BUBBLE_ABORT, matcher_response['abort'])
 
                 elif ('matchers' in matcher_response
                       and 'request_id' in matcher_response
                       and len(matcher_response['matchers']) > 0):
                     req_id = matcher_response['request_id']
                     bubble_log("dns_spoofing.request: found request_id: " + req_id + ' with matchers: ' + ' '.join(matcher_response['matchers']))
-                    flow.request.headers[HEADER_BUBBLE_MATCHERS] = json.dumps(matcher_response['matchers'])
-                    flow.request.headers[HEADER_BUBBLE_REQUEST_ID] = req_id
+                    add_flow_ctx(flow, CTX_BUBBLE_MATCHERS, matcher_response['matchers'])
+                    add_flow_ctx(flow, CTX_BUBBLE_REQUEST_ID, req_id)
                 else:
                     bubble_log('dns_spoofing.request: no rules returned, passing thru...')
             else:

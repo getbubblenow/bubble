@@ -25,9 +25,8 @@ import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
 @Slf4j
 class ActiveStreamState {
 
-    public static final int DEFAULT_BYTE_BUFFER_SIZE = (int) (8 * Bytes.KB);
-    public static final int MAX_BYTE_BUFFER_SIZE = (int) (64 * Bytes.KB);
-    public static final int MAX_PENDING_STREAMS = 5;
+    public static final long DEFAULT_BYTE_BUFFER_SIZE = (8 * Bytes.KB);
+    public static final long MAX_BYTE_BUFFER_SIZE = (64 * Bytes.KB);
 
     private FilterHttpRequest request;
     private String requestId;
@@ -48,27 +47,32 @@ class ActiveStreamState {
 
     private String prefix(String s) { return s+"("+requestId+"): "; }
 
-    public static byte[] toBytes(InputStream in, Integer contentLength) throws IOException {
+    public static byte[] toBytes(InputStream in, Integer chunkLength) throws IOException {
         if (in == null) return EMPTY_BYTE_ARRAY;
-        final ByteArrayOutputStream bout = new ByteArrayOutputStream(contentLength == null ? DEFAULT_BYTE_BUFFER_SIZE : Math.min(contentLength, MAX_BYTE_BUFFER_SIZE));
+        final ByteArrayOutputStream bout = new ByteArrayOutputStream((int) (chunkLength == null ? DEFAULT_BYTE_BUFFER_SIZE : Math.min(chunkLength, MAX_BYTE_BUFFER_SIZE)));
         IOUtils.copyLarge(in, bout);
         return bout.toByteArray();
     }
 
-    public void addChunk(InputStream in, Integer contentLength) throws IOException {
-        final byte[] chunk = toBytes(in, contentLength);
-        if (log.isDebugEnabled()) log.debug(prefix("addChunk")+"adding "+chunk.length+" bytes");
-        totalBytesWritten += chunk.length;
-        if (multiStream == null) {
-            multiStream = new MultiStream(new ByteArrayInputStream(chunk));
-            output = outputStream(firstRule.getDriver().filterResponse(request, inputStream(multiStream)));
+    public void addChunk(InputStream in, Integer chunkLength) throws IOException {
+        if (request.hasContentLength() && totalBytesWritten + chunkLength >= request.getContentLength()) {
+            if (log.isDebugEnabled()) log.debug(prefix("addChunk")+"detected lastChunk, calling addLastChunk");
+            addLastChunk(in, chunkLength);
         } else {
-            multiStream.addStream(new ByteArrayInputStream(chunk));
+            final byte[] chunk = toBytes(in, chunkLength);
+            if (log.isDebugEnabled()) log.debug(prefix("addChunk") + "adding " + chunk.length + " bytes");
+            totalBytesWritten += chunk.length;
+            if (multiStream == null) {
+                multiStream = new MultiStream(new ByteArrayInputStream(chunk));
+                output = outputStream(firstRule.getDriver().filterResponse(request, inputStream(multiStream)));
+            } else {
+                multiStream.addStream(new ByteArrayInputStream(chunk));
+            }
         }
     }
 
-    public void addLastChunk(InputStream in, Integer contentLength) throws IOException {
-        final byte[] chunk = toBytes(in, contentLength);
+    public void addLastChunk(InputStream in, Integer chunkLength) throws IOException {
+        final byte[] chunk = toBytes(in, chunkLength);
         if (log.isDebugEnabled()) log.debug(prefix("addLastChunk")+"adding "+chunk.length+" bytes");
         totalBytesWritten += chunk.length;
         if (multiStream == null) {
@@ -88,26 +92,15 @@ class ActiveStreamState {
             return output;
         }
 
-        // if we have 5 streams pending, send *something* now, or MITM proxy will not send us anything more
-        final int bytesToRead;
-        if (multiStream.pendingStreamCount() >= MAX_PENDING_STREAMS) {
-            // do we have at least 8k to send?
-            if (totalBytesWritten - totalBytesRead >= 8*Bytes.KB) {
-                bytesToRead = (int) (8*Bytes.KB);
-                if (log.isDebugEnabled()) log.debug(prefix + "pendingStreamCount ("+multiStream.pendingStreamCount()+") >= "+MAX_PENDING_STREAMS+" and > 8K bytes available, returning everything to read: " + bytesToRead+" bytes");
-            } else {
-                // send 20% of what we have
-                bytesToRead = (int) (totalBytesWritten - totalBytesRead)/5;
-                if (log.isDebugEnabled()) log.debug(prefix + "pendingStreamCount ("+multiStream.pendingStreamCount()+") >= "+MAX_PENDING_STREAMS+" and < 8K bytes available, returning 20% read: " + bytesToRead+" bytes");
-            }
-        } else {
-            // try to read as many bytes as we have written, and have not yet read, less a safety buffer
-            bytesToRead = (int) (totalBytesWritten - totalBytesRead - (2 * MAX_BYTE_BUFFER_SIZE));
-            if (bytesToRead < 0) {
-                // we shouldn't try to read yet, less than 1024 bytes have been written
-                if (log.isDebugEnabled()) log.debug(prefix + "not enough data written (bytesToRead=" + bytesToRead + "), can't read anything yet");
-                return NullInputStream.instance;
-            }
+        if (request.hasContentLength() && totalBytesWritten >= request.getContentLength()) {
+            if (log.isDebugEnabled()) log.debug(prefix+"all bytes written, returning full output");
+            return output;
+        }
+        final int bytesToRead = (int) (totalBytesWritten - totalBytesRead - (2 * MAX_BYTE_BUFFER_SIZE));
+        if (bytesToRead < 0) {
+            // we shouldn't try to read yet, less than 1024 bytes have been written
+            if (log.isDebugEnabled()) log.debug(prefix + "not enough data written (bytesToRead=" + bytesToRead + "), can't read anything yet");
+            return NullInputStream.instance;
         }
 
         if (log.isDebugEnabled()) log.debug(prefix+"trying to read "+bytesToRead+" bytes from output="+output.getClass().getSimpleName());

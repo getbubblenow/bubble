@@ -8,7 +8,7 @@ mitmdump \
   --listen-port ${MITM_PORT} \
   --showhost \
   --no-http2 \
-  --set block_global=false \
+  --set block_global=true \
   --set block_private=false \
   --set termlog_verbosity=debug \
   --set flow_detail=3 \

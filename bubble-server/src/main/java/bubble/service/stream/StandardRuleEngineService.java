@@ -138,7 +138,7 @@ public class StandardRuleEngineService implements RuleEngineService {
 
     public Response applyRulesToChunkAndSendResponse(ContainerRequest request,
                                                      FilterHttpRequest filterRequest,
-                                                     Integer contentLength,
+                                                     Integer chunkLength,
                                                      boolean last) throws IOException {
         final String prefix = "applyRulesToChunkAndSendResponse("+filterRequest.getId()+"): ";
         if (!filterRequest.hasMatchers()) {
@@ -151,10 +151,10 @@ public class StandardRuleEngineService implements RuleEngineService {
                 k -> new ActiveStreamState(filterRequest, initRules(filterRequest)));
         if (last) {
             if (log.isDebugEnabled()) log.debug(prefix+"adding LAST stream");
-            state.addLastChunk(request.getEntityStream(), contentLength);
+            state.addLastChunk(request.getEntityStream(), chunkLength);
         } else {
             if (log.isDebugEnabled()) log.debug(prefix+"adding a stream");
-            state.addChunk(request.getEntityStream(), contentLength);
+            state.addChunk(request.getEntityStream(), chunkLength);
         }
 
         if (log.isDebugEnabled()) log.debug(prefix+"sending as much filtered data as we can right now (which may be nothing)");

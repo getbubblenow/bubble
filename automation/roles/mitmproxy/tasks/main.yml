@@ -46,9 +46,6 @@
     - bubble_modify.py
     - run_mitmdump.sh
 
-- name: Set ownership of mitmproxy files
-  shell: chown -R mitmproxy /home/mitmproxy/mitmproxy
-
 - name: Install cert helper scripts
   copy:
     src: "{{ item }}"
@@ -58,7 +55,14 @@
     mode: 0500
   with_items:
     - install_cert.sh
+    - set_cert_name.sh
     - reuse_bubble_mitm_certs.sh
+
+- name: Set the cert name
+  shell: set_cert_name.sh /home/mitmproxy/mitmproxy {{ server_alias }}
+
+- name: Set ownership of mitmproxy files
+  shell: chown -R mitmproxy /home/mitmproxy/mitmproxy
 
 - name: Reuse bubble mitm certs if available
   shell: reuse_bubble_mitm_certs.sh

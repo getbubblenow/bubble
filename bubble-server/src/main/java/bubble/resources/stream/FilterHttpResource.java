@@ -39,6 +39,7 @@ import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
+import static org.cobbzilla.util.string.StringUtil.trimQuotes;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 import static org.cobbzilla.wizard.model.NamedEntity.names;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -259,7 +260,8 @@ public class FilterHttpResource {
                                @Context ContainerRequest request,
                                @PathParam("requestId") String requestId,
                                @QueryParam("encoding") String contentEncoding,
-                               @QueryParam("contentType") String contentType,
+                               @QueryParam("type") String contentType,
+                               @QueryParam("length") Long contentLength,
                                @QueryParam("last") Boolean last) throws IOException {
 
         // only mitmproxy is allowed to call us, and this should always be a local address
@@ -269,6 +271,7 @@ public class FilterHttpResource {
             return forbidden();
         }
 
+        requestId = trimQuotes(requestId);
         if (empty(requestId)) {
             if (log.isDebugEnabled()) log.debug("filterHttp: no requestId provided, returning passthru");
             return passthru(request);
@@ -292,12 +295,12 @@ public class FilterHttpResource {
 
         // mitmproxy provides Content-Length, which helps us right-size the input byte buffer
         final String contentLengthHeader = req.getHeader(CONTENT_LENGTH);
-        Integer contentLength;
+        Integer chunkLength;
         try {
-            contentLength = empty(contentLengthHeader) ? null : Integer.parseInt(contentLengthHeader);
+            chunkLength = empty(contentLengthHeader) ? null : Integer.parseInt(contentLengthHeader);
         } catch (Exception e) {
             if (log.isDebugEnabled()) log.debug(prefix+"error parsing Content-Length ("+contentLengthHeader+"): "+shortError(e));
-            contentLength = null;
+            chunkLength = null;
         }
 
         final FilterMatchersResponse matchersResponse = getMatchersResponseByRequestId(requestId);
@@ -368,7 +371,8 @@ public class FilterHttpResource {
                     .setDevice(device)
                     .setAccount(caller)
                     .setEncoding(encoding)
-                    .setContentType(contentType);
+                    .setContentType(contentType)
+                    .setContentLength(contentLength);
             if (log.isDebugEnabled()) log.trace(prefix+"start filterRequest="+json(filterRequest, COMPACT_MAPPER));
             getActiveRequestCache().set(requestId, json(filterRequest, COMPACT_MAPPER), EX, ACTIVE_REQUEST_TIMEOUT);
         } else {
@@ -381,7 +385,7 @@ public class FilterHttpResource {
             }
         }
 
-        return ruleEngine.applyRulesToChunkAndSendResponse(request, filterRequest, contentLength, isLast);
+        return ruleEngine.applyRulesToChunkAndSendResponse(request, filterRequest, chunkLength, isLast);
     }
 
     public Response passthru(@Context ContainerRequest request) { return ruleEngine.passthru(request); }
