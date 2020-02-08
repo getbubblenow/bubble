@@ -82,7 +82,7 @@ def send_bubble_response(response):
 def responseheaders(flow):
 
     if flow.request.path and flow.request.path.startswith(BUBBLE_URI_PREFIX):
-        uri = 'https://' + bubble_host_alias + ':' + str(bubble_ssl_port) + '/' + flow.request.path[len(BUBBLE_URI_PREFIX):]
+        uri = 'http://127.0.0.1:' + bubble_port + '/' + flow.request.path[len(BUBBLE_URI_PREFIX):]
         bubble_log('responseheaders: sending special bubble request to '+uri)
         headers = {
             'Accept' : 'application/json',

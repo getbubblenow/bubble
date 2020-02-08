@@ -8,6 +8,13 @@
       "fqdn": "news.ycombinator.com",
       "urlRegex": "/item\\?id=\\d+",
       "rule": "hn_user_blocker"
+    }, {
+      "name": "HNThreadsMatcher",
+      "site": "HackerNews",
+      "template": true,
+      "fqdn": "news.ycombinator.com",
+      "urlRegex": "/threads\\?id=\\w+",
+      "rule": "hn_user_blocker"
     }]
   }
 }]
