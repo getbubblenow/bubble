@@ -1,4 +1,6 @@
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
+    const currentUser = document.getElementById('me');
+    const currentUserName = (currentUser !== null) ? currentUser.innerText : null;
     let commentTable = document.querySelector('table.comment-tree');
     if (commentTable === null) {
         console.warn('commentTable not found, looking for hnmain table');
@@ -39,7 +41,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
                     i++;
                 } else {
                     const existingBlock = comment.querySelector('.bubble_block');
-                    if (existingBlock === null) {
+                    if (existingBlock === null && (currentUserName === null || currentUserName !== author)) {
                         const ageElement = comment.querySelector('.age');
                         const blockNode = document.createElement('span');
                         blockNode.className = "bubble_block";
