@@ -122,7 +122,13 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                     return FilterMatchDecision.no_match;
                 } else {
                     if (!bubbleBlockConfig.inPageBlocks()) {
-                        log.info(prefix+"decision was FILTER but inPageBlocks are disabled (returning no_match)");
+                        for (BlockSpec spec : specs) {
+                            if (spec.hasNoSelector()) {
+                                log.info(prefix+"decision was FILTER but a URL block was triggered and inPageBlocks are disabled (returning abort_not_found)");
+                                return FilterMatchDecision.abort_not_found;
+                            }
+                        }
+                        log.info(prefix+"decision was FILTER but no URL-blocks and inPageBlocks are disabled (returning no_match)");
                         return FilterMatchDecision.no_match;
                     }
                     if (log.isInfoEnabled()) log.info(prefix+"decision is FILTER (returning match)");
