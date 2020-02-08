@@ -37,7 +37,7 @@
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
     <logger name="bubble.service.notify.NotificationService" level="WARN" />
     <logger name="bubble.rule.bblock.BubbleBlockRuleDriver" level="INFO" />
-    <logger name="org.cobbzilla.util.io.multi.MultiStream" level="TRACE" />
+<!--    <logger name="org.cobbzilla.util.io.multi.MultiStream" level="TRACE" />-->
 <!--    <logger name="bubble.filters.BubbleRateLimitFilter" level="TRACE" />-->
 <!--    <logger name="org.cobbzilla.wizard.filters.RateLimitFilter" level="TRACE" />-->
     <logger name="bubble.service.stream.StandardRuleEngineService" level="DEBUG" />
