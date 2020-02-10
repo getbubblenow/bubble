@@ -39,4 +39,11 @@ public class FilterHttpRequest {
     @JsonIgnore public String getUrl() {
         return !hasMatchers() || !matchersResponse.hasRequest() ? null : matchersResponse.getRequest().getUrl();
     }
+
+    public boolean hasApp(String appId) {
+        if (!hasMatchers()) return false;
+        for (AppMatcher m : getMatchers()) if (m.getApp().equals(appId)) return true;
+        return false;
+    }
+
 }

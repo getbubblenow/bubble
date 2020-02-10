@@ -1,12 +1,19 @@
 package bubble.resources.stream;
 
 import bubble.dao.account.AccountDAO;
-import bubble.dao.app.*;
+import bubble.dao.app.AppMatcherDAO;
+import bubble.dao.app.AppRuleDAO;
+import bubble.dao.app.AppSiteDAO;
+import bubble.dao.app.BubbleAppDAO;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
-import bubble.model.app.*;
+import bubble.model.app.AppMatcher;
+import bubble.model.app.AppRule;
+import bubble.model.app.AppSite;
+import bubble.model.app.BubbleApp;
 import bubble.model.device.Device;
 import bubble.rule.FilterMatchDecision;
+import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.DeviceIdService;
 import bubble.service.stream.StandardRuleEngineService;
 import lombok.Getter;
@@ -59,9 +66,8 @@ public class FilterHttpResource {
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private DeviceIdService deviceIdService;
-    @Autowired private AppDataDAO dataDAO;
-
     @Autowired private RedisService redis;
+    @Autowired private BubbleConfiguration configuration;
 
     private static final long ACTIVE_REQUEST_TIMEOUT = HOURS.toSeconds(4);
 
@@ -402,113 +408,47 @@ public class FilterHttpResource {
 
     public Response passthru(@Context ContainerRequest request) { return ruleEngine.passthru(request); }
 
-    @GET @Path(EP_DATA+"/{requestId}/{matcherId}"+EP_READ)
-    @Produces(APPLICATION_JSON)
-    public Response readData(@Context Request req,
-                             @Context ContainerRequest ctx,
-                             @PathParam("requestId") String requestId,
-                             @PathParam("matcherId") String matcherId,
-                             @QueryParam("format") AppDataFormat format) {
+    @Path(EP_DATA+"/{requestId}/{matcherId}")
+    public FilterDataResource getMatcherDataResource(@Context Request req,
+                                                     @Context ContainerRequest ctx,
+                                                     @PathParam("requestId") String requestId,
+                                                     @PathParam("matcherId") String matcherId) {
+        final FilterSubContext filterCtx = new FilterSubContext(req, requestId);
+        if (!filterCtx.request.hasMatcher(matcherId)) throw notFoundEx(matcherId);
 
-        final FilterDataContext fdc = new FilterDataContext(req, requestId, matcherId);
-        final List<AppData> data = dataDAO.findEnabledByAccountAndAppAndSite
-                (fdc.request.getAccount().getUuid(), fdc.matcher.getApp(), fdc.matcher.getSite());
+        final AppMatcher matcher = matcherDAO.findByAccountAndId(filterCtx.request.getAccount().getUuid(), matcherId);
+        if (matcher == null) throw notFoundEx(matcherId);
 
-        if (log.isDebugEnabled()) log.debug("readData: found "+data.size()+" AppData records");
-
-        if (format == null) format = AppDataFormat.key;
-        switch (format) {
-            case key:
-                return ok(data.stream().map(AppData::getKey).collect(Collectors.toList()));
-            case value:
-                return ok(data.stream().map(AppData::getData).collect(Collectors.toList()));
-            case key_value:
-                return ok(data.stream().collect(Collectors.toMap(AppData::getKey, AppData::getData)));
-            case full:
-                return ok(data);
-            default:
-                throw notFoundEx(format.name());
-        }
+        return configuration.subResource(FilterDataResource.class, filterCtx.request.getAccount(), filterCtx.request.getDevice(), matcher);
     }
 
-    @POST @Path(EP_DATA+"/{requestId}/{matcherId}"+EP_WRITE)
-    @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
-    public Response writeData(@Context Request req,
-                              @Context ContainerRequest ctx,
-                              @PathParam("requestId") String requestId,
-                              @PathParam("matcherId") String matcherId,
-                              AppData data) {
-        if (data == null || !data.hasKey()) throw invalidEx("err.key.required");
-        return ok(writeData(req, requestId, matcherId, data));
+    @Path(EP_ASSETS+"/{requestId}/{appId}")
+    public FilterAssetsResource getAppAssetsResource(@Context Request req,
+                                                     @Context ContainerRequest ctx,
+                                                     @PathParam("requestId") String requestId,
+                                                     @PathParam("appId") String appId) {
+        final FilterSubContext filterCtx = new FilterSubContext(req, requestId);
+        if (!filterCtx.request.hasApp(appId)) throw notFoundEx(appId);
+
+        final BubbleApp app = appDAO.findByAccountAndId(filterCtx.request.getAccount().getUuid(), appId);
+        if (app == null) throw notFoundEx(appId);
+
+        return configuration.subResource(FilterAssetsResource.class, filterCtx.request.getAccount(), app);
     }
 
-    @GET @Path(EP_DATA+"/{requestId}/{matcherId}"+EP_WRITE)
-    @Produces(APPLICATION_JSON)
-    public Response writeData(@Context Request req,
-                              @Context ContainerRequest ctx,
-                              @PathParam("requestId") String requestId,
-                              @PathParam("matcherId") String matcherId,
-                              @QueryParam(Q_DATA) String dataJson,
-                              @QueryParam(Q_REDIRECT) String redirectLocation) {
-        if (empty(dataJson)) throw invalidEx("err.data.required");
-        final AppData data;
-        try {
-            data = json(dataJson, AppData.class);
-        } catch (Exception e) {
-            if (log.isDebugEnabled()) log.debug("writeData: invalid data="+dataJson+": "+shortError(e));
-            throw invalidEx("err.data.invalid");
-        }
-        if (!data.hasKey()) throw invalidEx("err.key.required");
-
-        final FilterDataContext fdc = writeData(req, requestId, matcherId, data);
-
-        if (!empty(redirectLocation)) {
-            if (redirectLocation.trim().equalsIgnoreCase(Boolean.FALSE.toString())) {
-                return ok(data);
-            } else {
-                return redirect(redirectLocation);
-            }
-        } else {
-            final String referer = req.getHeader("Referer");
-            if (referer != null) return redirect(referer);
-            return redirect(".");
-        }
-    }
-
-    private FilterDataContext writeData(Request req, String requestId, String matcherId, AppData data) {
-        if (log.isDebugEnabled()) log.debug("writeData: received data=" + json(data, COMPACT_MAPPER));
-        final FilterDataContext fdc = new FilterDataContext(req, requestId, matcherId);
-
-        data.setAccount(fdc.request.getAccount().getUuid());
-        data.setDevice(fdc.request.getDevice().getUuid());
-        data.setApp(fdc.matcher.getApp());
-        data.setSite(fdc.matcher.getSite());
-        data.setMatcher(fdc.matcher.getUuid());
-
-        if (log.isDebugEnabled()) log.debug("writeData: recording data=" + json(data, COMPACT_MAPPER));
-        fdc.data = dataDAO.set(data);
-        return fdc;
-    }
-
-    private class FilterDataContext {
+    private class FilterSubContext {
         public FilterHttpRequest request;
-        public AppMatcher matcher;
-        public AppData data;
 
-        public FilterDataContext(Request req, String requestId, String matcherId) {
+        public FilterSubContext(Request req, String requestId) {
             // only mitmproxy is allowed to call us, and this should always be a local address
             final String mitmAddr = req.getRemoteAddr();
             if (!isLocalIpv4(mitmAddr)) throw forbiddenEx();
 
-            if (empty(requestId) || empty(matcherId)) throw notFoundEx();
+            if (empty(requestId)) throw notFoundEx();
 
             request = getActiveRequest(requestId);
             if (request == null) throw notFoundEx(requestId);
-            if (!request.hasMatcher(matcherId)) throw notFoundEx(matcherId);
-
-            matcher = matcherDAO.findByAccountAndId(request.getAccount().getUuid(), matcherId);
-            if (matcher == null) throw notFoundEx(matcherId);
         }
     }
+
 }

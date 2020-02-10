@@ -181,10 +181,10 @@ public class ApiConstants {
     public static final String SEARCH_ENDPOINT = "/search";
     public static final String DEBUG_ENDPOINT = "/debug";
     public static final String BUBBLE_MAGIC_ENDPOINT = "/.bubble";
-    public static final String EP_ASSETS = "/assets";
 
     public static final String FILTER_HTTP_ENDPOINT = "/filter";
     public static final String EP_APPLY = "/apply";
+    public static final String EP_ASSETS = "/assets";
 
     // requests to a first-party host with this prefix will be forwarded to bubble
     public static final String BUBBLE_FILTER_PASSTHRU = "/__bubble";
