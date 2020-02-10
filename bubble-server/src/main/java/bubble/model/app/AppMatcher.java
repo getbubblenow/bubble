@@ -87,8 +87,8 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
     public boolean matchesUrl (String value) { return getUrlPattern().matcher(value).find(); }
 
     @ECSearchable(filter=true) @ECField(index=70)
-    @Size(max=1024, message="err.contentTypeRegex.length")
-    @Type(type=ENCRYPTED_STRING) @Column(nullable=false, columnDefinition="varchar("+(200+ENC_PAD)+")")
+    @Size(max=200, message="err.contentTypeRegex.length")
+    @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(200+ENC_PAD)+")")
     @Getter @Setter private String contentTypeRegex;
     public boolean hasContentTypeRegex() { return !empty(contentTypeRegex); }
 
@@ -97,25 +97,42 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
     }
     public boolean matchesContentType (String value) { return getContentTypePattern().matcher(value).find(); }
 
-    @ECSearchable @ECField(index=80)
+    @ECSearchable(filter=true) @ECField(index=80)
+    @Size(max=2000, message="err.userAgentRegex.length")
+    @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(2000+ENC_PAD)+")")
+    @Getter @Setter private String userAgentRegex;
+    public boolean hasUserAgentRegex() { return !empty(userAgentRegex); }
+
+    @Transient @JsonIgnore public Pattern getUserAgentPattern () {
+        return hasUserAgentRegex() ? Pattern.compile(getUserAgentRegex()) : DEFAULT_CONTENT_TYPE_PATTERN;
+    }
+    public boolean matchesUserAgent (String value) { return getUserAgentPattern().matcher(value).find(); }
+
+    @ECSearchable(filter=true) @ECField(index=90)
+    @Size(max=4000, message="err.jsMatch.length")
+    @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(4000+ENC_PAD)+")")
+    @Getter @Setter private String jsMatch;
+    public boolean hasJsMatch() { return !empty(jsMatch); }
+
+    @ECSearchable @ECField(index=100)
     @ECForeignKey(entity=AppRule.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String rule;
 
-    @ECSearchable @ECField(index=90)
+    @ECSearchable @ECField(index=110)
     @Column(nullable=false)
     @Getter @Setter private Boolean blocked = false;
     public boolean blocked() { return bool(blocked); }
 
-    @ECSearchable @ECField(index=100)
+    @ECSearchable @ECField(index=120)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
 
-    @ECSearchable @ECField(index=110)
+    @ECSearchable @ECField(index=130)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
-    @ECSearchable @ECField(index=120)
+    @ECSearchable @ECField(index=140)
     @Column(nullable=false)
     @Getter @Setter private Integer priority = 0;
 
