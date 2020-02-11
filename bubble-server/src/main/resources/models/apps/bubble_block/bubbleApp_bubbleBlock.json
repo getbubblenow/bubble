@@ -34,7 +34,10 @@
       {"name": "rule"},
       {"name": "ruleType", "mode": "readOnly"},
       {"name": "testUrl", "type": "http_url"},
-      {"name": "testUrlPrimary", "type": "flag"}
+      {"name": "testUserAgent", "required": false},
+      {"name": "testUrlPrimary", "type": "flag"},
+      {"name": "urlRegex", "required": false},
+      {"name": "userAgentRegex"}
     ],
     "configViews": [{
       "name": "manageLists",
@@ -45,7 +48,7 @@
         {"name": "enableList", "when": "!item.enabled", "index": 10},
         {"name": "disableList", "when": "item.enabled", "index": 20},
         {"name": "manageList", "view": "manageList", "index": 30},
-        {"name": "manageRules", "view": "manageRules", "when": "item.url === ''", "index": 40},
+        {"name": "manageRules", "view": "manageRules", "when": "item.url === \\'\\'", "index": 40},
         {"name": "removeList", "index": 50, "when": "item.url !== ''"},
         {
           "name": "createList", "scope": "app", "view": "manageList", "index": 10,
@@ -83,7 +86,26 @@
         },
         {
           "name": "testUrl", "scope": "app", "index": 20,
-          "params": ["testUrl", "testUrlPrimary"],
+          "params": ["testUrl", "testUserAgent", "testUrlPrimary"],
+          "button": "testUrl",
+          "successMessage": "decisionType"
+        }
+      ]
+    }, {
+      "name": "manageUserAgents",
+      "scope": "app",
+      "root": "true",
+      "fields": ["userAgentRegex", "urlRegex"],
+      "actions": [
+        {"name": "removeUserAgentBlock", "index": 10},
+        {
+          "name": "createUserAgentBlock", "scope": "app", "index": 10,
+          "params": ["userAgentRegex", "urlRegex"],
+          "button": "createUserAgentBlock"
+        },
+        {
+          "name": "testUrl", "scope": "app", "index": 20,
+          "params": ["testUrl", "testUserAgent", "testUrlPrimary"],
           "button": "testUrl",
           "successMessage": "decisionType"
         }
@@ -150,6 +172,7 @@
         {"name": "config.view.manageLists", "value": "Manage Filter Lists"},
         {"name": "config.view.manageList", "value": "Manage Filter List"},
         {"name": "config.view.manageRules", "value": "Manage Filter Rules"},
+        {"name": "config.view.manageUserAgents", "value": "Manage User-Agents"},
 
         {"name": "config.field.name", "value": "Name"},
         {"name": "config.field.description", "value": "Description"},
@@ -164,8 +187,14 @@
         {"name": "config.field.ruleType", "value": "Rule Type"},
         {"name": "config.field.testUrl", "value": "Test URL"},
         {"name": "config.field.testUrl.description", "value": "URL to check against filters"},
+        {"name": "config.field.testUserAgent", "value": "Test User-Agent"},
+        {"name": "config.field.testUserAgent.description", "value": "User-Agent to check against filters"},
         {"name": "config.field.testUrlPrimary", "value": "Primary"},
         {"name": "config.field.testUrlPrimary.description", "value": "A primary request will receive either an ALLOW or BLOCK decision from your Bubble. A non-primary request (for example a request for a webpage) may additionally receive a FILTER decision. This means the request will be permitted, but the response will be instrumented with Bubble filters to remove ads, malware and blocked elements."},
+        {"name": "config.field.urlRegex", "value": "URL"},
+        {"name": "config.field.urlRegex.description", "value": "A regular expression to match against the URL"},
+        {"name": "config.field.userAgentRegex", "value": "User-Agent"},
+        {"name": "config.field.userAgentRegex.description", "value": "A regular expression to match against the User-Agent"},
 
         {"name": "config.action.enableList", "value": "Enable"},
         {"name": "config.action.disableList", "value": "Disable"},
@@ -175,9 +204,14 @@
         {"name": "config.button.createList", "value": "Add"},
         {"name": "config.action.updateList", "value": "Update"},
         {"name": "config.action.manageRules", "value": "Rules"},
+        {"name": "config.action.manageUserAgents", "value": "User-Agents"},
         {"name": "config.action.removeRule", "value": "Remove Rule"},
         {"name": "config.action.createRule", "value": "Add New Rule"},
         {"name": "config.button.createRule", "value": "Add"},
+        {"name": "config.action.createUserAgentBlock", "value": "Add New User-Agent Rule"},
+        {"name": "config.button.createUserAgentBlock", "value": "Add"},
+        {"name": "config.action.removeUserAgentBlock", "value": "Remove Rule"},
+        {"name": "config.button.removeUserAgentBlock", "value": "Remove"},
         {"name": "config.action.testUrl", "value": "Test URL"},
         {"name": "config.button.testUrl", "value": "Test"},
         {"name": "config.response.block", "value": "Block"},

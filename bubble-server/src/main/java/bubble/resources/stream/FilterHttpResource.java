@@ -187,7 +187,16 @@ public class FilterHttpResource {
             for (AppMatcher matcher : matchers) {
                 if (retainMatchers.containsKey(matcher.getUuid())) continue;
                 if (matcher.matchesUrl(uri)) {
-                    if (log.isDebugEnabled()) log.debug(prefix+"matcher "+matcher.getName()+" with pattern "+matcher.getUrlRegex()+" found match for uri: '"+uri+"'");
+                    if (matcher.hasUserAgentRegex()) {
+                        if (!matcher.matchesUserAgent(filterRequest.getUserAgent())) {
+                            if (log.isDebugEnabled()) log.debug(prefix+"matcher "+matcher.getName()+" with pattern "+matcher.getUrlRegex()+" found match for uri: '"+uri+"', but user-agent pattern "+matcher.getUserAgentRegex()+" does not match user-agent="+filterRequest.getUserAgent());
+                            continue;
+                        } else {
+                            if (log.isDebugEnabled()) log.debug(prefix + "matcher " + matcher.getName() + " with pattern " + matcher.getUrlRegex() + " found match for uri: '" + uri + "' and for user-agent pattern "+matcher.getUserAgentRegex()+" for user-agent="+filterRequest.getUserAgent());
+                        }
+                    } else {
+                        if (log.isDebugEnabled()) log.debug(prefix + "matcher " + matcher.getName() + " with pattern " + matcher.getUrlRegex() + " found match for uri: '" + uri + "'");
+                    }
                     final FilterMatchDecision matchResponse = ruleEngine.preprocess(filterRequest, req, request, caller, device, matcher);
                     switch (matchResponse) {
                         case abort_ok:        return FilterMatchersResponse.ABORT_OK;
@@ -350,7 +359,7 @@ public class FilterHttpResource {
                 return passthru(request);
             }
             if (!isContentTypeMatch(matchersResponse, contentType)) {
-                if (log.isInfoEnabled()) log.info(prefix+"none of the "+matchersResponse.getMatchers().size()+" matchers matched contentType="+contentType+", returning passthru");
+                if (log.isDebugEnabled()) log.debug(prefix+"none of the "+matchersResponse.getMatchers().size()+" matchers matched contentType="+contentType+", returning passthru");
                 return passthru(request);
             }
 
@@ -399,7 +408,7 @@ public class FilterHttpResource {
         final List<AppMatcher> matchers = matchersResponse.getMatchers();
         for (AppMatcher m : matchers) {
             if (log.isDebugEnabled()) log.debug(prefix+"checking contentType match, matcher.contentTypeRegex="+m.getContentTypeRegex()+", contentType="+ct);
-            if (m.getContentTypePattern().matcher(ct).matches()) {
+            if (m.matchesContentType(ct)) {
                 return true;
             }
         }

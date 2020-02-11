@@ -15,6 +15,8 @@ public class BubbleBlockConfig {
     @Getter @Setter private Boolean inPageBlocks;
     public boolean inPageBlocks() { return inPageBlocks != null && inPageBlocks; }
 
+    @Getter @Setter private BubbleUserAgentBlock[] userAgentBlocks;
+
     @Getter @Setter private BubbleBlockList[] blockLists;
 
     public BubbleBlockConfig updateList(BubbleBlockList list) {
@@ -49,4 +51,25 @@ public class BubbleBlockConfig {
         }
         return this;
     }
+
+    public BubbleBlockConfig addUserAgentBlock (BubbleUserAgentBlock uaBlock) {
+        if (userAgentBlocks != null) {
+            for (BubbleUserAgentBlock uab : userAgentBlocks) {
+                if (uab.equals(uaBlock)) return this;
+            }
+        }
+        userAgentBlocks = ArrayUtil.append(userAgentBlocks, uaBlock);
+        return this;
+    }
+
+    public BubbleBlockConfig removeUserAgentBlock (String id) {
+        if (userAgentBlocks == null) return this;
+        final List<BubbleUserAgentBlock> retained = new ArrayList<>(userAgentBlocks.length);
+        for (BubbleUserAgentBlock uab : userAgentBlocks) {
+            if (!uab.getId().equals(id)) retained.add(uab);
+        }
+        userAgentBlocks = retained.toArray(BubbleUserAgentBlock.NO_BLOCKS);
+        return this;
+    }
+
 }

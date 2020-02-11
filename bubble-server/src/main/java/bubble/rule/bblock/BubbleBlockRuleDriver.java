@@ -104,7 +104,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final String fqdn = filter.getFqdn();
         final String prefix = "preprocess("+filter.getRequestId()+"): ";
 
-        final BlockDecision decision = getDecision(filter.getFqdn(), filter.getUri());
+        final BlockDecision decision = getDecision(filter.getFqdn(), filter.getUri(), filter.getUserAgent());
         switch (decision.getDecisionType()) {
             case block:
                 if (log.isInfoEnabled()) log.info(prefix+"decision is BLOCK");
@@ -137,9 +137,18 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         }
     }
 
-    public BlockDecision getDecision(String fqdn, String uri) { return blockList.getDecision(fqdn, uri, false); }
+    public BlockDecision getDecision(String fqdn, String uri, String userAgent) { return blockList.getDecision(fqdn, uri, userAgent, false); }
 
-    public BlockDecision getDecision(String fqdn, String uri, boolean primary) { return blockList.getDecision(fqdn, uri, primary); }
+    public BlockDecision getDecision(String fqdn, String uri, String userAgent, boolean primary) {
+        if (!empty(userAgent) && !empty(bubbleBlockConfig.getUserAgentBlocks())) {
+            for (BubbleUserAgentBlock uaBlock : bubbleBlockConfig.getUserAgentBlocks()) {
+                if (uaBlock.hasUrlRegex() && uaBlock.urlMatches(uri)) {
+                    if (uaBlock.userAgentMatches(userAgent)) return BlockDecision.BLOCK;
+                }
+            }
+        }
+        return blockList.getDecision(fqdn, uri, primary);
+    }
 
     @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
 

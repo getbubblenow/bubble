@@ -15,6 +15,7 @@ import bubble.model.device.Device;
 import bubble.rule.bblock.BubbleBlockConfig;
 import bubble.rule.bblock.BubbleBlockList;
 import bubble.rule.bblock.BubbleBlockRuleDriver;
+import bubble.rule.bblock.BubbleUserAgentBlock;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,7 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     public static final String VIEW_manageLists = "manageLists";
     public static final String VIEW_manageList = "manageList";
     public static final String VIEW_manageRules = "manageRules";
+    public static final String VIEW_manageUserAgents = "manageUserAgents";
     public static final AppMatcher TEST_MATCHER = new AppMatcher();
     public static final Device TEST_DEVICE = new Device();
 
@@ -68,6 +70,9 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
                     id = builtinList.getId();
                 }
                 return loadListEntries(account, app, id);
+
+            case VIEW_manageUserAgents:
+                return loadUserAgentBlocks(account, app);
         }
         throw notFoundEx(view);
     }
@@ -96,12 +101,22 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
         final AppRule rule = loadRule(account, app);
         loadDriver(account, rule); // validate proper driver
 
-        final List<BubbleBlockList> blockLists = new ArrayList<>();
         final BubbleBlockConfig blockConfig = json(rule.getConfigJson(), BubbleBlockConfig.class);
+        final List<BubbleBlockList> blockLists = new ArrayList<>();
         blockLists.addAll( Arrays.stream(blockConfig.getBlockLists())
                 .map(list -> list.setRule(rule))
                 .collect(Collectors.toList()) );
         return blockLists;
+    }
+
+    private BubbleUserAgentBlock[] loadUserAgentBlocks(Account account, BubbleApp app) {
+
+        final AppRule rule = loadRule(account, app);
+        loadDriver(account, rule); // validate proper driver
+
+        final BubbleBlockConfig blockConfig = json(rule.getConfigJson(), BubbleBlockConfig.class);
+        final BubbleUserAgentBlock[] blocks = blockConfig.getUserAgentBlocks();
+        return empty(blocks) ? BubbleUserAgentBlock.NO_BLOCKS : blocks;
     }
 
     private RuleDriver loadDriver(Account account, AppRule rule) {
@@ -126,11 +141,15 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     public static final String ACTION_updateList = "updateList";
     public static final String ACTION_createRule = "createRule";
     public static final String ACTION_removeRule = "removeRule";
+    public static final String ACTION_createUserAgentBlock = "createUserAgentBlock";
+    public static final String ACTION_removeUserAgentBlock = "removeUserAgentBlock";
     public static final String ACTION_testUrl = "testUrl";
 
     public static final String PARAM_URL = "url";
     public static final String PARAM_RULE = "rule";
+    public static final String PARAM_USER_AGENT_REGEX = "userAgentRegex";
     public static final String PARAM_TEST_URL = "testUrl";
+    public static final String PARAM_TEST_USER_AGENT = "testUserAgent";
     public static final String PARAM_TEST_URL_PRIMARY = "testUrlPrimary";
 
     @Override public Object takeAppAction(Account account,
@@ -146,6 +165,8 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
                 return addRule(account, app, params, data);
             case ACTION_testUrl:
                 return testUrl(account, app, data);
+            case ACTION_createUserAgentBlock:
+                return createUserAgentBlock(account, app, params, data);
         }
         throw notFoundEx(action);
     }
@@ -159,6 +180,14 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
         final boolean primary = testUrlPrimaryNode == null || testUrlPrimaryNode.booleanValue();
 
         if (!isHttpOrHttps(testUrl)) testUrl = SCHEME_HTTPS + testUrl;
+
+        final String userAgent;
+        final JsonNode userAgentNode = data.get(PARAM_TEST_USER_AGENT);
+        if (userAgentNode == null || empty(userAgentNode.textValue())) {
+            userAgent = "";
+        } else {
+            userAgent = userAgentNode.textValue();
+        }
 
         final String host;
         final String path;
@@ -177,7 +206,7 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
             final RuleDriver ruleDriver = loadDriver(account, rule);
             final BubbleBlockRuleDriver unwiredDriver = (BubbleBlockRuleDriver) rule.initDriver(ruleDriver, TEST_MATCHER, account, TEST_DEVICE);
             final BubbleBlockRuleDriver driver = configuration.autowire(unwiredDriver);
-            final BlockDecision decision = driver.getDecision(host, path, primary);
+            final BlockDecision decision = driver.getDecision(host, path, userAgent, primary);
             return getBuiltinList(account, app).setResponse(decision);
 
         } catch (Exception e) {
@@ -239,6 +268,38 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
         return list;
     }
 
+    private BubbleUserAgentBlock createUserAgentBlock(Account account, BubbleApp app, Map<String, String> params, JsonNode data) {
+
+        final JsonNode rule = data.get(PARAM_RULE);
+        final String urlRegex;
+        if (rule == null || rule.textValue() == null) {
+            urlRegex = ".*";
+        } else {
+            urlRegex = rule.textValue().trim();
+        }
+
+        final JsonNode userAgentRegexNode = data.get(PARAM_USER_AGENT_REGEX);
+        if (userAgentRegexNode == null) {
+            throw invalidEx("err.userAgentRegex.required");
+        }
+        final String userAgentRegex = userAgentRegexNode.textValue().trim();
+
+        final AppRule appRule = loadRule(account, app);
+        final BubbleBlockConfig blockConfig = json(appRule.getConfigJson(), BubbleBlockConfig.class);
+        final BubbleUserAgentBlock uaBlock = new BubbleUserAgentBlock()
+                .setUrlRegex(urlRegex)
+                .setUserAgentRegex(userAgentRegex);
+        ruleDAO.update(appRule.setConfigJson(json(blockConfig.addUserAgentBlock(uaBlock))));
+        return uaBlock;
+    }
+
+    private BubbleUserAgentBlock[] removeUserAgentBlock(Account account, BubbleApp app, String id) {
+        final AppRule appRule = loadRule(account, app);
+        final BubbleBlockConfig blockConfig = json(appRule.getConfigJson(), BubbleBlockConfig.class);
+        ruleDAO.update(appRule.setConfigJson(json(blockConfig.removeUserAgentBlock(id))));
+        return blockConfig.getUserAgentBlocks();
+    }
+
     @Override public Object takeItemAction(Account account,
                                            BubbleApp app,
                                            String view,
@@ -279,6 +340,9 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
 
             case ACTION_removeRule:
                 return removeRule(account, app, id);
+
+            case ACTION_removeUserAgentBlock:
+                return removeUserAgentBlock(account, app, id);
         }
 
         throw notFoundEx(action);

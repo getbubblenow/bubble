@@ -108,31 +108,25 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
     }
     public boolean matchesUserAgent (String value) { return getUserAgentPattern().matcher(value).find(); }
 
-    @ECSearchable(filter=true) @ECField(index=90)
-    @Size(max=4000, message="err.jsMatch.length")
-    @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(4000+ENC_PAD)+")")
-    @Getter @Setter private String jsMatch;
-    public boolean hasJsMatch() { return !empty(jsMatch); }
-
-    @ECSearchable @ECField(index=100)
+    @ECSearchable @ECField(index=90)
     @ECForeignKey(entity=AppRule.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String rule;
 
-    @ECSearchable @ECField(index=110)
+    @ECSearchable @ECField(index=1100)
     @Column(nullable=false)
     @Getter @Setter private Boolean blocked = false;
     public boolean blocked() { return bool(blocked); }
 
-    @ECSearchable @ECField(index=120)
+    @ECSearchable @ECField(index=110)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
 
-    @ECSearchable @ECField(index=130)
+    @ECSearchable @ECField(index=120)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
-    @ECSearchable @ECField(index=140)
+    @ECSearchable @ECField(index=130)
     @Column(nullable=false)
     @Getter @Setter private Integer priority = 0;
 
