@@ -423,17 +423,17 @@ public class FilterHttpResource {
     }
 
     @Path(EP_ASSETS+"/{requestId}/{appId}")
-    public FilterAssetsResource getAppAssetsResource(@Context Request req,
-                                                     @Context ContainerRequest ctx,
-                                                     @PathParam("requestId") String requestId,
-                                                     @PathParam("appId") String appId) {
+    public AppAssetsResource getAppAssetsResource(@Context Request req,
+                                                  @Context ContainerRequest ctx,
+                                                  @PathParam("requestId") String requestId,
+                                                  @PathParam("appId") String appId) {
         final FilterSubContext filterCtx = new FilterSubContext(req, requestId);
         if (!filterCtx.request.hasApp(appId)) throw notFoundEx(appId);
 
         final BubbleApp app = appDAO.findByAccountAndId(filterCtx.request.getAccount().getUuid(), appId);
         if (app == null) throw notFoundEx(appId);
 
-        return configuration.subResource(FilterAssetsResource.class, filterCtx.request.getAccount(), app);
+        return configuration.subResource(AppAssetsResource.class, filterCtx.request.getAccount().getLocale(), app);
     }
 
     private class FilterSubContext {

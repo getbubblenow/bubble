@@ -64,6 +64,10 @@ public class AppMessage extends IdentifiableBase implements AppTemplateEntity, H
     @Transient public NameAndValue[] getMessages () { return messagesJson == null ? null : json(messagesJson, NameAndValue[].class); }
     public AppMessage setMessages(NameAndValue[] messages) { return setMessagesJson(messages == null ? null : json(messages, DB_JSON_MAPPER));}
 
+    public String getMessage(String name) { return NameAndValue.find(getMessages(), name); }
+
+    public boolean hasMessage(String name) { return !empty(getMessage(name)); }
+
     @ECSearchable @ECField(index=50) @Column(nullable=false)
     @ECIndex @Getter @Setter private Integer priority = 1;
 

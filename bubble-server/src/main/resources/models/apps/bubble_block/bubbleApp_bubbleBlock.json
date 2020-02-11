@@ -132,6 +132,7 @@
       "locale": "en_US",
       "messages": [
         {"name": "name", "value": "Block Party!"},
+        {"name": "icon", "value": "classpath:models/apps/bubble_block/blockparty-icon.svg"},
         {"name": "summary", "value": "Network Filter"},
         {"name": "description", "value": "Block adware, malware, phishing/scam sites, and much more"},
         {"name": "field.ctime", "value": "When"},

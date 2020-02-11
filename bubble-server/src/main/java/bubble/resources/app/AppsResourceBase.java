@@ -4,12 +4,14 @@ import bubble.dao.app.AppMatcherDAO;
 import bubble.dao.app.AppRuleDAO;
 import bubble.dao.app.BubbleAppDAO;
 import bubble.model.account.Account;
+import bubble.model.app.BubbleApp;
 import bubble.model.app.config.AppDataConfig;
 import bubble.model.app.config.AppDataDriver;
 import bubble.model.app.config.AppDataPresentation;
-import bubble.model.app.BubbleApp;
 import bubble.resources.account.AccountOwnedTemplateResource;
+import bubble.resources.stream.AppAssetsResource;
 import bubble.server.BubbleConfiguration;
+import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -133,6 +135,15 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
         final BubbleApp app = find(ctx, id);
         if (app == null || !app.hasDataConfig() || !app.getDataConfig().hasConfigViews()) throw notFoundEx(id);
         return configuration.subResource(AppConfigResource.class, getAccount(account, ctx), app);
+    }
+
+    @Path("/{id}"+EP_ASSETS)
+    public AppAssetsResource getAppAssetsResource(@Context Request req,
+                                                  @Context ContainerRequest ctx,
+                                                  @PathParam("id") String id) {
+        final BubbleApp app = find(ctx, id);
+        if (app == null) throw notFoundEx(id);
+        return configuration.subResource(AppAssetsResource.class, getAccount(account, ctx).getLocale(), app);
     }
 
 }
