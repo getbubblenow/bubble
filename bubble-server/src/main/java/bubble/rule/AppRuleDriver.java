@@ -19,6 +19,7 @@ import java.util.Map;
 
 import static org.cobbzilla.util.io.StreamUtil.stream2bytes;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
+import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 
 public interface AppRuleDriver {
@@ -71,6 +72,8 @@ public interface AppRuleDriver {
     }
 
     default Handlebars getHandlebars() { return null; }
+
+    static String getJsPrefix(String requestId) { return "__bubble_"+sha256_hex(requestId)+"_"; }
 
     default String locateResource(String res) {
         if (!res.startsWith("@")) return res;

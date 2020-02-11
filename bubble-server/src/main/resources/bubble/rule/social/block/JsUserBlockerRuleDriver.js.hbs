@@ -60,12 +60,18 @@ function {{JS_PREFIX}}_block_user (author) {
 
 {{{APPLY_BLOCKS_JS}}}
 
+
 {{JS_PREFIX}}_onReady(function() {
-    const bubbleControlDiv = document.createElement('div');
-    bubbleControlDiv.style.position = 'fixed';
-    bubbleControlDiv.style.bottom = '0';
-    bubbleControlDiv.style.right = '0';
-    bubbleControlDiv.innerHTML = '<a href="{{{BUBBLE_HOME}}}/app/UserBlocker/site/{{SITE}}"><img width="64" src="/__bubble/bubble_icon.png"/></a>';
-    document.getElementsByTagName('body')[0].appendChild(bubbleControlDiv);
+    const controlDivId = '{{JS_PREFIX}}_controlDiv';
+    let bubbleControlDiv = document.getElementById(controlDivId);
+    if (bubbleControlDiv === null) {
+        bubbleControlDiv = document.createElement('div');
+        bubbleControlDiv.id = controlDivId;
+        bubbleControlDiv.style.position = 'fixed';
+        bubbleControlDiv.style.bottom = '0';
+        bubbleControlDiv.style.right = '0';
+        document.getElementsByTagName('body')[0].appendChild(bubbleControlDiv);
+    }
+    bubbleControlDiv.innerHTML = bubbleControlDiv.innerHTML + '<br/><a href="{{{BUBBLE_HOME}}}/app/UserBlocker/site/{{SITE}}/view/blocked_users"><img width="64" src="/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true"/></a>';
 });
 

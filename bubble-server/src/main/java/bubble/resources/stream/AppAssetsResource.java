@@ -3,6 +3,7 @@ package bubble.resources.stream;
 import bubble.dao.app.AppMessageDAO;
 import bubble.model.app.AppMessage;
 import bubble.model.app.BubbleApp;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.string.Base64;
 import org.cobbzilla.wizard.stream.DataUrlSendableResource;
 import org.cobbzilla.wizard.stream.StreamStreamingOutput;
@@ -30,6 +31,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.stream.DataUrlStreamingOutput.DATA_URL_PREFIX;
 import static org.cobbzilla.wizard.stream.DataUrlStreamingOutput.dataUrlBytes;
 
+@Slf4j
 public class AppAssetsResource {
 
     private String locale;

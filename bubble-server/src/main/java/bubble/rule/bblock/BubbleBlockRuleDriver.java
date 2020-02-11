@@ -10,6 +10,7 @@ import bubble.model.app.AppRule;
 import bubble.model.device.Device;
 import bubble.resources.stream.FilterHttpRequest;
 import bubble.resources.stream.FilterMatchersRequest;
+import bubble.rule.AppRuleDriver;
 import bubble.rule.FilterMatchDecision;
 import bubble.rule.analytics.TrafficAnalyticsRuleDriver;
 import bubble.service.stream.AppRuleHarness;
@@ -36,7 +37,6 @@ import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.util.string.StringUtil.UTF8cs;
 import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 
@@ -199,7 +199,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
 
     private String getBubbleJs(String requestId, BlockDecision decision) {
         final Map<String, Object> ctx = new HashMap<>();
-        ctx.put(CTX_JS_PREFIX, "__bubble_block_"+sha256_hex(requestId)+"_");
+        ctx.put(CTX_JS_PREFIX, AppRuleDriver.getJsPrefix(requestId));
         ctx.put(CTX_BUBBLE_REQUEST_ID, requestId);
         ctx.put(CTX_BUBBLE_HOME, configuration.getPublicUriBase());
         ctx.put(CTX_BUBBLE_DATA_ID, getDataId(requestId));

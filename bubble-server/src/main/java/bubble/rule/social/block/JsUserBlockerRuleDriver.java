@@ -3,6 +3,7 @@ package bubble.rule.social.block;
 import bubble.model.app.AppMatcher;
 import bubble.resources.stream.FilterHttpRequest;
 import bubble.rule.AbstractAppRuleDriver;
+import bubble.rule.AppRuleDriver;
 import lombok.Getter;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.cobbzilla.util.collection.ExpirationMap;
@@ -18,7 +19,6 @@ import java.util.Map;
 import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.util.string.StringUtil.UTF8cs;
 import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 
@@ -42,7 +42,7 @@ public class JsUserBlockerRuleDriver extends AbstractAppRuleDriver {
 
     private String getBubbleJs(String requestId) {
         final Map<String, Object> ctx = new HashMap<>();
-        ctx.put(CTX_JS_PREFIX, "__bubble_"+sha256_hex(requestId)+"_");
+        ctx.put(CTX_JS_PREFIX, AppRuleDriver.getJsPrefix(requestId));
         ctx.put(CTX_BUBBLE_REQUEST_ID, requestId);
         ctx.put(CTX_BUBBLE_HOME, configuration.getPublicUriBase());
         ctx.put(CTX_SITE, getSiteName(matcher));
