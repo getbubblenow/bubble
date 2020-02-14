@@ -139,7 +139,8 @@ public class CodePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
     @Override protected String charge(BubblePlan plan,
                                       AccountPlan accountPlan,
                                       AccountPaymentMethod paymentMethod,
-                                      Bill bill) {
+                                      Bill bill,
+                                      long chargeAmount) {
         // is the token valid?
         final CloudServiceData csData = dataDAO.findByCloudAndKey(cloud.getUuid(), paymentMethod.getPaymentInfo());
         if (csData == null) throw invalidEx("err.purchase.tokenNotFound");

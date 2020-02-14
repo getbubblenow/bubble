@@ -24,7 +24,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 @ECIndexes({
         @ECIndex(name="account_payment_uniq_bill_type_payment_method_success",
                  unique=true,
-                 of={"bill", "type", "paymentMethod"},
+                 of={"bill", "type"},
                  where="status = 'success'")
 })
 @Entity @NoArgsConstructor @Accessors(chain=true)

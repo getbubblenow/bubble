@@ -3,6 +3,7 @@ package bubble.dao.bill;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.model.bill.AccountPayment;
 import bubble.model.bill.AccountPaymentStatus;
+import bubble.model.bill.AccountPaymentType;
 import org.hibernate.criterion.Order;
 import org.springframework.stereotype.Repository;
 
@@ -30,8 +31,20 @@ public class AccountPaymentDAO extends AccountOwnedEntityDAO<AccountPayment> {
         return findByFields("account", accountUuid, "accountPlan", accountPlanUuid, "bill", billUuid);
     }
 
-    public AccountPayment findByAccountAndAccountPlanAndBillAndSuccess(String accountUuid, String accountPlanUuid, String billUuid) {
-        return findByUniqueFields("account", accountUuid, "accountPlan", accountPlanUuid, "bill", billUuid, "status", AccountPaymentStatus.success);
+    public AccountPayment findByAccountAndAccountPlanAndBillAndPaymentSuccess(String accountUuid, String accountPlanUuid, String billUuid) {
+        return findByUniqueFields("account", accountUuid,
+                "accountPlan", accountPlanUuid,
+                "bill", billUuid,
+                "type", AccountPaymentType.payment,
+                "status", AccountPaymentStatus.success);
+    }
+
+    public AccountPayment findByAccountAndAccountPlanAndBillAndCreditAppliedSuccess(String accountUuid, String accountPlanUuid, String billUuid) {
+        return findByUniqueFields("account", accountUuid,
+                "accountPlan", accountPlanUuid,
+                "bill", billUuid,
+                "type", AccountPaymentType.credit_applied,
+                "status", AccountPaymentStatus.success);
     }
 
 }

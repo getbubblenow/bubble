@@ -11,6 +11,7 @@ import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.NamedEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
+import org.cobbzilla.wizard.model.search.SqlViewSearchResult;
 import org.cobbzilla.wizard.validation.HasValue;
 
 import javax.persistence.Column;
@@ -23,14 +24,21 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 @ECType(root=true)
 @ECTypeURIs(baseURI=PROMOTIONS_ENDPOINT, listFields={"name", "priority", "enabled", "validFrom", "validTo", "code", "referral"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
-public class Promotion extends IdentifiableBase implements NamedEntity, HasPriority {
+public class Promotion extends IdentifiableBase
+        implements NamedEntity, HasPriority, SqlViewSearchResult, Comparable<Promotion> {
 
     public static final String[] UPDATE_FIELDS = {"priority", "enabled", "validFrom", "validTo"};
-    public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "name", "code", "referral");
+    public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS,
+            "name", "code", "referral", "currency", "maxValue");
 
     public Promotion (Promotion other) { copy(this, other, CREATE_FIELDS); }
 
     @Override public Identifiable update(Identifiable other) { copy(this, other, UPDATE_FIELDS); return this; }
+
+    @Override public int compareTo(Promotion o) {
+        int diff = hasPriority() && o.hasPriority() ? getPriority().compareTo(o.getPriority()) : 0;
+        return diff != 0 ? diff : Long.compare(getCtime(), o.getCtime());
+    }
 
     @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
@@ -44,6 +52,7 @@ public class Promotion extends IdentifiableBase implements NamedEntity, HasPrior
 
     @ECSearchable @ECField(index=30) @Column(nullable=false)
     @ECIndex @Getter @Setter private Integer priority = 1;
+    public boolean hasPriority () { return priority != null; }
 
     @ECSearchable(filter=true) @ECField(index=40)
     @ECIndex(unique=true) @Column(updatable=false, length=NAME_MAXLEN)
@@ -69,5 +78,13 @@ public class Promotion extends IdentifiableBase implements NamedEntity, HasPrior
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean referral = false;
     public boolean referral () { return referral != null && referral; }
+
+    @ECSearchable @ECField(index=90)
+    @ECIndex @Column(nullable=false, updatable=false, length=10)
+    @Getter @Setter private String currency;
+
+    @ECSearchable @ECField(index=100)
+    @ECIndex @Column(nullable=false, updatable=false)
+    @Getter @Setter private Integer maxValue;
 
 }

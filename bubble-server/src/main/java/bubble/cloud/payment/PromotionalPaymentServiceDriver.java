@@ -5,8 +5,8 @@ import bubble.model.bill.Promotion;
 
 public interface PromotionalPaymentServiceDriver extends PaymentServiceDriver {
 
-    void applyPromo(Promotion promo, Account caller);
+    boolean applyPromo(Promotion promo, Account caller);
 
-    void applyReferralPromo(Promotion referralPromo, Account caller, Account referredFrom);
+    boolean applyReferralPromo(Promotion referralPromo, Account caller, Account referredFrom);
 
 }

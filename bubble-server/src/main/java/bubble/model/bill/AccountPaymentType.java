@@ -6,7 +6,7 @@ import static bubble.ApiConstants.enumFromString;
 
 public enum AccountPaymentType {
 
-    payment, refund;
+    payment, credit_applied, refund;
 
     @JsonCreator public static AccountPaymentType fromString (String v) { return enumFromString(AccountPaymentType.class, v); }
 

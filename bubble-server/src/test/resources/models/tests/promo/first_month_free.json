@@ -1,1 +1,207 @@
-[]
+[
+  {
+    "comment": "create a user account",
+    "request": {
+      "uri": "users",
+      "method": "put",
+      "entity": {
+        "name": "test_user_1mo_free",
+        "password": "password1!",
+        "contact": {"type": "email", "info": "test_user_1mo_free@example.com"}
+      }
+    }
+  },
+
+  {
+    "before": "sleep 22s",  // wait for account objects to be created
+    "comment": "login as new user",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "test_user_1mo_free",
+        "password": "password1!"
+      }
+    },
+    "response": {
+      "store": "testAccount",
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "as root, check email inbox for verification message",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/test_user_1mo_free@example.com?type=request&action=verify&target=account"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "approve email verification request",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{emailInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    }
+  },
+
+  {
+    "comment": "get plans",
+    "request": { "uri": "plans" },
+    "response": {
+      "store": "plans",
+      "check": [{"condition": "json.length >= 1"}]
+    }
+  },
+
+  {
+    "comment": "get payment methods, tokenize a credit card",
+    "request": { "uri": "paymentMethods" },
+    "response": {
+      "store": "paymentMethods"
+    },
+    "after": "stripe_tokenize_card"
+  },
+
+  {
+    "comment": "add plan, using 'credit' payment method, also applies 1mo free promo",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "{{plans.[0].name}}",
+        "footprint": "US",
+        "paymentMethodObject": {
+          "paymentMethodType": "credit",
+          "paymentInfo": "{{stripeToken}}"
+        }
+      }
+    },
+    "response": {
+      "store": "accountPlan"
+    }
+  },
+
+  {
+    "before": "sleep 15s",
+    "comment": "list all account payment methods, should be two",
+    "request": { "uri": "me/paymentMethods?all=true" },
+    "response": {
+      "store": "paymentMethods",
+      "check": [
+        {"condition": "json.length === 2"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'credit'; }) !== null"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'credit'; }).deleted() === false"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }) !== null"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }).deleted() === true"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify account plans, should be one, verify enabled",
+    "request": { "uri": "me/plans" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getName() === accountPlan.getName()"},
+        {"condition": "json[0].enabled()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify account plan payment info",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/paymentMethod" },
+    "response": {
+      "check": [
+        {"condition": "json.getPaymentMethodType().name() === 'credit'"},
+        {"condition": "json.getMaskedPaymentInfo() == 'XXXX-XXXX-XXXX-4242'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify bill exists and was paid",
+    "request": { "uri": "me/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify bill exists via plan and is paid",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify payment exists and is successful via 1mo free promotional credit",
+    "request": { "uri": "me/payments" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'success'"},
+        {"condition": "json[0].getType().name() === 'credit_applied'"},
+        {"condition": "json[0].getPaymentMethod() === _find(paymentMethods, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }).getUuid()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify payment exists via plan and is successful",
+    "request": { "uri": "me/plans/{{accountPlan.uuid}}/payments" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'success'"},
+        {"condition": "json[0].getType().name() === 'credit_applied'"},
+        {"condition": "json[0].getPaymentMethod() === _find(paymentMethods, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }).getUuid()"},
+        {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getBillObject().getAccountPlan() === '{{accountPlan.uuid}}'"},
+        {"condition": "json[0].getBillObject().getQuantity() === 1"},
+        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
+      ]
+    }
+  }
+]

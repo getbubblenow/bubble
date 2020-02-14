@@ -37,7 +37,7 @@ public class PromotionsResource {
     public Response listPromos(@Context ContainerRequest ctx,
                                @QueryParam("code") String code) {
         final Account caller = optionalUserPrincipal(ctx);
-        return ok(promotionDAO.findEnabledAndNoCodeOrWithCode(code));
+        return ok(promotionDAO.findEnabledAndActiveWithNoCodeOrWithCode(code));
     }
 
     @GET @Path("/{id}")
@@ -47,7 +47,8 @@ public class PromotionsResource {
         if (!caller.admin()) return forbidden();
         if (!caller.getUuid().equals(getFirstAdmin().getUuid())) return forbidden();
 
-        return ok(promotionDAO.findById(id));
+        final Promotion promo = promotionDAO.findById(id);
+        return promo == null ? notFound(id) : ok(promo);
     }
 
     @PUT

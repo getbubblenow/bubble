@@ -1,5 +1,6 @@
 package bubble.dao.bill;
 
+import bubble.model.bill.PaymentMethodType;
 import bubble.notify.payment.PaymentValidationResult;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.dao.cloud.CloudServiceDAO;
@@ -30,6 +31,14 @@ public class AccountPaymentMethodDAO extends AccountOwnedEntityDAO<AccountPaymen
                 .orElse(null);
     }
 
+    public List<AccountPaymentMethod> findByAccountAndPromoAndNotDeleted(String account) {
+        return findByFields("account", account, "paymentMethodType", PaymentMethodType.promotional_credit, "deleted", null);
+    }
+
+    public List<AccountPaymentMethod> findByAccountAndCloud(String accountUuid, String cloud) {
+        return findByFields("account", accountUuid, "cloud", cloud);
+    }
+
     @Override public Object preCreate(AccountPaymentMethod paymentMethod) {
         if (paymentMethod.getPaymentMethodType().requiresClaim()) {
             final CloudService paymentService = cloudDAO.findByUuid(paymentMethod.getCloud());
@@ -50,7 +59,7 @@ public class AccountPaymentMethodDAO extends AccountOwnedEntityDAO<AccountPaymen
             throw invalidEx("err.paymentMethod.cannotDeleteInUse");
         }
 
-        update(pm.setDeleted(true).setPaymentInfo("deleted_"+now()));
+        update(pm.setDeleted().setPaymentInfo("deleted_"+now()));
     }
 
     @Override public void forceDelete(String uuid) { super.delete(uuid); }

@@ -6,6 +6,7 @@ import org.hibernate.criterion.Order;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.hibernate.criterion.Restrictions.*;
@@ -28,24 +29,27 @@ public class PromotionDAO extends AbstractCRUDDAO<Promotion> {
         return findByUniqueFields("enabled", true, "code", code);
     }
 
-    public Promotion findEnabledWithNoCode() {
+    public List<Promotion> findEnabledAndActiveWithNoCode() {
         final List<Promotion> promos = findByFields("enabled", true, "code", null);
-        return empty(promos) ? null : promos.get(0);
+        return filterActive(promos);
     }
 
-    public List<Promotion> findEnabledAndNoCodeOrWithCode(String code) {
+    public List<Promotion> findEnabledAndActiveWithNoCodeOrWithCode(String code) {
         if (empty(code)) {
-            return findByFields("enabled", true, "code", null);
+            return filterActive(findByFields("enabled", true, "code", null));
         } else {
-            return list(criteria().add(and(
+            return filterActive(list(criteria().add(and(
                     eq("enabled", true),
-                    or(isNull("code"), eq("code", code)))));
+                    or(isNull("code"), eq("code", code))))));
         }
     }
 
-    public Promotion findReferralPromotion() {
-        final List<Promotion> referrals = findByField("referral", true);
-        return empty(referrals) ? null : referrals.get(0);
+    public List<Promotion> filterActive(List<Promotion> promos) {
+        return promos.stream().filter(Promotion::active).collect(Collectors.toList());
+    }
+
+    public List<Promotion> findEnabledAndActiveWithReferral() {
+        return filterActive(findByFields("enabled", true, "referral", true));
     }
 
 }

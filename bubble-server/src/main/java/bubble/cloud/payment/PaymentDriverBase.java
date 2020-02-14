@@ -1,13 +1,21 @@
 package bubble.cloud.payment;
 
 import bubble.cloud.CloudServiceDriverBase;
+import bubble.cloud.CloudServiceType;
 import bubble.dao.bill.*;
+import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.bill.*;
+import bubble.model.cloud.CloudService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
+import static bubble.model.bill.PaymentMethodType.promotional_credit;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_ASC;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
@@ -18,11 +26,14 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
     @Autowired protected AccountPaymentMethodDAO paymentMethodDAO;
     @Autowired protected BillDAO billDAO;
     @Autowired protected AccountPaymentDAO accountPaymentDAO;
+    @Autowired protected PromotionDAO promotionDAO;
+    @Autowired protected CloudServiceDAO cloudDAO;
 
     protected abstract String charge(BubblePlan plan,
                                      AccountPlan accountPlan,
                                      AccountPaymentMethod paymentMethod,
-                                     Bill bill);
+                                     Bill bill,
+                                     long chargeAmount);
 
     protected abstract String refund(AccountPlan accountPlan,
                                      AccountPayment payment,
@@ -59,6 +70,47 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         return bill;
     }
 
+    protected long applyPromotions(String accountPlanUuid, AccountPaymentMethod paymentMethod, long price) {
+        // cannot apply a promotion to a promotion -- should never happen
+        if (getPaymentMethodType() == promotional_credit) {
+            log.warn("applyPromotions: cannot apply promotions to a promotion");
+            return price;
+        }
+
+        final List<AccountPaymentMethod> promos = paymentMethodDAO.findByAccountAndPromoAndNotDeleted(paymentMethod.getAccount());
+        if (!empty(promos)) {
+            // sort oldest first, this ensures default promotions (like first month free) get applied before referral promotions
+            promos.sort(CTIME_ASC);
+            Promotion selectedPromo = null;
+            for (AccountPaymentMethod apm : promos) {
+                final Promotion promo = promotionDAO.findByUuid(apm.getPromotion());
+                if (promo != null && promo.active()) {
+
+                }
+            }
+        }
+
+
+        final Bill bill = billDAO.findOldestUnpaidBillByAccountPlan(accountPlanUuid);
+        final long creditApplied;
+        if (bill == null) {
+            log.warn("No unpaid bills for account "+paymentMethod.getAccount()+" and accountPlanUuid="+accountPlanUuid+", no credit applied");
+            creditApplied = 0;
+        } else {
+            final AccountPayment promoPayment = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndCreditAppliedSuccess(paymentMethod.getAccount(), accountPlanUuid, bill.getUuid());
+            if (promoPayment != null) {
+                creditApplied = promoPayment.getAmount();
+            } else {
+                creditApplied = 0;
+            }
+        }
+        if (creditApplied >= price) {
+            log.info("getChargeAmount: credit applied ("+creditApplied+") exceeds price "+price+", no charge due");
+            return 0;
+        }
+        return price - creditApplied;
+    }
+
     @Override public boolean authorize(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod) {
         return true;
     }
@@ -84,7 +136,7 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
             return true;
         }
 
-        final AccountPayment successfulPayment = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndSuccess(accountPlan.getAccount(), accountPlanUuid, bill.getUuid());
+        final AccountPayment successfulPayment = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndPaymentSuccess(accountPlan.getAccount(), accountPlanUuid, bill.getUuid());
         if (successfulPayment != null) {
             log.warn("purchase: successful AccountPayment found (marking Bill "+bill.getUuid()+" as paid and returning true): " + successfulPayment.getUuid());
             billDAO.update(bill.setStatus(BillStatus.paid));
@@ -94,10 +146,78 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         // If the current PaymentDriver is not for a promotional credit,
         // then check for AccountPaymentMethods associated with promotional credits
         // If we have one, use that payment driver instead. It may apply a partial payment.
+        long chargeAmount = bill.getTotal();
+        if (getPaymentMethodType() != promotional_credit) {
+            final AccountPayment creditAlreadyApplied = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndCreditAppliedSuccess(accountPlan.getAccount(), accountPlanUuid, billUuid);
+            if (creditAlreadyApplied != null) {
+                log.info("purchase: credit already applied, not applying another credit");
+            } else {
+                final List<AccountPaymentMethod> accountPaymentMethods = paymentMethodDAO.findByAccountAndPromoAndNotDeleted(accountPlan.getAccount());
+                final Map<Promotion, AccountPaymentMethod> promos = new TreeMap<>();
+                for (AccountPaymentMethod apm : accountPaymentMethods) {
+                    if (!apm.hasPromotion()) {
+                        log.warn("purchase: AccountPaymentMethod "+apm.getUuid()+" has type "+promotional_credit+" but promotion was null, skipping");
+                        continue;
+                    }
+                    final Promotion promo = promotionDAO.findByUuid(apm.getPromotion());
+                    if (promo == null) {
+                        log.warn("purchase: AccountPaymentMethod "+apm.getUuid()+": promotion "+apm.getPromotion()+" does not exist");
+                        continue;
+                    }
+                    if (promo.inactive()) {
+                        log.warn("purchase: AccountPaymentMethod "+apm.getUuid()+": promotion "+apm.getPromotion()+" is not active");
+                        continue;
+                    }
+                    promos.put(promo, apm);
+                }
+                if (!promos.isEmpty()) {
+                    // find the payment cloud associated with the promo, defer to that
+                    final Promotion promoToUse = promos.keySet().iterator().next();
+                    final AccountPaymentMethod apm = promos.get(promoToUse);
+                    final CloudService promoCloud = cloudDAO.findByUuid(promoToUse.getCloud());
+                    if (promoCloud == null) {
+                        return die("purchase: cloud "+promoToUse.getCloud()+" not found for promotion "+promoToUse.getUuid());
+                    }
+                    if (promoCloud.getType() != CloudServiceType.payment) {
+                        return die("purchase: cloud "+promoToUse.getCloud()+" for promotion "+promoToUse.getUuid()+" has wrong type (expected 'payment'): "+promoCloud.getType());
+                    }
+                    log.info("purchase: using Promotion: "+promoToUse.getName());
+                    try {
+                        final PaymentServiceDriver promoPaymentDriver = promoCloud.getPaymentDriver(configuration);
+                        promoPaymentDriver.purchase(accountPlanUuid, apm.getUuid(), billUuid);
+
+                        // verify AccountPayments exists for new payment with promo
+                        final AccountPayment payment = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndCreditAppliedSuccess(accountPlan.getAccount(), accountPlanUuid, billUuid);
+                        if (payment == null) {
+                            log.warn("purchase: applying promotion did not result in an AccountPayment");
+                            return false;
+                        }
+
+                        if (getPaymentMethodType().requiresAuth() && !cancelAuthorization(plan, accountPlanUuid, paymentMethod)) {
+                            log.warn("purchase: error cancelling authorization for accountPlanUuid=" + accountPlanUuid + ", paymentMethod=" + paymentMethod.getUuid());
+                        }
+                        if (payment.getAmount() >= bill.getTotal()) {
+                            log.info("purchase: applying promotion paid full bill, canceled current payment authorization");
+                            return true;
+                        } else {
+                            log.info("purchase: promotion applied credits of " + payment.getAmount() + " on a bill of " + bill.getTotal() + ", using current paymentMethod to pay the remainder; reauthorizing now...");
+                            chargeAmount -= payment.getAmount();
+                            if (getPaymentMethodType().requiresAuth() && !authorize(plan, accountPlanUuid, paymentMethod)) {
+                                log.warn("purchase: after applying credit and cancelling previous charge authorization, new charge authorization failed");
+                                return false;
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.error("purchase: error applying promotion "+promoToUse.getName()+" to accountPlan "+accountPlanUuid+": "+shortError(e));
+                        return false;
+                    }
+                }
+            }
+        }
 
         final String chargeInfo;
         try {
-            chargeInfo = charge(plan, accountPlan, paymentMethod, bill);
+            chargeInfo = charge(plan, accountPlan, paymentMethod, bill, chargeAmount);
         } catch (RuntimeException e) {
             // record failed payment, rethrow
             accountPaymentDAO.create(new AccountPayment()
@@ -107,7 +227,7 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
                     .setAccountPlan(accountPlan.getUuid())
                     .setPaymentMethod(paymentMethod.getUuid())
                     .setBill(bill.getUuid())
-                    .setAmount(bill.getTotal())
+                    .setAmount(chargeAmount)
                     .setCurrency(bill.getCurrency())
                     .setStatus(AccountPaymentStatus.failure)
                     .setError(e)
@@ -124,7 +244,7 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
                                         String chargeInfo) {
         // record the payment
         final AccountPayment accountPayment = accountPaymentDAO.create(new AccountPayment()
-                .setType(AccountPaymentType.payment)
+                .setType(paymentMethod.getPaymentMethodType() == promotional_credit ? AccountPaymentType.credit_applied : AccountPaymentType.payment)
                 .setAccount(accountPlan.getAccount())
                 .setPlan(accountPlan.getPlan())
                 .setAccountPlan(accountPlan.getUuid())
@@ -163,7 +283,7 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         }
 
         // Was the recent bill paid?
-        final AccountPayment successfulPayment = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndSuccess(accountPlan.getAccount(), accountPlanUuid, bill.getUuid());
+        final AccountPayment successfulPayment = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndPaymentSuccess(accountPlan.getAccount(), accountPlanUuid, bill.getUuid());
         if (bill.unpaid()) {
             if (successfulPayment != null) {
                 // should never happen
@@ -194,10 +314,17 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         }
 
         // Determine how much to refund
-        final long refundAmount = plan.getPeriod().calculateRefund(bill, accountPlan);
+        long refundAmount = plan.getPeriod().calculateRefund(bill, accountPlan);
         if (refundAmount == 0) {
             log.warn("refund: no refund to issue, refundAmount == 0");
             return true;
+        }
+
+        // If a promotional credit was applied to the Bill, subtract that from the refundAmount
+        final AccountPayment creditApplied = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndCreditAppliedSuccess(accountPlan.getAccount(), accountPlanUuid, bill.getUuid());
+        if (creditApplied != null) {
+            log.warn("refund: reducing refund amount of "+refundAmount+" by credit applied "+creditApplied.getAmount());
+            refundAmount -= creditApplied.getAmount();
         }
 
         final String refundInfo;

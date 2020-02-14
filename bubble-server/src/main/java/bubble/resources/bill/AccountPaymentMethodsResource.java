@@ -13,15 +13,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.URIUtil.queryParams;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Slf4j
 public class AccountPaymentMethodsResource extends AccountOwnedResource<AccountPaymentMethod, AccountPaymentMethodDAO> {
+
+    public static final String PARAM_ALL = "all";
 
     @Autowired private BubbleConfiguration configuration;
 
@@ -37,7 +41,12 @@ public class AccountPaymentMethodsResource extends AccountOwnedResource<AccountP
     }
 
     @Override protected List<AccountPaymentMethod> list(ContainerRequest ctx) {
-        return super.list(ctx).stream().filter(AccountPaymentMethod::notDeleted).collect(Collectors.toList());
+        final Map<String, String> params = queryParams(ctx.getRequestUri().getQuery());
+        if (params.containsKey(PARAM_ALL) && Boolean.parseBoolean(params.get("all").toLowerCase())) {
+            return super.list(ctx);
+        } else {
+            return super.list(ctx).stream().filter(AccountPaymentMethod::notDeleted).collect(Collectors.toList());
+        }
     }
 
     @Override protected AccountPaymentMethod setReferences(ContainerRequest ctx, Account caller, AccountPaymentMethod request) {

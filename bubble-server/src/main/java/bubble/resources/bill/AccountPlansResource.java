@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.model.cloud.BubbleNetwork.validateHostname;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.string.ValidationRegexes.HOST_PATTERN;
 import static org.cobbzilla.util.string.ValidationRegexes.validateRegexMatches;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -191,54 +192,80 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                     paymentMethod.setAccount(caller.getUuid()).validate(errors, configuration);
                 }
             }
+
+            // apply promo code (and default) promotions
+            Promotion promo = null;
+            if (request.hasPromoCode()) {
+                promo = promotionDAO.findEnabledWithCode(request.getPromoCode());
+                if (promo == null) {
+                    errors.addViolation("err.promoCode.notFound");
+                    promo = null;
+                } else if (promo.inactive()) {
+                    errors.addViolation("err.promoCode.notActive");
+                    promo = null;
+                }
+            } else {
+                for (Promotion p : promotionDAO.findEnabledAndActiveWithNoCode()) {
+                    if (p.active()) { // todo: add JS condition?
+                        promo = p;
+                        break;
+                    }
+                }
+            }
+            if (promo != null) {
+                final CloudService promoCloud = cloudDAO.findByUuid(promo.getCloud());
+                if (promoCloud == null || promoCloud.getType() != CloudServiceType.payment) {
+                    errors.addViolation("err.promoCode.configurationError");
+                } else {
+                    final PaymentServiceDriver promoDriver = promoCloud.getPaymentDriver(configuration);
+                    if (promoDriver.getPaymentMethodType() != PaymentMethodType.promotional_credit
+                            || !(promoDriver instanceof PromotionalPaymentServiceDriver)) {
+                        errors.addViolation("err.promoCode.configurationError");
+                    } else {
+                        final PromotionalPaymentServiceDriver promoPaymentDriver = (PromotionalPaymentServiceDriver) promoDriver;
+                        if (!promoPaymentDriver.applyPromo(promo, caller)) {
+                            errors.addViolation("err.promoCode.notApplied");
+                        }
+                    }
+                }
+            }
+
+            // apply referral promotions
             if (request.hasReferralFrom()) {
                 final Account referredFrom = accountDAO.findByName(request.getReferralFrom());
                 if (referredFrom == null || referredFrom.deleted()) {
                     errors.addViolation("err.referralFrom.invalid");
                 }
                 // check for referral promotion
-                final Promotion referralPromo = promotionDAO.findReferralPromotion();
-                if (referralPromo == null) {
+                final List<Promotion> referralPromos = promotionDAO.findEnabledAndActiveWithReferral();
+                if (empty(referralPromos)) {
                     errors.addViolation("err.referralFrom.unavailable");
                 } else {
-                    final CloudService referralCloud = cloudDAO.findByUuid(referralPromo.getCloud());
-                    if (referralCloud == null || referralCloud.getType() != CloudServiceType.payment) {
-                        errors.addViolation("err.referralFrom.configurationError");
-                    } else {
-                        final PaymentServiceDriver referralDriver = referralCloud.getPaymentDriver(configuration);
-                        if (referralDriver.getPaymentMethodType() != PaymentMethodType.promotional_credit
-                                || !(referralDriver instanceof PromotionalPaymentServiceDriver)) {
-                            errors.addViolation("err.referralFrom.configurationError");
-                        } else {
-                            final PromotionalPaymentServiceDriver promoDriver = (PromotionalPaymentServiceDriver) referralDriver;
-                            promoDriver.applyReferralPromo(referralPromo, caller, referredFrom);
+                    Promotion referralPromo = null;
+                    for (Promotion p : referralPromos) {
+                        if (p.active()) { // todo: add JS condition?
+                            referralPromo = p;
+                            break;
                         }
                     }
-                }
-            }
-            final Promotion promo;
-            if (request.hasPromoCode()) {
-                promo = promotionDAO.findEnabledWithCode(request.getPromoCode());
-                if (promo == null) {
-                    errors.addViolation("err.promoCode.notFound");
-                } else if (promo.inactive()) {
-                    errors.addViolation("err.promoCode.notActive");
-                }
-            } else {
-                promo = promotionDAO.findEnabledWithNoCode();
-            }
-            if (promo != null) {
-                final CloudService referralCloud = cloudDAO.findByUuid(promo.getCloud());
-                if (referralCloud == null || referralCloud.getType() != CloudServiceType.payment) {
-                    errors.addViolation("err.promoCode.configurationError");
-                } else {
-                    final PaymentServiceDriver referralDriver = referralCloud.getPaymentDriver(configuration);
-                    if (referralDriver.getPaymentMethodType() != PaymentMethodType.promotional_credit
-                            || !(referralDriver instanceof PromotionalPaymentServiceDriver)) {
-                        errors.addViolation("err.promoCode.configurationError");
+                    if (referralPromo == null) {
+                        errors.addViolation("err.referralFrom.unavailable");
                     } else {
-                        final PromotionalPaymentServiceDriver promoDriver = (PromotionalPaymentServiceDriver) referralDriver;
-                        promoDriver.applyPromo(promo, caller);
+                        final CloudService referralCloud = cloudDAO.findByUuid(referralPromo.getCloud());
+                        if (referralCloud == null || referralCloud.getType() != CloudServiceType.payment) {
+                            errors.addViolation("err.referralFrom.configurationError");
+                        } else {
+                            final PaymentServiceDriver referralDriver = referralCloud.getPaymentDriver(configuration);
+                            if (referralDriver.getPaymentMethodType() != PaymentMethodType.promotional_credit
+                                    || !(referralDriver instanceof PromotionalPaymentServiceDriver)) {
+                                errors.addViolation("err.referralFrom.configurationError");
+                            } else {
+                                final PromotionalPaymentServiceDriver referralPaymentDriver = (PromotionalPaymentServiceDriver) referralDriver;
+                                if (!referralPaymentDriver.applyReferralPromo(referralPromo, caller, referredFrom)) {
+                                    errors.addViolation("err.referralFrom.notApplied");
+                                }
+                            }
+                        }
                     }
                 }
             }

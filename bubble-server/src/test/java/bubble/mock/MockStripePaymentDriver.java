@@ -38,12 +38,12 @@ public class MockStripePaymentDriver extends StripePaymentDriver {
         }
     }
 
-    @Override protected String charge(BubblePlan plan, AccountPlan accountPlan, AccountPaymentMethod paymentMethod, Bill bill) {
+    @Override protected String charge(BubblePlan plan, AccountPlan accountPlan, AccountPaymentMethod paymentMethod, Bill bill, long chargeAmount) {
         final String err = error.get();
         if (err != null && (err.equals("charge") || err.equals("all"))) {
             throw invalidEx("err.purchase.declined", "mock: error flag="+err);
         } else {
-            return super.charge(plan, accountPlan, paymentMethod, bill);
+            return super.charge(plan, accountPlan, paymentMethod, bill, chargeAmount);
         }
     }
 

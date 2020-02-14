@@ -61,6 +61,12 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
     public boolean hasCloud() { return cloud != null; }
 
     @ECSearchable @ECField(index=30)
+    @ECForeignKey(entity=Promotion.class)
+    @Column(length=UUID_MAXLEN, updatable=false)
+    @Getter @Setter private String promotion;
+    public boolean hasPromotion() { return promotion != null; }
+
+    @ECSearchable @ECField(index=40)
     @Enumerated(EnumType.STRING) @Column(nullable=false, updatable=false, length=20)
     @Getter @Setter private PaymentMethodType paymentMethodType;
     public boolean hasPaymentMethodType() { return paymentMethodType != null; }
@@ -70,14 +76,14 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
     public boolean hasPaymentInfo () { return paymentInfo != null; }
 
     public static final String DEFAULT_MASKED_PAYMENT_INFO = "XXXX-".repeat(3)+"XXXX";
-    @ECSearchable @ECField(index=40, type=EntityFieldType.opaque_string)
+    @ECSearchable @ECField(index=50, type=EntityFieldType.opaque_string)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String maskedPaymentInfo = DEFAULT_MASKED_PAYMENT_INFO;
 
-    @ECSearchable @ECField(index=50)
-    @Column(nullable=false)
-    @Getter @Setter private Boolean deleted = false;
-    public boolean deleted() { return bool(deleted); }
+    @ECSearchable @ECField(index=60)
+    @Getter @Setter private Long deleted = null;
+    public AccountPaymentMethod setDeleted () { return setDeleted(now()); }
+    public boolean deleted() { return deleted != null; }
     public boolean notDeleted() { return !deleted(); }
 
     public ValidationResult validate(ValidationResult result, BubbleConfiguration configuration) {

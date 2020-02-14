@@ -13,6 +13,9 @@ public class BillDAO extends AccountOwnedEntityDAO<Bill> {
     // newest first
     @Override public Order getDefaultSortOrder() { return ORDER_CTIME_DESC; }
 
+    // todo: make this more efficient, use "COUNT"
+    public int countByAccount(String accountUuid) { return findByAccount(accountUuid).size(); }
+
     public List<Bill> findByAccountAndAccountPlan(String accountUuid, String accountPlanUuid) {
         return findByFields("account", accountUuid, "accountPlan", accountPlanUuid);
     }
@@ -28,6 +31,11 @@ public class BillDAO extends AccountOwnedEntityDAO<Bill> {
 
     public List<Bill> findUnpaidByAccount(String accountUuid) {
         return findByFields("account", accountUuid, "status", BillStatus.unpaid);
+    }
+
+    public Bill findOldestUnpaidBillByAccountPlan(String accountPlanUuid) {
+        final List<Bill> unpaid = findUnpaidByAccountPlan(accountPlanUuid);
+        return unpaid.isEmpty() ? null : unpaid.get(unpaid.size()-1);
     }
 
     public Bill createFirstBill(BubblePlan plan, AccountPlan accountPlan) {

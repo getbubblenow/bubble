@@ -22,9 +22,10 @@ public class FreePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
     }
 
     @Override protected String charge(BubblePlan plan,
-                                    AccountPlan accountPlan,
-                                    AccountPaymentMethod paymentMethod,
-                                    Bill bill) {
+                                      AccountPlan accountPlan,
+                                      AccountPaymentMethod paymentMethod,
+                                      Bill bill,
+                                      long chargeAmount) {
         return INFO_FREE;
     }
 

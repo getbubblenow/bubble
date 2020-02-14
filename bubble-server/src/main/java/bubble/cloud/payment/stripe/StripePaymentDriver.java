@@ -286,7 +286,8 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
     @Override protected String charge(BubblePlan plan,
                                       AccountPlan accountPlan,
                                       AccountPaymentMethod paymentMethod,
-                                      Bill bill) {
+                                      Bill bill,
+                                      long chargeAmount) {
         final String accountPlanUuid = accountPlan.getUuid();
         final String paymentMethodUuid = paymentMethod.getUuid();
         final String billUuid = bill.getUuid();
@@ -368,10 +369,10 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
     }
 
     @Override protected String refund(AccountPlan accountPlan,
-                                       AccountPayment payment,
-                                       AccountPaymentMethod paymentMethod,
-                                       Bill bill,
-                                       long refundAmount) {
+                                      AccountPayment payment,
+                                      AccountPaymentMethod paymentMethod,
+                                      Bill bill,
+                                      long refundAmount) {
 
         final String accountPlanUuid = accountPlan.getUuid();
         final String paymentMethodUuid = paymentMethod.getUuid();
