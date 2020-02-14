@@ -224,7 +224,11 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                     } else {
                         final PromotionalPaymentServiceDriver promoPaymentDriver = (PromotionalPaymentServiceDriver) promoDriver;
                         if (!promoPaymentDriver.applyPromo(promo, caller)) {
-                            errors.addViolation("err.promoCode.notApplied");
+                            if (request.hasPromoCode()) {
+                                errors.addViolation("err.promoCode.notApplied");
+                            } else {
+                                log.warn("setReferences: promo not applied: "+promo.getName());
+                            }
                         }
                     }
                 }

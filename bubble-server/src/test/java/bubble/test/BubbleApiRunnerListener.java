@@ -52,6 +52,7 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
             final List<String> parts = splitAndTrim(before.substring(FAST_FORWARD_AND_BILL.length()), " ");
             final long delta = parseDuration(parts.get(0));
             final long sleepTime = parts.size() > 1 ? parseDuration(parts.get(1)) : DEFAULT_BILLING_SLEEP;
+            configuration.autowire(new StripePaymentDriver()).flushCaches();
             incrementSystemTimeOffset(delta);
             configuration.getBean(BillingService.class).processBilling();
             sleep(sleepTime, "waiting for BillingService to complete");

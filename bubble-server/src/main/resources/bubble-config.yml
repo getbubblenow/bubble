@@ -61,7 +61,7 @@ jersey:
 
 redis:
   key: '{{#exists BUBBLE_REDIS_ENCRYPTION_KEY}}{{BUBBLE_REDIS_ENCRYPTION_KEY}}{{else}}{{key_file '.BUBBLE_REDIS_ENCRYPTION_KEY'}}{{/exists}}'
-  prefix: bubble_
+  prefix: bubble
 
 errorApi:
   url: {{ERRBIT_URL}}

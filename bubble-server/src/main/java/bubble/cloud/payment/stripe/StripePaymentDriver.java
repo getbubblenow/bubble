@@ -49,6 +49,12 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
     @Getter(lazy=true) private final RedisService chargeCache = redisService.prefixNamespace(SIMPLE_NAME +"_charge");
     @Getter(lazy=true) private final RedisService refundCache = redisService.prefixNamespace(SIMPLE_NAME +"_refund");
 
+    public void flushCaches () {
+        getAuthCache().flush();
+        getChargeCache().flush();
+        getRefundCache().flush();
+    }
+
     private static final AtomicReference<String> setupDone = new AtomicReference<>(null);
 
     @Override public void postSetup() {

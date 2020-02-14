@@ -61,6 +61,7 @@ public class FirstMonthFreePaymentDriver extends PaymentDriverBase<FirstMonthPay
                                       Bill bill,
                                       long chargeAmount) {
         // mark deleted so it will not be found/applied for future transactions
+        log.info("charge: applying promotion: "+paymentMethod.getPromotion()+" via AccountPaymentMethod: "+paymentMethod.getUuid());
         paymentMethodDAO.update(paymentMethod.setDeleted());
         return FIRST_MONTH_FREE_INFO;
     }

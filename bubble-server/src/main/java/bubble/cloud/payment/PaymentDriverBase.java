@@ -14,8 +14,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static bubble.model.bill.PaymentMethodType.promotional_credit;
-import static org.cobbzilla.util.daemon.ZillaRuntime.*;
-import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_ASC;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
@@ -68,47 +68,6 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         if (bill.getTotal() != purchaseAmount) throw invalidEx("err.purchase.amountMismatch");
         if (!bill.getCurrency().equals(currency)) throw invalidEx("err.purchase.currencyMismatch");
         return bill;
-    }
-
-    protected long applyPromotions(String accountPlanUuid, AccountPaymentMethod paymentMethod, long price) {
-        // cannot apply a promotion to a promotion -- should never happen
-        if (getPaymentMethodType() == promotional_credit) {
-            log.warn("applyPromotions: cannot apply promotions to a promotion");
-            return price;
-        }
-
-        final List<AccountPaymentMethod> promos = paymentMethodDAO.findByAccountAndPromoAndNotDeleted(paymentMethod.getAccount());
-        if (!empty(promos)) {
-            // sort oldest first, this ensures default promotions (like first month free) get applied before referral promotions
-            promos.sort(CTIME_ASC);
-            Promotion selectedPromo = null;
-            for (AccountPaymentMethod apm : promos) {
-                final Promotion promo = promotionDAO.findByUuid(apm.getPromotion());
-                if (promo != null && promo.active()) {
-
-                }
-            }
-        }
-
-
-        final Bill bill = billDAO.findOldestUnpaidBillByAccountPlan(accountPlanUuid);
-        final long creditApplied;
-        if (bill == null) {
-            log.warn("No unpaid bills for account "+paymentMethod.getAccount()+" and accountPlanUuid="+accountPlanUuid+", no credit applied");
-            creditApplied = 0;
-        } else {
-            final AccountPayment promoPayment = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndCreditAppliedSuccess(paymentMethod.getAccount(), accountPlanUuid, bill.getUuid());
-            if (promoPayment != null) {
-                creditApplied = promoPayment.getAmount();
-            } else {
-                creditApplied = 0;
-            }
-        }
-        if (creditApplied >= price) {
-            log.info("getChargeAmount: credit applied ("+creditApplied+") exceeds price "+price+", no charge due");
-            return 0;
-        }
-        return price - creditApplied;
     }
 
     @Override public boolean authorize(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod) {

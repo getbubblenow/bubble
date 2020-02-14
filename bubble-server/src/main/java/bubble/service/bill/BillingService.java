@@ -29,6 +29,7 @@ import java.util.List;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.wizard.server.RestServerBase.reportError;
 
 @Service @Slf4j
 public class BillingService extends SimpleDaemon {
@@ -58,8 +59,9 @@ public class BillingService extends SimpleDaemon {
 
             final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
             if (plan == null) {
-                // todo: this is really bad -- notify admin
-                log.error("billPlan: plan not found ("+accountPlan.getPlan()+") for accountPlan: "+accountPlan.getUuid());
+                final String msg = "process: plan not found (" + accountPlan.getPlan() + ") for accountPlan: " + accountPlan.getUuid();
+                log.error(msg);
+                reportError("BillingService: "+msg);
                 continue;
             }
 
@@ -97,8 +99,9 @@ public class BillingService extends SimpleDaemon {
                     try {
                         networkService.stopNetwork(network);
                     } catch (Exception e) {
-                        // todo: notify admin, requires intervention
-                        log.error("process: error stopping network due to non-payment: "+network.getUuid());
+                        final String msg = "process: error stopping network due to non-payment: " + network.getUuid();
+                        log.error(msg);
+                        reportError("BillingService: "+msg);
                         continue;
                     }
                     messageDAO.create(new AccountMessage()
