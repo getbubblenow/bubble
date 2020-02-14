@@ -6,7 +6,7 @@ import static bubble.ApiConstants.enumFromString;
 
 public enum PaymentMethodType {
 
-    credit, code, free;
+    credit, code, free, promotional_credit;
 
     public boolean requiresClaim() { return this == code; }
     public boolean requiresAuth() { return this == credit; }

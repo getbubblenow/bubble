@@ -103,7 +103,7 @@ public class ApiConstants {
     public static final String CLOUDS_ENDPOINT = "/clouds";
     public static final String ROLES_ENDPOINT = "/roles";
     public static final String PROXY_ENDPOINT = "/p";
-    public static final String DATA_ENDPOINT = "/d";
+    public static final String PROMOTIONS_ENDPOINT = "/promos";
 
     public static final String NOTIFY_ENDPOINT = "/notify";
     public static final String EP_READ_METADATA = "/meta";

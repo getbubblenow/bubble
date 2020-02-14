@@ -2,19 +2,20 @@ package bubble.resources.bill;
 
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.geoLocation.GeoLocation;
+import bubble.cloud.payment.PaymentServiceDriver;
+import bubble.cloud.payment.PromotionalPaymentServiceDriver;
 import bubble.dao.account.AccountSshKeyDAO;
 import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BubblePlanDAO;
+import bubble.dao.bill.PromotionDAO;
 import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.BubbleFootprintDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.AccountSshKey;
-import bubble.model.bill.AccountPaymentMethod;
-import bubble.model.bill.AccountPlan;
-import bubble.model.bill.BubblePlan;
+import bubble.model.bill.*;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleFootprint;
 import bubble.model.cloud.BubbleNetwork;
@@ -57,6 +58,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AuthenticatorService authenticatorService;
     @Autowired private GeoService geoService;
+    @Autowired private PromotionDAO promotionDAO;
 
     public AccountPlansResource(Account account) { super(account); }
 
@@ -187,6 +189,57 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                 }
                 if (paymentMethod != null) {
                     paymentMethod.setAccount(caller.getUuid()).validate(errors, configuration);
+                }
+            }
+            if (request.hasReferralFrom()) {
+                final Account referredFrom = accountDAO.findByName(request.getReferralFrom());
+                if (referredFrom == null || referredFrom.deleted()) {
+                    errors.addViolation("err.referralFrom.invalid");
+                }
+                // check for referral promotion
+                final Promotion referralPromo = promotionDAO.findReferralPromotion();
+                if (referralPromo == null) {
+                    errors.addViolation("err.referralFrom.unavailable");
+                } else {
+                    final CloudService referralCloud = cloudDAO.findByUuid(referralPromo.getCloud());
+                    if (referralCloud == null || referralCloud.getType() != CloudServiceType.payment) {
+                        errors.addViolation("err.referralFrom.configurationError");
+                    } else {
+                        final PaymentServiceDriver referralDriver = referralCloud.getPaymentDriver(configuration);
+                        if (referralDriver.getPaymentMethodType() != PaymentMethodType.promotional_credit
+                                || !(referralDriver instanceof PromotionalPaymentServiceDriver)) {
+                            errors.addViolation("err.referralFrom.configurationError");
+                        } else {
+                            final PromotionalPaymentServiceDriver promoDriver = (PromotionalPaymentServiceDriver) referralDriver;
+                            promoDriver.applyReferralPromo(referralPromo, caller, referredFrom);
+                        }
+                    }
+                }
+            }
+            final Promotion promo;
+            if (request.hasPromoCode()) {
+                promo = promotionDAO.findEnabledWithCode(request.getPromoCode());
+                if (promo == null) {
+                    errors.addViolation("err.promoCode.notFound");
+                } else if (promo.inactive()) {
+                    errors.addViolation("err.promoCode.notActive");
+                }
+            } else {
+                promo = promotionDAO.findEnabledWithNoCode();
+            }
+            if (promo != null) {
+                final CloudService referralCloud = cloudDAO.findByUuid(promo.getCloud());
+                if (referralCloud == null || referralCloud.getType() != CloudServiceType.payment) {
+                    errors.addViolation("err.promoCode.configurationError");
+                } else {
+                    final PaymentServiceDriver referralDriver = referralCloud.getPaymentDriver(configuration);
+                    if (referralDriver.getPaymentMethodType() != PaymentMethodType.promotional_credit
+                            || !(referralDriver instanceof PromotionalPaymentServiceDriver)) {
+                        errors.addViolation("err.promoCode.configurationError");
+                    } else {
+                        final PromotionalPaymentServiceDriver promoDriver = (PromotionalPaymentServiceDriver) referralDriver;
+                        promoDriver.applyPromo(promo, caller);
+                    }
                 }
             }
         }

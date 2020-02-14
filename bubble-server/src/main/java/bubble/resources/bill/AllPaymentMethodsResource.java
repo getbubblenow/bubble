@@ -41,6 +41,7 @@ public class AllPaymentMethodsResource {
         for (CloudService cloud : allPaymentServices) {
             final PaymentMethodType paymentMethodType = cloud.getPaymentDriver(configuration).getPaymentMethodType();
             if (type != null && type != paymentMethodType) continue;
+            if (paymentMethodType == PaymentMethodType.promotional_credit) continue; // do not include promotions
             if (!typesFound.contains(paymentMethodType)) {
                 paymentServices.add(new PaymentService(cloud, paymentMethodType));
                 typesFound.add(paymentMethodType);
@@ -60,6 +61,9 @@ public class AllPaymentMethodsResource {
             cloud = cloudDAO.findFirstByAccountAndTypeAndDriverClass(account.getUuid(), CloudServiceType.payment, id);
         }
         if (cloud == null) return notFound(id);
+        if (cloud.getPaymentDriver(configuration).getPaymentMethodType() == PaymentMethodType.promotional_credit) {
+            return notFound(id);  // cannot find promotions this way
+        }
         return ok(new PaymentService(cloud, cloud.getPaymentDriver(configuration).getPaymentMethodType()));
     }
 

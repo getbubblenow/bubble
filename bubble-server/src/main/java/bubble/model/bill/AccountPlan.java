@@ -60,67 +60,79 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
+    // refers to an Account.uuid, but we do not use a foreign key, so if the referring Account is deleted
+    // then a lookup of the referralFrom will return null, and any unused referral promotion cannot be used
     @ECSearchable @ECField(index=30)
+    @Column(length=UUID_MAXLEN, updatable=false)
+    @Getter @Setter private String referralFrom;
+    public boolean hasReferralFrom () { return !empty(referralFrom); }
+
+    @ECSearchable @ECField(index=40)
+    @Column(length=100, updatable=false)
+    @Getter @Setter private String promoCode;
+    public boolean hasPromoCode () { return !empty(promoCode); }
+
+    @ECSearchable @ECField(index=50)
     @ECForeignKey(entity=BubblePlan.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String plan;
 
-    @ECSearchable @ECField(index=40)
+    @ECSearchable @ECField(index=60)
     @ECForeignKey(entity=AccountPaymentMethod.class)
     @Column(updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String paymentMethod;
 
-    @ECSearchable @ECField(index=50)
+    @ECSearchable @ECField(index=70)
     @ECForeignKey(entity=BubbleDomain.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String domain;
 
-    @ECSearchable @ECField(index=60)
+    @ECSearchable @ECField(index=80)
     @ECForeignKey(entity=BubbleNetwork.class, index=false) @ECIndex(unique=true)
     @Column(length=UUID_MAXLEN)
     @Getter @Setter private String network;
 
-    @ECSearchable @ECField(index=70)
+    @ECSearchable @ECField(index=90)
     @ECForeignKey(entity=AccountSshKey.class)
     @Column(length=UUID_MAXLEN)
     @Getter @Setter private String sshKey;
     public boolean hasSshKey () { return !empty(sshKey); }
 
-    @ECSearchable @ECField(index=80)
+    @ECSearchable @ECField(index=100)
     @Column(nullable=false)
     @Getter @Setter private Boolean enabled = false;
     public boolean enabled() { return bool(enabled); }
     public boolean disabled() { return !enabled(); }
 
-    @ECSearchable(type=EntityFieldType.epoch_time) @ECField(index=90)
+    @ECSearchable(type=EntityFieldType.epoch_time) @ECField(index=110)
     @Column(nullable=false)
     @ECIndex @Getter @Setter private Long nextBill;
 
-    @ECSearchable @ECField(index=100)
+    @ECSearchable @ECField(index=120)
     @Column(nullable=false, length=50)
     @Getter @Setter private String nextBillDate;
     public AccountPlan setNextBillDate() { return setNextBillDate(BILL_START_END_FORMAT.print(getNextBill())); }
 
-    @ECSearchable @ECField(index=110)
+    @ECSearchable @ECField(index=130)
     @ECIndex @Getter @Setter private Long deleted;
     public boolean deleted() { return deleted != null; }
     public boolean notDeleted() { return !deleted(); }
 
-    @ECSearchable @ECField(index=120)
+    @ECSearchable @ECField(index=140)
     @Column(nullable=false)
     @ECIndex @Getter @Setter private Boolean closed = false;
     public boolean closed() { return bool(closed); }
     public boolean notClosed() { return !closed(); }
 
-    @ECSearchable @ECField(index=130, type=EntityFieldType.reference)
+    @ECSearchable @ECField(index=150, type=EntityFieldType.reference)
     @ECIndex(unique=true) @Column(length=UUID_MAXLEN)
     @Getter @Setter private String deletedNetwork;
     public boolean hasDeletedNetwork() { return deletedNetwork != null; }
 
-    @ECSearchable @ECField(index=140) @Column(nullable=false)
+    @ECSearchable @ECField(index=160) @Column(nullable=false)
     @Getter @Setter private Boolean refundIssued = false;
 
-    @ECSearchable @ECField(index=150, type=EntityFieldType.error)
+    @ECSearchable @ECField(index=170, type=EntityFieldType.error)
     @Getter @Setter private String refundError;
 
     // Fields below are used when creating a new plan, to also create the network associated with it
