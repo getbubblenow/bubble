@@ -20,6 +20,8 @@ public interface PaymentServiceDriver extends CloudServiceDriver {
 
     boolean authorize(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod);
 
+    boolean cancelAuthorization(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod);
+
     boolean purchase(String accountPlanUuid, String paymentMethodUuid, String billUuid);
 
     boolean refund(String accountPlanUuid);

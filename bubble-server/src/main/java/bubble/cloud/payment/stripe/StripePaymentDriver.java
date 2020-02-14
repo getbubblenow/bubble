@@ -212,6 +212,77 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
         }
     }
 
+    @Override public boolean cancelAuthorization(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod) {
+        final String paymentMethodUuid = paymentMethod.getUuid();
+
+        final RedisService authCache = getAuthCache();
+        final String authCacheKey = getAuthCacheKey(accountPlanUuid, paymentMethodUuid);
+
+        final Map<String, Object> refundParams = new LinkedHashMap<>();;
+        final Refund refund;
+        final RedisService refundCache = getRefundCache();
+        try {
+            final Long price = plan.getPrice();
+            if (price <= 0) throw invalidEx("err.purchase.priceInvalid");
+
+            final String chargeId = authCache.get(authCacheKey);
+            if (chargeId == null) throw invalidEx("err.purchase.authNotFound");
+
+            final String refunded = refundCache.get(chargeId);
+            if (refunded != null) {
+                // already refunded, nothing to do
+                log.info("refund: already refunded: "+refunded);
+                return true;
+            }
+
+            refundParams.put("charge", chargeId);
+            refundParams.put("amount", price);
+            refund = Refund.create(refundParams);
+            if (refund.getStatus() == null) {
+                final String msg = "cancelAuthorization: no status returned for Charge, accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid;
+                log.error(msg);
+                throw invalidEx("err.refund.unknownError", msg);
+            } else {
+                final String msg;
+                switch (refund.getStatus()) {
+                    case "succeeded":
+                        log.info("cancelAuthorization: authorization of "+price+" successful cancelled");
+                        refundCache.set(chargeId, refund.getId(), EX, REFUND_CACHE_DURATION);
+                        return true;
+
+                    case "pending":
+                        msg = "cancelAuthorization: status='pending' (expected 'succeeded'), accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid;
+                        log.error(msg);
+                        throw invalidEx("err.refund.refundPendingError", msg);
+
+                    default:
+                        msg = "cancelAuthorization: status='"+refund.getStatus()+"' (expected 'succeeded'), accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid;
+                        log.error(msg);
+                        throw invalidEx("err.refund.refundFailedError", msg);
+                }
+            }
+
+        } catch (CardException e) {
+            // The card has been declined
+            final String msg = "cancelAuthorization: CardException for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + ": requestId=" + e.getRequestId() + ", code="+e.getCode()+", declineCode="+e.getDeclineCode()+", error=" + e.toString();
+            log.error(msg);
+            throw invalidEx("err.purchase.cardError", msg);
+
+        } catch (SimpleViolationException e) {
+            throw e;
+
+        } catch (StripeException e) {
+            final String msg = "cancelAuthorization: "+e.getClass().getSimpleName()+" for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + ": requestId=" + e.getRequestId() + ", code="+e.getCode()+", error=" + e.toString();
+            log.error(msg);
+            throw invalidEx("err.purchase.cardProcessingError", msg);
+
+        } catch (Exception e) {
+            final String msg = "cancelAuthorization: "+e.getClass().getSimpleName()+" for accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + ": error=" + e.toString();
+            log.error(msg);
+            throw invalidEx("err.purchase.cardUnknownError", msg);
+        }
+    }
+
     @Override protected String charge(BubblePlan plan,
                                       AccountPlan accountPlan,
                                       AccountPaymentMethod paymentMethod,

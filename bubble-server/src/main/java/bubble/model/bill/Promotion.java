@@ -21,12 +21,12 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
 @ECType(root=true)
-@ECTypeURIs(baseURI=PROMOTIONS_ENDPOINT, listFields={"name", "enabled", "start", "end"})
+@ECTypeURIs(baseURI=PROMOTIONS_ENDPOINT, listFields={"name", "priority", "enabled", "validFrom", "validTo", "code", "referral"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class Promotion extends IdentifiableBase implements NamedEntity, HasPriority {
 
-    public static final String[] UPDATE_FIELDS = {"enabled", "start", "end"};
-    public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "name", "referral");
+    public static final String[] UPDATE_FIELDS = {"priority", "enabled", "validFrom", "validTo"};
+    public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "name", "code", "referral");
 
     public Promotion (Promotion other) { copy(this, other, CREATE_FIELDS); }
 
@@ -55,12 +55,12 @@ public class Promotion extends IdentifiableBase implements NamedEntity, HasPrior
     public boolean enabled () { return enabled == null || enabled; }
 
     @ECSearchable @ECField(index=60)
-    @ECIndex @Getter @Setter private Long start;
-    public boolean hasStarted () { return start == null || start > now(); }
+    @ECIndex @Getter @Setter private Long validFrom;
+    public boolean hasStarted () { return validFrom == null || validFrom > now(); }
 
     @ECSearchable @ECField(index=70)
-    @ECIndex @Getter @Setter private Long end;
-    public boolean hasEnded () { return end != null && end > now(); }
+    @ECIndex @Getter @Setter private Long validTo;
+    public boolean hasEnded () { return validTo != null && validTo > now(); }
 
     public boolean active () { return enabled() && hasStarted() && !hasEnded(); }
     public boolean inactive () { return !active(); }

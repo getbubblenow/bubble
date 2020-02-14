@@ -29,6 +29,15 @@ public class MockStripePaymentDriver extends StripePaymentDriver {
         }
     }
 
+    @Override public boolean cancelAuthorization(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod) {
+        final String err = error.get();
+        if (err != null && (err.equals("cancelAuthorization") || err.equals("all"))) {
+            throw invalidEx("err.purchase.authNotFound", "mock: error flag="+err);
+        } else {
+            return super.cancelAuthorization(plan, accountPlanUuid, paymentMethod);
+        }
+    }
+
     @Override protected String charge(BubblePlan plan, AccountPlan accountPlan, AccountPaymentMethod paymentMethod, Bill bill) {
         final String err = error.get();
         if (err != null && (err.equals("charge") || err.equals("all"))) {

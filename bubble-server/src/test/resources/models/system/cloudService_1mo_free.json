@@ -1,0 +1,10 @@
+[
+  {
+    "name": "FirstMonthFree",
+    "type": "payment",
+    "driverClass": "bubble.cloud.payment.firstMonthFree.FirstMonthFreePaymentDriver",
+    "driverConfig": {},
+    "credentials": {},
+    "template": true
+  }
+]

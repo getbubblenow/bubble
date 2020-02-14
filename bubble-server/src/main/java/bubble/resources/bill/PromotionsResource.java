@@ -11,17 +11,20 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import static bubble.ApiConstants.PROMOTIONS_ENDPOINT;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
-@Slf4j
+@Path(PROMOTIONS_ENDPOINT)
+@Service @Slf4j
 public class PromotionsResource {
 
     @Autowired private CloudServiceDAO cloudDAO;
@@ -35,6 +38,16 @@ public class PromotionsResource {
                                @QueryParam("code") String code) {
         final Account caller = optionalUserPrincipal(ctx);
         return ok(promotionDAO.findEnabledAndNoCodeOrWithCode(code));
+    }
+
+    @GET @Path("/{id}")
+    public Response findPromo(@Context ContainerRequest ctx,
+                              @PathParam("id") String id) {
+        final Account caller = userPrincipal(ctx);
+        if (!caller.admin()) return forbidden();
+        if (!caller.getUuid().equals(getFirstAdmin().getUuid())) return forbidden();
+
+        return ok(promotionDAO.findById(id));
     }
 
     @PUT

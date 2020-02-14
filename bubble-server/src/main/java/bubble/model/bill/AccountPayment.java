@@ -22,7 +22,10 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 @ECType(root=true) @ECTypeCreate(method="DISABLED")
 @ECTypeURIs(listFields={"account", "paymentMethod", "amount"})
 @ECIndexes({
-        @ECIndex(name="account_payment_uniq_bill_type_success", unique=true, of={"bill", "type"}, where="status = 'success'")
+        @ECIndex(name="account_payment_uniq_bill_type_payment_method_success",
+                 unique=true,
+                 of={"bill", "type", "paymentMethod"},
+                 where="status = 'success'")
 })
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class AccountPayment extends IdentifiableBase implements HasAccountNoName {

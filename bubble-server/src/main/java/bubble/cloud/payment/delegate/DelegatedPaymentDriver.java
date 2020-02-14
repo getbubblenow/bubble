@@ -67,6 +67,17 @@ public class DelegatedPaymentDriver extends DelegatedCloudServiceDriverBase impl
         return processResult(result);
     }
 
+    @Override public boolean cancelAuthorization(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod) {
+        final BubbleNode delegate = getDelegateNode();
+        final PaymentResult result = notificationService.notifySync(delegate, payment_driver_cancel_authorization,
+                new PaymentNotification()
+                        .setCloud(cloud.getName())
+                        .setPlanUuid(plan.getUuid())
+                        .setAccountPlanUuid(accountPlanUuid)
+                        .setPaymentMethodUuid(paymentMethod.getUuid()));
+        return processResult(result);
+    }
+
     @Override public boolean purchase(String accountPlanUuid,
                                       String paymentMethodUuid,
                                       String billUuid) {

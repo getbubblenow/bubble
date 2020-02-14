@@ -69,6 +69,9 @@ This code is available under the GNU Affero General Public License, version 3: h
                         <include>bubble.test.AuthTest</include>
                         <include>bubble.test.PaymentTest</include>
                         <include>bubble.test.RecurringBillingTest</include>
+                        <include>bubble.test.FirstMonthFreePromotionTest</include>
+                        <include>bubble.test.ReferralMonthFreePromotionTest</include>
+                        <include>bubble.test.FirstMonthAndReferralMonthPromotionTest</include>
                         <include>bubble.test.DriverTest</include>
                         <include>bubble.test.ProxyTest</include>
                         <include>bubble.test.TrafficAnalyticsTest</include>

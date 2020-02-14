@@ -63,6 +63,10 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         return true;
     }
 
+    @Override public boolean cancelAuthorization(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod) {
+        return true;
+    }
+
     @Override public boolean purchase(String accountPlanUuid, String paymentMethodUuid, String billUuid) {
 
         final AccountPlan accountPlan = getAccountPlan(accountPlanUuid);
@@ -86,6 +90,10 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
             billDAO.update(bill.setStatus(BillStatus.paid));
             return true;
         }
+
+        // If the current PaymentDriver is not for a promotional credit,
+        // then check for AccountPaymentMethods associated with promotional credits
+        // If we have one, use that payment driver instead. It may apply a partial payment.
 
         final String chargeInfo;
         try {

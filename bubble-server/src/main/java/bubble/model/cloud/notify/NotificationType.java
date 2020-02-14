@@ -92,6 +92,7 @@ public enum NotificationType {
     payment_driver_validate (PaymentValidationResult.class),
     payment_driver_claim (PaymentValidationResult.class),
     payment_driver_authorize (PaymentResult.class),
+    payment_driver_cancel_authorization (PaymentResult.class),
     payment_driver_purchase (PaymentResult.class),
     payment_driver_refund (PaymentResult.class),
     payment_driver_response (true);
