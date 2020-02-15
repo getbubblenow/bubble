@@ -8,13 +8,14 @@ import bubble.service.bill.PromotionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 import static bubble.model.bill.AccountPayment.totalPayments;
 import static bubble.model.bill.PaymentMethodType.promotional_credit;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
@@ -70,7 +71,10 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         return bill;
     }
 
-    @Override public boolean authorize(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod) {
+    @Override public boolean authorize(BubblePlan plan,
+                                       String accountPlanUuid,
+                                       String billUuid,
+                                       AccountPaymentMethod paymentMethod) {
         return true;
     }
 
@@ -95,9 +99,10 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
             return true;
         }
 
-        final AccountPayment successfulPayment = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndPaymentSuccess(accountPlan.getAccount(), accountPlanUuid, bill.getUuid());
-        if (successfulPayment != null) {
-            log.warn("purchase: successful AccountPayment found (marking Bill "+bill.getUuid()+" as paid and returning true): " + successfulPayment.getUuid());
+        final List<AccountPayment> successfulPayments = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndPaid(accountPlan.getAccount(), accountPlanUuid, bill.getUuid());
+        final int totalPayments = totalPayments(successfulPayments);
+        if (totalPayments >= bill.getTotal()) {
+            log.warn("purchase: sufficient successful AccountPayments found (marking Bill "+bill.getUuid()+" as paid and returning true): "+json(successfulPayments, COMPACT_MAPPER));
             billDAO.update(bill.setStatus(BillStatus.paid));
             return true;
         }
@@ -105,37 +110,31 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
         // If the current PaymentDriver is not for a promotional credit,
         // then check for AccountPaymentMethods associated with promotional credits
         // If we have one, use that payment driver instead. It may apply a partial payment.
-        long chargeAmount = bill.getTotal();
+        long chargeAmount = bill.getTotal() - totalPayments;
         if (getPaymentMethodType() != promotional_credit) {
-            final List<AccountPayment> creditsApplied = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndCreditAppliedSuccess(accountPlan.getAccount(), accountPlanUuid, billUuid);
-            // sanity check
-            if (totalPayments(creditsApplied) >= bill.getTotal()) {
-                log.warn("purchase: credit already applied sufficient to pay bill.total");
-            } else {
-                final List<AccountPaymentMethod> accountPaymentMethods = paymentMethodDAO.findByAccountAndPromoAndNotDeleted(accountPlan.getAccount());
-                final Map<Promotion, AccountPaymentMethod> promos = new TreeMap<>();
-                for (AccountPaymentMethod apm : accountPaymentMethods) {
-                    if (!apm.hasPromotion()) {
-                        log.warn("purchase: AccountPaymentMethod "+apm.getUuid()+" has type "+promotional_credit+" but promotion was null, skipping");
-                        continue;
-                    }
-                    final Promotion promo = promotionDAO.findByUuid(apm.getPromotion());
-                    if (promo == null) {
-                        log.warn("purchase: AccountPaymentMethod "+apm.getUuid()+": promotion "+apm.getPromotion()+" does not exist");
-                        continue;
-                    }
-                    if (promo.inactive()) {
-                        log.warn("purchase: AccountPaymentMethod "+apm.getUuid()+": promotion "+apm.getPromotion()+" is not active");
-                        continue;
-                    }
-                    promos.put(promo, apm);
+            final List<AccountPaymentMethod> accountPaymentMethods = paymentMethodDAO.findByAccountAndPromoAndNotDeleted(accountPlan.getAccount());
+            final List<Promotion> promos = new ArrayList<>();
+            for (AccountPaymentMethod apm : accountPaymentMethods) {
+                if (!apm.hasPromotion()) {
+                    log.warn("purchase: AccountPaymentMethod "+apm.getUuid()+" has type "+promotional_credit+" but promotion was null, skipping");
+                    continue;
                 }
-                if (!promos.isEmpty()) {
-                    chargeAmount = promoService.usePromotions(plan, accountPlan, bill, paymentMethod, this, promos, chargeAmount);
-                    if (chargeAmount <= 0) {
-                        log.info("purchase: chargeAmount="+chargeAmount+" after applying promotions, done");
-                        return true;
-                    }
+                final Promotion promo = promotionDAO.findByUuid(apm.getPromotion());
+                if (promo == null) {
+                    log.warn("purchase: AccountPaymentMethod "+apm.getUuid()+": promotion "+apm.getPromotion()+" does not exist");
+                    continue;
+                }
+                if (promo.inactive()) {
+                    log.warn("purchase: AccountPaymentMethod "+apm.getUuid()+": promotion "+apm.getPromotion()+" is not active");
+                    continue;
+                }
+                promos.add(promo.setPaymentMethod(apm));
+            }
+            if (!promos.isEmpty()) {
+                chargeAmount = promoService.usePromotions(plan, accountPlan, bill, paymentMethod, this, promos, chargeAmount);
+                if (chargeAmount <= 0) {
+                    log.info("purchase: chargeAmount="+chargeAmount+" after applying promotions, done");
+                    return true;
                 }
             }
         }
@@ -167,24 +166,33 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
                                         AccountPlan accountPlan,
                                         AccountPaymentMethod paymentMethod,
                                         ChargeResult chargeResult) {
+        final String accountUuid = accountPlan.getAccount();
+        final String accountPlanUuid = accountPlan.getUuid();
+        final String billUuid = bill.getUuid();
+
         // record the payment
         final AccountPayment accountPayment = accountPaymentDAO.create(new AccountPayment()
                 .setType(paymentMethod.getPaymentMethodType() == promotional_credit ? AccountPaymentType.credit_applied : AccountPaymentType.payment)
-                .setAccount(accountPlan.getAccount())
+                .setAccount(accountUuid)
                 .setPlan(accountPlan.getPlan())
-                .setAccountPlan(accountPlan.getUuid())
+                .setAccountPlan(accountPlanUuid)
                 .setPaymentMethod(paymentMethod.getUuid())
-                .setBill(bill.getUuid())
+                .setBill(billUuid)
                 .setAmount(chargeResult.getAmountCharged())
                 .setCurrency(bill.getCurrency())
                 .setStatus(AccountPaymentStatus.success)
                 .setInfo(chargeResult.getChargeId()));
 
-        // mark the bill as paid, enable the plan
-        billDAO.update(bill.setStatus(BillStatus.paid));
+        final int total = totalPayments(accountPaymentDAO.findByAccountAndAccountPlanAndBillAndPaid(accountUuid, accountPlanUuid, billUuid));
+        if (total >= bill.getTotal()) {
+            // mark the bill as paid, enable the plan
+            billDAO.update(bill.setStatus(BillStatus.paid));
+        } else if (bill.getStatus() == BillStatus.unpaid) {
+            billDAO.update(bill.setStatus(BillStatus.partial_payment));
+        }
 
         // if there are no unpaid bills, we can (re-)enable the plan
-        final List<Bill> unpaidBills = billDAO.findUnpaidByAccountPlan(accountPlan.getUuid());
+        final List<Bill> unpaidBills = billDAO.findUnpaidByAccountPlan(accountPlanUuid);
         if (unpaidBills.isEmpty()) {
             accountPlanDAO.update(accountPlan.setEnabled(true));
         } else {

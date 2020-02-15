@@ -1,6 +1,7 @@
-package bubble.test;
+package bubble.test.filter;
 
 import bubble.server.BubbleConfiguration;
+import bubble.test.ActivatedBubbleModelTestBase;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.util.RestResponse;
 import org.junit.Test;

@@ -1,5 +1,6 @@
-package bubble.test;
+package bubble.test.system;
 
+import bubble.test.ActivatedBubbleModelTestBase;
 import org.junit.Test;
 
 public class DriverTest extends ActivatedBubbleModelTestBase {

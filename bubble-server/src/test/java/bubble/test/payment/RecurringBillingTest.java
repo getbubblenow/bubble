@@ -1,4 +1,4 @@
-package bubble.test;
+package bubble.test.payment;
 
 import org.junit.Test;
 

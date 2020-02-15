@@ -37,7 +37,10 @@ public class PromotionsResource {
     public Response listPromos(@Context ContainerRequest ctx,
                                @QueryParam("code") String code) {
         final Account caller = optionalUserPrincipal(ctx);
-        return ok(promotionDAO.findEnabledAndActiveWithNoCodeOrWithCode(code));
+        if (caller != null && caller.admin()) {
+            return ok(promotionDAO.findAll());
+        }
+        return ok(promotionDAO.findVisibleAndEnabledAndActiveWithNoCodeOrWithCode(code));
     }
 
     @GET @Path("/{id}")

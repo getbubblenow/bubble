@@ -13,9 +13,7 @@ import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.AccountSshKey;
-import bubble.model.bill.AccountPaymentMethod;
-import bubble.model.bill.AccountPlan;
-import bubble.model.bill.BubblePlan;
+import bubble.model.bill.*;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleFootprint;
 import bubble.model.cloud.BubbleNetwork;
@@ -187,8 +185,14 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                 } else {
                     paymentMethod = request.getPaymentMethodObject();
                 }
-                if (paymentMethod != null) {
-                    paymentMethod.setAccount(caller.getUuid()).validate(errors, configuration);
+                if (paymentMethod != null && plan != null) {
+                    if (paymentMethod.hasPromotion() || paymentMethod.getPaymentMethodType() == PaymentMethodType.promotional_credit) {
+                        // cannot pay with a promo credit, must supply another payment method.
+                        // promos will be applied at purchase, and may result in no charge to this payment method
+                        errors.addViolation("err.purchase.paymentMethodNotFound");
+                    } else {
+                        paymentMethod.setAccount(caller.getUuid()).validate(errors, configuration);
+                    }
                 }
             }
         }

@@ -172,6 +172,7 @@ public class ApiConstants {
     public static final String EP_RESTORE = "/restore";
     public static final String EP_KEYS = "/keys";
     public static final String EP_STATUS = "/status";
+    public static final String EP_PROMOTIONS = PROMOTIONS_ENDPOINT;
     public static final String EP_FORK = "/fork";
 
     public static final String DETECT_ENDPOINT = "/detect";

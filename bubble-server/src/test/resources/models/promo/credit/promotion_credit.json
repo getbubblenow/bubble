@@ -1,0 +1,26 @@
+[
+  {
+    "name": "AccountCredit1",
+    "cloud": "AccountCredit1",
+    "priority": 1,
+    "currency": "USD",
+    "maxValue": 100,
+    "visible": false
+  },
+  {
+    "name": "AccountCredit5",
+    "cloud": "AccountCredit5",
+    "priority": 1,
+    "currency": "USD",
+    "maxValue": 500,
+    "visible": false
+  },
+  {
+    "name": "AccountCreditBill",
+    "cloud": "AccountCreditBill",
+    "priority": 1,
+    "currency": "USD",
+    "maxValue": 10000,
+    "visible": false
+  }
+]

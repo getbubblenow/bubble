@@ -28,6 +28,13 @@ public abstract class PromotionalPaymentDriverBase<T> extends PaymentDriverBase<
         if (!paymentMethod.getCloud().equals(cloud.getUuid()) || paymentMethod.deleted()) {
             return new PaymentValidationResult("err.paymentMethodType.mismatch");
         }
+        if (!paymentMethod.hasPromotion()) {
+            return new PaymentValidationResult("err.paymentMethodType.mismatch");
+        }
+        final Promotion promotion = promotionDAO.findByUuid(paymentMethod.getPromotion());
+        if (promotion == null || promotion.disabled()) {
+            return new PaymentValidationResult("err.paymentMethodType.mismatch");
+        }
         return new PaymentValidationResult(paymentMethod);
     }
 
@@ -53,15 +60,19 @@ public abstract class PromotionalPaymentDriverBase<T> extends PaymentDriverBase<
             return ZERO_CHARGE;
         }
 
+        // mark deleted so it will not be found/applied for future transactions
         log.info("charge: applying promotion: "+paymentMethod.getPromotion()+" via AccountPaymentMethod: "+paymentMethod.getUuid());
         paymentMethodDAO.update(paymentMethod.setDeleted());
 
+        return getChargeResult(chargeAmount, promotion);
+    }
+
+    protected ChargeResult getChargeResult(long chargeAmount, Promotion promotion) {
         // apply up to maximum
         if (chargeAmount > promotion.getMaxValue()) {
             log.warn("charge: chargeAmount ("+chargeAmount+") > promotion.maxValue ("+promotion.getMinValue()+"), returning maxValue");
             return new ChargeResult().setAmountCharged(promotion.getMaxValue()).setChargeId(getClass().getSimpleName());
         } else {
-            // mark deleted so it will not be found/applied for future transactions
             return new ChargeResult().setAmountCharged(chargeAmount).setChargeId(getClass().getSimpleName());
         }
     }

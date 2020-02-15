@@ -1,8 +1,9 @@
-package bubble.test;
+package bubble.test.payment;
 
 import bubble.server.BubbleConfiguration;
 import bubble.service.bill.BillingService;
 import bubble.service.bill.StandardRefundService;
+import bubble.test.ActivatedBubbleModelTestBase;
 import org.cobbzilla.wizard.server.RestServer;
 
 public class PaymentTestBase extends ActivatedBubbleModelTestBase {

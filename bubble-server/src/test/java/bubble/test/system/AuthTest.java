@@ -1,7 +1,8 @@
-package bubble.test;
+package bubble.test.system;
 
 import bubble.dao.account.AccountDAO;
 import bubble.model.account.Account;
+import bubble.test.ActivatedBubbleModelTestBase;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.model.HashedPassword;
 import org.junit.Before;

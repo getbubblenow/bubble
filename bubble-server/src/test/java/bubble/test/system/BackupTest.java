@@ -1,4 +1,4 @@
-package bubble.test;
+package bubble.test.system;
 
 import org.junit.Test;
 

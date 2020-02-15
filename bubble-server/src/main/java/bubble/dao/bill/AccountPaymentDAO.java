@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static org.hibernate.criterion.Restrictions.*;
+
 @Repository
 public class AccountPaymentDAO extends AccountOwnedEntityDAO<AccountPayment> {
 
@@ -27,6 +29,16 @@ public class AccountPaymentDAO extends AccountOwnedEntityDAO<AccountPayment> {
         return findByFields("account", accountUuid, "accountPlan", accountPlanUuid);
     }
 
+    public List<AccountPayment> findByAccountAndAccountPlanAndPaid(String accountUuid, String accountPlanUuid) {
+        return list(criteria().add(and(
+                eq("account", accountUuid),
+                eq("accountPlan", accountPlanUuid),
+                eq("status", AccountPaymentStatus.success),
+                or(eq("type", AccountPaymentType.payment),
+                        eq("type", AccountPaymentType.credit_applied)))));
+
+    }
+
     public List<AccountPayment> findByAccountAndAccountPlanAndBill(String accountUuid, String accountPlanUuid, String billUuid) {
         return findByFields("account", accountUuid, "accountPlan", accountPlanUuid, "bill", billUuid);
     }
@@ -37,6 +49,16 @@ public class AccountPaymentDAO extends AccountOwnedEntityDAO<AccountPayment> {
                 "bill", billUuid,
                 "type", AccountPaymentType.payment,
                 "status", AccountPaymentStatus.success);
+    }
+
+    public List<AccountPayment> findByAccountAndAccountPlanAndBillAndPaid(String accountUuid, String accountPlanUuid, String billUuid) {
+        return list(criteria().add(and(
+                eq("account", accountUuid),
+                eq("accountPlan", accountPlanUuid),
+                eq("bill", billUuid),
+                eq("status", AccountPaymentStatus.success),
+                or(eq("type", AccountPaymentType.payment),
+                        eq("type", AccountPaymentType.credit_applied)))));
     }
 
     public List<AccountPayment> findByAccountAndPaymentSuccess(String accountUuid) {

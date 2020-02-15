@@ -66,18 +66,19 @@ This code is available under the GNU Affero General Public License, version 3: h
                     <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
                     <includes>
                         <include>bubble.test.DbInit</include>
-                        <include>bubble.test.AuthTest</include>
-                        <include>bubble.test.PaymentTest</include>
-                        <include>bubble.test.RecurringBillingTest</include>
-                        <include>bubble.test.FirstMonthFreePromotionTest</include>
-                        <include>bubble.test.ReferralMonthFreePromotionTest</include>
-                        <include>bubble.test.FirstMonthAndReferralMonthPromotionTest</include>
-                        <include>bubble.test.DriverTest</include>
-                        <include>bubble.test.ProxyTest</include>
-                        <include>bubble.test.TrafficAnalyticsTest</include>
-                        <include>bubble.test.BackupTest</include>
-                        <include>bubble.test.NetworkTest</include>
-                        <include>bubble.rule.bblock.spec.BlockListTest</include>
+                        <include>bubble.test.system.AuthTest</include>
+                        <include>bubble.test.payment.PaymentTest</include>
+                        <include>bubble.test.payment.RecurringBillingTest</include>
+                        <include>bubble.test.promo.FirstMonthFreePromotionTest</include>
+                        <include>bubble.test.promo.ReferralMonthFreePromotionTest</include>
+                        <include>bubble.test.promo.AccountCreditTest</include>
+                        <include>bubble.test.promo.FirstMonthAndReferralMonthPromotionTest</include>
+                        <include>bubble.test.system.DriverTest</include>
+                        <include>bubble.test.filter.ProxyTest</include>
+                        <include>bubble.test.filter.TrafficAnalyticsTest</include>
+                        <include>bubble.test.system.BackupTest</include>
+                        <include>bubble.test.system.NetworkTest</include>
+                        <include>bubble.abp.spec.BlockListTest</include>
                     </includes>
                 </configuration>
             </plugin>

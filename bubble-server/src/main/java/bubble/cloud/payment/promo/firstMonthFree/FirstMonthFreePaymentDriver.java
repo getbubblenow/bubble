@@ -8,7 +8,6 @@ import bubble.model.bill.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
@@ -42,7 +41,7 @@ public class FirstMonthFreePaymentDriver extends PromotionalPaymentDriverBase<Pr
     @Override public boolean canUseNow(Bill bill,
                                        Promotion promo,
                                        PromotionalPaymentServiceDriver promoDriver,
-                                       Map<Promotion, AccountPaymentMethod> promos,
+                                       List<Promotion> promos,
                                        Set<Promotion> usable,
                                        AccountPlan accountPlan,
                                        AccountPaymentMethod paymentMethod) {

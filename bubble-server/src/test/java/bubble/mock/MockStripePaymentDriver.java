@@ -21,12 +21,12 @@ public class MockStripePaymentDriver extends StripePaymentDriver {
         Stripe.apiKey = getCredentials().getParam(PARAM_SECRET_API_KEY);;
     }
 
-    @Override public boolean authorize(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod) {
+    @Override public boolean authorize(BubblePlan plan, String accountPlanUuid, String billUuid, AccountPaymentMethod paymentMethod) {
         final String err = error.get();
         if (err != null && (err.equals("authorize") || err.equals("all"))) {
             throw invalidEx("err.purchase.authNotFound", "mock: error flag="+err);
         } else {
-            return super.authorize(plan, accountPlanUuid, paymentMethod);
+            return super.authorize(plan, accountPlanUuid, billUuid, paymentMethod);
         }
     }
 

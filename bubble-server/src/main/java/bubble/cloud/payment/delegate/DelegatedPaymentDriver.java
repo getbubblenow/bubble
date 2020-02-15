@@ -3,10 +3,7 @@ package bubble.cloud.payment.delegate;
 import bubble.cloud.DelegatedCloudServiceDriverBase;
 import bubble.cloud.payment.PaymentServiceDriver;
 import bubble.dao.cloud.CloudServiceDAO;
-import bubble.model.bill.AccountPaymentMethod;
-import bubble.model.bill.AccountPlan;
-import bubble.model.bill.BubblePlan;
-import bubble.model.bill.PaymentMethodType;
+import bubble.model.bill.*;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.notify.payment.*;
@@ -56,13 +53,14 @@ public class DelegatedPaymentDriver extends DelegatedCloudServiceDriverBase impl
                 new PaymentMethodClaimNotification(cloud.getName(), accountPlan));
     }
 
-    @Override public boolean authorize(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod) {
+    @Override public boolean authorize(BubblePlan plan, String accountPlanUuid, String billUuid, AccountPaymentMethod paymentMethod) {
         final BubbleNode delegate = getDelegateNode();
         final PaymentResult result = notificationService.notifySync(delegate, payment_driver_authorize,
                 new PaymentNotification()
                         .setCloud(cloud.getName())
                         .setPlanUuid(plan.getUuid())
                         .setAccountPlanUuid(accountPlanUuid)
+                        .setBillUuid(billUuid)
                         .setPaymentMethodUuid(paymentMethod.getUuid()));
         return processResult(result);
     }

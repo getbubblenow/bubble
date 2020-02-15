@@ -24,6 +24,7 @@ import org.joda.time.Days;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.concurrent.TimeUnit.HOURS;
@@ -167,7 +168,7 @@ public class BillingService extends SimpleDaemon {
         final PaymentServiceDriver paymentDriver = paymentService.getPaymentDriver(configuration);
         for (Bill bill : bills) {
             if (paymentDriver.getPaymentMethodType().requiresAuth()) {
-                if (!paymentDriver.authorize(plan, accountPlan.getUuid(), paymentMethod)) {
+                if (!paymentDriver.authorize(plan, accountPlan.getUuid(), bill.getUuid(), paymentMethod)) {
                     return die("payBills: paymentDriver.authorized returned false for accountPlan="+accountPlan.getUuid()+", paymentMethod="+paymentMethod.getUuid()+", bill="+bill.getUuid());
                 }
             }

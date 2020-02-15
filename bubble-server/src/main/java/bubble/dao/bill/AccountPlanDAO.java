@@ -93,7 +93,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
             if (paymentDriver.getPaymentMethodType().requiresAuth()) {
                 final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
                 accountPlan.beforeCreate(); // ensure uuid exists
-                paymentDriver.authorize(plan, accountPlan.getUuid(), accountPlan.getPaymentMethodObject());
+                paymentDriver.authorize(plan, accountPlan.getUuid(), null, accountPlan.getPaymentMethodObject());
             }
             accountPlan.setPaymentMethod(accountPlan.getPaymentMethodObject().getUuid());
             accountPlan.setNextBill(0L); // bill and payment occurs in postCreate, will update this

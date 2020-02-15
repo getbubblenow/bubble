@@ -8,10 +8,12 @@ import bubble.model.bill.AccountPlan;
 import bubble.model.bill.Bill;
 import bubble.model.bill.Promotion;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 public interface PromotionalPaymentServiceDriver extends PaymentServiceDriver {
+
+    default boolean adminAddPromoToAccount(Promotion promo, Account account) { return false; }
 
     default boolean addPromoToAccount(Promotion promo, Account caller) { return false; }
 
@@ -20,15 +22,16 @@ public interface PromotionalPaymentServiceDriver extends PaymentServiceDriver {
                                               Account referredFrom,
                                               ReferralCode referralCode) { return false; }
 
-    default boolean canUseNow(Bill bill, Promotion promo,
+    default boolean canUseNow(Bill bill,
+                              Promotion promo,
                               PromotionalPaymentServiceDriver promoDriver,
-                              Map<Promotion, AccountPaymentMethod> promos,
+                              List<Promotion> promos,
                               Set<Promotion> usable,
                               AccountPlan accountPlan,
                               AccountPaymentMethod paymentMethod) {
         // do not use if deleted (should never happen)
         // do not use if other higher priority promotions are usable
-        return !paymentMethod.deleted() && usable.isEmpty();
+        return paymentMethod.notDeleted() && usable.isEmpty();
     }
 
 }

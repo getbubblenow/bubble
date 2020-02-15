@@ -7,6 +7,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static org.hibernate.criterion.Restrictions.*;
+
 @Repository
 public class BillDAO extends AccountOwnedEntityDAO<Bill> {
 
@@ -26,11 +28,16 @@ public class BillDAO extends AccountOwnedEntityDAO<Bill> {
     }
 
     public List<Bill> findUnpaidByAccountPlan(String accountPlanUuid) {
-        return findByFields("accountPlan", accountPlanUuid, "status", BillStatus.unpaid);
+        return list(criteria().add(and(
+                eq("accountPlan", accountPlanUuid),
+                ne("status", BillStatus.paid)))
+                .addOrder(ORDER_CTIME_ASC));
     }
 
     public List<Bill> findUnpaidByAccount(String accountUuid) {
-        return findByFields("account", accountUuid, "status", BillStatus.unpaid);
+        return list(criteria().add(and(
+                eq("account", accountUuid),
+                ne("status", BillStatus.paid))));
     }
 
     public Bill findOldestUnpaidBillByAccountPlan(String accountPlanUuid) {

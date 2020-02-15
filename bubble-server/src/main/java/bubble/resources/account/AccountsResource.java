@@ -169,10 +169,18 @@ public class AccountsResource {
         return ok(networkService.listLaunchStatuses(c.account.getUuid()));
     }
 
+    @Path("/{id}"+EP_PROMOTIONS)
+    public AccountPromotionsResource getPromotionsResource(@Context Request req,
+                                          @Context ContainerRequest ctx,
+                                          @PathParam("id") String id) {
+        final AccountContext c = new AccountContext(ctx, id);
+        return configuration.subResource(AccountPromotionsResource.class, c.account);
+    }
+
     @GET @Path("/{id}"+EP_POLICY)
     public Response viewPolicy(@Context ContainerRequest ctx,
                                @PathParam("id") String id) {
-        final AccountContext c = new AccountContext(ctx, id);
+        final AccountsResource.AccountContext c = new AccountsResource.AccountContext(ctx, id);
         final AccountPolicy policy = policyDAO.findSingleByAccount(c.account.getUuid());
         authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
         return policy == null ? notFound(id) : ok(policy.mask());

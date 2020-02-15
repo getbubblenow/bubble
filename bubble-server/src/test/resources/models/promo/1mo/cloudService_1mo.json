@@ -5,6 +5,6 @@
     "driverClass": "bubble.cloud.payment.promo.firstMonthFree.FirstMonthFreePaymentDriver",
     "driverConfig": {},
     "credentials": {},
-    "template": true
+    "template": false
   }
 ]

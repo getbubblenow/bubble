@@ -6,6 +6,7 @@ import bubble.cloud.payment.promo.PromotionalPaymentServiceDriver;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.ReferralCodeDAO;
 import bubble.dao.bill.AccountPaymentDAO;
+import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.PromotionDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
@@ -23,9 +24,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static bubble.model.bill.AccountPayment.totalPayments;
+import static bubble.model.bill.Promotion.SORT_PAYMENT_METHOD_CTIME;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
-import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.RestServerBase.reportError;
 
 @Service @Slf4j
@@ -36,6 +39,7 @@ public class PromotionService {
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private AccountDAO accountDAO;
     @Autowired protected AccountPaymentDAO accountPaymentDAO;
+    @Autowired protected AccountPaymentMethodDAO accountPaymentMethodDAO;
     @Autowired private BubbleConfiguration configuration;
 
     public void applyPromotions(Account account, String code) {
@@ -142,7 +146,7 @@ public class PromotionService {
                               Bill bill,
                               AccountPaymentMethod paymentMethod,
                               PaymentServiceDriver paymentDriver,
-                              Map<Promotion, AccountPaymentMethod> promos,
+                              List<Promotion> promos,
                               long chargeAmount) {
         if (chargeAmount <= 0) {
             log.error("usePromotions: chargeAmount <= 0 : "+chargeAmount);
@@ -155,8 +159,8 @@ public class PromotionService {
 
         // find the payment cloud associated with the promo, defer to that
         final String accountPlanUuid = accountPlan.getUuid();
-        for (Promotion promo : promos.keySet()) {
-            final AccountPaymentMethod apm = promos.get(promo);
+        for (Promotion promo : promos) {
+            final AccountPaymentMethod apm = promo.getPaymentMethod();
             final CloudService promoCloud = cloudDAO.findByUuid(promo.getCloud());
             final String prefix = getClass().getSimpleName()+": ";
             if (promoCloud == null) {
@@ -202,7 +206,7 @@ public class PromotionService {
                     final int promoCredits = totalPayments(creditsByThisPromo);
                     log.info("purchase: promotion applied credits of " + promoCredits + " on a bill of " + bill.getTotal() + ", using current paymentMethod to pay the remainder; reauthorizing now...");
                     chargeAmount -= promoCredits;
-                    if (paymentDriver.getPaymentMethodType().requiresAuth() && !paymentDriver.authorize(plan, accountPlanUuid, paymentMethod)) {
+                    if (paymentDriver.getPaymentMethodType().requiresAuth() && !paymentDriver.authorize(plan, accountPlanUuid, bill.getUuid(), paymentMethod)) {
                         reportError(prefix+"purchase: after applying credit and cancelling previous charge authorization, new charge authorization failed");
                         continue;
                     }
@@ -217,5 +221,51 @@ public class PromotionService {
             }
         }
         return chargeAmount;
+    }
+
+    public List<Promotion> listPromosForAccount(String accountUuid) {
+        final List<Promotion> promos = new ArrayList<>();
+        final List<AccountPaymentMethod> apmList = accountPaymentMethodDAO.findByAccountAndPromoAndNotDeleted(accountUuid);
+        for (AccountPaymentMethod apm : apmList) {
+            final Promotion promo = promotionDAO.findByUuid(apm.getPromotion());
+            if (promo == null) {
+                log.warn("listPromos: promo "+apm.getPromotion()+" not found for apm="+apm.getUuid());
+                continue;
+            }
+            if (!promo.enabled() && !promo.getVisible()) {
+                log.warn("listPromos: promo "+apm.getPromotion()+" is not enabled and not admin-assigned, apm="+apm.getUuid());
+                continue;
+            }
+            promos.add(promo.setPaymentMethod(apm));
+        }
+        promos.sort(SORT_PAYMENT_METHOD_CTIME);
+        return promos;
+    }
+
+    public List<Promotion> adminAddPromotion(Account account, Promotion request) {
+        final Promotion promotion = request.hasUuid()
+                ? promotionDAO.findByUuid(request.getUuid())
+                : promotionDAO.findByName(request.getName());
+        if (promotion == null) throw notFoundEx(json(request));
+        final var promoDriver = (PromotionalPaymentServiceDriver) cloudDAO.findByUuid(promotion.getCloud()).getPaymentDriver(configuration);
+        promoDriver.adminAddPromoToAccount(promotion, account);
+        return listPromosForAccount(account.getUuid());
+    }
+
+    public List<Promotion> adminRemovePromotion(Account account, Promotion request) {
+
+        final Promotion promotion = request.hasUuid()
+                ? promotionDAO.findByUuid(request.getUuid())
+                : promotionDAO.findByName(request.getName());
+        if (promotion == null) throw notFoundEx(json(request));
+
+        final AccountPaymentMethod paymentMethod = accountPaymentMethodDAO.findByAccount(account.getUuid()).stream()
+                .filter(apm -> apm.hasPromotion() && apm.getPromotion().equals(promotion.getUuid()))
+                .findFirst().orElse(null);
+        if (paymentMethod == null) throw notFoundEx(promotion.getName());
+
+        accountPaymentMethodDAO.update(paymentMethod.setDeleted());
+
+        return listPromosForAccount(account.getUuid());
     }
 }

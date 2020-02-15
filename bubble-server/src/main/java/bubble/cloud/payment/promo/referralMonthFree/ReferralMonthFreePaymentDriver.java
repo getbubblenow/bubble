@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
@@ -29,6 +28,11 @@ public class ReferralMonthFreePaymentDriver extends PromotionalPaymentDriverBase
                                                        Account caller,
                                                        Account referredFrom,
                                                        ReferralCode referralCode) {
+        // sanity check
+        if (!promo.enabled()) {
+            log.warn("applyReferralPromo: promo="+promo.getName()+" is not enabled");
+            return false;
+        }
 
         // caller must not have any bills
         final int billCount = billDAO.countByAccount(caller.getUuid());
@@ -92,13 +96,13 @@ public class ReferralMonthFreePaymentDriver extends PromotionalPaymentDriverBase
     @Override public boolean canUseNow(Bill bill,
                                        Promotion promo,
                                        PromotionalPaymentServiceDriver promoDriver,
-                                       Map<Promotion, AccountPaymentMethod> promos,
+                                       List<Promotion> promos,
                                        Set<Promotion> usable,
                                        AccountPlan accountPlan,
                                        AccountPaymentMethod paymentMethod) {
         final String prefix = getClass().getSimpleName() + ".canUseNow: ";
         try {
-            final AccountPaymentMethod promoPaymentMethod = promos.get(promo);
+            final AccountPaymentMethod promoPaymentMethod = promo.getPaymentMethod();
             final String referralCodeUuid = promoPaymentMethod.getPaymentInfo();
             final ReferralCode referralCode = referralCodeDAO.findByUuid(referralCodeUuid);
             if (referralCode == null) {

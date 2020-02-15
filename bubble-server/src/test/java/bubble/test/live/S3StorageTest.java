@@ -7,7 +7,7 @@ import bubble.model.cloud.CloudService;
 import bubble.model.cloud.RekeyRequest;
 import bubble.model.cloud.StorageMetadata;
 import bubble.notify.storage.StorageListing;
-import bubble.test.NetworkTestBase;
+import bubble.test.system.NetworkTestBase;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpHeaders;

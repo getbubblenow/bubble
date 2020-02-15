@@ -6,7 +6,7 @@ import static bubble.ApiConstants.enumFromString;
 
 public enum BillStatus {
 
-    unpaid, paid;
+    unpaid, partial_payment, paid;
 
     @JsonCreator public static BillStatus fromString (String v) { return enumFromString(BillStatus.class, v); }
 

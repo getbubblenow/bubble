@@ -1,5 +1,6 @@
-package bubble.test;
+package bubble.test.filter;
 
+import bubble.test.system.NetworkTestBase;
 import org.junit.Test;
 
 public class TrafficAnalyticsTest extends NetworkTestBase {

@@ -351,6 +351,13 @@ public class MeResource {
         return ok(networkService.listLaunchStatuses(caller.getUuid()));
     }
 
+    @Path(EP_PROMOTIONS)
+    public AccountPromotionsResource getPromotionsResource(@Context Request req,
+                                                           @Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        return configuration.subResource(AccountPromotionsResource.class, caller);
+    }
+
     @Autowired private BubbleModelSetupService modelSetupService;
 
     @POST @Path(EP_MODEL)

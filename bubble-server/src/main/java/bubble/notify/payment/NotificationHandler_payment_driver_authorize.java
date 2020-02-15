@@ -17,7 +17,7 @@ public class NotificationHandler_payment_driver_authorize extends NotificationHa
         final BubblePlan plan = planDAO.findByUuid(paymentNotification.getPlanUuid());
         final AccountPaymentMethod paymentMethod = paymentMethodDAO.findByUuid(paymentNotification.getPaymentMethodUuid());
         final PaymentServiceDriver paymentDriver = paymentService.getPaymentDriver(configuration);
-        return paymentDriver.authorize(plan, paymentNotification.getAccountPlanUuid(), paymentMethod);
+        return paymentDriver.authorize(plan, paymentNotification.getAccountPlanUuid(), paymentNotification.getBillUuid(), paymentMethod);
     }
 
 }

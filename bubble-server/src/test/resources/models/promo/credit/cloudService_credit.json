@@ -1,0 +1,32 @@
+[
+  {
+    "name": "AccountCredit1",
+    "type": "payment",
+    "driverClass": "bubble.cloud.payment.promo.accountCredit.AccountCreditPaymentDriver",
+    "driverConfig": {
+      "creditAmount": 100
+    },
+    "credentials": {},
+    "template": false
+  },
+  {
+    "name": "AccountCredit5",
+    "type": "payment",
+    "driverClass": "bubble.cloud.payment.promo.accountCredit.AccountCreditPaymentDriver",
+    "driverConfig": {
+      "creditAmount": 500
+    },
+    "credentials": {},
+    "template": false
+  },
+  {
+    "name": "AccountCreditBill",
+    "type": "payment",
+    "driverClass": "bubble.cloud.payment.promo.accountCredit.AccountCreditPaymentDriver",
+    "driverConfig": {
+      "fullBill": true
+    },
+    "credentials": {},
+    "template": false
+  }
+]

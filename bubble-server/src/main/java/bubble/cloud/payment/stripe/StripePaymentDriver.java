@@ -11,7 +11,10 @@ import com.stripe.exception.CardException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.*;
 import com.stripe.param.EventListParams;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
@@ -22,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static bubble.model.bill.AccountPayment.totalPayments;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
@@ -146,6 +150,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
 
     @Override public boolean authorize(BubblePlan plan,
                                        String accountPlanUuid,
+                                       String billUuid,
                                        AccountPaymentMethod paymentMethod) {
         final String planUuid = plan.getUuid();
         final String paymentMethodUuid = paymentMethod.getUuid();
@@ -157,7 +162,21 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
             final Long price = plan.getPrice();
             if (price <= 0) throw invalidEx("err.purchase.priceInvalid");
 
-            chargeParams.put("amount", price); // Amount in cents
+            // less any credits already applied
+            final int paidSoFar;
+            if (billUuid == null) {
+                // first payments on plan, find all credits for plan
+                paidSoFar = totalPayments(accountPaymentDAO.findByAccountAndAccountPlanAndPaid(paymentMethod.getAccount(), accountPlanUuid));
+            } else {
+                paidSoFar = totalPayments(accountPaymentDAO.findByAccountAndAccountPlanAndBillAndPaid(paymentMethod.getAccount(), accountPlanUuid, billUuid));
+            }
+            if (paidSoFar >= price) {
+                log.warn("authorized: already paid, no need to authorize");
+                return true;
+            }
+
+            final long chargeAmount = price - paidSoFar;
+            chargeParams.put("amount", chargeAmount); // Amount in cents
             chargeParams.put("currency", plan.getCurrency().toLowerCase());
             chargeParams.put("customer", paymentMethod.getPaymentInfo());
             chargeParams.put("description", plan.chargeDescription());
@@ -165,8 +184,8 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
             chargeParams.put("capture", false);
             final String chargeJson = json(chargeParams, COMPACT_MAPPER);
             final String authCacheKey = getAuthCacheKey(accountPlanUuid, paymentMethodUuid);
-            final String chargeId = authCache.get(authCacheKey);
-            if (chargeId != null) {
+            final String authChargeJson = authCache.get(authCacheKey);
+            if (authChargeJson != null) {
                 log.warn("authorize: already authorized: "+authCacheKey);
                 return true;
             }
@@ -184,7 +203,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
                         } else {
                             log.info("authorize: successful: charge=" + chargeJson);
                         }
-                        authCache.set(authCacheKey, charge.getId(), EX, AUTH_CACHE_DURATION);
+                        authCache.set(authCacheKey, json(new AuthCharge(charge.getId(), chargeAmount)), EX, AUTH_CACHE_DURATION);
                         return true;
 
                     case "pending":
@@ -229,11 +248,9 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
         final Refund refund;
         final RedisService refundCache = getRefundCache();
         try {
-            final Long price = plan.getPrice();
-            if (price <= 0) throw invalidEx("err.purchase.priceInvalid");
-
-            final String chargeId = authCache.get(authCacheKey);
-            if (chargeId == null) throw invalidEx("err.purchase.authNotFound");
+            final AuthCharge authCharge = getAuthCharge(authCache, authCacheKey);
+            final String chargeId = authCharge.getChargeId();
+            final long amount = authCharge.getAmount();
 
             final String refunded = refundCache.get(chargeId);
             if (refunded != null) {
@@ -243,7 +260,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
             }
 
             refundParams.put("charge", chargeId);
-            refundParams.put("amount", price);
+            refundParams.put("amount", amount);
             refund = Refund.create(refundParams);
             if (refund.getStatus() == null) {
                 final String msg = "cancelAuthorization: no status returned for Charge, accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid;
@@ -253,8 +270,9 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
                 final String msg;
                 switch (refund.getStatus()) {
                     case "succeeded":
-                        log.info("cancelAuthorization: authorization of "+price+" successful cancelled");
+                        log.info("cancelAuthorization: authorization of "+amount+" successful cancelled");
                         refundCache.set(chargeId, refund.getId(), EX, REFUND_CACHE_DURATION);
+                        authCache.del(authCacheKey);
                         return true;
 
                     case "pending":
@@ -312,8 +330,13 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
                 return new ChargeResult().setAmountCharged(chargeAmount).setChargeId(charged);
             }
 
-            final String chargeId = authCache.get(authCacheKey);
-            if (chargeId == null) throw invalidEx("err.purchase.authNotFound");
+            final AuthCharge authCharge = getAuthCharge(authCache, authCacheKey);
+            final String chargeId = authCharge.getChargeId();
+            final long amount = authCharge.getAmount();
+            if (amount != chargeAmount) {
+                // should never happen
+                throw invalidEx("err.purchase.chargeAmountMismatch");
+            }
 
             try {
                 charge = Charge.retrieve(chargeId);
@@ -373,6 +396,12 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
             log.error(msg);
             throw invalidEx("err.purchase.cardUnknownError", msg);
         }
+    }
+
+    private AuthCharge getAuthCharge(RedisService authCache, String authCacheKey) {
+        final String authChargeJson = authCache.get(authCacheKey);
+        if (authChargeJson == null) throw invalidEx("err.purchase.authNotFound");
+        return json(authChargeJson, AuthCharge.class);
     }
 
     @Override protected String refund(AccountPlan accountPlan,
@@ -436,5 +465,11 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
             log.error(msg);
             throw invalidEx("err.refund.unknownError", msg);
         }
+    }
+
+    @NoArgsConstructor @AllArgsConstructor
+    private static class AuthCharge {
+        @Getter @Setter private String chargeId;
+        @Getter @Setter private long amount;
     }
 }

@@ -33,12 +33,13 @@ public class PromotionDAO extends AbstractCRUDDAO<Promotion> {
         return filterActive(findByFields("enabled", true, "code", null, "referral", false));
     }
 
-    public List<Promotion> findEnabledAndActiveWithNoCodeOrWithCode(String code) {
+    public List<Promotion> findVisibleAndEnabledAndActiveWithNoCodeOrWithCode(String code) {
         if (empty(code)) {
-            return filterActive(findByFields("enabled", true, "code", null));
+            return filterActive(findByFields("enabled", true, "code", null, "visible", true));
         } else {
             return filterActive(list(criteria().add(and(
                     eq("enabled", true),
+                    eq("visible", true),
                     or(isNull("code"), eq("code", code))))));
         }
     }

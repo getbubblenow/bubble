@@ -1,7 +1,7 @@
 package bubble.test.live;
 
 import bubble.notify.NewNodeNotification;
-import bubble.test.NetworkTestBase;
+import bubble.test.system.NetworkTestBase;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.AfterClass;
