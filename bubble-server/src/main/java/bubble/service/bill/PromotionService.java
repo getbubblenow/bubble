@@ -2,28 +2,31 @@ package bubble.service.bill;
 
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.payment.PaymentServiceDriver;
-import bubble.cloud.payment.PromotionalPaymentServiceDriver;
+import bubble.cloud.payment.promo.PromotionalPaymentServiceDriver;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.ReferralCodeDAO;
+import bubble.dao.bill.AccountPaymentDAO;
 import bubble.dao.bill.PromotionDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.ReferralCode;
-import bubble.model.bill.PaymentMethodType;
-import bubble.model.bill.Promotion;
+import bubble.model.bill.*;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import static bubble.model.bill.AccountPayment.totalPayments;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.cobbzilla.wizard.server.RestServerBase.reportError;
 
 @Service @Slf4j
 public class PromotionService {
@@ -32,6 +35,7 @@ public class PromotionService {
     @Autowired private ReferralCodeDAO referralCodeDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private AccountDAO accountDAO;
+    @Autowired protected AccountPaymentDAO accountPaymentDAO;
     @Autowired private BubbleConfiguration configuration;
 
     public void applyPromotions(Account account, String code) {
@@ -44,7 +48,7 @@ public class PromotionService {
                 // check referral codes
                 // it might be a referral code
                 referralCode = referralCodeDAO.findByName(code);
-                if (referralCode != null && !referralCode.used()) {
+                if (referralCode != null && !referralCode.claimed()) {
                     // is there a referral promotion we can use?
                     for (Promotion p : promotionDAO.findEnabledAndActiveWithReferral()) {
                         promos.add(p);
@@ -80,11 +84,11 @@ public class PromotionService {
                         if (referralCode == null) throw invalidEx("err.promoCode.notFound");
                         final Account referer = accountDAO.findById(referralCode.getAccountUuid());
                         if (referer == null || referer.deleted()) throw invalidEx("err.promoCode.notFound");
-                        if (!promoPaymentDriver.applyReferralPromo(p, account, referer)) {
+                        if (!promoPaymentDriver.addReferralPromoToAccount(p, account, referer, referralCode)) {
                             throw invalidEx("err.promoCode.notApplied");
                         }
                     } else {
-                        if (!promoPaymentDriver.applyPromo(p, account)) {
+                        if (!promoPaymentDriver.addPromoToAccount(p, account)) {
                             if (!empty(code)) {
                                 throw invalidEx("err.promoCode.notApplied");
                             } else {
@@ -103,7 +107,7 @@ public class PromotionService {
             if (promo == null) {
                 // it might be a referral code
                 final ReferralCode referralCode = referralCodeDAO.findByName(code);
-                if (referralCode != null && !referralCode.used()) {
+                if (referralCode != null && !referralCode.claimed()) {
                     final Account referer = accountDAO.findById(referralCode.getAccountUuid());
                     if (referer == null || referer.deleted()) return new ValidationResult("err.promoCode.notFound");
 
@@ -131,5 +135,87 @@ public class PromotionService {
             }
         }
         return null;
+    }
+
+    public long usePromotions(BubblePlan plan,
+                              AccountPlan accountPlan,
+                              Bill bill,
+                              AccountPaymentMethod paymentMethod,
+                              PaymentServiceDriver paymentDriver,
+                              Map<Promotion, AccountPaymentMethod> promos,
+                              long chargeAmount) {
+        if (chargeAmount <= 0) {
+            log.error("usePromotions: chargeAmount <= 0 : "+chargeAmount);
+            return chargeAmount;
+        }
+        if (paymentDriver instanceof PromotionalPaymentServiceDriver) {
+            log.warn("usePromotions: must be used with another payment driver, not a "+paymentDriver.getClass().getName());
+            return chargeAmount;
+        }
+
+        // find the payment cloud associated with the promo, defer to that
+        final String accountPlanUuid = accountPlan.getUuid();
+        for (Promotion promo : promos.keySet()) {
+            final AccountPaymentMethod apm = promos.get(promo);
+            final CloudService promoCloud = cloudDAO.findByUuid(promo.getCloud());
+            final String prefix = getClass().getSimpleName()+": ";
+            if (promoCloud == null) {
+                reportError(prefix+"purchase: cloud "+promo.getCloud()+" not found for promotion "+promo.getUuid());
+                continue;
+            }
+            if (promoCloud.getType() != CloudServiceType.payment) {
+                reportError(prefix+"purchase: cloud "+promo.getCloud()+" for promotion "+promo.getUuid()+" has wrong type (expected 'payment'): "+promoCloud.getType());
+                continue;
+            }
+            log.info("purchase: using Promotion: "+promo.getName());
+            try {
+                final PaymentServiceDriver promoPaymentDriver = promoCloud.getPaymentDriver(configuration);
+                final PromotionalPaymentServiceDriver promoDriver = (PromotionalPaymentServiceDriver) promoPaymentDriver;
+                final Set<Promotion> usable = new HashSet<>();
+                if (!promoDriver.canUseNow(bill, promo, promoDriver, promos, usable, accountPlan, paymentMethod)) {
+                    log.warn("purchase: Promotion "+promo.getName()+" cannot currently be used for accountPlan "+ accountPlanUuid);
+                    continue;
+                }
+                usable.add(promo);
+                promoDriver.purchase(accountPlanUuid, apm.getUuid(), bill.getUuid());
+
+                // verify AccountPayments exists for new payment with promo
+                final List<AccountPayment> creditsApplied = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndCreditAppliedSuccess(accountPlan.getAccount(), accountPlanUuid, bill.getUuid());
+                final List<AccountPayment> creditsByThisPromo = creditsApplied.stream()
+                        .filter(c -> c.getPaymentMethod().equals(apm.getUuid()))
+                        .collect(Collectors.toList());;
+                if (empty(creditsByThisPromo)) {
+                    log.warn("purchase: applying promotion did not result in an AccountPayment to Bill "+bill.getUuid());
+                    continue;
+                }
+                if (creditsByThisPromo.size() > 1) {
+                    reportError("purchase: multiple credits applied by promo: "+promo.getName()+": "+StringUtil.toString(creditsByThisPromo));
+                }
+
+                if (paymentDriver.getPaymentMethodType().requiresAuth() && !paymentDriver.cancelAuthorization(plan, accountPlanUuid, paymentMethod)) {
+                    log.warn("purchase: error cancelling authorization for accountPlanUuid=" + accountPlanUuid + ", paymentMethod=" + paymentMethod.getUuid());
+                }
+                if (totalPayments(creditsApplied) >= bill.getTotal()) {
+                    log.info("purchase: applying promotion paid full bill, canceled current payment authorization");
+                    return 0;
+                } else {
+                    final int promoCredits = totalPayments(creditsByThisPromo);
+                    log.info("purchase: promotion applied credits of " + promoCredits + " on a bill of " + bill.getTotal() + ", using current paymentMethod to pay the remainder; reauthorizing now...");
+                    chargeAmount -= promoCredits;
+                    if (paymentDriver.getPaymentMethodType().requiresAuth() && !paymentDriver.authorize(plan, accountPlanUuid, paymentMethod)) {
+                        reportError(prefix+"purchase: after applying credit and cancelling previous charge authorization, new charge authorization failed");
+                        continue;
+                    }
+                    if (chargeAmount <= 0) {
+                        log.info("purchase: chargeAmount < 0 ("+chargeAmount+") returning 0");
+                        return 0;
+                    }
+                }
+            } catch (Exception e) {
+                reportError(prefix+"purchase: error applying promotion "+promo.getName()+" to accountPlan "+accountPlanUuid+": "+shortError(e));
+                continue;
+            }
+        }
+        return chargeAmount;
     }
 }

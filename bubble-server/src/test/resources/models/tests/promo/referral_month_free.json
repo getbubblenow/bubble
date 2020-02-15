@@ -1,6 +1,6 @@
 [
   {
-    "comment": "create a user account for the referring user",
+    "comment": "root: create a user account for the referring user",
     "request": {
       "uri": "users",
       "method": "put",
@@ -14,7 +14,7 @@
 
   {
     "before": "sleep 22s",  // wait for account objects to be created
-    "comment": "login as referring user",
+    "comment": "referring: login as referring user",
     "request": {
       "session": "new",
       "uri": "auth/login",
@@ -31,7 +31,18 @@
   },
 
   {
-    "comment": "as root, check email inbox for verification message for referring user",
+    "comment": "referring: lookup payment methods, none created yet",
+    "request": {
+      "session": "referringUserSession",
+      "uri": "me/paymentMethods"
+    },
+    "response": {
+      "check": [ {"condition": "json.length === 0"} ]
+    }
+  },
+
+  {
+    "comment": "root: check email inbox for verification message for referring user",
     "request": {
       "session": "rootSession",
       "uri": "debug/inbox/email/test_user_referring_free@example.com?type=request&action=verify&target=account"
@@ -60,7 +71,7 @@
   },
 
   {
-    "comment": "approve email verification request for referring user",
+    "comment": "referring: approve email verification request for referring user",
     "request": {
       "session": "referringUserSession",
       "uri": "auth/approve/{{emailInbox.[0].ctx.confirmationToken}}",
@@ -69,20 +80,23 @@
   },
 
   {
-    "comment": "as referring user, list referral codes, verify all codes are unused",
+    "comment": "referring: list referral codes, verify all codes are unused",
     "request": { "uri": "me/referralCodes" },
     "response": {
       "check": [
         {"condition": "json.length === 3"},
-        {"condition": "json[0].getUsedBy() === null"},
-        {"condition": "json[1].getUsedBy() === null"},
-        {"condition": "json[2].getUsedBy() === null"}
+        {"condition": "json[0].getClaimedBy() === null"},
+        {"condition": "json[1].getClaimedBy() === null"},
+        {"condition": "json[2].getClaimedBy() === null"},
+        {"condition": "json[0].getClaimedByUuid() === null"},
+        {"condition": "json[1].getClaimedByUuid() === null"},
+        {"condition": "json[2].getClaimedByUuid() === null"}
       ]
     }
   },
 
   {
-    "comment": "register an account for the referred user, using one of the referral codes",
+    "comment": "referred: register an account for the referred user, using one of the referral codes",
     "request": {
       "session": "new",
       "uri": "auth/register",
@@ -118,7 +132,7 @@
   },
 
   {
-    "comment": "as referred user, approve email verification request",
+    "comment": "referred: approve email verification request",
     "request": {
       "session": "referredUserSession",
       "uri": "auth/approve/{{emailInbox.[0].ctx.confirmationToken}}",
@@ -127,9 +141,10 @@
   },
 
   {
-    "comment": "as referred user, lookup payment methods, ensure ReferralMonthFree is present",
+    "comment": "referred: lookup payment methods, ensure ReferralMonthFree is present",
     "request": { "uri": "me/paymentMethods" },
     "response": {
+      "store": "referredPaymentMethods",
       "check": [
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPaymentMethodType().name() === 'promotional_credit'"},
@@ -139,12 +154,13 @@
   },
 
   {
-    "comment": "as referring user, lookup payment methods, ensure ReferralMonthFree is present",
+    "comment": "referring: lookup payment methods, ensure ReferralMonthFree is present",
     "request": {
       "session": "referringUserSession",
       "uri": "me/paymentMethods"
     },
     "response": {
+      "store": "referringPaymentMethods",
       "check": [
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPaymentMethodType().name() === 'promotional_credit'"},
@@ -154,23 +170,436 @@
   },
 
   {
-    "comment": "get plans",
-    "request": { "uri": "plans" },
+    "comment": "referring: list referral codes, verify one code has been used",
+    "request": { "uri": "me/referralCodes?show=avail" },
     "response": {
-      "store": "plans",
-      "check": [{"condition": "json.length >= 1"}]
+      "check": [
+        {"condition": "json.length === 2"},
+        {"condition": "json[0].getClaimedBy() === null"},
+        {"condition": "json[1].getClaimedBy() === null"},
+        {"condition": "json[0].getClaimedByUuid() === null"},
+        {"condition": "json[1].getClaimedByUuid() === null"}
+      ]
     }
   },
 
   {
-    "comment": "get payment methods, tokenize a credit card",
-    "request": { "uri": "paymentMethods" },
+    "comment": "referring: list all referral codes, verify code was used by referred user",
+    "request": { "uri": "me/referralCodes?show=claimed" },
     "response": {
-      "store": "paymentMethods"
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getClaimedBy() === referredUser.getUuid()"},
+        {"condition": "json[0].getClaimedByUuid() === referredUser.getUuid()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "referring: get plans, tokenize a credit card",
+    "request": { "uri": "plans" },
+    "response": {
+      "store": "plans",
+      "check": [{"condition": "json.length >= 1"}]
     },
     "after": "stripe_tokenize_card"
-  }
+  },
 
-  // start a network. we don't get the first month free because the user on the other end of
-  // the ReferralMonthFree has not made any payments
+  {
+    "comment": "referring: add plan, using 'credit' payment method, does NOT apply referral free promo since referred user has not paid us yet",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "{{plans.[0].name}}",
+        "footprint": "US",
+        "paymentMethodObject": {
+          "paymentMethodType": "credit",
+          "paymentInfo": "{{stripeToken}}"
+        }
+      }
+    },
+    "response": {
+      "store": "referringAccountPlan"
+    }
+  },
+
+  {
+    "before": "sleep 15s",
+    "comment": "referring: start the network",
+    "request": {
+      "uri": "me/networks/{{referringAccountPlan.network}}/actions/start?cloud=MockCompute&region=nyc_mock",
+      "method": "post"
+    },
+    "response": {
+      "store": "newNetworkNotification"
+    }
+  },
+
+  {
+    "before": "sleep 5s",
+    "comment": "referring: verify the network is running",
+    "request": { "uri": "me/networks/{{referringAccountPlan.network}}" },
+    "response": {
+      "check": [ {"condition": "json.getState().name() == 'running'"} ]
+    }
+  },
+
+  {
+    "comment": "referring: list all account payment methods, should be two, neither deleted",
+    "request": { "uri": "me/paymentMethods?all=true" },
+    "response": {
+      "store": "referringPaymentMethods",
+      "check": [
+        {"condition": "json.length === 2"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'credit'; }) !== null"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'credit'; }).deleted() === false"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }) !== null"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }).deleted() === false"}
+      ]
+    }
+  },
+
+  {
+    "comment": "referring: verify account plans, should be one, verify enabled",
+    "request": { "uri": "me/plans" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getName() === referringAccountPlan.getName()"},
+        {"condition": "json[0].enabled()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "referring: verify account plan payment info",
+    "request": { "uri": "me/plans/{{referringAccountPlan.uuid}}/paymentMethod" },
+    "response": {
+      "store": "referringCreditPaymentMethod",
+      "check": [
+        {"condition": "json.getPaymentMethodType().name() === 'credit'"},
+        {"condition": "json.getMaskedPaymentInfo() == 'XXXX-XXXX-XXXX-4242'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify bill exists and was paid",
+    "request": { "uri": "me/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify bill exists via plan and is paid",
+    "request": { "uri": "me/plans/{{referringAccountPlan.uuid}}/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify payment exists and is successful via credit card (did not use promotion)",
+    "request": { "uri": "me/payments" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'success'"},
+        {"condition": "json[0].getType().name() === 'payment'"},
+        {"condition": "json[0].getPaymentMethod() === referringCreditPaymentMethod.getUuid()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "verify payment exists via plan and is successful via credit card",
+    "request": { "uri": "me/plans/{{referringAccountPlan.uuid}}/payments" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'success'"},
+        {"condition": "json[0].getType().name() === 'payment'"},
+        {"condition": "json[0].getPaymentMethod() === referringCreditPaymentMethod.getUuid()"},
+        {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getBillObject().getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
+        {"condition": "json[0].getBillObject().getQuantity() === 1"},
+        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  // Now we do all the same steps as the referred user, and the referral credit is used
+  {
+    "comment": "referred: get payment methods, tokenize a credit card",
+    "request": {
+      "session": "referredUserSession",
+      "uri": "paymentMethods"
+    },
+    "response": {
+      "store": "referredPaymentMethods"
+    },
+    "after": "stripe_tokenize_card"
+  },
+
+  {
+    "comment": "referred: add plan, using 'credit' payment method, does NOT apply referral free promo since referred user has not paid us yet",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "{{plans.[0].name}}",
+        "footprint": "US",
+        "paymentMethodObject": {
+          "paymentMethodType": "credit",
+          "paymentInfo": "{{stripeToken}}"
+        }
+      }
+    },
+    "response": {
+      "store": "referredAccountPlan"
+    }
+  },
+
+  {
+    "before": "sleep 15s",
+    "comment": "referred: start the network",
+    "request": {
+      "uri": "me/networks/{{referredAccountPlan.network}}/actions/start?cloud=MockCompute&region=nyc_mock",
+      "method": "post"
+    },
+    "response": {
+      "store": "newNetworkNotification"
+    }
+  },
+
+  {
+    "before": "sleep 5s",
+    "comment": "referred: verify the network is running",
+    "request": { "uri": "me/networks/{{referredAccountPlan.network}}" },
+    "response": {
+      "check": [ {"condition": "json.getState().name() == 'running'"} ]
+    }
+  },
+
+  {
+    "comment": "referred: list all account payment methods, should be two, with the credit used up",
+    "request": { "uri": "me/paymentMethods?all=true" },
+    "response": {
+      "store": "referredPaymentMethods",
+      "check": [
+        {"condition": "json.length === 2"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'credit'; }) !== null"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'credit'; }).deleted() === false"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }) !== null"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }).deleted() === true"}
+      ]
+    }
+  },
+
+  {
+    "comment": "referred: verify account plans, should be one, verify enabled",
+    "request": { "uri": "me/plans" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getName() === referredAccountPlan.getName()"},
+        {"condition": "json[0].enabled()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "referred: verify account plan payment info",
+    "request": { "uri": "me/plans/{{referredAccountPlan.uuid}}/paymentMethod" },
+    "response": {
+      "store": "referredCreditPaymentMethod",
+      "check": [
+        {"condition": "json.getPaymentMethodType().name() === 'credit'"},
+        {"condition": "json.getMaskedPaymentInfo() == 'XXXX-XXXX-XXXX-4242'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "referred: verify bill exists and was paid",
+    "request": { "uri": "me/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "referred: verify bill exists via plan and is paid",
+    "request": { "uri": "me/plans/{{referredAccountPlan.uuid}}/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "referred: verify payment exists and is successful and used the referral promotion",
+    "request": { "uri": "me/payments" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'success'"},
+        {"condition": "json[0].getType().name() === 'credit_applied'"},
+        {"condition": "json[0].getPaymentMethod() === _find(referredPaymentMethods, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }).getUuid()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "referred: verify payment exists via plan and is successful and used the referral promotion",
+    "request": { "uri": "me/plans/{{referredAccountPlan.uuid}}/payments" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'success'"},
+        {"condition": "json[0].getType().name() === 'credit_applied'"},
+        {"condition": "json[0].getPaymentMethod() === _find(referredPaymentMethods, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }).getUuid()"},
+        {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getBillObject().getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
+        {"condition": "json[0].getBillObject().getQuantity() === 1"},
+        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "before": "fast_forward_and_bill 31d 30s",
+    "comment": "referred: fast-forward +31 days, verify a new bill exists for referred accountPlan",
+    "request": { "uri": "me/plans/{{referredAccountPlan.uuid}}/bills" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 2"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
+        {"condition": "json[0].getQuantity() === 1"},
+        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "referred: Verify a successful payment for accountPlan has been made via credit card",
+    "request": { "uri": "me/plans/{{referredAccountPlan.uuid}}/payments" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 2"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'success'"},
+        {"condition": "json[0].getType().name() === 'payment'"},
+        {"condition": "json[0].getPaymentMethod() === _find(referredPaymentMethods, function(p) { return p.getPaymentMethodType().name() === 'credit'; }).getUuid()"},
+        {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getBillObject().getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
+        {"condition": "json[0].getBillObject().getQuantity() === 1"},
+        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "referring: Verify a successful payment for referringAccountPlan has been made via the referral credit",
+    "request": {
+      "session": "referringUserSession",
+      "uri": "me/plans/{{referringAccountPlan.uuid}}/payments"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length === 2"},
+        {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
+        {"condition": "json[0].getAmount() === {{plans.[0].price}}"},
+        {"condition": "json[0].getStatus().name() === 'success'"},
+        {"condition": "json[0].getType().name() === 'credit_applied'"},
+        {"condition": "json[0].getPaymentMethod() === _find(referringPaymentMethods, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }).getUuid()"},
+        {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
+        {"condition": "json[0].getBillObject().getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
+        {"condition": "json[0].getBillObject().getQuantity() === 1"},
+        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
+        {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "referring: list all account payment methods, should be two, with the promotion deleted",
+    "request": { "uri": "me/paymentMethods?all=true" },
+    "response": {
+      "store": "referringPaymentMethods",
+      "check": [
+        {"condition": "json.length === 2"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'credit'; }) !== null"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'credit'; }).deleted() === false"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }) !== null"},
+        {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }).deleted() === true"}
+      ]
+    }
+  }
 ]

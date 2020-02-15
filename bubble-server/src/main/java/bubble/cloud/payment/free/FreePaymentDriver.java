@@ -1,9 +1,10 @@
 package bubble.cloud.payment.free;
 
+import bubble.cloud.payment.ChargeResult;
 import bubble.cloud.payment.DefaultPaymentDriverConfig;
 import bubble.cloud.payment.PaymentDriverBase;
-import bubble.notify.payment.PaymentValidationResult;
 import bubble.model.bill.*;
+import bubble.notify.payment.PaymentValidationResult;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -21,12 +22,12 @@ public class FreePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
         return new PaymentValidationResult(paymentMethod.setMaskedPaymentInfo(FREE_MASK));
     }
 
-    @Override protected String charge(BubblePlan plan,
-                                      AccountPlan accountPlan,
-                                      AccountPaymentMethod paymentMethod,
-                                      Bill bill,
-                                      long chargeAmount) {
-        return INFO_FREE;
+    @Override protected ChargeResult charge(BubblePlan plan,
+                                            AccountPlan accountPlan,
+                                            AccountPaymentMethod paymentMethod,
+                                            Bill bill,
+                                            long chargeAmount) {
+        return new ChargeResult().setAmountCharged(chargeAmount).setChargeId(INFO_FREE);
     }
 
     @Override protected String refund(AccountPlan accountPlan,

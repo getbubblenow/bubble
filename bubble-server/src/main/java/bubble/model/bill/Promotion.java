@@ -85,6 +85,10 @@ public class Promotion extends IdentifiableBase
 
     @ECSearchable @ECField(index=100)
     @ECIndex @Column(nullable=false, updatable=false)
+    @Getter @Setter private Integer minValue = 5;
+
+    @ECSearchable @ECField(index=110)
+    @ECIndex @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer maxValue;
 
 }

@@ -1,5 +1,6 @@
 package bubble.cloud.payment.stripe;
 
+import bubble.cloud.payment.ChargeResult;
 import bubble.cloud.payment.PaymentDriverBase;
 import bubble.dao.account.AccountPolicyDAO;
 import bubble.model.account.AccountPolicy;
@@ -289,11 +290,11 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
         }
     }
 
-    @Override protected String charge(BubblePlan plan,
-                                      AccountPlan accountPlan,
-                                      AccountPaymentMethod paymentMethod,
-                                      Bill bill,
-                                      long chargeAmount) {
+    @Override protected ChargeResult charge(BubblePlan plan,
+                                            AccountPlan accountPlan,
+                                            AccountPaymentMethod paymentMethod,
+                                            Bill bill,
+                                            long chargeAmount) {
         final String accountPlanUuid = accountPlan.getUuid();
         final String paymentMethodUuid = paymentMethod.getUuid();
         final String billUuid = bill.getUuid();
@@ -308,7 +309,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
             if (charged != null) {
                 // already charged, nothing to do
                 log.info("charge: already charged: "+charged);
-                return charged;
+                return new ChargeResult().setAmountCharged(chargeAmount).setChargeId(charged);
             }
 
             final String chargeId = authCache.get(authCacheKey);
@@ -339,7 +340,7 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
                         log.info("charge: charge successful: "+authCacheKey);
                         chargeCache.set(billUuid, captured.getId(), EX, CHARGE_CACHE_DURATION);
                         authCache.del(authCacheKey);
-                        return captured.getId();
+                        return new ChargeResult().setAmountCharged(chargeAmount).setChargeId(captured.getId());
 
                     case "pending":
                         msg = "charge: status='pending' (expected 'succeeded'), accountPlan=" + accountPlanUuid + " with paymentMethod=" + paymentMethodUuid + " and bill=" + billUuid;

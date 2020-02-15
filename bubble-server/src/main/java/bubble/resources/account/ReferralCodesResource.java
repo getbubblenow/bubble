@@ -9,11 +9,28 @@ import org.glassfish.jersey.server.ContainerRequest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.http.URIUtil.queryParams;
 
 @Slf4j
 public class ReferralCodesResource extends AccountOwnedResource<ReferralCode, ReferralCodeDAO> {
 
+    private static final String PARAM_REFERRAL_CODE_VIEW = "show";
+
     public ReferralCodesResource(Account account) { super(account); }
+
+    @Override protected List<ReferralCode> list(Request req, ContainerRequest ctx) {
+        final Map<String, String> params = queryParams(ctx.getRequestUri().getQuery());
+        if (empty(params) || !params.containsKey(PARAM_REFERRAL_CODE_VIEW)) return super.list(req, ctx);
+
+        switch (params.get(PARAM_REFERRAL_CODE_VIEW)) {
+            case "all":   default:          return super.list(req, ctx);
+            case "used":  case "claimed":   return getDao().findByAccountAndClaimed(getAccountUuid(ctx));
+            case "avail": case "available": return getDao().findByAccountAndNotClaimed(getAccountUuid(ctx));
+        }
+    }
 
     @Override protected boolean canCreate(Request req, ContainerRequest ctx, Account caller, ReferralCode request) {
         return caller.admin();
@@ -25,8 +42,8 @@ public class ReferralCodesResource extends AccountOwnedResource<ReferralCode, Re
             createdCodes.add((ReferralCode) super.daoCreate(new ReferralCode()
                     .setAccount(toCreate.getAccount())
                     .setAccountUuid(toCreate.getAccount())
-                    .setUsedBy(null)
-                    .setUsedByUuid(null)
+                    .setClaimedBy(null)
+                    .setClaimedByUuid(null)
                     .setName()));
         }
         return createdCodes;

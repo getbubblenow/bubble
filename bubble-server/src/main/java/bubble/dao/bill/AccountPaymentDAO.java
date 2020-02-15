@@ -39,8 +39,14 @@ public class AccountPaymentDAO extends AccountOwnedEntityDAO<AccountPayment> {
                 "status", AccountPaymentStatus.success);
     }
 
-    public AccountPayment findByAccountAndAccountPlanAndBillAndCreditAppliedSuccess(String accountUuid, String accountPlanUuid, String billUuid) {
-        return findByUniqueFields("account", accountUuid,
+    public List<AccountPayment> findByAccountAndPaymentSuccess(String accountUuid) {
+        return findByFields("account", accountUuid,
+                "type", AccountPaymentType.payment,
+                "status", AccountPaymentStatus.success);
+    }
+
+    public List<AccountPayment> findByAccountAndAccountPlanAndBillAndCreditAppliedSuccess(String accountUuid, String accountPlanUuid, String billUuid) {
+        return findByFields("account", accountUuid,
                 "accountPlan", accountPlanUuid,
                 "bill", billUuid,
                 "type", AccountPaymentType.credit_applied,

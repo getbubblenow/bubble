@@ -15,17 +15,19 @@ import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
+import java.util.List;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.errorString;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 
 @ECType(root=true) @ECTypeCreate(method="DISABLED")
 @ECTypeURIs(listFields={"account", "paymentMethod", "amount"})
 @ECIndexes({
-        @ECIndex(name="account_payment_uniq_bill_type_payment_method_success",
+        @ECIndex(name="account_payment_uniq_bill_success_payment",
                  unique=true,
                  of={"bill", "type"},
-                 where="status = 'success'")
+                 where="status = 'success' AND type = 'payment'")
 })
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class AccountPayment extends IdentifiableBase implements HasAccountNoName {
@@ -67,6 +69,8 @@ public class AccountPayment extends IdentifiableBase implements HasAccountNoName
     @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
     @Getter @Setter private Long amount = 0L;
 
+    @JsonIgnore @Transient public int getAmountInt() { return (int) (amount == null ? 0 : amount); }
+
     @ECSearchable @ECField(index=90)
     @ECIndex @Column(nullable=false, updatable=false, length=10)
     @Getter @Setter private String currency;
@@ -95,4 +99,7 @@ public class AccountPayment extends IdentifiableBase implements HasAccountNoName
 
     @Transient @Getter @Setter private transient Bill billObject;
 
+    public static int totalPayments (List<AccountPayment> payments) {
+        return empty(payments) ? 0 : payments.stream().mapToInt(AccountPayment::getAmountInt).sum();
+    }
 }

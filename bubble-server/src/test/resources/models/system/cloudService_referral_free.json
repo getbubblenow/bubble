@@ -2,7 +2,7 @@
   {
     "name": "ReferralMonthFree",
     "type": "payment",
-    "driverClass": "bubble.cloud.payment.referralMonthFree.ReferralMonthFreePaymentDriver",
+    "driverClass": "bubble.cloud.payment.promo.referralMonthFree.ReferralMonthFreePaymentDriver",
     "driverConfig": {},
     "credentials": {},
     "template": true

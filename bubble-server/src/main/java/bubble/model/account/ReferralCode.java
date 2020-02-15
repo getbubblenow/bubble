@@ -43,12 +43,12 @@ public class ReferralCode extends IdentifiableBase implements HasAccount {
     @ECSearchable @ECField(index=30)
     @ECForeignKey(index=false, entity=Account.class) @ECIndex(unique=true)
     @Column(length=UUID_MAXLEN)
-    @Getter @Setter private String usedBy;
+    @Getter @Setter private String claimedBy;
 
     @ECSearchable @ECField(index=40) @ECIndex(unique=true)
     @Column(length=UUID_MAXLEN)
-    @Getter @Setter private String usedByUuid;
-    public boolean used() { return !empty(usedByUuid); }
+    @Getter @Setter private String claimedByUuid;
+    public boolean claimed() { return !empty(claimedByUuid); }
 
     @Transient @Getter @Setter private transient int count = 1;
 

@@ -1,5 +1,6 @@
 package bubble.cloud.payment.code;
 
+import bubble.cloud.payment.ChargeResult;
 import bubble.cloud.payment.DefaultPaymentDriverConfig;
 import bubble.cloud.payment.PaymentDriverBase;
 import bubble.notify.payment.PaymentValidationResult;
@@ -136,11 +137,11 @@ public class CodePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
         return null;
     }
 
-    @Override protected String charge(BubblePlan plan,
-                                      AccountPlan accountPlan,
-                                      AccountPaymentMethod paymentMethod,
-                                      Bill bill,
-                                      long chargeAmount) {
+    @Override protected ChargeResult charge(BubblePlan plan,
+                                            AccountPlan accountPlan,
+                                            AccountPaymentMethod paymentMethod,
+                                            Bill bill,
+                                            long chargeAmount) {
         // is the token valid?
         final CloudServiceData csData = dataDAO.findByCloudAndKey(cloud.getUuid(), paymentMethod.getPaymentInfo());
         if (csData == null) throw invalidEx("err.purchase.tokenNotFound");
@@ -155,7 +156,7 @@ public class CodePaymentDriver extends PaymentDriverBase<DefaultPaymentDriverCon
         if (!cpToken.hasAccountPlan(accountPlan.getUuid())) {
             throw invalidEx("err.purchase.tokenInvalid");
         }
-        return cpToken.getToken();
+        return new ChargeResult().setAmountCharged(chargeAmount).setChargeId(cpToken.getToken());
     }
 
     public static final String INFO_CODE = "code";

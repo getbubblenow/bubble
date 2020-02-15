@@ -288,7 +288,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
 
         // for referral a code we used, set usedBy to null, leave usedByUuid in place
         final ReferralCode usedCode = referralCodeDAO.findCodeUsedBy(uuid);
-        if (usedCode != null) referralCodeDAO.update(usedCode.setUsedBy(null));
+        if (usedCode != null) referralCodeDAO.update(usedCode.setClaimedBy(null));
 
         log.info("delete ("+Thread.currentThread().getName()+"): starting to delete account-dependent objects");
         configuration.deleteDependencies(account);

@@ -192,7 +192,7 @@
   },
 
   {
-    "comment": "verify payment exists via plan and is successful",
+    "comment": "verify payment exists via plan and is successful via promo credit",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/payments" },
     "response": {
       "check": [

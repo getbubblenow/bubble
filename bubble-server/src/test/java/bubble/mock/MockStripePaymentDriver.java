@@ -1,5 +1,6 @@
 package bubble.mock;
 
+import bubble.cloud.payment.ChargeResult;
 import bubble.cloud.payment.stripe.StripePaymentDriver;
 import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.AccountPlan;
@@ -38,7 +39,7 @@ public class MockStripePaymentDriver extends StripePaymentDriver {
         }
     }
 
-    @Override protected String charge(BubblePlan plan, AccountPlan accountPlan, AccountPaymentMethod paymentMethod, Bill bill, long chargeAmount) {
+    @Override protected ChargeResult charge(BubblePlan plan, AccountPlan accountPlan, AccountPaymentMethod paymentMethod, Bill bill, long chargeAmount) {
         final String err = error.get();
         if (err != null && (err.equals("charge") || err.equals("all"))) {
             throw invalidEx("err.purchase.declined", "mock: error flag="+err);
