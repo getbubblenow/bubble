@@ -17,6 +17,7 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.account.AuthenticatorService;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.backup.RestoreService;
+import bubble.service.bill.PromotionService;
 import bubble.service.boot.ActivationService;
 import bubble.service.boot.SageHelloService;
 import bubble.service.notify.NotificationService;
@@ -25,6 +26,7 @@ import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.wizard.auth.LoginRequest;
 import org.cobbzilla.wizard.stream.FileSendableResource;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
+import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -71,6 +73,7 @@ public class AuthResource {
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AuthenticatorService authenticatorService;
+    @Autowired private PromotionService promoService;
 
     public Account updateLastLogin(Account account) { return accountDAO.update(account.setLastLogin()); }
 
@@ -193,6 +196,11 @@ public class AuthResource {
         } else {
             request.getContact().validate(errors);
         }
+
+        if (configuration.paymentsEnabled()) {
+            errors.addAll(promoService.validatePromotions(request.getPromoCode()));
+        }
+
         if (errors.isInvalid()) return invalid(errors);
 
         final String parentUuid = thisNetwork.getTag(TAG_PARENT_ACCOUNT, thisNetwork.getAccount());
@@ -200,7 +208,18 @@ public class AuthResource {
         if (parent == null) return invalid("err.parent.notFound", "Parent account does not exist: "+parentUuid);
 
         final Account account = accountDAO.newAccount(req, null, request, parent);
-        return ok(account.waitForAccountInit().setToken(newLoginSession(account)));
+        SimpleViolationException promoEx = null;
+        if (configuration.paymentsEnabled()) {
+            try {
+                promoService.applyPromotions(account, request.getPromoCode());
+            } catch (SimpleViolationException e) {
+                promoEx = e;
+            }
+        }
+        return ok(account
+                .waitForAccountInit()
+                .setPromoError(promoEx == null ? null : promoEx.getMessageTemplate())
+                .setToken(newLoginSession(account)));
     }
 
     @POST @Path(EP_LOGIN)

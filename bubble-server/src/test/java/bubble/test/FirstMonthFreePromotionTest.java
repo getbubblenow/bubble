@@ -8,8 +8,6 @@ public class FirstMonthFreePromotionTest extends PaymentTestBase {
 
     @Override protected String getManifest() { return "manifest-1mo-promo"; }
 
-    @Test public void testFirstMonthFree () throws Exception {
-        modelTest("promo/first_month_free");
-    }
+    @Test public void testFirstMonthFree () throws Exception { modelTest("promo/first_month_free"); }
 
 }

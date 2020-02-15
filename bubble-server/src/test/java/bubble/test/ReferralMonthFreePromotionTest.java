@@ -6,8 +6,8 @@ import org.junit.Test;
 @Slf4j
 public class ReferralMonthFreePromotionTest extends PaymentTestBase {
 
-    @Test public void testReferralMonthFree () throws Exception {
-        modelTest("promo/referral_month_free");
-    }
+    @Override protected String getManifest() { return "manifest-referral-promo"; }
+
+    @Test public void testReferralMonthFree () throws Exception { modelTest("promo/referral_month_free"); }
 
 }

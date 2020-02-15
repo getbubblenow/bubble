@@ -7,18 +7,19 @@ import bubble.dao.cloud.BubbleNodeKeyDAO;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccount;
+import bubble.model.account.ReferralCode;
 import bubble.model.account.message.AccountMessage;
-import bubble.model.bill.BubblePlanApp;
+import bubble.model.bill.*;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeKey;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
+import edu.emory.mathcs.backport.java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.dao.DAO;
 import org.cobbzilla.wizard.model.Identifiable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -27,14 +28,12 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 @Slf4j
 public class FilteredEntityIterator extends EntityIterator {
 
-    public static final List<Class<? extends Identifiable>> POST_COPY_ENTITIES = new ArrayList<>();
-    static {
-        POST_COPY_ENTITIES.add(BubbleNode.class);
-        POST_COPY_ENTITIES.add(BubbleNodeKey.class);
-        POST_COPY_ENTITIES.add(Device.class);
-        POST_COPY_ENTITIES.add(AccountMessage.class);
-    }
-    public static boolean isPostCopyEntity(Class<? extends Identifiable> clazz) {
+    private static final List<Class<? extends Identifiable>> POST_COPY_ENTITIES = Arrays.asList(new Class<?>[] {
+        BubbleNode.class, BubbleNodeKey.class, Device.class, AccountMessage.class,
+        ReferralCode.class, AccountPaymentMethod.class, AccountPayment.class, Bill.class, Promotion.class,
+    });
+
+    private static boolean isPostCopyEntity(Class<? extends Identifiable> clazz) {
         return POST_COPY_ENTITIES.stream().anyMatch(c -> c.isAssignableFrom(clazz));
     }
 

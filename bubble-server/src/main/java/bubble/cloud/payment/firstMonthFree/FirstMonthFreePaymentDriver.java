@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.wizard.server.RestServerBase.reportError;
 
 @Slf4j
 public class FirstMonthFreePaymentDriver extends PaymentDriverBase<FirstMonthPaymentConfig> implements PromotionalPaymentServiceDriver {
@@ -19,7 +20,7 @@ public class FirstMonthFreePaymentDriver extends PaymentDriverBase<FirstMonthPay
     @Override public PaymentMethodType getPaymentMethodType() { return PaymentMethodType.promotional_credit; }
 
     @Override public boolean applyPromo(Promotion promo, Account caller) {
-        // does the caller have exactly one Bill?
+        // caller must not have any bills
         final int billCount = billDAO.countByAccount(caller.getUuid());
         if (billCount != 0) {
             log.warn("applyPromo: promo="+promo.getName()+", account="+caller.getName()+", account must have no Bills, found "+billCount+" bills");
@@ -37,8 +38,7 @@ public class FirstMonthFreePaymentDriver extends PaymentDriverBase<FirstMonthPay
                 .setPaymentMethodType(PaymentMethodType.promotional_credit)
                 .setPaymentInfo(promo.getName())
                 .setMaskedPaymentInfo(promo.getName())
-                .setPromotion(promo.getUuid())
-        );
+                .setPromotion(promo.getUuid()));
         return true;
     }
 
@@ -52,7 +52,6 @@ public class FirstMonthFreePaymentDriver extends PaymentDriverBase<FirstMonthPay
             return new PaymentValidationResult("err.paymentMethodType.mismatch");
         }
         return new PaymentValidationResult(paymentMethod);
-
     }
 
     @Override protected String charge(BubblePlan plan,
@@ -67,6 +66,7 @@ public class FirstMonthFreePaymentDriver extends PaymentDriverBase<FirstMonthPay
     }
 
     @Override protected String refund(AccountPlan accountPlan, AccountPayment payment, AccountPaymentMethod paymentMethod, Bill bill, long refundAmount) {
+        reportError(getClass().getSimpleName()+": refund: cannot issue, ignoring");
         return FIRST_MONTH_FREE_INFO;
     }
 

@@ -13,6 +13,7 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.bill.BillingService;
 import com.github.jknack.handlebars.Handlebars;
 import com.stripe.model.Token;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.client.script.SimpleApiRunnerListener;
 
@@ -46,13 +47,15 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
         this.configuration = configuration;
     }
 
+    @Getter(lazy=true) private final StripePaymentDriver stripePaymentDriver = configuration.autowire(new StripePaymentDriver());
+
     @Override public void beforeScript(String before, Map<String, Object> ctx) throws Exception {
         if (before == null) return;
         if (before.startsWith(FAST_FORWARD_AND_BILL)) {
             final List<String> parts = splitAndTrim(before.substring(FAST_FORWARD_AND_BILL.length()), " ");
             final long delta = parseDuration(parts.get(0));
             final long sleepTime = parts.size() > 1 ? parseDuration(parts.get(1)) : DEFAULT_BILLING_SLEEP;
-            configuration.autowire(new StripePaymentDriver()).flushCaches();
+            getStripePaymentDriver().flushCaches();
             incrementSystemTimeOffset(delta);
             configuration.getBean(BillingService.class).processBilling();
             sleep(sleepTime, "waiting for BillingService to complete");

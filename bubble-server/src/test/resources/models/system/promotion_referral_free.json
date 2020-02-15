@@ -1,0 +1,10 @@
+[
+  {
+    "name": "ReferralMonthFree",
+    "cloud": "ReferralMonthFree",
+    "priority": 1,
+    "currency": "USD",
+    "maxValue": 1200,
+    "referral": true
+  }
+]

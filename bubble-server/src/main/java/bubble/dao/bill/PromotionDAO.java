@@ -25,13 +25,12 @@ public class PromotionDAO extends AbstractCRUDDAO<Promotion> {
         return found != null ? found : findByName(id);
     }
 
-    public Promotion findEnabledWithCode(String code) {
-        return findByUniqueFields("enabled", true, "code", code);
+    public Promotion findEnabledAndActiveWithCode(String code) {
+        return filterActive(findByUniqueFields("enabled", true, "code", code, "referral", false));
     }
 
     public List<Promotion> findEnabledAndActiveWithNoCode() {
-        final List<Promotion> promos = findByFields("enabled", true, "code", null);
-        return filterActive(promos);
+        return filterActive(findByFields("enabled", true, "code", null, "referral", false));
     }
 
     public List<Promotion> findEnabledAndActiveWithNoCodeOrWithCode(String code) {
@@ -44,12 +43,14 @@ public class PromotionDAO extends AbstractCRUDDAO<Promotion> {
         }
     }
 
-    public List<Promotion> filterActive(List<Promotion> promos) {
-        return promos.stream().filter(Promotion::active).collect(Collectors.toList());
-    }
-
     public List<Promotion> findEnabledAndActiveWithReferral() {
         return filterActive(findByFields("enabled", true, "referral", true));
+    }
+
+    public Promotion filterActive(Promotion promo) { return promo != null && promo.active() ? promo : null; }
+
+    public List<Promotion> filterActive(List<Promotion> promos) {
+        return promos.stream().filter(Promotion::active).collect(Collectors.toList());
     }
 
 }

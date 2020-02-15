@@ -560,6 +560,13 @@ public class AccountsResource {
         return configuration.subResource(ReceivedNotificationsResource.class, c.account);
     }
 
+    @Path("/{id}"+EP_REFERRAL_CODES)
+    public ReferralCodesResource getReferralCodesResource(@Context ContainerRequest ctx,
+                                                          @PathParam("id") String id) {
+        final AccountContext c = new AccountContext(ctx, id);
+        return configuration.subResource(ReferralCodesResource.class, c.account);
+    }
+
     // Non-admins can only read/edit/delete themselves. Admins can do anything to anyone.
     private class AccountContext {
         public Account caller;

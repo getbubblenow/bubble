@@ -1,1 +1,176 @@
-[]
+[
+  {
+    "comment": "create a user account for the referring user",
+    "request": {
+      "uri": "users",
+      "method": "put",
+      "entity": {
+        "name": "test_user_referring_free",
+        "password": "password1!",
+        "contact": {"type": "email", "info": "test_user_referring_free@example.com"}
+      }
+    }
+  },
+
+  {
+    "before": "sleep 22s",  // wait for account objects to be created
+    "comment": "login as referring user",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "test_user_referring_free",
+        "password": "password1!"
+      }
+    },
+    "response": {
+      "store": "referringUser",
+      "sessionName": "referringUserSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "as root, check email inbox for verification message for referring user",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/test_user_referring_free@example.com?type=request&action=verify&target=account"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as root, grant some referral codes to the referring user",
+    "request": {
+      "uri": "users/test_user_referring_free/referralCodes",
+      "method": "put",
+      "entity": { "count": 3 }
+    },
+    "response": {
+      "store": "referralCodes",
+      "check": [ {"condition": "json.length === 3"} ]
+    }
+  },
+
+  {
+    "comment": "approve email verification request for referring user",
+    "request": {
+      "session": "referringUserSession",
+      "uri": "auth/approve/{{emailInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    }
+  },
+
+  {
+    "comment": "as referring user, list referral codes, verify all codes are unused",
+    "request": { "uri": "me/referralCodes" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 3"},
+        {"condition": "json[0].getUsedBy() === null"},
+        {"condition": "json[1].getUsedBy() === null"},
+        {"condition": "json[2].getUsedBy() === null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "register an account for the referred user, using one of the referral codes",
+    "request": {
+      "session": "new",
+      "uri": "auth/register",
+      "entity": {
+        "name": "test_user_referred_free",
+        "password": "password1!",
+        "contact": {"type": "email", "info": "test_user_referred_free@example.com"},
+        "promoCode": "{{referralCodes.[0].name}}"
+      }
+    },
+    "response": {
+      "store": "referredUser",
+      "sessionName": "referredUserSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "before": "sleep 22s",  // wait for account objects to be created
+    "comment": "as root, check email inbox for verification message",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/test_user_referred_free@example.com?type=request&action=verify&target=account"
+    },
+    "response": {
+      "store": "emailInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as referred user, approve email verification request",
+    "request": {
+      "session": "referredUserSession",
+      "uri": "auth/approve/{{emailInbox.[0].ctx.confirmationToken}}",
+      "method": "post"
+    }
+  },
+
+  {
+    "comment": "as referred user, lookup payment methods, ensure ReferralMonthFree is present",
+    "request": { "uri": "me/paymentMethods" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPaymentMethodType().name() === 'promotional_credit'"},
+        {"condition": "json[0].deleted() === false"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as referring user, lookup payment methods, ensure ReferralMonthFree is present",
+    "request": {
+      "session": "referringUserSession",
+      "uri": "me/paymentMethods"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getPaymentMethodType().name() === 'promotional_credit'"},
+        {"condition": "json[0].deleted() === false"}
+      ]
+    }
+  },
+
+  {
+    "comment": "get plans",
+    "request": { "uri": "plans" },
+    "response": {
+      "store": "plans",
+      "check": [{"condition": "json.length >= 1"}]
+    }
+  },
+
+  {
+    "comment": "get payment methods, tokenize a credit card",
+    "request": { "uri": "paymentMethods" },
+    "response": {
+      "store": "paymentMethods"
+    },
+    "after": "stripe_tokenize_card"
+  }
+
+  // start a network. we don't get the first month free because the user on the other end of
+  // the ReferralMonthFree has not made any payments
+]

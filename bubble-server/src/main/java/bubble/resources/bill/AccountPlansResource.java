@@ -2,8 +2,6 @@ package bubble.resources.bill;
 
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.geoLocation.GeoLocation;
-import bubble.cloud.payment.PaymentServiceDriver;
-import bubble.cloud.payment.PromotionalPaymentServiceDriver;
 import bubble.dao.account.AccountSshKeyDAO;
 import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.AccountPlanDAO;
@@ -15,7 +13,9 @@ import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.AccountSshKey;
-import bubble.model.bill.*;
+import bubble.model.bill.AccountPaymentMethod;
+import bubble.model.bill.AccountPlan;
+import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleFootprint;
 import bubble.model.cloud.BubbleNetwork;
@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.model.cloud.BubbleNetwork.validateHostname;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.string.ValidationRegexes.HOST_PATTERN;
 import static org.cobbzilla.util.string.ValidationRegexes.validateRegexMatches;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -190,87 +189,6 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                 }
                 if (paymentMethod != null) {
                     paymentMethod.setAccount(caller.getUuid()).validate(errors, configuration);
-                }
-            }
-
-            // apply promo code (and default) promotions
-            Promotion promo = null;
-            if (request.hasPromoCode()) {
-                promo = promotionDAO.findEnabledWithCode(request.getPromoCode());
-                if (promo == null) {
-                    errors.addViolation("err.promoCode.notFound");
-                    promo = null;
-                } else if (promo.inactive()) {
-                    errors.addViolation("err.promoCode.notActive");
-                    promo = null;
-                }
-            } else {
-                for (Promotion p : promotionDAO.findEnabledAndActiveWithNoCode()) {
-                    if (p.active()) { // todo: add JS condition?
-                        promo = p;
-                        break;
-                    }
-                }
-            }
-            if (promo != null) {
-                final CloudService promoCloud = cloudDAO.findByUuid(promo.getCloud());
-                if (promoCloud == null || promoCloud.getType() != CloudServiceType.payment) {
-                    errors.addViolation("err.promoCode.configurationError");
-                } else {
-                    final PaymentServiceDriver promoDriver = promoCloud.getPaymentDriver(configuration);
-                    if (promoDriver.getPaymentMethodType() != PaymentMethodType.promotional_credit
-                            || !(promoDriver instanceof PromotionalPaymentServiceDriver)) {
-                        errors.addViolation("err.promoCode.configurationError");
-                    } else {
-                        final PromotionalPaymentServiceDriver promoPaymentDriver = (PromotionalPaymentServiceDriver) promoDriver;
-                        if (!promoPaymentDriver.applyPromo(promo, caller)) {
-                            if (request.hasPromoCode()) {
-                                errors.addViolation("err.promoCode.notApplied");
-                            } else {
-                                log.warn("setReferences: promo not applied: "+promo.getName());
-                            }
-                        }
-                    }
-                }
-            }
-
-            // apply referral promotions
-            if (request.hasReferralFrom()) {
-                final Account referredFrom = accountDAO.findByName(request.getReferralFrom());
-                if (referredFrom == null || referredFrom.deleted()) {
-                    errors.addViolation("err.referralFrom.invalid");
-                }
-                // check for referral promotion
-                final List<Promotion> referralPromos = promotionDAO.findEnabledAndActiveWithReferral();
-                if (empty(referralPromos)) {
-                    errors.addViolation("err.referralFrom.unavailable");
-                } else {
-                    Promotion referralPromo = null;
-                    for (Promotion p : referralPromos) {
-                        if (p.active()) { // todo: add JS condition?
-                            referralPromo = p;
-                            break;
-                        }
-                    }
-                    if (referralPromo == null) {
-                        errors.addViolation("err.referralFrom.unavailable");
-                    } else {
-                        final CloudService referralCloud = cloudDAO.findByUuid(referralPromo.getCloud());
-                        if (referralCloud == null || referralCloud.getType() != CloudServiceType.payment) {
-                            errors.addViolation("err.referralFrom.configurationError");
-                        } else {
-                            final PaymentServiceDriver referralDriver = referralCloud.getPaymentDriver(configuration);
-                            if (referralDriver.getPaymentMethodType() != PaymentMethodType.promotional_credit
-                                    || !(referralDriver instanceof PromotionalPaymentServiceDriver)) {
-                                errors.addViolation("err.referralFrom.configurationError");
-                            } else {
-                                final PromotionalPaymentServiceDriver referralPaymentDriver = (PromotionalPaymentServiceDriver) referralDriver;
-                                if (!referralPaymentDriver.applyReferralPromo(referralPromo, caller, referredFrom)) {
-                                    errors.addViolation("err.referralFrom.notApplied");
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }

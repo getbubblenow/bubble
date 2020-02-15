@@ -157,6 +157,7 @@ public class ApiConstants {
     public static final String EP_ROLES = ROLES_ENDPOINT;
     public static final String EP_SENT_NOTIFICATIONS = "/notifications/outbox";
     public static final String EP_RECEIVED_NOTIFICATIONS = "/notifications/inbox";
+    public static final String EP_REFERRAL_CODES = "/referralCodes";
     public static final String EP_STORAGE = "/storage";
     public static final String EP_DNS = "/dns";
     public static final String EP_BACKUPS = "/backups";

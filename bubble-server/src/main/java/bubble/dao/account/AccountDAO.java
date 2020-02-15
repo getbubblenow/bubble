@@ -62,6 +62,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private SelfNodeService selfNodeService;
     @Autowired private BillDAO billDAO;
     @Autowired private SearchService searchService;
+    @Autowired private ReferralCodeDAO referralCodeDAO;
 
     public Account newAccount(Request req, Account caller, AccountRegistration request, Account parent) {
         return create(new Account(request)
@@ -281,12 +282,19 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
             throw invalidEx("err.delete.unpaidBills", "cannot delete account ("+account.getUuid()+") with "+unpaid.size()+" unpaid bills", account.getUuid());
         }
 
-        final AccountPolicy policy = policyDAO.findSingleByAccount(uuid);
+        // for referral codes owned by us, set account to null, leave accountUuid in place
+        final List<ReferralCode> ownedCodes = referralCodeDAO.findByAccount(uuid);
+        for (ReferralCode c : ownedCodes) referralCodeDAO.update(c.setAccount(null));
+
+        // for referral a code we used, set usedBy to null, leave usedByUuid in place
+        final ReferralCode usedCode = referralCodeDAO.findCodeUsedBy(uuid);
+        if (usedCode != null) referralCodeDAO.update(usedCode.setUsedBy(null));
 
         log.info("delete ("+Thread.currentThread().getName()+"): starting to delete account-dependent objects");
         configuration.deleteDependencies(account);
         log.info("delete: finished deleting account-dependent objects");
 
+        final AccountPolicy policy = policyDAO.findSingleByAccount(uuid);
         switch (policy.getDeletionPolicy()) {
             case full_delete:
                 super.delete(uuid);

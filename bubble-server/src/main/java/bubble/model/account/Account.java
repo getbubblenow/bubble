@@ -82,7 +82,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     public static final String[] UPDATE_FIELDS = {"url", "description", "autoUpdatePolicy"};
     public static final String[] ADMIN_UPDATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "suspended", "admin");
-    public static final String[] CREATE_FIELDS = ArrayUtil.append(ADMIN_UPDATE_FIELDS, "name");
+    public static final String[] CREATE_FIELDS = ArrayUtil.append(ADMIN_UPDATE_FIELDS, "name", "referralCode");
 
     public static final String ROOT_USERNAME = "root";
     public static final int NAME_MIN_LENGTH = 4;
@@ -180,6 +180,8 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     public static final long INIT_WAIT_INTERVAL = MILLISECONDS.toMillis(250);
     public static final long INIT_WAIT_TIMEOUT = SECONDS.toMillis(60);
+
+    @Transient @Getter @Setter private transient String promoError;
 
     @Transient @JsonIgnore @Getter @Setter private transient AccountInitializer accountInitializer;
     public boolean hasAccountInitializer () { return accountInitializer != null; }

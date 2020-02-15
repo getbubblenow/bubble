@@ -1,0 +1,10 @@
+[
+  {
+    "name": "ReferralMonthFree",
+    "type": "payment",
+    "driverClass": "bubble.cloud.payment.referralMonthFree.ReferralMonthFreePaymentDriver",
+    "driverConfig": {},
+    "credentials": {},
+    "template": true
+  }
+]

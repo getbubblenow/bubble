@@ -1,26 +1,13 @@
 [
   {
-    "comment": "create a user account",
+    "comment": "register a user account",
     "request": {
-      "uri": "users",
-      "method": "put",
+      "session": "new",
+      "uri": "auth/register",
       "entity": {
         "name": "test_user_1mo_free",
         "password": "password1!",
         "contact": {"type": "email", "info": "test_user_1mo_free@example.com"}
-      }
-    }
-  },
-
-  {
-    "before": "sleep 22s",  // wait for account objects to be created
-    "comment": "login as new user",
-    "request": {
-      "session": "new",
-      "uri": "auth/login",
-      "entity": {
-        "name": "test_user_1mo_free",
-        "password": "password1!"
       }
     },
     "response": {
@@ -31,6 +18,7 @@
   },
 
   {
+    "before": "sleep 10s",
     "comment": "as root, check email inbox for verification message",
     "request": {
       "session": "rootSession",
@@ -377,7 +365,7 @@
   },
 
   {
-    "before": "fast_forward_and_bill 31d 20s",
+    "before": "fast_forward_and_bill 31d 30s",
     "comment": "fast-forward +31 days, verify a new bill exists for first accountPlan",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
     "response": {

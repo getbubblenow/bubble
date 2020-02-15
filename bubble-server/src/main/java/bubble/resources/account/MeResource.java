@@ -336,6 +336,12 @@ public class MeResource {
         return configuration.subResource(DevicesResource.class, caller);
     }
 
+    @Path(EP_REFERRAL_CODES)
+    public ReferralCodesResource getReferralCodes(@Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        return configuration.subResource(ReferralCodesResource.class, caller);
+    }
+
     @Autowired private StandardNetworkService networkService;
 
     @GET @Path(EP_STATUS)
