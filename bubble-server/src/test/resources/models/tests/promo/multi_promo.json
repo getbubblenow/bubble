@@ -498,6 +498,9 @@
       "entity": {
         "name": "AccountCredit5"
       }
+    },
+    "response": {
+      "store": "referringPromos"
     }
   },
 
@@ -716,7 +719,7 @@
         {"condition": "json[0].getType().name() === 'payment'"},
         {"condition": "json[1].getType().name() === 'credit_applied'"},
         {"condition": "_find(referringPaymentMethods, function(p) { return p.getUuid() === json[0].getPaymentMethod() && p.getPaymentMethodType().name() === 'credit' }) !== null"},
-        {"condition": "_find(referringPaymentMethods, function(p) { return p.getUuid() === json[1].getPaymentMethod() && p.getInfo() === 'AccountCreditPaymentDriver' }) !== null"}
+        {"condition": "_find(referringPromos, function(p) { return p.getUuid() === json[1].getPromotion(); }) !== null"}
       ]
     }
   },
