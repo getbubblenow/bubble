@@ -16,26 +16,27 @@ import java.util.List;
 
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_LONG;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_LONG;
+import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySearchDepth.shallow;
 
 @ECType(root=true) @ECTypeCreate(method="DISABLED")
-@ECTypeURIs(listFields={"name", "status", "type", "quantity", "price", "periodStart"})
+@ECTypeURIs(listFields={"account", "plan", "periodLabel", "total", "status"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "accountPlan", "type", "periodStart"})
 })
 public class Bill extends IdentifiableBase implements HasAccountNoName {
 
-    @ECSearchable @ECField(index=10)
+    @ECSearchable(fkDepth=shallow) @ECField(index=10)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
 
-    @ECSearchable @ECField(index=20)
+    @ECSearchable(fkDepth=shallow) @ECField(index=20)
     @ECForeignKey(entity=BubblePlan.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String plan;
 
-    @ECSearchable @ECField(index=30)
+    @ECSearchable(fkDepth=shallow) @ECField(index=30)
     @ECForeignKey(entity=AccountPlan.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String accountPlan;
