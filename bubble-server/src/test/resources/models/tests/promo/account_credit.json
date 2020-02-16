@@ -18,7 +18,7 @@
   },
 
   {
-    "before": "sleep 10s",
+    "before": "sleep 5s",
     "comment": "root: check email inbox for verification message",
     "request": {
       "session": "rootSession",
@@ -271,7 +271,7 @@
   },
 
   {
-    "before": "sleep 10s",
+    "before": "sleep 5s",
     "comment": "verify the network is running",
     "request": { "uri": "me/networks/{{accountPlan.network}}" },
     "response": {

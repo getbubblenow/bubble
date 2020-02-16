@@ -67,7 +67,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
                 isNull("deleted"),
                 eq("closed", false),
                 le("nextBill", time)
-        )).addOrder(ORDER_CTIME_DESC));  // newest plans billed first so older plans can get credit for their referrals that have finally paid.
+        )));
     }
 
     @Override public Object preCreate(AccountPlan accountPlan) {

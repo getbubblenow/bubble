@@ -18,7 +18,7 @@
   },
 
   {
-    "before": "sleep 10s",
+    "before": "sleep 5s",
     "comment": "as root, check email inbox for verification message",
     "request": {
       "session": "rootSession",

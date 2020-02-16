@@ -6,6 +6,7 @@ import bubble.model.account.HasAccount;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.CloudService;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -138,6 +139,9 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
 
     @Transient @Getter @Setter private transient AccountPaymentMethod paymentMethodObject = null;
     public boolean hasPaymentMethodObject () { return paymentMethodObject != null; }
+
+    @JsonIgnore @Transient @Getter @Setter private transient Account accountObject = null;
+    public boolean hasAccountObject () { return account != null; }
 
     @Transient @Getter @Setter private transient String forkHost = null;
     public boolean hasForkHost () { return !empty(forkHost); }

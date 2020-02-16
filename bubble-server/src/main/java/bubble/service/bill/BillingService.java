@@ -1,6 +1,7 @@
 package bubble.service.bill;
 
 import bubble.cloud.payment.PaymentServiceDriver;
+import bubble.dao.account.AccountDAO;
 import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.AccountPlanDAO;
@@ -8,6 +9,7 @@ import bubble.dao.bill.BillDAO;
 import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.CloudServiceDAO;
+import bubble.model.account.Account;
 import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
@@ -24,12 +26,15 @@ import org.joda.time.Days;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_DESC;
 import static org.cobbzilla.wizard.server.RestServerBase.reportError;
 
 @Service @Slf4j
@@ -38,6 +43,7 @@ public class BillingService extends SimpleDaemon {
     private static final long BILLING_CHECK_INTERVAL = HOURS.toMillis(6);
     private static final int MAX_UNPAID_DAYS_BEFORE_STOP = 7;
 
+    @Autowired private AccountDAO accountDAO;
     @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private BubblePlanDAO planDAO;
     @Autowired private BillDAO billDAO;
@@ -55,74 +61,87 @@ public class BillingService extends SimpleDaemon {
     @Override protected boolean canInterruptSleep() { return true; }
 
     @Override protected void process() {
+        // sort plans by Account ctime, newer Accounts are billed before older Accounts
         final List<AccountPlan> plansToBill = accountPlanDAO.findBillableAccountPlans(now());
+        final Map<Account, List<AccountPlan>> plansByAccount = new TreeMap<>(CTIME_DESC);
         for (AccountPlan accountPlan : plansToBill) {
-
-            final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
-            if (plan == null) {
-                final String msg = "process: plan not found (" + accountPlan.getPlan() + ") for accountPlan: " + accountPlan.getUuid();
-                log.error(msg);
-                reportError("BillingService: "+msg);
-                continue;
+            final Account account = accountDAO.findByUuid(accountPlan.getAccount());
+            if (account == null) {
+                reportError("process: account "+accountPlan.getAccount()+" not found for AccountPlan="+accountPlan.getUuid());
+            } else {
+                plansByAccount.computeIfAbsent(account, a -> new ArrayList<>()).add(accountPlan);
             }
+        }
 
-            final List<Bill> bills;
-            try {
-                bills = billPlan(plan, accountPlan);
-            } catch (Exception e) {
-                log.error("process: error creating bill(s) for accountPlan "+accountPlan.getUuid()+": "+e);
-                continue;
-            }
+        for (Account account : plansByAccount.keySet()) {
+            for (AccountPlan accountPlan : plansByAccount.get(account)) {
 
-            boolean sendPaymentReminder = false;
-            try {
-                if (!payBills(plan, accountPlan, bills)) {
-                    log.error("process: payBills returned false for "+bills.size()+" bill(s) for accountPlan "+accountPlan.getUuid());
+                final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
+                if (plan == null) {
+                    final String msg = "process: plan not found (" + accountPlan.getPlan() + ") for accountPlan: " + accountPlan.getUuid();
+                    log.error(msg);
+                    reportError("BillingService: "+msg);
+                    continue;
+                }
+
+                final List<Bill> bills;
+                try {
+                    bills = billPlan(plan, accountPlan);
+                } catch (Exception e) {
+                    log.error("process: error creating bill(s) for accountPlan "+accountPlan.getUuid()+": "+e);
+                    continue;
+                }
+
+                boolean sendPaymentReminder = false;
+                try {
+                    if (!payBills(plan, accountPlan, bills)) {
+                        log.error("process: payBills returned false for "+bills.size()+" bill(s) for accountPlan "+accountPlan.getUuid());
+                        sendPaymentReminder = true;
+                    }
+                } catch (Exception e) {
+                    log.error("process: error paying "+bills.size()+" bill(s) for accountPlan "+accountPlan.getUuid()+": "+e);
                     sendPaymentReminder = true;
                 }
-            } catch (Exception e) {
-                log.error("process: error paying "+bills.size()+" bill(s) for accountPlan "+accountPlan.getUuid()+": "+e);
-                sendPaymentReminder = true;
-            }
 
-            if (sendPaymentReminder) {
-                // plan has unpaid bill, try again tomorrow
-                accountPlan.setNextBill(new DateTime(now()).plusDays(1).getMillis());
-                accountPlan.setNextBillDate();
-                accountPlanDAO.update(accountPlan);
+                if (sendPaymentReminder) {
+                    // plan has unpaid bill, try again tomorrow
+                    accountPlan.setNextBill(new DateTime(now()).plusDays(1).getMillis());
+                    accountPlan.setNextBillDate();
+                    accountPlanDAO.update(accountPlan);
 
-                final Bill bill = bills.get(0);
-                final long unpaidStart = plan.getPeriod().periodMillis(bill.getPeriodStart());
-                final int unpaidDays = Days.daysBetween(new DateTime(unpaidStart), new DateTime(now())).getDays();
-                final BubbleNetwork network = networkDAO.findByUuid(accountPlan.getNetwork());
-                if (unpaidDays > MAX_UNPAID_DAYS_BEFORE_STOP) {
-                    accountPlanDAO.update(accountPlan.setEnabled(false));
-                    try {
-                        networkService.stopNetwork(network);
-                    } catch (Exception e) {
-                        final String msg = "process: error stopping network due to non-payment: " + network.getUuid();
-                        log.error(msg);
-                        reportError("BillingService: "+msg);
-                        continue;
+                    final Bill bill = bills.get(0);
+                    final long unpaidStart = plan.getPeriod().periodMillis(bill.getPeriodStart());
+                    final int unpaidDays = Days.daysBetween(new DateTime(unpaidStart), new DateTime(now())).getDays();
+                    final BubbleNetwork network = networkDAO.findByUuid(accountPlan.getNetwork());
+                    if (unpaidDays > MAX_UNPAID_DAYS_BEFORE_STOP) {
+                        accountPlanDAO.update(accountPlan.setEnabled(false));
+                        try {
+                            networkService.stopNetwork(network);
+                        } catch (Exception e) {
+                            final String msg = "process: error stopping network due to non-payment: " + network.getUuid();
+                            log.error(msg);
+                            reportError("BillingService: "+msg);
+                            continue;
+                        }
+                        messageDAO.create(new AccountMessage()
+                                .setAccount(accountPlan.getAccount())
+                                .setNetwork(network.getUuid())
+                                .setMessageType(AccountMessageType.notice)
+                                .setTarget(ActionTarget.network)
+                                .setAction(AccountAction.payment)
+                                .setName(accountPlan.getUuid())
+                                .setData(accountPlan.getNetwork()));
+
+                    } else {
+                        messageDAO.create(new AccountMessage()
+                                .setAccount(accountPlan.getAccount())
+                                .setNetwork(network.getUuid())
+                                .setMessageType(AccountMessageType.request)
+                                .setTarget(ActionTarget.network)
+                                .setAction(AccountAction.payment)
+                                .setName(accountPlan.getUuid())
+                                .setData(accountPlan.getNetwork()));
                     }
-                    messageDAO.create(new AccountMessage()
-                            .setAccount(accountPlan.getAccount())
-                            .setNetwork(network.getUuid())
-                            .setMessageType(AccountMessageType.notice)
-                            .setTarget(ActionTarget.network)
-                            .setAction(AccountAction.payment)
-                            .setName(accountPlan.getUuid())
-                            .setData(accountPlan.getNetwork()));
-
-                } else {
-                    messageDAO.create(new AccountMessage()
-                            .setAccount(accountPlan.getAccount())
-                            .setNetwork(network.getUuid())
-                            .setMessageType(AccountMessageType.request)
-                            .setTarget(ActionTarget.network)
-                            .setAction(AccountAction.payment)
-                            .setName(accountPlan.getUuid())
-                            .setData(accountPlan.getNetwork()));
                 }
             }
         }

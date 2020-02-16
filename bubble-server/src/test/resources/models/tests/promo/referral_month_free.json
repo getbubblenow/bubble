@@ -13,7 +13,7 @@
   },
 
   {
-    "before": "sleep 22s",  // wait for account objects to be created
+    "before": "sleep 5s",  // wait for account objects to be created
     "comment": "referring: login as referring user",
     "request": {
       "session": "new",
@@ -115,7 +115,7 @@
   },
 
   {
-    "before": "sleep 22s",  // wait for account objects to be created
+    "before": "sleep 5s",  // wait for account objects to be created
     "comment": "as root, check email inbox for verification message",
     "request": {
       "session": "rootSession",
