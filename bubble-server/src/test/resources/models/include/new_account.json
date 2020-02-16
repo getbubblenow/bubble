@@ -33,7 +33,7 @@
   },
 
   {
-    "before": "sleep 24s",
+    "before": "sleep 10s",
     "comment": "as root, check inbox, verify welcome message sent",
     "request": {
       "uri": "debug/inbox/email/{{<<userVar>>.policy.firstEmail}}?action=welcome"

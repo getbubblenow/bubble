@@ -36,6 +36,7 @@ import static bubble.ApiConstants.getRemoteHost;
 import static bubble.model.account.AccountTemplate.copyTemplateObjects;
 import static bubble.model.account.AutoUpdatePolicy.EMPTY_AUTO_UPDATE_POLICY;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
+import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
 import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_ASC;
@@ -290,12 +291,14 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         final ReferralCode usedCode = referralCodeDAO.findCodeUsedBy(uuid);
         if (usedCode != null) referralCodeDAO.update(usedCode.setClaimedBy(null));
 
-        log.info("delete ("+Thread.currentThread().getName()+"): starting to delete account-dependent objects");
+        // stash the deletion policy for later use, the policy object will be deleted in deleteDependencies
+        final AccountDeletionPolicy deletionPolicy = policyDAO.findSingleByAccount(uuid).getDeletionPolicy();
+
+        log.info("delete ("+currentThread().getName()+"): starting to delete account-dependent objects");
         configuration.deleteDependencies(account);
         log.info("delete: finished deleting account-dependent objects");
 
-        final AccountPolicy policy = policyDAO.findSingleByAccount(uuid);
-        switch (policy.getDeletionPolicy()) {
+        switch (deletionPolicy) {
             case full_delete:
                 super.delete(uuid);
                 break;
