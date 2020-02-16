@@ -6,7 +6,7 @@ import bubble.cloud.payment.stripe.StripePaymentDriver;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.CloudServiceDAO;
-import bubble.mock.MockStripePaymentDriver;
+import bubble.cloud.payment.stripe.mock.MockStripePaymentDriver;
 import bubble.model.account.Account;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;

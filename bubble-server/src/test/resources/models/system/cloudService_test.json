@@ -78,7 +78,7 @@
     "_subst": true,
     "name": "StripePayments",
     "type": "payment",
-    "driverClass": "bubble.mock.MockStripePaymentDriver",
+    "driverClass": "bubble.cloud.payment.stripe.mock.MockStripePaymentDriver",
     "driverConfig": {
       "publicApiKey": "{{STRIPE_PUBLIC_API_KEY}}"
     },

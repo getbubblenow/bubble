@@ -55,13 +55,11 @@ public class BillDAO extends AccountOwnedEntityDAO<Bill> {
                     .setAccount(accountPlan.getAccount())
                     .setPlan(plan.getUuid())
                     .setAccountPlan(accountPlan.getUuid())
-                    .setPrice(plan.getPrice())
+                    .setTotal(plan.getPrice())
                     .setCurrency(plan.getCurrency())
                     .setPeriodLabel(period.periodLabel(periodStartMillis))
                     .setPeriodStart(period.periodStart(periodStartMillis))
                     .setPeriodEnd(period.periodEnd(periodStartMillis))
-                    .setQuantity(1L)
-                    .setType(BillItemType.compute)
                     .setStatus(BillStatus.unpaid);
     }
 

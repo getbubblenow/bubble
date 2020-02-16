@@ -1,4 +1,4 @@
-package bubble.mock;
+package bubble.cloud.payment.stripe.mock;
 
 import bubble.cloud.payment.ChargeResult;
 import bubble.cloud.payment.stripe.StripePaymentDriver;

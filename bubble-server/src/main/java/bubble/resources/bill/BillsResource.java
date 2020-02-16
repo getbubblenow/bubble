@@ -4,14 +4,18 @@ import bubble.cloud.payment.PaymentServiceDriver;
 import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BillDAO;
+import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.Bill;
+import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.CloudService;
 import bubble.resources.account.ReadOnlyAccountOwnedResource;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
+import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +26,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.Map;
 
 import static bubble.ApiConstants.EP_PAY;
 import static bubble.ApiConstants.EP_PAYMENTS;
@@ -30,6 +35,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 @Slf4j
 public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
 
+    @Autowired private BubblePlanDAO planDAO;
     @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private AccountPaymentMethodDAO paymentMethodDAO;
     @Autowired private CloudServiceDAO cloudDAO;
@@ -52,6 +58,13 @@ public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
         if (accountPlan == null) return super.list(ctx);
         return getDao().findByAccountAndAccountPlan(getAccountUuid(ctx), accountPlan.getUuid());
     }
+
+    @Override protected Bill populate(ContainerRequest ctx, Bill bill) {
+        return super.populate(ctx, bill.setPlanObject(findPlan(bill.getPlan())));
+    }
+
+    private Map<String, BubblePlan> planCache = new ExpirationMap<>(ExpirationEvictionPolicy.atime);
+    private BubblePlan findPlan(String planUuid) { return planCache.computeIfAbsent(planUuid, k -> planDAO.findByUuid(planUuid)); }
 
     @Path("/{id}"+EP_PAYMENTS)
     public AccountPaymentsResource getPayments(@Context ContainerRequest ctx,
