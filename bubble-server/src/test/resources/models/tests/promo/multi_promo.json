@@ -719,7 +719,7 @@
         {"condition": "json[0].getType().name() === 'payment'"},
         {"condition": "json[1].getType().name() === 'credit_applied'"},
         {"condition": "_find(referringPaymentMethods, function(p) { return p.getUuid() === json[0].getPaymentMethod() && p.getPaymentMethodType().name() === 'credit' }) !== null"},
-        {"condition": "_find(referringPromos, function(p) { return p.getUuid() === json[1].getPromotion(); }) !== null"}
+        {"condition": "_find(referringPromos, function(p) { return p.getPaymentMethod().getUuid() === json[1].getPaymentMethod(); }) !== null"}
       ]
     }
   },
@@ -790,7 +790,7 @@
       "check": [
         {"condition": "json.length === 7"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
-        {"condition": "json[0].getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
+        {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
         {"condition": "json[0].getQuantity() === 1"},
         {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
@@ -915,19 +915,20 @@
   },
 
   {
-    "comment": "referring: lookup all payment methods, should have 5, all promos used",
+    "comment": "referring: lookup all payment methods, should have 6, with all promos used",
     "request": {
       "session": "referringUserSession",
       "uri": "me/paymentMethods?all=true"
     },
     "response": {
       "check": [
-        {"condition": "json.length === 5"},
+        {"condition": "json.length === 6"},
         {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'credit'; }) !== null"},
         {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'credit'; }).deleted() === false"},
         {"condition": "_find(json, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit' && !p.deleted(); }) === null"},
         {"condition": "_find(json, function(p) { return p.getMaskedPaymentInfo() === 'ReferralMonthFree' && p.deleted(); }) !== null"},
-        {"condition": "_find(json, function(p) { return p.getMaskedPaymentInfo() === 'FirstMonthFree' && p.deleted(); }) !== null"}
+        {"condition": "_find(json, function(p) { return p.getMaskedPaymentInfo() === 'FirstMonthFree' && p.deleted(); }) !== null"},
+        {"condition": "_find(json, function(p) { return p.getMaskedPaymentInfo() === 'AccountCredit5' && p.deleted(); }) !== null"}
       ]
     }
   }
