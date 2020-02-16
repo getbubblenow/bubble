@@ -2,7 +2,7 @@
   {
     "name": "FirstMonthFree",
     "cloud": "FirstMonthFree",
-    "priority": 1,
+    "priority": -10000,
     "currency": "USD",
     "maxValue": 1200
   }

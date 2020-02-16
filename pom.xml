@@ -72,7 +72,7 @@ This code is available under the GNU Affero General Public License, version 3: h
                         <include>bubble.test.promo.FirstMonthFreePromotionTest</include>
                         <include>bubble.test.promo.ReferralMonthFreePromotionTest</include>
                         <include>bubble.test.promo.AccountCreditTest</include>
-                        <include>bubble.test.promo.FirstMonthAndReferralMonthPromotionTest</include>
+                        <include>bubble.test.promo.MultiplePromotionsTest</include>
                         <include>bubble.test.system.DriverTest</include>
                         <include>bubble.test.filter.ProxyTest</include>
                         <include>bubble.test.filter.TrafficAnalyticsTest</include>

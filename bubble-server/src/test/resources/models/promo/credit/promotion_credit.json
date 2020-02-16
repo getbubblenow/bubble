@@ -2,25 +2,28 @@
   {
     "name": "AccountCredit1",
     "cloud": "AccountCredit1",
-    "priority": 1,
+    "priority": 10000,
     "currency": "USD",
     "maxValue": 100,
-    "visible": false
+    "visible": false,
+    "adminAssignOnly": true
   },
   {
     "name": "AccountCredit5",
     "cloud": "AccountCredit5",
-    "priority": 1,
+    "priority": 10000,
     "currency": "USD",
     "maxValue": 500,
-    "visible": false
+    "visible": false,
+    "adminAssignOnly": true
   },
   {
     "name": "AccountCreditBill",
     "cloud": "AccountCreditBill",
-    "priority": 1,
+    "priority": 10000,
     "currency": "USD",
     "maxValue": 10000,
-    "visible": false
+    "visible": false,
+    "adminAssignOnly": true
   }
 ]

@@ -26,16 +26,16 @@ public class PromotionDAO extends AbstractCRUDDAO<Promotion> {
     }
 
     public Promotion findEnabledAndActiveWithCode(String code) {
-        return filterActive(findByUniqueFields("enabled", true, "code", code, "referral", false));
+        return filterActive(findByUniqueFields("enabled", true, "code", code, "referral", false, "adminAssignOnly", false));
     }
 
     public List<Promotion> findEnabledAndActiveWithNoCode() {
-        return filterActive(findByFields("enabled", true, "code", null, "referral", false));
+        return filterActive(findByFields("enabled", true, "code", null, "referral", false, "adminAssignOnly", false));
     }
 
     public List<Promotion> findVisibleAndEnabledAndActiveWithNoCodeOrWithCode(String code) {
         if (empty(code)) {
-            return filterActive(findByFields("enabled", true, "code", null, "visible", true));
+            return filterActive(findByFields("enabled", true, "code", null, "visible", true, "adminAssignOnly", false));
         } else {
             return filterActive(list(criteria().add(and(
                     eq("enabled", true),
@@ -45,7 +45,7 @@ public class PromotionDAO extends AbstractCRUDDAO<Promotion> {
     }
 
     public List<Promotion> findEnabledAndActiveWithReferral() {
-        return filterActive(findByFields("enabled", true, "referral", true));
+        return filterActive(findByFields("enabled", true, "referral", true, "adminAssignOnly", false));
     }
 
     public Promotion filterActive(Promotion promo) { return promo != null && promo.active() ? promo : null; }

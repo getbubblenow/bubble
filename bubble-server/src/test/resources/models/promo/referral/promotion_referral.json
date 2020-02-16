@@ -2,9 +2,9 @@
   {
     "name": "ReferralMonthFree",
     "cloud": "ReferralMonthFree",
-    "priority": 1,
+    "priority": -1000,
     "currency": "USD",
-    "maxValue": 1200,
+    "maxValue": 2500,
     "referral": true
   }
 ]

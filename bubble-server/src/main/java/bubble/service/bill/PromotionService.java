@@ -157,8 +157,11 @@ public class PromotionService {
             return chargeAmount;
         }
 
+        promos.sort(Promotion::compareTo);
+
         // find the payment cloud associated with the promo, defer to that
         final String accountPlanUuid = accountPlan.getUuid();
+        final Set<Promotion> used = new HashSet<>();
         for (Promotion promo : promos) {
             final AccountPaymentMethod apm = promo.getPaymentMethod();
             final CloudService promoCloud = cloudDAO.findByUuid(promo.getCloud());
@@ -175,19 +178,18 @@ public class PromotionService {
             try {
                 final PaymentServiceDriver promoPaymentDriver = promoCloud.getPaymentDriver(configuration);
                 final PromotionalPaymentServiceDriver promoDriver = (PromotionalPaymentServiceDriver) promoPaymentDriver;
-                final Set<Promotion> usable = new HashSet<>();
-                if (!promoDriver.canUseNow(bill, promo, promoDriver, promos, usable, accountPlan, paymentMethod)) {
+                if (!promoDriver.canUseNow(bill, promo, promoDriver, promos, used, accountPlan, paymentMethod)) {
                     log.warn("purchase: Promotion "+promo.getName()+" cannot currently be used for accountPlan "+ accountPlanUuid);
                     continue;
                 }
-                usable.add(promo);
                 promoDriver.purchase(accountPlanUuid, apm.getUuid(), bill.getUuid());
+                used.add(promo);
 
                 // verify AccountPayments exists for new payment with promo
                 final List<AccountPayment> creditsApplied = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndCreditAppliedSuccess(accountPlan.getAccount(), accountPlanUuid, bill.getUuid());
                 final List<AccountPayment> creditsByThisPromo = creditsApplied.stream()
                         .filter(c -> c.getPaymentMethod().equals(apm.getUuid()))
-                        .collect(Collectors.toList());;
+                        .collect(Collectors.toList());
                 if (empty(creditsByThisPromo)) {
                     log.warn("purchase: applying promotion did not result in an AccountPayment to Bill "+bill.getUuid());
                     continue;

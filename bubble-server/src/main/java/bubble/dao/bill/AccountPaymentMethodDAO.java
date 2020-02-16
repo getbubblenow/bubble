@@ -9,6 +9,7 @@ import bubble.model.bill.AccountPlan;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -23,6 +24,8 @@ public class AccountPaymentMethodDAO extends AccountOwnedEntityDAO<AccountPaymen
     @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleConfiguration configuration;
+
+    @Override public Order getDefaultSortOrder() { return ORDER_CTIME_DESC; }
 
     public AccountPaymentMethod findByAccountAndPaymentInfo(String account, String paymentInfo) {
         return findByAccount(account).stream()
