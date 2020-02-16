@@ -25,27 +25,47 @@ public class PromotionDAO extends AbstractCRUDDAO<Promotion> {
         return found != null ? found : findByName(id);
     }
 
-    public Promotion findEnabledAndActiveWithCode(String code) {
-        return filterActive(findByUniqueFields("enabled", true, "code", code, "referral", false, "adminAssignOnly", false));
+    public Promotion findEnabledAndActiveWithCode(String code, String currency) {
+        return filterActive(findByUniqueFields(
+                "enabled", true,
+                "code", code,
+                "referral", false,
+                "currency", currency,
+                "adminAssignOnly", false));
     }
 
-    public List<Promotion> findEnabledAndActiveWithNoCode() {
-        return filterActive(findByFields("enabled", true, "code", null, "referral", false, "adminAssignOnly", false));
+    public List<Promotion> findEnabledAndActiveWithNoCode(String currency) {
+        return filterActive(findByFields(
+                "enabled", true,
+                "code", null,
+                "referral", false,
+                "currency", currency,
+                "adminAssignOnly", false));
     }
 
-    public List<Promotion> findVisibleAndEnabledAndActiveWithNoCodeOrWithCode(String code) {
+    public List<Promotion> findVisibleAndEnabledAndActiveWithNoCodeOrWithCode(String code, String currency) {
         if (empty(code)) {
-            return filterActive(findByFields("enabled", true, "code", null, "visible", true, "adminAssignOnly", false));
+            return filterActive(findByFields(
+                    "enabled", true,
+                    "code", null,
+                    "visible", true,
+                    "currency", currency,
+                    "adminAssignOnly", false));
         } else {
             return filterActive(list(criteria().add(and(
                     eq("enabled", true),
                     eq("visible", true),
+                    eq("currency", currency),
                     or(isNull("code"), eq("code", code))))));
         }
     }
 
-    public List<Promotion> findEnabledAndActiveWithReferral() {
-        return filterActive(findByFields("enabled", true, "referral", true, "adminAssignOnly", false));
+    public List<Promotion> findEnabledAndActiveWithReferral(String currency) {
+        return filterActive(findByFields(
+                "enabled", true,
+                "referral", true,
+                "currency", currency,
+                "adminAssignOnly", false));
     }
 
     public Promotion filterActive(Promotion promo) { return promo != null && promo.active() ? promo : null; }

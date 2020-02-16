@@ -12,6 +12,7 @@ import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
+import java.util.List;
 
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_LONG;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_LONG;
@@ -74,5 +75,6 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     public boolean hasRefundedAmount () { return refundedAmount != null && refundedAmount > 0L; }
 
     @Transient @Getter @Setter private transient BubblePlan planObject;
+    @Transient @Getter @Setter private transient List<AccountPayment> payments;
 
 }

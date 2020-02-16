@@ -1,16 +1,10 @@
 package bubble.resources.bill;
 
 import bubble.cloud.payment.PaymentServiceDriver;
-import bubble.dao.bill.AccountPaymentMethodDAO;
-import bubble.dao.bill.AccountPlanDAO;
-import bubble.dao.bill.BillDAO;
-import bubble.dao.bill.BubblePlanDAO;
+import bubble.dao.bill.*;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
-import bubble.model.bill.AccountPaymentMethod;
-import bubble.model.bill.AccountPlan;
-import bubble.model.bill.Bill;
-import bubble.model.bill.BubblePlan;
+import bubble.model.bill.*;
 import bubble.model.cloud.CloudService;
 import bubble.resources.account.ReadOnlyAccountOwnedResource;
 import lombok.extern.slf4j.Slf4j;
@@ -30,14 +24,18 @@ import java.util.Map;
 
 import static bubble.ApiConstants.EP_PAY;
 import static bubble.ApiConstants.EP_PAYMENTS;
+import static org.cobbzilla.util.http.URIUtil.queryParams;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Slf4j
 public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
 
+    public static final String PARAM_PAYMENTS = "payments";
+
     @Autowired private BubblePlanDAO planDAO;
     @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private AccountPaymentMethodDAO paymentMethodDAO;
+    @Autowired private AccountPaymentDAO paymentDAO;
     @Autowired private CloudServiceDAO cloudDAO;
 
     private AccountPlan accountPlan;
@@ -51,7 +49,24 @@ public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
 
     @Override protected Bill find(ContainerRequest ctx, String id) {
         final Bill bill = super.find(ctx, id);
-        return bill == null || (accountPlan != null && !bill.getAccountPlan().equals(accountPlan.getUuid())) ? null : bill;
+        if (bill == null || (accountPlan != null && !bill.getAccountPlan().equals(accountPlan.getUuid()))) return null;
+
+        final Map<String, String> params = queryParams(ctx.getRequestUri().getQuery());
+        if (Boolean.parseBoolean(params.get(PARAM_PAYMENTS))) {
+            final List<AccountPayment> payments = paymentDAO.findByAccountAndAccountPlanAndBill(bill.getAccount(), bill.getAccountPlan(), bill.getUuid());
+            for (AccountPayment payment : payments) {
+                final String paymentMethodUuid = payment.getPaymentMethod();
+                payment.setPaymentMethodObject(findPaymentMethod(paymentMethodUuid));
+            }
+            return bill.setPayments(payments);
+        }
+
+        return bill;
+    }
+
+    private Map<String, AccountPaymentMethod> paymentMethodCache = new ExpirationMap<>(ExpirationEvictionPolicy.atime);
+    private AccountPaymentMethod findPaymentMethod(String paymentMethodUuid) {
+        return paymentMethodCache.computeIfAbsent(paymentMethodUuid, k -> paymentMethodDAO.findByUuid(k));
     }
 
     @Override protected List<Bill> list(ContainerRequest ctx) {
@@ -64,7 +79,7 @@ public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
     }
 
     private Map<String, BubblePlan> planCache = new ExpirationMap<>(ExpirationEvictionPolicy.atime);
-    private BubblePlan findPlan(String planUuid) { return planCache.computeIfAbsent(planUuid, k -> planDAO.findByUuid(planUuid)); }
+    private BubblePlan findPlan(String planUuid) { return planCache.computeIfAbsent(planUuid, k -> planDAO.findByUuid(k)); }
 
     @Path("/{id}"+EP_PAYMENTS)
     public AccountPaymentsResource getPayments(@Context ContainerRequest ctx,

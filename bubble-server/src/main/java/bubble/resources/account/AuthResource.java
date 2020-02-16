@@ -4,6 +4,7 @@ import bubble.dao.SessionDAO;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
 import bubble.dao.account.message.AccountMessageDAO;
+import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.model.CertType;
 import bubble.model.account.*;
@@ -47,11 +48,13 @@ import static bubble.model.account.Account.validatePassword;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static bubble.model.cloud.BubbleNetwork.TAG_PARENT_ACCOUNT;
 import static bubble.model.cloud.notify.NotificationType.retrieve_backup;
+import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static bubble.server.BubbleServer.getRestoreKey;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpContentTypes.CONTENT_TYPE_ANY;
+import static org.cobbzilla.util.string.LocaleUtil.currencyForLocale;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -70,6 +73,7 @@ public class AuthResource {
     @Autowired private ActivationService activationService;
     @Autowired private AccountMessageDAO accountMessageDAO;
     @Autowired private StandardAccountMessageService messageService;
+    @Autowired private BubblePlanDAO planDAO;
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AuthenticatorService authenticatorService;
@@ -197,8 +201,14 @@ public class AuthResource {
             request.getContact().validate(errors);
         }
 
+        String currency = null;
         if (configuration.paymentsEnabled()) {
-            errors.addAll(promoService.validatePromotions(request.getPromoCode()));
+            currency = currencyForLocale(request.getLocale(), getDEFAULT_LOCALE());
+            // do we have any plans with this currency?
+            if (!planDAO.getSupportedCurrencies().contains(currency)) {
+                currency = currencyForLocale(getDEFAULT_LOCALE());
+            }
+            errors.addAll(promoService.validatePromotions(request.getPromoCode(), currency));
         }
 
         if (errors.isInvalid()) return invalid(errors);
@@ -211,7 +221,7 @@ public class AuthResource {
         SimpleViolationException promoEx = null;
         if (configuration.paymentsEnabled()) {
             try {
-                promoService.applyPromotions(account, request.getPromoCode());
+                promoService.applyPromotions(account, request.getPromoCode(), currency);
             } catch (SimpleViolationException e) {
                 promoEx = e;
             }

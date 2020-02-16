@@ -42,19 +42,19 @@ public class PromotionService {
     @Autowired protected AccountPaymentMethodDAO accountPaymentMethodDAO;
     @Autowired private BubbleConfiguration configuration;
 
-    public void applyPromotions(Account account, String code) {
+    public void applyPromotions(Account account, String code, String currency) {
         // apply promo code (or default) promotion
         final Set<Promotion> promos = new TreeSet<>();
         ReferralCode referralCode = null;
         if (!empty(code)) {
-            Promotion promo = promotionDAO.findEnabledAndActiveWithCode(code);
+            Promotion promo = promotionDAO.findEnabledAndActiveWithCode(code, currency);
             if (promo == null) {
                 // check referral codes
                 // it might be a referral code
                 referralCode = referralCodeDAO.findByName(code);
                 if (referralCode != null && !referralCode.claimed()) {
                     // is there a referral promotion we can use?
-                    for (Promotion p : promotionDAO.findEnabledAndActiveWithReferral()) {
+                    for (Promotion p : promotionDAO.findEnabledAndActiveWithReferral(currency)) {
                         promos.add(p);
                         break;
                     }
@@ -66,7 +66,7 @@ public class PromotionService {
         }
 
         // everyone gets the highest-priority default promotion, if there are any enabled and active
-        for (Promotion p : promotionDAO.findEnabledAndActiveWithNoCode()) {
+        for (Promotion p : promotionDAO.findEnabledAndActiveWithNoCode(currency)) {
             promos.add(p);
             break;
         }
@@ -105,9 +105,9 @@ public class PromotionService {
         }
     }
 
-    public ValidationResult validatePromotions(String code) {
+    public ValidationResult validatePromotions(String code, String currency) {
         if (!empty(code)) {
-            Promotion promo = promotionDAO.findEnabledAndActiveWithCode(code);
+            Promotion promo = promotionDAO.findEnabledAndActiveWithCode(code, currency);
             if (promo == null) {
                 // it might be a referral code
                 final ReferralCode referralCode = referralCodeDAO.findByName(code);
@@ -116,7 +116,7 @@ public class PromotionService {
                     if (referer == null || referer.deleted()) return new ValidationResult("err.promoCode.notFound");
 
                     // is there a referral promotion we can use?
-                    for (Promotion p : promotionDAO.findEnabledAndActiveWithReferral()) {
+                    for (Promotion p : promotionDAO.findEnabledAndActiveWithReferral(currency)) {
                         // todo: add JS check?
                         promo = p;
                         break;
@@ -167,11 +167,15 @@ public class PromotionService {
             final CloudService promoCloud = cloudDAO.findByUuid(promo.getCloud());
             final String prefix = getClass().getSimpleName()+": ";
             if (promoCloud == null) {
-                reportError(prefix+"purchase: cloud "+promo.getCloud()+" not found for promotion "+promo.getUuid());
+                reportError(prefix+"purchase: cloud "+promo.getCloud()+" not found for promotion "+promo.getName());
                 continue;
             }
             if (promoCloud.getType() != CloudServiceType.payment) {
-                reportError(prefix+"purchase: cloud "+promo.getCloud()+" for promotion "+promo.getUuid()+" has wrong type (expected 'payment'): "+promoCloud.getType());
+                reportError(prefix+"purchase: cloud "+promo.getCloud()+" for promotion "+promo.getName()+" has wrong type (expected 'payment'): "+promoCloud.getType());
+                continue;
+            }
+            if (!promo.getCurrency().equals(plan.getCurrency())) {
+                reportError(prefix+"purchase: promotion "+promo.getName()+" has wrong currency (expected "+plan.getCurrency()+" for plan "+plan.getName()+"): "+promoCloud.getType());
                 continue;
             }
             log.info("purchase: using Promotion: "+promo.getName());

@@ -8,6 +8,9 @@ import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Repository
 public class BubblePlanDAO extends AccountOwnedEntityDAO<BubblePlan> {
 
@@ -36,6 +39,10 @@ public class BubblePlanDAO extends AccountOwnedEntityDAO<BubblePlan> {
         final BubblePlan plan = findByUuid(id);
         if (plan != null) return plan;
         return findByName(id);
+    }
+
+    public Set<String> getSupportedCurrencies () {
+        return findAll().stream().map(BubblePlan::getCurrency).collect(Collectors.toSet());
     }
 
 }

@@ -6,14 +6,16 @@ import bubble.dao.account.AccountSshKeyDAO;
 import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BubblePlanDAO;
-import bubble.dao.bill.PromotionDAO;
 import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.BubbleFootprintDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.AccountSshKey;
-import bubble.model.bill.*;
+import bubble.model.bill.AccountPaymentMethod;
+import bubble.model.bill.AccountPlan;
+import bubble.model.bill.BubblePlan;
+import bubble.model.bill.PaymentMethodType;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleFootprint;
 import bubble.model.cloud.BubbleNetwork;
@@ -56,7 +58,6 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AuthenticatorService authenticatorService;
     @Autowired private GeoService geoService;
-    @Autowired private PromotionDAO promotionDAO;
 
     public AccountPlansResource(Account account) { super(account); }
 

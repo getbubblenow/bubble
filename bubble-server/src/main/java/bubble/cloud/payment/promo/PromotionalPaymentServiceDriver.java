@@ -30,8 +30,9 @@ public interface PromotionalPaymentServiceDriver extends PaymentServiceDriver {
                               AccountPlan accountPlan,
                               AccountPaymentMethod paymentMethod) {
         // do not use if deleted (should never happen)
+        // do not use if wrong currency (should never happen)
         // do not use if other higher priority promotions are usable
-        return paymentMethod.notDeleted() && usable.isEmpty();
+        return paymentMethod.notDeleted() && promo.isCurrency(bill.getCurrency()) && usable.isEmpty();
     }
 
 }

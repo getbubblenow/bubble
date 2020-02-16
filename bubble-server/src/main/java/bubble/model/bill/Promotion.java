@@ -114,6 +114,10 @@ public class Promotion extends IdentifiableBase
     @ECIndex @Column(nullable=false, updatable=false, length=10)
     @Getter @Setter private String currency;
 
+    public boolean isCurrency(String currency) {
+        return currency != null && currency.equalsIgnoreCase(this.currency);
+    }
+
     @ECSearchable @ECField(index=120)
     @ECIndex @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer minValue = 100;

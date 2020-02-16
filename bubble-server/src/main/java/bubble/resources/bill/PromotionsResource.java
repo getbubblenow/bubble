@@ -18,7 +18,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import static bubble.ApiConstants.PROMOTIONS_ENDPOINT;
+import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.string.LocaleUtil.currencyForLocale;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Consumes(APPLICATION_JSON)
@@ -35,12 +38,14 @@ public class PromotionsResource {
 
     @GET
     public Response listPromos(@Context ContainerRequest ctx,
+                               @QueryParam("currency") String currency,
                                @QueryParam("code") String code) {
+        if (empty(currency)) currency = currencyForLocale(getDEFAULT_LOCALE());
         final Account caller = optionalUserPrincipal(ctx);
         if (caller != null && caller.admin()) {
             return ok(promotionDAO.findAll());
         }
-        return ok(promotionDAO.findVisibleAndEnabledAndActiveWithNoCodeOrWithCode(code));
+        return ok(promotionDAO.findVisibleAndEnabledAndActiveWithNoCodeOrWithCode(code, currency));
     }
 
     @GET @Path("/{id}")

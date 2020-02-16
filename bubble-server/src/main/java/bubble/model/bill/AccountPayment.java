@@ -98,6 +98,7 @@ public class AccountPayment extends IdentifiableBase implements HasAccountNoName
     }
 
     @Transient @Getter @Setter private transient Bill billObject;
+    @Transient @Getter @Setter private transient AccountPaymentMethod paymentMethodObject;
 
     public static int totalPayments (List<AccountPayment> payments) {
         return empty(payments) ? 0 : payments.stream().mapToInt(AccountPayment::getAmountInt).sum();
