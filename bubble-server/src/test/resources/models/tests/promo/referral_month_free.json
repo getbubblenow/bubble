@@ -296,8 +296,6 @@
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -312,8 +310,6 @@
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -350,8 +346,6 @@
         {"condition": "json[0].getPaymentMethod() === referringCreditPaymentMethod.getUuid()"},
         {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getBillObject().getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
-        {"condition": "json[0].getBillObject().getQuantity() === 1"},
-        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
       ]
@@ -462,8 +456,6 @@
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -478,8 +470,6 @@
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -516,8 +506,6 @@
         {"condition": "json[0].getPaymentMethod() === _find(referredPaymentMethods, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }).getUuid()"},
         {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getBillObject().getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
-        {"condition": "json[0].getBillObject().getQuantity() === 1"},
-        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
       ]
@@ -533,8 +521,6 @@
         {"condition": "json.length === 2"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -555,8 +541,6 @@
         {"condition": "json[0].getPaymentMethod() === _find(referredPaymentMethods, function(p) { return p.getPaymentMethodType().name() === 'credit'; }).getUuid()"},
         {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getBillObject().getAccountPlan() === '{{referredAccountPlan.uuid}}'"},
-        {"condition": "json[0].getBillObject().getQuantity() === 1"},
-        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
       ]
@@ -580,8 +564,6 @@
         {"condition": "json[0].getPaymentMethod() === _find(referringPaymentMethods, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }).getUuid()"},
         {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getBillObject().getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
-        {"condition": "json[0].getBillObject().getQuantity() === 1"},
-        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
       ]

@@ -164,8 +164,6 @@
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPlan() === '{{<<plansVar>>.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{<<referredAccountPlanVar>>.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{<<plansVar>>.[0].price}}"},
         {"condition": "json[0].getTotal() === {{<<plansVar>>.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -180,8 +178,6 @@
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPlan() === '{{<<plansVar>>.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{<<referredAccountPlanVar>>.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{<<plansVar>>.[0].price}}"},
         {"condition": "json[0].getTotal() === {{<<plansVar>>.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -218,8 +214,6 @@
         {"condition": "json[0].getPaymentMethod() === _find(<<referredPaymentMethodsVar>>, function(p) { return p.getMaskedPaymentInfo() === 'FirstMonthFree'; }).getUuid()"},
         {"condition": "json[0].getBillObject().getPlan() === '{{<<plansVar>>.[0].uuid}}'"},
         {"condition": "json[0].getBillObject().getAccountPlan() === '{{<<referredAccountPlanVar>>.uuid}}'"},
-        {"condition": "json[0].getBillObject().getQuantity() === 1"},
-        {"condition": "json[0].getBillObject().getPrice() === {{<<plansVar>>.[0].price}}"},
         {"condition": "json[0].getBillObject().getTotal() === {{<<plansVar>>.[0].price}}"},
         {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
       ]

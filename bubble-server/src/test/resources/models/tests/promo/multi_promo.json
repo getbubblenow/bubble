@@ -250,8 +250,6 @@
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -266,8 +264,6 @@
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -304,8 +300,6 @@
         {"condition": "_find(referringPaymentMethods, function(p) { return p.getUuid() === json[0].getPaymentMethod() && p.getMaskedPaymentInfo() === 'FirstMonthFree' }) !== null"},
         {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getBillObject().getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
-        {"condition": "json[0].getBillObject().getQuantity() === 1"},
-        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
       ]
@@ -322,8 +316,6 @@
         {"condition": "json.length === 2"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -412,8 +404,6 @@
         {"condition": "json.length === 3"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -517,8 +507,6 @@
         {"condition": "json.length === 4"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -607,8 +595,6 @@
         {"condition": "json.length === 5"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -697,8 +683,6 @@
         {"condition": "json.length === 6"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -791,8 +775,6 @@
         {"condition": "json.length === 7"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{referringAccountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]

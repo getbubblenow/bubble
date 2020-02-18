@@ -339,8 +339,6 @@
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -355,8 +353,6 @@
         {"condition": "json.length === 1"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -413,8 +409,6 @@
         {"condition": "_find(paymentMethods, function (p) { return p.getUuid() === json[2].getPaymentMethod(); }).getPaymentMethodType().name() === 'promotional_credit'"},
         {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getBillObject().getAccountPlan() === '{{accountPlan.uuid}}'"},
-        {"condition": "json[0].getBillObject().getQuantity() === 1"},
-        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
       ]
@@ -430,8 +424,6 @@
         {"condition": "json.length === 2"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -452,8 +444,6 @@
         {"condition": "json[0].getPaymentMethod() === _find(paymentMethods, function(p) { return p.getPaymentMethodType().name() === 'credit'; }).getUuid()"},
         {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getBillObject().getAccountPlan() === '{{accountPlan.uuid}}'"},
-        {"condition": "json[0].getBillObject().getQuantity() === 1"},
-        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
       ]
@@ -474,8 +464,6 @@
         {"condition": "json[0].getPaymentMethod() === _find(paymentMethods, function(p) { return p.getPaymentMethodType().name() === 'credit'; }).getUuid()"},
         {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getBillObject().getAccountPlan() === '{{accountPlan.uuid}}'"},
-        {"condition": "json[0].getBillObject().getQuantity() === 1"},
-        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
       ]
@@ -519,8 +507,6 @@
         {"condition": "json.length === 3"},
         {"condition": "json[0].getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getAccountPlan() === '{{accountPlan.uuid}}'"},
-        {"condition": "json[0].getQuantity() === 1"},
-        {"condition": "json[0].getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getStatus().name() === 'paid'"}
       ]
@@ -544,8 +530,6 @@
         {"condition": "json[1].getPaymentMethod() === _find(paymentMethods, function(p) { return p.getPaymentMethodType().name() === 'promotional_credit'; }).getUuid()"},
         {"condition": "json[0].getBillObject().getPlan() === '{{plans.[0].uuid}}'"},
         {"condition": "json[0].getBillObject().getAccountPlan() === '{{accountPlan.uuid}}'"},
-        {"condition": "json[0].getBillObject().getQuantity() === 1"},
-        {"condition": "json[0].getBillObject().getPrice() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getTotal() === {{plans.[0].price}}"},
         {"condition": "json[0].getBillObject().getStatus().name() === 'paid'"}
       ]
