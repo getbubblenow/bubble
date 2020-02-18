@@ -9,6 +9,7 @@ import bubble.model.cloud.CloudService;
 import bubble.notify.payment.PaymentValidationResult;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,6 +24,7 @@ import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
+import java.util.List;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
@@ -85,6 +87,12 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
     public AccountPaymentMethod setDeleted () { return setDeleted(now()); }
     public boolean deleted() { return deleted != null; }
     public boolean notDeleted() { return !deleted(); }
+
+    @Transient @Getter @Setter private transient List<String> planNames = null;
+    @Transient public Boolean getDeletable () { return planNames == null ? null : notDeleted() && planNames.isEmpty(); }
+    public void setDeletable(boolean deletable) {} // noop
+
+    @JsonProperty @Override public long getCtime () { return super.getCtime(); }
 
     public ValidationResult validate(ValidationResult result, BubbleConfiguration configuration) {
 

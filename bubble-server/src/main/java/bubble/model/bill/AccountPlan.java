@@ -68,7 +68,7 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
 
     @ECSearchable @ECField(index=40)
     @ECForeignKey(entity=AccountPaymentMethod.class)
-    @Column(updatable=false, length=UUID_MAXLEN)
+    @Column(length=UUID_MAXLEN)
     @Getter @Setter private String paymentMethod;
 
     @ECSearchable @ECField(index=50)

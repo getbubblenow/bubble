@@ -1,8 +1,10 @@
 package bubble.resources.bill;
 
 import bubble.dao.bill.AccountPaymentMethodDAO;
+import bubble.dao.bill.AccountPlanDAO;
 import bubble.model.account.Account;
 import bubble.model.bill.AccountPaymentMethod;
+import bubble.model.bill.AccountPlan;
 import bubble.resources.account.AccountOwnedResource;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,7 @@ public class AccountPaymentMethodsResource extends AccountOwnedResource<AccountP
 
     public static final String PARAM_ALL = "all";
 
+    @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private BubbleConfiguration configuration;
 
     public AccountPaymentMethodsResource(Account account) { super(account); }
@@ -43,10 +46,18 @@ public class AccountPaymentMethodsResource extends AccountOwnedResource<AccountP
     @Override protected List<AccountPaymentMethod> list(ContainerRequest ctx) {
         final Map<String, String> params = queryParams(ctx.getRequestUri().getQuery());
         if (params.containsKey(PARAM_ALL) && Boolean.parseBoolean(params.get("all").toLowerCase())) {
-            return super.list(ctx);
+            return setPlanNames(super.list(ctx));
         } else {
-            return super.list(ctx).stream().filter(AccountPaymentMethod::notDeleted).collect(Collectors.toList());
+            return setPlanNames(super.list(ctx).stream().filter(AccountPaymentMethod::notDeleted).collect(Collectors.toList()));
         }
+    }
+
+    private List<AccountPaymentMethod> setPlanNames(List<AccountPaymentMethod> paymentMethods) {
+        for (AccountPaymentMethod apm : paymentMethods) {
+            final List<AccountPlan> plans = accountPlanDAO.findByAccountAndPaymentMethodAndNotDeleted(apm.getAccount(), apm.getUuid());
+            apm.setPlanNames(plans.stream().map(AccountPlan::getName).collect(Collectors.toList()));
+        }
+        return paymentMethods;
     }
 
     @Override protected AccountPaymentMethod setReferences(ContainerRequest ctx, Account caller, AccountPaymentMethod request) {

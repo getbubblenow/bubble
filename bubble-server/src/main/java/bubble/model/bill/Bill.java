@@ -22,7 +22,7 @@ import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySe
 @ECTypeURIs(listFields={"account", "plan", "periodLabel", "total", "status"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({
-        @ECIndex(unique=true, of={"account", "accountPlan", "type", "periodStart"})
+        @ECIndex(unique=true, of={"accountPlan", "periodStart"})
 })
 public class Bill extends IdentifiableBase implements HasAccountNoName {
 
