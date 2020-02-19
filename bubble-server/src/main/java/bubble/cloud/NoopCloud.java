@@ -40,6 +40,7 @@ public class NoopCloud implements
         GeoCodeServiceDriver, GeoLocateServiceDriver, GeoTimeServiceDriver, PaymentServiceDriver,
         SmsServiceDriver, StorageServiceDriver {
 
+    public static final String NOOP_CLOUD_NAME = NoopCloud.class.getSimpleName();
     public static final String NOOP_CLOUD = NoopCloud.class.getName();
 
     @Override public boolean send(Account account, AccountMessage message, AccountContact contact) {

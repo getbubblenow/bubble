@@ -18,6 +18,7 @@ import java.util.List;
 
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.cloud.NoopCloud.NOOP_CLOUD;
+import static bubble.cloud.NoopCloud.NOOP_CLOUD_NAME;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
 import static bubble.model.cloud.CloudService.testDriver;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -39,8 +40,8 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
                     create(new CloudService()
                             .setAccount(account.getUuid())
                             .setType(type)
-                            .setName(NOOP_CLOUD+"/"+type)
-                            .setDescription(NOOP_CLOUD+"/"+type)
+                            .setName(NOOP_CLOUD_NAME+"/"+type)
+                            .setDescription(NOOP_CLOUD_NAME+"/"+type)
                             .setPriority(Integer.MIN_VALUE)
                             .setEnabled(true)
                             .setTemplate(false)
