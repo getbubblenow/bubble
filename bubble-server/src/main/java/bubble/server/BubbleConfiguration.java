@@ -72,7 +72,6 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_SAGE_LAUNCHER = "sageLauncher";
     public static final String TAG_NETWORK_UUID = "networkUuid";
     public static final String TAG_PAYMENTS_ENABLED = "paymentsEnabled";
-    public static final String TAG_CLOUD_DRIVERS = "cloudDrivers";
     public static final String TAG_ENTITY_CLASSES = "entityClasses";
     public static final String TAG_LOCALES = "locales";
     public static final String TAG_CLOUD_CONFIGS = "cloudConfigs";
@@ -278,7 +277,6 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_SAGE_LAUNCHER, thisNetwork == null || isSageLauncher()},
                         {TAG_PAYMENTS_ENABLED, cloudDAO.paymentsEnabled()},
                         {TAG_PROMO_CODE_POLICY, getPromoCodePolicy().name()},
-                        {TAG_CLOUD_DRIVERS, getCloudDriverClasses()},
                         {TAG_ENTITY_CLASSES, getSortedSimpleEntityClassMap()},
                         {TAG_LOCALES, getAllLocales()},
                         {TAG_CLOUD_CONFIGS, accountDAO.activated() ? null : activationService.getCloudDefaults()},
