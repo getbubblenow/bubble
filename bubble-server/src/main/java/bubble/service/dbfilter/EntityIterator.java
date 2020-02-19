@@ -77,18 +77,21 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
         }
     }
 
-    public void addEntities(Class<? extends Identifiable> c,
+    public void addEntities(boolean fullCopy,
+                            Class<? extends Identifiable> c,
                             List<? extends Identifiable> entities,
                             BubbleNetwork network,
                             BubbleNode node,
                             List<BubblePlanApp> planApps) {
         if (CloudService.class.isAssignableFrom(c)) {
-            entities.forEach(e -> add(setLocalStoragePath((CloudService) e)));
+            entities.stream()
+                    .filter(cloud -> fullCopy || notPaymentCloud((CloudService) cloud))
+                    .forEach(e -> add(setLocalStoragePath((CloudService) e)));
 
         } else if (AccountSshKey.class.isAssignableFrom(c)) {
             entities.forEach(e -> add(setInstallKey((AccountSshKey) e, network)));
 
-        } else if (planApps != null && BubbleApp.class.isAssignableFrom(c)) {
+        } else if (!fullCopy && planApps != null && BubbleApp.class.isAssignableFrom(c)) {
             // only copy enabled apps, make them templates
             entities.stream().filter(app -> planAppEnabled(((BubbleApp) app).getTemplateApp(), planApps))
                     .map(app -> ((BubbleApp) app).setTemplate(true))
@@ -97,7 +100,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
             // save these for later, we will need them when copying BubblePlanApps below
             userApps = (List<BubbleApp>) entities;
 
-        } else if (planApps != null && BubblePlanApp.class.isAssignableFrom(c)) {
+        } else if (!fullCopy && planApps != null && BubblePlanApp.class.isAssignableFrom(c)) {
             // the only BubblePlanApps we will see here are the ones associated with the system BubblePlans
             // and the system/template BubbleApps.
             // But for this new node, the BubbleApps that are associated with the first user (admin of new node)
@@ -124,7 +127,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
                 }
             }
 
-        } else if (planApps != null && AccountTemplate.class.isAssignableFrom(c)) {
+        } else if (!fullCopy && planApps != null && AccountTemplate.class.isAssignableFrom(c)) {
             // only copy app-related entities for enabled apps, make them all templates
             entities.stream()
                     .map(app -> (AccountTemplate) ((AccountTemplate) app).setTemplate(true))
@@ -134,6 +137,8 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
             entities.forEach(this::add);
         }
     }
+
+    private boolean notPaymentCloud(CloudService cloud) { return !cloud.getDriverClass().contains(".payment."); }
 
     private boolean planAppEnabled(String appUuid, List<BubblePlanApp> planApps) {
         return planApps == null || planApps.stream().anyMatch(planApp -> planApp.getApp().equals(appUuid));

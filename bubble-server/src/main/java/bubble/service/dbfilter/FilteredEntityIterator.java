@@ -80,7 +80,7 @@ public class FilteredEntityIterator extends EntityIterator {
                 final List<? extends HasAccount> entities = aoDAO.dbFilterIncludeAll()
                         ? aoDAO.findAll()
                         : aoDAO.findByAccount(account.getUuid());
-                addEntities(c, entities, network, node, planApps);
+                addEntities(false, c, entities, network, node, planApps);
             }
         });
 
