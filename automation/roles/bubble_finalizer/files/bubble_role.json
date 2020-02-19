@@ -3,6 +3,7 @@
   "priority": 9999999,
   "template": true,
   "config": [
+    {"name": "server_alias", "value": "[[network.networkDomain]]"},
     {"name": "restore_key", "value": "[[restoreKey]]"},
     {"name": "install_type", "value": "[[installType]]"},
     {"name": "bubble_java_opts", "value": "-Xms[[expr nodeSize.memoryMB '//' 2]]m -Xmx[[expr nodeSize.memoryMB '//' 2]]m"}
