@@ -19,14 +19,16 @@ public interface RegionalServiceDriver {
         final List<CloudRegionRelative> allRegions = new ArrayList<>();
         for (CloudService c : clouds) {
             final List<CloudRegion> regions = c.getRegionalDriver().getRegions();
-            for (CloudRegion region : regions) {
-                if (footprint != null && !footprint.isAllowedCountry(region.getLocation().getCountry())) {
-                    continue;
+            if (regions != null) {
+                for (CloudRegion region : regions) {
+                    if (footprint != null && !footprint.isAllowedCountry(region.getLocation().getCountry())) {
+                        continue;
+                    }
+                    final CloudRegionRelative r = new CloudRegionRelative(region);
+                    r.setCloud(c.getUuid());
+                    r.setDistance(latitude, longitude);
+                    allRegions.add(r);
                 }
-                final CloudRegionRelative r = new CloudRegionRelative(region);
-                r.setCloud(c.getUuid());
-                r.setDistance(latitude, longitude);
-                allRegions.add(r);
             }
         }
         allRegions.sort(comparingDouble(CloudRegionRelative::getDistance));

@@ -107,6 +107,10 @@ public class GeoService {
                                 geoCodeDriver = geoCodeServices.get(0).getGeoCodeDriver(configuration);
                             }
                             final GeoCodeResult code = geoCodeDriver.lookup(result);
+                            if (code == null) {
+                                log.info("locate: driver lookup returned null result, skipping");
+                                continue;
+                            }
                             result.setLat(code.getLat());
                             result.setLon(code.getLon());
                         }
