@@ -208,7 +208,11 @@ public class AuthResource {
             if (!planDAO.getSupportedCurrencies().contains(currency)) {
                 currency = currencyForLocale(getDEFAULT_LOCALE());
             }
-            errors.addAll(promoService.validatePromotions(request.getPromoCode(), currency));
+            if (configuration.promoCodeRequired() && !request.hasPromoCode()) {
+                errors.addViolation("err.promoCode.required");
+            } else {
+                errors.addAll(promoService.validatePromotions(request.getPromoCode(), currency));
+            }
         }
 
         if (errors.isInvalid()) return invalid(errors);

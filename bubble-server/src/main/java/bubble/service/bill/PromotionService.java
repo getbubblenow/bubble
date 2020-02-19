@@ -28,7 +28,8 @@ import static bubble.model.bill.Promotion.SORT_PAYMENT_METHOD_CTIME;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 import static org.cobbzilla.wizard.server.RestServerBase.reportError;
 
 @Service @Slf4j
@@ -43,6 +44,10 @@ public class PromotionService {
     @Autowired private BubbleConfiguration configuration;
 
     public void applyPromotions(Account account, String code, String currency) {
+        if (configuration.promoCodesDisabled()) {
+            log.info("applyPromotions: promotions disabled, not applying any");
+            return;
+        }
         // apply promo code (or default) promotion
         final Set<Promotion> promos = new TreeSet<>();
         ReferralCode referralCode = null;
@@ -107,6 +112,9 @@ public class PromotionService {
 
     public ValidationResult validatePromotions(String code, String currency) {
         if (!empty(code)) {
+            if (configuration.promoCodesDisabled()) {
+                return new ValidationResult("err.promoCode.disabled");
+            }
             Promotion promo = promotionDAO.findEnabledAndActiveWithCode(code, currency);
             if (promo == null) {
                 // it might be a referral code
@@ -148,6 +156,10 @@ public class PromotionService {
                               PaymentServiceDriver paymentDriver,
                               List<Promotion> promos,
                               long chargeAmount) {
+        if (configuration.promoCodesDisabled()) {
+            log.warn("usePromotions: promo codes are disabled, not using");
+            return chargeAmount;
+        }
         if (chargeAmount <= 0) {
             log.error("usePromotions: chargeAmount <= 0 : "+chargeAmount);
             return chargeAmount;

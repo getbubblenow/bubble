@@ -2,6 +2,7 @@ package bubble.server;
 
 import bubble.ApiConstants;
 import bubble.BubbleHandlebars;
+import bubble.auth.PromoCodePolicy;
 import bubble.client.BubbleApiClient;
 import bubble.cloud.CloudServiceDriver;
 import bubble.dao.account.AccountDAO;
@@ -77,6 +78,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_CLOUD_CONFIGS = "cloudConfigs";
     public static final String TAG_LOCKED = "locked";
     public static final String TAG_SSL_PORT = "sslPort";
+    public static final String TAG_PROMO_CODE_POLICY = "promoCodePolicy";
 
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
@@ -256,6 +258,11 @@ public class BubbleConfiguration extends PgRestServerConfiguration
             .map(Class::getName)
             .collect(Collectors.toList());
 
+    @Getter @Setter private PromoCodePolicy promoCodePolicy = PromoCodePolicy.disabled;
+    public boolean promoCodesEnabled () { return isSageLauncher() && promoCodePolicy.enabled(); }
+    public boolean promoCodesDisabled () { return !isSageLauncher() || promoCodePolicy.disabled(); }
+    public boolean promoCodeRequired () { return isSageLauncher() && promoCodePolicy.required(); }
+
     private final AtomicReference<Map<String, Object>> publicSystemConfigs = new AtomicReference<>();
     public Map<String, Object> getPublicSystemConfigs () {
         synchronized (publicSystemConfigs) {
@@ -270,6 +277,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_NETWORK_UUID, thisNetwork == null ? null : thisNetwork.getUuid()},
                         {TAG_SAGE_LAUNCHER, thisNetwork == null || isSageLauncher()},
                         {TAG_PAYMENTS_ENABLED, cloudDAO.paymentsEnabled()},
+                        {TAG_PROMO_CODE_POLICY, getPromoCodePolicy().name()},
                         {TAG_CLOUD_DRIVERS, getCloudDriverClasses()},
                         {TAG_ENTITY_CLASSES, getSortedSimpleEntityClassMap()},
                         {TAG_LOCALES, getAllLocales()},

@@ -71,3 +71,5 @@ letsencryptEmail: {{LETSENCRYPT_EMAIL}}
 localStorageDir: {{LOCALSTORAGE_BASE_DIR}}
 
 disallowedCountries: {{DISALLOWED_COUNTRIES}}
+
+promoCodePolicy: {{#exists BUBBLE_PROMO_CODE_POLICY}}{{BUBBLE_PROMO_CODE_POLICY}}{{else}}optional{{/exists}}
