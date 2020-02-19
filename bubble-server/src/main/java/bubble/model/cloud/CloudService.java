@@ -61,6 +61,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 })
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "name"}),
+        @ECIndex(unique=true, of={"account", "type", "driverClass"}, where="driver_class='bubble.cloud.NoopCloud'"),
         @ECIndex(of={"account", "template", "enabled"}),
         @ECIndex(of={"template", "enabled"})
 })

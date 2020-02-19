@@ -6,6 +6,7 @@ import bubble.main.http.BubbleHttpPostMain;
 import bubble.main.http.BubbleHttpPutMain;
 import bubble.server.BubbleServer;
 import org.cobbzilla.util.collection.MapBuilder;
+import org.cobbzilla.util.main.ConstMain;
 import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.main.MainBase;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -28,7 +29,8 @@ public class BubbleMain {
             {"handlebars", BubbleHandlebarsMain.class},
             {"crypt", CryptMain.class},
             {"rekey", RekeyDatabaseMain.class},
-            {"generate-algo-conf", GenerateAlgoConfMain.class}
+            {"generate-algo-conf", GenerateAlgoConfMain.class},
+            {"const", ConstMain.class}
     });
 
     public static void main(String[] args) throws Exception {

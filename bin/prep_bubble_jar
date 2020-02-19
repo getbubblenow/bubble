@@ -57,10 +57,9 @@ if [[ ! -d ${ROLES_DIR} ]] ; then
   die "automation/roles dir not found: ${ROLES_DIR}"
 fi
 
-API_CONSTANTS="${BUBBLE_SERVER}/src/main/java/bubble/ApiConstants.java"
-LOCAL_NET_ID="$(cat "${API_CONSTANTS}" | grep -v '//' | grep -m 1 "String ROOT_NETWORK_UUID" | awk -F '"' '{print $2}')"
+LOCAL_NET_ID="$("${SCRIPT_DIR}/bconst" bubble.ApiConstants.ROOT_NETWORK_UUID 2> /dev/null)"
 if [[ -z "${LOCAL_NET_ID}" ]] ; then
-  die "ROOT_NETWORK_UUID could not be read from ${API_CONSTANTS}"
+  die "ROOT_NETWORK_UUID could not be read from ApiConstants"
 fi
 
 echo "lbs = ${LOCALSTORAGE_BASE_DIR}"

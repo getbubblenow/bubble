@@ -30,7 +30,7 @@ public class FilteredEntityIterator extends EntityIterator {
 
     private static final List<Class<? extends Identifiable>> POST_COPY_ENTITIES = Arrays.asList(new Class<?>[] {
         BubbleNode.class, BubbleNodeKey.class, Device.class, AccountMessage.class,
-        ReferralCode.class, AccountPaymentMethod.class, AccountPayment.class, Bill.class, Promotion.class,
+        ReferralCode.class, AccountPayment.class, Bill.class, Promotion.class,
     });
 
     private static boolean isPostCopyEntity(Class<? extends Identifiable> clazz) {

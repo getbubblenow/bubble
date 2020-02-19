@@ -8,6 +8,7 @@ import bubble.model.account.Account;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,16 +17,48 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
+import static bubble.cloud.NoopCloud.NOOP_CLOUD;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
 import static bubble.model.cloud.CloudService.testDriver;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.wizard.model.Identifiable.UUID;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.cobbzilla.wizard.server.RestServerBase.reportError;
 
-@Repository
+@Repository @Slf4j
 public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
 
     @Autowired private AccountDAO accountDAO;
     @Autowired private BubbleConfiguration configuration;
+
+    public void ensureNoopCloudsExist(Account account) {
+        for (CloudServiceType type : CloudServiceType.values()) {
+            final CloudService noopCloud = findByAccountNoopForType(account.getUuid(), type);
+            if (empty(noopCloud)) {
+                try {
+                    create(new CloudService()
+                            .setAccount(account.getUuid())
+                            .setType(type)
+                            .setName(NOOP_CLOUD)
+                            .setDescription(NOOP_CLOUD)
+                            .setPriority(Integer.MIN_VALUE)
+                            .setEnabled(true)
+                            .setTemplate(false)
+                            .setSkipTest(true)
+                            .setCredentialsJson("{}")
+                            .setDriverConfigJson("{}")
+                            .setDriverClass(NOOP_CLOUD));
+                } catch (Exception e) {
+                    reportError("ensureNoopCloudExists: " + shortError(e));
+                }
+            }
+        }
+    }
+
+    private CloudService findByAccountNoopForType(String accountUuid, CloudServiceType type) {
+        final List<CloudService> found = findByAccountAndTypeAndDriverClass(accountUuid, type, NOOP_CLOUD);
+        return found.isEmpty() ? null : found.size() == 1 ? found.get(0) : die("findByAccountNoopForType("+accountUuid+", "+type+"): "+found.size()+" results found, expected only one");
+    }
 
     @Override public Order getDefaultSortOrder() { return PRIORITY_ASC; }
 

@@ -1,10 +1,12 @@
 package bubble.service.dbfilter;
 
+import bubble.cloud.CloudServiceType;
 import bubble.cloud.storage.local.LocalStorageConfig;
 import bubble.cloud.storage.local.LocalStorageDriver;
 import bubble.model.account.AccountSshKey;
 import bubble.model.account.AccountTemplate;
 import bubble.model.app.BubbleApp;
+import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.BubblePlanApp;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
@@ -13,13 +15,12 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.model.Identifiable;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static bubble.cloud.NoopCloud.NOOP_CLOUD;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE_STANDARD_BASE_DIR;
 import static bubble.service.dbfilter.EndOfEntityStream.END_OF_ENTITY_STREAM;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -36,6 +37,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
     @Getter private final Thread thread;
     @Getter private final AtomicReference<Exception> error;
     private List<BubbleApp> userApps;
+    private Map<CloudServiceType, CloudService> noopClouds = new HashMap<>();
 
     public EntityIterator(AtomicReference<Exception> error) {
         this.error = error;
@@ -86,10 +88,40 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
         if (CloudService.class.isAssignableFrom(c)) {
             entities.stream()
                     .filter(cloud -> fullCopy || notPaymentCloud((CloudService) cloud))
-                    .forEach(e -> add(setLocalStoragePath((CloudService) e)));
+                    .forEach(e -> {
+                        final CloudService cs = (CloudService) e;
+                        if (!fullCopy) {
+                            if (cs.getDriverClass().equals(NOOP_CLOUD)) {
+                                final CloudServiceType type = cs.getType();
+                                if (noopClouds.containsKey(type)) {
+                                    log.warn("addEntities: multiple " + NOOP_CLOUD + " drivers found for type=" + type);
+                                } else {
+                                    noopClouds.put(type, cs);
+                                }
+                            }
+                        }
+                        add(setLocalStoragePath(cs));
+                    });
 
         } else if (AccountSshKey.class.isAssignableFrom(c)) {
             entities.forEach(e -> add(setInstallKey((AccountSshKey) e, network)));
+
+        } else if (!fullCopy && AccountPaymentMethod.class.isAssignableFrom(c)) {
+            // clear out payment information, set driver to noop
+            final CloudService noopCloud = noopClouds.get(CloudServiceType.payment);
+            if (noopCloud == null) {
+                die("addEntities: "+NOOP_CLOUD+" for payment cloud type not found");
+            } else {
+                entities.forEach(e -> {
+                    final AccountPaymentMethod apm = (AccountPaymentMethod) e;
+                    apm.setMaskedPaymentInfo("")
+                            .setPaymentInfo("")
+                            .setCloud(noopCloud.getUuid())
+                            .setDeleted(now())
+                            .setPromotion(null);
+                    add(apm);
+                });
+            }
 
         } else if (!fullCopy && planApps != null && BubbleApp.class.isAssignableFrom(c)) {
             // only copy enabled apps, make them templates

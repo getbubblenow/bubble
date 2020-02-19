@@ -197,6 +197,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         });
         ready.set(true);
 
+        cloudDAO.ensureNoopCloudsExist(account);
         copyTemplateObjects(acct, parent, roleDAO);
 
         final Map<String, RuleDriver> drivers = new HashMap<>();
