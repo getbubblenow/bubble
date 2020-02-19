@@ -7,6 +7,7 @@
       "entity": {
         "name": "test_user_small_promo",
         "password": "password1!",
+        "agreeToTerms": true,
         "contact": {"type": "email", "info": "test_user_small_promo@example.com"}
       }
     },

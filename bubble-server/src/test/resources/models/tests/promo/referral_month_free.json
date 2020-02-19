@@ -7,6 +7,7 @@
       "entity": {
         "name": "test_user_referring_free",
         "password": "password1!",
+        "agreeToTerms": true,
         "contact": {"type": "email", "info": "test_user_referring_free@example.com"}
       }
     }
@@ -103,6 +104,7 @@
       "entity": {
         "name": "test_user_referred_free",
         "password": "password1!",
+        "agreeToTerms": true,
         "contact": {"type": "email", "info": "test_user_referred_free@example.com"},
         "promoCode": "{{referralCodes.[0].name}}"
       }

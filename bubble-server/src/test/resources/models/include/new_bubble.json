@@ -67,6 +67,7 @@
       "entity": {
         "name": "<<username>>",
         "password": "<<password>>",
+        "agreeToTerms": true,
         "contact": {"type": "email", "info": "<<email>>"}
       }
     },

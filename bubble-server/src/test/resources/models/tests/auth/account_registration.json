@@ -9,13 +9,31 @@
   },
 
   {
-    "comment": "new session, register a user account",
+    "comment": "new session, register a user account, do not agree to terms, fails",
     "request": {
       "session": "new",
       "uri": "auth/register",
       "entity": {
         "name": "foobar1",
         "password": "password1!",
+        "contact": { "type": "email", "info": "user-{{rand 5}}@example.com" }
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [ {"condition": "json.has('err.terms.required')"} ]
+    }
+  },
+
+  {
+    "comment": "new session, register a user account, agree to terms, succeeds",
+    "request": {
+      "session": "new",
+      "uri": "auth/register",
+      "entity": {
+        "name": "foobar1",
+        "password": "password1!",
+        "agreeToTerms": true,
         "contact": { "type": "email", "info": "user-{{rand 5}}@example.com" }
       }
     },
@@ -141,7 +159,8 @@
       "uri": "auth/register",
       "entity": {
         "name": "foobar1",
-        "password": "password1!"
+        "password": "password1!",
+        "agreeToTerms": true
       }
     },
     "response": {
@@ -184,7 +203,8 @@
       "uri": "auth/register",
       "entity": {
         "name": "foobar1",
-        "password": "password1!"
+        "password": "password1!",
+        "agreeToTerms": true
       }
     },
     "response": {
@@ -201,6 +221,7 @@
       "entity": {
         "name": "foobar2",
         "password": "password2!",
+        "agreeToTerms": true,
         "contact": { "type": "email", "info": "user2-{{rand 5}}@example.com" }
       }
     },

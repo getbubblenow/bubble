@@ -101,6 +101,7 @@
       "entity": {
         "name": "user1",
         "password": "password1!",
+        "agreeToTerms": true,
         "contact": {"type": "email", "info": "user-{{rand 5}}@example.com"}
       }
     },

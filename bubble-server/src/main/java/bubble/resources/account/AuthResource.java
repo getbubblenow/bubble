@@ -206,6 +206,12 @@ public class AuthResource {
             request.getContact().validate(errors);
         }
 
+        if (!request.agreeToTerms()) {
+            errors.addViolation("err.terms.required", "You must agree to the legal terms to use this service");
+        } else {
+            request.setTermsAgreed();
+        }
+
         String currency = null;
         if (configuration.paymentsEnabled()) {
             currency = currencyForLocale(request.getLocale(), getDEFAULT_LOCALE());

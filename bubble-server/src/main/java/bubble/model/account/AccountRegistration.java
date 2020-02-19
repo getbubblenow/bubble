@@ -15,4 +15,7 @@ public class AccountRegistration extends Account {
     @Getter @Setter private AccountContact contact;
     public boolean hasContact () { return contact != null; }
 
+    @Getter @Setter private Boolean agreeToTerms = null;
+    public boolean agreeToTerms () { return agreeToTerms != null && agreeToTerms; }
+
 }

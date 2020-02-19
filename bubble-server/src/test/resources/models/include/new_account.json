@@ -24,6 +24,7 @@
         "name": "<<username>>",
         "password": "<<password>>",
         "admin": "<<admin>>",
+        "agreeToTerms": true,
         "contact": {"type": "email", "info": "<<email>>"}
       }
     },

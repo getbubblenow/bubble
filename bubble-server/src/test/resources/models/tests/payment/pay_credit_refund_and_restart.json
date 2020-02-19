@@ -7,6 +7,7 @@
       "entity": {
         "name": "test_user_credit_refund_restart",
         "password": "password1!",
+        "agreeToTerms": true,
         "contact": {"type": "email", "info": "test-user@example.com"}
       }
     }

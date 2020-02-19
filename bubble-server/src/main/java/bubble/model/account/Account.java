@@ -23,8 +23,6 @@ import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.filters.auth.TokenPrincipal;
 import org.cobbzilla.wizard.model.HashedPassword;
 import org.cobbzilla.wizard.model.Identifiable;
-import org.cobbzilla.wizard.model.entityconfig.EntityFieldMode;
-import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.IdentifiableBaseParentEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.model.search.SqlViewSearchResult;
@@ -52,6 +50,8 @@ import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
+import static org.cobbzilla.wizard.model.entityconfig.EntityFieldMode.readOnly;
+import static org.cobbzilla.wizard.model.entityconfig.EntityFieldType.epoch_time;
 import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySearchDepth.none;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
@@ -82,7 +82,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     public static final String[] UPDATE_FIELDS = {"url", "description", "autoUpdatePolicy"};
     public static final String[] ADMIN_UPDATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "suspended", "admin");
-    public static final String[] CREATE_FIELDS = ArrayUtil.append(ADMIN_UPDATE_FIELDS, "name", "referralCode");
+    public static final String[] CREATE_FIELDS = ArrayUtil.append(ADMIN_UPDATE_FIELDS, "name", "referralCode", "termsAgreed");
 
     public static final String ROOT_USERNAME = "root";
     public static final int NAME_MIN_LENGTH = 4;
@@ -115,7 +115,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     // make this updatable if we ever want accounts to be able to change parents
     // there might be a lot more involved in that action though (read-only parent objects that will no longer be visible, must be copied in?)
-    @ECForeignKey(entity=Account.class) @ECField(index=20, mode=EntityFieldMode.readOnly)
+    @ECForeignKey(entity=Account.class) @ECField(index=20, mode=readOnly)
     @Column(length=UUID_MAXLEN, updatable=false)
     @Getter @Setter private String parent;
     public boolean hasParent () { return parent != null; }
@@ -148,14 +148,19 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     @Getter @Setter private Boolean locked = false;
     public boolean locked () { return bool(locked); }
 
-    @ECIndex @ECSearchable @ECField(index=90, type=EntityFieldType.epoch_time, mode=EntityFieldMode.readOnly)
+    @ECIndex @ECSearchable @ECField(index=90, type=epoch_time, mode=readOnly)
     @Getter @Setter private Long deleted;
     public boolean deleted () { return deleted != null; }
     public Account setDeleted() { return setDeleted(now()); }
 
-    @ECIndex @ECSearchable @ECField(index=100, type=EntityFieldType.epoch_time, mode=EntityFieldMode.readOnly)
+    @ECIndex @ECSearchable @ECField(index=100, type=epoch_time, mode=readOnly)
     @Getter @Setter private Long lastLogin;
     public Account setLastLogin() { return setLastLogin(now()); }
+
+    @ECIndex @ECSearchable @ECField(index=110, type=epoch_time, mode=readOnly)
+    @Column(nullable=false)
+    @Getter @Setter private Long termsAgreed;
+    public Account setTermsAgreed() { return setTermsAgreed(now()); }
 
     @JsonIgnore @Embedded @Getter @Setter private HashedPassword hashedPassword;
 
@@ -221,11 +226,13 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
         setAdmin(true);
         setDescription(request.hasDescription() ? request.getDescription() : "root user");
         setLocale(getDEFAULT_LOCALE());
+        setTermsAgreed(now());
     }
 
     public Account(AccountRegistration request) {
         setName(request.getName());
         setHashedPassword(new HashedPassword(request.getPassword()));
+        setTermsAgreed(request.getTermsAgreed());
     }
 
     @Override public Identifiable update(Identifiable other) {

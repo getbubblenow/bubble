@@ -100,6 +100,11 @@ public class AccountsResource {
         } else {
             request.getContact().validate(errors);
         }
+        if (!request.agreeToTerms()) {
+            errors.addViolation("err.terms.required", "You must agree to the legal terms to use this service");
+        } else {
+            request.setTermsAgreed();
+        }
         if (errors.isInvalid()) return invalid(errors);
 
         final String parentUuid;

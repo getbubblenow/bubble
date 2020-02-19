@@ -15,6 +15,7 @@
       "entity": {
         "name": "test_user_simple_net",
         "password": "password1!",
+        "agreeToTerms": true,
         "contact": {"type": "email", "info": "test-user@example.com"}
       }
     },
@@ -342,6 +343,7 @@
       "entity": {
         "name": "bubble_user",
         "password": "password1!",
+        "agreeToTerms": true,
         "contact": {"type": "email", "info": "bubble-user@example.com"}
       }
     }

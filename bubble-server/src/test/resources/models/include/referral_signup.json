@@ -21,6 +21,7 @@
       "entity": {
         "name": "<<referredName>>",
         "password": "password1!",
+        "agreeToTerms": true,
         "contact": {"type": "email", "info": "<<referredName>>@example.com"},
         "promoCode": "<<referralCode>>"
       }
