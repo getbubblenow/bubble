@@ -30,6 +30,7 @@
       {"name": "ssl_port", "value": "[[node.sslPort]]"},
       {"name": "public_base_uri", "value": "[[publicBaseUri]]"},
       {"name": "sage_node", "value": "[[sageNode]]"},
+      {"name": "promo_code_policy", "value": "[[#compare fork '==' true]][[configuration.promoCodePolicy]][[else]]disabled[[/compare]]"},
       {"name": "install_type", "value": "[[installType]]"},
       {"name": "default_locale", "value": "[[network.locale]]"},
       {"name": "time_zone", "value": "[[network.timezone]]"},
