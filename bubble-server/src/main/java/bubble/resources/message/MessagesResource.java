@@ -6,6 +6,7 @@ import bubble.service.message.AppMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.ArrayUtils;
 import org.cobbzilla.util.collection.ArrayUtil;
+import org.cobbzilla.util.string.StringUtil;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -73,6 +74,7 @@ public class MessagesResource {
         if (!ArrayUtils.contains(ALL_MESSAGE_GROUPS, group)) return notFound(group);
         if (format == null) format = MessageResourceFormat.underscore;
 
+        if (log.isDebugEnabled()) log.debug("loadMessagesByGroup: finding messages for group="+group+" among locales: "+StringUtil.toString(locales));
         for (String loc : locales) {
             try {
                 return ok_utf8(loadMessages(caller, loc, group, format));
