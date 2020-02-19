@@ -113,6 +113,11 @@ public class AuthResource {
             return invalid("err.activation.alreadyDone", "activation has already been done");
         }
         if (!request.hasName()) return invalid("err.name.required", "name is required");
+
+        if (!request.hasPassword()) return invalid("err.password.required", "password is required");
+        if (request.getPassword().contains("{{") && request.getPassword().contains("}}")) {
+            request.setPassword(configuration.applyHandlebars(request.getPassword()));
+        }
         if (!request.hasPassword()) return invalid("err.password.required", "password is required");
 
         final Account account = accountDAO.create(new Account(request).setRemoteHost(getRemoteHost(req)));

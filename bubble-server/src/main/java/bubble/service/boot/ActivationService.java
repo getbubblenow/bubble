@@ -9,6 +9,7 @@ import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountSshKeyDAO;
 import bubble.dao.cloud.*;
 import bubble.model.account.Account;
+import bubble.model.account.AccountSshKey;
 import bubble.model.boot.ActivationRequest;
 import bubble.model.boot.CloudServiceConfig;
 import bubble.model.cloud.*;
@@ -74,7 +75,13 @@ public class ActivationService {
         }
         if (ip == null) die("bootstrapThisNode: no IP could be found, not even a localhost address");
 
-        if (request.hasSshKey()) sshKeyDAO.create(request.getSshKey().setAccount(account.getUuid()));
+        if (request.hasSshKey()) {
+            final String keyJson = json(request.getSshKey());
+            if (keyJson.contains("{{") && keyJson.contains("}}")) {
+                request.setSshKey(json(configuration.applyHandlebars(keyJson), AccountSshKey.class));
+            }
+            sshKeyDAO.create(request.getSshKey().setAccount(account.getUuid()));
+        }
 
         final Map<String, CloudServiceConfig> requestConfigs = request.getCloudConfigs();
         final Map<String, CloudService> defaultConfigs = getCloudDefaultsMap();
