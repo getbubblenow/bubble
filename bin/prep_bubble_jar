@@ -57,6 +57,12 @@ if [[ ! -d ${ROLES_DIR} ]] ; then
   die "automation/roles dir not found: ${ROLES_DIR}"
 fi
 
+API_CONSTANTS="${BUBBLE_SERVER}/src/main/java/bubble/ApiConstants.java"
+LOCAL_NET_ID="$(cat "${API_CONSTANTS}" | grep -v '//' | grep -m 1 "String ROOT_NETWORK_UUID" | awk -F '"' '{print $2}')"
+if [[ -z "${LOCAL_NET_ID}" ]] ; then
+  die "ROOT_NETWORK_UUID could not be read from ${API_CONSTANTS}"
+fi
+
 echo "lbs = ${LOCALSTORAGE_BASE_DIR}"
 
 UPDATED="$(mktemp /tmp/default_roles.XXXXXXX.json)"
@@ -94,6 +100,7 @@ cat "${UPDATED}"
 echo "------------------------------------------------------------"
 
 cd ${LOCALSTORAGE_BASE_DIR} && jar uvf ${BUBBLE_JAR} automation || die "Error updating ${BUBBLE_JAR} with default role archives"
+mkdir -p ${LOCALSTORAGE_BASE_DIR}/${LOCAL_NET_ID} && cp -R ${LOCALSTORAGE_BASE_DIR}/automation ${LOCALSTORAGE_BASE_DIR}/${LOCAL_NET_ID}/ || die "Error creating/copying network storage dir: ${LOCALSTORAGE_BASE_DIR}/${LOCAL_NET_ID}"
 
 mkdir -p ${CLASSES_DIR}/scripts
 for script in $(cat ${BUBBLE_SERVER}/src/main/resources/ansible/bubble_scripts.txt) ; do

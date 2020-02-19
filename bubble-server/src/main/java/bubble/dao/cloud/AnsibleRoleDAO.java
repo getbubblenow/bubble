@@ -17,13 +17,13 @@ import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.*;
 import java.util.List;
 
 import static bubble.cloud.storage.StorageServiceDriver.STORAGE_PREFIX;
+import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.string.Base64.DONT_GUNZIP;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
@@ -95,7 +95,19 @@ public class AnsibleRoleDAO extends AccountOwnedTemplateDAO<AnsibleRole> {
                     return die("preCreate: role archive not found in storage: "+role.getTgzB64());
                 }
             } catch (Exception e) {
-                throw invalidEx("err.tgzB64.invalid.readingFromStorage", "error reading from "+ role.getTgzB64()+" : "+e);
+                boolean existsOnClasspath = false;
+                if (role.getTgzB64().startsWith(STORAGE_PREFIX+LOCAL_STORAGE+"/automation/roles/")) {
+                    // check classpath
+                    try {
+                        @Cleanup final InputStream in = getClass().getClassLoader().getResourceAsStream(role.getTgzB64());
+                        existsOnClasspath = in != null;
+                    } catch (Exception ioe) {
+                        log.warn("preCreate: role archive not found in storage and exception searching classpath: "+shortError(ioe));
+                    }
+                }
+                if (!existsOnClasspath) {
+                    throw invalidEx("err.tgzB64.invalid.readingFromStorage", "error reading from " + role.getTgzB64() + " : " + e);
+                }
             }
         }
 
