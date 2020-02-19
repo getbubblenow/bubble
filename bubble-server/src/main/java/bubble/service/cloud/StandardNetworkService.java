@@ -86,7 +86,7 @@ public class StandardNetworkService implements NetworkService {
     public static final List<String> BUBBLE_SCRIPTS = splitAndTrim(stream2string(ANSIBLE_DIR + "/bubble_scripts.txt"), "\n")
             .stream().filter(s -> !empty(s)).collect(Collectors.toList());
 
-    public static final int MAX_ANSIBLE_TRIES = 5;
+    public static final int MAX_ANSIBLE_TRIES = 1;
     public static final int RESTORE_KEY_LEN = 6;
 
     private static final long NET_LOCK_TIMEOUT = MINUTES.toMillis(21);
