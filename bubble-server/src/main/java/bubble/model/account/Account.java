@@ -91,6 +91,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     public static Account sageMask(Account sage) {
         final Account masked = new Account(sage)
                 .setAdmin(false)
+                .setDeleted(now())
                 .setHashedPassword(HashedPassword.DISABLED);
         masked.setUuid(sage.getUuid());
         return masked;

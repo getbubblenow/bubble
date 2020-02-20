@@ -1,4 +1,4 @@
-# Copyright (C) 2019 Bubble, Inc.
+# Copyright (C) 2020 Bubble, Inc.
 
 ## For ANY commercial use of this software
 All rights are reserved. Please contact licensing@bubblev.com for more information.

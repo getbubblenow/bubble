@@ -12,6 +12,7 @@ import bubble.dao.device.DeviceDAO;
 import bubble.model.account.*;
 import bubble.model.app.*;
 import bubble.model.bill.Bill;
+import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import bubble.service.SearchService;
@@ -83,6 +84,15 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Override public Object preCreate(Account account) {
         if (!account.hasLocale()) account.setLocale(getDEFAULT_LOCALE());
 
+        // check account limit for plan, if there is a plan
+        final BubblePlan plan = selfNodeService.getThisPlan();
+        if (plan != null && plan.hasMaxAccounts()) {
+            final int numAccounts = countNotDeleted();
+            if (numAccounts > plan.getMaxAccounts()) {
+                throw invalidEx("err.name.planMaxAccountLimit", "Account limit for plan reached (max "+plan.getMaxAccounts()+" accounts)");
+            }
+        }
+
         final ValidationResult result = account.validateName();
         if (result.isInvalid()) throw invalidEx(result);
 
@@ -93,6 +103,8 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         ensureThisNodeExists();
         return super.preCreate(account);
     }
+
+    public int countNotDeleted() { return findByField("deleted", null).size(); }
 
     private void ensureThisNodeExists() {
         if (activated()) {

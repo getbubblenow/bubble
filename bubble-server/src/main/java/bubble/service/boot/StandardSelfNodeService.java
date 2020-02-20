@@ -3,14 +3,15 @@ package bubble.service.boot;
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.storage.local.LocalStorageDriver;
 import bubble.dao.account.AccountSshKeyDAO;
+import bubble.dao.bill.AccountPlanDAO;
+import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
 import bubble.dao.cloud.CloudServiceDAO;
-import bubble.model.cloud.BubbleNetwork;
-import bubble.model.cloud.BubbleNode;
-import bubble.model.cloud.BubbleNodeKey;
-import bubble.model.cloud.BubbleNodeState;
+import bubble.model.bill.AccountPlan;
+import bubble.model.bill.BubblePlan;
+import bubble.model.cloud.*;
 import bubble.model.cloud.notify.NotificationReceipt;
 import bubble.model.cloud.notify.NotificationType;
 import bubble.server.BubbleConfiguration;
@@ -60,6 +61,8 @@ public class StandardSelfNodeService implements SelfNodeService {
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private CloudServiceDAO cloudDAO;
+    @Autowired private AccountPlanDAO accountPlanDAO;
+    @Autowired private BubblePlanDAO planDAO;
     @Autowired private NotificationService notificationService;
     @Autowired private BubbleConfiguration configuration;
 
@@ -383,4 +386,14 @@ public class StandardSelfNodeService implements SelfNodeService {
             return existingByUuid;
         }
     }
+
+    @Override public BubblePlan getThisPlan() {
+        final BubbleNetwork network = safeGetThisNetwork();
+        if (network == null) return null;
+        if (network.getInstallType() != AnsibleInstallType.node) return null;
+        final AccountPlan accountPlan = accountPlanDAO.findByNetwork(network.getUuid());
+        if (accountPlan == null) return null;
+        return planDAO.findByUuid(accountPlan.getPlan());
+    }
+
 }

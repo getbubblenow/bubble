@@ -40,12 +40,13 @@ public class BubblePlan extends IdentifiableBaseParentEntity implements HasAccou
     public static final int MAX_CHARGENAME_LEN = 12;
 
     public static final String[] UPDATE_FIELDS = {
-            "enabled", "price", "additionalPerNodePrice", "additionalStoragePerGbPrice", "additionalBandwidthPerGbPrice"
+            "enabled", "chargeName", "priority", "price", "maxAccounts",
+            "nodesIncluded", "storageGbIncluded", "bandwidthGbIncluded",
+            "additionalPerNodePrice", "additionalStoragePerGbPrice", "additionalBandwidthPerGbPrice"
     };
 
     public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS,
-            "name", "chargeName", "priority", "period", "computeSizeType",
-            "nodesIncluded", "storageGbIncluded", "bandwidthGbIncluded"
+            "name", "period", "computeSizeType"
     );
 
     public BubblePlan (BubblePlan other) { copy(this, other, CREATE_FIELDS); }
@@ -104,27 +105,32 @@ public class BubblePlan extends IdentifiableBaseParentEntity implements HasAccou
     @Enumerated(EnumType.STRING) @Getter @Setter private ComputeNodeSizeType computeSizeType;
 
     @ECSearchable @ECField(index=100)
-    @Column(nullable=false, updatable=false)
-    @Getter @Setter private Integer nodesIncluded;
+    @Getter @Setter private Integer maxAccounts;
+    public boolean hasMaxAccounts () { return maxAccounts != null; }
+    public int maxAccounts () { return hasMaxAccounts() ? getMaxAccounts() : Integer.MAX_VALUE; }
 
     @ECSearchable @ECField(index=110)
-    @Column(nullable=false, updatable=false)
-    @Getter @Setter private Integer additionalPerNodePrice;
+    @Column(nullable=false)
+    @Getter @Setter private Integer nodesIncluded;
 
     @ECSearchable @ECField(index=120)
-    @Column(nullable=false, updatable=false)
-    @Getter @Setter private Integer storageGbIncluded;
+    @Column(nullable=false)
+    @Getter @Setter private Integer additionalPerNodePrice;
 
     @ECSearchable @ECField(index=130)
-    @Column(nullable=false, updatable=false)
-    @Getter @Setter private Integer additionalStoragePerGbPrice;
+    @Column(nullable=false)
+    @Getter @Setter private Integer storageGbIncluded;
 
     @ECSearchable @ECField(index=140)
-    @Column(nullable=false, updatable=false)
-    @Getter @Setter private Integer bandwidthGbIncluded;
+    @Column(nullable=false)
+    @Getter @Setter private Integer additionalStoragePerGbPrice;
 
     @ECSearchable @ECField(index=150)
-    @Column(nullable=false, updatable=false)
+    @Column(nullable=false)
+    @Getter @Setter private Integer bandwidthGbIncluded;
+
+    @ECSearchable @ECField(index=160)
+    @Column(nullable=false)
     @Getter @Setter private Integer additionalBandwidthPerGbPrice;
 
     @Transient @Getter @Setter private transient List<BubbleApp> apps;

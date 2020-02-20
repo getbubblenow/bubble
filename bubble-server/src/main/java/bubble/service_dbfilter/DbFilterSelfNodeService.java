@@ -1,5 +1,6 @@
 package bubble.service_dbfilter;
 
+import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.service.boot.SelfNodeService;
@@ -21,5 +22,7 @@ public class DbFilterSelfNodeService implements SelfNodeService {
     @Override public BubbleNode getSoleNode() { return notSupported("getSoleNode"); }
 
     @Override public void setActivated(BubbleNode thisNode) { notSupported("setActivated"); }
+
+    @Override public BubblePlan getThisPlan() { return notSupported("getThisPlan"); }
 
 }
