@@ -48,9 +48,9 @@
       {"name": "restore_key", "value": "[[restoreKey]]"},
       {"name": "restore_timeout", "value": "[[restoreTimeoutSeconds]]"},
       {"name": "test_mode", "value": "[[testMode]]"},
-      {"name": "errbit_url", "value": "[[#compare fork '==' true]][[configuration.errorApi.url]][[/compare]]"},
-      {"name": "errbit_key", "value": "[[#compare fork '==' true]][[configuration.errorApi.key]][[/compare]]"},
-      {"name": "errbit_env", "value": "[[#compare fork '==' true]][[node.fqdn]][[/compare]]"}
+      {"name": "errbit_url", "value": "[[errbit_url]]"},
+      {"name": "errbit_key", "value": "[[errbit_key]]"},
+      {"name": "errbit_env", "value": "[[errbit_env]]"}
     ],
     "optionalConfigNames": ["restore_key", "restore_timeout", "errbit_url", "errbit_key", "errbit_env"],
     "tgzB64": ""

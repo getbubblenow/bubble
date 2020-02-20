@@ -21,6 +21,7 @@ import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.io.Tarball;
 import org.cobbzilla.util.io.TempDir;
 import org.cobbzilla.util.string.Base64;
+import org.cobbzilla.wizard.server.config.ErrorApiConfiguration;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -80,9 +81,10 @@ public class AnsiblePrepService {
         ctx.put("sslPort", network.getSslPort());
         ctx.put("publicBaseUri", network.getPublicUri());
 
-        if (network.sendMetrics()) {
-            ctx.put("errbit_url", configuration.getErrorApi().getUrl());
-            ctx.put("errbit_key", configuration.getErrorApi().getKey());
+        if (network.sendMetrics() && configuration.hasErrorApi()) {
+            final ErrorApiConfiguration errorApi = configuration.getErrorApi();
+            ctx.put("errbit_url", errorApi.getUrl());
+            ctx.put("errbit_key", errorApi.getKey());
             ctx.put("errbit_env", node.getFqdn());
         }
 
