@@ -59,7 +59,11 @@ fi
 
 LOCAL_NET_ID="$("${SCRIPT_DIR}/bconst" bubble.ApiConstants.ROOT_NETWORK_UUID 2> /dev/null)"
 if [[ -z "${LOCAL_NET_ID}" ]] ; then
-  die "ROOT_NETWORK_UUID could not be read from ApiConstants"
+  # try to read from source file
+  LOCAL_NET_ID="$(cat "${BUBBLE_SERVER}/src/main/java/bubble/ApiConstants.java" | grep -v '//' | egrep '\s+String\s+ROOT_NETWORK_UUID' | awk -F '"' '{print $2}')"
+  if [[ -z "${LOCAL_NET_ID}" ]] ; then
+    die "ROOT_NETWORK_UUID could not be read from ApiConstants"
+  fi
 fi
 
 echo "lbs = ${LOCALSTORAGE_BASE_DIR}"
