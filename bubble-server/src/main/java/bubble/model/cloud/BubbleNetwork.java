@@ -34,8 +34,7 @@ import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.model.cloud.BubbleDomain.DOMAIN_NAME_MAXLEN;
 import static bubble.model.cloud.BubbleNetworkState.created;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpSchemes.SCHEME_HTTPS;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.string.ValidationRegexes.HOST_PART_PATTERN;
@@ -153,6 +152,11 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @Size(max=100, message="err.timezone.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String timezone = "America/New_York";
+
+    @ECSearchable @ECField(index=140)
+    @Column(nullable=false)
+    @ECIndex @Getter @Setter private Boolean sendMetrics = false;
+    public boolean sendMetrics() { return bool(sendMetrics); }
 
     @Embedded @Getter @Setter private BubbleTags tags;
 

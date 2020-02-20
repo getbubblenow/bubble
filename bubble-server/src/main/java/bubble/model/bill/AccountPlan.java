@@ -146,6 +146,9 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     @Transient @Getter @Setter private transient String forkHost = null;
     public boolean hasForkHost () { return !empty(forkHost); }
 
+    @Transient @Getter @Setter private transient Boolean sendMetrics = null;
+    public boolean sendMetrics () { return bool(sendMetrics); }
+
     public BubbleNetwork bubbleNetwork(Account account,
                                        BubbleDomain domain,
                                        BubblePlan plan,
@@ -157,6 +160,7 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
                 .setTimezone(getTimezone())
                 .setAccount(account.getUuid())
                 .setSshKey(getSshKey())
+                .setSendMetrics(sendMetrics())
                 .setDomain(domain.getUuid())
                 .setDomainName(domain.getName())
                 .setFootprint(getFootprint())

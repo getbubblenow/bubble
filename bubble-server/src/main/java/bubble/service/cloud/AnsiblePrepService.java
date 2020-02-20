@@ -80,6 +80,12 @@ public class AnsiblePrepService {
         ctx.put("sslPort", network.getSslPort());
         ctx.put("publicBaseUri", network.getPublicUri());
 
+        if (network.sendMetrics()) {
+            ctx.put("errbit_url", configuration.getErrorApi().getUrl());
+            ctx.put("errbit_key", configuration.getErrorApi().getKey());
+            ctx.put("errbit_env", node.getFqdn());
+        }
+
         ctx.put("network", network);
         ctx.put("node", node);
         ctx.put("roles", installRoles.stream().map(AnsibleRole::getRoleName).collect(Collectors.toList()));
