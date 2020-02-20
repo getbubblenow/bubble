@@ -41,7 +41,8 @@ public class AccountPlan extends IdentifiableBase implements HasAccount {
     public static final String[] UPDATE_FIELDS = {"description", "paymentMethod", "paymentMethodObject"};
 
     public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS,
-            "name", "forkHost", "locale", "timezone", "domain", "network", "sshKey", "plan", "footprint");
+            "name", "forkHost", "locale", "timezone", "domain", "network",
+            "sshKey", "sendMetrics", "plan", "footprint");
 
     @SuppressWarnings("unused")
     public AccountPlan (AccountPlan other) { copy(this, other, CREATE_FIELDS); }
