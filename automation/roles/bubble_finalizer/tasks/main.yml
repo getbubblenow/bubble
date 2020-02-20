@@ -23,7 +23,7 @@
   when: install_type == 'node'
 
 - name: Install mitmproxy public certs in bubble dir
-  shell: /usr/local/bin/copy_certs_to_bubble.sh
+  shell: /usr/local/bin/copy_certs_to_bubble.sh {{ server_alias }}
   when: install_type == 'node'
 
 - name: Install bubble supervisor conf file

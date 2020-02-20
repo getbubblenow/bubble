@@ -64,7 +64,6 @@ public class ApiConstants {
     public static final String HOME_DIR = System.getProperty("user.home");
 
     public static final File CACERTS_DIR = new File(HOME_DIR, "cacerts");
-    public static final String MITMPROXY_CA_CERT_BASE = "bubble-ca-cert.";
     public static final File MITMPROXY_CERT_DIR = new File(HOME_DIR, "mitm_certs");
 
     public static final String META_PROP_BUBBLE_VERSION = "bubble.version";

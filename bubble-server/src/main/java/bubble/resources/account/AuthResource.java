@@ -452,7 +452,9 @@ public class AuthResource {
                               @QueryParam("type") CertType type) {
         final Account caller = optionalUserPrincipal(ctx);
         if (type == null) type = CertType.pem;
-        final File certFile = new File(CACERTS_DIR, MITMPROXY_CA_CERT_BASE+type.name());
+        final BubbleNetwork thisNet = configuration.getThisNetwork();
+        if (thisNet == null) return die("getCaCert: thisNetwork was null");
+        final File certFile = new File(CACERTS_DIR, thisNet.getNetworkDomain()+"."+type.name());
         if (!certFile.exists()) return notFound(type.name());
         return send(new FileSendableResource(certFile).setForceDownload(true));
     }

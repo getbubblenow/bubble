@@ -12,7 +12,10 @@ chmod 750 ${MITM_CERTS} || die "Error setting permissions on ${MITM_CERTS}"
 chmod -R 440 ${MITM_CERTS}/* || die "Error setting permissions on ${MITM_CERTS} files"
 
 CERTS_DIR=/home/bubble/cacerts
-MITM_BASE_NAME="bubble-ca"
+
+CERT_BASE="${1:?no cert base provided}"
+MITM_BASE_NAME="${CERT_BASE}-ca"
+
 mkdir -p ${CERTS_DIR} || die "Error creating cacerts dir"
 cp ${MITM_CERTS}/${MITM_BASE_NAME}-cert.pem ${CERTS_DIR} || die "Error copying pem cert"
 cp ${MITM_CERTS}/${MITM_BASE_NAME}-cert.pem.crt ${CERTS_DIR}/${MITM_BASE_NAME}-cert.crt || die "Error copying crt cert"

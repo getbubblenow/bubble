@@ -12,7 +12,6 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.NetworkMonitorService;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.wizard.dao.AbstractDAO;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
 
@@ -54,11 +53,13 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
         final BubbleConfiguration c = (BubbleConfiguration) server.getConfiguration();
 
         // ensure all search views can be created
-        if (!c.testMode()) {
-            c.getAllDAOs().stream()
-                    .filter(dao -> dao instanceof AbstractDAO)
-                    .forEach(dao -> ((AbstractDAO) dao).getSearchView());
-        }
+//        disabled for now, slows down startup time and consumes much memory.
+//        Most search views will probably not need to be instantiated anyway
+//        if (!c.testMode()) {
+//            c.getAllDAOs().stream()
+//                    .filter(dao -> dao instanceof AbstractDAO)
+//                    .forEach(dao -> ((AbstractDAO) dao).getSearchView());
+//        }
 
         // ensure system configs can be loaded properly
         final Map<String, Object> configs = c.getPublicSystemConfigs();
