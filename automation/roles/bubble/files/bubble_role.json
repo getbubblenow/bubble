@@ -27,10 +27,10 @@
     {"name": "restore_key", "value": "[[restoreKey]]"},
     {"name": "restore_timeout", "value": "[[restoreTimeoutSeconds]]"},
     {"name": "test_mode", "value": "[[testMode]]"},
-    {"name": "errbit_url", "value": "[[errbit_url]]"},
-    {"name": "errbit_key", "value": "[[errbit_key]]"},
-    {"name": "errbit_env", "value": "[[errbit_env]]"}
+    {"name": "error_url", "value": "[[error_url]]"},
+    {"name": "error_key", "value": "[[error_key]]"},
+    {"name": "error_env", "value": "[[error_env]]"}
   ],
-  "optionalConfigNames": ["restore_key", "restore_timeout", "errbit_url", "errbit_key", "errbit_env"],
+  "optionalConfigNames": ["restore_key", "restore_timeout", "error_url", "error_key", "error_env"],
   "tgzB64": ""
 }

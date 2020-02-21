@@ -83,9 +83,9 @@ public class AnsiblePrepService {
 
         if (network.sendMetrics() && configuration.hasErrorApi()) {
             final ErrorApiConfiguration errorApi = configuration.getErrorApi();
-            ctx.put("errbit_url", errorApi.getUrl());
-            ctx.put("errbit_key", errorApi.getKey());
-            ctx.put("errbit_env", node.getFqdn());
+            ctx.put("error_url", errorApi.getUrl());
+            ctx.put("error_key", errorApi.getKey());
+            ctx.put("error_env", node.getFqdn());
         }
 
         ctx.put("network", network);
