@@ -78,6 +78,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_LOCKED = "locked";
     public static final String TAG_SSL_PORT = "sslPort";
     public static final String TAG_PROMO_CODE_POLICY = "promoCodePolicy";
+    public static final String TAG_REQUIRE_SEND_METRICS = "requireSendMetrics";
 
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
@@ -277,6 +278,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_SAGE_LAUNCHER, thisNetwork == null || isSageLauncher()},
                         {TAG_PAYMENTS_ENABLED, cloudDAO.paymentsEnabled()},
                         {TAG_PROMO_CODE_POLICY, getPromoCodePolicy().name()},
+                        {TAG_REQUIRE_SEND_METRICS, requireSendMetrics()},
                         {TAG_ENTITY_CLASSES, getSortedSimpleEntityClassMap()},
                         {TAG_LOCALES, getAllLocales()},
                         {TAG_CLOUD_CONFIGS, accountDAO.activated() ? null : activationService.getCloudDefaults()},
