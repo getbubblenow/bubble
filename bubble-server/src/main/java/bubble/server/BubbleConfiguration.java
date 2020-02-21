@@ -299,6 +299,9 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         return peValue != null && Boolean.parseBoolean(peValue.toString());
     }
 
+    @Getter @Setter private Boolean requireSendMetrics;
+    public boolean requireSendMetrics () { return bool(requireSendMetrics); }
+
     @Getter @Setter private String[] disallowedCountries;
 
     public boolean hasDisallowedCountries() { return !empty(disallowedCountries); }

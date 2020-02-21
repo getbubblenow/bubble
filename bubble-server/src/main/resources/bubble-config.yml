@@ -76,6 +76,7 @@ localStorageDir: {{LOCALSTORAGE_BASE_DIR}}
 disallowedCountries: {{DISALLOWED_COUNTRIES}}
 
 promoCodePolicy: {{#exists BUBBLE_PROMO_CODE_POLICY}}{{BUBBLE_PROMO_CODE_POLICY}}{{else}}disabled{{/exists}}
+requireSendMetrics: true
 
 rateLimits:
   - { limit: 500, interval: 3s, block: 5m }
