@@ -81,7 +81,10 @@ public class AuthResource {
 
     public Account updateLastLogin(Account account) { return accountDAO.update(account.setLastLogin()); }
 
-    public String newLoginSession(Account account) { return sessionDAO.create(updateLastLogin(account)); }
+    public String newLoginSession(Account account) {
+        if (account.getLastLogin() == null) account.setFirstLogin(true);
+        return sessionDAO.create(updateLastLogin(account));
+    }
 
     @GET @Path(EP_CONFIGS)
     public Response getPublicSystemConfigs(@Context ContainerRequest ctx) {

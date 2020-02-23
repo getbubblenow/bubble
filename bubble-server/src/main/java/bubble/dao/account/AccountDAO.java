@@ -88,7 +88,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         final BubblePlan plan = selfNodeService.getThisPlan();
         if (plan != null && plan.hasMaxAccounts()) {
             final int numAccounts = countNotDeleted();
-            if (numAccounts > plan.getMaxAccounts()) {
+            if (numAccounts >= plan.getMaxAccounts()) {
                 throw invalidEx("err.name.planMaxAccountLimit", "Account limit for plan reached (max "+plan.getMaxAccounts()+" accounts)");
             }
         }

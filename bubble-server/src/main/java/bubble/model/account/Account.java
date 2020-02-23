@@ -158,6 +158,8 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     @Getter @Setter private Long lastLogin;
     public Account setLastLogin() { return setLastLogin(now()); }
 
+    @Getter @Setter @Transient private transient Boolean firstLogin;
+
     @ECIndex @ECSearchable @ECField(index=110, type=epoch_time, mode=readOnly)
     @Column(nullable=false)
     @Getter @Setter private Long termsAgreed;
