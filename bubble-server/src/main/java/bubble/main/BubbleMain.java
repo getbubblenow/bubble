@@ -7,6 +7,7 @@ import bubble.main.http.BubbleHttpPutMain;
 import bubble.server.BubbleServer;
 import org.cobbzilla.util.collection.MapBuilder;
 import org.cobbzilla.util.main.ConstMain;
+import org.cobbzilla.util.main.FileHeaderMain;
 import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.main.MainBase;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -30,7 +31,8 @@ public class BubbleMain {
             {"crypt", CryptMain.class},
             {"rekey", RekeyDatabaseMain.class},
             {"generate-algo-conf", GenerateAlgoConfMain.class},
-            {"const", ConstMain.class}
+            {"const", ConstMain.class},
+            {"file-header", FileHeaderMain.class}
     });
 
     public static void main(String[] args) throws Exception {
