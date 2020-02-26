@@ -1,6 +1,7 @@
 package bubble.dao.account;
 
 import bubble.cloud.CloudServiceDriver;
+import bubble.cloud.compute.ComputeNodeSizeType;
 import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.app.*;
 import bubble.dao.bill.BillDAO;
@@ -173,17 +174,23 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
                 if (driver.disableDelegation()) {
                     return accountEntity.setTemplate(false);
 
-                } else if (selfNodeService.getThisNetwork() != null && selfNodeService.getThisNetwork().getInstallType() == AnsibleInstallType.node) {
-                    // on a node, sub-accounts can use the same cloud/config/credentials as their admin
-                    return accountEntity.setDelegated(parentEntity.getDelegated())
-                            .setCredentialsJson(parentEntity.getCredentialsJson())
-                            .setDriverConfigJson(parentEntity.getDriverConfigJson())
-                            .setTemplate(false);
-
                 } else {
-                    return accountEntity.setDelegated(parentEntity.getUuid())
-                            .setCredentials(CloudCredentials.delegate(configuration.getThisNode(), configuration))
-                            .setTemplate(false);
+                    final BubbleNetwork thisNetwork = selfNodeService.getThisNetwork();
+                    if (parentEntity.delegated()
+                            && thisNetwork != null
+                            && thisNetwork.getInstallType() == AnsibleInstallType.node
+                            && thisNetwork.getComputeSizeType() != ComputeNodeSizeType.local) {
+                        // on a node, sub-accounts can use the same cloud/config/credentials as their admin
+                        return accountEntity.setDelegated(parentEntity.getDelegated())
+                                .setCredentialsJson(parentEntity.getCredentialsJson())
+                                .setDriverConfigJson(parentEntity.getDriverConfigJson())
+                                .setTemplate(false);
+
+                    } else {
+                        return accountEntity.setDelegated(parentEntity.getUuid())
+                                .setCredentials(CloudCredentials.delegate(configuration.getThisNode(), configuration))
+                                .setTemplate(false);
+                    }
                 }
             }
             @Override public void postCreate(CloudService parentEntity, CloudService accountEntity) {
