@@ -171,6 +171,14 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
                 final CloudServiceDriver driver = parentEntity.getDriver();
                 if (driver.disableDelegation()) {
                     return accountEntity.setTemplate(false);
+
+                } else if (selfNodeService.getThisNetwork() != null && selfNodeService.getThisNetwork().getInstallType() == AnsibleInstallType.node) {
+                    // on a node, sub-accounts can use the same cloud/config/credentials as their admin
+                    return accountEntity.setDelegated(parentEntity.getDelegated())
+                            .setCredentialsJson(parentEntity.getCredentialsJson())
+                            .setDriverConfigJson(parentEntity.getDriverConfigJson())
+                            .setTemplate(false);
+
                 } else {
                     return accountEntity.setDelegated(parentEntity.getUuid())
                             .setCredentials(CloudCredentials.delegate(configuration.getThisNode(), configuration))

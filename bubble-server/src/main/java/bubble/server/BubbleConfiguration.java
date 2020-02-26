@@ -7,6 +7,7 @@ import bubble.client.BubbleApiClient;
 import bubble.cloud.CloudServiceDriver;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.CloudServiceDAO;
+import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.server.listener.BubbleFirstTimeListener;
@@ -70,6 +71,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final File DEBUG_NODE_INSTALL_FILE = new File(HOME_DIR, ".debug_node_install");
 
     public static final String TAG_SAGE_LAUNCHER = "sageLauncher";
+    public static final String TAG_BUBBLE_NODE = "bubbleNode";
     public static final String TAG_NETWORK_UUID = "networkUuid";
     public static final String TAG_PAYMENTS_ENABLED = "paymentsEnabled";
     public static final String TAG_ENTITY_CLASSES = "entityClasses";
@@ -276,6 +278,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_ALLOW_REGISTRATION, thisNetwork == null ? null : thisNetwork.getBooleanTag(TAG_ALLOW_REGISTRATION, false)},
                         {TAG_NETWORK_UUID, thisNetwork == null ? null : thisNetwork.getUuid()},
                         {TAG_SAGE_LAUNCHER, thisNetwork == null || isSageLauncher()},
+                        {TAG_BUBBLE_NODE, thisNetwork == null ? null : thisNetwork.getInstallType() == AnsibleInstallType.node},
                         {TAG_PAYMENTS_ENABLED, cloudDAO.paymentsEnabled()},
                         {TAG_PROMO_CODE_POLICY, getPromoCodePolicy().name()},
                         {TAG_REQUIRE_SEND_METRICS, requireSendMetrics()},

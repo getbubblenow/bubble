@@ -98,6 +98,9 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
                                 } else {
                                     noopClouds.put(type, cs);
                                 }
+                            } else {
+                                // for new node, cloud services become templates
+                                cs.setTemplate(true);
                             }
                         }
                         add(setLocalStoragePath(cs));
