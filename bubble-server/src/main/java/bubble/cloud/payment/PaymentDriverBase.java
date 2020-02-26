@@ -228,8 +228,15 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
 
         // What payment was used to pay the bill?
         if (successfulPayment == null) {
-            log.warn("refund: AccountPlanPayment not found for paid bill ("+bill.getUuid()+") accountPlan: "+accountPlanUuid);
-            throw invalidEx("err.refund.paymentNotFound");
+            // check to see if promotional credit(s) were used, this may be the reason no refund is due
+            final List<AccountPayment> creditsApplied = accountPaymentDAO.findByAccountAndAccountPlanAndBillAndCreditAppliedSuccess(accountPlan.getAccount(), accountPlanUuid, bill.getUuid());
+            if (empty(creditsApplied)) {
+                log.warn("refund: AccountPlanPayment not found for paid bill (" + bill.getUuid() + ") accountPlan: " + accountPlanUuid);
+                throw invalidEx("err.refund.paymentNotFound");
+            } else {
+                log.warn("refund: not refunding bill paid via promotional credits ("+bill.getUuid()+") accountPlan: "+accountPlanUuid);
+                return false;
+            }
         }
 
         // Is the payment method associated with the bill still active?
