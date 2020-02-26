@@ -17,6 +17,7 @@ import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import bubble.service.SearchService;
 import bubble.service.boot.SelfNodeService;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.cache.Refreshable;
 import org.cobbzilla.wizard.dao.AbstractCRUDDAO;
@@ -378,6 +379,9 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         admins.sort(CTIME_ASC); // todo: do this in SQL
         return admins.get(0);
     }
+
+    // There can be only one sage account
+    @Getter(lazy=true) private final Account sageAccount = findByUniqueField("sage", true);
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void unlock() {

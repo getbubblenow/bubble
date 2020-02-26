@@ -92,21 +92,26 @@ public class AnsibleRoleDAO extends AccountOwnedTemplateDAO<AnsibleRole> {
             // Verify file exists in storage
             try {
                 if (!storageService.exists(role.getAccount(), role.getTgzB64())) {
-                    return die("preCreate: role archive not found in storage: "+role.getTgzB64());
+                    throw new IllegalStateException("preCreate: role archive not found in storage: "+role.getTgzB64());
                 }
             } catch (Exception e) {
                 boolean existsOnClasspath = false;
-                if (role.getTgzB64().startsWith(STORAGE_PREFIX+LOCAL_STORAGE+"/automation/roles/")) {
+                final String prefix = STORAGE_PREFIX + LOCAL_STORAGE + "/";
+                final String roleTgzPath;
+                if (role.getTgzB64().startsWith(prefix + "automation/roles/")) {
                     // check classpath
+                    roleTgzPath = role.getTgzB64().substring(prefix.length());
                     try {
-                        @Cleanup final InputStream in = getClass().getClassLoader().getResourceAsStream(role.getTgzB64());
+                        @Cleanup final InputStream in = getClass().getClassLoader().getResourceAsStream(roleTgzPath);
                         existsOnClasspath = in != null;
                     } catch (Exception ioe) {
-                        log.warn("preCreate: role archive not found in storage and exception searching classpath: "+shortError(ioe));
+                        log.warn("preCreate: role archive not found in storage ("+role.getTgzB64()+") and exception searching classpath ("+roleTgzPath+"): "+shortError(ioe));
                     }
+                } else {
+                    roleTgzPath = null;
                 }
                 if (!existsOnClasspath) {
-                    throw invalidEx("err.tgzB64.invalid.readingFromStorage", "error reading from " + role.getTgzB64() + " : " + e);
+                    throw invalidEx("err.tgzB64.invalid.readingFromStorage", "error reading from " + roleTgzPath + " : " + e);
                 }
             }
         }

@@ -34,6 +34,7 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
 
     public void ensureNoopCloudsExist(Account account) {
         for (CloudServiceType type : CloudServiceType.values()) {
+            if (type == CloudServiceType.local) continue;
             final CloudService noopCloud = findByAccountNoopForType(account.getUuid(), type);
             if (empty(noopCloud)) {
                 try {

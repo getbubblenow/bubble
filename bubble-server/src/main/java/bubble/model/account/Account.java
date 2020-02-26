@@ -91,9 +91,11 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     public static Account sageMask(Account sage) {
         final Account masked = new Account(sage)
                 .setAdmin(false)
+                .setSage(true)
                 .setDeleted(now())
                 .setHashedPassword(HashedPassword.DISABLED);
         masked.setUuid(sage.getUuid());
+        masked.setCtime(sage.getCtime());
         return masked;
     }
 
@@ -141,26 +143,30 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     @Getter @Setter private Boolean admin = false;
     public boolean admin () { return bool(admin); }
 
-    @ECIndex @ECSearchable @ECField(index=70)
+    @ECIndex(unique=true, where="sage = true") @ECField(index=70)
+    @Getter @Setter private Boolean sage = false;
+    public boolean sage () { return bool(sage); }
+
+    @ECIndex @ECSearchable @ECField(index=80)
     @Getter @Setter private Boolean suspended = false;
     public boolean suspended () { return bool(suspended); }
 
-    @ECIndex @ECSearchable @ECField(index=80)
+    @ECIndex @ECSearchable @ECField(index=90)
     @Getter @Setter private Boolean locked = false;
     public boolean locked () { return bool(locked); }
 
-    @ECIndex @ECSearchable @ECField(index=90, type=epoch_time, mode=readOnly)
+    @ECIndex @ECSearchable @ECField(index=100, type=epoch_time, mode=readOnly)
     @Getter @Setter private Long deleted;
     public boolean deleted () { return deleted != null; }
     public Account setDeleted() { return setDeleted(now()); }
 
-    @ECIndex @ECSearchable @ECField(index=100, type=epoch_time, mode=readOnly)
+    @ECIndex @ECSearchable @ECField(index=110, type=epoch_time, mode=readOnly)
     @Getter @Setter private Long lastLogin;
     public Account setLastLogin() { return setLastLogin(now()); }
 
     @Getter @Setter @Transient private transient Boolean firstLogin;
 
-    @ECIndex @ECSearchable @ECField(index=110, type=epoch_time, mode=readOnly)
+    @ECIndex @ECSearchable @ECField(index=120, type=epoch_time, mode=readOnly)
     @Column(nullable=false)
     @Getter @Setter private Long termsAgreed;
     public Account setTermsAgreed() { return setTermsAgreed(now()); }

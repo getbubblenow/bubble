@@ -1,6 +1,7 @@
 package bubble.service;
 
 import bubble.ApiConstants;
+import bubble.dao.account.AccountDAO;
 import bubble.model.account.Account;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.GeoService;
@@ -10,6 +11,7 @@ import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.wizard.dao.AbstractDAO;
 import org.cobbzilla.wizard.dao.DAO;
 import org.cobbzilla.wizard.dao.SearchResults;
+import org.cobbzilla.wizard.model.search.SearchBoundComparison;
 import org.cobbzilla.wizard.model.search.SearchQuery;
 import org.cobbzilla.wizard.model.search.SearchSort;
 import org.cobbzilla.wizard.model.search.SqlViewField;
@@ -22,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static bubble.ApiConstants.MAX_SEARCH_PAGE;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
+import static org.cobbzilla.wizard.model.search.SearchField.OP_SEP;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
 @Service @Slf4j
@@ -91,13 +94,14 @@ public class StandardSearchService implements SearchService {
     }
 
     public SearchResults search(Boolean nocache, Account caller, DAO dao, SearchQuery q) {
+        final boolean isSageLauncher = configuration.isSageLauncher();
         final SearchResults results;
         if (nocache != null && nocache) {
-            results = search(dao, q, caller);
+            results = search(dao, q, caller, isSageLauncher);
         } else {
             final String cacheKey = hashOf(caller.getUuid(), dao.getClass().getName(), q);
             final ExpirationMap<String, Object> searchCache = searchCaches.computeIfAbsent(dao.getEntityClass().getName(), k -> newSearchCache());
-            results = (SearchResults) searchCache.computeIfAbsent(cacheKey, searchKey -> search(dao, q, caller));
+            results = (SearchResults) searchCache.computeIfAbsent(cacheKey, searchKey -> search(dao, q, caller, isSageLauncher));
         }
         return results;
     }
@@ -106,7 +110,8 @@ public class StandardSearchService implements SearchService {
 
     public static SearchResults search(DAO dao,
                                        SearchQuery q,
-                                       Account caller) {
+                                       Account caller,
+                                       boolean isSageLauncher) {
         if (!caller.admin()) {
             final Class entityClass = dao.getEntityClass();
             if (entityClass.equals(Account.class)) {
@@ -120,6 +125,12 @@ public class StandardSearchService implements SearchService {
                     // no results, non-admin cannot search for things that do not have an account
                     return new SearchResults<>().setError("cannot search "+ entityClass.getName());
                 }
+            }
+        }
+        if (!isSageLauncher && dao instanceof AccountDAO) {
+            final Account sageAccount = ((AccountDAO) dao).getSageAccount();
+            if (sageAccount != null) {
+                q.setBound("uuid", SearchBoundComparison.ne + OP_SEP + sageAccount.getUuid());
             }
         }
         return dao.search(q);
