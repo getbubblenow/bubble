@@ -1,5 +1,8 @@
 #!/bin/bash
 #
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://git.bubblev.org/bubblev/bubble/src/branch/master/LICENSE.md
+#
+#
 # Bubble client script. Wraps the run.sh script.
 #
 # Usually not called directly, instead use one of the higher-level wrappers: sync-model, run-script
