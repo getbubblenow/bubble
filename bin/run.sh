@@ -119,5 +119,11 @@ else
   LOG_CONFIG="-Dlogback.configurationFile=logback-client.xml"
 fi
 
+if [[ -z "${BUBBLE_ADDITIONAL_CLASSPATH}" ]] ; then
+  BUBBLE_CP="${BUBBLE_JAR}"
+else
+  BUBBLE_CP="${BUBBLE_JAR}:${BUBBLE_ADDITIONAL_CLASSPATH}"
+fi
+
 # Run!
-BUBBLE_JAR="${BUBBLE_JAR}" java ${LOG_CONFIG} ${BUBBLE_JVM_OPTS} ${debug} -server -cp ${BUBBLE_JAR} ${CLASS} ${command} "${@}"
+BUBBLE_JAR="${BUBBLE_JAR}" java ${LOG_CONFIG} ${BUBBLE_JVM_OPTS} ${debug} -server -cp "${BUBBLE_CP}" ${CLASS} ${command} "${@}"
