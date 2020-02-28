@@ -19,7 +19,7 @@ import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.NetworkKeys;
 import bubble.model.cloud.notify.NotificationReceipt;
 import bubble.server.BubbleConfiguration;
-import bubble.service.account.AuthenticatorService;
+import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.backup.RestoreService;
 import bubble.service.bill.PromotionService;
@@ -80,7 +80,7 @@ public class AuthResource {
     @Autowired private BubblePlanDAO planDAO;
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private BubbleConfiguration configuration;
-    @Autowired private AuthenticatorService authenticatorService;
+    @Autowired private StandardAuthenticatorService authenticatorService;
     @Autowired private PromotionService promoService;
 
     public Account updateLastLogin(Account account) { return accountDAO.update(account.setLastLogin()); }

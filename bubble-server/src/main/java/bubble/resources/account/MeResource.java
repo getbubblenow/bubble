@@ -25,7 +25,7 @@ import bubble.resources.driver.DriversResource;
 import bubble.resources.notify.ReceivedNotificationsResource;
 import bubble.resources.notify.SentNotificationsResource;
 import bubble.server.BubbleConfiguration;
-import bubble.service.account.AuthenticatorService;
+import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.BubbleModelSetupService;
@@ -80,7 +80,7 @@ public class MeResource {
     @Autowired private SessionDAO sessionDAO;
     @Autowired private AccountDownloadService downloadService;
     @Autowired private BubbleConfiguration configuration;
-    @Autowired private AuthenticatorService authenticatorService;
+    @Autowired private StandardAuthenticatorService authenticatorService;
     @Autowired private AccountMessageDAO messageDAO;
 
     @GET

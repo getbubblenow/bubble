@@ -19,7 +19,7 @@ import bubble.model.account.message.ActionTarget;
 import bubble.model.bill.AccountPlan;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
-import bubble.service.account.AuthenticatorService;
+import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.backup.NetworkKeysService;
 import bubble.service.cloud.NodeProgressMeterTick;
 import bubble.service.cloud.StandardNetworkService;
@@ -56,7 +56,7 @@ public class NetworkActionsResource {
     @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private BubbleConfiguration configuration;
-    @Autowired private AuthenticatorService authenticatorService;
+    @Autowired private StandardAuthenticatorService authenticatorService;
 
     private Account account;
     private BubbleNetwork network;

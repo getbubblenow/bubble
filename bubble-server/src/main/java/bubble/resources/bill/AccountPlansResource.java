@@ -26,7 +26,7 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.CloudService;
 import bubble.resources.account.AccountOwnedResource;
 import bubble.server.BubbleConfiguration;
-import bubble.service.account.AuthenticatorService;
+import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.cloud.GeoService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.validation.ValidationResult;
@@ -60,7 +60,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private AccountPaymentMethodDAO paymentMethodDAO;
     @Autowired private BubbleConfiguration configuration;
-    @Autowired private AuthenticatorService authenticatorService;
+    @Autowired private StandardAuthenticatorService authenticatorService;
     @Autowired private GeoService geoService;
 
     public AccountPlansResource(Account account) { super(account); }
