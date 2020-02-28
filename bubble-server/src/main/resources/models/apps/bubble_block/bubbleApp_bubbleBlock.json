@@ -141,6 +141,13 @@
             "tags": ["malware", "phishing"]
           },
           {
+            "name": "Bubble Ads/Tracking List",
+            "id": "bubble_ads_and_trackers1",
+            "url": "https://raw.githubusercontent.com/bubblev/bubble-filter-lists/master/ads_and_trackers1.txt",
+            "description": "Blocks lots of ads and trackers, with a focus on ads and trackers used in native mobile apps",
+            "tags": ["ads", "privacy"]
+          },
+          {
             "name": "Bubble Custom List",
             "id": "local",
             "url": "",
