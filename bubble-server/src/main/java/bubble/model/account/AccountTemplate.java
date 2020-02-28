@@ -25,6 +25,9 @@ public interface AccountTemplate extends HasAccount {
     Logger log = LoggerFactory.getLogger(AccountTemplate.class);
 
     interface CopyTemplate<E extends AccountTemplate> {
+        default E findAccountEntity(AccountOwnedTemplateDAO<E> dao, String accountUuid, E parentEntity) {
+            return dao.findByAccountAndId(parentEntity.getName(), accountUuid);
+        }
         default E preCreate (E parentEntity, E accountEntity) { return accountEntity; }
         default void postCreate (E parentEntity, E accountEntity) { }
     }
@@ -41,7 +44,9 @@ public interface AccountTemplate extends HasAccount {
                                                                  CopyTemplate<E> copy) {
         try {
             for (E parentEntity : dao.findPublicTemplates(parentAccountUuid)) {
-                E accountEntity = dao.findByAccountAndId(accountUuid, parentEntity.getName());
+                E accountEntity = copy != null
+                        ? copy.findAccountEntity(dao, accountUuid, parentEntity)
+                        : dao.findByAccountAndId(parentEntity.getName(), accountUuid);
                 if (accountEntity == null) {
                     accountEntity = ((E) instantiate(parentEntity.getClass(), parentEntity)).setAccount(accountUuid);
                     if (copy != null) accountEntity = copy.preCreate(parentEntity, accountEntity);
@@ -49,7 +54,7 @@ public interface AccountTemplate extends HasAccount {
                         log.warn("copyTemplateObjects: preCreate returned null for parentEntity: " + parentEntity);
                         return;
                     }
-                    accountEntity= dao.create(accountEntity.setTemplate(false));
+                    accountEntity = dao.create(accountEntity.setTemplate(false));
                 }
                 if (copy != null) copy.postCreate(parentEntity, accountEntity);
             }

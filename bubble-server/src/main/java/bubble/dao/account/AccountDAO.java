@@ -46,6 +46,8 @@ import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_ASC;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
@@ -251,16 +253,24 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
 
         final Map<String, AppSite> sites = new HashMap<>();
         copyTemplateObjects(acct, parent, siteDAO, new AccountTemplate.CopyTemplate<>() {
+            @Override public AppSite findAccountEntity(AccountOwnedTemplateDAO<AppSite> dao, String accountUuid, AppSite parentEntity) {
+                return ((AppSiteDAO) dao).findByAccountAndAppAndId(accountUuid, apps.get(parentEntity.getApp()).getUuid(), parentEntity.getName());
+            }
             @Override public AppSite preCreate(AppSite parentEntity, AppSite accountEntity) {
+                log.info("CopyTemplate.AppSite.preCreate: site="+json(accountEntity, COMPACT_MAPPER));
                 return accountEntity.setApp(apps.get(parentEntity.getApp()).getUuid());
             }
             @Override public void postCreate(AppSite parentEntity, AppSite accountEntity) {
+                log.info("CopyTemplate.AppSite.postCreate: site="+json(accountEntity, COMPACT_MAPPER));
                 sites.put(parentEntity.getUuid(), accountEntity);
             }
         });
 
         final Map<String, AppRule> rules = new HashMap<>();
         copyTemplateObjects(acct, parent, ruleDAO, new AccountTemplate.CopyTemplate<>() {
+            @Override public AppRule findAccountEntity(AccountOwnedTemplateDAO<AppRule> dao, String accountUuid, AppRule parentEntity) {
+                return ((AppRuleDAO) dao).findByAccountAndAppAndId(accountUuid, apps.get(parentEntity.getApp()).getUuid(), parentEntity.getName());
+            }
             @Override public AppRule preCreate(AppRule parentEntity, AppRule accountEntity) {
                 return accountEntity
                         .setApp(apps.get(parentEntity.getApp()).getUuid())
@@ -273,6 +283,9 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
 
         final Map<String, AppMatcher> matchers = new HashMap<>();
         copyTemplateObjects(acct, parent, matchDAO, new AccountTemplate.CopyTemplate<>() {
+            @Override public AppMatcher findAccountEntity(AccountOwnedTemplateDAO<AppMatcher> dao, String accountUuid, AppMatcher parentEntity) {
+                return ((AppMatcherDAO) dao).findByAccountAndAppAndId(accountUuid, apps.get(parentEntity.getApp()).getUuid(), parentEntity.getName());
+            }
             @Override public AppMatcher preCreate(AppMatcher parentEntity, AppMatcher accountEntity) {
                 return accountEntity
                         .setApp(apps.get(parentEntity.getApp()).getUuid())
