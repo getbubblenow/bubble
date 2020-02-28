@@ -246,31 +246,27 @@
   },
 
   {
-    "comment": "as user, approve email request, still not logged in",
+    "comment": "as user, approve email request, fails without TOTP token",
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
       "entity": [{"name": "account", "value": "user-multifactor_auth"}]
     },
     "response": {
-      "store": "remainingApprovals",
-      "check": [
-        {"condition": "json.getUuid() == null"},
-        {"condition": "json.getMultifactorAuth() != null"},
-        {"condition": "json.getMultifactorAuth().length == 1"},
-        {"condition": "json.getMultifactorAuth()[0].getInfo() == '{\"masked\": true}'"}
-      ]
+      "status": 422,
+      "check": [ {"condition": "json.has('err.totpToken.required')"} ]
     }
   },
 
   {
-    "comment": "approve (1st) authenticator request, logged in",
+    "comment": "as user, approve email request with TOTP token, now logged in",
     "request": {
-      "uri": "auth/authenticator",
-      "entity": {
-        "account": "{{userAccount.name}}",
-        "token": "{{authenticator_token authenticator.totpKey}}"
-      }
+      "session": "userSession",
+      "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
+      "entity": [
+        {"name": "account", "value": "user-multifactor_auth"},
+        {"name": "totpToken", "value": "{{authenticator_token authenticator.totpKey}}"}
+      ]
     },
     "response": {
       "sessionName": "userSession",
@@ -279,7 +275,33 @@
   },
 
   {
-    "comment": "remove email from contacts",
+    "comment": "remove email from contacts, fails because TOTP token is required",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts/email/user-multifactor_auth@example.com",
+      "method": "delete"
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.totpToken.invalid')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "send TOTP token",
+    "request": {
+      "uri": "auth/authenticator",
+      "entity": {
+        "account": "{{userAccount.name}}",
+        "token": "{{authenticator_token authenticator.totpKey}}",
+        "authenticate": true
+      }
+    }
+  },
+
+  {
+    "comment": "remove email from contacts after sending TOTP token, succeeds",
     "request": {
       "uri": "users/{{userAccount.name}}/policy/contacts/email/user-multifactor_auth@example.com",
       "method": "delete"
@@ -442,28 +464,36 @@
       "entity": [{"name": "account", "value": "user-multifactor_auth"}]
     },
     "response": {
-      "store": "remainingApprovals",
-      "check": [
-        {"condition": "json.getUuid() == null"},
-        {"condition": "json.getMultifactorAuth() != null"},
-        {"condition": "json.getMultifactorAuth().length == 1"},
-        {"condition": "json.getMultifactorAuth()[0].getInfo() == '{\"masked\": true}'"}
-      ]
+      "status": 422,
+      "check": [ {"condition": "json.has('err.totpToken.required')"} ]
     }
   },
 
   {
-    "comment": "approve (2nd) authenticator request, logged in",
+    "comment": "approve SMS request with TOTP token, logged in",
     "request": {
-      "uri": "auth/authenticator",
-      "entity": {
-        "account": "{{userAccount.name}}",
-        "token": "{{authenticator_token authenticator.totpKey}}"
-      }
+      "session": "userSession",
+      "uri": "auth/approve/{{smsInbox.[0].ctx.confirmationToken}}",
+      "entity": [
+        {"name": "account", "value": "user-multifactor_auth"},
+        {"name": "totpToken", "value": "{{authenticator_token authenticator.totpKey}}"}
+      ]
     },
     "response": {
       "sessionName": "userSession",
       "session": "token"
+    }
+  },
+
+  {
+    "comment": "send TOTP token prior to removing authenticator",
+    "request": {
+      "uri": "auth/authenticator",
+      "entity": {
+        "account": "{{userAccount.name}}",
+        "token": "{{authenticator_token authenticator.totpKey}}",
+        "authenticate": true
+      }
     }
   },
 

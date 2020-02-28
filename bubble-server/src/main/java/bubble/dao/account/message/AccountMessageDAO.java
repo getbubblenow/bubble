@@ -105,9 +105,7 @@ public class AccountMessageDAO extends AccountOwnedEntityDAO<AccountMessage> {
         final List<AccountContact> requiredApprovals = policy.getRequiredApprovals(approval);
 
         // is any AccountContact that requires approval missing its corresponding approval AccountMessage?
-        if (requiredApprovals.stream()
-                .anyMatch(c -> approvals.stream()
-                        .noneMatch(a -> a.getContact().equals(c.getUuid())))) {
+        if (requiredApprovalsRemain(approvals, requiredApprovals, false)) {
             // If the only remaining approval is an authenticator, check for valid totpToken in data
             final AccountContact authenticator = requiredApprovals.stream().filter(AccountContact::isAuthenticator).findFirst().orElse(null);
             if (authenticator != null) {
@@ -116,10 +114,7 @@ public class AccountMessageDAO extends AccountOwnedEntityDAO<AccountMessage> {
                     authenticatorService.authenticate(account, policy, new AuthenticatorRequest()
                             .setAccount(accountUuid)
                             .setToken(totpToken));
-                    log.info("requestApproved: capturing authenticator approval");
-                    final AccountMessage authApproval = messageService.captureResponse(account, approval.getRemoteHost(), token, AccountMessageType.approval, data);
-                    log.info("requestApproved: captured authenticator approval: "+authApproval);
-                    if (requiredApprovals.size() == 1) {
+                    if (!requiredApprovalsRemain(approvals, requiredApprovals, true)) {
                         // totp was the only remaining required approval, this request is approved
                         log.info("requestApproved: only remaining required approval was authenticator and totpToken was valid, can confirm: "+approval.getUuid());
                         return AccountMessageApprovalStatus.ok_confirmed;
@@ -151,6 +146,23 @@ public class AccountMessageDAO extends AccountOwnedEntityDAO<AccountMessage> {
 
         log.info("requestApproved: all approvals received, can confirm");
         return AccountMessageApprovalStatus.ok_confirmed;
+    }
+
+    public boolean requiredApprovalsRemain(List<AccountMessage> approvals,
+                                           List<AccountContact> requiredApprovals,
+                                           boolean skipAuthenticator) {
+        for (AccountContact contact : requiredApprovals) {
+            if (contact.isAuthenticator() && skipAuthenticator) continue;
+            boolean approved = false;
+            for (AccountMessage approval : approvals) {
+                if (approval.getContact().equals(contact.getUuid())) {
+                    approved = true;
+                    break;
+                }
+            }
+            if (!approved) return true;
+        }
+        return false;
     }
 
     public AccountMessage findOperationRequest(AccountMessage basis) {
