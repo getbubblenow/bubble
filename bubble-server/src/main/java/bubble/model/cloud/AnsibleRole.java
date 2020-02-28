@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2020 Bubble, Inc.  All rights reserved.
- * For personal (non-commercial) use, see license: https://git.bubblev.org/bubblev/bubble/src/branch/master/LICENSE.md
+ * For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
  */
 package bubble.model.cloud;
 
@@ -26,6 +26,7 @@ import java.util.Arrays;
 import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static bubble.ApiConstants.EP_ROLES;
 import static bubble.cloud.storage.StorageServiceDriver.STORAGE_PREFIX;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
@@ -122,7 +123,7 @@ public class AnsibleRole extends IdentifiableBase implements AccountTemplate, Ha
     // Then after it is stored (in AnsibleRoleDAO.preCreate), this becomes storage://CloudServiceName/path
     @Column(updatable=false, length=200)
     @Getter @Setter private String tgzB64;
-    public boolean hasTgzB64 () { return tgzB64 != null; }
+    public boolean hasTgzB64 () { return !empty(tgzB64); }
 
     @Transient @JsonIgnore public boolean isTgzB64raw() { return tgzB64 != null && !tgzB64.startsWith(STORAGE_PREFIX); }
     @Transient @JsonIgnore public boolean isTgzB64storage() { return tgzB64 != null && tgzB64.startsWith(STORAGE_PREFIX); }
