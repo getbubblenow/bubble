@@ -20,6 +20,7 @@ import bubble.server.BubbleConfiguration;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
+import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -133,15 +134,25 @@ public class StandardAccountMessageService implements AccountMessageService {
             return null;
         }
         if (account == null) account = accountDAO.findByUuid(approval.getAccount());
-        final AccountMessageApprovalStatus approvalStatus = messageDAO.requestApproved(account, approval);
+        final AccountMessageApprovalStatus approvalStatus = messageDAO.requestApproved(account, approval, token, data);
         if (approvalStatus == AccountMessageApprovalStatus.ok_confirmed) {
             final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
             final AccountMessage confirm = messageDAO.create(new AccountMessage(approval).setMessageType(AccountMessageType.confirmation));
             approval.setRequest(messageDAO.findOperationRequest(approval));
             approval.setRequestContact(policy.findContactByUuid(approval.getRequest().getContact()));
             getCompletionHandler(approval).confirm(approval, data);
+
+            if (approval.hasConfirmationTokensToRemove()) {
+                final RedisService tokens = getConfirmationTokens();
+                for (String toRemove : approval.getConfirmationTokensToRemove()) tokens.del(toRemove);
+            }
             return confirm;
+
         } else if (approvalStatus.ok()) {
+            if (approval.hasConfirmationTokensToRemove()) {
+                final RedisService tokens = getConfirmationTokens();
+                for (String toRemove : approval.getConfirmationTokensToRemove()) tokens.del(toRemove);
+            }
             return approval;
         }
         throw invalidEx("err.approval.invalid", "Approval cannot proceed: "+approvalStatus, approvalStatus.name());
@@ -200,11 +211,11 @@ public class StandardAccountMessageService implements AccountMessageService {
         return captureResponse(account, remoteHost, token, type, null);
     }
 
-    public AccountMessage captureResponse(Account account,
-                                          String remoteHost,
-                                          String token,
-                                          AccountMessageType type,
-                                          NameAndValue[] data) {
+    @Override public AccountMessage captureResponse(Account account,
+                                                    String remoteHost,
+                                                    String token,
+                                                    AccountMessageType type,
+                                                    NameAndValue[] data) {
 
         if (empty(remoteHost)) {
             throw invalidEx("err.remoteHost.required", "remoteHost was empty");
@@ -247,9 +258,8 @@ public class StandardAccountMessageService implements AccountMessageService {
         }
 
         final AccountMessage message = messageDAO.create(toCreate);
+        message.setConfirmationTokensToRemove(token, amc.key());
 
-        tokens.del(token);
-        tokens.del(amc.key());
         log.debug("captureResponse("+type+"): removing tokens: "+token+" and "+amc.key());
 
         return message;
@@ -263,6 +273,7 @@ public class StandardAccountMessageService implements AccountMessageService {
                 .collect(Collectors.toList());
 
         // return masked list of contacts remaining to approve
+        log.info("determineRemainingApprovals: remaining="+StringUtil.toString(remainingApprovals));
         return new Account().setMultifactorAuthList(remainingApprovals);
     }
 }

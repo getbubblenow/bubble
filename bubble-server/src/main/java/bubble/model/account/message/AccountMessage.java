@@ -86,6 +86,12 @@ public class AccountMessage extends IdentifiableBase implements HasAccount {
     @Transient @Getter @Setter private transient AccountMessage request;
     @Transient @Getter @Setter private transient AccountContact requestContact;
 
+    @JsonIgnore @Transient @Getter @Setter private transient String[] confirmationTokensToRemove;
+    public boolean hasConfirmationTokensToRemove () { return !empty(confirmationTokensToRemove); }
+    public AccountMessage setConfirmationTokensToRemove(String key1, String key2) {
+        return setConfirmationTokensToRemove(new String[] {key1, key2});
+    }
+
     public String redisPrefix() { return getUuid() + ":"; }
 
     public String templateName(String basename) { return getMessageType()+"/"+ getAction()+"/"+getTarget()+"/"+basename+".hbs"; }

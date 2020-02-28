@@ -330,6 +330,7 @@ public class AuthResource {
     public Response forgotPassword(@Context Request req,
                                    @Context ContainerRequest ctx,
                                    LoginRequest request) {
+        if (!request.hasName()) return invalid("err.name.required");
         final Account account = accountDAO.findById(request.getName());
         if (account == null) return ok();
 
@@ -371,11 +372,15 @@ public class AuthResource {
 
         if (approval.getMessageType() == AccountMessageType.confirmation) {
             if (account == null) return invalid("err.approvalToken.invalid");
-            if (approval.getAction() == AccountAction.login) {
+            if (approval.getAction() == AccountAction.login || approval.getAction() == AccountAction.password) {
                 return ok(account.setToken(newLoginSession(account)));
             } else {
                 return ok_empty();
             }
+        }
+        if (approval.getRequest() == null) {
+            approval.setRequest(accountMessageDAO.findOperationRequest(approval));
+            log.info("approve: set approval.request="+approval.getRequest());
         }
 
         return ok(messageService.determineRemainingApprovals(approval));

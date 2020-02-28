@@ -12,23 +12,31 @@ import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
 import bubble.service.account.AccountMessageService;
+import bubble.service.account.AuthenticatorService;
 import bubble.service.boot.SelfNodeService;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.NameAndValue;
+import org.cobbzilla.util.string.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
 import java.util.List;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_DESC;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Repository @Slf4j
 public class AccountMessageDAO extends AccountOwnedEntityDAO<AccountMessage> {
 
+    private static final String DATA_TOTP_TOKEN = "totpToken";
+
     @Autowired private AccountMessageService messageService;
     @Autowired private AccountPolicyDAO policyDAO;
     @Autowired private SelfNodeService selfNodeService;
+    @Autowired private AuthenticatorService authenticatorService;
 
     @Override public AccountMessage postCreate(AccountMessage message, Object context) {
         if (!messageService.send(message)) {
@@ -49,7 +57,10 @@ public class AccountMessageDAO extends AccountOwnedEntityDAO<AccountMessage> {
                 .setContact(contact.getUuid()));
     }
 
-    public AccountMessageApprovalStatus requestApproved(Account account, AccountMessage approval) {
+    public AccountMessageApprovalStatus requestApproved(Account account,
+                                                        AccountMessage approval,
+                                                        String token,
+                                                        NameAndValue[] data) {
 
         final String accountUuid = account != null ? account.getUuid() : approval.getAccount();
         final AccountPolicy policy = policyDAO.findSingleByAccount(accountUuid);
@@ -97,7 +108,32 @@ public class AccountMessageDAO extends AccountOwnedEntityDAO<AccountMessage> {
         if (requiredApprovals.stream()
                 .anyMatch(c -> approvals.stream()
                         .noneMatch(a -> a.getContact().equals(c.getUuid())))) {
-            log.info("requestApproved: OK, awaiting more approvals");
+            // If the only remaining approval is an authenticator, check for valid totpToken in data
+            final AccountContact authenticator = requiredApprovals.stream().filter(AccountContact::isAuthenticator).findFirst().orElse(null);
+            if (authenticator != null) {
+                final String totpToken = NameAndValue.find(data, DATA_TOTP_TOKEN);
+                if (!empty(totpToken)) {
+                    authenticatorService.authenticate(account, policy, new AuthenticatorRequest()
+                            .setAccount(accountUuid)
+                            .setToken(totpToken));
+                    log.info("requestApproved: capturing authenticator approval");
+                    final AccountMessage authApproval = messageService.captureResponse(account, approval.getRemoteHost(), token, AccountMessageType.approval, data);
+                    log.info("requestApproved: captured authenticator approval: "+authApproval);
+                    if (requiredApprovals.size() == 1) {
+                        // totp was the only remaining required approval, this request is approved
+                        log.info("requestApproved: only remaining required approval was authenticator and totpToken was valid, can confirm: "+approval.getUuid());
+                        return AccountMessageApprovalStatus.ok_confirmed;
+                    } else {
+                        log.info("requestApproved: > 1 required approvals remain: "+StringUtil.toString(requiredApprovals));
+                    }
+                } else {
+                    log.info("requestApproved: > required approvals remain (and no totpToken provided): "+StringUtil.toString(requiredApprovals));
+                    throw invalidEx("err.totpToken.required");
+                }
+            } else {
+                log.info("requestApproved: > required approvals remain (and none are authenticator): "+StringUtil.toString(requiredApprovals));
+            }
+            log.info("requestApproved: OK, awaiting more approvals: "+StringUtil.toString(requiredApprovals));
             return AccountMessageApprovalStatus.ok_accepted_and_awaiting_further_approvals;
         }
 
