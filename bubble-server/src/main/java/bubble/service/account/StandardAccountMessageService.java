@@ -155,7 +155,7 @@ public class StandardAccountMessageService implements AccountMessageService {
             }
             return approval;
         }
-        throw invalidEx("err.approval.invalid", "Approval cannot proceed: "+approvalStatus, approvalStatus.name());
+        throw invalidEx("err.approvalToken.invalid", "Approval cannot proceed: "+approvalStatus, approvalStatus.name());
     }
 
     @Getter(lazy=true) private final AccountMessageCompletionHandler accountLoginHandler = configuration.autowire(new AccountLoginHandler());
