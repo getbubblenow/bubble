@@ -18,6 +18,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.ALWAYS_TRUE;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.json.JsonUtil.json;
 
 public interface RenderedMessage {
 
@@ -27,9 +29,10 @@ public interface RenderedMessage {
     Comparator<RenderedMessage> SORT_CTIME_ASC = Comparator.comparingLong(RenderedMessage::getCtime);
 
     Map<String, Object> getCtx();
+
     long getCtime();
 
-    default <T> T del(String key) { getCtx().remove(key); return (T) this; }
+    default <T> T del(String key) { if (getCtx() != null) getCtx().remove(key); return (T) this; }
 
     default boolean hasContext(String key, String val) {
         if (getCtx() == null) return false;
@@ -42,7 +45,14 @@ public interface RenderedMessage {
         }
     }
 
-    @JsonIgnore default AccountMessage getAccountMessage() { return (AccountMessage) getCtx().get("message"); }
+    @JsonIgnore default AccountMessage getAccountMessage() {
+        final Object obj = getCtx() == null ? null : getCtx().get("message");
+        if (obj == null) return null;
+        if (obj instanceof AccountMessage) return (AccountMessage) obj;
+        if (obj instanceof Map) return json(json(obj), AccountMessage.class);
+        return die("getAccountMessage: unrecognized 'message' object: "+obj);
+    }
+
     @JsonIgnore default AccountMessageType getMessageType() { return getAccountMessage().getMessageType(); }
     @JsonIgnore default AccountAction getAction() { return getAccountMessage().getAction(); }
     @JsonIgnore default ActionTarget getTarget() { return getAccountMessage().getTarget(); }

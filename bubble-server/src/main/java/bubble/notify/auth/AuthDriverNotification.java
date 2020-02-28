@@ -4,25 +4,22 @@
  */
 package bubble.notify.auth;
 
-import bubble.model.account.Account;
-import bubble.model.account.AccountContact;
-import bubble.model.account.message.AccountMessage;
 import bubble.notify.SynchronousNotification;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
+import static org.cobbzilla.util.json.JsonUtil.json;
 
 @Accessors(chain=true)
 public class AuthDriverNotification extends SynchronousNotification {
 
     @Getter @Setter private String authService;
-    @Getter @Setter private Account account;
-    @Getter @Setter private AccountMessage message;
-    @Getter @Setter private AccountContact contact;
+    @Getter @Setter private JsonNode renderedMessage;
+    @Getter @Setter private String renderedMessageClass;
 
-    @Getter(lazy=true) private final String cacheKey
-            = hashOf(authService, account != null ? account.getUuid() : null, message != null ? message.getCacheKey() : null, contact != null ? contact.getCacheKey() : null);
+    @Getter(lazy=true) private final String cacheKey = hashOf(authService, renderedMessage != null ? json(renderedMessage) : null);
 
 }

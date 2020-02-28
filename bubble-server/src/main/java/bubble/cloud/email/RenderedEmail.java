@@ -8,6 +8,7 @@ import bubble.cloud.auth.RenderedMessage;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.cobbzilla.mail.SimpleEmailMessage;
 
 import java.util.Map;
@@ -16,7 +17,7 @@ import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
-@NoArgsConstructor
+@NoArgsConstructor @Accessors(chain=true)
 public class RenderedEmail extends SimpleEmailMessage implements RenderedMessage {
 
     @Getter private long ctime = now();

@@ -8,7 +8,9 @@ import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudCredentials;
 import bubble.model.cloud.CloudService;
+import bubble.server.BubbleConfiguration;
 import bubble.service.notify.NotificationService;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static bubble.model.cloud.CloudCredentials.PARAM_DELEGATE_NODE;
@@ -18,6 +20,7 @@ public abstract class DelegatedCloudServiceDriverBase extends CloudServiceDriver
 
     protected CloudService cloud;
 
+    @Autowired @Getter protected BubbleConfiguration configuration;
     @Autowired protected BubbleNodeDAO nodeDAO;
     @Autowired protected NotificationService notificationService;
 
