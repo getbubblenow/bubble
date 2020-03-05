@@ -25,7 +25,10 @@ public class FilterMatchersRequest {
     @Getter @Setter private String fqdn;
     @Getter @Setter private String uri;
     @Getter @Setter private String userAgent;
+
     @Getter @Setter private String referer;
+    public boolean hasReferer () { return !empty(referer); }
+
     @Getter @Setter private String remoteAddr;
     public boolean hasRemoteAddr() { return !empty(remoteAddr); }
 

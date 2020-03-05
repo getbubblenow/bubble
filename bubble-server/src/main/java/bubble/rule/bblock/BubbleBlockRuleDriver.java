@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
+import org.cobbzilla.util.http.URIUtil;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexReplacementFilter;
 import org.cobbzilla.util.string.StringUtil;
@@ -31,6 +32,7 @@ import org.glassfish.jersey.server.ContainerRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -116,6 +118,26 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                 return FilterMatchDecision.abort_not_found;  // block this request
 
             case allow: default:
+                if (filter.hasReferer()) {
+                    final URI refererURI = URIUtil.toUriOrNull(filter.getReferer());
+                    if (refererURI == null) {
+                        if (log.isInfoEnabled()) log.info(prefix+"invalid referer ("+filter.getReferer()+")");
+                    } else {
+                        final BlockDecision refererDecision = getDecision(refererURI.getHost(), refererURI.getPath(), filter.getUserAgent());
+                        switch (refererDecision.getDecisionType()) {
+                            case block:
+                                if (log.isInfoEnabled()) log.info(prefix+"decision for URL was ALLOW but for referer is BLOCK");
+                                incrementCounters(account, device, app, site, fqdn);
+                                return FilterMatchDecision.abort_not_found;  // block this request
+                            case filter:
+                                if (log.isInfoEnabled()) log.info(prefix+"decision is FILTER (based on referer), returning ALLOW");
+                                return FilterMatchDecision.no_match;
+                            case allow:
+                                if (log.isInfoEnabled()) log.info(prefix+"decision is ALLOW (after checking referer)");
+                                return FilterMatchDecision.no_match;
+                        }
+                    }
+                }
                 if (log.isInfoEnabled()) log.info(prefix+"decision is ALLOW");
                 return FilterMatchDecision.no_match;
 
