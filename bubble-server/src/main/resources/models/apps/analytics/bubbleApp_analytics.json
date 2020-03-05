@@ -4,6 +4,7 @@
   "url": "https://bubblev.com/apps/analytics",
   "template": true,
   "enabled": true,
+  "priority": 100,
   "dataConfig": {
     "dataDriver": "bubble.app.analytics.TrafficAnalyticsAppDataDriver",
     "presentation": "app",

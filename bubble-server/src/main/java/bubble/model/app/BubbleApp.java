@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
+import org.cobbzilla.util.collection.HasPriority;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.entityconfig.IdentifiableBaseParentEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
@@ -26,6 +27,7 @@ import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
 import static bubble.ApiConstants.*;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
@@ -47,9 +49,9 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
         @ECIndex(of={"account", "template", "enabled"}),
         @ECIndex(of={"template", "enabled"})
 })
-public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTemplate {
+public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTemplate, HasPriority {
 
-    private static final String[] VALUE_FIELDS = {"url", "description", "template", "enabled", "dataConfig"};
+    private static final String[] VALUE_FIELDS = {"url", "description", "template", "enabled", "priority", "dataConfig"};
 
     public BubbleApp(Account account, BubbleApp app) {
         copy(this, app);
@@ -90,9 +92,11 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     public boolean hasDataConfig () { return getDataConfig() != null; }
 
     private AppDataConfig ensureDefaults(AppDataConfig adc) {
-        for (AppDataField field : adc.getFields()) {
-            if (!adc.hasConfigField(field)) {
-                adc.setConfigFields(ArrayUtil.append(adc.getConfigFields(), field));
+        if (!empty(adc.getFields())) {
+            for (AppDataField field : adc.getFields()) {
+                if (!adc.hasConfigField(field)) {
+                    adc.setConfigFields(ArrayUtil.append(adc.getConfigFields(), field));
+                }
             }
         }
         return adc;
@@ -114,7 +118,10 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
-    @ECSearchable @ECField(index=90)
+    @ECSearchable @ECField(index=90) @Column(nullable=false)
+    @ECIndex @Getter @Setter private Integer priority;
+
+    @ECSearchable @ECField(index=100)
     @ECIndex @Getter @Setter private Boolean needsUpdate = false;
 
 }

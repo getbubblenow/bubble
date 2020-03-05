@@ -20,7 +20,7 @@ public class BubbleAppDAO extends AccountOwnedTemplateDAO<BubbleApp> {
     @Autowired private AppDataDAO dataDAO;
     @Autowired private RuleEngineService ruleEngineService;
 
-    @Override public Order getDefaultSortOrder() { return NAME_ASC; }
+    @Override public Order getDefaultSortOrder() { return PRIORITY_ASC; }
 
     @Override public BubbleApp postUpdate(BubbleApp app, Object context) {
         ruleEngineService.flushCaches();

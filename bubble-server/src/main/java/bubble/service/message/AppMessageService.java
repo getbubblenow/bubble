@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.Properties;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.string.StringUtil.EMPTY;
 
 @Service @Slf4j
@@ -125,8 +126,10 @@ public class AppMessageService {
                 }
 
                 // anything from data fields not yet defined, copy as config field name/desc
-                for (AppDataField field : cfg.getFields()) {
-                    ensureFieldNameAndDescription(props, cfgKeyPrefix, field.getName());
+                if (!empty(cfg.getFields())) {
+                    for (AppDataField field : cfg.getFields()) {
+                        ensureFieldNameAndDescription(props, cfgKeyPrefix, field.getName());
+                    }
                 }
             }
         }

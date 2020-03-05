@@ -1,34 +1,32 @@
 [
   {
+    "name": "TlsPassthruRuleDriver",
+    "driverClass": "bubble.rule.passthru.TlsPassthruRuleDriver",
+    "template": true,
+    "userConfig": { "fields": [] }
+  },
+  {
     "name": "UserBlockerRuleDriver",
     "driverClass": "bubble.rule.social.block.UserBlockerRuleDriver",
     "template": true,
-    "userConfig": {
-      "fields": []
-    }
+    "userConfig": { "fields": [] }
   },
   {
     "name": "JsUserBlockerRuleDriver",
     "driverClass": "bubble.rule.social.block.JsUserBlockerRuleDriver",
     "template": true,
-    "userConfig": {
-      "fields": []
-    }
+    "userConfig": { "fields": [] }
   },
   {
     "name": "TrafficAnalyticsRuleDriver",
     "driverClass": "bubble.rule.analytics.TrafficAnalyticsRuleDriver",
     "template": true,
-    "userConfig": {
-      "fields": []
-    }
+    "userConfig": { "fields": [] }
   },
   {
     "name": "BubbleBlockRuleDriver",
     "driverClass": "bubble.rule.bblock.BubbleBlockRuleDriver",
     "template": true,
-    "userConfig": {
-      "fields": []
-    }
+    "userConfig": { "fields": [] }
   }
 ]

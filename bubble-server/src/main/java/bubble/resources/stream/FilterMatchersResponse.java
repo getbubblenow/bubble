@@ -23,6 +23,7 @@ public class FilterMatchersResponse {
     public static final FilterMatchersResponse NO_MATCHERS = new FilterMatchersResponse().setDecision(FilterMatchDecision.no_match);
     public static final FilterMatchersResponse ABORT_OK = new FilterMatchersResponse().setDecision(FilterMatchDecision.abort_ok);
     public static final FilterMatchersResponse ABORT_NOT_FOUND = new FilterMatchersResponse().setDecision(FilterMatchDecision.abort_not_found);
+    public static final FilterMatchersResponse PASS_THRU = new FilterMatchersResponse().setDecision(FilterMatchDecision.pass_thru);
 
     @Getter @Setter private FilterMatchersRequest request;
     public boolean hasRequest () { return request != null; }

@@ -93,14 +93,19 @@ public class MessagesResource {
     private Map<String, String> loadMessages(Account caller, String locale, String group, MessageResourceFormat format) throws IOException {
 
         final boolean isAppsGroup = group.equalsIgnoreCase(APPS_MESSAGE_GROUP);
-        if (isAppsGroup && caller == null) return Collections.emptyMap();
+        if (isAppsGroup && caller == null) {
+            if (log.isDebugEnabled()) log.debug("loadMessages: returning empty app messages for caller=null");
+            return Collections.emptyMap();
+        }
         locale = normalizeLocale(locale);
 
         final String cacheKey = (isAppsGroup ? caller.getUuid()+"/" : "") + locale + "/" + group + "/" + format;
         if (!messageCache.containsKey(cacheKey)) {
             final Properties props;
             if (isAppsGroup) {
+                if (log.isDebugEnabled()) log.debug("loadMessages: loading app messages for caller="+caller.getName()+", locale="+locale);
                 props = appMessageService.loadAppMessages(caller, locale);
+                if (log.isDebugEnabled()) log.debug("loadMessages: loaded app messages for caller="+caller.getName()+", locale="+locale+", props.size="+props.size());
             } else {
                 props = new Properties();
                 props.load(new BufferedReader(new InputStreamReader(loadResourceAsStream(MESSAGE_RESOURCE_BASE + locale + MESSAGE_RESOURCE_PATH + group + "/" + RESOURCE_MESSAGES_PROPS), UTF8cs)));

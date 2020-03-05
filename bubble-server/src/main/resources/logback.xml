@@ -55,6 +55,7 @@
     <logger name="org.cobbzilla.util.io.regex.RegexFilterReader" level="WARN" />
     <logger name="org.cobbzilla.util.io.multi" level="INFO" />
     <logger name="bubble.rule.social.block" level="INFO" />
+    <logger name="bubble.rule.passthru" level="DEBUG" />
 <!--    <logger name="bubble.service.cloud.StandardNetworkService" level="INFO" />-->
     <logger name="bubble.resources.notify" level="WARN" />
     <logger name="bubble.client" level="WARN" />

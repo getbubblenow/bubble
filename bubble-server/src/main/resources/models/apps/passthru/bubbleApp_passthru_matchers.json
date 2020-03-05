@@ -1,0 +1,14 @@
+[{
+  "name": "TlsPassthru",
+  "children": {
+    "AppMatcher": [{
+      "name": "TlsPassthruMatcher",
+      "template": true,
+      "site": "All_Sites",
+      "fqdn": "*",
+      "urlRegex": ".*",
+      "rule": "passthru",
+      "priority": -1000000
+    }]
+  }
+}]

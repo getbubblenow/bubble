@@ -3,6 +3,8 @@
   "description": "ShadowBan User Blocker",
   "url": "https://bubblev.com/apps/UserBlocker",
   "template": true,
+  "enabled": true,
+  "priority": 300,
   "dataConfig": {
     "dataDriver": "bubble.app.social.block.UserBlockerAppDataDriver",
     "presentation": "site",

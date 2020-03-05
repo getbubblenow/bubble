@@ -4,6 +4,7 @@
   "url": "https://bubblev.com/apps/bblock",
   "template": true,
   "enabled": true,
+  "priority": 200,
   "dataConfig": {
     "dataDriver": "bubble.app.bblock.BubbleBlockAppDataDriver",
     "presentation": "app",

@@ -206,6 +206,7 @@ public class FilterHttpResource {
                         case abort_ok:        return FilterMatchersResponse.ABORT_OK;
                         case abort_not_found: return FilterMatchersResponse.ABORT_NOT_FOUND;
                         case no_match:        break;
+                        case pass_thru:       return FilterMatchersResponse.PASS_THRU;
                         case match:           retainMatchers.put(matcher.getUuid(), matcher); break;
                     }
                 } else {
@@ -336,12 +337,12 @@ public class FilterHttpResource {
             final FilterMatchDecision decision = matchersResponse.getDecision();
             if (decision != FilterMatchDecision.match) {
                 switch (decision) {
-                    case no_match:
-                        if (log.isWarnEnabled()) log.warn(prefix + "FilterMatchersResponse decision was not match: "+ decision +", returning passthru");
+                    case no_match: case pass_thru:
+                        if (log.isWarnEnabled()) log.warn(prefix + "FilterMatchersResponse decision was no_match/pass_thru (should not have received this): "+ decision +", returning passthru");
                         return passthru(request);
                     case abort_not_found:
                     case abort_ok:
-                        if (log.isWarnEnabled()) log.warn(prefix + "FilterMatchersResponse decision was not match: "+ decision +", returning "+matchersResponse.httpStatus());
+                        if (log.isWarnEnabled()) log.warn(prefix + "FilterMatchersResponse decision was abort: "+ decision +", returning "+matchersResponse.httpStatus());
                         return status(matchersResponse.httpStatus());
                     default:
                         if (log.isWarnEnabled()) log.warn(prefix + "FilterMatchersResponse decision was unknown: "+ decision +", returning passthru");
