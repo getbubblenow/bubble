@@ -12,6 +12,7 @@ import bubble.rule.AbstractAppRuleDriver;
 import bubble.rule.FilterMatchDecision;
 import bubble.service.stream.AppRuleHarness;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -25,6 +26,7 @@ import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD;
 import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
+@Slf4j
 public class TrafficAnalyticsRuleDriver extends AbstractAppRuleDriver {
 
     private static final long ANALYTICS_EXPIRATION = DAYS.toMillis(32);
@@ -37,6 +39,10 @@ public class TrafficAnalyticsRuleDriver extends AbstractAppRuleDriver {
 
     @Getter(lazy=true) private final RedisService recentTraffic = redis.prefixNamespace(RECENT_TRAFFIC_PREFIX);
 
+    @Getter(lazy=true) private final String networkDomain = initNetworkDomain();
+    private String initNetworkDomain() { return configuration.getThisNetwork() == null ? null : configuration.getThisNetwork().getNetworkDomain(); }
+    @Getter(lazy=true) private final String networkDomainWithDotPrefix = "."+getNetworkDomain();
+
     @Override public FilterMatchDecision preprocess(AppRuleHarness ruleHarness,
                                                     FilterMatchersRequest filter,
                                                     Account account,
@@ -46,6 +52,11 @@ public class TrafficAnalyticsRuleDriver extends AbstractAppRuleDriver {
         final String app = ruleHarness.getRule().getApp();
         final String site = ruleHarness.getMatcher().getSite();
         final String fqdn = filter.getFqdn();
+        final String networkDomain = getNetworkDomain();
+        if ((networkDomain != null && fqdn != null) && (fqdn.equals(networkDomain) || fqdn.endsWith(getNetworkDomainWithDotPrefix()))) {
+            if (log.isDebugEnabled()) log.debug("preprocess: not logging request for Bubble: fqdn="+fqdn);
+            return FilterMatchDecision.no_match;
+        }
 
         final TrafficRecord rec = new TrafficRecord(filter, account, device);
         recordRecentTraffic(rec);
