@@ -2,7 +2,6 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
 #
-
 LE_EMAIL="${1}"
 SERVER_NAME="${2}"
 SERVER_ALIAS="${3}"

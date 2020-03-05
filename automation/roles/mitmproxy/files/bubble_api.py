@@ -1,3 +1,6 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
+#
 import requests
 import traceback
 import sys
@@ -9,6 +12,7 @@ HEADER_REFERER = 'Referer'
 
 CTX_BUBBLE_MATCHERS='X-Bubble-Matchers'
 CTX_BUBBLE_ABORT='X-Bubble-Abort'
+CTX_BUBBLE_PASSTHRU='X-Bubble-Passthru'
 CTX_BUBBLE_REQUEST_ID='X-Bubble-RequestId'
 CTX_CONTENT_LENGTH='X-Bubble-Content-Length'
 CTX_CONTENT_LENGTH_SENT='X-Bubble-Content-Length-Sent'

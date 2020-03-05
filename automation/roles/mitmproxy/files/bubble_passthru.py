@@ -1,3 +1,12 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
+#
+from mitmproxy.proxy.protocol import TlsLayer, RawTCPLayer
+from bubble_api import bubble_log
+
+def should_passthru(next_layer, addr):
+    # todo
+    return False
 
 def next_layer(next_layer):
     """
@@ -6,14 +15,9 @@ def next_layer(next_layer):
     """
     if isinstance(next_layer, TlsLayer) and next_layer._client_tls:
         server_address = next_layer.server_conn.address
-
-        if tls_strategy.should_intercept(server_address):
-            # We try to intercept.
-            # Monkey-Patch the layer to get feedback from the TLSLayer if interception worked.
-            next_layer.__class__ = TlsFeedback
-        else:
+        bubble_log("next_layer: examining server_address="+server_address+" with respect to next_layer="+repr(next_layer))
+        if should_passthru(next_layer, server_address):
             # We don't intercept - reply with a pass-through layer and add a "skipped" entry.
-            mitmproxy.ctx.log("TLS passthrough for %s" % repr(next_layer.server_conn.address), "info")
+            bubble_log("next_layer: TLS passthru for " + repr(next_layer.server_conn.address))
             next_layer_replacement = RawTCPLayer(next_layer.ctx, ignore=True)
             next_layer.reply.send(next_layer_replacement)
-            tls_strategy.record_skipped(server_address)

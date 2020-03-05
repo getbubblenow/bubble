@@ -2,7 +2,6 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
 #
-
 MITM_PORT=${1:?no port provided}
 cd /home/mitmproxy/mitmproxy && \
 ./dev.sh && . ./venv/bin/activate && \
@@ -18,5 +17,6 @@ mitmdump \
   --set stream_large_bodies=5m \
   --set keep_host_header \
   -s ./dns_spoofing.py \
+  -s ./bubble_passthru.py \
   -s ./bubble_modify.py \
   --mode transparent

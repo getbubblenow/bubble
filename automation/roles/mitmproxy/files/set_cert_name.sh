@@ -2,7 +2,6 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
 #
-
 MITM_DIR=${1:?no mitm dir specified}
 CERT_NAME=${2:?no cert name specified}
 

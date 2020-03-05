@@ -2,7 +2,6 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
 #
-
 LOG=/tmp/bubble.algo_refresh_users_monitor.log
 
 function die {

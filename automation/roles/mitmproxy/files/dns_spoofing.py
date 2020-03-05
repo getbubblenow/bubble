@@ -1,7 +1,10 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
+#
 import re
 import time
 import uuid
-from bubble_api import bubble_matchers, bubble_log, CTX_BUBBLE_MATCHERS, BUBBLE_URI_PREFIX, CTX_BUBBLE_ABORT, CTX_BUBBLE_REQUEST_ID, add_flow_ctx
+from bubble_api import bubble_matchers, bubble_log, CTX_BUBBLE_MATCHERS, BUBBLE_URI_PREFIX, CTX_BUBBLE_ABORT, CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_REQUEST_ID, add_flow_ctx
 from bubble_config import bubble_host, bubble_host_alias
 
 # This regex extracts splits the host header into host and port.
@@ -89,7 +92,12 @@ class Rerouter:
         if sni or host_header:
             matcher_response = self.get_matchers(flow, sni or host_header)
             if matcher_response:
-                if 'decision' in matcher_response and matcher_response['decision'] is not None and matcher_response['decision'].startswith('abort_'):
+                if 'decision' in matcher_response and matcher_response['decision'] is not None and matcher_response['decision'].equals('passthru'):
+                    bubble_log('dns_spoofing.request: passthru response returned, passing thru and NOT performing TLS interception...')
+                    add_flow_ctx(flow, CTX_BUBBLE_PASSTHRU, True)
+                    return
+
+                elif 'decision' in matcher_response and matcher_response['decision'] is not None and matcher_response['decision'].startswith('abort_'):
                     bubble_log('dns_spoofing.request: found abort code: ' + str(matcher_response['decision']) + ', aborting')
                     if matcher_response['decision'] == 'abort_ok':
                         abort_code = 200
