@@ -4,11 +4,17 @@
  */
 package bubble.model.app.config;
 
+import bubble.dao.app.AppRuleDAO;
+import bubble.dao.app.RuleDriverDAO;
 import bubble.model.account.Account;
+import bubble.model.app.AppRule;
 import bubble.model.app.BubbleApp;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.List;
 import java.util.Map;
+
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 
 public interface AppConfigDriver {
 
@@ -30,4 +36,17 @@ public interface AppConfigDriver {
                           String id,
                           Map<String, String> params,
                           JsonNode data);
+
+    AppRuleDAO getRuleDAO();
+    RuleDriverDAO getDriverDAO();
+
+    default AppRule loadRule(Account account, BubbleApp app) { return loadRule(account, app, getRuleDAO()); }
+
+    static AppRule loadRule(Account account, BubbleApp app, AppRuleDAO ruleDAO) {
+        final List<AppRule> rules = ruleDAO.findByAccountAndAppAndEnabled(account.getUuid(), app.getUuid());
+        if (rules.isEmpty()) return die("loadRule: no rule found");
+        if (rules.size() > 1) return die("loadRule: expected only one enabled rule, found "+rules.size());
+        return rules.get(0);
+    }
+
 }

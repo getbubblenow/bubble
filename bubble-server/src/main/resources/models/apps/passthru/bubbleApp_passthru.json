@@ -10,31 +10,34 @@
     "presentation": "app",
     "configDriver": "bubble.app.passthru.TlsPassthruAppConfigDriver",
     "configFields": [
-      {"name": "name"},
-      {"name": "description", "control": "textarea"},
-      {"name": "url", "type": "http_url"},
-      {"name": "tags"},
-      {"name": "tagString"},
-      {"name": "enabled", "type": "flag", "mode": "readOnly"},
-      {"name": "rule"},
-      {"name": "ruleType", "mode": "readOnly"},
-      {"name": "testUrl", "type": "http_url"},
-      {"name": "testUserAgent", "required": false},
-      {"name": "testUrlPrimary", "type": "flag"},
-      {"name": "urlRegex", "required": false},
-      {"name": "userAgentRegex"}
+      {"name": "passthruFqdn", "type": "hostname", "truncate": false},
+      {"name": "feedName", "truncate": false},
+      {"name": "feedUrl", "type": "http_url"}
     ],
     "configViews": [{
-      "name": "managePassthru",
+      "name": "manageDomains",
       "scope": "app",
       "root": "true",
-      "fields": ["fqdn"],
+      "fields": ["passthruFqdn"],
       "actions": [
         {"name": "removeFqdn", "index": 10},
         {
           "name": "addFqdn", "scope": "app", "index": 10,
-          "params": ["fqdn"],
+          "params": ["passthruFqdn"],
           "button": "addFqdn"
+        }
+      ]
+    }, {
+      "name": "manageFeeds",
+      "scope": "app",
+      "root": "true",
+      "fields": ["feedName", "feedUrl"],
+      "actions": [
+        {"name": "removeFeed", "index": 10},
+        {
+          "name": "addFeed", "scope": "app", "index": 10,
+          "params": ["feedUrl"],
+          "button": "addFeed"
         }
       ]
     }]
@@ -52,7 +55,10 @@
       "driver": "TlsPassthruRuleDriver",
       "priority": -1000000,
       "config": {
-        "passthruFqdn": []
+        "fqdnList": [],
+        "feedList": [{
+          "feedUrl": "https://raw.githubusercontent.com/bubblev/bubble-filter-lists/master/tls_passthru.txt"
+        }]
       }
     }],
     "AppMessage": [{
@@ -63,12 +69,19 @@
         {"name": "summary", "value": "Network Bypass"},
         {"name": "description", "value": "Do not perform SSL interception for certificate-pinned domains"},
 
-        {"name": "config.view.managePassthru", "value": "Manage Bypass Domains"},
-        {"name": "config.field.fqdn", "value": "Hostname"},
-        {"name": "config.field.fqdn.description", "value": "Bypass traffic interception for this hostname"},
-        {"name": "config.action.addFqdn", "value": "Add New"},
+        {"name": "config.view.manageDomains", "value": "Manage Bypass Domains"},
+        {"name": "config.view.manageFeeds", "value": "Manage Bypass Domain Feeds"},
+        {"name": "config.field.passthruFqdn", "value": "Domain"},
+        {"name": "config.field.passthruFqdn.description", "value": "Bypass traffic interception for this hostname"},
+        {"name": "config.field.feedName", "value": "Name"},
+        {"name": "config.field.feedUrl", "value": "Bypass Domains List URL"},
+        {"name": "config.field.feedUrl.description", "value": "URL returning a list of bypass domains and/or hostnames, one per line"},
+        {"name": "config.action.addFqdn", "value": "Add New Bypass Domain"},
         {"name": "config.button.addFqdn", "value": "Add"},
-        {"name": "config.action.removeFqdn", "value": "Remove"}
+        {"name": "config.action.removeFqdn", "value": "Remove"},
+        {"name": "config.action.addFeed", "value": "Add New Bypass Domain Feed"},
+        {"name": "config.button.addFeed", "value": "Add"},
+        {"name": "config.action.removeFeed", "value": "Remove"}
       ]
     }]
   }

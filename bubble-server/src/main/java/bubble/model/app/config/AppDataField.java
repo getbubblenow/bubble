@@ -12,5 +12,6 @@ public class AppDataField extends EntityFieldConfig {
 
     @Getter @Setter private Boolean customFormat;
     @Getter @Setter private String when;
+    @Getter @Setter private Boolean truncate;
 
 }

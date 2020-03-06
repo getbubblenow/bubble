@@ -7,14 +7,12 @@ package bubble.app.bblock;
 import bubble.abp.BlockDecision;
 import bubble.abp.BlockListSource;
 import bubble.abp.BlockSpec;
-import bubble.dao.app.AppRuleDAO;
-import bubble.dao.app.RuleDriverDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.app.BubbleApp;
 import bubble.model.app.RuleDriver;
-import bubble.model.app.config.AppConfigDriver;
+import bubble.model.app.config.AppConfigDriverBase;
 import bubble.model.device.Device;
 import bubble.rule.bblock.BubbleBlockConfig;
 import bubble.rule.bblock.BubbleBlockList;
@@ -31,7 +29,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptySet;
-import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpSchemes.SCHEME_HTTPS;
 import static org.cobbzilla.util.http.HttpSchemes.isHttpOrHttps;
 import static org.cobbzilla.util.http.URIUtil.getHost;
@@ -44,7 +43,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
 @Slf4j
-public class BubbleBlockAppConfigDriver implements AppConfigDriver {
+public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
 
     public static final String VIEW_manageLists = "manageLists";
     public static final String VIEW_manageList = "manageList";
@@ -53,8 +52,6 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     public static final AppMatcher TEST_MATCHER = new AppMatcher();
     public static final Device TEST_DEVICE = new Device();
 
-    @Autowired private RuleDriverDAO driverDAO;
-    @Autowired private AppRuleDAO ruleDAO;
     @Autowired private BubbleConfiguration configuration;
 
     @Override public Object getView(Account account, BubbleApp app, String view, Map<String, String> params) {
@@ -103,7 +100,7 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     private List<BubbleBlockList> loadAllLists(Account account, BubbleApp app) {
 
         final AppRule rule = loadRule(account, app);
-        loadDriver(account, rule); // validate proper driver
+        loadDriver(account, rule, BubbleBlockRuleDriver.class); // validate proper driver
 
         final BubbleBlockConfig blockConfig = json(rule.getConfigJson(), BubbleBlockConfig.class);
         final List<BubbleBlockList> blockLists = new ArrayList<>();
@@ -116,26 +113,11 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
     private BubbleUserAgentBlock[] loadUserAgentBlocks(Account account, BubbleApp app) {
 
         final AppRule rule = loadRule(account, app);
-        loadDriver(account, rule); // validate proper driver
+        loadDriver(account, rule, BubbleBlockRuleDriver.class); // validate proper driver
 
         final BubbleBlockConfig blockConfig = json(rule.getConfigJson(), BubbleBlockConfig.class);
         final BubbleUserAgentBlock[] blocks = blockConfig.getUserAgentBlocks();
         return empty(blocks) ? BubbleUserAgentBlock.NO_BLOCKS : blocks;
-    }
-
-    private RuleDriver loadDriver(Account account, AppRule rule) {
-        final RuleDriver driver = driverDAO.findByAccountAndId(account.getUuid(), rule.getDriver());
-        if (driver == null || !driver.getDriverClass().equals(BubbleBlockRuleDriver.class.getName())) {
-            return die("expected BubbleBlockRuleDriver");
-        }
-        return driver;
-    }
-
-    private AppRule loadRule(Account account, BubbleApp app) {
-        final List<AppRule> rules = ruleDAO.findByAccountAndAppAndEnabled(account.getUuid(), app.getUuid());
-        if (rules.isEmpty()) return die("loadAllLists: no rule found");
-        if (rules.size() > 1) return die("loadAllLists: expected only one enabled rule");
-        return rules.get(0);
     }
 
     public static final String ACTION_enableList = "enableList";
@@ -207,7 +189,7 @@ public class BubbleBlockAppConfigDriver implements AppConfigDriver {
 
         try {
             final AppRule rule = loadRule(account, app);
-            final RuleDriver ruleDriver = loadDriver(account, rule);
+            final RuleDriver ruleDriver = loadDriver(account, rule, BubbleBlockRuleDriver.class);
             final BubbleBlockRuleDriver unwiredDriver = (BubbleBlockRuleDriver) rule.initDriver(ruleDriver, TEST_MATCHER, account, TEST_DEVICE);
             final BubbleBlockRuleDriver driver = configuration.autowire(unwiredDriver);
             final BlockDecision decision = driver.getDecision(host, path, userAgent, primary);
