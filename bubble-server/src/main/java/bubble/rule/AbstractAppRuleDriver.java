@@ -17,12 +17,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
 import lombok.Getter;
 import lombok.Setter;
-import org.cobbzilla.util.http.HttpContentTypeAndCharset;
 import org.cobbzilla.util.system.Bytes;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static org.cobbzilla.util.http.HttpContentTypes.TEXT_HTML;
+import static org.cobbzilla.util.json.JsonUtil.json;
 
 public abstract class AbstractAppRuleDriver implements AppRuleDriver {
 
@@ -50,6 +49,10 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
     protected Account account;
     protected Device device;
 
+    public <C> Class<C> getConfigClass () { return null; }
+    protected Object ruleConfig;
+    public <C> C getRuleConfig () { return (C) ruleConfig; }
+
     public Handlebars getHandlebars () { return configuration.getHandlebars(); }
 
     protected String getDataId(String requestId) { return getDataId(requestId, matcher); }
@@ -67,6 +70,9 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
         this.rule = rule;
         this.account = account;
         this.device = device;
+        if (getConfigClass() != null) {
+            this.ruleConfig = json(json(config), getConfigClass());
+        }
     }
 
 }

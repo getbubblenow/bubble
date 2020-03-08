@@ -49,19 +49,19 @@ import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 @Slf4j
 public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
 
-    private BubbleBlockConfig bubbleBlockConfig;
-
     private BlockList blockList = new BlockList();
 
     private static Map<String, BlockListSource> blockListCache = new ConcurrentHashMap<>();
 
+    @Override public <C> Class<C> getConfigClass() { return (Class<C>) BubbleBlockConfig.class; }
+
     @Override public void init(JsonNode config, JsonNode userConfig, AppRule rule, AppMatcher matcher, Account account, Device device) {
         super.init(config, userConfig, rule, matcher, account, device);
-        bubbleBlockConfig = json(json(config), BubbleBlockConfig.class);
         refreshBlockLists();
     }
 
     public void refreshBlockLists() {
+        final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
         final BubbleBlockList[] blockLists = bubbleBlockConfig.getBlockLists();
         final Set<String> refreshed = new HashSet<>();
         for (BubbleBlockList list : blockLists) {
@@ -110,6 +110,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final String fqdn = filter.getFqdn();
         final String prefix = "preprocess("+filter.getRequestId()+"): ";
 
+        final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
         final BlockDecision decision = getDecision(filter.getFqdn(), filter.getUri(), filter.getUserAgent());
         switch (decision.getDecisionType()) {
             case block:
@@ -166,6 +167,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
     public BlockDecision getDecision(String fqdn, String uri, String userAgent) { return blockList.getDecision(fqdn, uri, userAgent, false); }
 
     public BlockDecision getDecision(String fqdn, String uri, String userAgent, boolean primary) {
+        final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
         if (!empty(userAgent) && !empty(bubbleBlockConfig.getUserAgentBlocks())) {
             for (BubbleUserAgentBlock uaBlock : bubbleBlockConfig.getUserAgentBlocks()) {
                 if (uaBlock.hasUrlRegex() && uaBlock.urlMatches(uri)) {

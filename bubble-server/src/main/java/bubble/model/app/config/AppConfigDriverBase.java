@@ -4,12 +4,14 @@ import bubble.dao.app.AppRuleDAO;
 import bubble.dao.app.RuleDriverDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppRule;
+import bubble.model.app.BubbleApp;
 import bubble.model.app.RuleDriver;
 import bubble.rule.AppRuleDriver;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.json.JsonUtil.json;
 
 public abstract class AppConfigDriverBase implements AppConfigDriver {
 
@@ -28,4 +30,9 @@ public abstract class AppConfigDriverBase implements AppConfigDriver {
         return driver;
     }
 
+    protected <T> T getConfig (Account account, BubbleApp app, Class<? extends AppRuleDriver> driverClass, Class<T> configClass) {
+        final AppRule rule = loadRule(account, app);
+        loadDriver(account, rule, driverClass); // validate proper driver
+        return json(rule.getConfigJson(), configClass);
+    }
 }

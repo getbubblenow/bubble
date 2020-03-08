@@ -60,9 +60,7 @@ public class TlsPassthruAppConfigDriver extends AppConfigDriverBase {
     }
 
     private TlsPassthruConfig getConfig(Account account, BubbleApp app) {
-        final AppRule rule = loadRule(account, app);
-        loadDriver(account, rule, TlsPassthruRuleDriver.class); // validate proper driver
-        return json(rule.getConfigJson(), TlsPassthruConfig.class);
+        return getConfig(account, app, TlsPassthruRuleDriver.class, TlsPassthruConfig.class);
     }
 
     public static final String ACTION_addFqdn = "addFqdn";

@@ -43,6 +43,8 @@ public class TrafficAnalyticsRuleDriver extends AbstractAppRuleDriver {
     private String initNetworkDomain() { return configuration.getThisNetwork() == null ? null : configuration.getThisNetwork().getNetworkDomain(); }
     @Getter(lazy=true) private final String networkDomainWithDotPrefix = "."+getNetworkDomain();
 
+    @Override public <C> Class<C> getConfigClass() { return (Class<C>) TrafficAnalyticsConfig.class; }
+
     @Override public FilterMatchDecision preprocess(AppRuleHarness ruleHarness,
                                                     FilterMatchersRequest filter,
                                                     Account account,
@@ -58,6 +60,13 @@ public class TrafficAnalyticsRuleDriver extends AbstractAppRuleDriver {
             return FilterMatchDecision.no_match;
         }
 
+        final TrafficAnalyticsConfig config = getRuleConfig();
+        if (config != null && config.shouldSkip(filter.getUrl())) {
+            if (log.isDebugEnabled()) log.debug("preprocess: not logging request (matched filter): url="+filter.getUrl());
+            return FilterMatchDecision.no_match;
+        }
+
+        if (log.isDebugEnabled()) log.debug("preprocess: logging request (config="+config+"): url="+filter.getUrl());
         final TrafficRecord rec = new TrafficRecord(filter, account, device);
         recordRecentTraffic(rec);
         incrementCounters(account, device, app, site, fqdn);

@@ -41,7 +41,25 @@
       {"name": "last_24_hours"},
       {"name": "last_7_days"},
       {"name": "last_30_days"}
-    ]
+    ],
+    "configDriver": "bubble.app.analytics.TrafficAnalyticsAppConfigDriver",
+    "configFields": [
+      {"name": "analyticsFilter", "truncate": false}
+    ],
+    "configViews": [{
+      "name": "manageFilters",
+      "scope": "app",
+      "root": "true",
+      "fields": ["analyticsFilter"],
+      "actions": [
+        {"name": "removeFilter", "index": 10},
+        {
+          "name": "addFilter", "scope": "app", "index": 10,
+          "params": ["analyticsFilter"],
+          "button": "addFilter"
+        }
+      ]
+    }]
   },
   "children": {
     "AppSite": [{
@@ -54,7 +72,9 @@
       "name": "traffic_analytics",
       "template": true,
       "driver": "TrafficAnalyticsRuleDriver",
-      "config": {}
+      "config": {
+        "filterPatterns": ["\\.stripe\\.com"]
+      }
     }],
     "AppMessage": [{
       "locale": "en_US",
@@ -85,7 +105,14 @@
         {"name": "view.last_7_days", "value": "Last 7 Days"},
         {"name": "view.last_7_days.ctime.format", "value": "{{MMM}} {{d}}, {{YYYY}}"},
         {"name": "view.last_30_days", "value": "Last 30 Days"},
-        {"name": "view.last_30_days.ctime.format", "value": "{{MMM}} {{d}}, {{YYYY}}"}
+        {"name": "view.last_30_days.ctime.format", "value": "{{MMM}} {{d}}, {{YYYY}}"},
+
+        {"name": "config.view.manageFilters", "value": "Manage Filters"},
+        {"name": "config.field.analyticsFilter", "value": "Filter Pattern"},
+        {"name": "config.field.analyticsFilter.description", "value": "Skip logging for URLs that match this pattern"},
+        {"name": "config.action.addFilter", "value": "Add New Filter"},
+        {"name": "config.button.addFilter", "value": "Add"},
+        {"name": "config.action.removeFilter", "value": "Remove"}
       ]
     }]
   }
