@@ -108,6 +108,11 @@ public class AnsibleRoleDAO extends AccountOwnedTemplateDAO<AnsibleRole> {
                     try {
                         @Cleanup final InputStream in = getClass().getClassLoader().getResourceAsStream(roleTgzPath);
                         existsOnClasspath = in != null;
+                        if (existsOnClasspath) {
+                            if (!storageService.write(role.getAccount(), role.getTgzB64(), in)) {
+                                log.warn("preCreate: error writing role archive from classpath:"+roleTgzPath+" -> storage:"+role.getTgzB64());
+                            }
+                        }
                     } catch (Exception ioe) {
                         log.warn("preCreate: role archive not found in storage ("+role.getTgzB64()+") and exception searching classpath ("+roleTgzPath+"): "+shortError(ioe));
                     }

@@ -123,6 +123,10 @@ public class AnsiblePrepService {
 
         for (AnsibleRole role : roles) {
             @Cleanup final InputStream roleStream = getTgzInputStream(node.getAccount(), role);
+            if (roleStream == null) {
+                errors.addViolation("err.role.notFound", "roleStream was null for: "+role.getTgzB64());
+                continue;
+            }
             final File roleTarball = toFile(new File(tarballDir, role.getName() + ".tgz"), roleStream);
             final File rolesDir = new File(automation, "roles");
             Tarball.unroll(roleTarball, rolesDir);
