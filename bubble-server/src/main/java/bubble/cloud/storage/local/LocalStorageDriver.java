@@ -86,7 +86,13 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
 
         // check classpath
         @Cleanup final InputStream in = getClass().getClassLoader().getResourceAsStream(key);
-        return in != null;
+        if (in == null) return false;
+
+        // copy file to root network storage, so we can find it after activation
+        if (!file.getParentFile().mkdirs()) return false;
+        @Cleanup OutputStream out = new FileOutputStream(file);
+        IOUtils.copyLarge(in, out);
+        return true;
     }
 
     protected File metaFile(File f) { return new File(abs(f)+SUFFIX_META); }
