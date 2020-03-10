@@ -124,6 +124,52 @@ public class FilterHttpResource {
         return null;
     }
 
+    @POST @Path(EP_PASSTHRU)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    public Response isTlsPassthru(@Context Request req,
+                                  @Context ContainerRequest request,
+                                  FilterPassthruRequest passthruRequest) {
+        final String prefix = "isPassthru: ";
+        if (passthruRequest == null || !passthruRequest.hasFqdn() || !passthruRequest.hasRemoteAddr()) {
+            if (log.isDebugEnabled()) log.debug(prefix+"invalid passthruRequest, returning forbidden");
+            return forbidden();
+        }
+        validateMitmCall(req);
+
+        final String vpnAddr = passthruRequest.getRemoteAddr();
+        final Device device = deviceIdService.findDeviceByIp(vpnAddr);
+        if (device == null) {
+            if (log.isDebugEnabled()) log.debug(prefix+"device not found for IP "+vpnAddr+", returning not found");
+            return notFound();
+        } else if (log.isTraceEnabled()) {
+            log.trace(prefix+"found device "+device.id()+" for IP "+vpnAddr);
+        }
+        final Account account = findCaller(device.getAccount());
+        if (account == null) {
+            if (log.isDebugEnabled()) log.debug(prefix+"account not found for uuid "+device.getAccount()+", returning not found");
+            return notFound();
+        }
+
+        final List<AppMatcher> matchers = matcherDAO.findByAccountAndEnabledAndPassthru(device.getAccount());
+        final List<AppMatcher> retained = new ArrayList<>();
+        for (AppMatcher matcher : matchers) {
+            final BubbleApp app = appDAO.findByUuid(matcher.getApp());
+            if (!app.enabled()) continue;
+            final AppRule rule = ruleDAO.findByUuid(matcher.getRule());
+            if (!rule.enabled()) continue;
+            retained.add(matcher);
+        }
+
+        final boolean passthru = ruleEngine.isTlsPassthru(account, device, retained, passthruRequest.getFqdn());
+        if (passthru) {
+            if (log.isDebugEnabled()) log.debug(prefix+"returning true for fqdn="+passthruRequest.getFqdn());
+            return ok();
+        }
+        if (log.isDebugEnabled()) log.debug(prefix+"returning false for fqdn="+passthruRequest.getFqdn());
+        return notFound();
+    }
+
     @POST @Path(EP_MATCHERS+"/{requestId}")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
@@ -131,16 +177,11 @@ public class FilterHttpResource {
                                    @Context ContainerRequest request,
                                    @PathParam("requestId") String requestId,
                                    FilterMatchersRequest filterRequest) {
-        final String mitmAddr = req.getRemoteAddr();
         if (filterRequest == null || !filterRequest.hasRequestId() || empty(requestId) || !requestId.equals(filterRequest.getRequestId())) {
             if (log.isDebugEnabled()) log.debug("selectMatchers: no filterRequest, missing requestId, or mismatch, returning forbidden");
             return forbidden();
         }
-        // only mitmproxy is allowed to call us, and this should always be a local address
-        if (!isLocalIpv4(mitmAddr)) {
-            if (log.isDebugEnabled()) log.debug("selectMatchers: mitmAddr ("+mitmAddr+") was not local IPv4 for filterRequest ("+filterRequest.getRequestId()+"), returning forbidden");
-            return forbidden();
-        }
+        validateMitmCall(req);
 
         final String prefix = "selectMatchers("+filterRequest.getRequestId()+"): ";
         if (log.isDebugEnabled()) log.debug(prefix+"starting for filterRequest="+json(filterRequest, COMPACT_MAPPER));
@@ -275,12 +316,7 @@ public class FilterHttpResource {
                                @QueryParam("length") Long contentLength,
                                @QueryParam("last") Boolean last) throws IOException {
 
-        // only mitmproxy is allowed to call us, and this should always be a local address
-        final String mitmAddr = req.getRemoteAddr();
-        if (!isLocalIpv4(mitmAddr)) {
-            if (log.isDebugEnabled()) log.debug("filterHttp: mitmAddr ("+mitmAddr+") was not local IPv4, returning forbidden");
-            return forbidden();
-        }
+        validateMitmCall(req);
 
         requestId = trimQuotes(requestId);
         if (empty(requestId)) {
@@ -406,6 +442,15 @@ public class FilterHttpResource {
         }
 
         return ruleEngine.applyRulesToChunkAndSendResponse(request, filterRequest, chunkLength, isLast);
+    }
+
+    private void validateMitmCall(Request req) {
+        // only mitmproxy is allowed to call us, and this should always be a local address
+        final String mitmAddr = req.getRemoteAddr();
+        if (!isLocalIpv4(mitmAddr)) {
+            if (log.isDebugEnabled()) log.debug("validateMitmCall: mitmAddr ("+mitmAddr+") was not local IPv4, returning forbidden");
+            throw forbiddenEx();
+        }
     }
 
     public boolean isContentTypeMatch(FilterMatchersResponse matchersResponse, String ct) {

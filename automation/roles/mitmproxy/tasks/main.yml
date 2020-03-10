@@ -87,6 +87,14 @@
     group: root
     state: link
 
+- name: Install dnscrypt-proxy
+  copy:
+    src: "dnscrypt-proxy"
+    dest: "/usr/bin/dnscrypt-proxy"
+    owner: root
+    group: root
+    mode: 0755
+
 - name: restart supervisord
   service:
     name: supervisor

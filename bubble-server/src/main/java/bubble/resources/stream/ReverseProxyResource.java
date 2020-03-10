@@ -73,11 +73,6 @@ public class ReverseProxyResource {
             for (AppMatcher m : matchers) {
                 // check for regex match
                 if (m.matchesUrl(ub.getFullPath())) {
-                    // is this a total block?
-                    if (m.blocked()) {
-                        log.debug("get: matcher("+m.getUuid()+") blocks request, returning 404 Not Found for "+ub.getFullPath());
-                        return notFound(ub.getFullPath());
-                    }
                     matchedMatchers.put(m.getUuid(), m);
                 }
             }

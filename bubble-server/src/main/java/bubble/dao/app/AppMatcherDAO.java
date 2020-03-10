@@ -36,11 +36,16 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
                 and(
                         eq("account", account),
                         eq("enabled", true),
+                        eq("passthru", false),
                         or(
                                 eq("fqdn", fqdn),
                                 eq("fqdn", "*")
                         ))
         ).addOrder(PRIORITY_ASC));
+    }
+
+    public List<AppMatcher> findByAccountAndEnabledAndPassthru(String account) {
+        return findByFields("account", account, "enabled", true, "passthru", true);
     }
 
     public List<AppMatcher> findAllChangesSince(Long lastMod) {

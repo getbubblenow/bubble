@@ -6,33 +6,23 @@ package bubble.rule.passthru;
 
 import bubble.model.account.Account;
 import bubble.model.device.Device;
-import bubble.resources.stream.FilterMatchersRequest;
 import bubble.rule.AbstractAppRuleDriver;
-import bubble.rule.FilterMatchDecision;
 import bubble.service.stream.AppRuleHarness;
 import lombok.extern.slf4j.Slf4j;
-import org.glassfish.grizzly.http.server.Request;
-import org.glassfish.jersey.server.ContainerRequest;
 
 @Slf4j
 public class TlsPassthruRuleDriver extends AbstractAppRuleDriver {
 
     @Override public <C> Class<C> getConfigClass() { return (Class<C>) TlsPassthruConfig.class; }
 
-    @Override public FilterMatchDecision preprocess(AppRuleHarness ruleHarness,
-                                                    FilterMatchersRequest filter,
-                                                    Account account,
-                                                    Device device,
-                                                    Request req,
-                                                    ContainerRequest request) {
+    @Override public boolean isTlsPassthru(AppRuleHarness harness, Account account, Device device, String fqdn) {
         final TlsPassthruConfig passthruConfig = getRuleConfig();
-        final String fqdn = filter.getFqdn();
         if (passthruConfig.isPassthru(fqdn)) {
-            if (log.isDebugEnabled()) log.debug("preprocess: returning pass_thru for fqdn="+fqdn);
-            return FilterMatchDecision.pass_thru;
+            if (log.isDebugEnabled()) log.debug("isTlsPassthru: returning true for fqdn="+fqdn);
+            return true;
         }
-        if (log.isDebugEnabled()) log.debug("preprocess: returning no_match for fqdn="+fqdn);
-        return FilterMatchDecision.no_match;
+        if (log.isDebugEnabled()) log.debug("isTlsPassthru: returning false for fqdn="+fqdn);
+        return false;
     }
 
 }

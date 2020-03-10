@@ -45,7 +45,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, HasPriority {
 
     public static final String[] VALUE_FIELDS = {"fqdn", "urlRegex", "template", "enabled", "priority"};
-    public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS, "name", "site", "rule");
+    public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS, "name", "site", "rule", "passthru");
 
     public static final Pattern DEFAULT_CONTENT_TYPE_PATTERN = Pattern.compile("^text/html.*", Pattern.CASE_INSENSITIVE);
 
@@ -117,18 +117,18 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String rule;
 
-    @ECSearchable @ECField(index=1100)
-    @Column(nullable=false)
-    @Getter @Setter private Boolean blocked = false;
-    public boolean blocked() { return bool(blocked); }
-
-    @ECSearchable @ECField(index=110)
+    @ECSearchable @ECField(index=100)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
 
-    @ECSearchable @ECField(index=120)
+    @ECSearchable @ECField(index=110)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
+
+    @ECSearchable @ECField(index=120)
+    @ECIndex @Column(nullable=false)
+    @Getter @Setter private Boolean passthru;
+    public boolean passthru () { return bool(passthru); }
 
     @ECSearchable @ECField(index=130)
     @Column(nullable=false)

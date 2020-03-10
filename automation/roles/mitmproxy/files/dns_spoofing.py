@@ -92,7 +92,7 @@ class Rerouter:
         if sni or host_header:
             matcher_response = self.get_matchers(flow, sni or host_header)
             if matcher_response:
-                if 'decision' in matcher_response and matcher_response['decision'] is not None and matcher_response['decision'].equals('passthru'):
+                if 'decision' in matcher_response and matcher_response['decision'] is not None and matcher_response['decision'] == 'passthru':
                     bubble_log('dns_spoofing.request: passthru response returned, passing thru and NOT performing TLS interception...')
                     add_flow_ctx(flow, CTX_BUBBLE_PASSTHRU, True)
                     return

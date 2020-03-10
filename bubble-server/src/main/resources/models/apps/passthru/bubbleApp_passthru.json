@@ -4,6 +4,7 @@
   "url": "https://bubblev.com/apps/passthru",
   "template": true,
   "enabled": true,
+  "passthru": true,
   "priority": 1000000,
   "dataConfig": {
     "dataDriver": "bubble.app.passthru.TlsPassthruAppDataDriver",

@@ -188,6 +188,7 @@ public class ApiConstants {
     public static final String BUBBLE_MAGIC_ENDPOINT = "/.bubble";
 
     public static final String FILTER_HTTP_ENDPOINT = "/filter";
+    public static final String EP_PASSTHRU = "/passthru";
     public static final String EP_APPLY = "/apply";
     public static final String EP_ASSETS = "/assets";
 

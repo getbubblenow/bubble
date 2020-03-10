@@ -22,6 +22,25 @@ def bubble_log(message):
     print(str(datetime.datetime.time(datetime.datetime.now()))+': ' + message, file=sys.stderr)
 
 
+def bubble_passthru(remote_addr, fqdn):
+    headers = {
+        'X-Forwarded-For': remote_addr,
+        'Accept' : 'application/json',
+        'Content-Type': 'application/json'
+    }
+    try:
+        data = {
+            'fqdn': str(fqdn),
+            'remoteAddr': remote_addr
+        }
+        response = requests.post('http://127.0.0.1:'+bubble_port+'/api/filter/passthru', headers=headers, json=data)
+        return response.ok
+    except Exception as e:
+        bubble_log('bubble_passthru API call failed: '+repr(e))
+        traceback.print_exc()
+    return False
+
+
 def bubble_matchers(req_id, remote_addr, flow, host):
     headers = {
         'X-Forwarded-For': remote_addr,

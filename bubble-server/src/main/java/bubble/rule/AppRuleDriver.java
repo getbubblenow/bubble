@@ -109,4 +109,6 @@ public interface AppRuleDriver {
         return null;
     }
 
+    default boolean isTlsPassthru(AppRuleHarness harness, Account account, Device device, String fqdn) { return false; }
+
 }

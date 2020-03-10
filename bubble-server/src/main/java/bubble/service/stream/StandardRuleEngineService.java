@@ -274,4 +274,11 @@ public class StandardRuleEngineService implements RuleEngineService {
     @Getter(lazy=true) private final HttpClientBuilder httpClientBuilder = newHttpClientBuilder(1000, 50);
     public CloseableHttpClient newHttpConn() { return getHttpClientBuilder().build(); }
 
+    public boolean isTlsPassthru(Account account, Device device, List<AppMatcher> matchers, String fqdn) {
+        final List<AppRuleHarness> ruleHarnesses = initRules(account, device, matchers);
+        for (AppRuleHarness harness : ruleHarnesses) {
+            if (harness.getDriver().isTlsPassthru(harness, account, device, fqdn)) return true;
+        }
+        return false;
+    }
 }
