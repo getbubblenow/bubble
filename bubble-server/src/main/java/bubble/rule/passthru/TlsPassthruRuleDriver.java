@@ -15,13 +15,13 @@ public class TlsPassthruRuleDriver extends AbstractAppRuleDriver {
 
     @Override public <C> Class<C> getConfigClass() { return (Class<C>) TlsPassthruConfig.class; }
 
-    @Override public boolean isTlsPassthru(AppRuleHarness harness, Account account, Device device, String fqdn) {
+    @Override public boolean isTlsPassthru(AppRuleHarness harness, Account account, Device device, String addr, String fqdn) {
         final TlsPassthruConfig passthruConfig = getRuleConfig();
-        if (passthruConfig.isPassthru(fqdn)) {
-            if (log.isDebugEnabled()) log.debug("isTlsPassthru: returning true for fqdn="+fqdn);
+        if (passthruConfig.isPassthru(fqdn) || passthruConfig.isPassthru(addr)) {
+            if (log.isDebugEnabled()) log.debug("isTlsPassthru: returning true for fqdn/addr="+fqdn+"/"+addr);
             return true;
         }
-        if (log.isDebugEnabled()) log.debug("isTlsPassthru: returning false for fqdn="+fqdn);
+        if (log.isDebugEnabled()) log.debug("isTlsPassthru: returning false for fqdn/addr="+fqdn+"/"+addr);
         return false;
     }
 

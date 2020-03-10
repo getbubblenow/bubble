@@ -131,7 +131,7 @@ public class FilterHttpResource {
                                   @Context ContainerRequest request,
                                   FilterPassthruRequest passthruRequest) {
         final String prefix = "isPassthru: ";
-        if (passthruRequest == null || !passthruRequest.hasFqdn() || !passthruRequest.hasRemoteAddr()) {
+        if (passthruRequest == null || !passthruRequest.hasAddr() || !passthruRequest.hasRemoteAddr()) {
             if (log.isDebugEnabled()) log.debug(prefix+"invalid passthruRequest, returning forbidden");
             return forbidden();
         }
@@ -161,12 +161,12 @@ public class FilterHttpResource {
             retained.add(matcher);
         }
 
-        final boolean passthru = ruleEngine.isTlsPassthru(account, device, retained, passthruRequest.getFqdn());
+        final boolean passthru = ruleEngine.isTlsPassthru(account, device, retained, passthruRequest.getAddr(), passthruRequest.getFqdn());
         if (passthru) {
-            if (log.isDebugEnabled()) log.debug(prefix+"returning true for fqdn="+passthruRequest.getFqdn());
+            if (log.isDebugEnabled()) log.debug(prefix+"returning true for fqdn/addr="+passthruRequest.getFqdn()+"/"+passthruRequest.getAddr());
             return ok();
         }
-        if (log.isDebugEnabled()) log.debug(prefix+"returning false for fqdn="+passthruRequest.getFqdn());
+        if (log.isDebugEnabled()) log.debug(prefix+"returning false for fqdn/addr="+passthruRequest.getFqdn()+"/"+passthruRequest.getAddr());
         return notFound();
     }
 

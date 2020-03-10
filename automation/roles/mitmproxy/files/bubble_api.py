@@ -22,7 +22,7 @@ def bubble_log(message):
     print(str(datetime.datetime.time(datetime.datetime.now()))+': ' + message, file=sys.stderr)
 
 
-def bubble_passthru(remote_addr, fqdn):
+def bubble_passthru(remote_addr, addr, fqdn):
     headers = {
         'X-Forwarded-For': remote_addr,
         'Accept' : 'application/json',
@@ -30,6 +30,7 @@ def bubble_passthru(remote_addr, fqdn):
     }
     try:
         data = {
+            'addr': str(addr),
             'fqdn': str(fqdn),
             'remoteAddr': remote_addr
         }

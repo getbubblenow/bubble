@@ -7,6 +7,9 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
 public class FilterPassthruRequest {
 
+    @Getter @Setter private String addr;
+    public boolean hasAddr() { return !empty(addr); }
+
     @Getter @Setter private String fqdn;
     public boolean hasFqdn() { return !empty(fqdn); }
 
