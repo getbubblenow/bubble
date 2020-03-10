@@ -125,7 +125,7 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
-    @ECSearchable @ECField(index=120)
+    @ECSearchable @ECField(index=120, required=EntityFieldRequired.optional)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean passthru;
     public boolean passthru () { return bool(passthru); }

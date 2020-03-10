@@ -52,6 +52,11 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
         return list(criteria().add(gt(MTIME, lastMod)));
     }
 
+    @Override public Object preCreate(AppMatcher matcher) {
+        if (matcher.getPassthru() == null) matcher.setPassthru(false);
+        return super.preCreate(matcher);
+    }
+
     @Override public AppMatcher postUpdate(AppMatcher matcher, Object context) {
         final BubbleApp app = appDAO.findByUuid(matcher.getApp());
         if (app == null) return die("postUpdate("+ matcher.getUuid()+"): app not found: "+ matcher.getApp());
