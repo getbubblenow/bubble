@@ -7,6 +7,7 @@ package bubble.dao.device;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.dao.app.AppDataDAO;
 import bubble.model.cloud.BubbleNetwork;
+import bubble.model.device.BubbleDeviceType;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,13 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
     public Device findByNetworkAndName(String networkUuid, String name) {
         return findByUniqueFields("network", networkUuid, "name", name);
+    }
+
+    @Override public Object preCreate(Device device) {
+        if (device.uninitialized()) {
+            device.setDeviceType(BubbleDeviceType.uninitialized);
+        }
+        return super.preCreate(device);
     }
 
     @Override public Device create(Device device) {

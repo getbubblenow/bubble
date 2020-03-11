@@ -18,6 +18,7 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.NetworkKeys;
 import bubble.model.cloud.notify.NotificationReceipt;
+import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.StandardAccountMessageService;
@@ -25,6 +26,7 @@ import bubble.service.backup.RestoreService;
 import bubble.service.bill.PromotionService;
 import bubble.service.boot.ActivationService;
 import bubble.service.boot.SageHelloService;
+import bubble.service.cloud.DeviceIdService;
 import bubble.service.notify.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
@@ -82,6 +84,7 @@ public class AuthResource {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private StandardAuthenticatorService authenticatorService;
     @Autowired private PromotionService promoService;
+    @Autowired private DeviceIdService deviceIdService;
 
     public Account updateLastLogin(Account account) { return accountDAO.update(account.setLastLogin()); }
 
@@ -460,9 +463,19 @@ public class AuthResource {
 
     @GET @Path(EP_CA_CERT)
     @Produces(CONTENT_TYPE_ANY)
-    public Response getCaCert(@Context ContainerRequest ctx,
+    public Response getCaCert(@Context Request req,
+                              @Context ContainerRequest ctx,
                               @QueryParam("type") CertType type) {
         final Account caller = optionalUserPrincipal(ctx);
+        if (type == null) {
+            final String remoteHost = getRemoteHost(req);
+            if (!empty(remoteHost)) {
+                final Device device = deviceIdService.findDeviceByIp(remoteHost);
+                if (device != null) {
+                    type = device.getDeviceType().getCertType();
+                }
+            }
+        }
         if (type == null) type = CertType.pem;
         final BubbleNetwork thisNet = configuration.getThisNetwork();
         if (thisNet == null) return die("getCaCert: thisNetwork was null");

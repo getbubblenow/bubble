@@ -20,6 +20,8 @@ import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.validation.constraints.Size;
 
 import static bubble.ApiConstants.EP_DEVICES;
@@ -40,7 +42,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 public class Device extends IdentifiableBase implements HasAccount {
 
     public static final String[] CREATE_FIELDS = { UUID, "name", "enabled", "totpKey" };
-    public static final String[] UPDATE_FIELDS = { "name", "enabled" };
+    public static final String[] UPDATE_FIELDS = { "name", "enabled", "deviceType" };
 
     public static final String UNINITIALIZED_DEVICE = "__uninitialized_device__";
     public static final String UNINITIALIZED_DEVICE_LIKE = UNINITIALIZED_DEVICE+"%";
@@ -78,13 +80,17 @@ public class Device extends IdentifiableBase implements HasAccount {
     @Getter @Setter private String account;
 
     @ECSearchable @ECField(index=30)
+    @ECIndex @Enumerated(EnumType.STRING) @Column(nullable=false, length=20)
+    @Getter @Setter private BubbleDeviceType deviceType;
+
+    @ECSearchable @ECField(index=40)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
     public boolean uninitialized () { return name.startsWith(UNINITIALIZED_DEVICE); }
     public boolean initialized () { return !uninitialized(); }
 
-    @ECSearchable @ECField(index=40)
+    @ECSearchable @ECField(index=50)
     @ECForeignKey(entity=BubbleNetwork.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String network;
