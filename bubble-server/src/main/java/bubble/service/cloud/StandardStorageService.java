@@ -4,6 +4,7 @@
  */
 package bubble.service.cloud;
 
+import bubble.ApiConstants;
 import bubble.cloud.storage.StorageServiceDriver;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.cloud.CloudService;
@@ -44,7 +45,9 @@ public class StandardStorageService implements StorageService {
         }
     }
 
-    private String thisNodeId() { return configuration.getThisNode() != null ? configuration.getThisNode().getUuid() : null; }
+    private String thisNodeId() {
+        return configuration.getThisNode() != null ? configuration.getThisNode().getUuid() : ApiConstants.ROOT_NETWORK_UUID;
+    }
 
     public boolean exists(String account, String uri) {
         final StorageTarget target = new StorageTarget(account, uri);
