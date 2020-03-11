@@ -76,6 +76,9 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
         if (current != null && current.uninitialized()) {
             device.initTotpKey();
         }
+        if (device.getDeviceType() == null || device.getDeviceType() == BubbleDeviceType.uninitialized) {
+            device.setDeviceType(BubbleDeviceType.other);
+        }
         final Device updated = super.update(device);
         ensureSpareDevice(device.getAccount(), device.getNetwork(), true);
         return updated;
