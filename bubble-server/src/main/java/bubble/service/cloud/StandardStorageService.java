@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
@@ -46,7 +47,7 @@ public class StandardStorageService implements StorageService {
     }
 
     private String thisNodeId() {
-        return configuration.getThisNode() != null ? configuration.getThisNode().getUuid() : ApiConstants.ROOT_NETWORK_UUID;
+        return configuration.getThisNode() != null ? configuration.getThisNode().getUuid() : ROOT_NETWORK_UUID;
     }
 
     public boolean exists(String account, String uri) {
