@@ -9,6 +9,7 @@ import bubble.dao.app.AppRuleDAO;
 import bubble.dao.app.BubbleAppDAO;
 import bubble.model.account.Account;
 import bubble.model.app.BubbleApp;
+import bubble.model.app.config.AppConfigDriver;
 import bubble.model.app.config.AppDataConfig;
 import bubble.model.app.config.AppDataDriver;
 import bubble.model.app.config.AppDataPresentation;
@@ -50,6 +51,13 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
             }
             if (!dataConfig.hasViews()) throw invalidEx("err.dataConfig.views.required");
             if (!dataConfig.hasFields()) throw invalidEx("err.dataConfig.fields.required");
+        }
+        if (dataConfig.hasConfigDriver()) {
+            try {
+                final AppConfigDriver configDriver = dataConfig.getConfigDriver(configuration);
+            } catch (Exception e) {
+                throw invalidEx("err.dataConfig.configDriver.invalid", "Error initializing config driver: "+shortError(e), dataConfig.getDataDriver());
+            }
         }
         return super.setReferences(ctx, caller, request);
     }
