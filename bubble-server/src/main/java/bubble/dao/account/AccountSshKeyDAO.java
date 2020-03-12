@@ -6,6 +6,9 @@ package bubble.dao.account;
 
 import bubble.model.account.Account;
 import bubble.model.account.AccountSshKey;
+import bubble.model.cloud.AnsibleInstallType;
+import bubble.model.cloud.BubbleNetwork;
+import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -22,6 +25,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 public class AccountSshKeyDAO extends AccountOwnedEntityDAO<AccountSshKey> {
 
     @Autowired private AccountDAO accountDAO;
+    @Autowired private BubbleConfiguration configuration;
 
     public AccountSshKey findByAccountAndHash(String accountUuid, String hash) {
         return findByUniqueFields("account", accountUuid, "sshPublicKeyHash", hash);
@@ -41,9 +45,16 @@ public class AccountSshKeyDAO extends AccountOwnedEntityDAO<AccountSshKey> {
 
         if (key.hasExpiration() && key.expired()) throw invalidEx("err.expiration.cannotCreateSshKeyAlreadyExpired");
 
+        final Account owner = accountDAO.findByUuid(key.getAccount());
         if (key.installSshKey()) {
-            final Account owner = accountDAO.findByUuid(key.getAccount());
             if (!owner.admin()) throw invalidEx("err.installSshKey.cannotInstallAsNonAdmin");
+
+        } else if (owner.admin()) {
+            // admin keys are always installed
+            final BubbleNetwork thisNetwork = configuration.getThisNetwork();
+            if (thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.node) {
+                key.setInstallSshKey(true);
+            }
         }
 
         final String hash = sha256_hex(key.getSshPublicKey());

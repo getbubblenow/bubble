@@ -26,6 +26,7 @@ import static org.cobbzilla.util.time.TimeUtil.formatISO8601;
 import static org.cobbzilla.util.time.TimeUtil.parseISO8601;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
+import static org.cobbzilla.wizard.model.entityconfig.annotations.EntityFieldRequired.optional;
 
 @Entity @ECType(root=true)
 @NoArgsConstructor @Accessors(chain=true)
@@ -67,7 +68,7 @@ public class AccountSshKey extends IdentifiableBase implements HasAccount {
     @Getter @Setter private String sshPublicKeyHash;
     public boolean hasSshPublicKeyHash () { return !empty(sshPublicKeyHash); };
 
-    @ECField(index=50) @ECSearchable
+    @ECSearchable @ECField(index=50, required=optional)
     @Column(nullable=false)
     @Getter @Setter private Boolean installSshKey = false;
     public boolean installSshKey() { return bool(installSshKey); }
