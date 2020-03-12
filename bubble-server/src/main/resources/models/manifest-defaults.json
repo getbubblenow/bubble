@@ -4,5 +4,6 @@
   "manifest-app-analytics",
   "manifest-app-user-block",
   "manifest-app-bubble-block",
+  "manifest-app-passthru",
   "defaults/bubblePlan"
 ]
