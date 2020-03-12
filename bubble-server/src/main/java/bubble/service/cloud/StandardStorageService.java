@@ -4,7 +4,6 @@
  */
 package bubble.service.cloud;
 
-import bubble.ApiConstants;
 import bubble.cloud.storage.StorageServiceDriver;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.cloud.CloudService;
