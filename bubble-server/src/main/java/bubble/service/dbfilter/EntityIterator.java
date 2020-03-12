@@ -9,6 +9,7 @@ import bubble.cloud.storage.local.LocalStorageConfig;
 import bubble.cloud.storage.local.LocalStorageDriver;
 import bubble.model.account.AccountSshKey;
 import bubble.model.account.AccountTemplate;
+import bubble.model.app.AppTemplateEntity;
 import bubble.model.app.BubbleApp;
 import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.BubblePlanApp;
@@ -160,9 +161,18 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
                         log.info("addEntities: system BubblePlanApp " + systemPlanApp.getUuid() + ": no matching BubbleApp not found in userApps (not adding): " + names(userApps));
                     } else {
                         // systemPlanApp will now be associated with "root"'s BubblePlan, but user's BubbleApp
-                        log.info("addEntities: rewrote app for "+systemPlanApp.getUuid()+" -> "+userApp.getName()+"/"+userApp.getUuid());
+                        log.info("addEntities: rewrote app for " + systemPlanApp.getUuid() + " -> " + userApp.getName() + "/" + userApp.getUuid());
                         add(systemPlanApp.setApp(userApp.getUuid()));
                     }
+                }
+            }
+
+        } else if (!fullCopy && planApps != null && AppTemplateEntity.class.isAssignableFrom(c)) {
+            // Only copy app-related objects if the corresponding app is among the planApps
+            // Make copied objects templates
+            for (AppTemplateEntity e : (List<? extends AppTemplateEntity>) entities) {
+                if (planAppEnabled(e.getApp(), planApps)) {
+                    add(e.setTemplate(true));
                 }
             }
 

@@ -15,7 +15,8 @@
       "BubblePlanApp": [
         {"app": "TrafficAnalytics"},
         {"app": "BubbleBlock"},
-        {"app": "UserBlocker"}
+        {"app": "UserBlocker"},
+        {"app": "TlsPassthru"}
       ]
     }
   },
@@ -36,7 +37,8 @@
       "BubblePlanApp": [
         {"app": "TrafficAnalytics"},
         {"app": "BubbleBlock"},
-        {"app": "UserBlocker"}
+        {"app": "UserBlocker"},
+        {"app": "TlsPassthru"}
       ]
     }
   },
@@ -57,7 +59,8 @@
       "BubblePlanApp": [
         {"app": "TrafficAnalytics"},
         {"app": "BubbleBlock"},
-        {"app": "UserBlocker"}
+        {"app": "UserBlocker"},
+        {"app": "TlsPassthru"}
       ]
     }
   }
