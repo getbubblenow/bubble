@@ -73,7 +73,10 @@
       "template": true,
       "driver": "TrafficAnalyticsRuleDriver",
       "config": {
-        "filterPatterns": ["\\.stripe\\.com"]
+        "filterPatterns": [
+          "\\.stripe\\.com",
+          "\\.stripe\\.network"
+        ]
       }
     }],
     "AppMessage": [{
