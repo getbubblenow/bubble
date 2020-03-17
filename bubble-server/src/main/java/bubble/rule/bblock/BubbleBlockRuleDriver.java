@@ -4,10 +4,7 @@
  */
 package bubble.rule.bblock;
 
-import bubble.abp.BlockDecision;
-import bubble.abp.BlockList;
-import bubble.abp.BlockListSource;
-import bubble.abp.BlockSpec;
+import bubble.abp.*;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
@@ -112,7 +109,8 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
 
         final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
         final BlockDecision decision = getDecision(filter.getFqdn(), filter.getUri(), filter.getUserAgent());
-        switch (decision.getDecisionType()) {
+        final BlockDecisionType decisionType = decision.getDecisionType();
+        switch (decisionType) {
             case block:
                 if (log.isInfoEnabled()) log.info(prefix+"decision is BLOCK");
                 incrementCounters(account, device, app, site, fqdn);
@@ -120,30 +118,17 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
 
             case allow: default:
                 if (filter.hasReferer()) {
-                    final URI refererURI = URIUtil.toUriOrNull(filter.getReferer());
-                    if (refererURI == null) {
-                        if (log.isInfoEnabled()) log.info(prefix+"invalid referer ("+filter.getReferer()+")");
-                    } else {
-                        if (log.isInfoEnabled()) log.info(prefix+"decision for URL was ALLOW, checking against referer: host="+refererURI.getHost()+", path="+refererURI.getPath());
-                        final BlockDecision refererDecision = getDecision(refererURI.getHost(), refererURI.getPath(), filter.getUserAgent());
-                        switch (refererDecision.getDecisionType()) {
-                            case block:
-                                if (log.isInfoEnabled()) log.info(prefix+"decision for URL was ALLOW but for referer is BLOCK");
-                                incrementCounters(account, device, app, site, fqdn);
-                                return FilterMatchDecision.abort_not_found;  // block this request
-                            case filter:
-                                if (log.isInfoEnabled()) log.info(prefix+"decision is FILTER (based on referer), returning ALLOW");
-                                return FilterMatchDecision.no_match;
-                            case allow:
-                                if (log.isInfoEnabled()) log.info(prefix+"decision is ALLOW (after checking referer)");
-                                return FilterMatchDecision.no_match;
-                        }
-                    }
+                    final FilterMatchDecision refererDecision = checkRefererDecision(filter, account, device, app, site, prefix);
+                    if (refererDecision != null) return refererDecision;
                 }
                 if (log.isInfoEnabled()) log.info(prefix+"decision is ALLOW");
                 return FilterMatchDecision.no_match;
 
             case filter:
+                if (filter.hasReferer()) {
+                    final FilterMatchDecision refererDecision = checkRefererDecision(filter, account, device, app, site, prefix);
+                    if (refererDecision != null) return refererDecision;
+                }
                 final List<BlockSpec> specs = decision.getSpecs();
                 if (empty(specs)) {
                     log.warn(prefix+"decision was 'filter' but no specs were found, returning no_match");
@@ -162,6 +147,32 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                     if (log.isInfoEnabled()) log.info(prefix+"decision is FILTER (returning match)");
                     return FilterMatchDecision.match;
                 }
+        }
+    }
+
+    public FilterMatchDecision checkRefererDecision(FilterMatchersRequest filter, Account account, Device device, String app, String site, String prefix) {
+        prefix = prefix+" (checkRefererDecision): ";
+        final URI refererURI = URIUtil.toUriOrNull(filter.getReferer());
+        if (refererURI == null) {
+            if (log.isInfoEnabled()) log.info(prefix+"invalid referer ("+filter.getReferer()+")");
+            return null;
+        }
+        if (log.isInfoEnabled()) log.info(prefix+"decision for URL was ALLOW, checking against referer: host="+refererURI.getHost()+", path="+refererURI.getPath());
+        final String refererHost = refererURI.getHost();
+        final String refererPath = refererURI.getPath();
+        final String userAgent = filter.getUserAgent();
+        final BlockDecision refererDecision = getDecision(refererHost, refererPath, userAgent);
+        switch (refererDecision.getDecisionType()) {
+            case block:
+                if (log.isInfoEnabled()) log.info(prefix+"decision for URL was ALLOW but for referer is BLOCK");
+                incrementCounters(account, device, app, site, refererHost);
+                return FilterMatchDecision.abort_not_found;  // block this request
+            case filter:
+                if (log.isInfoEnabled()) log.info(prefix+"decision is FILTER (after checking referer), returning null");
+                return null;
+            case allow: default:
+                if (log.isInfoEnabled()) log.info(prefix+"decision is ALLOW (after checking referer), returning null");
+                return null;
         }
     }
 
