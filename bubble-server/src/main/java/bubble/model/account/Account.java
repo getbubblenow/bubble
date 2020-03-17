@@ -116,9 +116,11 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     private static final List<String> RESERVED_NAMES = Arrays.asList(
             "root", "postmaster", "hostmaster", "webmaster",
-            "ftp", "www", "www-data", "postgres", "ipfs",
+            "dns", "dnscrypt", "dnscrypt-proxy", "ftp", "www", "www-data", "postgres", "ipfs",
             "redis", "nginx", "mitmproxy", "mitmdump", "algo", "algovpn");
-    public boolean hasReservedName () { return hasName() && RESERVED_NAMES.contains(getName()); }
+    public boolean hasReservedName () { return hasName() && isReservedName(getName()); }
+
+    public static boolean isReservedName(String name) { return RESERVED_NAMES.contains(name); }
 
     // make this updatable if we ever want accounts to be able to change parents
     // there might be a lot more involved in that action though (read-only parent objects that will no longer be visible, must be copied in?)

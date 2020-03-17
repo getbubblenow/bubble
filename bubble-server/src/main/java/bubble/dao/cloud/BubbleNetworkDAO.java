@@ -4,6 +4,7 @@
  */
 package bubble.dao.cloud;
 
+import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.model.bill.AccountPlan;
@@ -29,6 +30,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @Repository @Slf4j
 public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
 
+    @Autowired private AccountDAO accountDAO;
     @Autowired private BubbleDomainDAO domainDAO;
     @Autowired private NetworkService networkService;
     @Autowired private BubbleBackupDAO backupDAO;
@@ -40,7 +42,7 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
 
     @Override public Object preCreate(BubbleNetwork network) {
         if (!network.hasForkHost()) {
-            final ValidationResult errors = validateHostname(network);
+            final ValidationResult errors = validateHostname(network, accountDAO, this);
             if (errors.isInvalid()) throw invalidEx(errors);
         }
         final AnsibleInstallType installType = network.hasForkHost() && configuration.isSageLauncher()
@@ -83,6 +85,10 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
 
     public BubbleNetwork findByNameAndDomainName(String name, String domainName) {
         return findByUniqueFields("name", name, "domainName", domainName);
+    }
+
+    public BubbleNetwork findByNameAndDomainUuid(String name, String domainUuid) {
+        return findByUniqueFields("name", name, "domain", domainUuid);
     }
 
     @Override public void delete(String uuid) { delete(uuid, false); }

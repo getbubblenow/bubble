@@ -6,7 +6,7 @@ package bubble.model.bill;
 
 import bubble.model.account.Account;
 import bubble.model.account.AccountSshKey;
-import bubble.model.account.HasAccount;
+import bubble.model.account.HasNetwork;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.CloudService;
@@ -40,7 +40,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
         @ECIndex(unique=true, of={"account", "network"}),
         @ECIndex(unique=true, of={"plan", "network"})
 })
-public class AccountPlan extends IdentifiableBase implements HasAccount {
+public class AccountPlan extends IdentifiableBase implements HasNetwork {
 
     public static final String[] UPDATE_FIELDS = {"description", "paymentMethod", "paymentMethodObject"};
 

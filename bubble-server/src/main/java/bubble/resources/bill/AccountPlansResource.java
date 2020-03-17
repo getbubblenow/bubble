@@ -146,11 +146,11 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                     errors.addViolation("err.forkHost.domainMismatch");
                 } else if (domain != null) {
                     request.setName(domain.networkFromFqdn(forkHost, errors));
-                    validateHostname(request, errors);
+                    validateHostname(request, errors, accountDAO, networkDAO);
                 }
             }
         } else {
-            validateHostname(request, errors);
+            validateHostname(request, errors, accountDAO, networkDAO);
         }
 
         final BubblePlan plan = planDAO.findByAccountOrParentAndId(caller, request.getPlan());

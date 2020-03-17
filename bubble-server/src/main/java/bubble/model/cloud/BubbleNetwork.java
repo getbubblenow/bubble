@@ -5,6 +5,8 @@
 package bubble.model.cloud;
 
 import bubble.cloud.compute.ComputeNodeSizeType;
+import bubble.dao.account.AccountDAO;
+import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.model.BubbleTags;
 import bubble.model.HasBubbleTags;
 import bubble.model.account.Account;
@@ -20,7 +22,6 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
-import org.cobbzilla.wizard.model.NamedEntity;
 import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
@@ -179,19 +180,36 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
         return die("hostFromFqdn("+fqdn+"): expected suffix ."+getNetworkDomain());
     }
 
-    public static ValidationResult validateHostname(NamedEntity request) {
-        return validateHostname(request, new ValidationResult());
+    public static ValidationResult validateHostname(HasNetwork request,
+                                                    AccountDAO accountDAO,
+                                                    BubbleNetworkDAO networkDAO) {
+        return validateHostname(request, new ValidationResult(), accountDAO, networkDAO);
     }
 
-    public static ValidationResult validateHostname(NamedEntity request, ValidationResult errors) {
+    public static ValidationResult validateHostname(HasNetwork request,
+                                                    ValidationResult errors,
+                                                    AccountDAO accountDAO,
+                                                    BubbleNetworkDAO networkDAO) {
         if (!request.hasName()) {
             errors.addViolation("err.name.required");
-        } else if (!validateRegexMatches(HOST_PART_PATTERN, request.getName())) {
-            errors.addViolation("err.name.invalid");
-        } else if (request.getName().length() > NETWORK_NAME_MAXLEN) {
-            errors.addViolation("err.name.length");
-        } else if (request.getName().length() < NETWORK_NAME_MINLEN) {
-            errors.addViolation("err.name.tooShort");
+        } else {
+            final String name = request.getName();
+            if (!validateRegexMatches(HOST_PART_PATTERN, name)) {
+                errors.addViolation("err.name.invalid");
+            } else if (Account.isReservedName(name)) {
+                errors.addViolation("err.name.reserved");
+            } else if (name.length() > NETWORK_NAME_MAXLEN) {
+                errors.addViolation("err.name.length");
+            } else if (name.length() < NETWORK_NAME_MINLEN) {
+                errors.addViolation("err.name.tooShort");
+            } else if (networkDAO.findByNameAndDomainUuid(name, request.getDomain()) != null) {
+                errors.addViolation("err.name.alreadyInUse");
+            } else {
+                final Account acct = accountDAO.findByName(name);
+                if (acct != null && !acct.getUuid().equals(request.getAccount())) {
+                    errors.addViolation("err.name.reservedForAccount");
+                }
+            }
         }
         return errors;
     }
