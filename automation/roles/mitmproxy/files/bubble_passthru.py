@@ -37,19 +37,24 @@ REDIS = redis.Redis(host='127.0.0.1', port=6379, db=0)
 TLS_FAILURE_HISTORY = {}
 
 
+def passthru_cache_prefix(client_addr, server_addr):
+    return REDIS_PASSTHRU_PREFIX + client_addr + '_' + server_addr
+
 class TlsFeedback(TlsLayer):
     """
     Monkey-patch _establish_tls_with_client to get feedback if TLS could be established
     successfully on the client connection (which may fail due to cert pinning).
     """
     def _establish_tls_with_client(self):
-        server_address = self.server_conn.address
+        client_address = self.client_conn.address[0]
+        server_address = self.server_conn.address[0]
         try:
             super(TlsFeedback, self)._establish_tls_with_client()
         except TlsProtocolException as e:
-            bubble_log('_establish_tls_with_client: TLS error for '+repr(server_address[0])+', enabling passthru')
-            REDIS.delete(REDIS_PASSTHRU_PREFIX+server_address[0])
-            TLS_FAILURE_HISTORY[server_address[0]] = True
+            bubble_log('_establish_tls_with_client: TLS error for '+repr(server_address)+', enabling passthru')
+            cache_key = passthru_cache_prefix(client_address, server_address)
+            REDIS.delete(cache_key)
+            TLS_FAILURE_HISTORY[cache_key] = True
             raise e
 
 
@@ -68,12 +73,12 @@ def check_bubble_passthru(remote_addr, addr):
 
 def should_passthru(remote_addr, addr):
     bubble_log('should_passthru: examining addr='+repr(addr))
-    if addr in TLS_FAILURE_HISTORY and TLS_FAILURE_HISTORY[addr]:
+    cache_key = passthru_cache_prefix(remote_addr, addr)
+    if cache_key in TLS_FAILURE_HISTORY and TLS_FAILURE_HISTORY[cache_key]:
         bubble_log('should_passthru: previous failure, returning True')
         return True
     else:
         bubble_log('should_passthru: no failure (failures='+repr(TLS_FAILURE_HISTORY)+'), returning True')
-    cache_key = REDIS_PASSTHRU_PREFIX + addr
     passthru_string = REDIS.get(cache_key)
     if passthru_string is None or len(passthru_string) == 0:
         passthru = check_bubble_passthru(remote_addr, addr)
@@ -88,9 +93,9 @@ def should_passthru(remote_addr, addr):
 
 def next_layer(next_layer):
     if isinstance(next_layer, TlsLayer) and next_layer._client_tls:
-        client_address = next_layer.client_conn.address
-        server_address = next_layer.server_conn.address
-        if should_passthru(client_address[0], server_address[0]):
+        client_address = next_layer.client_conn.address[0]
+        server_address = next_layer.server_conn.address[0]
+        if should_passthru(client_address, server_address):
             bubble_log('next_layer: TLS passthru for ' + repr(next_layer.server_conn.address))
             next_layer_replacement = RawTCPLayer(next_layer.ctx, ignore=True)
             next_layer.reply.send(next_layer_replacement)
