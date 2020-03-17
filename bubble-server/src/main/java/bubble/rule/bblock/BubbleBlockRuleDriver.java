@@ -124,6 +124,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                     if (refererURI == null) {
                         if (log.isInfoEnabled()) log.info(prefix+"invalid referer ("+filter.getReferer()+")");
                     } else {
+                        if (log.isInfoEnabled()) log.info(prefix+"decision for URL was ALLOW, checking against referer: host="+refererURI.getHost()+", path="+refererURI.getPath());
                         final BlockDecision refererDecision = getDecision(refererURI.getHost(), refererURI.getPath(), filter.getUserAgent());
                         switch (refererDecision.getDecisionType()) {
                             case block:

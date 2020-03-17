@@ -10,12 +10,14 @@ import bubble.dao.account.AccountPolicyDAO;
 import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
+import bubble.dao.cloud.BubbleNodeKeyDAO;
 import bubble.model.CertType;
 import bubble.model.account.*;
 import bubble.model.account.message.*;
 import bubble.model.boot.ActivationRequest;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.BubbleNodeKey;
 import bubble.model.cloud.NetworkKeys;
 import bubble.model.cloud.notify.NotificationReceipt;
 import bubble.model.device.Device;
@@ -85,6 +87,7 @@ public class AuthResource {
     @Autowired private StandardAuthenticatorService authenticatorService;
     @Autowired private PromotionService promoService;
     @Autowired private DeviceIdService deviceIdService;
+    @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
 
     public Account updateLastLogin(Account account) { return accountDAO.update(account.setLastLogin()); }
 
@@ -482,6 +485,16 @@ public class AuthResource {
         final File certFile = new File(CACERTS_DIR, thisNet.getNetworkDomain()+"-ca-cert."+type.name());
         if (!certFile.exists()) return notFound(type.name());
         return send(new FileSendableResource(certFile).setForceDownload(true));
+    }
+
+    @GET @Path(EP_KEY)
+    public Response getNodeKey(@Context Request req,
+                               @Context ContainerRequest ctx) {
+        final BubbleNode thisNode = configuration.getThisNode();
+        if (thisNode == null) return notFound();
+        final BubbleNodeKey key = nodeKeyDAO.findFirstByNode(thisNode.getUuid());
+        if (key == null) return notFound(thisNode.id());
+        return ok(key);
     }
 
     private Account validateCallerForApproveOrDeny(Account caller, AccountMessage message, String token) {

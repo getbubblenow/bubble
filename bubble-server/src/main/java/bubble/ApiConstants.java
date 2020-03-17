@@ -87,6 +87,7 @@ public class ApiConstants {
     public static final String EP_FORGOT_PASSWORD = "/forgotPassword";
     public static final String EP_CHANGE_PASSWORD = "/changePassword";
     public static final String EP_CA_CERT = "/cacert";
+    public static final String EP_KEY = "/key";
     public static final String EP_SCRIPT = "/script";
     public static final String EP_APPROVE = "/approve";
     public static final String EP_DENY = "/deny";

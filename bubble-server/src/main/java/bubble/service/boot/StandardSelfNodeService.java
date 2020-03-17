@@ -25,6 +25,9 @@ import bubble.service.notify.NotificationService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.cache.Refreshable;
+import org.cobbzilla.util.http.HttpSchemes;
+import org.cobbzilla.util.http.HttpUtil;
+import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.util.system.OneWayFlag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +39,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static bubble.ApiConstants.HOME_DIR;
-import static bubble.ApiConstants.NULL_NODE;
+import static bubble.ApiConstants.*;
+import static bubble.ApiConstants.EP_KEY;
 import static bubble.model.cloud.BubbleNode.nodeFromFile;
 import static bubble.model.cloud.BubbleNodeKey.nodeKeyFromFile;
 import static bubble.server.BubbleServer.disableRestoreMode;
@@ -226,25 +229,20 @@ public class StandardSelfNodeService implements SelfNodeService {
     }
 
     private BubbleNode initSageNode(BubbleNode selfNode) {
-        final BubbleNode sage = nodeDAO.findByUuid(selfNode.getSageNode());
+        BubbleNode sage = nodeDAO.findByUuid(selfNode.getSageNode());
         if (sage == null) {
             // do we have a local file we can fall back on?
             if (!SAGE_NODE_FILE.exists()) {
                 log.warn("initSageNode: DB contains no entry for selfNode.sage ("+selfNode.getSageNode()+") and "+abs(SAGE_NODE_FILE)+ " does not exist, returning null");
                 return NULL_NODE;
             }
-            return ensureSageKeyExists(syncSage(selfNode, nodeFromFile(SAGE_NODE_FILE)));
+            sage = syncSage(selfNode, nodeFromFile(SAGE_NODE_FILE));
         }
-        return ensureSageKeyExists(syncSage(selfNode, SAGE_NODE_FILE.exists()
+        sage = syncSage(selfNode, SAGE_NODE_FILE.exists()
                 ? nodeFromFile(SAGE_NODE_FILE)
-                : sage));
-    }
-
-    private BubbleNode ensureSageKeyExists(BubbleNode sageNode) {
-        final BubbleNodeKey sageKey = initSageKey(sageNode);
-        return sageKey != null
-                ? sageNode
-                : die("finalizeRestore: no sage key found in DB and no sage key file, cannot finalize restore. Sage = "+sageNode.id());
+                : sage);
+        initSageKey(sage);
+        return sage;
     }
 
     private BubbleNode syncSage(BubbleNode selfNode, BubbleNode sage) {
@@ -359,13 +357,14 @@ public class StandardSelfNodeService implements SelfNodeService {
         }
 
         // try key from file
-        if (!SAGE_KEY_FILE.exists()) return null;
+        if (!SAGE_KEY_FILE.exists()) return fetchLatestSageKey(sageNode);
         sageKey = nodeKeyFromFile(SAGE_KEY_FILE);
         final BubbleNodeKey existingByUuid = nodeKeyDAO.findByUuid(sageKey.getUuid());
         final BubbleNodeKey existingByHash = nodeKeyDAO.findByPublicKeyHash(sageKey.getPublicKeyHash());
         if (existingByUuid == null && existingByHash == null) {
             if (sageKey.expired()) {
-                return die("initSageKey: key not found in DB, but key on disk has expired: "+sageKey);
+                log.warn("initSageKey: key not found in DB and key on disk has expired, re-keying: "+sageKey);
+                return fetchLatestSageKey(sageNode);
             }
             return nodeKeyDAO.create(sageKey);
 
@@ -373,7 +372,8 @@ public class StandardSelfNodeService implements SelfNodeService {
             if (!existingByHash.getUuid().equals(existingByUuid.getUuid())) {
                 // should never happen, but reset just in case
                 if (sageKey.expired()) {
-                    return die("initSageKey: key found in DB with different entries for uuid/fqdn, and key on disk has expired: "+sageKey);
+                    log.warn("initSageKey: key not found in DB and key on disk has expired, re-keying: "+sageKey);
+                    return fetchLatestSageKey(sageNode);
                 }
                 nodeKeyDAO.delete(existingByUuid.getUuid());
                 nodeKeyDAO.delete(existingByHash.getUuid());
@@ -388,6 +388,21 @@ public class StandardSelfNodeService implements SelfNodeService {
         } else {
             // we only have a sage key by uuid. use that but leave the one on disk untouched
             return existingByUuid;
+        }
+    }
+
+    private BubbleNodeKey fetchLatestSageKey(BubbleNode sageNode) {
+        log.warn("fetchLatestSageKey: key found in DB with different entries for uuid/fqdn, and key on disk has expired, refreshing: "+sageNode.id());
+        try {
+            final String keyUrl = HttpSchemes.SCHEME_HTTPS + sageNode.getFqdn() + ":" + sageNode.getSslPort() + configuration.getHttp().getBaseUri() + AUTH_ENDPOINT + EP_KEY;
+            log.info("fetchLatestSageKey: fetching sage key from: "+keyUrl);
+            final String keyJson = HttpUtil.url2string(keyUrl);
+            final BubbleNodeKey sageKey = json(keyJson, BubbleNodeKey.class);
+            FileUtil.toFile(SAGE_KEY_FILE, keyJson);
+            nodeKeyDAO.create(sageKey);
+            return sageKey;
+        } catch (Exception e) {
+            return die("fetchLatestSageKey: error fetching/saving latest sage key: "+e, e);
         }
     }
 
