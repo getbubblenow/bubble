@@ -20,6 +20,7 @@ import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeKey;
 import bubble.model.cloud.NetworkKeys;
 import bubble.model.cloud.notify.NotificationReceipt;
+import bubble.model.device.BubbleDeviceType;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAuthenticatorService;
@@ -468,16 +469,23 @@ public class AuthResource {
     @Produces(CONTENT_TYPE_ANY)
     public Response getCaCert(@Context Request req,
                               @Context ContainerRequest ctx,
+                              @QueryParam("deviceType") BubbleDeviceType deviceType,
                               @QueryParam("type") CertType type) {
         final Account caller = optionalUserPrincipal(ctx);
         if (type == null) {
-            final String remoteHost = getRemoteHost(req);
-            if (!empty(remoteHost)) {
-                final Device device = deviceIdService.findDeviceByIp(remoteHost);
-                if (device != null) {
-                    type = device.getDeviceType().getCertType();
+            if (deviceType != null) {
+                type = deviceType.getCertType();
+            } else {
+                final String remoteHost = getRemoteHost(req);
+                if (!empty(remoteHost)) {
+                    final Device device = deviceIdService.findDeviceByIp(remoteHost);
+                    if (device != null) {
+                        type = device.getDeviceType().getCertType();
+                    }
                 }
             }
+        } else if (deviceType != null) {
+            type = deviceType.getCertType();
         }
         if (type == null) type = CertType.pem;
         final BubbleNetwork thisNet = configuration.getThisNetwork();

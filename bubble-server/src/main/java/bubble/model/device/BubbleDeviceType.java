@@ -20,6 +20,7 @@ public enum BubbleDeviceType {
     ios           (CertType.pem),
     android       (CertType.cer),
     linux         (CertType.crt),
+    firefox       (CertType.crt),
     other         (null);
 
     @Getter private CertType certType;
