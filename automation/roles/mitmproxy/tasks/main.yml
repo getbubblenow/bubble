@@ -95,6 +95,17 @@
     group: root
     mode: 0755
 
+- name: Install dnscrypt-proxy conf file
+  copy:
+    src: "dnscrypt-proxy.toml"
+    dest: "/etc/dnscrypt-proxy/dnscrypt-proxy.toml"
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Restart dnscrypt-proxy
+  shell: service dnscrypt-proxy restart
+
 - name: restart supervisord
   service:
     name: supervisor
