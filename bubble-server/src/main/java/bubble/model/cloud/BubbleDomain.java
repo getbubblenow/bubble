@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
+import org.cobbzilla.util.collection.HasPriority;
 import org.cobbzilla.util.dns.DnsRecordMatch;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
@@ -53,9 +54,9 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
         @ECIndex(of={"account", "template", "enabled"}),
         @ECIndex(of={"template", "enabled"})
 })
-public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
+public class BubbleDomain extends IdentifiableBase implements AccountTemplate, HasPriority {
 
-    public static final String[] UPDATE_FIELDS = {"description", "template", "enabled", "publicDns"};
+    public static final String[] UPDATE_FIELDS = {"description", "template", "enabled", "priority", "publicDns"};
     public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS,
             "name", "rolesJson");
 
@@ -95,12 +96,15 @@ public class BubbleDomain extends IdentifiableBase implements AccountTemplate {
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
-    @ECSearchable @ECField(index=60, type=EntityFieldType.reference)
+    @ECSearchable @ECField(index=60) @Column(nullable=false)
+    @ECIndex @Getter @Setter private Integer priority = 1;
+
+    @ECSearchable @ECField(index=70, type=EntityFieldType.reference)
     @ECIndex @Column(updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String delegated;
     public boolean delegated() { return delegated != null; }
 
-    @ECSearchable @ECForeignKey(entity=CloudService.class) @ECField(index=70)
+    @ECSearchable @ECForeignKey(entity=CloudService.class) @ECField(index=80)
     @Column(nullable=false, length=UUID_MAXLEN)
     @Getter @Setter private String publicDns;
 

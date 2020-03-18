@@ -11,6 +11,7 @@ import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -26,6 +27,8 @@ public class BubbleDomainDAO extends AccountOwnedTemplateDAO<BubbleDomain> {
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private AccountDAO accountDAO;
     @Autowired private BubbleConfiguration configuration;
+
+    @Override public Order getDefaultSortOrder() { return PRIORITY_ASC; }
 
     @Override public Object preCreate(BubbleDomain domain) {
 
