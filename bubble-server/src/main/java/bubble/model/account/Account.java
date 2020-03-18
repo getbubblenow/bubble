@@ -253,6 +253,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
         setName(request.getName());
         setHashedPassword(new HashedPassword(request.getPassword()));
         setTermsAgreed(request.getTermsAgreed());
+        setPreferredPlan(request.getPreferredPlan());
     }
 
     @Override public Identifiable update(Identifiable other) {
