@@ -20,10 +20,7 @@ import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
 import bubble.model.bill.PaymentMethodType;
-import bubble.model.cloud.BubbleDomain;
-import bubble.model.cloud.BubbleFootprint;
-import bubble.model.cloud.BubbleNetwork;
-import bubble.model.cloud.CloudService;
+import bubble.model.cloud.*;
 import bubble.resources.account.AccountOwnedResource;
 import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAuthenticatorService;
@@ -146,11 +143,11 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                     errors.addViolation("err.forkHost.domainMismatch");
                 } else if (domain != null) {
                     request.setName(domain.networkFromFqdn(forkHost, errors));
-                    validateHostname(request, errors, accountDAO, networkDAO);
+                    validateName(request, errors);
                 }
             }
         } else {
-            validateHostname(request, errors, accountDAO, networkDAO);
+            validateName(request, errors);
         }
 
         final BubblePlan plan = planDAO.findByAccountOrParentAndId(caller, request.getPlan());
@@ -222,6 +219,15 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         }
 
         return request;
+    }
+
+    private void validateName(AccountPlan request, ValidationResult errors) {
+        final HostnameValidationResult hostnameErrors = validateHostname(request, accountDAO, networkDAO);
+        if (hostnameErrors.isInvalid()) {
+            errors.addAll(hostnameErrors);
+        } else if (hostnameErrors.hasSuggestedName()) {
+            request.setName(hostnameErrors.getSuggestedName());
+        }
     }
 
     private CloudService selectStorageCloud(ContainerRequest ctx, Account caller, AccountPlan request, ValidationResult result) {

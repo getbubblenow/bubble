@@ -25,7 +25,6 @@ import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
-import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
@@ -180,16 +179,10 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
         return die("hostFromFqdn("+fqdn+"): expected suffix ."+getNetworkDomain());
     }
 
-    public static ValidationResult validateHostname(HasNetwork request,
-                                                    AccountDAO accountDAO,
-                                                    BubbleNetworkDAO networkDAO) {
-        return validateHostname(request, new ValidationResult(), accountDAO, networkDAO);
-    }
-
-    public static ValidationResult validateHostname(HasNetwork request,
-                                                    ValidationResult errors,
-                                                    AccountDAO accountDAO,
-                                                    BubbleNetworkDAO networkDAO) {
+    public static HostnameValidationResult validateHostname(HasNetwork request,
+                                                            AccountDAO accountDAO,
+                                                            BubbleNetworkDAO networkDAO) {
+        HostnameValidationResult errors = new HostnameValidationResult();
         if (!request.hasName()) {
             errors.addViolation("err.name.required");
         } else {
@@ -203,15 +196,20 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
             } else if (name.length() < NETWORK_NAME_MINLEN) {
                 errors.addViolation("err.name.tooShort");
             } else {
-                final BubbleNetwork network = networkDAO.findByNameAndDomainUuid(name, request.getDomain());
-                if (network != null && !network.getUuid().equals(request.getNetwork())) {
-                    errors.addViolation("err.name.alreadyInUse");
-                } else {
-                    final Account acct = accountDAO.findByName(name);
-                    if (acct != null && !acct.getUuid().equals(request.getAccount())) {
-                        errors.addViolation("err.name.reservedForAccount");
+                for (int i=0; i<100; i++) {
+                    final String tryName = i == 0 ? name : name + i;
+                    final BubbleNetwork network = networkDAO.findByNameAndDomainUuid(tryName, request.getDomain());
+                    if (network != null && !network.getUuid().equals(request.getNetwork())) {
+                        continue;
+                    } else {
+                        final Account acct = accountDAO.findByName(name);
+                        if (acct != null && !acct.getUuid().equals(request.getAccount())) {
+                            continue;
+                        }
                     }
+                    return tryName.equals(name) ? errors : errors.setSuggestedName(tryName);
                 }
+                errors.addViolation("err.name.alreadyInUse");
             }
         }
         return errors;

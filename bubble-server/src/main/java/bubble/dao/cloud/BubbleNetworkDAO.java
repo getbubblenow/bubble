@@ -14,7 +14,6 @@ import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.NetworkService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.model.IdentifiableBase;
-import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -42,8 +41,9 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
 
     @Override public Object preCreate(BubbleNetwork network) {
         if (!network.hasForkHost()) {
-            final ValidationResult errors = validateHostname(network, accountDAO, this);
+            final HostnameValidationResult errors = validateHostname(network, accountDAO, this);
             if (errors.isInvalid()) throw invalidEx(errors);
+            if (errors.hasSuggestedName()) network.setName(errors.getSuggestedName());
         }
         final AnsibleInstallType installType = network.hasForkHost() && configuration.isSageLauncher()
                 ? AnsibleInstallType.sage

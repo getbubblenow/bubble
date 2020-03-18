@@ -15,12 +15,12 @@ import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNetworkState;
 import bubble.model.cloud.CloudService;
+import bubble.model.cloud.HostnameValidationResult;
 import bubble.notify.payment.PaymentValidationResult;
 import bubble.server.BubbleConfiguration;
 import bubble.service.bill.RefundService;
 import bubble.service.cloud.NetworkService;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -79,8 +79,9 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
     }
 
     @Override public Object preCreate(AccountPlan accountPlan) {
-        final ValidationResult errors = validateHostname(accountPlan, accountDAO, networkDAO);
+        final HostnameValidationResult errors = validateHostname(accountPlan, accountDAO, networkDAO);
         if (errors.isInvalid()) throw invalidEx(errors);
+        if (errors.hasSuggestedName()) accountPlan.setName(errors.getSuggestedName());
 
         if (configuration.paymentsEnabled()) {
             if (!accountPlan.hasPaymentMethodObject()) throw invalidEx("err.paymentMethod.required");
