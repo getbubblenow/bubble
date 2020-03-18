@@ -131,6 +131,7 @@ public class AccountsResource {
                 .setRemoteHost(getRemoteHost(req))
                 .setVerifyContact(true);
         final Account created = accountDAO.newAccount(req, c.caller, reg, parent);
+        created.getAccountInitializer().setCanSendAccountMessages();
         return ok(created.waitForAccountInit());
     }
 
