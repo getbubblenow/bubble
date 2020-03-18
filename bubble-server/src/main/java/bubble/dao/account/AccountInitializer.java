@@ -27,6 +27,7 @@ public class AccountInitializer implements Runnable {
 
     public static final int MAX_ACCOUNT_INIT_RETRIES = 3;
     public static final long COPY_WAIT_TIME = SECONDS.toMillis(2);
+    public static final long SEND_MESSAGE_WAIT_TIME = SECONDS.toMillis(1);
 
     private Account account;
     private AccountDAO accountDAO;
@@ -35,6 +36,15 @@ public class AccountInitializer implements Runnable {
 
     private AtomicBoolean ready = new AtomicBoolean(false);
     public boolean ready() { return ready.get(); }
+
+    private AtomicBoolean canSendAccountMessages = new AtomicBoolean(false);
+    public void setCanSendAccountMessages() { canSendAccountMessages.set(true); }
+
+    private AtomicBoolean abort = new AtomicBoolean(false);
+    public void setAbort () { abort.set(true); }
+
+    private AtomicBoolean completed = new AtomicBoolean(false);
+    public boolean completed () { return completed.get(); }
 
     private AtomicReference<Exception> error = new AtomicReference<>();
     public Exception getError() { return error.get(); }
@@ -55,6 +65,14 @@ public class AccountInitializer implements Runnable {
                 try {
                     sleep(COPY_WAIT_TIME, "waiting before copyTemplates");
                     accountDAO.copyTemplates(account, ready);
+
+                    while (!canSendAccountMessages.get() && !abort.get()) {
+                        sleep(SEND_MESSAGE_WAIT_TIME, "waiting before sending welcome message");
+                    }
+                    if (abort.get()) {
+                        log.warn("aborting!");
+                        return;
+                    }
 
                     if (account.hasPolicy() && account.getPolicy().hasAccountContacts()) {
                         messageDAO.sendVerifyRequest(account.getRemoteHost(), account, account.getPolicy().getAccountContacts()[0]);
@@ -82,6 +100,8 @@ public class AccountInitializer implements Runnable {
             error.set(e);
             // todo: send to errbit
             die("error: "+e, e);
+        } finally {
+            completed.set(true);
         }
     }
 }

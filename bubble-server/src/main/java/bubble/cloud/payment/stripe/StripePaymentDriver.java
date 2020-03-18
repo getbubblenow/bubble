@@ -110,9 +110,18 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
             final AccountPolicy policy = policyDAO.findSingleByAccount(accountPaymentMethod.getAccount());
             if (policy == null) return new PaymentValidationResult("err.paymentInfo.emailRequired");
 
-            final String email = policy.getFirstVerifiedEmail();
-            if (email == null && policy.getFirstEmail() != null) {
-                return new PaymentValidationResult("err.paymentInfo.verifiedEmailRequired");
+
+            final String email;
+            if (accountPaymentMethod.requireValidatedEmail()) {
+                email = policy.getFirstVerifiedEmail();
+                if (email == null && policy.getFirstEmail() != null) {
+                    return new PaymentValidationResult("err.paymentInfo.verifiedEmailRequired");
+                }
+            } else {
+                email = policy.getFirstEmail();
+                if (email == null) {
+                    return new PaymentValidationResult("err.paymentInfo.verifiedEmailRequired");
+                }
             }
 
             final Map<String, Object> customerParams = new HashMap<>();

@@ -86,7 +86,8 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     public static final String[] UPDATE_FIELDS = {"url", "description", "autoUpdatePolicy"};
     public static final String[] ADMIN_UPDATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "suspended", "admin");
-    public static final String[] CREATE_FIELDS = ArrayUtil.append(ADMIN_UPDATE_FIELDS, "name", "referralCode", "termsAgreed");
+    public static final String[] CREATE_FIELDS = ArrayUtil.append(ADMIN_UPDATE_FIELDS,
+            "name", "referralCode", "termsAgreed", "preferredPlan");
 
     public static final String ROOT_USERNAME = "root";
     public static final int NAME_MIN_LENGTH = 4;
@@ -190,6 +191,10 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
         }
         return new ConstraintViolationBean("err.password.invalid", "Password must contain at least one letter, one number, and one special character");
     }
+
+    @Column(length=UUID_MAXLEN)
+    @Getter @Setter private String preferredPlan;
+    public boolean hasPreferredPlan () { return !empty(preferredPlan); }
 
     @Embedded @Getter @Setter private AutoUpdatePolicy autoUpdatePolicy;
 

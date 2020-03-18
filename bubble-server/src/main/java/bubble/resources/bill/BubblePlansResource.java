@@ -41,6 +41,11 @@ public class BubblePlansResource extends AccountOwnedResource<BubblePlan, Bubble
     @Autowired private BubblePlanAppDAO planAppDAO;
     @Autowired private BubbleAppDAO appDAO;
 
+    // allow unauthenticated users to read plans
+    @Override public Account getAccountForViewById(ContainerRequest ctx) {
+        return optionalUserPrincipal(ctx);
+    }
+
     @Override protected BubblePlan setReferences(ContainerRequest ctx, Account caller, BubblePlan bubblePlan) {
         if (empty(bubblePlan.getChargeName())) throw invalidEx("err.chargeName.required");
         if (bubblePlan.getChargeName().length() > MAX_CHARGENAME_LEN) throw invalidEx("err.chargeName.length");
@@ -67,8 +72,12 @@ public class BubblePlansResource extends AccountOwnedResource<BubblePlan, Bubble
     }
 
     @Override protected BubblePlan populate(ContainerRequest ctx, BubblePlan plan) {
+        final Account account = optionalUserPrincipal(ctx);
         final List<BubbleApp> apps = getAppsForPlan(plan);
         plan.setApps(apps);
+        if (account == null) {
+            plan.getApps().forEach(app -> app.setDataConfig(null));
+        }
         return super.populate(ctx, plan);
     }
 

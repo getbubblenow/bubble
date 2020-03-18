@@ -4,6 +4,7 @@
  */
 package bubble.model.account;
 
+import bubble.model.bill.AccountPaymentMethod;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,4 +23,6 @@ public class AccountRegistration extends Account {
     @Getter @Setter private Boolean agreeToTerms = null;
     public boolean agreeToTerms () { return agreeToTerms != null && agreeToTerms; }
 
+    @Getter @Setter private AccountPaymentMethod paymentMethodObject;
+    public boolean hasPaymentMethod () { return paymentMethodObject != null; }
 }

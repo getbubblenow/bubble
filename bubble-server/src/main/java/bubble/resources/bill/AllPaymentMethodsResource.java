@@ -5,6 +5,7 @@
 package bubble.resources.bill;
 
 import bubble.cloud.CloudServiceType;
+import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.bill.PaymentMethodType;
@@ -33,13 +34,16 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 public class AllPaymentMethodsResource {
 
     @Autowired private CloudServiceDAO cloudDAO;
+    @Autowired private AccountDAO accountDAO;
     @Autowired private BubbleConfiguration configuration;
 
     @GET
     public Response listPaymentMethods(@Context ContainerRequest ctx,
                                        @QueryParam("type") PaymentMethodType type) {
-        final Account account = userPrincipal(ctx);
-        final List<CloudService> allPaymentServices = cloudDAO.findByAccountAndType(account.getUuid(), CloudServiceType.payment);
+        final Account account = optionalUserPrincipal(ctx);
+        final List<CloudService> allPaymentServices = account != null
+                ? cloudDAO.findByAccountAndType(account.getUuid(), CloudServiceType.payment)
+                : cloudDAO.findPublicTemplatesByType(accountDAO.getFirstAdmin().getUuid(), CloudServiceType.payment);
         final Set<PaymentMethodType> typesFound = new HashSet<>();
         final List<CloudService> paymentServices = new ArrayList<>();
         for (CloudService cloud : allPaymentServices) {

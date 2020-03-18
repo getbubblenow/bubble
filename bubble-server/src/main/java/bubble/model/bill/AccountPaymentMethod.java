@@ -98,6 +98,9 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
 
     @JsonProperty @Override public long getCtime () { return super.getCtime(); }
 
+    @Transient @Getter @Setter private transient Boolean requireValidatedEmail = null;
+    public boolean requireValidatedEmail() { return requireValidatedEmail == null || requireValidatedEmail; }
+
     public ValidationResult validate(ValidationResult result, BubbleConfiguration configuration) {
 
         if (!hasPaymentMethodType()) {
@@ -139,6 +142,7 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
                 if (empty(getPaymentInfo())) {
                     result.addViolation("err.paymentInfo.required");
                 } else {
+                    log.info("validate: starting validation of payment method with this.requireValidatedEmail="+requireValidatedEmail);
                     final PaymentValidationResult validationResult = paymentDriver.validate(this);
                     if (validationResult.hasErrors()) {
                         result.addAll(validationResult.getViolations());

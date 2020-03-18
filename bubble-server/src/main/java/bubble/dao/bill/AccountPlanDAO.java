@@ -5,6 +5,7 @@
 package bubble.dao.bill;
 
 import bubble.cloud.payment.PaymentServiceDriver;
+import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.CloudServiceDAO;
@@ -39,6 +40,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
     public static final long PURCHASE_DELAY = SECONDS.toMillis(3);
 
     @Autowired private BubblePlanDAO planDAO;
+    @Autowired private AccountDAO accountDAO;
     @Autowired private BillDAO billDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
@@ -77,7 +79,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
     }
 
     @Override public Object preCreate(AccountPlan accountPlan) {
-        final ValidationResult errors = validateHostname(accountPlan);
+        final ValidationResult errors = validateHostname(accountPlan, accountDAO, networkDAO);
         if (errors.isInvalid()) throw invalidEx(errors);
 
         if (configuration.paymentsEnabled()) {

@@ -202,12 +202,15 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
                 errors.addViolation("err.name.length");
             } else if (name.length() < NETWORK_NAME_MINLEN) {
                 errors.addViolation("err.name.tooShort");
-            } else if (networkDAO.findByNameAndDomainUuid(name, request.getDomain()) != null) {
-                errors.addViolation("err.name.alreadyInUse");
             } else {
-                final Account acct = accountDAO.findByName(name);
-                if (acct != null && !acct.getUuid().equals(request.getAccount())) {
-                    errors.addViolation("err.name.reservedForAccount");
+                final BubbleNetwork network = networkDAO.findByNameAndDomainUuid(name, request.getDomain());
+                if (network != null && !network.getUuid().equals(request.getNetwork())) {
+                    errors.addViolation("err.name.alreadyInUse");
+                } else {
+                    final Account acct = accountDAO.findByName(name);
+                    if (acct != null && !acct.getUuid().equals(request.getAccount())) {
+                        errors.addViolation("err.name.reservedForAccount");
+                    }
                 }
             }
         }

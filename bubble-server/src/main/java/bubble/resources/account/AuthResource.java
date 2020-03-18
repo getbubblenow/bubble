@@ -8,12 +8,15 @@ import bubble.dao.SessionDAO;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
 import bubble.dao.account.message.AccountMessageDAO;
+import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
 import bubble.model.CertType;
 import bubble.model.account.*;
 import bubble.model.account.message.*;
+import bubble.model.bill.AccountPaymentMethod;
+import bubble.model.bill.BubblePlan;
 import bubble.model.boot.ActivationRequest;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
@@ -23,8 +26,8 @@ import bubble.model.cloud.notify.NotificationReceipt;
 import bubble.model.device.BubbleDeviceType;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
-import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.StandardAccountMessageService;
+import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.backup.RestoreService;
 import bubble.service.bill.PromotionService;
 import bubble.service.boot.ActivationService;
@@ -63,6 +66,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpContentTypes.CONTENT_TYPE_ANY;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.LocaleUtil.currencyForLocale;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -81,6 +86,7 @@ public class AuthResource {
     @Autowired private SessionDAO sessionDAO;
     @Autowired private ActivationService activationService;
     @Autowired private AccountMessageDAO accountMessageDAO;
+    @Autowired private AccountPaymentMethodDAO accountPaymentMethodDAO;
     @Autowired private StandardAccountMessageService messageService;
     @Autowired private BubblePlanDAO planDAO;
     @Autowired private BubbleNodeDAO nodeDAO;
@@ -240,6 +246,11 @@ public class AuthResource {
             }
         }
 
+        if (request.hasPreferredPlan()) {
+            final BubblePlan plan = planDAO.findById(request.getPreferredPlan());
+            if (plan == null) errors.addViolation("err.plan.notFound");
+        }
+
         if (errors.isInvalid()) return invalid(errors);
 
         final String parentUuid = thisNetwork.getTag(TAG_PARENT_ACCOUNT, thisNetwork.getAccount());
@@ -249,12 +260,37 @@ public class AuthResource {
         final Account account = accountDAO.newAccount(req, null, request, parent);
         SimpleViolationException promoEx = null;
         if (configuration.paymentsEnabled()) {
+            if (request.hasPaymentMethod()) {
+                final AccountPaymentMethod paymentMethodObject = request.getPaymentMethodObject();
+                log.info("register: found AccountPaymentMethod at registration-time: " + json(paymentMethodObject, COMPACT_MAPPER));
+                paymentMethodObject.setUuid(null);
+                paymentMethodObject.setAccount(account.getUuid());
+                paymentMethodObject.setRequireValidatedEmail(false);
+                account.waitForAccountInit(); // payment clouds for user must exist before we can create the APM
+                final ValidationResult result = new ValidationResult();
+                log.info("register: starting validation of payment method with requireValidatedEmail="+paymentMethodObject.requireValidatedEmail());
+                paymentMethodObject.validate(result, configuration);
+                if (result.isInvalid()) {
+                    account.getAccountInitializer().setAbort();
+                    final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
+                    policyDAO.update(policy.setDeletionPolicy(AccountDeletionPolicy.full_delete));
+                    while (!account.getAccountInitializer().completed()) {
+                        sleep(SECONDS.toMillis(1), "waiting for account initialization to complete before deleting");
+                    }
+                    accountDAO.delete(account.getUuid());
+                    throw invalidEx(result);
+                }
+                log.info("register: creating AccountPaymentMethod upon registration: " + json(paymentMethodObject, COMPACT_MAPPER));
+                final AccountPaymentMethod apm = accountPaymentMethodDAO.create(paymentMethodObject);
+                log.info("register: created AccountPaymentMethod upon registration: " + apm.getUuid());
+            }
             try {
                 promoService.applyPromotions(account, request.getPromoCode(), currency);
             } catch (SimpleViolationException e) {
                 promoEx = e;
             }
         }
+        account.getAccountInitializer().setCanSendAccountMessages();
         return ok(account
                 .waitForAccountInit()
                 .setPromoError(promoEx == null ? null : promoEx.getMessageTemplate())

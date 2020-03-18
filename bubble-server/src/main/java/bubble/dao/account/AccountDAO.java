@@ -46,8 +46,6 @@ import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
-import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
-import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_ASC;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
@@ -257,11 +255,9 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
                 return ((AppSiteDAO) dao).findByAccountAndAppAndId(accountUuid, apps.get(parentEntity.getApp()).getUuid(), parentEntity.getName());
             }
             @Override public AppSite preCreate(AppSite parentEntity, AppSite accountEntity) {
-                log.info("CopyTemplate.AppSite.preCreate: site="+json(accountEntity, COMPACT_MAPPER));
                 return accountEntity.setApp(apps.get(parentEntity.getApp()).getUuid());
             }
             @Override public void postCreate(AppSite parentEntity, AppSite accountEntity) {
-                log.info("CopyTemplate.AppSite.postCreate: site="+json(accountEntity, COMPACT_MAPPER));
                 sites.put(parentEntity.getUuid(), accountEntity);
             }
         });

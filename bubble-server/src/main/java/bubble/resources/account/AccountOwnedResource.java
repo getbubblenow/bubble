@@ -111,18 +111,23 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     public Response view(@Context ContainerRequest ctx,
                          @PathParam("id") String id) {
 
-        final Account caller = userPrincipal(ctx);
-        final String accountUuid = getAccountUuid(ctx);
-        if (!caller.admin() && !caller.getUuid().equals(accountUuid)) return notFound();
+        final Account caller = getAccountForViewById(ctx);
         E found = find(ctx, id);
 
         if (found == null) {
             found = findAlternate(ctx, id);
             if (found == null) return notFound(id);
         }
-        if (!found.getAccount().equals(caller.getUuid()) && !caller.admin()) return notFound(id);
+        if (caller != null && !found.getAccount().equals(caller.getUuid()) && !caller.admin()) return notFound(id);
 
         return ok(populate(ctx, found));
+    }
+
+    public Account getAccountForViewById(ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        final String accountUuid = getAccountUuid(ctx);
+        if (!caller.admin() && !caller.getUuid().equals(accountUuid)) throw notFoundEx();
+        return caller;
     }
 
     @PUT

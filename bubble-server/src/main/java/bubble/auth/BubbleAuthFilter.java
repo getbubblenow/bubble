@@ -28,7 +28,10 @@ import static bubble.server.BubbleServer.isRestoreMode;
 public class BubbleAuthFilter extends AuthFilter<Account> {
 
     public static final Set<String> SKIP_AUTH_PREFIXES = new HashSet<>(Arrays.asList(
-            AUTH_ENDPOINT, ENTITY_CONFIGS_ENDPOINT, BUBBLE_MAGIC_ENDPOINT, MESSAGES_ENDPOINT, TIMEZONES_ENDPOINT,
+            AUTH_ENDPOINT, ENTITY_CONFIGS_ENDPOINT,
+            PLANS_ENDPOINT, PAYMENT_METHODS_ENDPOINT,
+            BUBBLE_MAGIC_ENDPOINT,
+            MESSAGES_ENDPOINT, TIMEZONES_ENDPOINT,
             NOTIFY_ENDPOINT, FILTER_HTTP_ENDPOINT, DETECT_ENDPOINT
     ));
     public static final Set<String> SKIP_AUTH_PATHS = new SingletonSet<>(AUTH_ENDPOINT);
