@@ -29,6 +29,7 @@ import bubble.model.cloud.notify.NotificationType;
 import bubble.notify.NewNodeNotification;
 import bubble.server.BubbleConfiguration;
 import bubble.service.backup.RestoreService;
+import bubble.service.bill.PromotionService;
 import bubble.service.notify.NotificationService;
 import com.github.jknack.handlebars.Handlebars;
 import lombok.Cleanup;
@@ -116,6 +117,7 @@ public class StandardNetworkService implements NetworkService {
     @Autowired private AccountPolicyDAO policyDAO;
     @Autowired private AccountMessageDAO accountMessageDAO;
     @Autowired private BubblePlanDAO planDAO;
+    @Autowired private PromotionService promoService;
 
     @Autowired private NotificationService notificationService;
     @Autowired private NodeService nodeService;
@@ -392,7 +394,18 @@ public class StandardNetworkService implements NetworkService {
                     log.warn("newNode: compute.cleanupStart error: "+e, e);
                 }
             }
-            if (progressMeter != null) closeQuietly(progressMeter);
+            if (progressMeter != null) {
+                if (!progressMeter.success() && configuration.paymentsEnabled()) {
+                    final AccountPlan accountPlan = accountPlanDAO.findByNetwork(nn.getNetwork());
+                    if (accountPlan != null) {
+                        final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
+                        if (plan != null) {
+                            promoService.applyLaunchFailurePromo(nn.getAccount(), plan.getCurrency());
+                        }
+                    }
+                }
+                closeQuietly(progressMeter);
+            }
             unlockNetwork(nn.getNetwork(), lock);
         }
         return node;

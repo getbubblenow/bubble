@@ -99,22 +99,27 @@ public class Promotion extends IdentifiableBase
     public boolean notAdminAssignOnly() { return !adminAssignOnly(); }
 
     @ECSearchable @ECField(index=80)
+    @ECIndex @Column(nullable=false)
+    @Getter @Setter private Boolean launchFailureCredit = false;
+    public boolean launchFailureCredit() { return launchFailureCredit != null && launchFailureCredit; }
+
+    @ECSearchable @ECField(index=90)
     @ECIndex @Getter @Setter private Long validFrom;
     public boolean hasStarted () { return validFrom == null || validFrom > now(); }
 
-    @ECSearchable @ECField(index=90)
+    @ECSearchable @ECField(index=100)
     @ECIndex @Getter @Setter private Long validTo;
     public boolean hasEnded () { return validTo != null && validTo > now(); }
 
     public boolean active () { return enabled() && hasStarted() && !hasEnded(); }
     public boolean inactive () { return !active(); }
 
-    @ECSearchable @ECField(index=100)
+    @ECSearchable @ECField(index=110)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean referral = false;
     public boolean referral () { return referral != null && referral; }
 
-    @ECSearchable @ECField(index=110)
+    @ECSearchable @ECField(index=120)
     @ECIndex @Column(nullable=false, updatable=false, length=10)
     @Getter @Setter private String currency;
 
@@ -122,11 +127,11 @@ public class Promotion extends IdentifiableBase
         return currency != null && currency.equalsIgnoreCase(this.currency);
     }
 
-    @ECSearchable @ECField(index=120)
+    @ECSearchable @ECField(index=130)
     @ECIndex @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer minValue = 100;
 
-    @ECSearchable @ECField(index=130)
+    @ECSearchable @ECField(index=140)
     @ECIndex @Column(nullable=false, updatable=false)
     @Getter @Setter private Integer maxValue;
 

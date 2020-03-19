@@ -290,4 +290,27 @@ public class PromotionService {
 
         return listPromosForAccount(account.getUuid());
     }
+
+    public void applyLaunchFailurePromo(String accountUuid, String currency) {
+
+        final List<AccountPaymentMethod> promos = accountPaymentMethodDAO.findByAccountAndPromoAndNotDeleted(accountUuid);
+
+        // only include promos that are not already associated with the account
+        final List<Promotion> launchFailPromos = promotionDAO.findEnabledAndActiveAndLaunchFailureWithNoCode(currency).stream()
+                .filter(p -> promos.stream().noneMatch(ap -> ap.getPromotion().equals(p.getUuid())))
+                .collect(Collectors.toList());
+
+        if (!empty(launchFailPromos)) {
+            final Promotion promo = launchFailPromos.get(0);
+            log.info("applyLaunchFailurePromo: adding launchFailPromo: "+promo.getName());
+            accountPaymentMethodDAO.create(new AccountPaymentMethod()
+                    .setAccount(accountUuid)
+                    .setCloud(promo.getCloud())
+                    .setPaymentMethodType(PaymentMethodType.promotional_credit)
+                    .setPaymentInfo(promo.getName())
+                    .setMaskedPaymentInfo(promo.getName())
+                    .setPromotion(promo.getUuid()));
+        }
+    }
+
 }

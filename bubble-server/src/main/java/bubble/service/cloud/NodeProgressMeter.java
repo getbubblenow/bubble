@@ -40,6 +40,9 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     private int tickPos = 0;
     private AtomicBoolean error = new AtomicBoolean(false);
     private AtomicBoolean closed = new AtomicBoolean(false);
+    private AtomicBoolean success = new AtomicBoolean(false);
+    public boolean success () { return success.get(); }
+
     private final Thread thread;
 
     private RedisService redis;
@@ -159,6 +162,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
 
     public void completed() {
         closed.set(true);
+        success.set(true);
         background(this::close);
         _setCurrentTick(new NodeProgressMeterTick()
                 .setNetwork(nn.getNetwork())

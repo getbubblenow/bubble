@@ -47,6 +47,16 @@ public class PromotionDAO extends AbstractCRUDDAO<Promotion> {
                 "adminAssignOnly", false));
     }
 
+    public List<Promotion> findEnabledAndActiveAndLaunchFailureWithNoCode(String currency) {
+        return filterActive(findByFields(
+                "enabled", true,
+                "code", null,
+                "referral", false,
+                "launchFailureCredit", true,
+                "currency", currency,
+                "adminAssignOnly", false));
+    }
+
     public List<Promotion> findVisibleAndEnabledAndActiveWithNoCodeOrWithCode(String code, String currency) {
         if (empty(code)) {
             return filterActive(findByFields(

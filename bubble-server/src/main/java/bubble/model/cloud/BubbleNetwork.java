@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
@@ -51,7 +52,8 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 @ECTypeChildren(uriPrefix=EP_NETWORKS+"/{BubbleNetwork.name}", value={
         @ECTypeChild(type=BubbleNode.class, backref="network")
 })
-@Entity @NoArgsConstructor @Accessors(chain=true) @ToString(of={"name", "domainName", "installType"})
+@Entity @NoArgsConstructor @Accessors(chain=true)
+@Slf4j @ToString(of={"name", "domainName", "installType"})
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "name"}),
         @ECIndex(unique=true, of={"name", "domainName"})
@@ -202,12 +204,14 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
                     if (network != null && !network.getUuid().equals(request.getNetwork())) {
                         continue;
                     } else {
-                        final Account acct = accountDAO.findByName(name);
+                        final Account acct = accountDAO.findByName(tryName);
                         if (acct != null && !acct.getUuid().equals(request.getAccount())) {
                             continue;
                         }
                     }
-                    return tryName.equals(name) ? errors : errors.setSuggestedName(tryName);
+                    if (tryName.equals(name)) return errors;
+                    log.info("validateHostname: setting suggested name='"+tryName+"'");
+                    return errors.setSuggestedName(tryName);
                 }
                 errors.addViolation("err.name.alreadyInUse");
             }

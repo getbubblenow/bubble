@@ -66,11 +66,15 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         return getDao().findByAccountAndNotDeleted(account.getUuid());
     }
 
+    @Override protected AccountPlan find(ContainerRequest ctx, String id) {
+        return getDao().findByAccountAndIdAndNotDeleted(getAccountUuid(ctx), id);
+    }
+
     @Override protected AccountPlan findAlternate(ContainerRequest ctx, String id) {
         // id might be a network uuid
         final String accountUuid = getAccountUuid(ctx);
         final BubbleNetwork network = networkDAO.findByAccountAndId(accountUuid, id);
-        return network == null ? null : getDao().findByAccountAndNetwork(accountUuid, network.getUuid());
+        return network == null ? null : getDao().findByAccountAndNetworkAndNotDeleted(accountUuid, network.getUuid());
     }
 
     @Override protected boolean canCreate(Request req, ContainerRequest ctx, Account caller, AccountPlan request) {
@@ -149,6 +153,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         } else {
             validateName(request, errors);
         }
+        log.info("setReferences: after calling validateName, request.name="+request.getName());
 
         final BubblePlan plan = planDAO.findByAccountOrParentAndId(caller, request.getPlan());
         if (plan == null) {

@@ -52,10 +52,19 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
         return findByUniqueFields("account", accountUuid, "network", networkUuid);
     }
 
+    public AccountPlan findByAccountAndNetworkAndNotDeleted(String accountUuid, String networkUuid) {
+        return findByUniqueFields("account", accountUuid, "network", networkUuid, "deleted", null);
+    }
+
     public AccountPlan findByNetwork(String networkUuid) { return findByUniqueField("network", networkUuid); }
 
     public List<AccountPlan> findByAccountAndNotDeleted(String account) {
         return findByFields("account", account, "deleted", null);
+    }
+
+    public AccountPlan findByAccountAndIdAndNotDeleted(String account, String id) {
+        final AccountPlan accountPlan = findByUniqueFields("account", account, "uuid", id, "deleted", null);
+        return accountPlan != null ? accountPlan : findByUniqueFields("account", account, "name", id, "deleted", null);
     }
 
     public List<AccountPlan> findByAccountAndPaymentMethodAndNotDeleted(String account, String paymentMethod) {

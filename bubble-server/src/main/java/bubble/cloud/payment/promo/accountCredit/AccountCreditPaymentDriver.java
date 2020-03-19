@@ -9,10 +9,14 @@ import bubble.cloud.payment.promo.PromotionalPaymentDriverBase;
 import bubble.cloud.payment.promo.PromotionalPaymentServiceDriver;
 import bubble.model.account.Account;
 import bubble.model.bill.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Set;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+
+@Slf4j
 public class AccountCreditPaymentDriver extends PromotionalPaymentDriverBase<AccountCreditPaymentConfig> {
 
     @Override public boolean adminAddPromoToAccount(Promotion promo, Account account) {
@@ -20,7 +24,7 @@ public class AccountCreditPaymentDriver extends PromotionalPaymentDriverBase<Acc
                 .setAccount(account.getUuid())
                 .setCloud(promo.getCloud())
                 .setPaymentMethodType(PaymentMethodType.promotional_credit)
-                .setPaymentInfo(promo.getName())
+                .setPaymentInfo(promo.getName()+"_"+now())
                 .setMaskedPaymentInfo(promo.getName())
                 .setPromotion(promo.getUuid()));
         return true;

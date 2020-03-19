@@ -37,7 +37,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @Entity @ECType(root=true) @ECTypeCreate(method="DISABLED")
 @NoArgsConstructor @Accessors(chain=true)
-@ECIndexes({ @ECIndex(unique=true, of={"paymentMethodType", "paymentInfo"}) })
+@ECIndexes({ @ECIndex(unique=true, of={"paymentMethodType", "paymentInfo"}, where="deleted IS NULL") })
 @Slf4j
 public class AccountPaymentMethod extends IdentifiableBase implements HasAccountNoName, Scrubbable {
 

@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
@@ -34,9 +35,9 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
 @ECType(root=true) @ECTypeCreate(method="DISABLED")
 @ECTypeURIs(listFields={"account", "plan", "network", "name"})
-@Entity @NoArgsConstructor @Accessors(chain=true)
+@Entity @NoArgsConstructor @Accessors(chain=true) @Slf4j
 @ECIndexes({
-        @ECIndex(unique=true, of={"account", "name"}),
+        @ECIndex(unique=true, of={"account", "name"}, where="deleted IS NULL"),
         @ECIndex(unique=true, of={"account", "network"}),
         @ECIndex(unique=true, of={"plan", "network"})
 })
