@@ -146,6 +146,7 @@ public class ApiConstants {
     public static final String EP_TAGS = "/tags";
     public static final String EP_NODES = "/nodes";
     public static final String EP_DEVICES = "/devices";
+    public static final String EP_DEVICE_TYPES = "/deviceTypes";
     public static final String EP_MODEL = "/model";
     public static final String EP_VPN = "/vpn";
     public static final String EP_IPS = "/ips";

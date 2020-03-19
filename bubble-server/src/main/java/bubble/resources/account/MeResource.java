@@ -15,6 +15,7 @@ import bubble.model.account.AuthenticatorRequest;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
+import bubble.model.device.BubbleDeviceType;
 import bubble.resources.app.AppsResource;
 import bubble.resources.bill.AccountPaymentMethodsResource;
 import bubble.resources.bill.AccountPaymentsResource;
@@ -338,6 +339,11 @@ public class MeResource {
     public DevicesResource getDevices(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(DevicesResource.class, caller);
+    }
+
+    @GET @Path(EP_DEVICE_TYPES)
+    public Response getDeviceTypes(@Context ContainerRequest ctx) {
+        return ok(BubbleDeviceType.getSelectableTypes());
     }
 
     @Path(EP_REFERRAL_CODES)

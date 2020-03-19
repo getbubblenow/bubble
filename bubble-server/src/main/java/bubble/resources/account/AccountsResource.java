@@ -15,6 +15,7 @@ import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
 import bubble.model.cloud.BubbleNetwork;
+import bubble.model.device.BubbleDeviceType;
 import bubble.resources.app.AppsResource;
 import bubble.resources.bill.AccountPaymentMethodsResource;
 import bubble.resources.bill.AccountPaymentsResource;
@@ -513,6 +514,11 @@ public class AccountsResource {
                                       @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
         return configuration.subResource(DevicesResource.class, c.account);
+    }
+
+    @GET @Path("/{id}"+EP_DEVICE_TYPES)
+    public Response getDeviceTypes(@Context ContainerRequest ctx) {
+        return ok(BubbleDeviceType.getSelectableTypes());
     }
 
     @Path("/{id}"+EP_ROLES)

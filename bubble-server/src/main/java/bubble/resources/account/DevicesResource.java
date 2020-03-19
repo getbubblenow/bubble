@@ -9,6 +9,7 @@ import bubble.model.account.Account;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.DeviceIdService;
+import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -24,6 +25,7 @@ import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
+@Slf4j
 public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
 
     @Autowired protected BubbleConfiguration configuration;
