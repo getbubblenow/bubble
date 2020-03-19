@@ -10,12 +10,17 @@ import bubble.cloud.dns.DnsServiceDriver;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
 import bubble.dao.account.AccountSshKeyDAO;
+import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.*;
 import bubble.model.account.Account;
 import bubble.model.account.AccountPolicy;
 import bubble.model.account.AccountSshKey;
+import bubble.model.account.message.AccountAction;
+import bubble.model.account.message.AccountMessage;
+import bubble.model.account.message.AccountMessageType;
+import bubble.model.account.message.ActionTarget;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.*;
@@ -109,6 +114,7 @@ public class StandardNetworkService implements NetworkService {
     @Autowired private AnsibleRoleDAO roleDAO;
     @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private AccountPolicyDAO policyDAO;
+    @Autowired private AccountMessageDAO accountMessageDAO;
     @Autowired private BubblePlanDAO planDAO;
 
     @Autowired private NotificationService notificationService;
@@ -565,6 +571,15 @@ public class StandardNetworkService implements NetworkService {
                     .setCloud(cloudAndRegion.getCloud().getUuid())
                     .setRegion(cloudAndRegion.getRegion().getInternalName())
                     .setLock(lock);
+
+            // notify user that new bubble is launching
+            accountMessageDAO.create(new AccountMessage()
+                    .setAccount(accountUuid)
+                    .setNetwork(network.getUuid())
+                    .setName(network.getUuid())
+                    .setMessageType(AccountMessageType.notice)
+                    .setTarget(ActionTarget.network)
+                    .setAction(AccountAction.start));
 
             // start background process to create node
             backgroundNewNode(newNodeRequest, lock);
