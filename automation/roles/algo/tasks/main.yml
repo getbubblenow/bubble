@@ -9,7 +9,7 @@
 - name: Write algo config.cfg.hbs
   copy:
     src: config.cfg.hbs
-    dest: /root/ansible/roles/algo/algo-master/config.cfg.hbs
+    dest: /root/ansible/roles/algo/algo/config.cfg.hbs
 
 - name: Install algo_refresh_users script and monitor
   copy:
@@ -30,7 +30,7 @@
 - name: Write install_algo.sh template
   template:
     src: install_algo.sh.j2
-    dest: /root/ansible/roles/algo/algo-master/install_algo.sh
+    dest: /root/ansible/roles/algo/algo/install_algo.sh
     owner: root
     group: root
     mode: 0500
@@ -50,7 +50,7 @@
 
 # Don't setup algo when in restore mode, bubble_restore_monitor.sh will set it up after the CA key has been restored
 - name: Run algo playbook to install algo
-  shell: /root/ansible/roles/algo/algo-master/install_algo.sh
+  shell: /root/ansible/roles/algo/algo/install_algo.sh
   when: restore_key is not defined
 
 # Don't start monitors when in restore mode, bubble_restore_monitor.sh will start it after algo is installed

@@ -14,7 +14,7 @@ function log {
   echo "$(date): ${1}" >> ${LOG}
 }
 
-ALGO_CONFIGS=/root/ansible/roles/algo/algo-master/configs
+ALGO_CONFIGS=/root/ansible/roles/algo/algo/configs
 BUBBLE_DEVICE_DIR=/home/bubble/wg_devices
 if [[ ! -d ${BUBBLE_DEVICE_DIR} ]] ; then
   mkdir -p ${BUBBLE_DEVICE_DIR} && chown -R bubble ${BUBBLE_DEVICE_DIR} && chmod 700 ${BUBBLE_DEVICE_DIR} || die "Error creating ${BUBBLE_DEVICE_DIR}"

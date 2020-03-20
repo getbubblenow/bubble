@@ -111,7 +111,7 @@ CONFIGS_BACKUP=/home/bubble/.BUBBLE_ALGO_CONFIGS.tgz
 if [[ ! -f ${CONFIGS_BACKUP} ]] ; then
   log "Warning: Algo VPN configs backup not found: ${CONFIGS_BACKUP}, not installing algo"
 else
-  ALGO_BASE=/root/ansible/roles/algo/algo-master
+  ALGO_BASE=/root/ansible/roles/algo/algo
   if [[ ! -d ${ALGO_BASE} ]] ; then
     die "Error restoring Algo VPN: directory ${ALGO_BASE} not found"
   fi

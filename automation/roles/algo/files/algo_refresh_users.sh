@@ -14,7 +14,7 @@ function log {
   echo "$(date): ${1}" >> ${LOG}
 }
 
-ALGO_BASE=/root/ansible/roles/algo/algo-master
+ALGO_BASE=/root/ansible/roles/algo/algo
 if [[ ! -d ${ALGO_BASE} ]] ; then
   die "Algo VPN directory ${ALGO_BASE} not found"
 fi
