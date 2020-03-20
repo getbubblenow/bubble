@@ -282,7 +282,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_ALLOW_REGISTRATION, thisNetwork == null ? null : thisNetwork.getBooleanTag(TAG_ALLOW_REGISTRATION, false)},
                         {TAG_NETWORK_UUID, thisNetwork == null ? null : thisNetwork.getUuid()},
                         {TAG_SAGE_LAUNCHER, thisNetwork == null || isSageLauncher()},
-                        {TAG_BUBBLE_NODE, thisNetwork == null ? null : thisNetwork.getInstallType() == AnsibleInstallType.node},
+                        {TAG_BUBBLE_NODE, isSageLauncher() || thisNetwork == null ? null : thisNetwork.getInstallType() == AnsibleInstallType.node},
                         {TAG_PAYMENTS_ENABLED, cloudDAO.paymentsEnabled()},
                         {TAG_PROMO_CODE_POLICY, getPromoCodePolicy().name()},
                         {TAG_REQUIRE_SEND_METRICS, requireSendMetrics()},
