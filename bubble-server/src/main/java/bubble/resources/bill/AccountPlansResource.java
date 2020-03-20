@@ -51,7 +51,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
 
     @Autowired private AccountSshKeyDAO sshKeyDAO;
     @Autowired private BubbleDomainDAO domainDAO;
-    @Autowired private BubbleNetworkDAO networkDAO;
+    @Autowired protected BubbleNetworkDAO networkDAO;
     @Autowired private BubblePlanDAO planDAO;
     @Autowired private BubbleFootprintDAO footprintDAO;
     @Autowired private CloudServiceDAO cloudDAO;
@@ -62,19 +62,11 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
 
     public AccountPlansResource(Account account) { super(account); }
 
-    @Override protected List<AccountPlan> list(ContainerRequest ctx) {
-        return getDao().findByAccountAndNotDeleted(account.getUuid());
-    }
-
-    @Override protected AccountPlan find(ContainerRequest ctx, String id) {
-        return getDao().findByAccountAndIdAndNotDeleted(getAccountUuid(ctx), id);
-    }
-
     @Override protected AccountPlan findAlternate(ContainerRequest ctx, String id) {
         // id might be a network uuid
         final String accountUuid = getAccountUuid(ctx);
         final BubbleNetwork network = networkDAO.findByAccountAndId(accountUuid, id);
-        return network == null ? null : getDao().findByAccountAndNetworkAndNotDeleted(accountUuid, network.getUuid());
+        return network == null ? null : getDao().findByAccountAndNetwork(accountUuid, network.getUuid());
     }
 
     @Override protected boolean canCreate(Request req, ContainerRequest ctx, Account caller, AccountPlan request) {

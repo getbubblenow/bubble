@@ -17,10 +17,7 @@ import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
 import bubble.model.device.BubbleDeviceType;
 import bubble.resources.app.AppsResource;
-import bubble.resources.bill.AccountPaymentMethodsResource;
-import bubble.resources.bill.AccountPaymentsResource;
-import bubble.resources.bill.AccountPlansResource;
-import bubble.resources.bill.BillsResource;
+import bubble.resources.bill.*;
 import bubble.resources.cloud.*;
 import bubble.resources.driver.DriversResource;
 import bubble.resources.notify.ReceivedNotificationsResource;
@@ -300,9 +297,15 @@ public class MeResource {
     }
 
     @Path(EP_PLANS)
-    public AccountPlansResource getPlans(@Context ContainerRequest ctx) {
+    public AccountPlansResource getAllPlans(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(AccountPlansResource.class, caller);
+    }
+
+    @Path(EP_CURRENT_PLANS)
+    public CurrentAccountPlansResource getCurrentPlans(@Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        return configuration.subResource(CurrentAccountPlansResource.class, caller);
     }
 
     @Path(EP_KEYS)

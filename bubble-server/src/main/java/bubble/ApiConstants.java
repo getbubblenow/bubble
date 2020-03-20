@@ -143,6 +143,7 @@ public class ApiConstants {
     public static final String EP_DOMAINS = DOMAINS_ENDPOINT;
     public static final String EP_NETWORKS = "/networks";
     public static final String EP_PLANS = PLANS_ENDPOINT;
+    public static final String EP_CURRENT_PLANS = "/currentPlans";
     public static final String EP_TAGS = "/tags";
     public static final String EP_NODES = "/nodes";
     public static final String EP_DEVICES = "/devices";

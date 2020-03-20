@@ -17,17 +17,14 @@ import bubble.model.account.message.ActionTarget;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.device.BubbleDeviceType;
 import bubble.resources.app.AppsResource;
-import bubble.resources.bill.AccountPaymentMethodsResource;
-import bubble.resources.bill.AccountPaymentsResource;
-import bubble.resources.bill.AccountPlansResource;
-import bubble.resources.bill.BillsResource;
+import bubble.resources.bill.*;
 import bubble.resources.cloud.*;
 import bubble.resources.driver.DriversResource;
 import bubble.resources.notify.ReceivedNotificationsResource;
 import bubble.resources.notify.SentNotificationsResource;
 import bubble.server.BubbleConfiguration;
-import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.MitmControlService;
+import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.StandardNetworkService;
@@ -536,10 +533,17 @@ public class AccountsResource {
     }
 
     @Path("/{id}"+EP_PLANS)
-    public AccountPlansResource getPlans(@Context ContainerRequest ctx,
-                                         @PathParam("id") String id) {
+    public AccountPlansResource getAllPlans(@Context ContainerRequest ctx,
+                                            @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
         return configuration.subResource(AccountPlansResource.class, c.account);
+    }
+
+    @Path("/{id}"+EP_CURRENT_PLANS)
+    public CurrentAccountPlansResource getCurrentPlans(@Context ContainerRequest ctx,
+                                                       @PathParam("id") String id) {
+        final AccountContext c = new AccountContext(ctx, id);
+        return configuration.subResource(CurrentAccountPlansResource.class, c.account);
     }
 
     @Path("/{id}"+EP_KEYS)

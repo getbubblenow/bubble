@@ -224,8 +224,8 @@
   },
 
   {
-    "comment": "verify no plans exist",
-    "request": { "uri": "me/plans" },
+    "comment": "verify no current plans exist",
+    "request": { "uri": "me/currentPlans" },
     "response": {
       "check": [ {"condition": "json.length === 0"} ]
     }
