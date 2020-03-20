@@ -28,8 +28,7 @@ import java.util.List;
 
 import static bubble.model.cloud.BubbleNetwork.validateHostname;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.background;
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.hibernate.criterion.Restrictions.*;
@@ -47,6 +46,12 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
     @Autowired private NetworkService networkService;
     @Autowired private RefundService refundService;
     @Autowired private BubbleConfiguration configuration;
+
+    @Override public AccountPlan findByAccountAndId(String accountUuid, String id) {
+        final AccountPlan byUuid = findByUniqueFields("account", accountUuid, "uuid", id);
+        if (byUuid != null) return byUuid;
+        return findByAccountAndIdAndNotDeleted(accountUuid, id);
+    }
 
     public AccountPlan findByAccountAndNetwork(String accountUuid, String networkUuid) {
         return findByUniqueFields("account", accountUuid, "network", networkUuid);
@@ -154,7 +159,11 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
 
         final BubbleNetwork network = networkDAO.findByUuid(accountPlan.getNetwork());
         if (network != null && network.getState() != BubbleNetworkState.stopped) {
-            networkService.stopNetwork(network);
+            try {
+                networkService.stopNetwork(network);
+            } catch (Exception e) {
+                log.warn("delete: error stopping network: "+shortError(e));
+            }
         }
         update(accountPlan.setDeleted(now()).setEnabled(false));
         if (accountPlan.getNetwork() == null && accountPlan.getDeletedNetwork() != null) {

@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.model.cloud.BubbleNetwork.validateHostname;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.string.ValidationRegexes.HOST_PATTERN;
 import static org.cobbzilla.util.string.ValidationRegexes.validateRegexMatches;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -77,11 +78,10 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             // do we have a geoLocation service?
             final List<CloudService> geoLocationServices = cloudDAO.findByAccountAndType(request.getAccount(), CloudServiceType.geoLocation);
             final String remoteHost = getRemoteHost(req);
-            for (CloudService geo : geoLocationServices) {
+            if (!empty(geoLocationServices)) {
                 try {
                     final GeoLocation location = geoService.locate(request.getAccount(), remoteHost);
                     if (configuration.isDisallowed(location.getCountry())) throw invalidEx("err.accountPlan.callerCountryDisallowed");
-                    break;
                 } catch (Exception e) {
                     log.debug("canCreate: error geo-locating address "+remoteHost+": "+e);
                 }
@@ -105,6 +105,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         final ValidationResult errors = new ValidationResult();
         if (!request.hasTimezone()) errors.addViolation("err.timezone.required");
         if (!request.hasLocale()) errors.addViolation("err.locale.required");
+        request.setAccount(caller.getUuid());
 
         if (request.hasSshKey()) {
             final AccountSshKey sshKey = sshKeyDAO.findByAccountAndId(caller.getUuid(), request.getSshKey());

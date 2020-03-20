@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
-import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
@@ -25,7 +24,7 @@ public class NetworkMonitorService extends SimpleDaemon {
 
     private static final long STARTUP_DELAY = MINUTES.toMillis(1);
     private static final long CHECK_INTERVAL = MINUTES.toMillis(30);
-    private static final long NO_NODES_GRACE_PERIOD = HOURS.toMillis(1);
+    private static final long NO_NODES_GRACE_PERIOD = MINUTES.toMillis(10);
 
     @Override protected long getStartupDelay() { return STARTUP_DELAY; }
     @Override protected long getSleepTime() { return CHECK_INTERVAL; }

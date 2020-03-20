@@ -202,10 +202,12 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
                     final String tryName = i == 0 ? name : name + i;
                     final BubbleNetwork network = networkDAO.findByNameAndDomainUuid(tryName, request.getDomain());
                     if (network != null && !network.getUuid().equals(request.getNetwork())) {
+                        log.info("validateHostname: name "+tryName+" is ineligible (network="+network.getUuid()+") exists");
                         continue;
                     } else {
                         final Account acct = accountDAO.findByName(tryName);
                         if (acct != null && !acct.getUuid().equals(request.getAccount())) {
+                            log.info("validateHostname: name "+tryName+" is ineligible (account="+acct.getUuid()+") exists (request.account="+request.getAccount()+")");
                             continue;
                         }
                     }
