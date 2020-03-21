@@ -109,7 +109,8 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
     @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=100)
-    @Getter @Setter private String name;
+    @Getter private String name;
+    public Account setName (String n) { this.name = n == null ? null : n.toLowerCase(); return this; }
     public boolean hasName () { return !empty(name); }
 
     public static final Pattern VALID_NAME_PATTERN = Pattern.compile("^[A-Za-z][-\\.A-Za-z0-9_]+$");

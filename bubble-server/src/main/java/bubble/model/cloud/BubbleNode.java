@@ -91,7 +91,8 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
 
     @ECSearchable(filter=true) @ECField(index=10)
     @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=1000)
-    @Getter @Setter private String fqdn;
+    @Getter private String fqdn;
+    public BubbleNode setFqdn (String fqdn) { this.fqdn = fqdn == null ? null : fqdn.toLowerCase(); return this; }
 
     @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=Account.class)

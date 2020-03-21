@@ -60,7 +60,8 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
     @ECSearchable(filter=true) @ECField(index=10)
     @Size(max=NETWORK_NAME_MAXLEN, message="err.name.length")
     @Column(length=NETWORK_NAME_MAXLEN, nullable=false)
-    @Getter @Setter private String name;
+    @Getter private String name;
+    public AccountPlan setName (String name) { this.name = name == null ? null : name.toLowerCase(); return this; }
 
     @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=Account.class)

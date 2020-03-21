@@ -12,6 +12,7 @@ import bubble.model.HasBubbleTags;
 import bubble.model.account.Account;
 import bubble.model.account.AccountSshKey;
 import bubble.model.account.HasNetwork;
+import bubble.model.bill.AccountPlan;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
@@ -86,7 +87,8 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @HasValue(message="err.name.required")
     @Size(min=NETWORK_NAME_MINLEN, max=NETWORK_NAME_MAXLEN, message="err.name.length")
     @ECIndex @Column(nullable=false, updatable=false, length=NETWORK_NAME_MAXLEN)
-    @Getter @Setter private String name;
+    @Getter private String name;
+    public BubbleNetwork setName (String name) { this.name = name == null ? null : name.toLowerCase(); return this; }
 
     @ECSearchable @ECField(index=20)
     @ECForeignKey(entity=Account.class)
@@ -101,7 +103,8 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
 
     @ECSearchable(filter=true) @ECField(index=40, type=EntityFieldType.fqdn)
     @ECIndex @Column(nullable=false, updatable=false, length=DOMAIN_NAME_MAXLEN)
-    @Getter @Setter private String domainName;  // denormalized from BubbleDomain
+    @Getter private String domainName;  // denormalized from BubbleDomain
+    public BubbleNetwork setDomainName (String dn) { this.domainName = dn == null ? null : dn.toLowerCase(); return this; }
 
     @Transient @JsonIgnore public String getNetworkDomain () { return name + "." + domainName; }
 
