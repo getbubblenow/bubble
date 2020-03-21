@@ -19,13 +19,11 @@ import bubble.model.cloud.CloudService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.model.Identifiable;
-import org.cobbzilla.wizard.model.IdentifiableBase;
 
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static bubble.cloud.NoopCloud.NOOP_CLOUD;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE_STANDARD_BASE_DIR;
@@ -174,10 +172,10 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
             // Make copied objects templates
             for (AppTemplateEntity e : (List<? extends AppTemplateEntity>) entities) {
                 if (userAppEnabled(e.getApp(), userApps)) {
-                    log.info("addEntities: adding " + c.getSimpleName() + "/" + e.getUuid() + " (app="+e.getApp()+") as template");
+                    log.debug("addEntities: adding " + c.getSimpleName() + "/" + e.getUuid() + " (app="+e.getApp()+") as template");
                     add(e.setTemplate(true));
                 } else {
-                    log.info("addEntities: NOT adding " + c.getSimpleName() + "/" + e.getUuid() + " (app="+e.getApp()+"), app not enabled (planApps="+planApps.stream().map(IdentifiableBase::getUuid).collect(Collectors.joining(", "))+")");
+                    log.debug("addEntities: NOT adding " + c.getSimpleName() + "/" + e.getUuid() + " (app="+e.getApp()+"), app not enabled (planApps="+planApps.stream().map(IdentifiableBase::getUuid).collect(Collectors.joining(", "))+")");
                 }
             }
 
