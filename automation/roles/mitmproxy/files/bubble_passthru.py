@@ -31,10 +31,9 @@ import redis
 
 REDIS_DNS_PREFIX = 'bubble_dns_'
 REDIS_PASSTHRU_PREFIX = 'bubble_passthru_'
-REDIS_PASSTHRU_DURATION = 60 * 10
+REDIS_PASSTHRU_DURATION = 60 * 60  # 1 hour timeout on passthru
 
 REDIS = redis.Redis(host='127.0.0.1', port=6379, db=0)
-TLS_FAILURE_HISTORY = {}
 
 
 def passthru_cache_prefix(client_addr, server_addr):
@@ -53,8 +52,7 @@ class TlsFeedback(TlsLayer):
         except TlsProtocolException as e:
             bubble_log('_establish_tls_with_client: TLS error for '+repr(server_address)+', enabling passthru')
             cache_key = passthru_cache_prefix(client_address, server_address)
-            REDIS.delete(cache_key)
-            TLS_FAILURE_HISTORY[cache_key] = True
+            REDIS.set(cache_key, str(True), nx=True, ex=REDIS_PASSTHRU_DURATION)
             raise e
 
 
@@ -74,11 +72,6 @@ def check_bubble_passthru(remote_addr, addr):
 def should_passthru(remote_addr, addr):
     bubble_log('should_passthru: examining addr='+repr(addr))
     cache_key = passthru_cache_prefix(remote_addr, addr)
-    if cache_key in TLS_FAILURE_HISTORY and TLS_FAILURE_HISTORY[cache_key]:
-        bubble_log('should_passthru: previous failure, returning True')
-        return True
-    else:
-        bubble_log('should_passthru: no failure (failures='+repr(TLS_FAILURE_HISTORY)+'), returning True')
     passthru_string = REDIS.get(cache_key)
     if passthru_string is None or len(passthru_string) == 0:
         passthru = check_bubble_passthru(remote_addr, addr)
