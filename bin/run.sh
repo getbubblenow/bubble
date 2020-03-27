@@ -96,7 +96,7 @@ if [[ -z "${command}" ]] ; then
 
 else
   CLASS=bubble.main.BubbleMain
-  DEFAULT_JVM_OPTS="-Xmx256m -Xms64m"
+  DEFAULT_JVM_OPTS="-Xmx64m -Xms2m"
   shift
 fi
 

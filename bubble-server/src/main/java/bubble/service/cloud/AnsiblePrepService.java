@@ -148,7 +148,9 @@ public class AnsiblePrepService {
                             continue;
                         }
                         final boolean quote = value.contains(" ") && !value.trim().startsWith("[") && !value.trim().startsWith("{");
-                        w.write(cfgName +": "+ (quote ? "\""+value+"\"" : value)+"\n");
+                        final String cfgValue = quote ? "\"" + value + "\"" : value;
+                        log.debug("prepAnsible["+roleName+"]: setting "+rawVal+" => "+cfgName+": "+cfgValue);
+                        w.write(cfgName +": "+ cfgValue +"\n");
                     }
                 }
             }

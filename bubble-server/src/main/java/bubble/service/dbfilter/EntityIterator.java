@@ -205,7 +205,10 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
     private AccountSshKey setInstallKey(AccountSshKey sshKey, BubbleNetwork network) {
         if (network == null) return sshKey;
         if (network.hasSshKey() && network.getSshKey().equals(sshKey.getUuid())) {
+            log.info("setInstallKey: setting install=true for key="+sshKey.getName()+"/"+sshKey.getUuid());
             sshKey.setInstallSshKey(true);
+        } else {
+            log.info("setInstallKey: NOT setting install=true for key="+sshKey.getName()+"/"+sshKey.getUuid());
         }
         return sshKey;
     }

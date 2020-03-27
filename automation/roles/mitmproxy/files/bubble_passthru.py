@@ -39,6 +39,11 @@ REDIS = redis.Redis(host='127.0.0.1', port=6379, db=0)
 def passthru_cache_prefix(client_addr, server_addr):
     return REDIS_PASSTHRU_PREFIX + client_addr + '_' + server_addr
 
+def redis_set(name, value, ex):
+    REDIS.set(name, value, nx=True, ex=ex)
+    REDIS.set(name, value, xx=True, ex=ex)
+
+
 class TlsFeedback(TlsLayer):
     """
     Monkey-patch _establish_tls_with_client to get feedback if TLS could be established
@@ -52,7 +57,7 @@ class TlsFeedback(TlsLayer):
         except TlsProtocolException as e:
             bubble_log('_establish_tls_with_client: TLS error for '+repr(server_address)+', enabling passthru')
             cache_key = passthru_cache_prefix(client_address, server_address)
-            REDIS.set(cache_key, str(True), nx=True, ex=REDIS_PASSTHRU_DURATION)
+            redis_set(cache_key, str(True), ex=REDIS_PASSTHRU_DURATION)
             raise e
 
 
@@ -70,17 +75,21 @@ def check_bubble_passthru(remote_addr, addr):
 
 
 def should_passthru(remote_addr, addr):
-    bubble_log('should_passthru: examining addr='+repr(addr))
+    prefix = 'should_passthru: '+repr(addr)
+    bubble_log(prefix+'starting...')
     cache_key = passthru_cache_prefix(remote_addr, addr)
     passthru_string = REDIS.get(cache_key)
     if passthru_string is None or len(passthru_string) == 0:
+        bubble_log(prefix+' not in redis or empty, calling check_bubble_passthru...')
         passthru = check_bubble_passthru(remote_addr, addr)
-        REDIS.set(cache_key, str(passthru), nx=True, ex=REDIS_PASSTHRU_DURATION)
+        bubble_log(prefix+'check_bubble_passthru returned '+str(passthru)+", string in redis...")
+        redis_set(cache_key, str(passthru), ex=REDIS_PASSTHRU_DURATION)
         passthru_string = str(passthru)
     else:
-        bubble_log('should_passthru: found cached value, passthru_string='+str(passthru_string))
         passthru_string = passthru_string.decode()
-    bubble_log('should_passthru: returning '+str(passthru_string == 'True'))
+        bubble_log(prefix+'found cached value, passthru_string='+str(passthru_string)+', re-setting in redis')
+        redis_set(cache_key, passthru_string, ex=REDIS_PASSTHRU_DURATION)
+    bubble_log(prefix+'returning '+str(passthru_string == 'True'))
     return passthru_string == 'True'
 
 

@@ -40,6 +40,15 @@ for key in $(echo "${CURRENT_KEYS_SQL}" | PGPASSWORD="$(cat /home/bubble/.BUBBLE
   fi
 done
 
+if [[ ${KEY_COUNT} -eq 0 ]] ; then
+  # Sanity check that we can even talk to psql
+  # We may be out of memory, in which case we do not want to erase existing installed keys
+  if [[ -z "$(echo 'SELECT count(*) FROM account_ssh_key' | PGPASSWORD="$(cat /home/bubble/.BUBBLE_PG_PASSWORD)" psql -U bubble -h 127.0.0.1 bubble)" ]] ; then
+    log "Warning: error calling psql, not installing/uninstalling any keys"
+    exit 0
+  fi
+fi
+
 # Retain self-generated ansible setup key
 ANSIBLE_USER="{{admin_user}}"
 if [[ ! -z "${ANSIBLE_USER}" ]] ; then
