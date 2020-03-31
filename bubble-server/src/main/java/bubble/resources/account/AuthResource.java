@@ -31,6 +31,7 @@ import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.backup.RestoreService;
 import bubble.service.bill.PromotionService;
 import bubble.service.boot.ActivationService;
+import bubble.service.boot.NodeManagerService;
 import bubble.service.boot.SageHelloService;
 import bubble.service.cloud.DeviceIdService;
 import bubble.service.notify.NotificationService;
@@ -64,8 +65,7 @@ import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static bubble.server.BubbleServer.getRestoreKey;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
-import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
-import static org.cobbzilla.util.http.HttpContentTypes.CONTENT_TYPE_ANY;
+import static org.cobbzilla.util.http.HttpContentTypes.*;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.LocaleUtil.currencyForLocale;
@@ -95,6 +95,7 @@ public class AuthResource {
     @Autowired private PromotionService promoService;
     @Autowired private DeviceIdService deviceIdService;
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
+    @Autowired private NodeManagerService nodeManagerService;
 
     public Account updateLastLogin(Account account) { return accountDAO.update(account.setLastLogin()); }
 
@@ -573,6 +574,15 @@ public class AuthResource {
         if (target == null) return notFound(id);
         sessionDAO.invalidateAllSessions(id);
         return ok_empty();
+    }
+
+    @GET @Path(EP_PATCH+"/{token}")
+    @Produces(APPLICATION_OCTET_STREAM)
+    public Response getPatchFile(@Context ContainerRequest ctx,
+                                 @PathParam("token") String token) {
+        final File patch = nodeManagerService.findPatch(token);
+        if (patch == null) return notFound(token);
+        return send(new FileSendableResource(patch));
     }
 
 }

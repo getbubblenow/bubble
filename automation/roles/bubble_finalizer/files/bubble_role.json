@@ -6,7 +6,7 @@
     {"name": "server_alias", "value": "[[network.networkDomain]]"},
     {"name": "restore_key", "value": "[[restoreKey]]"},
     {"name": "install_type", "value": "[[installType]]"},
-    {"name": "bubble_java_opts", "value": "-Xms[[expr nodeSize.memoryMB '//' 4]]m -Xmx[[expr nodeSize.memoryMB '//' 4]]m"}
+    {"name": "bubble_java_opts", "value": "-XX:MaxRAM=[[expr nodeSize.memoryMB '//' '2.625']]m"}
   ],
   "optionalConfigNames": ["restore_key"],
   "tgzB64": ""

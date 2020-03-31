@@ -39,6 +39,7 @@ public class SageHelloService extends SimpleDaemon {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private StandardSelfNodeService selfNodeService;
     @Autowired private NotificationService notificationService;
+    @Autowired private NodeManagerService nodeManagerService;
 
     private final AtomicBoolean sageHelloSent = new AtomicBoolean(false);
     public boolean sageHelloSuccessful () { return sageHelloSent.get(); }
@@ -62,6 +63,9 @@ public class SageHelloService extends SimpleDaemon {
             if (sage == null) {
                 log.error("hello_to_sage: sage node not found: " + c.getSageNode());
             } else {
+                // If we do not have a nodemanager password, generate one now and include it with our hello
+                selfNode.setNodeManagerPassword(nodeManagerService.generatePasswordOrNull());
+
                 log.info("hello_to_sage: sending hello...");
                 final NotificationReceipt receipt = notificationService.notify(sage, hello_to_sage, selfNode);
                 log.info("hello_to_sage: received reply from sage node: " + json(receipt, COMPACT_MAPPER));
@@ -74,6 +78,7 @@ public class SageHelloService extends SimpleDaemon {
                         }
                     }
                 }
+                selfNode.setNodeManagerPassword(null); // just in case the object gets sync'd to db
             }
         }
     }

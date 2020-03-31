@@ -29,18 +29,32 @@
   shell: /usr/local/bin/copy_certs_to_bubble.sh {{ server_alias }}
   when: install_type == 'node'
 
+- name: Install bubble-nodemanager
+  copy:
+    src: "bubble-nodemanager"
+    dest: /usr/sbin/bubble-nodemanager
+    owner: root
+    group: root
+    mode: 0500
+
+- name: Install bubble-nodemanager supervisor conf file
+  copy:
+    src: "supervisor_bubble_nodemanager.conf"
+    dest: /etc/supervisor/conf.d/nodemanager.conf
+
 - name: Install bubble supervisor conf file
   template:
     src: "supervisor_bubble.conf.j2"
     dest: /etc/supervisor/conf.d/bubble.conf
 
 # We cannot receive notifications until nginx is running, so start bubble API as the very last step
-- name: Ensure bubble is started
+- name: Ensure bubble and bubble_nodemanager are started
   supervisorctl:
     name: '{{ item }}'
     state: restarted
   with_items:
     - bubble
+    - nodemanager
 
 - name: Ensure authorized SSH keys are up-to-date
   shell: su - bubble bash -c "touch /home/bubble/.refresh_ssh_keys"

@@ -11,11 +11,16 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.resources.account.ReadOnlyAccountOwnedResource;
 import lombok.extern.slf4j.Slf4j;
+import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Context;
 import java.util.List;
 
-import static org.cobbzilla.wizard.resources.ResourceUtil.forbiddenEx;
+import static bubble.ApiConstants.EP_NODE_MANAGER;
+import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Slf4j
 public class NodesResource extends ReadOnlyAccountOwnedResource<BubbleNode, BubbleNodeDAO> {
@@ -66,5 +71,20 @@ public class NodesResource extends ReadOnlyAccountOwnedResource<BubbleNode, Bubb
     // these should never get called
     @Override protected BubbleNode setReferences(ContainerRequest ctx, Account caller, BubbleNode node) { throw forbiddenEx(); }
     @Override protected Object daoCreate(BubbleNode nodes) { throw forbiddenEx(); }
+
+    @Path("/{id}"+EP_NODE_MANAGER)
+    public NodeManagerResource getNodeManagerResource(@Context Request req,
+                                                      @Context ContainerRequest ctx,
+                                                      @PathParam("id") String id) {
+        final Account caller = userPrincipal(ctx);
+        final BubbleNode node = super.find(ctx, id);
+        if (node == null) throw notFoundEx(id);
+
+        if (!caller.admin() && !caller.getUuid().equals(node.getAccount())) throw forbiddenEx();
+
+        if (!node.hasNodeManagerPassword()) throw invalidEx("err.nodemanager.noPasswordSet");
+
+        return configuration.subResource(NodeManagerResource.class, node);
+    }
 
 }

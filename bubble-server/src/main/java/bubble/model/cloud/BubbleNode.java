@@ -27,6 +27,7 @@ import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.io.File;
@@ -41,6 +42,8 @@ import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.string.ValidationRegexes.IP4_MAXLEN;
 import static org.cobbzilla.util.string.ValidationRegexes.IP6_MAXLEN;
+import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
+import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySearchDepth.shallow;
 
 @ECType(root=true) @ECTypeCreate(method="DISABLED")
@@ -195,6 +198,10 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     public boolean notStopped() { return state != stopped; }
 
     @Embedded @Getter @Setter private BubbleTags tags;
+
+    @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100+ENC_PAD)+")")
+    @Getter @Setter private String nodeManagerPassword;
+    public boolean hasNodeManagerPassword () { return !empty(nodeManagerPassword); }
 
     @Transient @JsonIgnore @Getter @Setter private transient Map<String, String> ephemeralTags;
 

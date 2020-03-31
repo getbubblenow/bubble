@@ -92,6 +92,7 @@ public class ApiConstants {
     public static final String EP_APPROVE = "/approve";
     public static final String EP_DENY = "/deny";
     public static final String EP_AUTHENTICATOR = "/authenticator";
+    public static final String EP_PATCH = "/patch";
 
     public static final String ACCOUNTS_ENDPOINT = "/users";
     public static final String EP_POLICY = "/policy";
@@ -180,6 +181,7 @@ public class ApiConstants {
     public static final String EP_STATUS = "/status";
     public static final String EP_PROMOTIONS = PROMOTIONS_ENDPOINT;
     public static final String EP_FORK = "/fork";
+    public static final String EP_NODE_MANAGER = "/nodeman";
 
     public static final String DETECT_ENDPOINT = "/detect";
     public static final String EP_LOCALE = "/locale";
