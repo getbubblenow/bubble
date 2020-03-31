@@ -58,6 +58,8 @@ public class NodeManagerResource {
     @POST @Path("/set_password")
     public Response setPassword (@Context ContainerRequest ctx,
                                  LoginRequest request) {
+        final Account caller = userPrincipal(ctx);
+        if (!caller.admin()) return forbidden();
 
         final String password = request.getPassword();
         if (empty(password)) return invalid("err.password.required");
@@ -83,6 +85,9 @@ public class NodeManagerResource {
 
     @POST @Path("/disable")
     public Response disable (@Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        if (!caller.admin()) return forbidden();
+
         nodeManagerService.disable();
         return ok_empty();
     }
