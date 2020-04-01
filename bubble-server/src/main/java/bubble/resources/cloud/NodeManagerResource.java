@@ -9,7 +9,6 @@ import bubble.service.boot.SelfNodeService;
 import bubble.service.notify.NotificationService;
 import edu.emory.mathcs.backport.java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.http.*;
 import org.cobbzilla.util.io.ByteLimitedInputStream;
 import org.cobbzilla.util.io.FileUtil;
@@ -25,17 +24,18 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static bubble.model.cloud.notify.NotificationType.hello_to_sage;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.*;
+import static org.cobbzilla.util.system.CommandShell.execScript;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Consumes(APPLICATION_JSON)
@@ -196,13 +196,11 @@ public class NodeManagerResource {
         FileUtil.toFileOrDie(dest, in);
         log.info("buildPatchZip: wrote temp file: "+abs(dest));
         final File zipFile = FileUtil.temp(".zip");
+        if (!zipFile.delete()) return die("buildPatchZip: error deleting zipfile");
         log.info("buildPatchZip: zipping into zipFile: "+abs(zipFile));
-        try (OutputStream o = new FileOutputStream(zipFile)){
-            final ZipOutputStream out = new ZipOutputStream(o);
-            final ZipEntry e = new ZipEntry(path);
-            out.putNextEntry(e);
-            IOUtils.copyLarge(in, out);
-            out.closeEntry();
+        try {
+            execScript("cd "+abs(tempDir)+" && zip -r "+abs(zipFile)+" *");
+
         } catch (Exception e) {
             return die("buildPatchZip: "+shortError(e), e);
         }

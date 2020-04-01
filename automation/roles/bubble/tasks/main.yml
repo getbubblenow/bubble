@@ -3,7 +3,7 @@
 #
 - name: Install OpenJDK 11 JRE (headless), redis, uuid and jq
   apt:
-    name: [ 'openjdk-11-jre-headless', 'redis', 'uuid', 'jq' ]
+    name: [ 'openjdk-11-jre-headless', 'redis', 'uuid', 'jq', 'zip' ]
     state: present
     update_cache: yes
 
