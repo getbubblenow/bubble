@@ -9,8 +9,7 @@ import bubble.service.boot.SelfNodeService;
 import bubble.service.notify.NotificationService;
 import edu.emory.mathcs.backport.java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
+import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.http.*;
 import org.cobbzilla.util.io.ByteLimitedInputStream;
 import org.cobbzilla.util.io.FileUtil;
@@ -26,11 +25,11 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static bubble.model.cloud.notify.NotificationType.hello_to_sage;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -170,7 +169,8 @@ public class NodeManagerResource {
                                @PathParam("path") String path,
                                @FormDataParam("file") InputStream in,
                                @FormDataParam("name") String name) {
-        if (PATCH_COMPONENTS.contains(component)) return notFound(component);
+        log.info("patchFile: component="+component+", path="+path+", name="+name);
+        if (!PATCH_COMPONENTS.contains(component)) return notFound(component);
         final HttpRequestBean request = validateNodeManagerRequest(ctx, "patch/"+component)
                 .setMethod(HttpMethods.POST);
 
@@ -197,10 +197,14 @@ public class NodeManagerResource {
         log.info("buildPatchZip: wrote temp file: "+abs(dest));
         final File zipFile = FileUtil.temp(".zip");
         log.info("buildPatchZip: zipping into zipFile: "+abs(zipFile));
-        try {
-            new ZipFile(zipFile).addFolder(tempDir);
-        } catch (ZipException e) {
-            return die("buildPatchZip: "+shortError(e));
+        try (OutputStream o = new FileOutputStream(zipFile)){
+            final ZipOutputStream out = new ZipOutputStream(o);
+            final ZipEntry e = new ZipEntry(path);
+            out.putNextEntry(e);
+            IOUtils.copyLarge(in, out);
+            out.closeEntry();
+        } catch (Exception e) {
+            return die("buildPatchZip: "+shortError(e), e);
         }
         log.info("buildPatchZip: created patch file: "+abs(zipFile));
         return zipFile;
