@@ -14,6 +14,7 @@ import net.lingala.zip4j.exception.ZipException;
 import org.cobbzilla.util.http.*;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.TempDir;
+import org.cobbzilla.util.string.Base64;
 import org.cobbzilla.wizard.auth.LoginRequest;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +47,7 @@ public class NodeManagerResource {
     public static final String ROOT_DIR_PREFIX = "root_dir/";
     public static final String COMPONENT_ROOT = "root";
     public static final Set<String> PATCH_COMPONENTS = new HashSet<>(Arrays.asList(new String[]{COMPONENT_ROOT, "bubble", "mitmproxy"}));
+    public static final String AUTH_BASIC_PREFIX = "Basic ";
 
     private BubbleNode node;
 
@@ -70,12 +73,12 @@ public class NodeManagerResource {
         if (selfNode != null && selfNode.hasSageNode() && !selfNode.getUuid().equals(selfNode.getSageNode())) {
             final BubbleNode sageNode = nodeDAO.findByUuid(selfNode.getSageNode());
             if (sageNode == null) {
-                log.warn("setPassword: error finding sage to notify: "+selfNode.getSageNode());
+                log.warn("setPassword: error finding sage to notify: " + selfNode.getSageNode());
             } else {
                 selfNode.setNodeManagerPassword(password);
                 final NotificationReceipt receipt = notificationService.notify(sageNode, hello_to_sage, selfNode);
                 if (!receipt.isSuccess()) {
-                    log.warn("setPassword: error notifying sage of new nodemanager password: "+receipt);
+                    log.warn("setPassword: error notifying sage of new nodemanager password: " + receipt);
                 }
                 selfNode.setNodeManagerPassword(null); // just in case the object gets sync'd to db
             }
@@ -97,13 +100,26 @@ public class NodeManagerResource {
         if (!caller.admin() && !caller.getUuid().equals(node.getAccount())) throw forbiddenEx();
 
         final BubbleNode n = nodeDAO.findByUuid(node.getUuid());
-        if (!n.hasNodeManagerPassword()) throw invalidEx("err.nodemanager.noPasswordSet");
+        final String nodeManagerPassword;
+        if (n.hasNodeManagerPassword()) {
+            nodeManagerPassword = n.getNodeManagerPassword();
+        } else {
+            final String authHeader = ctx.getHeaderString(HttpHeaders.AUTHORIZATION);
+            if (empty(authHeader)) throw invalidEx("err.nodemanager.noPasswordSet");
+            try {
+                final String userNameAndPassword = new String(Base64.decode(authHeader.substring(authHeader.indexOf(AUTH_BASIC_PREFIX)+AUTH_BASIC_PREFIX.length())));
+                nodeManagerPassword = userNameAndPassword.substring(userNameAndPassword.indexOf(':') + 1);
+            } catch (Exception e) {
+                throw invalidEx("err.nodemanager.noPasswordSet");
+            }
+        }
 
-        final String url = "https://" + node.getFqdn() + ":" + node.getAdminPort() + "/nodeman/" + path;
+        final String url = "https://" + node.getFqdn() + ":" + node.getSslPort() + "/nodeman/" + path;
+        log.info("validateNodeManagerRequest: requesting URL: "+url);
         return new HttpRequestBean(url)
                 .setAuthType(HttpAuthType.basic)
                 .setAuthUsername(BUBBLE_NODE_ADMIN)
-                .setAuthPassword(n.getNodeManagerPassword());
+                .setAuthPassword(nodeManagerPassword);
     }
 
     public Response callNodeManager(HttpRequestBean request, String prefix) {

@@ -7,11 +7,15 @@ package bubble.main.http;
 import bubble.main.BubbleApiMain;
 import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.http.HttpRequestBean;
+import org.cobbzilla.util.string.Base64;
 import org.cobbzilla.wizard.api.ApiException;
 import org.cobbzilla.wizard.api.ForbiddenException;
 import org.cobbzilla.wizard.api.NotFoundException;
 import org.cobbzilla.wizard.api.ValidationException;
+import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.util.RestResponse;
+
+import javax.ws.rs.core.HttpHeaders;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.errorString;
 import static org.cobbzilla.util.http.HttpStatusCodes.OK;
@@ -23,6 +27,16 @@ public abstract class BubbleHttpMain<OPT extends BubbleHttpOptions> extends Bubb
 
     protected abstract String getMethod();
 
+    @Override protected ApiClientBase initApiClient() {
+        final ApiClientBase api = super.initApiClient();
+        final OPT options = getOptions();
+        if (options.hasHttpBasicUser() || options.hasHttpBasicPassword()) {
+            final String usernameAndPassword = options.getHttpBasicUser() + ":" + options.getHttpBasicPassword();
+            api.setHeader(HttpHeaders.AUTHORIZATION, "Basic "+ Base64.encodeBytes(usernameAndPassword.getBytes()));
+        }
+        return api;
+    }
+
     @Override protected void run() throws Exception {
         final OPT options = getOptions();
         final String url = options.getUrl();
@@ -32,7 +46,11 @@ public abstract class BubbleHttpMain<OPT extends BubbleHttpOptions> extends Bubb
             final String entity = options instanceof BubbleHttpEntityOptions
                     ? ((BubbleHttpEntityOptions) options).getRequestJson()
                     : null;
-            IOUtils.copyLarge(getApiClient().getStream(new HttpRequestBean(getMethod(), requestUrl, entity)), System.out);
+            final HttpRequestBean request = new HttpRequestBean(getMethod(), requestUrl, entity);
+            if (options.hasHttpBasicUser()) request.setAuthUsername(options.getHttpBasicUser());
+            if (options.hasHttpBasicPassword()) request.setAuthPassword(options.getHttpBasicPassword());
+
+            IOUtils.copyLarge(getApiClient().getStream(request), System.out);
         } else {
             RestResponse response = null;
             try {

@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.kohsuke.args4j.Option;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+
 public class BubbleHttpOptions extends BubbleApiOptionsBase {
 
     public static final String USAGE_URL = "URL to request";
@@ -16,6 +18,20 @@ public class BubbleHttpOptions extends BubbleApiOptionsBase {
     public static final String LONGOPT_URL= "--url";
     @Option(name=OPT_URL, aliases=LONGOPT_URL, usage=USAGE_URL)
     @Getter @Setter private String url;
+
+    public static final String USAGE_HTTP_USER = "HTTP Basic Auth username";
+    public static final String OPT_HTTP_USER = "-B";
+    public static final String LONGOPT_HTTP_USER= "--user";
+    @Option(name=OPT_HTTP_USER, aliases=LONGOPT_HTTP_USER, usage=USAGE_HTTP_USER)
+    @Getter @Setter private String httpBasicUser;
+    public boolean hasHttpBasicUser () { return !empty(httpBasicUser); }
+
+    public static final String USAGE_HTTP_PASS = "HTTP Basic Auth username";
+    public static final String OPT_HTTP_PASS = "-W";
+    public static final String LONGOPT_HTTP_PASS= "--password";
+    @Option(name=OPT_HTTP_PASS, aliases=LONGOPT_HTTP_PASS, usage=USAGE_HTTP_PASS)
+    @Getter @Setter private String httpBasicPassword;
+    public boolean hasHttpBasicPassword () { return !empty(httpBasicPassword); }
 
     public static final String USAGE_RAW = "Raw response: do not parse as JSON";
     public static final String OPT_RAW = "-R";
