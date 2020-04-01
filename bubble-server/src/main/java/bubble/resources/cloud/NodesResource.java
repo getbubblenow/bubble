@@ -79,11 +79,7 @@ public class NodesResource extends ReadOnlyAccountOwnedResource<BubbleNode, Bubb
         final Account caller = userPrincipal(ctx);
         final BubbleNode node = super.find(ctx, id);
         if (node == null) throw notFoundEx(id);
-
         if (!caller.admin() && !caller.getUuid().equals(node.getAccount())) throw forbiddenEx();
-
-        if (!node.hasNodeManagerPassword()) throw invalidEx("err.nodemanager.noPasswordSet");
-
         return configuration.subResource(NodeManagerResource.class, node);
     }
 
