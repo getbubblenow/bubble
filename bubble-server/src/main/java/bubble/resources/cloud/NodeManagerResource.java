@@ -64,7 +64,8 @@ public class NodeManagerResource {
 
     @POST @Path("/set_password")
     public Response setPassword (@Context ContainerRequest ctx,
-                                 LoginRequest request) {
+                                 LoginRequest request,
+                                 @QueryParam("notify") Boolean notify) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();
 
@@ -72,19 +73,27 @@ public class NodeManagerResource {
         if (empty(password)) return invalid("err.password.required");
         if (password.length() < 10) return invalid("err.password.tooShort");
 
+        if (!node.getUuid().equals(selfNodeService.getThisNode().getUuid())) {
+            return invalid("err.nodemanager.nodeNotLocal");
+        }
+
         nodeManagerService.setPassword(password);
-        final BubbleNode selfNode = selfNodeService.getThisNode();
-        if (selfNode != null && selfNode.hasSageNode() && !selfNode.getUuid().equals(selfNode.getSageNode())) {
-            final BubbleNode sageNode = nodeDAO.findByUuid(selfNode.getSageNode());
-            if (sageNode == null) {
-                log.warn("setPassword: error finding sage to notify: " + selfNode.getSageNode());
-            } else {
-                selfNode.setNodeManagerPassword(password);
-                final NotificationReceipt receipt = notificationService.notify(sageNode, hello_to_sage, selfNode);
-                if (!receipt.isSuccess()) {
-                    log.warn("setPassword: error notifying sage of new nodemanager password: " + receipt);
+
+        final boolean notifySage = notify == null || notify;
+        if (notifySage) {
+            final BubbleNode selfNode = selfNodeService.getThisNode();
+            if (selfNode != null && selfNode.hasSageNode() && !selfNode.getUuid().equals(selfNode.getSageNode())) {
+                final BubbleNode sageNode = nodeDAO.findByUuid(selfNode.getSageNode());
+                if (sageNode == null) {
+                    log.warn("setPassword: error finding sage to notify: " + selfNode.getSageNode());
+                } else {
+                    selfNode.setNodeManagerPassword(password);
+                    final NotificationReceipt receipt = notificationService.notify(sageNode, hello_to_sage, selfNode);
+                    if (!receipt.isSuccess()) {
+                        log.warn("setPassword: error notifying sage of new nodemanager password: " + receipt);
+                    }
+                    selfNode.setNodeManagerPassword(null); // just in case the object gets sync'd to db
                 }
-                selfNode.setNodeManagerPassword(null); // just in case the object gets sync'd to db
             }
         }
         return ok_empty();
@@ -94,6 +103,10 @@ public class NodeManagerResource {
     public Response disable (@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();
+
+        if (!node.getUuid().equals(selfNodeService.getThisNode().getUuid())) {
+            return invalid("err.nodemanager.nodeNotLocal");
+        }
 
         nodeManagerService.disable();
         return ok_empty();
