@@ -12,9 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.cobbzilla.util.http.*;
+import org.cobbzilla.util.io.ByteLimitedInputStream;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.TempDir;
 import org.cobbzilla.util.string.Base64;
+import org.cobbzilla.util.system.Bytes;
 import org.cobbzilla.wizard.auth.LoginRequest;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -47,7 +49,10 @@ public class NodeManagerResource {
     public static final String ROOT_DIR_PREFIX = "root_dir/";
     public static final String COMPONENT_ROOT = "root";
     public static final Set<String> PATCH_COMPONENTS = new HashSet<>(Arrays.asList(new String[]{COMPONENT_ROOT, "bubble", "mitmproxy"}));
+
+    // other constants
     public static final String AUTH_BASIC_PREFIX = "Basic ";
+    public static final long MAX_PATCH_SIZE = 200 * Bytes.MB;
 
     private BubbleNode node;
 
@@ -170,7 +175,7 @@ public class NodeManagerResource {
                 .setMethod(HttpMethods.POST);
 
         // create a zipfile containing the file at the proper path
-        final File zipFile = buildPatchZip(component, path, in);
+        final File zipFile = buildPatchZip(component, path, new ByteLimitedInputStream(in, MAX_PATCH_SIZE));
 
         // register patch with NodeManagerService, receive URL
         final String url = nodeManagerService.registerPatch(zipFile);
@@ -186,10 +191,12 @@ public class NodeManagerResource {
         }
         if (path.startsWith("/")) path = path.substring(1);
         if (empty(path)) throw invalidEx("err.nodemanager.invalidPath");
-        final String fullPath = abs(tempDir)+"/"+path;
-        final File parentDir = mkdirOrDie(dirname(fullPath));
-        FileUtil.toFileOrDie(new File(parentDir, basename(path)), in);
+        final File dest = new File(abs(tempDir)+"/"+path);
+        mkdirOrDie(dirname(abs(dest)));
+        FileUtil.toFileOrDie(dest, in);
+        log.info("buildPatchZip: wrote temp file: "+abs(dest));
         final File zipFile = FileUtil.temp(".zip");
+        log.info("buildPatchZip: zipping into zipFile: "+abs(zipFile));
         try {
             new ZipFile(zipFile).addFolder(tempDir);
         } catch (ZipException e) {

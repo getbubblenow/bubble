@@ -6,6 +6,7 @@ package bubble.main.http;
 
 import bubble.main.BubbleApiMain;
 import org.apache.commons.io.IOUtils;
+import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.http.HttpRequestBean;
 import org.cobbzilla.util.string.Base64;
 import org.cobbzilla.wizard.api.ApiException;
@@ -43,14 +44,25 @@ public abstract class BubbleHttpMain<OPT extends BubbleHttpOptions> extends Bubb
         final String requestUrl = url.startsWith("/") ? url : "/" + url;
 
         if (options.isRaw()) {
-            final String entity = options instanceof BubbleHttpEntityOptions
-                    ? ((BubbleHttpEntityOptions) options).getRequestJson()
-                    : null;
-            final HttpRequestBean request = new HttpRequestBean(getMethod(), requestUrl, entity);
+            final HttpRequestBean request;
+            final BubbleHttpEntityOptions entityOptions = (options instanceof BubbleHttpEntityOptions) ? (BubbleHttpEntityOptions) options : null;
+            if (entityOptions != null) {
+                if (entityOptions.hasMultipartFileName()) {
+                    request = new HttpRequestBean(getMethod(), requestUrl, entityOptions.getRequestStream(), entityOptions.getMultipartFileName(), NameAndValue.EMPTY_ARRAY);
+                } else {
+                    request = new HttpRequestBean(getMethod(), requestUrl, entityOptions.getRequestJson());
+                }
+            } else {
+                request = new HttpRequestBean(getMethod(), requestUrl);
+            }
+
             if (options.hasHttpBasicUser()) request.setAuthUsername(options.getHttpBasicUser());
             if (options.hasHttpBasicPassword()) request.setAuthPassword(options.getHttpBasicPassword());
-
-            IOUtils.copyLarge(getApiClient().getStream(request), System.out);
+            if (entityOptions != null && entityOptions.hasMultipartFileName()) {
+                IOUtils.copyLarge(getApiClient().uploadMultipartStream(request, entityOptions.getMultipartFileName()), System.out);
+            } else {
+                IOUtils.copyLarge(getApiClient().getStream(request), System.out);
+            }
         } else {
             RestResponse response = null;
             try {

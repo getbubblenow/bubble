@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.kohsuke.args4j.Option;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
 public class BubbleHttpOptions extends BubbleApiOptionsBase {
@@ -26,11 +27,21 @@ public class BubbleHttpOptions extends BubbleApiOptionsBase {
     @Getter @Setter private String httpBasicUser;
     public boolean hasHttpBasicUser () { return !empty(httpBasicUser); }
 
-    public static final String USAGE_HTTP_PASS = "HTTP Basic Auth username";
+    public static final String USAGE_HTTP_PASS = "HTTP Basic Auth username. Use @ENV_VAR_NAME to read an env var";
     public static final String OPT_HTTP_PASS = "-W";
     public static final String LONGOPT_HTTP_PASS= "--password";
     @Option(name=OPT_HTTP_PASS, aliases=LONGOPT_HTTP_PASS, usage=USAGE_HTTP_PASS)
-    @Getter @Setter private String httpBasicPassword;
+    @Setter private String httpBasicPassword;
+    public String getHttpBasicPassword () {
+        if (!hasHttpBasicPassword()) return null;
+        if (httpBasicPassword.startsWith("@")) {
+            final String envVarName = httpBasicPassword.substring(1);
+            final String pass = System.getenv(envVarName);
+            if (empty(pass)) return die("getHttpBasicPassword: env var not defined: "+ envVarName);
+            return pass;
+        }
+        return httpBasicPassword;
+    }
     public boolean hasHttpBasicPassword () { return !empty(httpBasicPassword); }
 
     public static final String USAGE_RAW = "Raw response: do not parse as JSON";
