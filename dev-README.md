@@ -3,6 +3,8 @@ bubble
 
 # Development Setup
 
+The instructions presume you are running a newly setup Ubuntu 18.04 system. Either the Ubuntu Server or Desktop distribution will work.
+
 ## First-Time System Setup
 After you clone this repository, run:
 
