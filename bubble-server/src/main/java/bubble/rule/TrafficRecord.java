@@ -20,6 +20,7 @@ public class TrafficRecord {
 
     @Getter @Setter private String uuid = randomUUID().toString();
     @Getter @Setter private long requestTime = now();
+    @Getter @Setter private String action;
     @Getter @Setter private String accountUuid;
     @Getter @Setter private String accountName;
     @Getter @Setter private String deviceUuid;
