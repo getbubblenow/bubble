@@ -378,6 +378,7 @@ public class StandardNetworkService implements NetworkService {
                 progressMeter.error(METER_UNKNOWN_ERROR);
                 killNode(node, "error: "+e);
             } else {
+                // fixme: NPE is inevitable here
                 final BubbleNetwork network = networkDAO.findByUuid(node.getNetwork());
                 if (noNodesActive(network)) {
                     // if no nodes are running, then the network is stopped

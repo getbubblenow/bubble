@@ -19,12 +19,12 @@ ROOT_KEY_MARKER=/usr/share/bubble/mitmdump_monitor
 
 # Start with MITM proxy turned off
 if [[ ! -f ${BUBBLE_MITM_MARKER} ]] ; then
-  echo -n off > ${BUBBLE_MITM_MARKER} && chown bubble ${BUBBLE_MITM_MARKER}
+  echo -n off > ${BUBBLE_MITM_MARKER} && chown bubble ${BUBBLE_MITM_MARKER} || log "Error writing 'off' to ${ROOT_KEY_MARKER}"
 fi
 if [[ ! -f ${ROOT_KEY_MARKER} ]] ; then
   sleep 1s
-  mkdir -p "$(dirname ${ROOT_KEY_MARKER})" && chmod 755 "$(dirname ${ROOT_KEY_MARKER})"
-  echo -n on > ${ROOT_KEY_MARKER} && touch ${ROOT_KEY_MARKER} && chmod 644 ${ROOT_KEY_MARKER}
+  mkdir -p "$(dirname ${ROOT_KEY_MARKER})" && chmod 755 "$(dirname ${ROOT_KEY_MARKER})" || log "Error creating or setting permissions on ${ROOT_KEY_MARKER}"
+  echo -n on > ${ROOT_KEY_MARKER} && touch ${ROOT_KEY_MARKER} && chmod 644 ${ROOT_KEY_MARKER} || log "Error writing 'on' to ${ROOT_KEY_MARKER}"
 fi
 
 function ensureMitmOn {
@@ -40,11 +40,11 @@ function ensureMitmOn {
 function ensureMitmOff {
   log "Flushing PREROUTING to disable MITM services"
   iptables -F PREROUTING  -t nat || log "Error flushing port forwarding when disabling MITM services"
-  echo -n off > ${ROOT_KEY_MARKER}
+  echo -n off > ${ROOT_KEY_MARKER} || log "Error writing 'off' to ${ROOT_KEY_MARKER}"
 }
 
 log "Watching marker file ${BUBBLE_MITM_MARKER} ..."
-sleep 2s && touch ${BUBBLE_MITM_MARKER}  # first time through, always check and set on/off state
+sleep 2s && touch ${BUBBLE_MITM_MARKER} || log "Error touching ${BUBBLE_MITM_MARKER}" # first time through, always check and set on/off state
 while : ; do
   if [[ $(stat -c %Y ${BUBBLE_MITM_MARKER}) -gt $(stat -c %Y ${ROOT_KEY_MARKER}) ]] ; then
     if [[ ! -z "$(cmp -b ${ROOT_KEY_MARKER} ${BUBBLE_MITM_MARKER})" ]] ; then

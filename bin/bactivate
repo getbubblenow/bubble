@@ -5,7 +5,7 @@
 #
 # Initial activation of a bubble server
 #
-# Usage:  activate activation.json
+# Usage:  bactivate activation.json
 #
 #   activation.json : a JSON file containing the activation information.
 #                     see config/activation.json for an example

@@ -105,7 +105,7 @@ if [[ $(count_table_rows ${DB_NAME} account 2> /dev/null) -eq 0 ]] ; then
     TEMP_DB="${DB_NAME}_$(uuid | tr -d '-')"
     log "Creating tempDB ${TEMP_DB}"
     createdb --encoding=UTF-8 ${TEMP_DB} || die "Error creating temp DB"
-    log "Populating tempDB ${TEMP_DB} with bubble.sq.gz"
+    log "Populating tempDB ${TEMP_DB} with bubble.sql.gz"
     zcat /home/bubble/sql/bubble.sql.gz | psql ${TEMP_DB} || die "Error writing database schema/data"
     DB_KEY="$(cat ${BUBBLE_HOME}/.BUBBLE_DB_ENCRYPTION_KEY)"
     TO_KEY="$(uuid)"
