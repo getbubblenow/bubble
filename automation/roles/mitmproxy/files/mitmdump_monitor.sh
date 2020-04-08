@@ -16,6 +16,8 @@ function log {
 
 BUBBLE_MITM_MARKER=/home/bubble/.mitmdump_monitor
 ROOT_KEY_MARKER=/usr/share/bubble/mitmdump_monitor
+MITMDUMP_PID_FILE=/home/mitmproxy/mitmdump.pid
+MAX_MITM_PCT_MEM=18
 
 # Start with MITM proxy turned off
 if [[ ! -f ${BUBBLE_MITM_MARKER} ]] ; then
@@ -56,6 +58,23 @@ while : ; do
         log "Error: marker file ${BUBBLE_MITM_MARKER} contained invalid value: $(cat ${BUBBLE_MITM_MARKER} | head -c 5)"
       fi
     fi
+  fi
+
+  # Check process memory usage, restart mitmdump if memory goes above max % allowed
+  if [[ -f ${MITMDUMP_PID_FILE} && -s ${MITMDUMP_PID_FILE} ]] ; then
+    MITM_PID="$(cat ${MITMDUMP_PID_FILE})"
+    PCT_MEM="$(ps q ${MITM_PID} -o %mem --no-headers | tr -d [[:space:]] | cut -f1 -d. | sed 's/[^0-9]*//g')"
+    # log "Info: mitmdump pid ${MITM_PID} using ${PCT_MEM}% of memory"
+    if [[ ! -z "${PCT_MEM}" ]] ; then
+      if [[ ${PCT_MEM} -ge ${MAX_MITM_PCT_MEM} ]] ; then
+        log "Warn: mitmdump: pid=$(cat ${MITMDUMP_PID_FILE}) memory used > max, restarting: ${PCT_MEM}% >= ${MAX_MITM_PCT_MEM}%"
+        supervisorctl restart mitmdump
+      fi
+    else
+      log "Error: could not determine mitmdump % memory, maybe PID file ${MITMDUMP_PID_FILE} is out of date? pid found was ${MITM_PID}"
+    fi
+  else
+    log "Error: mitmdump PID file ${MITMDUMP_PID_FILE} not found or empty"
   fi
   sleep 5s
 done
