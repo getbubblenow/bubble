@@ -34,6 +34,7 @@ import bubble.service.notify.NotificationService;
 import com.github.jknack.handlebars.Handlebars;
 import lombok.Cleanup;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.CommandLine;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
@@ -129,7 +130,7 @@ public class StandardNetworkService implements NetworkService {
     @Getter(lazy=true) private final RedisService networkLocks = redisService.prefixNamespace(getClass().getSimpleName()+"_lock_");
     @Getter(lazy=true) private final RedisService networkSetupStatus = redisService.prefixNamespace(getClass().getSimpleName()+"_status_");
 
-    public BubbleNode newNode(NewNodeNotification nn) {
+    @NonNull public BubbleNode newNode(@NonNull final NewNodeNotification nn) {
         log.info("newNode starting:\n"+json(nn));
         ComputeServiceDriver computeDriver = null;
         BubbleNode node = null;
@@ -378,8 +379,7 @@ public class StandardNetworkService implements NetworkService {
                 progressMeter.error(METER_UNKNOWN_ERROR);
                 killNode(node, "error: "+e);
             } else {
-                // fixme: NPE is inevitable here
-                final BubbleNetwork network = networkDAO.findByUuid(node.getNetwork());
+                final BubbleNetwork network = networkDAO.findByUuid(nn.getNetwork());
                 if (noNodesActive(network)) {
                     // if no nodes are running, then the network is stopped
                     networkDAO.update(network.setState(BubbleNetworkState.stopped));
