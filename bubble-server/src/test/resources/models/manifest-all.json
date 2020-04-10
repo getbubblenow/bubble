@@ -1,4 +1,5 @@
 [
   "manifest-live",
+  "system/account_testDevice",
   "manifest-app-user-block-localhost"
 ]
