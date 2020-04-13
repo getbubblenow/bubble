@@ -8,8 +8,10 @@ import bubble.model.account.Account;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.reflect.ReflectionUtil;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
@@ -20,13 +22,33 @@ import javax.persistence.*;
 import static bubble.model.bill.Bill.PERIOD_FIELDS_MAX_LENGTH;
 import static bubble.model.bill.BubblePlan.PLAN_NAME_MAX_LENGTH;
 import static bubble.model.cloud.BubbleNetwork.NETWORK_NAME_MAXLEN;
+import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.NamedEntity.NAME_MAXLEN;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
 
 @ECType(root=true) @ECTypeCreate(method="DISABLED")
 @ECTypeURIs(listFields={"accountName", "paymentMethodMaskedInfo", "amount"})
-@Entity @NoArgsConstructor @Accessors(chain=true)
+@Entity @Accessors(chain=true)
 public class AccountPaymentArchived extends IdentifiableBase {
+
+    /**
+     * List of properties from AccountPayment class which will not be used in this class the same way. Those foreign
+     * keys (uuids) will not be available within referenced tables, and so here the other unique data from those
+     * elements is extracted.
+     */
+    private static final String[] ALTERED_FIELDS = { "account", "paymentMethod", "plan", "accountPlan", "bill" };
+
+    public AccountPaymentArchived(@NonNull final AccountPayment original, @NonNull final String accountName,
+                                  @NonNull final String paymentMethodMaskedInfo, @NonNull final String bubblePlanName,
+                                  @NonNull final String accountPlanName, @NonNull final String billPeriodStart) {
+        this.accountName = accountName;
+        this.paymentMethodMaskedInfo = paymentMethodMaskedInfo;
+        this.bubblePlanName = bubblePlanName;
+        this.accountPlanName = accountPlanName;
+        this.billPeriodStart = billPeriodStart;
+
+        copy(this, original, null, ALTERED_FIELDS);
+    }
 
     @ECSearchable @ECField(index=0)
     @Id @Column(unique=true, updatable=false, nullable=false, length=UUID_MAXLEN)
