@@ -106,14 +106,4 @@ public class AccountPaymentArchived extends IdentifiableBase {
     @ECSearchable @ECField(index=120, type=EntityFieldType.error)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar(" + (10_000 + ENC_PAD) + ")")
     @JsonIgnore @Getter @Setter private String exception;
-
-    /**
-     * Anonymize this object. This is needed when client requires and signs/waives his/her right to sue in the future.
-     */
-    public AccountPaymentArchived anonymize() {
-        // TODO: what about paymentMethodMaskedInfo, bubblePlanName and billPeriodStart. Do those fields contain any
-        //       user info and names set up by the user?
-        return this.setAccountName("anonymous")
-                   .setAccountPlanName("anonymized");
-    }
 }
