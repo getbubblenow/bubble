@@ -23,6 +23,7 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.SearchService;
 import bubble.service.boot.SelfNodeService;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.cache.Refreshable;
 import org.cobbzilla.wizard.dao.AbstractCRUDDAO;
@@ -311,18 +312,30 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         log.info("copyTemplates completed: "+acct);
     }
 
-    @Override public void delete(String uuid) {
-        final Account account = findByUuid(uuid);
-
+    @Override public void delete(@NonNull final String uuid) {
         // you cannot delete the account that owns the current network
-        if (account.getUuid().equals(configuration.getThisNetwork().getAccount())) {
-            throw invalidEx("err.delete.invalid", "cannot delete account ("+account.getUuid()+") that owns current network ("+configuration.getThisNetwork().getUuid()+")", account.getUuid());
+        if (uuid.equals(configuration.getThisNetwork().getAccount())) {
+            throw invalidEx("err.delete.invalid",
+                            "cannot delete account that owns current network: "
+                            + uuid + " - " + configuration.getThisNetwork().getUuid(),
+                            uuid);
         }
+
+        deleteTransactional(uuid);
+        searchService.flushCache(this);
+    }
+
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    private void deleteTransactional(@NonNull final String uuid) {
+        // loading, and actually checking if the account with given UUID exists
+        final var account = findByUuid(uuid);
 
         // cannot delete account with unpaid bills
         final List<Bill> unpaid = billDAO.findUnpaidByAccount(uuid);
         if (!unpaid.isEmpty()) {
-            throw invalidEx("err.delete.unpaidBills", "cannot delete account ("+account.getUuid()+") with "+unpaid.size()+" unpaid bills", account.getUuid());
+            throw invalidEx("err.delete.unpaidBills",
+                            "cannot delete account with unpaid bills: " + uuid + " - " + unpaid.size(),
+                            uuid);
         }
 
         // for referral codes owned by us, set account to null, leave accountUuid in place
@@ -343,7 +356,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         switch (deletionPolicy) {
             case full_delete:
                 super.delete(uuid);
-                break;
+                return;
             case block_delete: default:
                 update(account.setParent(null)
                         .setAdmin(null)
@@ -353,9 +366,8 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
                         .setUrl(null)
                         .setAutoUpdatePolicy(EMPTY_AUTO_UPDATE_POLICY)
                         .setHashedPassword(HashedPassword.DELETED));
-                break;
+                return;
         }
-        searchService.flushCache(this);
     }
 
     // once activated (any accounts exist), you can never go back
