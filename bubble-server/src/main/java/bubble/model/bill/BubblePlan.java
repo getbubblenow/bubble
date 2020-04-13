@@ -41,6 +41,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class BubblePlan extends IdentifiableBaseParentEntity implements HasAccount, HasPriority {
 
+    public static final int PLAN_NAME_MAX_LENGTH = 200;
     public static final int MAX_CHARGENAME_LEN = 12;
 
     public static final String[] UPDATE_FIELDS = {
@@ -59,7 +60,7 @@ public class BubblePlan extends IdentifiableBaseParentEntity implements HasAccou
 
     @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
-    @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=200)
+    @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=PLAN_NAME_MAX_LENGTH)
     @Getter @Setter private String name;
 
     @ECSearchable @ECField(index=20)

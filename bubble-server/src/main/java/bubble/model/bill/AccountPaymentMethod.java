@@ -83,7 +83,8 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
 
     public static final String DEFAULT_MASKED_PAYMENT_INFO = "XXXX-".repeat(3)+"XXXX";
     @ECSearchable @ECField(index=50, type=EntityFieldType.opaque_string)
-    @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")
+    @Type(type=ENCRYPTED_STRING)
+    @Column(updatable=false, columnDefinition="varchar(" + (NAME_MAXLEN + ENC_PAD) + ") NOT NULL")
     @Getter @Setter private String maskedPaymentInfo = DEFAULT_MASKED_PAYMENT_INFO;
 
     @ECSearchable @ECField(index=60)
