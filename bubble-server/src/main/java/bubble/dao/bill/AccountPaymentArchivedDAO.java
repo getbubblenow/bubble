@@ -21,17 +21,20 @@ public class AccountPaymentArchivedDAO
     // newest first
     @Override public Order getDefaultSortOrder() { return ORDER_CTIME_DESC; }
 
-    @NonNull public List<AccountPaymentArchived> findByAccountName(@NonNull final String accountName) {
-        return findByField("accountName", accountName);
+    @NonNull public List<AccountPaymentArchived> findByAccountNameAndUuid(@NonNull final String accountName,
+                                                                          @NonNull final String accountUuid) {
+        return findByFields("accountUuid", accountUuid, "accountName", accountName);
     }
 
     /**
      * Anonymize this object. This is needed when client requires and signs/waives his/her right to sue in the future.
      */
-    public void anonymizeForAccountName(@NonNull final String accountName) {
+    public void anonymizeForAccountNameAndUuid(@NonNull final String accountName, @NonNull final String accountUuid) {
         // TODO: what about paymentMethodMaskedInfo, bubblePlanName and billPeriodStart. Do those fields contain any
         //       user info and names set up by the user?
-        bulkUpdate(new String[] { "accountName", "accountPlanName" }, new String[] { "anonymous", "anonymized" },
-                   new String[] { "accountName" }, new String[] { accountName });
+        bulkUpdate(new String[] { "accountUuid", "accountName", "accountPlanName" },
+                   new String[] { "anonymized", "anonymous", "anonymized" },
+                   new String[] { "accountUuid", "accountName" },
+                   new String[] { accountUuid, accountName });
     }
 }
