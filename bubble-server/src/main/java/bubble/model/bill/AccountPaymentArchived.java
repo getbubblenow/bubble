@@ -51,10 +51,6 @@ public class AccountPaymentArchived extends IdentifiableBase {
         copy(this, original, null, ALTERED_FIELDS);
     }
 
-    @ECSearchable @ECField(index=0)
-    @Id @Column(unique=true, updatable=false, nullable=false, length=UUID_MAXLEN)
-    @Getter @Setter private volatile String uuid;
-
     /**
      * Storing deleted account UUID here is required as user may select full deletion of his/her account while not
      * waiving his/her rights to sue. So then these records must stay related to exactly that user which might not be
