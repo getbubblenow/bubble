@@ -12,7 +12,7 @@
 
   {
     "comment": "look up account policy",
-    "request": { "uri": "users/user-to-delete/policy" },
+    "request": { "uri": "users/{{user.uuid}}/policy" },
     "response": {
       "store": "policy",
       "check": [
@@ -25,7 +25,7 @@
   {
     "comment": "set deletion policy to full_delete",
     "request": {
-      "uri": "users/user-to-delete/policy",
+      "uri": "users/{{user.uuid}}/policy",
       "data": "policy",
       "entity": {
         "deletionPolicy": "full_delete"
@@ -40,10 +40,16 @@
   },
 
   {
+    "comment": "lookup user - just checking it is the one for deletion",
+    "request": { "uri": "users/{{user.uuid}}" },
+    "response": { "check": [{ "condition": "json.getName() == 'user-to-delete'" }] }
+  },
+
+  {
     "comment": "as root, delete account",
     "request": {
       "session": "rootSession",
-      "uri": "users/user-to-delete",
+      "uri": "users/{{user.uuid}}",
       "method": "delete"
     }
   },
@@ -51,7 +57,7 @@
   {
     "comment": "lookup user, expect not found",
     "request": {
-      "uri": "users/user-to-delete"
+      "uri": "users/{{user.uuid}}"
     },
     "response": { "status": 404 }
   }
