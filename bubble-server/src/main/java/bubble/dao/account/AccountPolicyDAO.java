@@ -33,7 +33,8 @@ public class AccountPolicyDAO extends AccountOwnedEntityDAO<AccountPolicy> {
 
     public AccountPolicy findSingleByAccount(String accountUuid) {
         final List<AccountPolicy> found = findByAccount(accountUuid);
-        return found.isEmpty() ? create(new AccountPolicy().setAccount(accountUuid)) : found.size() > 1 ? die("findSingleByAccount: "+found.size()+" found!") : found.get(0);
+        return found.isEmpty() ? create(new AccountPolicy().setAccount(accountUuid))
+                               : found.size() > 1 ? die("findSingleByAccount: "+found.size()+" found!") : found.get(0);
     }
 
 }
