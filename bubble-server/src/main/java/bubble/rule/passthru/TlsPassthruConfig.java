@@ -69,15 +69,14 @@ public class TlsPassthruConfig {
         return !empty(feedList) ? Arrays.stream(feedList).collect(Collectors.toCollection(TreeSet::new)) : Collections.emptySet();
     }
 
-    private class TlsPassthruMatcher {
+    private static class TlsPassthruMatcher {
         @Getter @Setter private String fqdn;
         @Getter @Setter private Pattern fqdnPattern;
         public boolean hasPattern () { return fqdnPattern != null; }
         public TlsPassthruMatcher (String fqdn) {
+            this.fqdn = fqdn;
             if (fqdn.startsWith("/") && fqdn.endsWith("/")) {
                 this.fqdnPattern = Pattern.compile(fqdn.substring(1, fqdn.length()-1), Pattern.CASE_INSENSITIVE);
-            } else {
-                this.fqdn = fqdn;
             }
         }
         public boolean matches (String val) {
