@@ -16,6 +16,7 @@ import org.cobbzilla.util.string.StringUtil;
 
 import java.io.InputStream;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static bubble.rule.passthru.TlsPassthruFeed.EMPTY_FEEDS;
@@ -68,16 +69,36 @@ public class TlsPassthruConfig {
         return !empty(feedList) ? Arrays.stream(feedList).collect(Collectors.toCollection(TreeSet::new)) : Collections.emptySet();
     }
 
-    @JsonIgnore @Getter(lazy=true) private final AutoRefreshingReference<Set<String>> passthruSetRef = new AutoRefreshingReference<>() {
-        @Override public Set<String> refresh() { return loadPassthruSet(); }
+    private class TlsPassthruMatcher {
+        @Getter @Setter private String fqdn;
+        @Getter @Setter private Pattern fqdnPattern;
+        public boolean hasPattern () { return fqdnPattern != null; }
+        public TlsPassthruMatcher (String fqdn) {
+            if (fqdn.startsWith("/") && fqdn.endsWith("/")) {
+                this.fqdnPattern = Pattern.compile(fqdn.substring(1, fqdn.length()-1), Pattern.CASE_INSENSITIVE);
+            } else {
+                this.fqdn = fqdn;
+            }
+        }
+        public boolean matches (String val) {
+            return hasPattern() ? fqdnPattern.matcher(val).matches() : fqdn.equals(val);
+        }
+    }
+
+    @JsonIgnore @Getter(lazy=true) private final AutoRefreshingReference<Set<TlsPassthruMatcher>> passthruSetRef = new AutoRefreshingReference<>() {
+        @Override public Set<TlsPassthruMatcher> refresh() { return loadPassthruSet(); }
         // todo: load refresh interval from config. implement a config view with an action to set it
         @Override public long getTimeout() { return DEFAULT_TLS_FEED_REFRESH_INTERVAL; }
     };
-    @JsonIgnore public Set<String> getPassthruSet() { return getPassthruSetRef().get(); }
+    @JsonIgnore public Set<TlsPassthruMatcher> getPassthruSet() { return getPassthruSetRef().get(); }
 
-    private Set<String> loadPassthruSet() {
-        final Set<String> set = new HashSet<>();
-        if (hasFqdnList()) set.addAll(Arrays.asList(fqdnList));
+    private Set<TlsPassthruMatcher> loadPassthruSet() {
+        final Set<TlsPassthruMatcher> set = new HashSet<>();
+        if (hasFqdnList()) {
+            for (String val : getFqdnList()) {
+                set.add(new TlsPassthruMatcher(val));
+            }
+        }
         if (hasFeedList()) {
             // put in a set to avoid duplicate URLs
             for (TlsPassthruFeed feed : new HashSet<>(Arrays.asList(feedList))) {
@@ -90,7 +111,9 @@ public class TlsPassthruConfig {
                 if (loaded.hasFqdnList()) recentFeedValues.put(feed.getFeedUrl(), loaded.getFqdnList());
             }
         }
-        set.addAll(recentFeedValues.values().stream().flatMap(Collection::stream).collect(Collectors.toSet()));
+        for (String val : recentFeedValues.values().stream().flatMap(Collection::stream).collect(Collectors.toSet())) {
+            set.add(new TlsPassthruMatcher(val));
+        }
         if (log.isDebugEnabled()) log.debug("loadPassthruSet: returning fqdnList: "+StringUtil.toString(set, ", "));
         return set;
     }
@@ -122,6 +145,11 @@ public class TlsPassthruConfig {
         return loaded;
     }
 
-    public boolean isPassthru(String fqdn) { return getPassthruSet().contains(fqdn); }
+    public boolean isPassthru(String fqdn) {
+        for (TlsPassthruMatcher match : getPassthruSet()) {
+            if (match.matches(fqdn)) return true;
+        }
+        return false;
+    }
 
 }
