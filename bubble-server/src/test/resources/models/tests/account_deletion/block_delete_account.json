@@ -74,9 +74,24 @@
   },
 
   {
-    "comment": "as root, look up account policy again - it should not be found now",
+    "comment": "as root, look up account policy again - it should recreated for this object with full deletion policy",
     "request": { "session": "rootSession", "uri": "users/{{user.uuid}}/policy" },
-    "response": { "status":  404 }
-  }
+    "response": { "check": [{ "condition": "json.getDeletionPolicy().name() == 'full_delete'" }] }
+  },
 
+  {
+    "comment": "try deleting the same account again - expect fully deletion this time even without policy",
+    "request": { "uri": "users/{{user.uuid}}", "method": "delete" }
+  },
+
+  {
+    "comment": "lookup user, expect there's no such user now",
+    "request": { "uri": "users/{{user.uuid}}" },
+    "response": { "status": 404 }
+  },
+  {
+    "comment": "as root, look up account policy again - not found, and account uuid reported as not found resource",
+    "request": { "session": "rootSession", "uri": "users/{{user.uuid}}/policy" },
+    "response": { "status": 404, "check": [{ "condition": "json.get('resource') == user.getUuid()" }] }
+  }
 ]
