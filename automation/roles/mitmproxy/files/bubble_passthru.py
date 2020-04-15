@@ -84,8 +84,8 @@ def should_passthru(remote_addr, addr):
         bubble_log(prefix+' not in redis or empty, calling check_bubble_passthru...')
         fqdn = fqdn_for_addr(addr)
         if fqdn is None or len(fqdn) == 0:
-            bubble_log(prefix+' no fqdn found for addr '+addr+', returning (uncached) passthru = True')
-            return {'fqdn': None, 'addr': addr, 'passthru': True}
+            bubble_log(prefix+' no fqdn found for addr '+addr+', returning (uncached) passthru = False')
+            return {'fqdn': None, 'addr': addr, 'passthru': False}
         passthru = check_bubble_passthru(remote_addr, addr, fqdn)
         bubble_log(prefix+'check_bubble_passthru returned '+repr(passthru)+", storing in redis...")
         redis_set(cache_key, json.dumps(passthru), ex=REDIS_PASSTHRU_DURATION)
