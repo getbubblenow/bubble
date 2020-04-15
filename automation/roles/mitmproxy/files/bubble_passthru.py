@@ -26,8 +26,9 @@
 from mitmproxy.proxy.protocol import TlsLayer, RawTCPLayer
 from mitmproxy.exceptions import TlsProtocolException
 
-from bubble_api import bubble_log, bubble_passthru
+from bubble_api import bubble_log, bubble_passthru, bubble_activity_log, redis_set
 import redis
+import json
 
 REDIS_DNS_PREFIX = 'bubble_dns_'
 REDIS_PASSTHRU_PREFIX = 'bubble_passthru_'
@@ -38,10 +39,6 @@ REDIS = redis.Redis(host='127.0.0.1', port=6379, db=0)
 
 def passthru_cache_prefix(client_addr, server_addr):
     return REDIS_PASSTHRU_PREFIX + client_addr + '_' + server_addr
-
-def redis_set(name, value, ex):
-    REDIS.set(name, value, nx=True, ex=ex)
-    REDIS.set(name, value, xx=True, ex=ex)
 
 
 class TlsFeedback(TlsLayer):
@@ -57,49 +54,59 @@ class TlsFeedback(TlsLayer):
         except TlsProtocolException as e:
             bubble_log('_establish_tls_with_client: TLS error for '+repr(server_address)+', enabling passthru')
             cache_key = passthru_cache_prefix(client_address, server_address)
-            redis_set(cache_key, str(True), ex=REDIS_PASSTHRU_DURATION)
+            fqdn = fqdn_for_addr(server_address)
+            redis_set(cache_key, json.dumps({'fqdn': fqdn, 'addr': server_address, 'passthru': True}), ex=REDIS_PASSTHRU_DURATION)
             raise e
 
 
-def check_bubble_passthru(remote_addr, addr):
+def fqdn_for_addr(addr):
     fqdn = REDIS.get(REDIS_DNS_PREFIX + addr)
     if fqdn is None or len(fqdn) == 0:
         bubble_log('check_bubble_passthru: no FQDN found for addr '+repr(addr)+', checking raw addr')
         fqdn = b''
-    fqdn = fqdn.decode()
+    return fqdn.decode()
+
+
+def check_bubble_passthru(remote_addr, addr, fqdn):
     if bubble_passthru(remote_addr, addr, fqdn):
         bubble_log('check_bubble_passthru: bubble_passthru returned True for FQDN/addr '+repr(fqdn)+'/'+repr(addr)+', returning True')
-        return True
+        return {'fqdn': fqdn, 'addr': addr, 'passthru': True}
     bubble_log('check_bubble_passthru: bubble_passthru returned False for FQDN/addr '+repr(fqdn)+'/'+repr(addr)+', returning False')
-    return False
+    return {'fqdn': fqdn, 'addr': addr, 'passthru': False}
 
 
 def should_passthru(remote_addr, addr):
-    prefix = 'should_passthru: '+repr(addr)
+    prefix = 'should_passthru: '+repr(addr)+' '
     bubble_log(prefix+'starting...')
     cache_key = passthru_cache_prefix(remote_addr, addr)
-    passthru_string = REDIS.get(cache_key)
-    if passthru_string is None or len(passthru_string) == 0:
+    passthru_json = REDIS.get(cache_key)
+    if passthru_json is None or len(passthru_json) == 0:
         bubble_log(prefix+' not in redis or empty, calling check_bubble_passthru...')
-        passthru = check_bubble_passthru(remote_addr, addr)
-        bubble_log(prefix+'check_bubble_passthru returned '+str(passthru)+", string in redis...")
-        redis_set(cache_key, str(passthru), ex=REDIS_PASSTHRU_DURATION)
-        passthru_string = str(passthru)
+        fqdn = fqdn_for_addr(addr)
+        if fqdn is None or len(fqdn) == 0:
+            bubble_log(prefix+' no fqdn found for addr '+addr+', returning (uncached) passthru = True')
+            return {'fqdn': None, 'addr': addr, 'passthru': True}
+        passthru = check_bubble_passthru(remote_addr, addr, fqdn)
+        bubble_log(prefix+'check_bubble_passthru returned '+repr(passthru)+", storing in redis...")
+        redis_set(cache_key, json.dumps(passthru), ex=REDIS_PASSTHRU_DURATION)
     else:
-        passthru_string = passthru_string.decode()
-        bubble_log(prefix+'found cached value, passthru_string='+str(passthru_string)+', re-setting in redis')
-        redis_set(cache_key, passthru_string, ex=REDIS_PASSTHRU_DURATION)
-    bubble_log(prefix+'returning '+str(passthru_string == 'True'))
-    return passthru_string == 'True'
+        bubble_log('found passthru_json='+str(passthru_json)+', touching key in redis')
+        passthru = json.loads(passthru_json)
+        REDIS.touch(cache_key)
+    bubble_log(prefix+'returning '+repr(passthru))
+    return passthru
 
 
 def next_layer(next_layer):
     if isinstance(next_layer, TlsLayer) and next_layer._client_tls:
         client_address = next_layer.client_conn.address[0]
         server_address = next_layer.server_conn.address[0]
-        if should_passthru(client_address, server_address):
+        passthru = should_passthru(client_address, server_address)
+        if passthru['passthru']:
             bubble_log('next_layer: TLS passthru for ' + repr(next_layer.server_conn.address))
+            bubble_activity_log(client_address, server_address, 'tls_passthru', passthru['fqdn'])
             next_layer_replacement = RawTCPLayer(next_layer.ctx, ignore=True)
             next_layer.reply.send(next_layer_replacement)
         else:
+            bubble_activity_log(client_address, server_address, 'tls_intercept', passthru['fqdn'])
             next_layer.__class__ = TlsFeedback

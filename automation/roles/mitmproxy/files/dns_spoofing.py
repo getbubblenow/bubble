@@ -4,7 +4,7 @@
 import re
 import time
 import uuid
-from bubble_api import bubble_matchers, bubble_log, CTX_BUBBLE_MATCHERS, BUBBLE_URI_PREFIX, CTX_BUBBLE_ABORT, CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_REQUEST_ID, add_flow_ctx
+from bubble_api import bubble_matchers, bubble_log, bubble_activity_log, CTX_BUBBLE_MATCHERS, BUBBLE_URI_PREFIX, CTX_BUBBLE_ABORT, CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_REQUEST_ID, add_flow_ctx
 from bubble_config import bubble_host, bubble_host_alias
 
 # This regex extracts splits the host header into host and port.
@@ -70,6 +70,8 @@ class Rerouter:
         return matcher_response
 
     def request(self, flow):
+        client_address = flow.client_conn.address[0]
+        server_address = flow.server_conn.address[0]
         if flow.client_conn.tls_established:
             flow.request.scheme = "https"
             sni = flow.client_conn.connection.get_servername()
@@ -90,11 +92,16 @@ class Rerouter:
 
         # Determine if this request should be filtered
         if sni or host_header:
+            host = str(sni or host_header)
+            if host.startswith("b'"):
+                host = host[2:-1]
+            log_url = flow.request.scheme + '://' + host + flow.request.path
             matcher_response = self.get_matchers(flow, sni or host_header)
             if matcher_response:
                 if 'decision' in matcher_response and matcher_response['decision'] is not None and matcher_response['decision'] == 'passthru':
                     bubble_log('dns_spoofing.request: passthru response returned, passing thru and NOT performing TLS interception...')
                     add_flow_ctx(flow, CTX_BUBBLE_PASSTHRU, True)
+                    bubble_activity_log(client_address, server_address, 'http_passthru', log_url)
                     return
 
                 elif 'decision' in matcher_response and matcher_response['decision'] is not None and matcher_response['decision'].startswith('abort_'):
@@ -107,10 +114,12 @@ class Rerouter:
                         bubble_log('dns_spoofing.request: unknown abort code: ' + str(matcher_response['decision']) + ', aborting with 404 Not Found')
                         abort_code = 404
                     add_flow_ctx(flow, CTX_BUBBLE_ABORT, abort_code)
+                    bubble_activity_log(client_address, server_address, 'http_abort' + str(abort_code), log_url)
                     return
 
                 elif 'decision' in matcher_response and matcher_response['decision'] is not None and matcher_response['decision'] == 'no_match':
                     bubble_log('dns_spoofing.request: decision was no_match, passing thru...')
+                    bubble_activity_log(client_address, server_address, 'http_no_match', log_url)
                     return
 
                 elif ('matchers' in matcher_response
@@ -120,12 +129,16 @@ class Rerouter:
                     bubble_log("dns_spoofing.request: found request_id: " + req_id + ' with matchers: ' + repr(matcher_response['matchers']))
                     add_flow_ctx(flow, CTX_BUBBLE_MATCHERS, matcher_response['matchers'])
                     add_flow_ctx(flow, CTX_BUBBLE_REQUEST_ID, req_id)
+                    bubble_activity_log(client_address, server_address, 'http_match', log_url)
                 else:
                     bubble_log('dns_spoofing.request: no rules returned, passing thru...')
+                    bubble_activity_log(client_address, server_address, 'http_no_rules', log_url)
             else:
                 bubble_log('dns_spoofing.request: no matcher_response returned, passing thru...')
+                # bubble_activity_log(client_address, server_address, 'http_no_matcher_response', log_url)
         else:
             bubble_log('dns_spoofing.request: no sni/host found, not applying rules to path: ' + flow.request.path)
+            bubble_activity_log(client_address, server_address, 'http_no_sni_or_host', 'n/a')
 
         flow.request.host_header = host_header
         flow.request.host = sni or host_header
