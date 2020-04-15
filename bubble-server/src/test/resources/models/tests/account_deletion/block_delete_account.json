@@ -74,8 +74,9 @@
   },
 
   {
-    "comment": "as root, look up account policy again - it should recreated for this object with full deletion policy",
+    "comment": "as root, look up account policy again - it should not be found now",
     "request": { "session": "rootSession", "uri": "users/{{user.uuid}}/policy" },
-    "response": { "check": [{ "condition": "json.getDeletionPolicy().name() == 'block_delete'" }] }
+    "response": { "status":  404 }
   }
+
 ]

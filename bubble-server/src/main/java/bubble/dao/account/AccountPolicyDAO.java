@@ -8,10 +8,9 @@ import bubble.model.account.AccountPolicy;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
 @Repository
 public class AccountPolicyDAO extends AccountOwnedEntityDAO<AccountPolicy> {
@@ -32,9 +31,19 @@ public class AccountPolicyDAO extends AccountOwnedEntityDAO<AccountPolicy> {
     }
 
     public AccountPolicy findSingleByAccount(String accountUuid) {
-        final List<AccountPolicy> found = findByAccount(accountUuid);
-        return found.isEmpty() ? create(new AccountPolicy().setAccount(accountUuid))
-                               : found.size() > 1 ? die("findSingleByAccount: "+found.size()+" found!") : found.get(0);
+        final var found = findByAccount(accountUuid);
+        if (found.size() == 1) return found.get(0);
+
+        if (found.size() > 1) {
+            die("findSingleByAccount: More than 1 policy found for account " + accountUuid + " - " + found.size());
+        }
+
+        // If there's no policy, and the account is marked as deleted - just return not found:
+        final var account = getConfiguration().getBean(AccountDAO.class).findById(accountUuid);
+        if (account.deleted()) throw notFoundEx();
+
+        // Else, create a policy for existing account:
+        return create(new AccountPolicy().setAccount(accountUuid));
     }
 
 }
