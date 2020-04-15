@@ -28,6 +28,7 @@
     <logger name="org.cobbzilla.util.daemon.ZillaRuntime" level="WARN" />
     <logger name="org.cobbzilla.wizard.server" level="WARN" />
     <logger name="org.cobbzilla.wizard.client" level="WARN" />
+    <logger name="org.cobbzilla.wizard.client.script" level="INFO" />
     <logger name="org.cobbzilla.wizard.model.entityconfig.ModelSetup" level="INFO" />
     <logger name="org.cobbzilla.wizard.resources.AbstractEntityConfigsResource" level="ERROR" />
     <logger name="org.cobbzilla.wizard.resources.ResourceUtil" level="ERROR" />
