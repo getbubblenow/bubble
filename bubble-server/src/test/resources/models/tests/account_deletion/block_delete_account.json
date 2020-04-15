@@ -71,13 +71,11 @@
       }
     },
     "response": { "status": 404 }
+  },
+
+  {
+    "comment": "as root, look up account policy again - it should recreated for this object with full deletion policy",
+    "request": { "session": "rootSession", "uri": "users/{{user.uuid}}/policy" },
+    "response": { "check": [{ "condition": "json.getDeletionPolicy().name() == 'block_delete'" }] }
   }
-
-//  {
-//    "comment": "as root, look up account policy again - it should not be found now",
-//    "before": "sleep 10s",
-//    "request": { "session": "rootSession", "uri": "users/{{user.uuid}}/policy" },
-//    "response": { "status":  404 }
-//  }
-
 ]

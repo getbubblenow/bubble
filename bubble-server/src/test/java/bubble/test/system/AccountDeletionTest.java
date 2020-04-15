@@ -29,16 +29,6 @@ public class AccountDeletionTest extends ActivatedBubbleModelTestBase {
     }
 
     @Test public void testFullAccountDeletion() throws Exception { modelTest("account_deletion/full_delete_account"); }
-    @Test public void testBlockAccountDeletion() throws Exception {
-        modelTest("account_deletion/block_delete_account");
-
-        final var accPolicyDAO = getConfiguration().getBean(AccountPolicyDAO.class);
-        final var policies = accPolicyDAO.findAll();
-        assertEquals("Not all objects removed for deleted account", 1, policies.size());
-
-        final var accDAO = getConfiguration().getBean(AccountDAO.class);
-        final var acc = accDAO.findById(policies.get(0).getAccount());
-        assertEquals("The one policy should be for the only existing account", "root", acc.getName());
-    }
+    @Test public void testBlockAccountDeletion() throws Exception { modelTest("account_deletion/block_delete_account"); }
 
 }
