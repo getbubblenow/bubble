@@ -5,16 +5,12 @@
 package bubble.test.system;
 
 import bubble.dao.account.AccountDAO;
-import bubble.dao.account.AccountPolicyDAO;
 import bubble.model.account.Account;
 import bubble.test.ActivatedBubbleModelTestBase;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.model.HashedPassword;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 @Slf4j
 public class AccountDeletionTest extends ActivatedBubbleModelTestBase {
