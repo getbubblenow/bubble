@@ -306,7 +306,7 @@ public class AuthResource {
         if (!request.hasName()) return invalid("err.name.required", "name is required");
         if (!request.hasPassword()) return invalid("err.password.required", "password is required");
         final Account account = accountDAO.findByName(request.getName());
-        if (account == null) return notFound(request.getName());
+        if (account == null || account.deleted()) return notFound(request.getName());
         if (!account.getHashedPassword().isCorrectPassword(request.getPassword())) {
             return notFound(request.getName());
         }
