@@ -11,8 +11,6 @@ import org.cobbzilla.wizard.dao.SqlViewSearchableDAO;
 import org.hibernate.criterion.Order;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 public class AccountPaymentArchivedDAO
         extends AbstractCRUDDAO<AccountPaymentArchived>
@@ -21,7 +19,7 @@ public class AccountPaymentArchivedDAO
     // newest first
     @Override public Order getDefaultSortOrder() { return ORDER_CTIME_DESC; }
 
-    @NonNull public List<AccountPaymentArchived> findByAccountUuid(@NonNull final String accountUuid) {
-        return findByField("accountUuid", accountUuid);
+    public AccountPaymentArchived findByAccountUuid(@NonNull final String accountUuid) {
+        return findByUniqueField("accountUuid", accountUuid);
     }
 }

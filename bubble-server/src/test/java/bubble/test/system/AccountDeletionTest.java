@@ -5,14 +5,9 @@
 package bubble.test.system;
 
 import bubble.dao.account.AccountDAO;
-import bubble.model.bill.AccountPayment;
-import bubble.model.bill.AccountPaymentMethod;
-import bubble.model.bill.Bill;
 import bubble.test.ActivatedBubbleModelTestBase;
 import org.cobbzilla.wizard.model.HashedPassword;
 import org.junit.Test;
-
-import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -40,17 +35,17 @@ public class AccountDeletionTest extends ActivatedBubbleModelTestBase {
         final var archivedInfo = archivedInfoDAO.findByAccountUuid(deletedAccount.getUuid());
         assertNotNull("Archived payment info not found for deleted user", archivedInfo);
 
-        final List<Bill> archivedBills = archivedInfo.getBills();
-        assertEquals("Only 1 bill should be in for deleted account", archivedBills.size());
+        final var archivedBills = archivedInfo.getBills();
+        assertEquals("Only 1 bill should be in for deleted account", archivedBills.length);
 
-        final List<AccountPayment> archivedPayments = archivedInfo.getPayments();
-        assertEquals("Only 1 bill should be in for deleted account", archivedPayments.size());
+        final var archivedPayments = archivedInfo.getPayments();
+        assertEquals("Only 1 bill should be in for deleted account", archivedPayments.length);
         assertEquals("Archived payment should be for archived bill",
-                     archivedBills.get(0).getUuid(), archivedPayments.get(0).getBill());
+                     archivedBills[0].getUuid(), archivedPayments[0].getBill());
 
-        final List<AccountPaymentMethod> archivedPaymentMethods = archivedInfo.getpaymentMethods();
-        assertEquals("Only 1 bill should be in for deleted account", archivedPaymentMethods.size());
+        final var archivedPaymentMethods = archivedInfo.getPaymentMethods();
+        assertEquals("Only 1 bill should be in for deleted account", archivedPaymentMethods.length);
         assertEquals("Archived payment method should be for used within archived payment",
-                     archivedPayments.get(0).getPaymentMethod(), archivedPaymentMethods.get(0).getUuid());
+                     archivedPayments[0].getPaymentMethod(), archivedPaymentMethods[0].getUuid());
     }
 }
