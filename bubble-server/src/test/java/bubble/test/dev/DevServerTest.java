@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.server.RestServer;
 import org.junit.Test;
 
+import java.net.URL;
+
 import static java.util.concurrent.TimeUnit.DAYS;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
@@ -31,7 +33,8 @@ public class DevServerTest extends ActivatedBubbleModelTestBase {
     }
 
     @Test public void runDevServer () throws Exception {
-        log.info("runDevServer: Bubble API server started and model initialized. You may now begin testing.");
+        log.info("runDevServer: Bubble API server started and model initialized. You may now begin testing on port: "
+                 + new URL(this.getApi().getBaseUri()).getPort());
         sleep(DAYS.toMillis(30), "running dev server");
     }
 

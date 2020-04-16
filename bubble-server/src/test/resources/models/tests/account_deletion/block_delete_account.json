@@ -1,0 +1,97 @@
+[
+  {
+    "comment": "activate service, create account, login for block_delete",
+    "include": "new_account",
+    "params": {
+      "username": "user-to-partially-delete",
+      "password": "foobar1!",
+      "email": "user-partially-account-deletion@example.com",
+      "verifyEmail": "true"
+    }
+  },
+
+  {
+    "comment": "look up account policy for block_delete",
+    "request": { "uri": "users/{{user.uuid}}/policy" },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length == 1"}
+      ]
+    }
+  },
+
+  {
+    "comment": "set deletion policy to block_delete",
+    "request": {
+      "uri": "users/{{user.uuid}}/policy",
+      "data": "policy",
+      "entity": {
+        "deletionPolicy": "block_delete"
+      }
+    },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getDeletionPolicy().name() == 'block_delete'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as root, block delete account",
+    "request": {
+      "session": "rootSession",
+      "uri": "users/{{user.uuid}}",
+      "method": "delete"
+    }
+  },
+
+  {
+    "comment": "lookup user, expect that it is still there, just empty",
+    "request": { "uri": "users/{{user.uuid}}" },
+    "response": {
+      "check": [
+        { "condition": "json.getUuid() == user.getUuid()" },
+        { "condition": "json.getName() == user.getName()" },
+        { "condition": "json.deleted()" }
+      ]
+    }
+  },
+
+  {
+    "comment": "try logging in as deleted user - failing now",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "{{user.name}}",
+        "password": "foobar1!"
+      }
+    },
+    "response": { "status": 404 }
+  },
+
+  {
+    "comment": "as root, look up account policy again - it should recreated for this object with full deletion policy",
+    "request": { "session": "rootSession", "uri": "users/{{user.uuid}}/policy" },
+    "response": { "check": [{ "condition": "json.getDeletionPolicy().name() == 'full_delete'" }] }
+  },
+
+  {
+    "comment": "try deleting the same account again - expect fully deletion this time even without policy",
+    "request": { "uri": "users/{{user.uuid}}", "method": "delete" }
+  },
+
+  {
+    "comment": "lookup user, expect there's no such user now",
+    "request": { "uri": "users/{{user.uuid}}" },
+    "response": { "status": 404 }
+  },
+  {
+    "comment": "as root, look up account policy again - not found, and account uuid reported as not found resource",
+    "request": { "session": "rootSession", "uri": "users/{{user.uuid}}/policy" },
+    "response": { "status": 404, "check": [{ "condition": "json.get('resource') == user.getUuid()" }] }
+  }
+]

@@ -10,6 +10,7 @@ import org.cobbzilla.wizard.server.RestServerLifecycleListener;
 import org.cobbzilla.wizard.server.listener.FlywayMigrationListener;
 import org.junit.Test;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -33,7 +34,8 @@ public class BlankDevServerTest extends NewBlankDevServerTest {
     }
 
     @Test public void runBlankServer () throws Exception {
-        log.info("runBlankServer: Bubble API server started and model initialized. You may now begin testing.");
+        log.info("runBlankServer: Bubble API server started and model initialized. You may now begin testing on port: "
+                 + new URL(this.getApi().getBaseUri()).getPort());
         sleep(DAYS.toMillis(30), "running dev server");
     }
 
