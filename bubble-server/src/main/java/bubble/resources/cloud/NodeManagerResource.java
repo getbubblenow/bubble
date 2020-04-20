@@ -179,6 +179,13 @@ public class NodeManagerResource {
         return callNodeManager(request, "service");
     }
 
+    @POST @Path("/redis/{key}")
+    public Response readRedisKey (@Context ContainerRequest ctx,
+                                  @PathParam("key") String key) {
+        final HttpRequestBean request = validateNodeManagerRequest(ctx, "redis/"+key);
+        return callNodeManager(request, "redis");
+    }
+
     @POST @Path("/patch/file/{component}/{path : .+}")
     @Consumes(MULTIPART_FORM_DATA)
     public Response patchFile (@Context ContainerRequest ctx,
