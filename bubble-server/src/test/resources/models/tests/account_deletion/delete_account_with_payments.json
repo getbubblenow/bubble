@@ -134,6 +134,17 @@
     "comment": "look up for deleted account's payment methods - none",
     "request": { "uri": "users/{{testAccount.uuid}}/paymentMethods" },
     "response": { "check": [{ "condition": "len(json) === 0" }] }
+  },
+
+  {
+    "comment": "try deleting the same account again - expect fully deletion this time even without policy",
+    "request": { "uri": "users/{{testAccount.uuid}}", "method": "delete" }
+  },
+
+  {
+    "comment": "lookup user, expect there's no such user now",
+    "request": { "uri": "users/{{testAccount.uuid}}" },
+    "response": { "status": 404 }
   }
 
   // test continues within Java's JUnit test as there are not resource methods implemented for archived payment data

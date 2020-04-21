@@ -5,14 +5,15 @@
 package bubble.test.system;
 
 import bubble.dao.account.AccountDAO;
+import bubble.model.account.Account;
 import bubble.model.bill.AccountPayment;
 import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.Bill;
 import bubble.test.ActivatedBubbleModelTestBase;
-import org.cobbzilla.wizard.model.HashedPassword;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class AccountDeletionTest extends ActivatedBubbleModelTestBase {
 
@@ -30,13 +31,9 @@ public class AccountDeletionTest extends ActivatedBubbleModelTestBase {
         final var accountDAO = getBean(AccountDAO.class);
 
         final var deletedAccounts = accountDAO.findDeleted();
-        // there should be just 1 deleted account - finding it by corresponding hashed password value:
-        assertEquals("Wrong number of deleted accounts found", 1, deletedAccounts.size());
-        final var deletedAccount = deletedAccounts.get(0);
-        assertEquals("Deleted account has wrong hashed password",
-                     HashedPassword.DELETED.getHashedPassword(),
-                     deletedAccount.getHashedPassword().getHashedPassword());
-        assertTrue("Account found with 'deleted' password is not marked as deleted", deletedAccount.deleted());
+        // the account was fully deleted at the end of the JSON test
+        assertEquals("Wrong number of deleted accounts found", 0, deletedAccounts.size());
+        final var deletedAccount = (Account) modelTestCtx.get("testAccount");
 
         // there should be just 1 archived payment info records corresponding to that 1 deleted account
         assertEquals("Archived payments record not created for deleted user", 1, archivedInfoDAO.countAll().intValue());

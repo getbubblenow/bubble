@@ -350,8 +350,8 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         // stash the deletion policy for later use, the policy object will be deleted in deleteDependencies
         final var deletionPolicy = policyDAO.findSingleByAccount(uuid).getDeletionPolicy();
 
-        // archive all payment data for the account
-        configuration.getBean(AccountPaymentArchivedDAO.class).createForAccount(uuid);
+        // archive all payment data for the account just on the first deletion request:
+        configuration.getBean(AccountPaymentArchivedDAO.class).createForAccount(account);
 
         log.info("delete: starting to delete account-dependent objects - " + currentThread().getName());
         configuration.deleteDependencies(account);
