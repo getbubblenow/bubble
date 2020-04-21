@@ -45,7 +45,7 @@ public class AccountPaymentArchived extends IdentifiableBase {
 
     @ECSearchable @ECField(index=20, type=EntityFieldType.opaque_string)
     @Type(type=ENCRYPTED_STRING)
-    @Column(updatable=false, nullable=false)
+    @Column(updatable=false, nullable=false, columnDefinition="varchar") // no length limit
     @JsonIgnore @Getter @Setter private String billsJson;
 
     @Transient public Bill[] getBills() { return json(billsJson, Bill[].class); }
@@ -53,7 +53,7 @@ public class AccountPaymentArchived extends IdentifiableBase {
 
     @ECSearchable @ECField(index=30)
     @Type(type=ENCRYPTED_STRING)
-    @Column(updatable=false, nullable=false)
+    @Column(updatable=false, nullable=false, columnDefinition="varchar") // no length limit
     @JsonIgnore @Getter @Setter private String paymentsJson;
 
     @Transient public AccountPayment[] getPayments() { return json(paymentsJson, AccountPayment[].class); }
@@ -63,7 +63,7 @@ public class AccountPaymentArchived extends IdentifiableBase {
 
     @ECSearchable @ECField(index=40)
     @Type(type=ENCRYPTED_STRING)
-    @Column(updatable=false, nullable=false)
+    @Column(updatable=false, nullable=false, columnDefinition="varchar") // no length limit
     @JsonIgnore @Getter @Setter private String paymentMethodsJson;
 
     @Transient public AccountPaymentMethod[] getPaymentMethods() {
