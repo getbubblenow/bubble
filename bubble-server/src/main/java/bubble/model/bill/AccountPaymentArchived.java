@@ -22,7 +22,6 @@ import java.util.List;
 import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
-import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @ECType(root=true) @ECTypeCreate(method="DISABLED")
 @ECTypeURIs(listFields={"accountName", "paymentMethodMaskedInfo", "amount"})
@@ -39,8 +38,7 @@ public class AccountPaymentArchived extends IdentifiableBase {
     }
 
     @ECSearchable @ECField(index=10, type=EntityFieldType.opaque_string)
-    @Type(type=ENCRYPTED_STRING)
-    @Column(updatable=false, columnDefinition="varchar(" + (UUID_MAXLEN + ENC_PAD) + ") NOT NULL")
+    @ECIndex(unique=true) @Column(updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String accountUuid;
 
     @ECSearchable @ECField(index=20, type=EntityFieldType.opaque_string)
