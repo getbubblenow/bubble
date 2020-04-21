@@ -16,7 +16,6 @@ import bubble.dao.cloud.CloudServiceDAO;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.*;
 import bubble.model.app.*;
-import bubble.model.bill.Bill;
 import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
@@ -69,7 +68,6 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private AccountMessageDAO messageDAO;
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private SelfNodeService selfNodeService;
-    @Autowired private BillDAO billDAO;
     @Autowired private SearchService searchService;
     @Autowired private ReferralCodeDAO referralCodeDAO;
 
@@ -331,7 +329,8 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         final var account = findByUuid(uuid);
 
         // cannot delete account with unpaid bills
-        final List<Bill> unpaid = billDAO.findUnpaidByAccount(uuid);
+        final var billDAO = configuration.getBean(BillDAO.class);
+        final var unpaid = billDAO.findUnpaidByAccount(uuid);
         if (!unpaid.isEmpty()) {
             throw invalidEx("err.delete.unpaidBills",
                             "cannot delete account with unpaid bills: " + uuid + " - " + unpaid.size(),
@@ -339,15 +338,15 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         }
 
         // for referral codes owned by us, set account to null, leave accountUuid in place
-        final List<ReferralCode> ownedCodes = referralCodeDAO.findByAccount(uuid);
-        for (ReferralCode c : ownedCodes) referralCodeDAO.update(c.setAccount(null));
+        final var ownedCodes = referralCodeDAO.findByAccount(uuid);
+        for (var c : ownedCodes) referralCodeDAO.update(c.setAccount(null));
 
         // for referral a code we used, set usedBy to null, leave usedByUuid in place
-        final ReferralCode usedCode = referralCodeDAO.findCodeUsedBy(uuid);
+        final var usedCode = referralCodeDAO.findCodeUsedBy(uuid);
         if (usedCode != null) referralCodeDAO.update(usedCode.setClaimedBy(null));
 
         // stash the deletion policy for later use, the policy object will be deleted in deleteDependencies
-        final AccountDeletionPolicy deletionPolicy = policyDAO.findSingleByAccount(uuid).getDeletionPolicy();
+        final var deletionPolicy = policyDAO.findSingleByAccount(uuid).getDeletionPolicy();
 
         log.info("delete ("+currentThread().getName()+"): starting to delete account-dependent objects");
         configuration.deleteDependencies(account);
