@@ -5,6 +5,9 @@
 package bubble.test.system;
 
 import bubble.dao.account.AccountDAO;
+import bubble.model.bill.AccountPayment;
+import bubble.model.bill.AccountPaymentMethod;
+import bubble.model.bill.Bill;
 import bubble.test.ActivatedBubbleModelTestBase;
 import org.cobbzilla.wizard.model.HashedPassword;
 import org.junit.Test;
@@ -22,9 +25,10 @@ public class AccountDeletionTest extends ActivatedBubbleModelTestBase {
         final var archivedInfoDAO = getBean(bubble.dao.bill.AccountPaymentArchivedDAO.class);
         assertEquals("Starting database contains some archived payments", 0, archivedInfoDAO.countAll().intValue());
 
-        modelTest("account_deletion/delete_account_with_payments");
+        final var modelTestCtx = modelTest("account_deletion/delete_account_with_payments");
 
         final var accountDAO = getBean(AccountDAO.class);
+
         final var deletedAccounts = accountDAO.findDeleted();
         // there should be just 1 deleted account - finding it by corresponding hashed password value:
         assertEquals("Wrong number of deleted accounts found", 1, deletedAccounts.size());
@@ -42,14 +46,19 @@ public class AccountDeletionTest extends ActivatedBubbleModelTestBase {
 
         final var archivedBills = archivedInfo.getBills();
         assertEquals("Only 1 bill should be in for deleted account", 1, archivedBills.length);
+        assertEquals("Wrong bill archived", ((Bill[]) modelTestCtx.get("bills"))[0], archivedBills[0]);
 
         final var archivedPayments = archivedInfo.getPayments();
         assertEquals("Only 1 payment should be in for deleted account", 1, archivedPayments.length);
+        assertEquals("Wrong payment archived",
+                     ((AccountPayment[]) modelTestCtx.get("payments"))[0], archivedPayments[0]);
         assertEquals("Archived payment should be for archived bill",
                      archivedBills[0].getUuid(), archivedPayments[0].getBill());
 
         final var archivedPaymentMethods = archivedInfo.getPaymentMethods();
         assertEquals("Only 1 payment method should be in for deleted account", 1, archivedPaymentMethods.length);
+        assertEquals("Wrong payment method archived",
+                     ((AccountPaymentMethod[]) modelTestCtx.get("paymentMethods"))[0], archivedPaymentMethods[0]);
         assertEquals("Archived payment method should be for used within archived payment",
                      archivedPayments[0].getPaymentMethod(), archivedPaymentMethods[0].getUuid());
     }

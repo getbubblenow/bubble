@@ -16,6 +16,7 @@ import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
 import lombok.Cleanup;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
@@ -70,13 +71,15 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
 
     @Override protected String[] getSqlPostScripts() { return hasExistingDb ? null : super.getSqlPostScripts(); }
 
-    @Override protected void modelTest(final String name, ApiRunner apiRunner) throws Exception {
+    @Override @NonNull
+    protected Map<String, Object> modelTest(final String name, ApiRunner apiRunner) throws Exception {
         getApi().logout();
         final Account root = getApi().post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_USERNAME, ROOT_PASSWORD), Account.class);
         if (empty(root.getToken())) die("modelTest: error logging in root user (was MFA configured in a previous test?): "+json(root));
         getApi().pushToken(root.getToken());
         apiRunner.addNamedSession(ROOT_SESSION, root.getToken());
         apiRunner.run(include(name));
+        return apiRunner.getContext();
     }
 
     @Override public void onStart(RestServer<BubbleConfiguration> server) {

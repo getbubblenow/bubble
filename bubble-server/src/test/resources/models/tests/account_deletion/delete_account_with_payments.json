@@ -88,6 +88,7 @@
     "comment": "verify account payment methods, should be one",
     "request": { "uri": "users/{{testAccount.uuid}}/paymentMethods" },
     "response": {
+      "store": "paymentMethods",
       "check": [
         { "condition": "len(json) === 1" },
         { "condition": "json[0].getPaymentMethodType().name() === 'free'" },
