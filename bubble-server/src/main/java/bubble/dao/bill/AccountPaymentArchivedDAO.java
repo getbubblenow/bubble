@@ -22,4 +22,15 @@ public class AccountPaymentArchivedDAO
     public AccountPaymentArchived findByAccountUuid(@NonNull final String accountUuid) {
         return findByUniqueField("accountUuid", accountUuid);
     }
+
+    @NonNull public AccountPaymentArchived createForAccount(@NonNull final String accountUuid) {
+        final var allBills = getConfiguration().getBean(BillDAO.class).findByAccount(accountUuid);
+        final var allPayments = getConfiguration().getBean(AccountPaymentDAO.class).findByAccount(accountUuid);
+        final var allMethods = getConfiguration().getBean(AccountPaymentMethodDAO.class).findByAccount(accountUuid);
+
+        return create(new AccountPaymentArchived().setAccountUuid(accountUuid)
+                                                  .setBills(allBills)
+                                                  .setPayments(allPayments)
+                                                  .setPaymentMethods(allMethods));
+    }
 }

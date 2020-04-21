@@ -8,6 +8,7 @@ import bubble.cloud.CloudServiceDriver;
 import bubble.cloud.compute.ComputeNodeSizeType;
 import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.app.*;
+import bubble.dao.bill.AccountPaymentArchivedDAO;
 import bubble.dao.bill.BillDAO;
 import bubble.dao.cloud.AnsibleRoleDAO;
 import bubble.dao.cloud.BubbleDomainDAO;
@@ -348,6 +349,9 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
 
         // stash the deletion policy for later use, the policy object will be deleted in deleteDependencies
         final var deletionPolicy = policyDAO.findSingleByAccount(uuid).getDeletionPolicy();
+
+        // archive all payment data for the account
+        configuration.getBean(AccountPaymentArchivedDAO.class).createForAccount(uuid);
 
         log.info("delete: starting to delete account-dependent objects - " + currentThread().getName());
         configuration.deleteDependencies(account);

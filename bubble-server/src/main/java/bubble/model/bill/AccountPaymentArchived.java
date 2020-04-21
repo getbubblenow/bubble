@@ -6,7 +6,7 @@ package bubble.model.bill;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
-import lombok.NonNull;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.model.IdentifiableBase;
@@ -25,17 +25,8 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 
 @ECType(root=true) @ECTypeCreate(method="DISABLED")
 @ECTypeURIs(listFields={"accountName", "paymentMethodMaskedInfo", "amount"})
-@Entity @Accessors(chain=true)
+@Entity @Accessors(chain=true) @NoArgsConstructor
 public class AccountPaymentArchived extends IdentifiableBase {
-
-    public AccountPaymentArchived(@NonNull final String accountUuid, @NonNull final List<Bill> bills,
-                                  @NonNull final List<AccountPayment> payments,
-                                  @NonNull final List<AccountPaymentMethod> paymentMethods) {
-        this.setAccountUuid(accountUuid)
-            .setBills(bills)
-            .setPayments(payments)
-            .setPaymentMethods(paymentMethods);
-    }
 
     @ECSearchable @ECField(index=10, type=EntityFieldType.opaque_string)
     @ECIndex(unique=true) @Column(updatable=false, length=UUID_MAXLEN)
