@@ -29,7 +29,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 public class AccountPaymentArchived extends IdentifiableBase {
 
     @ECSearchable @ECField(index=10, type=EntityFieldType.opaque_string)
-    @ECIndex(unique=true) @Column(updatable=false, length=UUID_MAXLEN)
+    @ECIndex(unique=true) @Column(unique=true, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String accountUuid;
 
     @ECSearchable @ECField(index=20, type=EntityFieldType.opaque_string)
