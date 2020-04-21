@@ -24,7 +24,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 
 @ECType(root=true) @ECTypeCreate(method="DISABLED")
-@ECTypeURIs(listFields={"accountName", "paymentMethodMaskedInfo", "amount"})
+@ECTypeURIs(listFields={"accountUuid", "ctime"})
 @Entity @Accessors(chain=true) @NoArgsConstructor
 public class AccountPaymentArchived extends IdentifiableBase {
 
