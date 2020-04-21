@@ -29,13 +29,6 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 @Entity @Accessors(chain=true)
 public class AccountPaymentArchived extends IdentifiableBase {
 
-    /**
-     * List of properties from AccountPayment class which will not be used in this class the same way. Those foreign
-     * keys (uuids) will not be available within referenced tables, and so here the other unique data from those
-     * elements is extracted.
-     */
-    private static final String[] ALTERED_FIELDS = { "account", "paymentMethod", "plan", "accountPlan", "bill" };
-
     public AccountPaymentArchived(@NonNull final String accountUuid, @NonNull final List<Bill> bills,
                                   @NonNull final List<AccountPayment> payments,
                                   @NonNull final List<AccountPaymentMethod> paymentMethods) {

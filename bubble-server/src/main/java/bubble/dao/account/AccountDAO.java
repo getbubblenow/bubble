@@ -348,23 +348,24 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         // stash the deletion policy for later use, the policy object will be deleted in deleteDependencies
         final var deletionPolicy = policyDAO.findSingleByAccount(uuid).getDeletionPolicy();
 
-        log.info("delete ("+currentThread().getName()+"): starting to delete account-dependent objects");
+        log.info("delete: starting to delete account-dependent objects - " + currentThread().getName());
         configuration.deleteDependencies(account);
-        log.info("delete: finished deleting account-dependent objects");
+        log.info("delete: finished deleting account-dependent objects - " + currentThread().getName());
 
         switch (deletionPolicy) {
             case full_delete:
                 super.delete(uuid);
                 return;
-            case block_delete: default:
+            default:
+                // includes case block_delete
                 update(account.setParent(null)
-                        .setAdmin(null)
-                        .setSuspended(null)
-                        .setDescription(null)
-                        .setDeleted()
-                        .setUrl(null)
-                        .setAutoUpdatePolicy(EMPTY_AUTO_UPDATE_POLICY)
-                        .setHashedPassword(HashedPassword.DELETED));
+                              .setAdmin(null)
+                              .setSuspended(null)
+                              .setDescription(null)
+                              .setDeleted()
+                              .setUrl(null)
+                              .setAutoUpdatePolicy(EMPTY_AUTO_UPDATE_POLICY)
+                              .setHashedPassword(HashedPassword.DELETED));
                 return;
         }
     }
