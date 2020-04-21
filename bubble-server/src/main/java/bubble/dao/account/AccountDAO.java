@@ -48,6 +48,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
 import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_ASC;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.hibernate.criterion.Restrictions.isNotNull;
 
 @Repository @Slf4j
 public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearchableDAO<Account> {
@@ -425,4 +426,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         }
     }
 
+    @NonNull public List<Account> findDeleted() {
+        return list(criteria().add(isNotNull("deleted")));
+    }
 }
