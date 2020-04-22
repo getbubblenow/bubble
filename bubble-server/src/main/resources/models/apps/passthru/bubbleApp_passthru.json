@@ -57,7 +57,7 @@
       "config": {
         "fqdnList": [],
         "feedList": [{
-          "feedUrl": "https://raw.githubusercontent.com/bubblev/bubble-filter-lists/master/tls_passthru.txt"
+          "feedUrl": "https://raw.githubusercontent.com/getbubblenow/bubble-filter-lists/master/tls_passthru.txt"
         }]
       }
     }],
