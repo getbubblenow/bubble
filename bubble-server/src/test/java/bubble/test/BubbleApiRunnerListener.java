@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2020 Bubble, Inc.  All rights reserved.
- * For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
+ * For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
  */
 package bubble.test;
 
@@ -102,7 +102,7 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
                 .stream().filter(c -> c.usesDriver(StripePaymentDriver.class))
                 .findFirst().orElse(null);
         if (stripe == null) {
-            die("afterScript: no cloud found with driverClass=" + StripePaymentDriver.class.getName());
+            die("stripTokenizeCard: no cloud found with driverClass=" + StripePaymentDriver.class.getName());
             return;
         }
         stripe.getPaymentDriver(configuration);
@@ -118,7 +118,7 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
             final Token token = Token.create(tokenParams);
             ctx.put(CTX_STRIPE_TOKEN, token.getId());
         } catch (Exception e) {
-            die("afterScript: error creating Stripe token: " + e);
+            die("stripTokenizeCard: error creating Stripe token: " + e);
         }
     }
 

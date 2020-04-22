@@ -1,7 +1,7 @@
 [{
   "name": "TlsPassthru",
   "description": "Do not perform SSL interception for certificate-pinned domains",
-  "url": "https://bubblev.com/apps/passthru",
+  "url": "https://getbubblenow.com/apps/passthru",
   "template": true,
   "enabled": true,
   "priority": 1000000,

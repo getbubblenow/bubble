@@ -1,3 +1,7 @@
+/**
+ * Copyright (c) 2020 Bubble, Inc.  All rights reserved.
+ * For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+ */
 package bubble.resources.cloud;
 
 import bubble.dao.cloud.BubbleNodeDAO;
@@ -173,6 +177,13 @@ public class NodeManagerResource {
         final HttpRequestBean request = validateNodeManagerRequest(ctx, "service/"+service+"/"+action)
                 .setMethod(HttpMethods.POST);
         return callNodeManager(request, "service");
+    }
+
+    @POST @Path("/redis/{key}")
+    public Response readRedisKey (@Context ContainerRequest ctx,
+                                  @PathParam("key") String key) {
+        final HttpRequestBean request = validateNodeManagerRequest(ctx, "redis/"+key);
+        return callNodeManager(request, "redis");
     }
 
     @POST @Path("/patch/file/{component}/{path : .+}")

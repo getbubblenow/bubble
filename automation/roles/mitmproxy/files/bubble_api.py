@@ -1,11 +1,15 @@
 #
-# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
 import requests
 import traceback
 import sys
 import os
+import time
+import uuid
 import datetime
+import redis
+import json
 from bubble_config import bubble_network, bubble_port
 
 # Write python PID to file so that mitmdump_monitor.sh can check for excessive memory usage and restart if needed
@@ -25,8 +29,31 @@ CTX_CONTENT_LENGTH='X-Bubble-Content-Length'
 CTX_CONTENT_LENGTH_SENT='X-Bubble-Content-Length-Sent'
 BUBBLE_URI_PREFIX='/__bubble/'
 
+REDIS = redis.Redis(host='127.0.0.1', port=6379, db=0)
+BUBBLE_ACTIVITY_LOG_PREFIX = 'bubble_activity_log_'
+BUBBLE_ACTIVITY_LOG_EXPIRATION = 600
+
+def redis_set(name, value, ex):
+    REDIS.set(name, value, nx=True, ex=ex)
+    REDIS.set(name, value, xx=True, ex=ex)
+
+
 def bubble_log(message):
     print(str(datetime.datetime.time(datetime.datetime.now()))+': ' + message, file=sys.stderr)
+
+
+def bubble_activity_log(client_addr, server_addr, event, data):
+    key = BUBBLE_ACTIVITY_LOG_PREFIX + str(time.time() * 1000.0) + '_' + str(uuid.uuid4())
+    value = json.dumps({
+        'source': 'mitmproxy',
+        'client_addr': client_addr,
+        'server_addr': server_addr,
+        'event': event,
+        'data': data
+    })
+    bubble_log('bubble_activity_log: setting '+key+' = '+value)
+    redis_set(key, value, BUBBLE_ACTIVITY_LOG_EXPIRATION)
+    pass
 
 
 def bubble_passthru(remote_addr, addr, fqdn):

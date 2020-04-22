@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2020 Bubble, Inc.  All rights reserved.
- * For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
+ * For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
  */
 package bubble.main.http;
 
@@ -15,6 +15,7 @@ import java.io.InputStream;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpContentTypes.MULTIPART_FORM_DATA;
 import static org.cobbzilla.util.json.JsonUtil.*;
 
 @Slf4j
@@ -22,12 +23,14 @@ public class BubbleHttpEntityOptions extends BubbleHttpOptions {
 
     public String getRequestJson() {
         final String data = readStdin();
-        // does the JSON contain any comments? scrub them before sending...
-        if (data.contains("//") || data.contains("/*")) {
-            try {
-                return json(json(data, JsonNode.class, FULL_MAPPER_ALLOW_COMMENTS), COMPACT_MAPPER);
-            } catch (Exception e) {
-                log.warn("getRequestJson: error scrubbing comments from JSON, sending as-is: " + shortError(e));
+        if (getContentType().equals(APPLICATION_JSON)) {
+            // does the JSON contain any comments? scrub them before sending...
+            if (data.contains("//") || data.contains("/*")) {
+                try {
+                    return json(json(data, JsonNode.class, FULL_MAPPER_ALLOW_COMMENTS), COMPACT_MAPPER);
+                } catch (Exception e) {
+                    log.warn("getRequestJson: error scrubbing comments from JSON, sending as-is: " + shortError(e));
+                }
             }
         }
         return data;
@@ -43,11 +46,16 @@ public class BubbleHttpEntityOptions extends BubbleHttpOptions {
     public boolean hasMultipartFileName() { return !empty(multipartFileName); }
 
 
-    public static final String USAGE_CONTENT_TYPE = "Content-Type to send. Default is application/json";
+    public static final String USAGE_CONTENT_TYPE = "Content-Type to send. Default is application/json, or multipart/form-data for multipart requests";
     public static final String OPT_CONTENT_TYPE = "-C";
     public static final String LONGOPT_CONTENT_TYPE= "--content-type";
     @Option(name=OPT_CONTENT_TYPE, aliases=LONGOPT_CONTENT_TYPE, usage=USAGE_CONTENT_TYPE)
-    @Getter @Setter private String contentType = APPLICATION_JSON;
+    @Setter private String contentType = null;
+    public String getContentType () {
+        if (contentType != null) return contentType;
+        if (hasMultipartFileName()) return MULTIPART_FORM_DATA;
+        return APPLICATION_JSON;
+    }
 
     public ContentType contentType() { return ContentType.create(getContentType()); }
 

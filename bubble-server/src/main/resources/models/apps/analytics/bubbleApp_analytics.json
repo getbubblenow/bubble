@@ -1,7 +1,7 @@
 [{
   "name": "TrafficAnalytics",
   "description": "Traffic analytics for your Bubble",
-  "url": "https://bubblev.com/apps/analytics",
+  "url": "https://getbubblenow.com/apps/analytics",
   "template": true,
   "enabled": true,
   "priority": 100,

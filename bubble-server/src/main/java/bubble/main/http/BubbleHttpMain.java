@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2020 Bubble, Inc.  All rights reserved.
- * For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
+ * For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
  */
 package bubble.main.http;
 
@@ -18,11 +18,15 @@ import org.cobbzilla.wizard.util.RestResponse;
 
 import javax.ws.rs.core.HttpHeaders;
 
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.errorString;
+import static org.cobbzilla.util.http.HttpContentTypes.MULTIPART_FORM_DATA;
 import static org.cobbzilla.util.http.HttpStatusCodes.OK;
 import static org.cobbzilla.util.json.JsonUtil.prettyJson;
 
 public abstract class BubbleHttpMain<OPT extends BubbleHttpOptions> extends BubbleApiMain<OPT> {
+
+    public static final NameAndValue[] HEADER_CONTENT_TYPE_MULTIPART = {new NameAndValue(CONTENT_TYPE, MULTIPART_FORM_DATA)};
 
     protected abstract RestResponse request(String url) throws Exception;
 
@@ -48,7 +52,7 @@ public abstract class BubbleHttpMain<OPT extends BubbleHttpOptions> extends Bubb
             final BubbleHttpEntityOptions entityOptions = (options instanceof BubbleHttpEntityOptions) ? (BubbleHttpEntityOptions) options : null;
             if (entityOptions != null) {
                 if (entityOptions.hasMultipartFileName()) {
-                    request = new HttpRequestBean(getMethod(), requestUrl, entityOptions.getRequestStream(), entityOptions.getMultipartFileName(), NameAndValue.EMPTY_ARRAY);
+                    request = new HttpRequestBean(getMethod(), requestUrl, entityOptions.getRequestStream(), entityOptions.getMultipartFileName(), HEADER_CONTENT_TYPE_MULTIPART);
                 } else {
                     request = new HttpRequestBean(getMethod(), requestUrl, entityOptions.getRequestJson());
                 }
@@ -59,7 +63,16 @@ public abstract class BubbleHttpMain<OPT extends BubbleHttpOptions> extends Bubb
             if (options.hasHttpBasicUser()) request.setAuthUsername(options.getHttpBasicUser());
             if (options.hasHttpBasicPassword()) request.setAuthPassword(options.getHttpBasicPassword());
             if (entityOptions != null && entityOptions.hasMultipartFileName()) {
-                IOUtils.copyLarge(getApiClient().uploadMultipartStream(request, entityOptions.getMultipartFileName()), System.out);
+                RestResponse response = getApiClient().uploadStream(options.getUrl(), entityOptions.getRequestStream(), entityOptions.getMultipartFileName(), getMethod());
+                if (response.status == OK) {
+                    try {
+                        out(prettyJson(response.json));
+                    } catch (Exception e) {
+                        out(response.json);
+                    }
+                } else {
+                    error(response, null, "unexpected status");
+                }
             } else {
                 IOUtils.copyLarge(getApiClient().getStream(request), System.out);
             }
@@ -68,7 +81,11 @@ public abstract class BubbleHttpMain<OPT extends BubbleHttpOptions> extends Bubb
             try {
                 response = request(requestUrl);
                 if (response.status == OK) {
-                    out(prettyJson(response.json));
+                    try {
+                        out(prettyJson(response.json));
+                    } catch (Exception e) {
+                        out(response.json);
+                    }
                 } else {
                     error(response, null, "unexpected status");
                 }

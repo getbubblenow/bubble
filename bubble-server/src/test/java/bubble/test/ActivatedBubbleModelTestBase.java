@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2020 Bubble, Inc.  All rights reserved.
- * For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
+ * For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
  */
 package bubble.test;
 
@@ -71,8 +71,7 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
 
     @Override protected String[] getSqlPostScripts() { return hasExistingDb ? null : super.getSqlPostScripts(); }
 
-    @Override @NonNull
-    protected Map<String, Object> modelTest(final String name, ApiRunner apiRunner) throws Exception {
+    @Override protected @NonNull Map<String, Object> modelTest(final String name, ApiRunner apiRunner) throws Exception {
         getApi().logout();
         final Account root = getApi().post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_USERNAME, ROOT_PASSWORD), Account.class);
         if (empty(root.getToken())) die("modelTest: error logging in root user (was MFA configured in a previous test?): "+json(root));

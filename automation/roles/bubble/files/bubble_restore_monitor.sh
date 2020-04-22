@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://bubblev.com/bubble-license/
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
 BUBBLE_HOME="/home/bubble"
 RESTORE_MARKER="${BUBBLE_HOME}/.restore"
