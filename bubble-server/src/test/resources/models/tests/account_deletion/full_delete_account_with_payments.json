@@ -99,45 +99,23 @@
   },
 
   {
-    "comment": "now (block) delete the account",
+    "comment": "look up that account's policy",
+    "request": { "uri": "users/{{testAccount.uuid}}/policy" },
+    "response": { "store": "policy", "check": [{ "condition": "len(json.getAccountContacts()) == 1" }] }
+  },
+
+  {
+    "comment": "set deletion policy to full_delete for that account",
     "request": {
-      "uri": "users/{{testAccount.uuid}}",
-      "method": "delete"
-    }
+      "uri": "users/{{testAccount.uuid}}/policy",
+      "data": "policy",
+      "entity": { "deletionPolicy": "full_delete" }
+    },
+    "response": { "store": "policy", "check": [{ "condition": "json.getDeletionPolicy().name() == 'full_delete'" }] }
   },
 
   {
-    "comment": "lookup user, expect that it is still there, just marked as deleted",
-    "request": { "uri": "users/{{testAccount.uuid}}" },
-    "response": {
-      "check": [
-        { "condition": "json.getUuid() === testAccount.getUuid()" },
-        { "condition": "json.getName() === testAccount.getName()" },
-        { "condition": "json.deleted()" }
-      ]
-    }
-  },
-
-  {
-    "comment": "look up for deleted account's bills - none",
-    "request": { "uri": "users/{{testAccount.uuid}}/bills" },
-    "response": { "check": [{ "condition": "len(json) === 0" }] }
-  },
-
-  {
-    "comment": "look up for deleted account's payments - none",
-    "request": { "uri": "users/{{testAccount.uuid}}/payments" },
-    "response": { "check": [{ "condition": "len(json) === 0" }] }
-  },
-
-  {
-    "comment": "look up for deleted account's payment methods - none",
-    "request": { "uri": "users/{{testAccount.uuid}}/paymentMethods" },
-    "response": { "check": [{ "condition": "len(json) === 0" }] }
-  },
-
-  {
-    "comment": "try deleting the same account again - expect fully deletion this time even without policy",
+    "comment": "now (full) delete the account",
     "request": { "uri": "users/{{testAccount.uuid}}", "method": "delete" }
   },
 
