@@ -108,7 +108,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     @ECSearchable(filter=true) @ECField(index=10)
     @HasValue(message="err.name.required")
-    @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=100)
+    @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=NAME_MAX_LENGTH)
     @Getter private String name;
     public Account setName (String n) { this.name = n == null ? null : n.toLowerCase(); return this; }
     public boolean hasName () { return !empty(name); }

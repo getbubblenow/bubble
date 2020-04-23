@@ -30,6 +30,8 @@ import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySe
 })
 public class Bill extends IdentifiableBase implements HasAccountNoName {
 
+    public static final int PERIOD_FIELDS_MAX_LENGTH = 20;
+
     @ECSearchable(fkDepth=shallow) @ECField(index=10)
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
@@ -53,15 +55,15 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     public boolean unpaid() { return !paid(); }
 
     @ECSearchable @ECField(index=50, type=EntityFieldType.opaque_string)
-    @Column(nullable=false, updatable=false, length=20)
+    @Column(nullable=false, updatable=false, length=PERIOD_FIELDS_MAX_LENGTH)
     @ECIndex @Getter @Setter private String periodLabel;
 
     @ECSearchable @ECField(index=60, type=EntityFieldType.opaque_string)
-    @Column(nullable=false, updatable=false, length=20)
+    @Column(nullable=false, updatable=false, length=PERIOD_FIELDS_MAX_LENGTH)
     @Getter @Setter private String periodStart;
 
     @ECSearchable @ECField(index=70, type=EntityFieldType.opaque_string)
-    @Column(nullable=false, updatable=false, length=20)
+    @Column(nullable=false, updatable=false, length=PERIOD_FIELDS_MAX_LENGTH)
     @Getter @Setter private String periodEnd;
 
     public int daysInPeriod () { return BillPeriod.daysInPeriod(periodStart, periodEnd); }

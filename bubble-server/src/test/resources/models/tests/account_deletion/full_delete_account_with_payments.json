@@ -1,0 +1,129 @@
+[
+  {
+    "comment": "create a user account",
+    "request": {
+      "uri": "users",
+      "method": "put",
+      "entity": {
+        "name": "user_with_payment_to_delete",
+        "password": "password1!",
+        "agreeToTerms": true,
+        "contact": { "type": "email", "info": "user_with_payment_to_delete@example.com" }
+      }
+    },
+    "response": { "store": "testAccount" }
+  },
+
+  {
+    "comment": "login as new user",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": { "name": "{{ testAccount.name }}", "password": "password1!" }
+    },
+    "response": {
+      "store": "testAccount",
+      "sessionName": "userSession",
+      "session": "token"
+    }
+  },
+
+  {
+    "comment": "get plans",
+    "request": { "uri": "plans" },
+    "response": { "store": "plans", "check": [{ "condition": "len(json) >= 1" }] }
+  },
+
+  {
+    "comment": "add plan, using 'free' payment method",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {
+        "name": "test-net-{{rand 5}}",
+        "domain": "{{defaultDomain}}",
+        "locale": "en_US",
+        "timezone": "EST",
+        "plan": "{{plans.[0].name}}",
+        "footprint": "US",
+        "paymentMethodObject": { "paymentMethodType": "free", "paymentInfo": "free" }
+      }
+    },
+    "response": { "store": "accountPlan" }
+  },
+
+  {
+    "comment": "as root, verify bill exists and is paid",
+    "before": "sleep 15s",
+    "request": { "session": "rootSession", "uri": "users/{{testAccount.uuid}}/bills" },
+    "response": {
+      "store": "bills",
+      "check": [
+        { "condition": "len(json) === 1" },
+        { "condition": "json[0].getPlan() === plans[0].getUuid()" },
+        { "condition": "json[0].getAccountPlan() === accountPlan.getUuid()" },
+        { "condition": "json[0].getTotal() === plans[0].getPrice()" },
+        { "condition": "json[0].getStatus().name() === 'paid'" }
+      ]
+    }
+  },
+
+  {
+    "comment": "verify payment exists and is successful",
+    "request": { "uri": "users/{{testAccount.uuid}}/payments" },
+    "response": {
+      "store": "payments",
+      "check": [
+        { "condition": "len(json) === 1" },
+        { "condition": "json[0].getPlan() === plans[0].getUuid()" },
+        { "condition": "json[0].getAccountPlan() === accountPlan.getUuid()" },
+        { "condition": "json[0].getAmount() === plans[0].getPrice()" },
+        { "condition": "json[0].getStatus().name() === 'success'" },
+        { "condition": "json[0].getBill() === bills[0].getUuid()" }
+      ]
+    }
+  },
+
+  {
+    "comment": "verify account payment methods, should be one",
+    "request": { "uri": "users/{{testAccount.uuid}}/paymentMethods" },
+    "response": {
+      "store": "paymentMethods",
+      "check": [
+        { "condition": "len(json) === 1" },
+        { "condition": "json[0].getPaymentMethodType().name() === 'free'" },
+        { "condition": "json[0].getMaskedPaymentInfo() === 'XXXXXXXX'" },
+        { "condition": "json[0].getUuid() === payments[0].getPaymentMethod()" }
+      ]
+    }
+  },
+
+  {
+    "comment": "look up that account's policy",
+    "request": { "uri": "users/{{testAccount.uuid}}/policy" },
+    "response": { "store": "policy", "check": [{ "condition": "len(json.getAccountContacts()) == 1" }] }
+  },
+
+  {
+    "comment": "set deletion policy to full_delete for that account",
+    "request": {
+      "uri": "users/{{testAccount.uuid}}/policy",
+      "data": "policy",
+      "entity": { "deletionPolicy": "full_delete" }
+    },
+    "response": { "store": "policy", "check": [{ "condition": "json.getDeletionPolicy().name() == 'full_delete'" }] }
+  },
+
+  {
+    "comment": "now (full) delete the account",
+    "request": { "uri": "users/{{testAccount.uuid}}", "method": "delete" }
+  },
+
+  {
+    "comment": "lookup user, expect there's no such user now",
+    "request": { "uri": "users/{{testAccount.uuid}}" },
+    "response": { "status": 404 }
+  }
+
+  // test continues within Java's JUnit test as there are not resource methods implemented for archived payment data
+]

@@ -147,8 +147,8 @@
   },
 
   {
-    "before": "sleep 15s",
     "comment": "verify account plans, should be one, verify enabled",
+    "before": "sleep 15s",
     "request": { "uri": "me/plans" },
     "response": {
       "check": [

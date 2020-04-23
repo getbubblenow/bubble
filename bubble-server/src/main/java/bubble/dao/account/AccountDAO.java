@@ -8,6 +8,7 @@ import bubble.cloud.CloudServiceDriver;
 import bubble.cloud.compute.ComputeNodeSizeType;
 import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.app.*;
+import bubble.dao.bill.AccountPaymentArchivedDAO;
 import bubble.dao.bill.BillDAO;
 import bubble.dao.cloud.AnsibleRoleDAO;
 import bubble.dao.cloud.BubbleDomainDAO;
@@ -16,13 +17,13 @@ import bubble.dao.cloud.CloudServiceDAO;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.*;
 import bubble.model.app.*;
-import bubble.model.bill.Bill;
 import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import bubble.service.SearchService;
 import bubble.service.boot.SelfNodeService;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.cache.Refreshable;
 import org.cobbzilla.wizard.dao.AbstractCRUDDAO;
@@ -48,6 +49,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
 import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_ASC;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.hibernate.criterion.Restrictions.isNotNull;
 
 @Repository @Slf4j
 public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearchableDAO<Account> {
@@ -68,7 +70,6 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private AccountMessageDAO messageDAO;
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private SelfNodeService selfNodeService;
-    @Autowired private BillDAO billDAO;
     @Autowired private SearchService searchService;
     @Autowired private ReferralCodeDAO referralCodeDAO;
 
@@ -311,51 +312,67 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         log.info("copyTemplates completed: "+acct);
     }
 
-    @Override public void delete(String uuid) {
-        final Account account = findByUuid(uuid);
-
+    @Override public void delete(@NonNull final String uuid) {
         // you cannot delete the account that owns the current network
-        if (account.getUuid().equals(configuration.getThisNetwork().getAccount())) {
-            throw invalidEx("err.delete.invalid", "cannot delete account ("+account.getUuid()+") that owns current network ("+configuration.getThisNetwork().getUuid()+")", account.getUuid());
+        if (uuid.equals(configuration.getThisNetwork().getAccount())) {
+            throw invalidEx("err.delete.invalid",
+                            "cannot delete account that owns current network: "
+                            + uuid + " - " + configuration.getThisNetwork().getUuid(),
+                            uuid);
         }
 
+        deleteTransactional(uuid);
+        searchService.flushCache(this);
+    }
+
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    private void deleteTransactional(@NonNull final String uuid) {
+        // loading, and actually checking if the account with given UUID exists
+        final var account = findByUuid(uuid);
+
         // cannot delete account with unpaid bills
-        final List<Bill> unpaid = billDAO.findUnpaidByAccount(uuid);
+        final var billDAO = configuration.getBean(BillDAO.class);
+        final var unpaid = billDAO.findUnpaidByAccount(uuid);
         if (!unpaid.isEmpty()) {
-            throw invalidEx("err.delete.unpaidBills", "cannot delete account ("+account.getUuid()+") with "+unpaid.size()+" unpaid bills", account.getUuid());
+            throw invalidEx("err.delete.unpaidBills",
+                            "cannot delete account with unpaid bills: " + uuid + " - " + unpaid.size(),
+                            uuid);
         }
 
         // for referral codes owned by us, set account to null, leave accountUuid in place
-        final List<ReferralCode> ownedCodes = referralCodeDAO.findByAccount(uuid);
-        for (ReferralCode c : ownedCodes) referralCodeDAO.update(c.setAccount(null));
+        final var ownedCodes = referralCodeDAO.findByAccount(uuid);
+        for (var c : ownedCodes) referralCodeDAO.update(c.setAccount(null));
 
         // for referral a code we used, set usedBy to null, leave usedByUuid in place
-        final ReferralCode usedCode = referralCodeDAO.findCodeUsedBy(uuid);
+        final var usedCode = referralCodeDAO.findCodeUsedBy(uuid);
         if (usedCode != null) referralCodeDAO.update(usedCode.setClaimedBy(null));
 
         // stash the deletion policy for later use, the policy object will be deleted in deleteDependencies
-        final AccountDeletionPolicy deletionPolicy = policyDAO.findSingleByAccount(uuid).getDeletionPolicy();
+        final var deletionPolicy = policyDAO.findSingleByAccount(uuid).getDeletionPolicy();
 
-        log.info("delete ("+currentThread().getName()+"): starting to delete account-dependent objects");
+        // archive all payment data for the account just on the first deletion request:
+        configuration.getBean(AccountPaymentArchivedDAO.class).createForAccount(account);
+
+        log.info("delete: starting to delete account-dependent objects - " + currentThread().getName());
         configuration.deleteDependencies(account);
-        log.info("delete: finished deleting account-dependent objects");
+        log.info("delete: finished deleting account-dependent objects - " + currentThread().getName());
 
         switch (deletionPolicy) {
             case full_delete:
                 super.delete(uuid);
-                break;
-            case block_delete: default:
+                return;
+            default:
+                // includes case block_delete
                 update(account.setParent(null)
-                        .setAdmin(null)
-                        .setSuspended(null)
-                        .setDescription(null)
-                        .setDeleted()
-                        .setUrl(null)
-                        .setAutoUpdatePolicy(EMPTY_AUTO_UPDATE_POLICY)
-                        .setHashedPassword(HashedPassword.DELETED));
-                break;
+                              .setAdmin(null)
+                              .setSuspended(null)
+                              .setDescription(null)
+                              .setDeleted()
+                              .setUrl(null)
+                              .setAutoUpdatePolicy(EMPTY_AUTO_UPDATE_POLICY)
+                              .setHashedPassword(HashedPassword.DELETED));
+                return;
         }
-        searchService.flushCache(this);
     }
 
     // once activated (any accounts exist), you can never go back
@@ -413,4 +430,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         }
     }
 
+    @NonNull public List<Account> findDeleted() {
+        return list(criteria().add(isNotNull("deleted")));
+    }
 }
