@@ -6,9 +6,9 @@ The request was made on {{format_epoch message.request.ctime 'MMM dd, YYYY' netw
 
 An approval was received via {{contact.type}} from {{contact.info}} {{#if contact.nick}}({{contact.nick}}){{/if}} on {{format_epoch message.ctime 'MMM dd, YYYY' network.timezone}} at {{format_epoch message.ctime 'hh:mm a, ZZZ' network.timezone}}.
 
-Follow the link below to view your network keys:
+Follow the link below to view your network keys ( code: {{message.requestId}} ):
 
-  {{publicUri}}/me/networks/{{network.name}}/actions/keys/{{message.requestId}}
+  {{publicUri}}/bubble/{{network.name}}?keys_code={{message.requestId}}
 
 This link will only work once, and only for the next 15 minutes.
 
