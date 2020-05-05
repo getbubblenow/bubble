@@ -5,6 +5,7 @@
 package bubble.service.account.download;
 
 import bubble.dao.account.message.AccountMessageDAO;
+import bubble.model.account.Account;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;
@@ -58,7 +59,20 @@ public class AccountDownloadService {
 
     public void cancel(String uuid) {
         getApprovedAccountData().del(uuid);
-        getAccountData().del(uuid);
+
+        final var userDataString = getAccountData().get(uuid);
+        if (userDataString != null) {
+            getAccountData().del(uuid);
+
+            final var userDataJson = json(userDataString, JsonNode.class);
+            Account account = null;
+            try {
+                account = json(userDataJson.get("Account").get(0).textValue(), Account.class);
+            } catch (Exception e) {
+                log.warn("cancel: cannot extract account UUID from account data for request: " + uuid);
+            }
+            if (account != null) { activeDownloads.remove(account.getUuid()); }
+        }
     }
 
     public void downloadAccountData(Request req,
