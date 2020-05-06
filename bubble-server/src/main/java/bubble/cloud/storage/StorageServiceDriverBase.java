@@ -13,6 +13,7 @@ import java.io.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
@@ -61,6 +62,8 @@ public abstract class StorageServiceDriverBase<T> extends CloudServiceDriverBase
                 requestMap.put(requestId, writeRequest);
                 try (OutputStream out = new FileOutputStream(f)) {
                     IOUtils.copyLarge(data, out);
+                } catch (IOException e) {
+                    return die("StorageServiceDriverBase._write: error: "+e);
                 }
             }
         }

@@ -39,7 +39,7 @@ import static org.cobbzilla.util.system.Sleep.sleep;
 @Service @Slf4j
 public class NotificationService {
 
-    public static final long SYNC_TIMEOUT = MINUTES.toMillis(5);
+    public static final long SYNC_TIMEOUT = MINUTES.toMillis(10);
     public static final long SYNC_WAIT_TIME = SECONDS.toMillis(2);
 
     @Autowired private SentNotificationDAO sentNotificationDAO;
