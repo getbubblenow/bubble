@@ -60,10 +60,17 @@ public abstract class StorageServiceDriverBase<T> extends CloudServiceDriverBase
                 f = new File(temp, "spooled");
                 writeRequest = new WriteRequest(temp, f, requestId);
                 requestMap.put(requestId, writeRequest);
+                long countBytes = 0;
                 try (OutputStream out = new FileOutputStream(f)) {
-                    IOUtils.copyLarge(data, out);
-                } catch (IOException e) {
-                    return die("StorageServiceDriverBase._write: error: "+e);
+                    countBytes = IOUtils.copyLarge(data, out);
+                } catch (IllegalStateException e) {
+                    if (e.getMessage().contains("timeout")) {
+                        if (countBytes == 0) {
+                            return die("StorageServiceDriverBase._write: error: " + e);
+                        }
+                    }
+                } catch (Exception e) {
+                    return die("StorageServiceDriverBase._write: error: " + e);
                 }
             }
         }
