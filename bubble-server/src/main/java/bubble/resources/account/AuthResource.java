@@ -567,12 +567,16 @@ public class AuthResource {
     @POST @Path(EP_LOGOUT+"/{id}")
     public Response logoutUserEverywhere(@Context ContainerRequest ctx,
                                          @PathParam("id") String id) {
-        final Account account = optionalUserPrincipal(ctx);
-        if (account == null) return invalid("err.logout.noSession");
-        if (!account.admin()) return forbidden();
+        final Account caller = optionalUserPrincipal(ctx);
+        if (caller == null) return invalid("err.logout.noSession");
         final Account target = accountDAO.findById(id);
-        if (target == null) return notFound(id);
-        sessionDAO.invalidateAllSessions(id);
+        if (target == null) {
+            if (caller.admin()) return notFound(id);
+            return forbidden();
+        } else if (!target.getUuid().equals(caller.getUuid())) {
+            return forbidden();
+        }
+        sessionDAO.invalidateAllSessions(target.getUuid());
         return ok_empty();
     }
 

@@ -126,7 +126,7 @@
       "session": "user1session",
       "uri": "me/networks/{{networks.[0].uuid}}/tags"
     },
-    "response": { "status": 403 }
+    "response": { "status": 401 }
   },
 
   {

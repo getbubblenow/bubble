@@ -51,7 +51,7 @@
   {
     "comment": "verify cannot read self after logout",
     "request": { "uri": "me" },
-    "response": { "status": 403 }
+    "response": { "status": 401 }
   }
 
 ]
