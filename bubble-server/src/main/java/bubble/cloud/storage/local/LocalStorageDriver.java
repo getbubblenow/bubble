@@ -153,7 +153,18 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
             }
         }
         @Cleanup final FileOutputStream out = new FileOutputStream(f);
-        IOUtils.copyLarge(data, out);
+        long countBytes = 0;
+        try {
+            IOUtils.copyLarge(data, out);
+        } catch (IllegalStateException e) {
+            if (e.getMessage().contains("timeout")) {
+                if (countBytes == 0) {
+                    return die("LocalStorageDriver._write: error: " + e);
+                }
+            }
+        } catch (Exception e) {
+            return die("LocalStorageDriver._write: error: " + e);
+        }
         if (fileSha == null) fileSha = sha256_file(f);
 
         // write meta-file
