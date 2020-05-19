@@ -20,7 +20,7 @@ import javax.persistence.*;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
-import static bubble.ApiConstants.BACKUPS_ENDPOINT;
+import static bubble.ApiConstants.EP_BACKUPS;
 import static bubble.ApiConstants.ERROR_MAXLEN;
 import static bubble.service.backup.BackupService.BR_STATE_LOCK_TIMEOUT;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
@@ -29,7 +29,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @ECType(root=true, name="backup") @ECTypeCreate(method="DISABLED")
-@ECTypeURIs(baseURI=BACKUPS_ENDPOINT, listFields={"network", "label", "path"})
+@ECTypeURIs(baseURI=EP_BACKUPS, listFields={"network", "label", "path"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({ @ECIndex(unique=true, of={"network", "path"}) })
 public class BubbleBackup extends IdentifiableBase implements HasAccount {

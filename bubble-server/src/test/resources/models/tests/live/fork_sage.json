@@ -23,7 +23,7 @@
       "uri": "auth/login",
       "entity": {
         "name": "root",
-        "password": "password1!"
+        "password": "{{sageRootPass}}"
       }
     },
     "response": {

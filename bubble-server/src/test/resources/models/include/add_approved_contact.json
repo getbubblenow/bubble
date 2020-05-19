@@ -31,7 +31,7 @@
 
   {
     "comment": "add <<contactType>> contact for user <<username>>",
-    "unless": "existingContact.getInfo() == '<<contactInfo>>'",
+    "unless": "existingContact.getUuid() != null",
     "request": {
       "session": "<<userSession>>",
       "uri": "users/<<username>>/policy/contacts",
@@ -47,7 +47,7 @@
 
   {
     "comment": "resend verification message for <<contactType>>/<<contactInfo>> for user <<username>>",
-    "onlyIf": "existingContact.getInfo() == '<<contactInfo>>'",
+    "onlyIf": "existingContact.getUuid() != null",
     "request": {
       "session": "<<userSession>>",
       "uri": "users/<<username>>/policy/contacts/verify",

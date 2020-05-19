@@ -22,7 +22,8 @@
       "region": "New Jersey",
       "bubbleConnectionVar": "bubbleConnection",
       "bubbleUserSessionVar": "bubbleUserSession",
-      "bubbleUserVar": "bubbleUserAccount"
+      "bubbleUserVar": "bubbleUserAccount",
+      "sendMetrics": null
     }
   },
 
@@ -94,8 +95,47 @@
   },
 
   {
+    "comment": "add email contact for the new user, if not already present",
+    "include": "add_approved_contact",
+    "params": {
+      "username": "<<username>>",
+      "userSession": "<<userSessionVar>>",
+      "userConnection": "<<sageConnectionVar>>",
+      "rootSession": "rootSession",
+      "rootConnection": "<<sageConnectionVar>>",
+      "contactInfo": "<<email>>",
+      "contactLookup": "<<email>>",
+      "authFactor": "not_required"
+    }
+  },
+
+  {
+    "comment": "list all payment methods",
+    "request": { "uri": "me/paymentMethods?all=true" },
+    "response": { "store": "paymentMethods" }
+  },
+
+  {
+    "comment": "add payment method for the user",
+    "onlyIf": "len(paymentMethods) == 0",
+    "before": "stripe_tokenize_card",
+    "request": {
+      "uri": "me/paymentMethods",
+      "method": "put",
+      "entity": { "paymentMethodType": "credit", "paymentInfo": "{{stripeToken}}" }
+    }
+  },
+
+  {
+    "comment": "list all payment methods again after creating one",
+    "onlyIf": "len(paymentMethods) == 0",
+    "request": { "uri": "me/paymentMethods?all=true" },
+    "response": { "store": "paymentMethods", "check": [{ "condition": "len(json) == 1" }] }
+  },
+
+  {
+    "comment": "add plan, using the first found payment method for the new bubble",
     "before": "sleep 24s",
-    "comment": "add plan",
     "request": {
       "uri": "me/plans",
       "method": "put",
@@ -105,12 +145,12 @@
         "locale": "<<locale>>",
         "timezone": "<<timezone>>",
         "plan": "<<plan>>",
-        "footprint": "<<footprint>>"
+        "footprint": "<<footprint>>",
+        "sendMetrics": <<sendMetrics>>,
+        "paymentMethodObject": { "uuid": "{{ paymentMethods.[0].uuid }}" }
       }
     },
-    "response": {
-      "store": "plan"
-    }
+    "response": { "store": "plan" }
   },
 
   {
@@ -125,8 +165,8 @@
   },
 
   {
-    "before": "await_url me/networks/<<network>>/dns/find?type=A&name=.<<network>>.<<domain>> 40m 10s await_json.length > 0",
     "comment": "list DNS for the network, should now see a DNS A record for new instance",
+    "before": "await_url me/networks/<<network>>/dns/find?type=A&name=.<<network>>.<<domain>> 40m 10s await_json.length > 0",
     "request": {
       "uri": "me/networks/<<network>>/dns/find?type=A&name=.<<network>>.<<domain>>"
     },
@@ -139,8 +179,8 @@
   },
 
   {
-    "before": "await_url .bubble 40m 20s",
     "comment": "call API of deployed node, ensure it is running",
+    "before": "await_url .bubble 40m 20s",
     "connection": {
       "name": "<<bubbleConnectionVar>>",
       "baseUri": "https://{{<<networkVar>>.host}}.<<network>>.<<domain>>:{{serverConfig.nginxPort}}/api"

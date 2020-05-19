@@ -10,7 +10,7 @@
       "uri": "auth/login",
       "entity": {
         "username": "root",
-        "password": "password1!"
+        "password": "{{sageRootPass}}"
       }
     },
     "response": {
@@ -21,18 +21,7 @@
   },
 
   {
-    "comment": "load root account policy",
-    "request": {
-      "uri": "users/root/policy"
-    },
-    "response": {
-      "store": "rootPolicy"
-    }
-  },
-
-  {
     "comment": "add root@example.com as email contact for root user, if not already present",
-    "onlyIf": "!rootPolicy.hasContact('root@example.com')",
     "include": "add_approved_contact",
     "params": {
       "username": "root",
@@ -51,6 +40,7 @@
     "include": "new_bubble",
     "params": {
       "sageFqdn": "{{sageFqdn}}",
+      "rootPassword": "{{sageRootPass}}",
       "username": "bubble-user",
       "password": "password1!",
       "userSessionVar": "userSession",
@@ -58,13 +48,14 @@
       "email": "bubble-user@example.com",
       "plan": "bubble",
       "networkVar": "bubbleNetwork",
-      "bubbleConnectionVar": "bubbleConnection"
+      "bubbleConnectionVar": "bubbleConnection",
+      "sendMetrics": true
     }
   },
 
   {
-    "before": "await_url .bubble 40m 20s",
     "comment": "add file to storage",
+    "before": "await_url .bubble 40m 20s",
     "connection": { "name":  "bubbleConnection" },
     "request": {
       "session": "bubbleUserSession",

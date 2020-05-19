@@ -122,7 +122,6 @@ public class ApiConstants {
     public static final String DOMAINS_ENDPOINT = "/domains";
     public static final String PLANS_ENDPOINT = "/plans";
     public static final String FOOTPRINTS_ENDPOINT = "/footprints";
-    public static final String BACKUPS_ENDPOINT = "/backups";
     public static final String EP_CLEAN_BACKUPS = "/clean";
     public static final String PAYMENT_METHODS_ENDPOINT = "/paymentMethods";
 
