@@ -165,57 +165,36 @@
   },
 
   {
-    "comment": "list DNS for the network, should now see a DNS A record for new instance",
-    "before": "await_url me/networks/<<network>>/dns/find?type=A&name=.<<network>>.<<domain>> 40m 10s await_json.length > 0",
-    "request": {
-      "uri": "me/networks/<<network>>/dns/find?type=A&name=.<<network>>.<<domain>>"
-    },
-    "response": {
-      "store": "dnsRecords",
-      "check": [
-        {"condition": "json.length == 1"}
-      ]
-    }
-  },
-
-  {
-    "comment": "call API of deployed node, ensure it is running",
-    "before": "await_url .bubble 40m 20s",
+    "comment": "call API of deployed node after some grace period, ensure it is running",
+    "before": "await_url .bubble 20m:40m 20s",
     "connection": {
       "name": "<<bubbleConnectionVar>>",
       "baseUri": "https://{{<<networkVar>>.host}}.<<network>>.<<domain>>:{{serverConfig.nginxPort}}/api"
     },
     "request": { "uri" : ".bubble" },
-    "response": {
-      "raw": true,
-      "check": [
-        {"condition": "response.json == 'you are ok. the magic is ok too.'"}
-      ]
-    }
+    "response": { "raw": true, "check": [{ "condition": "response.json == 'you are ok. the magic is ok too.'" }] }
   },
 
-//  {
-//    "comment": "verify new node has said hello, and requested another node",
-//    "connection": { "name": "<<sageFqdn>>_connection" },
-//    "request": {
-//      "session": "rootSession",
-//      "uri": "me/notifications/inbox"
-//    },
-//    "response": {
-//      "check": [
-//        {"condition": "json.length >= 2"},
-//        {"condition": "_find(json, function (n) { n.getType().name() == 'upstream_hello' }) != null"},
-//        {"condition": "_find(json, function (n) { n.getType().name() == 'new_node' }) != null"}
-//      ]
-//    }
-//  },
+  {
+    "comment": "now list DNS for the network, should now see a DNS A record for new instance",
+    "connection": { "name": "<<sageConnectionVar>>" },
+    "request": { "uri": "me/networks/<<network>>/dns/find?type=A&name={{<<networkVar>>.host}}.<<network>>.<<domain>>" },
+    "response": { "store": "dnsRecords", "check": [{ "condition": "json.length == 1" }] }
+  },
 
   {
-    "comment": "login to deployed node",
+    "comment": "check unauthorized access to debug mailbox required for this test (BUBBLE_TEST_MODE has to be true)",
     "connection": { "name": "<<bubbleConnectionVar>>" },
+    "request": { "uri": "debug/inbox/email/<<email>>?type=request&action=verify&target=network" },
+    "response": { "status": 200 }, // confirming status is not 401 here
+    "after": "await_url debug/inbox/email/<<email>>?type=request&action=verify&target=network 10m 10s len(await_json) > 0"
+  },
+
+  {
+    "comment": "activate and login to deployed node",
     "request": {
       "session": "new",
-      "uri" : "auth/login",
+      "uri" : "auth/login?k={{await_json.[0].ctx.message.data}}",
       "entity": {
         "name": "<<username>>",
         "password": "<<password>>"

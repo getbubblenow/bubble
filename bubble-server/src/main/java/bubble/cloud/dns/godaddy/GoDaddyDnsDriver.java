@@ -15,7 +15,6 @@ import org.cobbzilla.util.http.HttpRequestBean;
 import org.cobbzilla.util.http.HttpResponseBean;
 import org.cobbzilla.util.http.HttpUtil;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -32,6 +31,7 @@ import static org.cobbzilla.util.http.HttpMethods.PATCH;
 import static org.cobbzilla.util.http.HttpMethods.PUT;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
 
@@ -141,10 +141,6 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
                 return response.isOk() ? response : die("remove: " + response);
             }, MAX_GODADDY_RETRIES);
             return record;
-
-        } catch (IOException e) {
-            return die("remove: "+e);
-
         } finally {
             if (lock != null && domain.get() != null) unlockDomain(domain.get().getUuid(), lock);
         }
@@ -165,18 +161,21 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
         if (domain == null) return emptyList();
 
         // iterate over all records, return matches
-        String url = config.getBaseUri()+domain.getName()+"/records";
-        if (matcher != null) {
-            if (matcher.hasType()) {
-                url += "/" + matcher.getType().name();
+        final var url = new StringBuilder(config.getBaseUri()).append(domain.getName()).append("/records");
+        if (matcher != null && (matcher.hasType() || matcher.hasFqdn())) {
+            if (!matcher.hasType() || !matcher.hasPattern()) {
+                // as per GoDaddy's docs both type and fqdn must be set here
+                // https://developer.godaddy.com/doc/endpoint/domains#/v1/recordGet
+                throw invalidEx("err.request.invalid", "Both type and pattern are required");
             }
-            if (matcher.hasFqdn()) {
-                String fqdn = matcher.getFqdn();
-                fqdn = domain.dropDomainSuffix(fqdn);
-                url += "/" + fqdn;
-            }
+
+            url.append("/").append(matcher.getType().name());
+
+            var fqdn = matcher.getPattern();
+            fqdn = domain.dropDomainSuffix(fqdn);
+            url.append("/").append(fqdn);
         }
-        return readRecords(domain, url, matcher);
+        return readRecords(domain, url.toString(), matcher);
     }
 
     public Collection<DnsRecord> readRecords(BubbleDomain domain, String url, DnsRecordMatch matcher) {
@@ -195,17 +194,17 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
 
     private final Map<String, GoDaddyDnsRecord[]> listCache = new ExpirationMap<>(SECONDS.toMillis(10));
 
-    public GoDaddyDnsRecord[] listGoDaddyDnsRecords(String url) throws IOException {
-        final HttpRequestBean request = auth(url);
-        return listCache.computeIfAbsent(url, k -> {
+    public GoDaddyDnsRecord[] listGoDaddyDnsRecords(final String goDaddyApiUrl) {
+        return listCache.computeIfAbsent(goDaddyApiUrl, url -> {
+            final var request = auth(url);
             final HttpResponseBean response;
             try {
                 response = HttpUtil.getResponse(request);
             } catch (Exception e) {
-                log.error("listGoDaddyDnsRecords("+url+"): "+e);
+                log.error("listGoDaddyDnsRecords(" + url + "): " + e, e);
                 return GoDaddyDnsRecord.EMPTY_ARRAY;
             }
-            if (!response.isOk()) throw new IllegalStateException("readRecords: "+response);
+            if (!response.isOk()) throw new IllegalStateException("listGoDaddyDnsRecords: " + response);
             return json(response.getEntityString(), GoDaddyDnsRecord[].class);
         });
     }

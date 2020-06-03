@@ -54,8 +54,7 @@
   },
 
   {
-    "comment": "add file to storage",
-    "before": "await_url .bubble 40m 20s",
+    "comment": "add test file to storage",
     "connection": { "name":  "bubbleConnection" },
     "request": {
       "session": "bubbleUserSession",

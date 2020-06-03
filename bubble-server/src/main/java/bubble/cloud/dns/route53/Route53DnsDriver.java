@@ -18,10 +18,7 @@ import org.cobbzilla.util.dns.DnsRecord;
 import org.cobbzilla.util.dns.DnsRecordMatch;
 import org.cobbzilla.util.dns.DnsType;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
@@ -57,15 +54,20 @@ public class Route53DnsDriver extends DnsDriverBase<Route53DnsConfig> {
     @Getter(lazy=true) private final Map<String, HostedZone> cachedZoneLookups = new ExpirationMap<>();
     private HostedZone getHostedZone(BubbleDomain domain) {
         return getCachedZoneLookups().computeIfAbsent(domain.getName(), key -> {
+            final var keyDot = key + ".";
+
+            final Optional<HostedZone> found;
             try {
-                final ListHostedZonesResult zones = getRoute53client().listHostedZones(new ListHostedZonesRequest().withMaxItems(MAX_ITEMS));
-                for (HostedZone z : zones.getHostedZones()) {
-                    if (z.getName().equalsIgnoreCase(key + ".")) return z;
-                }
-                return die("HostedZone with name '"+key+".' not found");
+                found = getRoute53client().listHostedZones(new ListHostedZonesRequest().withMaxItems(MAX_ITEMS))
+                                          .getHostedZones()
+                                          .stream()
+                                          .filter(z -> z.getName().equalsIgnoreCase(keyDot))
+                                          .findFirst();
             } catch (Exception e) {
-                return die("getHostedZone: "+e);
+                return die("getHostedZone: " + e);
             }
+
+            return found.isPresent() ? found.get() : die("getHostedZone: HostedZone not found with name: " + keyDot);
         });
     }
 
