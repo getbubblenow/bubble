@@ -111,13 +111,13 @@
 
   {
     "comment": "list all payment methods",
-    "request": { "uri": "me/paymentMethods?all=true" },
+    "request": { "uri": "me/paymentMethods" },
     "response": { "store": "paymentMethods" }
   },
 
   {
     "comment": "add payment method for the user",
-    "onlyIf": "len(paymentMethods) == 0",
+    "onlyIf": "!match_any(paymentMethods, function(m) { return !m.hasPromotion() && m.getPaymentMethodType() != `promotional_credit`; })",
     "before": "stripe_tokenize_card",
     "request": {
       "uri": "me/paymentMethods",
@@ -127,15 +127,15 @@
   },
 
   {
-    "comment": "list all payment methods again after creating one",
-    "onlyIf": "len(paymentMethods) == 0",
-    "request": { "uri": "me/paymentMethods?all=true" },
-    "response": { "store": "paymentMethods", "check": [{ "condition": "len(json) == 1" }] }
+    "comment": "wait for the one created above and fetch all payment methods again including that one",
+    "onlyIf": "!match_any(paymentMethods, function(m) { return !m.hasPromotion() && m.getPaymentMethodType() != `promotional_credit`; })",
+    "before": "await_url me/paymentMethods 5m 10s match_any(await_json, function(m) { return !m.hasPromotion() && m.getPaymentMethodType() != `promotional_credit`; })",
+    "request": { "uri": "me/paymentMethods" },
+    "response": { "store": "paymentMethods" }
   },
 
   {
     "comment": "add plan, using the first found payment method for the new bubble",
-    "before": "sleep 24s",
     "request": {
       "uri": "me/plans",
       "method": "put",
@@ -147,7 +147,9 @@
         "plan": "<<plan>>",
         "footprint": "<<footprint>>",
         "sendMetrics": <<sendMetrics>>,
-        "paymentMethodObject": { "uuid": "{{ paymentMethods.[0].uuid }}" }
+        "paymentMethodObject": {
+          "uuid": "{{ js '_find(paymentMethods, function(m) { return !m.hasPromotion() && m.getPaymentMethodType() != `promotional_credit`; }).getUuid()' }}"
+        }
       }
     },
     "response": { "store": "plan" }
@@ -166,7 +168,7 @@
 
   {
     "comment": "call API of deployed node after some grace period, ensure it is running",
-    "before": "await_url .bubble 20m:40m 20s",
+    "before": "await_url .bubble 20m:20m 20s",
     "connection": {
       "name": "<<bubbleConnectionVar>>",
       "baseUri": "https://{{<<networkVar>>.host}}.<<network>>.<<domain>>:{{serverConfig.nginxPort}}/api"

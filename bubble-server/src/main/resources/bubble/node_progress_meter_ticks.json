@@ -13,7 +13,7 @@
 { "percent": 44,"messageKey":"role_bubble_jar",             "pattern":"TASK \\[bubble : Install bubble jar] \\*{5,}" },
 { "percent": 48,"messageKey":"role_bubble_db",              "pattern":"TASK \\[bubble : Populate database] \\*{5,}" },
 { "percent": 51,"messageKey":"role_bubble_restore",         "pattern":"TASK \\[bubble : Install restore helper scripts] \\*{5,}" },
-{ "percent": 52,"messageKey":"role_bubble_algo",            "pattern":"TASK \\[algo : Run algo playbook to install algo] \\*{5,}" },
+{ "percent": 52,"messageKey":"role_bubble_algo",            "pattern":"TASK \\[algo : [\\w\\s]+] \\*{5,}" },
 { "percent": 76,"messageKey":"role_nginx",                  "pattern":"TASK \\[nginx : [\\w\\s]+] \\*{5,}" },
 { "percent": 81,"messageKey":"role_nginx_certbot",          "pattern":"TASK \\[nginx : Init certbot] \\*{5,}" },
 { "percent": 91,"messageKey":"role_mitmproxy",              "pattern":"TASK \\[mitmproxy : [\\w\\s]+] \\*{5,}" },

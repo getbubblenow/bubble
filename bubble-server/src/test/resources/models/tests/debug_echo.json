@@ -1,0 +1,48 @@
+[
+  {
+    "comment": "Simplest example of using ECHO debug call without the query param",
+    "request": { "uri": "debug/echo", "entity": { "anything": "something" } },
+    "response": { "check": [{ "condition": "len(json) == 0" }] },
+    "after": "add_to_ctx { \"added\": \"val\", \"addedInner\": { \"inner\": \"value\", \"another\": \"variable\" }, \"addedArray\": [ \"abc\", \"def\" ] }"
+  },
+
+  {
+    "comment": "Example of using ECHO debug call and echo_in_log after",
+    "request": {
+      "uri": "debug/echo?respondWith=inner.comment",
+      "entity": {
+        "inner": { "comment": "Fixed text comment" },
+        "non-existing": "{{notexistingvar}}"
+      }
+    },
+    "response": {
+      "raw": true,
+      "store": "echoedResponse",
+      "check": [{ "condition": "response.json == 'Fixed text comment'" }]
+    },
+    "after": "echo_in_log Test:\n\tnon existent value: {{somethingThatDoesntExist}}\n\tjust stored response: {{echoedResponse}}"
+  },
+
+  {
+    "comment": "Another example of using ECHO debug call and echo_in_log after",
+    "before": "add_to_ctx { \"brand\": \"new\" }",
+    "request": {
+      "uri": "debug/echo?respondWith=inner",
+      "entity": {
+        "previouslyStored": "{{echoedResponse}}",
+        "inner": { "comment": "Another fixed text comment" }
+      }
+    },
+    "response": {
+      "store": "echoedJson",
+      "check": [
+        { "condition": "json.get('comment') == 'Another fixed text comment'" },
+        { "condition": "'{{brand}}' == 'new'" },
+        { "condition": "'{{addedInner.another}}' == 'variable'" },
+        { "condition": "'{{added}}' == 'val'" }
+      ]
+    },
+    "after": "echo_in_log \"And now the stored value is: {{echoedJson.comment}}\""
+    // echo_in_log is, of course, available within `before` also
+  }
+]

@@ -20,7 +20,7 @@ import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 
 public abstract class StorageServiceDriverBase<T> extends CloudServiceDriverBase<T> implements StorageServiceDriver {
 
-    private final Map<String, WriteRequest> requestMap = new ConcurrentHashMap<>();
+    private static final Map<String, WriteRequest> requestMap = new ConcurrentHashMap<>();
 
     private static final Map<String, WriteRequestCleaner> cleaners = new ConcurrentHashMap<>();
 
@@ -66,11 +66,11 @@ public abstract class StorageServiceDriverBase<T> extends CloudServiceDriverBase
                 } catch (IllegalStateException e) {
                     if (e.getMessage().contains("timeout")) {
                         if (countBytes == 0) {
-                            return die("StorageServiceDriverBase._write: error: " + e);
+                            return die("StorageServiceDriverBase._write: error (no bytes) ", e);
                         }
                     }
                 } catch (Exception e) {
-                    return die("StorageServiceDriverBase._write: error: " + e);
+                    return die("StorageServiceDriverBase._write: exception ", e);
                 }
             }
         }

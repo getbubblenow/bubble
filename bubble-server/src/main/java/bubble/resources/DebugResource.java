@@ -13,6 +13,8 @@ import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
 import bubble.server.BubbleConfiguration;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +22,12 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Nullable;
+import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -32,6 +37,7 @@ import static bubble.cloud.auth.RenderedMessage.filteredInbox;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.json.JsonUtil.*;
 import static org.cobbzilla.util.reflect.ReflectionUtil.forName;
 import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -117,4 +123,16 @@ public class DebugResource {
         }
     }
 
+    @POST @Path("/echo")
+    public Response echoJsonInLog(@Context ContainerRequest ctx,
+                                  @Valid @NonNull final JsonNode input,
+                                  @QueryParam("respondWith") @Nullable final String respondWith) throws IOException {
+        final var output = "ECHO: \n" + toJsonOrDie(input);
+        log.info(output);
+
+        if (empty(respondWith)) return ok();
+
+        log.debug("Responding with value in path: " + respondWith);
+        return ok(getNodeAsJava(findNode(input, respondWith), ""));
+    }
 }

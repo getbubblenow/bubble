@@ -120,7 +120,13 @@ public class VultrDriver extends ComputeServiceDriverBase {
         // create server, check response
         final HttpResponseBean serverResponse = serverRequest.curl();  // fixme: we can do better than shelling to curl
         if (serverResponse.getStatus() != 200) return die("start: error creating server: " + serverResponse);
-        final String subId = json(serverResponse.getEntityString(), JsonNode.class).get(VULTR_SUBID).textValue();
+        final JsonNode responseJson;
+        try {
+            responseJson = json(serverResponse.getEntityString(), JsonNode.class);
+        } catch (IllegalStateException e) {
+            return die("start: error creating server (error parsing response as JSON): " + serverResponse);
+        }
+        final var subId = responseJson.get(VULTR_SUBID).textValue();
 
         node.setState(BubbleNodeState.booting);
         node.setTag(TAG_INSTANCE_ID, subId);

@@ -146,7 +146,7 @@ public class InboundNotifyResource {
                     ? stream(APPLICATION_OCTET_STREAM, data)
                     : notFound(storageRequest.getKey());
         } catch (Exception e) {
-            return die("readStorage: "+e);
+            return die("readStorage: exception", e);
         } finally {
             storageStreamService.clearToken(token);
         }

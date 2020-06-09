@@ -88,13 +88,17 @@
     state: link
 
 - name: Restart dnscrypt-proxy
-  shell: service dnscrypt-proxy restart
+  service:
+    name: dnscrypt-proxy
+    state: restarted
+  tags: algo_related
 
 - name: restart supervisord
   service:
     name: supervisor
     enabled: yes
     state: restarted
+  tags: always
 
 - import_tasks: route.yml
 

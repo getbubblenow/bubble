@@ -1,6 +1,7 @@
 [
   {
-    "comment": "login as root on sage node",
+    "comment": "login as root on sage node (adding username to ctx also)",
+    "before": "add_to_ctx { \"username\": \"bubble-user\" }",
     "connection": {
       "name": "sageConnection",
       "baseUri": "https://{{sageFqdn}}:{{serverConfig.nginxPort}}/api"
@@ -41,11 +42,11 @@
     "params": {
       "sageFqdn": "{{sageFqdn}}",
       "rootPassword": "{{sageRootPass}}",
-      "username": "bubble-user",
+      "username": "{{username}}",
       "password": "password1!",
       "userSessionVar": "userSession",
       "network": "bubble-{{rand 5}}",
-      "email": "bubble-user@example.com",
+      "email": "{{username}}@example.com",
       "plan": "bubble",
       "networkVar": "bubbleNetwork",
       "bubbleConnectionVar": "bubbleConnection",
@@ -61,9 +62,6 @@
       "uri": "me/networks/{{bubbleNetwork.network}}/storage/write/test_file_{{bubbleNetwork.network}}.txt",
       "headers": { "Content-Type": "multipart/form-data" },
       "entity": {"file": "data:this is a test file: {{rand 20}}"}
-    },
-    "response": {
-      "store": "fileMeta"
     }
   },
 
@@ -71,11 +69,11 @@
     "comment": "add verified email to root account on new node",
     "include": "add_approved_contact",
     "params": {
-      "username": "bubble-user",
+      "username": "{{username}}",
       "userSession": "bubbleUserSession",
       "userConnection": "bubbleConnection",
-      "contactInfo": "bubble-user@example.com",
-      "contactLookup": "bubble-user@example.com",
+      "contactInfo": "{{username}}@example.com",
+      "contactLookup": "{{username}}@example.com",
       "authFactor": "not_required",
       "rootSession": "bubbleUserSession",
       "rootConnection": "bubbleConnection"
@@ -94,9 +92,6 @@
         "agreeToTerms": true,
         "contact": {"type": "email", "info": "user-{{rand 5}}@example.com"}
       }
-    },
-    "response": {
-      "store": "newUser"
     }
   },
 
@@ -108,28 +103,14 @@
   },
 
   {
-    "comment": "backup network",
-    "request": {
-      "uri": "me/networks/{{bubbleNetwork.network}}/backups/test_backup",
-      "method": "put"
-    },
-    "response": {
-      "store": "backup"
-    }
+    "comment": "backup network for later restore",
+    "request": { "method": "put", "uri": "me/networks/{{bubbleNetwork.network}}/backups/test_backup" }
   },
 
   {
-    "before": "await_url me/networks/{{bubbleNetwork.network}}/backups/test_backup?status=backup_completed 5m 10s",
-    "comment": "find completed backup",
-    "request": {
-      "uri": "me/networks/{{bubbleNetwork.network}}/backups/test_backup"
-    },
-    "response": {
-      "store": "backup",
-      "check": [
-        {"condition": "json.getStatus().name() == 'backup_completed'"}
-      ]
-    }
+    "comment": "await completed backup and store in the context",
+    "before": "await_url me/networks/{{bubbleNetwork.network}}/backups/test_backup?status=backup_completed 90s:10m 15s",
+    "request": { "uri": "me/networks/{{bubbleNetwork.network}}/backups/test_backup?status=backup_completed" }
   },
 
   {
@@ -137,7 +118,7 @@
     "include": "get_network_keys",
     "params": {
       "network": "{{bubbleNetwork.network}}",
-      "rootEmail": "bubble-user@example.com",
+      "rootEmail": "{{username}}@example.com",
       "networkKeysVar": "networkKeys",
       "networkKeysPassword": "Passw0rd!!"
     }
@@ -155,13 +136,9 @@
   },
 
   {
-    "comment": "verify network is stopped",
-    "request": {"uri": "me/networks/{{bubbleNetwork.network}}" },
-    "response": {
-      "check": [
-        {"condition": "json.getState().name() == 'stopped'"}
-      ]
-    }
+    "comment": "wait for network to stop",
+    "before": "await_url me/networks/{{bubbleNetwork.network}} 5m 10s await_json.getState().name() == 'stopped'",
+    "request": { "uri": "me" }
   },
 
   {
@@ -179,12 +156,12 @@
   },
 
   {
-    "before": "await_url .bubble 40m 20s",
+    "comment": "restore node using restoreKey",
+    "before": "await_url .bubble 16m:20m 20s",
     "connection": {
       "name": "restoredBubbleConnection",
       "baseUri": "https://{{restoreNN.fqdn}}:{{serverConfig.nginxPort}}/api"
     },
-    "comment": "restore node using restoreKey",
     "request": {
       "uri": "auth/restore/{{restoreNN.restoreKey}}",
       "entity": {
@@ -193,17 +170,16 @@
       },
       "method": "put"
     },
-    "after": "sleep 240s"  // give the restore some time to stop the server, restore and restart
+    "after": "await_url .bubble 9m:10m 20s" // give the restore some time to stop the server, restore and restart
   },
 
   {
-    "before": "await_url .bubble 10m 20s",
     "comment": "login to restored bubble",
     "request": {
       "session": "new",
       "uri": "auth/login",
       "entity": {
-        "name": "bubble-user",
+        "name": "{{username}}",
         "password": "password1!"
       }
     },
@@ -240,13 +216,14 @@
     "request": {
       "uri": "me/networks/{{restoreNN.network}}/actions/stop",
       "method": "post"
-    }
+    },
+    "after": "await_url me/networks/{{restoreNN.network}} 5m 10s await_json.getState().name() == 'stopped'"
   },
 
   {
-    "comment": "delete restored bubble network from sage",
+    "comment": "delete restored bubble network from sage by deleting plan which should have the same name",
     "request": {
-      "uri": "me/networks/{{restoreNN.network}}",
+      "uri": "me/plans/{{restoreNN.network}}",
       "method": "delete"
     },
     "after": "verify_unreachable https://{{restoreNN.fqdn}}:{{serverConfig.nginxPort}}/api/me"

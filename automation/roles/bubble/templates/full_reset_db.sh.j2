@@ -5,6 +5,8 @@ function die {
   exit 1
 }
 
+INSTALL_MODE=${2:-{{install_type}}}
+
 if [[ $(whoami) == "root" ]] ; then
   su - postgres ${0} ${@}
   exit $?
@@ -15,5 +17,5 @@ if [[ $(whoami) != "postgres" ]] ; then
 fi
 
 cd ~bubble/sql \
-  && init_bubble_db.sh {{ db_name }} {{ db_user }} {{ is_fork }} {{ install_type }} ${1} \
+  && init_bubble_db.sh {{ db_name }} {{ db_user }} {{ is_fork }} ${INSTALL_MODE} ${1} \
   || die "error reinitializing database"

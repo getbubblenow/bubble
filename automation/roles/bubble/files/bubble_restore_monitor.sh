@@ -21,7 +21,7 @@ function die {
 }
 
 function log {
-  echo "${1}" >> ${LOG}
+  echo "$(date): ${1}" >> ${LOG}
 }
 
 START=$(date +%s)
@@ -92,7 +92,7 @@ cp ${RESTORE_BASE}/bubble.sql.gz ${BUBBLE_HOME}/sql/ \
   && chgrp -R postgres ${BUBBLE_HOME}/sql \
   && chmod 550 ${BUBBLE_HOME}/sql \
   && chmod 440 ${BUBBLE_HOME}/sql/* || die "Error restoring bubble database archive"
-su - postgres bash -c "cd ${BUBBLE_HOME}/sql && full_reset_db.sh drop" || die "Error restoring database"
+su - postgres bash -c "cd ${BUBBLE_HOME}/sql && full_reset_db.sh drop restored_node" || die "Error restoring database"
 
 # Remove old keys
 log "Removing node keys"
@@ -107,21 +107,27 @@ log "Flushing redis"
 echo "FLUSHALL" | redis-cli || die "Error flushing redis"
 
 # restore algo configs
+log "Restoring algo configs"
 CONFIGS_BACKUP=/home/bubble/.BUBBLE_ALGO_CONFIGS.tgz
 if [[ ! -f ${CONFIGS_BACKUP} ]] ; then
   log "Warning: Algo VPN configs backup not found: ${CONFIGS_BACKUP}, not installing algo"
 else
-  ALGO_BASE=/root/ansible/roles/algo/algo
+  ANSIBLE_HOME="/root"
+  ANSIBLE_DIR="${ANSIBLE_HOME}/ansible"
+  ID_FILE="${ANSIBLE_HOME}/.ssh/bubble_rsa"
+  SSH_OPTIONS="--ssh-extra-args '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PreferredAuthentications=publickey -i ${ID_FILE}'"
+
+  ALGO_BASE=${ANSIBLE_DIR}/roles/algo/algo
   if [[ ! -d ${ALGO_BASE} ]] ; then
     die "Error restoring Algo VPN: directory ${ALGO_BASE} not found"
   fi
   cd ${ALGO_BASE} && tar xzf ${CONFIGS_BACKUP} || die "Error restoring algo VPN configs"
 
-  # install/configure algo
-  ${ALGO_BASE}/install_algo.sh || die "Error configuring or installing algo VPN"
-
-  # ensure user monitor is running
-  supervisorctl restart algo_refresh_users_monitor
+  cd "${ANSIBLE_DIR}" && \
+    . ./venv/bin/activate && \
+    bash -c \
+      "ansible-playbook ${SSH_OPTIONS} --tags 'algo_related,always' --inventory ./hosts ./playbook.yml 2>&1 >> ${LOG}" \
+  || die "Error running ansible in post-restore. journalctl -xe = $(journalctl -xe | tail -n 50)"
 fi
 
 # restart mitm proxy service
@@ -135,7 +141,7 @@ supervisorctl restart bubble
 # verify service is running OK
 log "Pausing for a bit, then verifying bubble server has successfully restarted after restore"
 sleep 60
-curl https://$(hostname):${ADMIN_PORT}/api/.bubble || log "Error restarting bubble server"
+curl https://$(hostname):${ADMIN_PORT}/api/.bubble || log "Error restarting bubble server - port ${ADMIN_PORT}"
 
 # remove restore markers, we are done
 log "Cleaning up temp files"
