@@ -93,6 +93,7 @@ public class ApiConstants {
     public static final String EP_CONFIGS = "/configs";
     public static final String EP_REGISTER = "/register";
     public static final String EP_LOGIN = "/login";
+    public static final String EP_APP_LOGIN = "/appLogin";
     public static final String EP_LOGOUT = "/logout";
     public static final String EP_FORGOT_PASSWORD = "/forgotPassword";
     public static final String EP_CHANGE_PASSWORD = "/changePassword";

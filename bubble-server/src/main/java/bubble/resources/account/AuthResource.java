@@ -370,6 +370,20 @@ public class AuthResource {
         return ok(account.setToken(newLoginSession(account)));
     }
 
+    @POST @Path(EP_APP_LOGIN+"/{session}")
+    public Response appLogin(@Context Request req,
+                             @Context ContainerRequest ctx,
+                             @PathParam("session") String sessionId) {
+        final Account sessionAccount = sessionDAO.find(sessionId);
+        if (sessionAccount == null) return notFound(sessionId);
+
+        final Account existing = optionalUserPrincipal(ctx);
+        if (existing != null) {
+            sessionDAO.invalidate(existing.getApiToken());
+        }
+        return ok(sessionAccount.setApiToken(sessionDAO.create(sessionAccount)));
+    }
+
     @POST @Path(EP_FORGOT_PASSWORD)
     public Response forgotPassword(@Context Request req,
                                    @Context ContainerRequest ctx,
