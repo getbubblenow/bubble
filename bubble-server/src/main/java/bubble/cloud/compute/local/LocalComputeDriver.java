@@ -6,10 +6,7 @@ package bubble.cloud.compute.local;
 
 import bubble.cloud.CloudRegion;
 import bubble.cloud.CloudServiceDriverBase;
-import bubble.cloud.compute.ComputeConfig;
-import bubble.cloud.compute.ComputeNodeSize;
-import bubble.cloud.compute.ComputeNodeSizeType;
-import bubble.cloud.compute.ComputeServiceDriver;
+import bubble.cloud.compute.*;
 import bubble.model.cloud.BubbleNode;
 
 import java.util.List;
@@ -20,6 +17,7 @@ public class LocalComputeDriver extends CloudServiceDriverBase<ComputeConfig> im
 
     @Override public List<ComputeNodeSize> getSizes() { return notSupported("getSizes"); }
     @Override public ComputeNodeSize getSize(ComputeNodeSizeType type) { return notSupported("getSize"); }
+    @Override public OsImage getOs() { return notSupported("getOs"); }
 
     @Override public List<CloudRegion> getRegions() { return notSupported("getRegions"); }
     @Override public CloudRegion getRegion(String region) { return notSupported("getRegion"); }
@@ -28,5 +26,8 @@ public class LocalComputeDriver extends CloudServiceDriverBase<ComputeConfig> im
     @Override public BubbleNode cleanupStart(BubbleNode node) throws Exception { return notSupported("cleanupStart"); }
     @Override public BubbleNode stop(BubbleNode node) throws Exception { return notSupported("stop"); }
     @Override public BubbleNode status(BubbleNode node) throws Exception { return notSupported("status"); }
+
+    @Override public List<PackerImage> getAllPackerImages() { return notSupported("getPackerImages"); }
+    @Override public List<PackerImage> getPackerImagesForRegion(String region) { return notSupported("getPackerImagesForRegion"); }
 
 }

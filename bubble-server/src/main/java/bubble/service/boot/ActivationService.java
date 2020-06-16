@@ -30,11 +30,9 @@ import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.util.*;
 
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
-import static bubble.cloud.storage.StorageServiceDriver.STORAGE_PREFIX;
 import static bubble.cloud.storage.local.LocalStorageDriver.LOCAL_STORAGE;
 import static bubble.model.cloud.BubbleFootprint.DEFAULT_FOOTPRINT;
 import static bubble.model.cloud.BubbleFootprint.DEFAULT_FOOTPRINT_OBJECT;
@@ -42,12 +40,10 @@ import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static bubble.model.cloud.BubbleNetwork.TAG_PARENT_ACCOUNT;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
-import static org.cobbzilla.util.io.FileUtil.toStringOrDie;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.getFirstPublicIpv4;
 import static org.cobbzilla.util.network.NetworkUtil.getLocalhostIpv4;
-import static org.cobbzilla.util.system.CommandShell.execScript;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.model.entityconfig.ModelSetup.scrubSpecial;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -55,12 +51,9 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @Service @Slf4j
 public class ActivationService {
 
-    public static final String DEFAULT_ROLES = "ansible/default_roles.json";
-
     public static final long ACTIVATION_TIMEOUT = SECONDS.toMillis(10);
 
     @Autowired private AccountSshKeyDAO sshKeyDAO;
-    @Autowired private AnsibleRoleDAO roleDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleDomainDAO domainDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
@@ -158,15 +151,9 @@ public class ActivationService {
         }
         if (errors.isInvalid()) throw invalidEx(errors);
 
-        final AnsibleRole[] roles = request.hasRoles() ? request.getRoles() : json(loadDefaultRoles(), AnsibleRole[].class);
-        for (AnsibleRole role : roles) {
-            roleDAO.create(role.setAccount(account.getUuid()));
-        }
-
         final BubbleDomain domain = domainDAO.create(new BubbleDomain(request.getDomain())
                 .setAccount(account.getUuid())
                 .setPublicDns(publicDns.getUuid())
-                .setRoles(Arrays.stream(roles).map(AnsibleRole::getName).toArray(String[]::new))
                 .setTemplate(true));
 
         BubbleFootprint footprint = footprintDAO.findByAccountAndId(account.getUuid(), DEFAULT_FOOTPRINT);
@@ -203,6 +190,7 @@ public class ActivationService {
                 .setAccount(account.getUuid())
                 .setNetwork(network.getUuid())
                 .setDomain(network.getDomain())
+                .setInstallType(AnsibleInstallType.sage)
                 .setSize("local")
                 .setRegion("local")
                 .setSizeType(ComputeNodeSizeType.local)
@@ -216,13 +204,6 @@ public class ActivationService {
         final BubbleNodeKey key = nodeKeyDAO.create(new BubbleNodeKey(node));
 
         selfNodeService.setActivated(node);
-
-        String[] domainRoles = request.getDomain().getRoles();
-        if (domainRoles == null || domainRoles.length == 0) {
-            domainRoles = Arrays.stream(roles).map(AnsibleRole::getName).toArray(String[]::new);
-        }
-        domainDAO.update(domain.setRoles(domainRoles));
-
         selfNodeService.initThisNode(node);
         configuration.refreshPublicSystemConfigs();
 
@@ -244,17 +225,6 @@ public class ActivationService {
         }
 
         return node;
-    }
-
-    public String loadDefaultRoles() {
-        if (configuration.testMode()) {
-            final File roleFile = new File("target/classes/"+DEFAULT_ROLES);
-            final String rolesJson = toStringOrDie(roleFile);
-            if (rolesJson == null || !rolesJson.contains(STORAGE_PREFIX)) execScript("../bin/prep_bubble_jar");
-            return toStringOrDie(roleFile);
-        } else {
-            return stream2string(DEFAULT_ROLES);
-        }
     }
 
     public BubbleNetwork createRootNetwork(BubbleNetwork network) {

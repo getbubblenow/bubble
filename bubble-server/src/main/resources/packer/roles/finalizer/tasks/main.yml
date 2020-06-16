@@ -1,0 +1,62 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+- name: Touch first-time setup file
+  shell: su - bubble bash -c "if [[ ! -f /home/bubble/first_time_marker ]] ; then echo -n install > /home/bubble/first_time_marker ; fi"
+  when: restore_key is not defined
+
+- name: Install copy_certs_to_bubble.sh helper
+  copy:
+    src: copy_certs_to_bubble.sh
+    dest: /usr/local/bin/copy_certs_to_bubble.sh
+    owner: bubble
+    group: root
+    mode: 0550
+  when: install_type == 'node'
+
+- name: Install snapshot_ansible.sh
+  copy:
+    src: snapshot_ansible.sh
+    dest: /usr/local/bin/snapshot_ansible.sh
+    owner: root
+    group: root
+    mode: 0500
+
+- name: Download bubble-nodemanager dist file
+  get_url:
+    url: https://github.com/getbubblenow/bubble-dist/raw/master/bubble-nodemanager/bubble-nodemanager
+    dest: /usr/sbin/bubble-nodemanager
+    checksum: sha256:43b0a3afb0e39b3d9bfde3c9b307956ffdc3f62c83ebb69269fe4ffc654a87cd
+
+- name: Set permissions on bubble-nodemanager
+  file:
+    path: /usr/sbin/bubble-nodemanager
+    owner: root
+    group: root
+    mode: 0500
+
+- name: Install bubble-nodemanager supervisor conf file
+  copy:
+    src: supervisor_bubble_nodemanager.conf
+    dest: /etc/supervisor/conf.d/nodemanager.conf
+
+# We cannot receive notifications until nginx is running, so start bubble API as the very last step
+- name: Ensure bubble_nodemanager is started
+  supervisorctl:
+    name: '{{ item }}'
+    state: restarted
+  with_items:
+    - nodemanager
+
+- name: Creates /etc/iptables directory
+  file:
+    path: /etc/iptables
+    state: directory
+
+- name: save iptables v4 rules
+  shell: iptables-save > /etc/iptables/rules.v4
+  become: yes
+
+- name: save iptables v6 rules
+  shell: ip6tables-save > /etc/iptables/rules.v6
+  become: yes

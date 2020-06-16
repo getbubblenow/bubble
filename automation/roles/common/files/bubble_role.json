@@ -1,9 +1,0 @@
-{
-  "name": "common-0.0.1",
-  "priority": 100,
-  "template": true,
-  "config": [
-    {"name": "hostname", "value": "[[node.fqdn]]"}
-  ],
-  "tgzB64": ""
-}

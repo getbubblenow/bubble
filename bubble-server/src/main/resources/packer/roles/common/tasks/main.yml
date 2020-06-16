@@ -1,0 +1,43 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+- name: Update packages
+  apt:
+    update_cache: yes
+
+- name: Remove ufw
+  apt:
+    name: ufw
+    state: absent
+    update_cache: yes
+
+- name: Upgrade packages
+  apt:
+    update_cache: yes
+    upgrade: yes
+
+- name: Install common packages
+  apt:
+    name: [ 'cloud-init', 'ntp', 'unzip', 'safe-rm', 'supervisor', 'emacs-nox', 'screen', 'xtail', 'fail2ban' ]
+    state: present
+    update_cache: yes
+
+- name: Install screenrc file
+  copy:
+    src: dot-screenrc
+    dest: /root/.screenrc
+
+- name: Install packer key as only authorized key
+  copy:
+    src: packer_rsa
+    dest: /root/.ssh/authorized_keys
+    owner: root
+    group: root
+    mode: 0600
+
+- name: Start common services
+  service:
+    name: '{{ item }}'
+    state: restarted
+  with_items:
+    - fail2ban

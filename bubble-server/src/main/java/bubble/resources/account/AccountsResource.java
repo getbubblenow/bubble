@@ -518,13 +518,6 @@ public class AccountsResource {
         return ok(BubbleDeviceType.getSelectableTypes());
     }
 
-    @Path("/{id}"+EP_ROLES)
-    public AnsibleRolesResource getAnsibleRoles(@Context ContainerRequest ctx,
-                                                @PathParam("id") String id) {
-        final AccountContext c = new AccountContext(ctx, id);
-        return configuration.subResource(AnsibleRolesResource.class, c.account);
-    }
-
     @Path("/{id}"+EP_VPN)
     public VpnConfigResource getVpnConfig(@Context ContainerRequest ctx,
                                                 @PathParam("id") String id) {

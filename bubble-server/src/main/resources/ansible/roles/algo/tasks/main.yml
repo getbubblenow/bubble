@@ -1,0 +1,27 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+- name: Write install_algo.sh template
+  template:
+    src: install_algo.sh.j2
+    dest: /root/ansible/roles/algo/algo/install_algo.sh
+    owner: root
+    group: root
+    mode: 0500
+
+# Don't setup algo when in restore mode, bubble_restore_monitor.sh will set it up after the CA key has been restored
+- name: Run algo playbook to install algo
+  shell: /root/ansible/roles/algo/algo/install_algo.sh
+  when: restore_key is not defined
+
+# Don't start monitors when in restore mode, bubble_restore_monitor.sh will start it after algo is installed
+- name: Restart algo monitors
+  shell: bash -c "supervisorctl reload && sleep 5s && supervisorctl restart algo_refresh_users_monitor && supervisorctl restart wg_monitor_connections"
+  when: restore_key is not defined
+
+- name: Stop algo monitors (in restore mode)
+  shell: bash -c "supervisorctl reload && sleep 5s && supervisorctl stop algo_refresh_users_monitor && supervisorctl stop wg_monitor_connections"
+  when: restore_key is defined
+
+# Add bubble rules
+- include: algo_firewall.yml

@@ -6,9 +6,7 @@ package bubble.cloud;
 
 import bubble.cloud.auth.AuthenticationDriver;
 import bubble.cloud.auth.RenderedMessage;
-import bubble.cloud.compute.ComputeNodeSize;
-import bubble.cloud.compute.ComputeNodeSizeType;
-import bubble.cloud.compute.ComputeServiceDriver;
+import bubble.cloud.compute.*;
 import bubble.cloud.dns.DnsServiceDriver;
 import bubble.cloud.email.EmailServiceDriver;
 import bubble.cloud.email.RenderedEmail;
@@ -39,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class NoopCloud implements
@@ -68,6 +67,10 @@ public class NoopCloud implements
         if (log.isDebugEnabled()) log.debug("test()");
         return false;
     }
+
+    @Override public List<PackerImage> getAllPackerImages() { return null; }
+
+    @Override public List<PackerImage> getPackerImagesForRegion(String region) { return null; }
 
     @Override public boolean _write(String fromNode, String key, InputStream data, StorageMetadata metadata, String requestId) throws IOException {
         if (log.isDebugEnabled()) log.debug("_write(fromNode=" + fromNode + ")");
@@ -248,6 +251,10 @@ public class NoopCloud implements
         if (log.isDebugEnabled()) log.debug("status(node=" + node + ")");
         return null;
     }
+
+    @Override public OsImage getOs() { return null; }
+
+    @Override public Map<String, ComputeNodeSize> getSizesMap() { return null; }
 
     @Override public List<CloudRegion> getRegions() {
         if (log.isDebugEnabled()) log.debug("getRegions()");

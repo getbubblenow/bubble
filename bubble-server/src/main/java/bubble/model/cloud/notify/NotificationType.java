@@ -6,6 +6,7 @@ package bubble.model.cloud.notify;
 
 import bubble.cloud.CloudRegion;
 import bubble.cloud.compute.ComputeNodeSize;
+import bubble.cloud.compute.OsImage;
 import bubble.cloud.geoCode.GeoCodeResult;
 import bubble.cloud.geoLocation.GeoLocation;
 import bubble.cloud.geoTime.GeoTimeZone;
@@ -63,6 +64,7 @@ public enum NotificationType {
     // delegated compute driver notifications
     compute_driver_get_sizes (ComputeNodeSize[].class),
     compute_driver_get_regions (CloudRegion[].class),
+    compute_driver_get_os (OsImage.class),
     compute_driver_start (BubbleNode.class),
     compute_driver_cleanup_start (BubbleNode.class),
     compute_driver_stop (BubbleNode.class),

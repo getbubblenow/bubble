@@ -1,0 +1,33 @@
+{
+  "name": "bubble",
+  "config": [
+    {"name": "node_uuid", "value": "[[node.uuid]]"},
+    {"name": "network_uuid", "value": "[[node.network]]"},
+    {"name": "admin_port", "value": "[[node.adminPort]]"},
+    {"name": "ssl_port", "value": "[[node.sslPort]]"},
+    {"name": "public_base_uri", "value": "[[publicBaseUri]]"},
+    {"name": "sage_node", "value": "[[sageNode]]"},
+    {"name": "install_type", "value": "[[installType]]"},
+    {"name": "promo_code_policy", "value": "[[#compare fork '==' true]][[configuration.promoCodePolicy]][[else]]disabled[[/compare]]"},
+    {"name": "default_locale", "value": "[[network.locale]]"},
+    {"name": "time_zone", "value": "[[network.timezone]]"},
+    {"name": "bubble_version", "value": "[[configuration.version]]"},
+    {"name": "bubble_host", "value": "[[node.fqdn]]"},
+    {"name": "bubble_cname", "value": "[[network.networkDomain]]"},
+    {"name": "admin_user", "value": "[[node.ansibleUser]]"},
+    {"name": "db_encoding", "value": "UTF-8"},
+    {"name": "db_locale", "value": "en_US"},
+    {"name": "db_user", "value": "bubble"},
+    {"name": "db_name", "value": "bubble"},
+    {"name": "db_key", "value": "[[dbEncryptionKey]]"},
+    {"name": "letsencrypt_email", "value": "[[configuration.letsencryptEmail]]"},
+    {"name": "is_fork", "value": "[[fork]]"},
+    {"name": "restore_key", "value": "[[restoreKey]]"},
+    {"name": "restore_timeout", "value": "[[restoreTimeoutSeconds]]"},
+    {"name": "test_mode", "value": "[[testMode]]"},
+    {"name": "error_url", "value": "[[error_url]]"},
+    {"name": "error_key", "value": "[[error_key]]"},
+    {"name": "error_env", "value": "[[error_env]]"}
+  ],
+  "optionalConfigNames": ["restore_key", "restore_timeout", "error_url", "error_key", "error_env"]
+}

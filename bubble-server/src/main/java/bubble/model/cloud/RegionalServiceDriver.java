@@ -6,23 +6,36 @@ package bubble.model.cloud;
 
 import bubble.cloud.CloudRegion;
 import bubble.cloud.CloudRegionRelative;
+import bubble.server.BubbleConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparingDouble;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 
 public interface RegionalServiceDriver {
 
-    static List<CloudRegionRelative> findClosestRegions(List<CloudService> clouds,
+    Logger log = LoggerFactory.getLogger(RegionalServiceDriver.class);
+
+    static List<CloudRegionRelative> findClosestRegions(BubbleConfiguration configuration,
+                                                        List<CloudService> clouds,
                                                         BubbleFootprint footprint,
                                                         double latitude,
                                                         double longitude) {
 
         final List<CloudRegionRelative> allRegions = new ArrayList<>();
         for (CloudService c : clouds) {
-            final List<CloudRegion> regions = c.getRegionalDriver().getRegions();
+            final List<CloudRegion> regions;
+            try {
+                regions = c.getComputeDriver(configuration).getRegions();
+            } catch (Exception e) {
+                log.warn("findClosestRegions: error fetching regions from "+c.getName()+"/"+c.getUuid()+": "+shortError(e), e);
+                continue;
+            }
             if (regions != null) {
                 for (CloudRegion region : regions) {
                     if (footprint != null && !footprint.isAllowedCountry(region.getLocation().getCountry())) {

@@ -1,0 +1,58 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+- name: Create algo staging directory
+  file:
+    path: /root/ansible/roles/algo/algo
+    owner: root
+    group: root
+    mode: 0770
+    state: directory
+
+- name: Download algo dist file
+  get_url:
+    url: https://github.com/getbubblenow/bubble-dist/raw/master/algo/master.zip
+    dest: /tmp/algo.zip
+    checksum: sha256:f9709ced6cbaf92473c975355050915657da50dfc0eaf655f178643953a9cd42
+
+- name: Unzip algo master.zip
+  unarchive:
+    remote_src: yes
+    src: /tmp/algo.zip
+    dest: /root/ansible/roles/algo
+
+- name: Write algo config.cfg.hbs
+  copy:
+    src: config.cfg.hbs
+    dest: /root/ansible/roles/algo/algo/config.cfg.hbs
+
+- name: Install algo_refresh_users script and monitor
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    owner: root
+    group: root
+    mode: 0500
+  with_items:
+    - "algo_refresh_users.sh"
+    - "algo_refresh_users_monitor.sh"
+
+- name: Install algo_refresh_users_monitor supervisor conf file
+  copy:
+    src: supervisor_algo_refresh_users_monitor.conf
+    dest: /etc/supervisor/conf.d/algo_refresh_users_monitor.conf
+
+- name: Install wg_monitor_connections script
+  copy:
+    src: wg_monitor_connections.sh
+    dest: "/usr/local/sbin/wg_monitor_connections.sh"
+    owner: root
+    group: root
+    mode: 0500
+
+- name: Install wg_monitor_connections supervisor conf file
+  copy:
+    src: supervisor_wg_monitor_connections.conf
+    dest: /etc/supervisor/conf.d/wg_monitor_connections.conf
+
+- include: algo_packer.yml

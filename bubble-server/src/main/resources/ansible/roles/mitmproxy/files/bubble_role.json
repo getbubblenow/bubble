@@ -1,0 +1,10 @@
+{
+  "name": "mitmproxy-0.0.1",
+  "config": [
+    {"name": "admin_port", "value": "[[node.adminPort]]"},
+    {"name": "bubble_network", "value": "[[node.network]]"},
+    {"name": "server_name", "value": "[[node.fqdn]]"},
+    {"name": "server_alias", "value": "[[network.networkDomain]]"},
+    {"name": "ssl_port", "value": "[[node.sslPort]]"}
+  ]
+}

@@ -61,7 +61,7 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
 
     public static final String[] DEFAULT_ENV_FILE_PATHS = {
             HOME_DIR + ".bubble.env",
-            HOME_DIR + "/current/bubble.env",
+            HOME_DIR + "/api/bubble.env",
             System.getProperty("user.dir") + "/bubble.env"
     };
 

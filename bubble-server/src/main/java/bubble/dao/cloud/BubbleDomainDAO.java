@@ -4,9 +4,7 @@
  */
 package bubble.dao.cloud;
 
-import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountOwnedTemplateDAO;
-import bubble.model.account.Account;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
@@ -15,7 +13,6 @@ import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -23,37 +20,16 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @Repository @Slf4j
 public class BubbleDomainDAO extends AccountOwnedTemplateDAO<BubbleDomain> {
 
-    @Autowired private AnsibleRoleDAO roleDAO;
     @Autowired private CloudServiceDAO cloudDAO;
-    @Autowired private AccountDAO accountDAO;
     @Autowired private BubbleConfiguration configuration;
 
     @Override public Order getDefaultSortOrder() { return PRIORITY_ASC; }
 
     @Override public Object preCreate(BubbleDomain domain) {
 
-        final String[] roles = domain.getRoles();
-        if (roles == null || roles.length == 0) throw invalidEx("err.roles.required");
-
         final CloudService dnsService = cloudDAO.findByUuid(domain.getPublicDns());
         if (dnsService == null) throw invalidEx("err.dns.notFound", "cloud service not found: "+domain.getPublicDns(), domain.getPublicDns());
 
-        final Account account = accountDAO.findByUuid(domain.getAccount());
-        final List<String> validRoles = new ArrayList<>();
-        for (String r : roles) {
-            if (roleDAO.findByAccountAndId(domain.getAccount(), r) == null) {
-                if (!account.hasParent()) {
-                    validRoles.add(r);
-                } else if (roleDAO.findPublicTemplate(account.getParent(), r) == null) {
-                    continue;
-                }
-                validRoles.add(r);
-            } else {
-                validRoles.add(r);
-            }
-        }
-
-        domain.setRoles(validRoles.toArray(new String[0]));
         return super.preCreate(domain);
     }
 

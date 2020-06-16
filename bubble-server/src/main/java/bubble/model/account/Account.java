@@ -66,7 +66,6 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
         @ECTypeChild(type=RuleDriver.class, backref="account"),
         @ECTypeChild(type=BubbleApp.class, backref="account"),
         @ECTypeChild(type=AppData.class, backref="account"),
-        @ECTypeChild(type=AnsibleRole.class, backref="account"),
         @ECTypeChild(type=CloudService.class, backref="account"),
         @ECTypeChild(type=BubbleFootprint.class, backref="account"),
         @ECTypeChild(type=BubbleDomain.class, backref="account"),

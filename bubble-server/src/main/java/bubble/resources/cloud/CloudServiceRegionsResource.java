@@ -12,6 +12,7 @@ import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.cloud.BubbleFootprint;
 import bubble.model.cloud.CloudService;
+import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.GeoService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -38,6 +39,7 @@ public class CloudServiceRegionsResource {
 
     public CloudServiceRegionsResource(Account account) { this.account = account; }
 
+    @Autowired private BubbleConfiguration configuration;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleFootprintDAO footprintDAO;
     @Autowired private GeoService geoService;
@@ -77,13 +79,13 @@ public class CloudServiceRegionsResource {
             if (footprint == null) return notFound(footprintId);
         }
 
-        return ok(findClosestRegions(computeClouds(), footprint, loc.getLatitude(), loc.getLongitude()));
+        return ok(findClosestRegions(configuration, computeClouds(), footprint, loc.getLatitude(), loc.getLongitude()));
     }
 
     public List<CloudRegion> findRegions(List<CloudService> clouds, BubbleFootprint footprint) {
         final List<CloudRegion> regions = new ArrayList<>();
         for (CloudService cloud : clouds) {
-            for (CloudRegion region : cloud.getRegionalDriver().getRegions(footprint)) {
+            for (CloudRegion region : cloud.getComputeDriver(configuration).getRegions(footprint)) {
                 regions.add(region.setCloud(cloud.getUuid()));
             }
         }

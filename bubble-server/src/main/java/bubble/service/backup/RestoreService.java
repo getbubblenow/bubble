@@ -47,7 +47,7 @@ public class RestoreService {
 
     // this is how long bubble_restore_monitor.sh will allow a restore after it starts
     // we add some time because, in the ansible setup, the script starts (in role bubble) before the
-    // API is started (in role bubble_finalizer)
+    // API is started (in role finalizer)
     public static final long RESTORE_MONITOR_SCRIPT_TIMEOUT_SECONDS = RESTORE_WINDOW_SECONDS + MINUTES.toSeconds(5);
 
     private static final long RESTORE_LOCK_TIMEOUT = MINUTES.toMillis(31);

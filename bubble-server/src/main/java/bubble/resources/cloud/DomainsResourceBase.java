@@ -54,13 +54,4 @@ public class DomainsResourceBase extends AccountOwnedTemplateResource<BubbleDoma
         return configuration.subResource(NodesResource.class, caller, domain);
     }
 
-    @Path("/{id}"+EP_ROLES)
-    public DomainRolesResource getRoles(@Context ContainerRequest ctx,
-                                        @PathParam("id") String id) {
-        final Account caller = userPrincipal(ctx);
-        final BubbleDomain domain = find(ctx, id);
-        if (domain == null) throw notFoundEx(id);
-        return configuration.subResource(DomainRolesResource.class, caller, domain);
-    }
-
 }

@@ -17,21 +17,24 @@ import org.glassfish.jersey.server.ContainerRequest;
 
 import javax.ws.rs.core.Context;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.http.HttpHeaders.*;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.io.FileUtil.abs;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.*;
+import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
@@ -40,6 +43,13 @@ public class ApiConstants {
     public static final String ROOT_NETWORK_UUID = "00000000-0000-0000-0000-000000000000";
 
     public static final String DEFAULT_LOCALE = "en_US";
+
+    public static final String[] ROLES_SAGE = {"common", "nginx", "bubble", "finalizer"};
+    public static final String[] ROLES_NODE = {"common", "nginx", "bubble", "algo", "mitmproxy", "finalizer"};
+
+    public static final String ANSIBLE_DIR = "ansible";
+    public static final List<String> BUBBLE_SCRIPTS = splitAndTrim(stream2string(ANSIBLE_DIR + "/bubble_scripts.txt"), "\n")
+            .stream().filter(s -> !empty(s)).collect(Collectors.toList());
 
     private static final AtomicReference<String> bubbleDefaultDomain = new AtomicReference<>();
 
@@ -86,6 +96,7 @@ public class ApiConstants {
     public static final String EP_LOGOUT = "/logout";
     public static final String EP_FORGOT_PASSWORD = "/forgotPassword";
     public static final String EP_CHANGE_PASSWORD = "/changePassword";
+    public static final String EP_ERROR_API = "/errorApi";
     public static final String EP_CA_CERT = "/cacert";
     public static final String EP_KEY = "/key";
     public static final String EP_SCRIPT = "/script";
@@ -106,7 +117,6 @@ public class ApiConstants {
     public static final String APPS_ENDPOINT = "/apps";
     public static final String DRIVERS_ENDPOINT = "/drivers";
     public static final String CLOUDS_ENDPOINT = "/clouds";
-    public static final String ROLES_ENDPOINT = "/roles";
     public static final String PROXY_ENDPOINT = "/p";
     public static final String PROMOTIONS_ENDPOINT = "/promos";
 
@@ -160,11 +170,11 @@ public class ApiConstants {
     public static final String EP_BILL = "/bill";
     public static final String EP_BILLS = "/bills";
     public static final String EP_CLOSEST = "/closest";
-    public static final String EP_ROLES = ROLES_ENDPOINT;
     public static final String EP_SENT_NOTIFICATIONS = "/notifications/outbox";
     public static final String EP_RECEIVED_NOTIFICATIONS = "/notifications/inbox";
     public static final String EP_REFERRAL_CODES = "/referralCodes";
     public static final String EP_STORAGE = "/storage";
+    public static final String EP_PACKER = "/packer";
     public static final String EP_DNS = "/dns";
     public static final String EP_BACKUPS = "/backups";
     public static final String EP_FIND_DNS = "/find";
@@ -285,4 +295,19 @@ public class ApiConstants {
                         invalidEx("err."+e.getSimpleName()+".invalid", "Invalid "+e.getSimpleName()+": "+v, v));
     }
 
+    public static void copyScriptsOrDie(File scriptsParentDir) {
+        try {
+            copyScripts(scriptsParentDir);
+        } catch (IOException e) {
+            die("copyScriptsOrDie: "+shortError(e), e);
+        }
+    }
+
+    public static void copyScripts(File scriptsParentDir) throws IOException {
+        // write scripts
+        final File scriptsDir = mkdirOrDie(new File(scriptsParentDir, "scripts"));
+        for (String script : BUBBLE_SCRIPTS) {
+            toFile(new File(scriptsDir, script), stream2string("scripts/"+script));
+        }
+    }
 }

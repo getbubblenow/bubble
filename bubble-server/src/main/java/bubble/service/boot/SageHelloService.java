@@ -69,7 +69,7 @@ public class SageHelloService extends SimpleDaemon {
                 log.info("hello_to_sage: sending hello...");
                 final NotificationReceipt receipt = notificationService.notify(sage, hello_to_sage, selfNode);
                 log.info("hello_to_sage: received reply from sage node: " + json(receipt, COMPACT_MAPPER));
-                if (receipt.isSuccess()) {
+                if (receipt != null && receipt.isSuccess()) {
                     if (!sageHelloSent.get()) sageHelloSent.set(true);
                     synchronized (unlockMessage) {
                         if (unlockMessage.get() != null && !unlockMessage.get().hasUuid()) {

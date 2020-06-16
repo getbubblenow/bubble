@@ -31,9 +31,7 @@ public class NodeProgressMeterConstants {
     public static final String METER_TICK_CREATING_NODE = "BUBBLE: CREATING NODE...";
     public static final String METER_TICK_LAUNCHING_NODE = "BUBBLE: LAUNCHING NODE...";
     public static final String METER_TICK_PREPARING_ROLES = "BUBBLE: PREPARING ANSIBLE ROLES...";
-    public static final String METER_TICK_WRITING_DNS_RECORDS = "BUBBLE: WRITING DNS RECORDS...";
     public static final String METER_TICK_PREPARING_INSTALL = "BUBBLE: PREPARING INSTALL FILES...";
-    public static final String METER_TICK_AWAITING_DNS = "BUBBLE: AWAITING DNS RECORDS...";
     public static final String METER_TICK_STARTING_INSTALL = "BUBBLE: STARTING INSTALLATION...";
     public static final String METER_TICK_COPYING_ANSIBLE = "BUBBLE: COPYING ANSIBLE FILES...";
     public static final String METER_TICK_RUNNING_ANSIBLE = "BUBBLE: RUNNING ANSIBLE PLAYBOOK...";
@@ -46,12 +44,13 @@ public class NodeProgressMeterConstants {
     public static final String METER_ERROR_PLAN_NOT_ENABLED = "BUBBLE-ERROR: PLAN NOT ENABLED";
     public static final String METER_ERROR_PEER_LIMIT_REACHED = "BUBBLE-ERROR: PEER LIMIT REACHED";
     public static final String METER_ERROR_NODE_CLOUD_NOT_FOUND = "BUBBLE-ERROR: NODE CLOUD NOT FOUND";
-    public static final String METER_ERROR_BUBBLE_JAR_NOT_FOUND = "BUBBLE-ERROR: BUBBLE JAR NOT FOUND";
-    public static final String METER_ERROR_ROLES_NOT_FOUND = "BUBBLE-ERROR: ANSIBLE ROLES NOT FOUND";
-    public static final String METER_ERROR_NO_IP_OR_SSH_KEY = "BUBBLE-ERROR: NODE STARTED BUT HAS NO IP ADDRESS OR SSH KEY";
+    public static final String METER_ERROR_STARTING_NODE = "BUBBLE-ERROR: ERROR STARTING NODE";
+    public static final String METER_ERROR_DNS = "BUBBLE-ERROR: ERROR SETTING DNS ENTRIES FOR NODE";
+    public static final String METER_ERROR_NO_IP = "BUBBLE-ERROR: NODE STARTED BUT HAS NO IP ADDRESS";
     public static final String METER_ERROR_ROLE_VALIDATION_ERRORS = "BUBBLE-ERROR: ROLE VALIDATION FAILED";
 
     public static final String METER_COMPLETED = "meter_completed";
+    public static final String METER_START_OR_DNS_ERROR = "meter_start_or_dns_error";
     public static final String METER_UNKNOWN_ERROR = "meter_unknown_error";
 
     private static final Map<String, Integer> STANDARD_TICKS = MapBuilder.build(new Object[][] {
@@ -60,9 +59,7 @@ public class NodeProgressMeterConstants {
             {METER_TICK_CREATING_NODE, 1},
             {METER_TICK_LAUNCHING_NODE, 1},
             {METER_TICK_PREPARING_ROLES, 2},
-            {METER_TICK_WRITING_DNS_RECORDS, 4},
             {METER_TICK_PREPARING_INSTALL, 4},
-            {METER_TICK_AWAITING_DNS, 5},
             {METER_TICK_STARTING_INSTALL, 6},
             {METER_TICK_COPYING_ANSIBLE, 7},
             {METER_TICK_RUNNING_ANSIBLE, 15}

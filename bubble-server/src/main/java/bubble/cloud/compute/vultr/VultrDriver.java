@@ -5,32 +5,35 @@
 package bubble.cloud.compute.vultr;
 
 import bubble.cloud.CloudRegion;
-import bubble.cloud.compute.ComputeNodeSize;
-import bubble.cloud.compute.ComputeServiceDriverBase;
+import bubble.cloud.compute.*;
+import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeState;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.SingletonList;
 import org.cobbzilla.util.http.HttpRequestBean;
 import org.cobbzilla.util.http.HttpResponseBean;
+import org.cobbzilla.util.system.CommandResult;
 
 import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.function.Function;
 
 import static bubble.model.cloud.BubbleNode.TAG_INSTANCE_ID;
-import static bubble.model.cloud.BubbleNode.TAG_SSH_KEY_ID;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.apache.http.HttpHeaders.CONTENT_ENCODING;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpMethods.POST;
 import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.util.http.HttpUtil.getResponse;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.string.StringUtil.urlEncode;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
@@ -38,6 +41,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 @Slf4j
 public class VultrDriver extends ComputeServiceDriverBase {
 
+    public static final String PARAM_API_KEY = "apiKey";
     public static final String API_KEY_HEADER = "API-Key";
 
     public static final String VULTR_API_BASE = "https://api.vultr.com/v1/";
@@ -45,47 +49,58 @@ public class VultrDriver extends ComputeServiceDriverBase {
     public static final String REGIONS_URL = VULTR_API_BASE + "regions/list";
     public static final String PLANS_URL = VULTR_API_BASE + "plans/list";
     public static final String OS_URL = VULTR_API_BASE + "os/list";
+    public static final String SNAPSHOT_URL = VULTR_API_BASE + "snapshot/list";
 
     public static final String VULTR_SUBID = "SUBID";
     public static final String VULTR_V4_IP = "main_ip";
     public static final String VULTR_V6_IP = "v6_main_ip";
 
-    public static final String CREATE_SSH_KEY_URL = VULTR_API_BASE + "sshkey/create";
-    public static final String DESTROY_SSH_KEY_URL = VULTR_API_BASE + "sshkey/destroy";
     public static final String CREATE_SERVER_URL = VULTR_API_BASE + "server/create";
     public static final String DESTROY_SERVER_URL = VULTR_API_BASE + "server/destroy";
     public static final String LIST_SERVERS_URL = VULTR_API_BASE + "server/list";
     public static final String POLL_SERVER_URL = LIST_SERVERS_URL + "?" + VULTR_SUBID + "=";
 
-    @Getter(lazy=true) private static final Map<String, Integer> regionMap = getResourceMap(REGIONS_URL);
-    @Getter(lazy=true) private static final Map<String, Integer> plansMap = getResourceMap(PLANS_URL);
-    @Getter(lazy=true) private static final Map<String, Integer> osMap = getResourceMap(OS_URL);
+    @Getter(lazy=true) private final List<CloudRegion> cloudRegions = loadCloudResources(REGIONS_URL, new VultrRegionParser());
+    @Getter(lazy=true) private final List<ComputeNodeSize> cloudSizes = loadCloudResources(PLANS_URL, new VultrComputeNodeSizeParser());
+    @Getter(lazy=true) private final List<OsImage> cloudOsImages = loadCloudResources(OS_URL, new VultrOsImageParser());
 
+    @Getter(lazy=true) private final int snapshotOsId = initSnapshotOsId();
+    private int initSnapshotOsId() {
+        final OsImage snapshot = getCloudOsImages().stream()
+                .filter(i -> i.getName().equals("Snapshot"))
+                .findFirst()
+                .orElse(null);
+        return snapshot == null ? die("initSnapshotOsId: no snapshot OS found") : Integer.parseInt(snapshot.getId());
+    }
+
+    public static final long SERVER_START_INITIAL_INTERVAL = SECONDS.toMillis(30);
     public static final long SERVER_START_POLL_INTERVAL = SECONDS.toMillis(5);
     public static final long SERVER_START_TIMEOUT = MINUTES.toMillis(10);
     public static final long SERVER_STOP_TIMEOUT = SECONDS.toMillis(60);
     public static final long SERVER_STOP_CHECK_INTERVAL = SECONDS.toMillis(5);
 
-    private static Map<String, Integer> getResourceMap(String uri) {
+    private <T> List<T> loadCloudResources(String uri, ResourceParser<T, List<T>> parser) {
         try {
-            final HttpResponseBean response = getResponse(uri);
-            final JsonNode regionsNode = json(response.getEntityString(), JsonNode.class);
-            final Map<String, Integer> map = new HashMap<>();
-            for (Iterator<String> fields = regionsNode.fieldNames(); fields.hasNext(); ) {
-                final String regionId = fields.next();
-                final JsonNode region = regionsNode.get(regionId);
-                map.put(region.get("name").textValue(), Integer.parseInt(regionId));
+            final HttpRequestBean request = auth(new HttpRequestBean(uri));
+            final HttpResponseBean response = getResponse(request);
+            final JsonNode node = json(response.getEntityString(), JsonNode.class);
+            final List<T> resources = parser.newResults();
+            for (Iterator<String> fields = node.fieldNames(); fields.hasNext(); ) {
+                final String id = fields.next();
+                final JsonNode item = node.get(id);
+                final T obj = parser.parse(item);
+                if (obj != null) resources.add(obj);
             }
-            return map;
+            return resources;
         } catch (Exception e) {
-            return die("getResourceMap("+uri+"): "+e, e);
+            return die("loadCloudResources("+uri+"): "+e, e);
         }
     }
 
     @Override public void postSetup() {
-        if (credentials != null && credentials.hasParam(API_KEY_HEADER) && credentials.getParam(API_KEY_HEADER).contains("{{")) {
-            final String apiKey = configuration.applyHandlebars(credentials.getParam(API_KEY_HEADER));
-            credentials.setParam(API_KEY_HEADER, apiKey);
+        if (credentials != null && credentials.hasParam(PARAM_API_KEY) && credentials.getParam(PARAM_API_KEY).contains("{{")) {
+            final String apiKey = configuration.applyHandlebars(credentials.getParam(PARAM_API_KEY));
+            credentials.setParam(PARAM_API_KEY, apiKey);
         }
         super.postSetup();
     }
@@ -95,23 +110,19 @@ public class VultrDriver extends ComputeServiceDriverBase {
         final CloudRegion region = config.getRegion(node.getRegion());
         final ComputeNodeSize size = config.getSize(node.getSize());
 
-        final Integer regionId = getRegionMap().get(region.getInternalName());
+        final Long regionId = getRegion(region.getInternalName()).getId();
         if (regionId == null) return die("start: region not found: "+region.getInternalName());
 
-        final Integer planId = getPlansMap().get(size.getInternalName());
+        final Long planId = getSize(size.getType()).getId();
         if (planId == null) return die("start: plan not found: "+size.getInternalName());
 
-        final Integer osId = getOsMap().get(config.getConfig("os"));
-        if (osId == null) return die("start: OS not found: "+config.getConfig("os"));
-
-        // register ssh key, check response
-        final String sshKeyId = registerSshKey(node);
+        final PackerImage packerImage = getOrCreatePackerImage(node);
 
         // prepare to create server
         final String data = "DCID=" + regionId +
                 "&VPSPLANID=" + planId +
-                "&OSID=" + osId +
-                "&SSHKEYID=" + sshKeyId +
+                "&OSID=" + getSnapshotOsId() +
+                "&SNAPSHOTID=" + packerImage.getId() +
                 "&tag=" + cloud.getUuid() +
                 "&label=" + node.getFqdn() +
                 "&enable_ipv6=yes";
@@ -135,6 +146,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
         final long start = now();
         boolean startedOk = false;
         final HttpRequestBean poll = auth(new HttpRequestBean(POLL_SERVER_URL+subId));
+        sleep(SERVER_START_INITIAL_INTERVAL);
         while (now() - start < SERVER_START_TIMEOUT) {
             sleep(SERVER_START_POLL_INTERVAL);
             final HttpResponseBean pollResponse = getResponse(poll);
@@ -147,23 +159,29 @@ public class VultrDriver extends ComputeServiceDriverBase {
                 if (serverNode.has("tag")
                         && serverNode.get("tag").textValue().equals(cloud.getUuid())
                         && serverNode.has("status")
+                        && serverNode.has("server_state")
                         && serverNode.has(VULTR_V4_IP)) {
 
                     final String status = serverNode.get("status").textValue();
+                    final String serverState = serverNode.get("server_state").textValue();
                     final String ip4 = serverNode.get(VULTR_V4_IP).textValue();
+                    final String ip6 = serverNode.get(VULTR_V6_IP).textValue();
+                    // log.info("start: server_state="+serverState+", status="+status, "ip4="+ip4+", ip6="+ip6);
+
                     if (ip4 != null && ip4.length() > 0 && !ip4.equals("0.0.0.0")) {
                         node.setIp4(ip4);
                         nodeDAO.update(node);
                     }
-                    final String ip6 = serverNode.get(VULTR_V6_IP).textValue();
                     if (ip6 != null && ip6.length() > 0) {
                         node.setIp6(ip6);
                         nodeDAO.update(node);
                     }
                     if (status.equals("active") && (node.hasIp4() || node.hasIp6())) {
-                        log.info("start: node is active! we can run ansible now: " + node.getIp4());
                         node.setState(BubbleNodeState.booted);
                         nodeDAO.update(node);
+                    }
+                    if (serverState.equals("ok")) {
+                        log.info("start: server is ready: "+node.id());
                         startedOk = true;
                         break;
                     }
@@ -177,28 +195,15 @@ public class VultrDriver extends ComputeServiceDriverBase {
         return node;
     }
 
-    @Override public HttpRequestBean registerSshKeyRequest(BubbleNode node) {
-        final String keyData = "name="+urlEncode(node.getUuid())+"&ssh_key="+urlEncode(node.getSshKey().getSshPublicKey());
-        return auth(new HttpRequestBean(POST, CREATE_SSH_KEY_URL, keyData).setHeader(CONTENT_ENCODING, "application/x-www-form-urlencoded"));
-    }
-
-    @Override protected String readSshKeyId(HttpResponseBean keyResponse)  {
-        return json(keyResponse.getEntityString(), JsonNode.class).get("SSHKEYID").textValue();
-    }
-
     @Override public BubbleNode cleanupStart(BubbleNode node) throws Exception {
-        deleteVultrKey(node);
         return node;
     }
 
     private HttpRequestBean auth(HttpRequestBean req) {
-        return req.setHeader(API_KEY_HEADER, credentials.getParam(API_KEY_HEADER));
+        return req.setHeader(API_KEY_HEADER, credentials.getParam(PARAM_API_KEY));
     }
 
     @Override public BubbleNode stop(BubbleNode node) throws Exception {
-
-        deleteVultrKey(node); // just in case
-
         Exception lastEx = null;
         final long start = now();
         while (now() - start < SERVER_STOP_TIMEOUT) {
@@ -244,12 +249,16 @@ public class VultrDriver extends ComputeServiceDriverBase {
             throw invalidEx("err.node.stop.error", "stop: no " + VULTR_SUBID + " on node, returning");
         }
 
+        stopServer(subId);
+        return node;
+    }
+
+    private void stopServer(String subId) {
         final HttpRequestBean destroyServerRequest = auth(new HttpRequestBean(POST, DESTROY_SERVER_URL, VULTR_SUBID + "=" + subId));
         final HttpResponseBean destroyResponse = destroyServerRequest.curl();
         if (destroyResponse.getStatus() != OK) {
             throw invalidEx("err.node.stop.error", "stop: error stopping node: "+destroyResponse);
         }
-        return node;
     }
 
     private BubbleNode findByIp4(BubbleNode node, String ip4) throws IOException {
@@ -294,6 +303,13 @@ public class VultrDriver extends ComputeServiceDriverBase {
     }
 
     @Override public List<BubbleNode> listNodes() throws IOException {
+        return listNodes(server -> {
+            final String tag = server.has("tag") ? server.get("tag").textValue() : null;
+            return tag != null && tag.equals(cloud.getUuid());
+        });
+    }
+
+    public List<BubbleNode> listNodes(Function<ObjectNode, Boolean> filter) throws IOException {
         final List<BubbleNode> nodes = new ArrayList<>();
         final HttpRequestBean listServerRequest = auth(new HttpRequestBean(LIST_SERVERS_URL));
         final HttpResponseBean listResponse = getResponse(listServerRequest);
@@ -303,8 +319,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
                 for (Iterator<String> iter = entity.fieldNames(); iter.hasNext(); ) {
                     final String subid = iter.next();
                     final ObjectNode server = (ObjectNode) entity.get(subid);
-                    final String tag = server.has("tag") ? server.get("tag").textValue() : null;
-                    if (tag == null || !tag.equals(cloud.getUuid())) {
+                    if (!filter.apply(server)) {
                         log.debug("Skipping node without cloud tag "+cloud.getUuid()+": "+subid);
                         continue;
                     }
@@ -359,17 +374,78 @@ public class VultrDriver extends ComputeServiceDriverBase {
         }
     }
 
-    public void deleteVultrKey(BubbleNode node) throws IOException {
-        if (node.hasTag(TAG_SSH_KEY_ID)) {
-            final String keyId = node.getTag(TAG_SSH_KEY_ID);
-            final String keyData = "SSHKEYID="+ keyId;
-            final HttpRequestBean destroyKeyRequest = auth(new HttpRequestBean(POST, DESTROY_SSH_KEY_URL, keyData));
+    @Override public List<PackerImage> getAllPackerImages() { return getPackerImages(); }
+    @Override public List<PackerImage> getPackerImagesForRegion(String region) { return getPackerImages(); }
 
-            // destroy key, check response
-            final HttpResponseBean destroyKeyResponse = destroyKeyRequest.curl();
-            if (destroyKeyResponse.getStatus() != OK) {
-                log.warn("cleanupStart: error destroying sshkey: "+ keyId);
-            }
-        }
+    public List<PackerImage> getPackerImages () {
+        final List<PackerImage> images = loadCloudResources(SNAPSHOT_URL, new VultrPackerImageParser(configuration.getVersion(), packerService.getPackerPublicKeyHash()));
+        return images == null ? Collections.emptyList() : images;
     }
+
+    public static final long SNAPSHOT_TIMEOUT = MINUTES.toMillis(60);
+    @Override public List<PackerImage> finalizeIncompletePackerRun(CommandResult commandResult, AnsibleInstallType installType) {
+        if (!commandResult.getStdout().contains("Waiting 300s for snapshot")
+                || !commandResult.getStdout().contains("Error waiting for snapshot")
+                || !commandResult.getStdout().contains("Unable to destroy server: Unable to remove VM: Server is currently locked")) {
+            stopImageServer(installType);
+            return null;
+        }
+
+        // wait longer for the snapshot...
+        final String keyHash = packerService.getPackerPublicKeyHash();
+        final long start = now();
+        PackerImage snapshot = null;
+        while (now() - start < SNAPSHOT_TIMEOUT) {
+            snapshot = getPackerImages().stream()
+                    .filter(i -> i.getName().contains("_"+installType.name()+"_") && i.getName().contains(keyHash))
+                    .findFirst()
+                    .orElse(null);
+            if (snapshot != null) break;
+            sleep(SECONDS.toMillis(20), "finalizeIncompletePackerRun: waiting for snapshot: "+keyHash);
+        }
+        if (snapshot == null) {
+            log.error("finalizeIncompletePackerRun: timeout waiting for snapshot");
+        }
+
+        if (!stopImageServer(installType)) return null;
+        if (snapshot == null) return null;
+
+        return new SingletonList<>(snapshot);
+    }
+
+    public boolean stopImageServer(AnsibleInstallType installType) {
+
+        final String keyHash = packerService.getPackerPublicKeyHash();
+        final List<BubbleNode> servers;
+
+        // find the server(s)
+        try {
+            servers = listNodes(server -> {
+                final String tag = server.has("tag") ? server.get("tag").textValue() : null;
+                return tag != null && tag.contains("_"+installType.name()+"_") && tag.contains(keyHash);
+            });
+        } catch (IOException e) {
+            log.error("stopImageServer: error listing servers: "+shortError(e), e);
+            return false;
+        }
+        if (servers.isEmpty()) {
+            log.error("stopImageServer: snapshot server not found");
+            return false;
+        }
+        if (servers.size() != 1) {
+            log.warn("stopImageServer: expected only one server, found: "+servers.size());
+        }
+
+        // now shut down the server(s)
+        try {
+            for (BubbleNode node : servers) {
+                stopServer(node.getTag(TAG_INSTANCE_ID));
+            }
+        } catch (Exception e) {
+            log.error("stopImageServer: error stopping server: "+shortError(e));
+            return false;
+        }
+        return true;
+    }
+
 }

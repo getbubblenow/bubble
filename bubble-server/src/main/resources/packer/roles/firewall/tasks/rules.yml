@@ -1,0 +1,61 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+- name: Allow all from local
+  iptables:
+    chain: INPUT
+    in_interface: lo
+    jump: ACCEPT
+    comment: Allow all from local
+  become: yes
+
+- name: Allow related and established connections
+  iptables:
+    chain: INPUT
+    ctstate: ESTABLISHED,RELATED
+    jump: ACCEPT
+    comment: Allow related and established connections
+  become: yes
+
+- name: Allow SSH
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 22
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new SSH connections
+  become: yes
+  when: fw_enable_ssh
+
+- name: Allow HTTP
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 80
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new HTTP connections
+  become: yes
+  when: fw_enable_http
+
+- name: Allow HTTPS
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 443
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new HTTPS connections
+  become: yes
+  when: fw_enable_http
+
+- name: Drop everything else
+  iptables:
+    chain: INPUT
+    jump: DROP
+    comment: Drop anything else
+  become: yes

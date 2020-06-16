@@ -19,7 +19,7 @@
 #
 #   BUBBLE_ENV      : env file to load, used when performing handlebars substitutions on entities marked
 #                        with `"_subst": true` JSON attribute. Default is ~/.bubble.env
-#   BUBBLE_JVM_OPTS : Java options. Defaults to "-Xmx4096 -Xms4096"
+#   BUBBLE_JVM_OPTS : Java options. Defaults to either "-Xmx512m -Xms512m" when no command is set, else "-Xmx64m -Xms2m"
 #   BUBBLE_JAR      : location of bubble uberjar. Default is to assume there is exactly one bubble-server*.jar file in a
 #                       directory named "target" that is in the same directory as this script
 #
@@ -54,7 +54,7 @@ fi
 if [[ -z "${BUBBLE_ENV}" ]] ; then
   BUBBLE_ENV="${HOME}/.bubble.env"
   if [[ ! -f "${BUBBLE_ENV}" ]] ; then
-    BUBBLE_ENV="/home/bubble/current/bubble.env"
+    BUBBLE_ENV="/home/bubble/api/bubble.env"
   fi
 fi
 if [[ -f ${BUBBLE_ENV} ]] ; then
@@ -101,7 +101,7 @@ else
 fi
 
 if [[ -z "${BUBBLE_JAR}" ]] ; then
-  die "API jar file not found in ${BASE}/target"
+  die "API jar file not found"
 fi
 
 if [[ -z "${BUBBLE_JVM_OPTS}" ]] ; then

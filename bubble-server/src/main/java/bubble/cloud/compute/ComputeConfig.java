@@ -13,6 +13,8 @@ import org.cobbzilla.util.collection.NameAndValue;
 public class ComputeConfig extends RegionalConfig {
 
     @Getter @Setter private ComputeNodeSize[] sizes;
+    @Getter @Setter private String os;
+    @Getter @Setter private PackerConfig packer;
     @Getter @Setter private NameAndValue[] config;
 
     public CloudRegion getRegion (String name) {

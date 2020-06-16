@@ -28,6 +28,16 @@
     "DigitalOceanCompute": {
       "credentials": {"apiKey": "your_digitalocean_api_key"}
     },
+    "AmazonEC2Driver" : {
+      "config": {
+        // region must be a valid value from the Regions enum: https://github.com/aws/aws-sdk-java/blob/master/aws-java-sdk-core/src/main/java/com/amazonaws/regions/Regions.java
+        "region": "your_aws_region"
+      },
+      "credentials" : {
+        "AWS_ACCESS_KEY_ID": "your_aws_access_key_id",
+        "AWS_SECRET_KEY": "your_aws_secret_key"
+      }
+    },
 
     // You must configure the AWS S3 Storage service in order to launch new Bubbles
     "S3Storage" : {

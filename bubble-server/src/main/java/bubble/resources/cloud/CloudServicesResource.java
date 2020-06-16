@@ -18,8 +18,7 @@ import javax.ws.rs.core.Context;
 import java.util.List;
 import java.util.Map;
 
-import static bubble.ApiConstants.EP_DATA;
-import static bubble.ApiConstants.EP_STORAGE;
+import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.URIUtil.queryParams;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -59,6 +58,16 @@ public class CloudServicesResource extends AccountOwnedResource<CloudService, Cl
                                       @PathParam("id") String id) {
         final CloudService cloud = find(ctx, id);
         return configuration.subResource(StorageResource.class, account, cloud);
+    }
+
+    @Path("/{id}"+EP_PACKER)
+    public ComputePackerResource getPacker(@Context ContainerRequest ctx,
+                                           @PathParam("id") String id) {
+        final Account caller = userPrincipal(ctx);
+        final CloudService cloud = find(ctx, id);
+        if (cloud == null) throw notFoundEx(id);
+        if (cloud.getType() != CloudServiceType.compute) throw invalidEx("err.cloudServiceType.invalid");
+        return configuration.subResource(ComputePackerResource.class, caller, cloud);
     }
 
 }

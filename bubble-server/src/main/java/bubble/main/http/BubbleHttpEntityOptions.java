@@ -14,9 +14,9 @@ import org.kohsuke.args4j.Option;
 import java.io.InputStream;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
-import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
-import static org.cobbzilla.util.http.HttpContentTypes.MULTIPART_FORM_DATA;
+import static org.cobbzilla.util.http.HttpContentTypes.*;
 import static org.cobbzilla.util.json.JsonUtil.*;
+import static org.cobbzilla.util.string.StringUtil.UTF8cs;
 
 @Slf4j
 public class BubbleHttpEntityOptions extends BubbleHttpOptions {
@@ -57,6 +57,6 @@ public class BubbleHttpEntityOptions extends BubbleHttpOptions {
         return APPLICATION_JSON;
     }
 
-    public ContentType contentType() { return ContentType.create(getContentType()); }
+    public ContentType contentType() { return ContentType.create(getContentType(), UTF8cs); }
 
 }

@@ -10,7 +10,6 @@ import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.app.*;
 import bubble.dao.bill.AccountPaymentArchivedDAO;
 import bubble.dao.bill.BillDAO;
-import bubble.dao.cloud.AnsibleRoleDAO;
 import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.BubbleFootprintDAO;
 import bubble.dao.cloud.CloudServiceDAO;
@@ -62,7 +61,6 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private AppDataDAO dataDAO;
     @Autowired private AppMessageDAO appMessageDAO;
     @Autowired private RuleDriverDAO driverDAO;
-    @Autowired private AnsibleRoleDAO roleDAO;
     @Autowired private BubbleDomainDAO domainDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleFootprintDAO footprintDAO;
@@ -231,7 +229,6 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         ready.set(true);
 
         cloudDAO.ensureNoopCloudsExist(account);
-        copyTemplateObjects(acct, parent, roleDAO);
 
         final Map<String, RuleDriver> drivers = new HashMap<>();
         copyTemplateObjects(acct, parent, driverDAO, new AccountTemplate.CopyTemplate<>() {
@@ -326,7 +323,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     }
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    private void deleteTransactional(@NonNull final String uuid) {
+    protected void deleteTransactional(@NonNull final String uuid) {
         // loading, and actually checking if the account with given UUID exists
         final var account = findByUuid(uuid);
 

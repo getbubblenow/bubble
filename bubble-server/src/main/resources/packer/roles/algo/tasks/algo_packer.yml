@@ -1,0 +1,147 @@
+## From algo/roles/common/tasks/unattended-upgrades.yml
+- name: Install algo packages
+  apt:
+    name: [ 'git', 'apparmor-utils', 'uuid-runtime', 'coreutils', 'cgroup-tools', 'openssl', 'gnupg2', 'linux-headers-generic' ]
+    state: present
+    update_cache: yes
+
+## From algo/roles/common/tasks/ubuntu.yml
+#- name: Disable MOTD on login and SSHD
+#  replace: dest="{{ item.file }}" regexp="{{ item.regexp }}" replace="{{ item.line }}"
+#  with_items:
+#    - { regexp: '^session.*optional.*pam_motd.so.*', line: '# MOTD DISABLED', file: '/etc/pam.d/login' }
+#    - { regexp: '^session.*optional.*pam_motd.so.*', line: '# MOTD DISABLED', file: '/etc/pam.d/sshd' }
+#
+#- name: Install algo packages
+#  apt:
+#    name: [ 'git', 'apparmor-utils', 'uuid-runtime', 'coreutils', 'cgroup-tools', 'openssl', 'gnupg2', 'linux-headers-generic' ]
+#    state: present
+#    update_cache: yes
+#
+## From algo/roles/dns/tasks/ubuntu.yml
+#- name: Add the repository
+#  apt_repository:
+#    state: present
+#    codename: "{{ ansible_distribution_release }}"
+#    repo: ppa:shevchuk/dnscrypt-proxy
+#  register: result
+#  until: result is succeeded
+#  retries: 10
+#  delay: 3
+#
+#- name: Install dnscrypt-proxy
+#  apt:
+#    name: dnscrypt-proxy
+#    state: present
+#    update_cache: true
+#
+#- name: Install Bubble-enhanced dnscrypt-proxy
+#  get_url:
+#    url: https://github.com/getbubblenow/bubble-dist/raw/master/dnscrypt-proxy/dnscrypt-proxy
+#    dest: /usr/bin/dnscrypt-proxy
+#    checksum: sha256:c0c8db69e0ab1ce6b493c65cb848f1b6cca077a6091eaa8207d76d672e12fc18
+#    owner: root
+#    group: root
+#    mode: 0500
+#
+#- block:
+#    - name: Ubuntu | Configure AppArmor policy for dnscrypt-proxy
+#      copy:
+#        src: apparmor.profile.dnscrypt-proxy
+#        dest: /etc/apparmor.d/usr.bin.dnscrypt-proxy
+#        owner: root
+#        group: root
+#        mode: 0600
+##      notify: restart dnscrypt-proxy
+#
+#    - name: Ubuntu | Enforce the dnscrypt-proxy AppArmor policy
+#      command: aa-enforce usr.bin.dnscrypt-proxy
+#      changed_when: false
+#  tags: apparmor
+#  when: apparmor_enabled|default(false)|bool
+#
+#- name: Ubuntu | Ensure that the dnscrypt-proxy service directory exist
+#  file:
+#    path: /etc/systemd/system/dnscrypt-proxy.service.d/
+#    state: directory
+#    mode: 0755
+#    owner: root
+#    group: root
+#
+#- name: Ubuntu | Add custom requirements to successfully start the unit
+#  copy:
+#    dest: /etc/systemd/system/dnscrypt-proxy.service.d/99-algo.conf
+#    content: |
+#      [Unit]
+#      After=systemd-resolved.service
+#      Requires=systemd-resolved.service
+#
+#      [Service]
+#      AmbientCapabilities=CAP_NET_BIND_SERVICE
+##  notify:
+##    - restart dnscrypt-proxy
+#
+## From algo/roles/wireguard/tasks/main.yml
+#- name: WireGuard repository configured
+#  apt_repository:
+#    repo: ppa:wireguard/wireguard
+#    state: present
+#  register: result
+#  until: result is succeeded
+#  retries: 10
+#  delay: 3
+#
+#- name: WireGuard installed
+#  apt:
+#    name: wireguard
+#    state: present
+#    update_cache: true
+#
+## From algo/roles/strongswan/tasks/ubuntu.yml
+#- name: Ubuntu | Install strongSwan
+#  apt:
+#    name: strongswan
+#    state: present
+#    update_cache: yes
+#    install_recommends: yes
+#
+#- block:
+#    # https://bugs.launchpad.net/ubuntu/+source/strongswan/+bug/1826238
+#    - name: Ubuntu | Charon profile for apparmor configured
+#      copy:
+#        dest: /etc/apparmor.d/local/usr.lib.ipsec.charon
+#        content: ' capability setpcap,'
+#        owner: root
+#        group: root
+#        mode: 0644
+##      notify: restart strongswan
+#
+#    - name: Ubuntu | Enforcing ipsec with apparmor
+#      command: aa-enforce "{{ item }}"
+#      changed_when: false
+#      with_items:
+#        - /usr/lib/ipsec/charon
+#        - /usr/lib/ipsec/lookip
+#        - /usr/lib/ipsec/stroke
+#  tags: apparmor
+#  when: apparmor_enabled|default(false)|bool
+#
+#- name: Ubuntu | Ensure that the strongswan service directory exists
+#  file:
+#    path: /etc/systemd/system/strongswan.service.d/
+#    state: directory
+#    mode: 0755
+#    owner: root
+#    group: root
+#
+## From algo/roles/strongswan/tasks/main.yml
+#- name: Ensure that the strongswan user exists
+#  user:
+#    name: strongswan
+#    group: nogroup
+#    shell: "{{ strongswan_shell }}"
+#    home: "{{ strongswan_home }}"
+#    state: present
+#
+#- name: Install strongSwan
+#  package: name=strongswan state=present

@@ -198,8 +198,6 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
         return wireAndSetup(configuration);
     }
 
-    @Transient @JsonIgnore public RegionalServiceDriver getRegionalDriver () { return (RegionalServiceDriver) getDriver(); }
-
     @Transient @JsonIgnore public GeoLocateServiceDriver getGeoLocateDriver(BubbleConfiguration configuration) {
         return (GeoLocateServiceDriver) wireAndSetup(configuration);
     }

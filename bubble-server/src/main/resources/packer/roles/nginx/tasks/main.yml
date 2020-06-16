@@ -1,0 +1,59 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+- name: Install OpenSSL, nginx and software-properties-common
+  apt:
+    name: [ 'openssl', 'nginx', 'software-properties-common' ]
+    state: present
+    update_cache: yes
+
+- name: Enable Ubuntu universe repositories
+  apt_repository:
+    repo: "{{ item }}"
+    state: present
+  loop:
+    - "deb http://archive.ubuntu.com/ubuntu/ focal universe"
+    - "deb http://archive.ubuntu.com/ubuntu/ focal-updates universe"
+    - "deb http://security.ubuntu.com/ubuntu/ focal-security universe"
+
+#- name: Enable ppa:certbot/certbot repository
+#  apt_repository:
+#    repo: ppa:certbot/certbot
+#    state: present
+#
+#- name: Update packages after adding new repositories
+#  apt:
+#    update_cache: yes
+
+- name: Install certbot
+  apt:
+    name: [ 'certbot', 'python3-certbot-nginx' ]
+    state: present
+    update_cache: yes
+
+- name: Ensure nginx can read cert files
+  file:
+    dest: /etc/letsencrypt
+    group: www-data
+    recurse: yes
+
+- name: Ensure nginx is stopped
+  service:
+    name: nginx
+    state: stopped
+
+- name: Install init_certbot script
+  copy:
+    src: init_certbot.sh
+    dest: /usr/local/bin/init_certbot.sh
+    owner: root
+    group: root
+    mode: 0555
+
+- name: Install certbot_renew.sh weekly cron job
+  copy:
+    src: "certbot_renew.sh"
+    dest: /etc/cron.weekly/certbot_renew.sh
+    owner: root
+    group: root
+    mode: 0755

@@ -223,11 +223,52 @@
         {"name": "medium", "type": "medium", "internalName": "s-1vcpu-2gb", "vcpu": 1, "memoryMB": 2048, "ssdGB": 50},
         {"name": "large", "type": "large", "internalName": "s-2vcpu-4gb", "vcpu": 2, "memoryMB": 4096, "ssdGB": 80}
       ],
-      "config": [{"name": "os", "value": "ubuntu-18-04-x64"}]
+      "packer": {
+        "vars": [{"name": "DIGITALOCEAN_API_KEY", "value": "[[credentials.apiKey]]"}],
+        "builder": {
+          "type": "digitalocean",
+          "ssh_username": "root",
+          "api_token": "[[user `DIGITALOCEAN_API_KEY`]]",
+          "image": "ubuntu-18-04-x64",
+          "region": "<<buildRegion.internalName>>",
+          "size": "s-1vcpu-1gb",
+          "ipv6": true,
+          "snapshot_name": "<<packerImageName>>",
+          "snapshot_regions": ["<<<imageRegions>>>"]
+        }
+      }
     },
     "credentials": {
       "params": [
         {"name": "apiKey", "value": "{{DIGITALOCEAN_API_KEY}}"}
+      ]
+    },
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "AmazonEC2Driver",
+    "type": "compute",
+    "driverClass": "bubble.cloud.compute.ec2.AmazonEC2Driver",
+    "driverConfig": {
+	  "regions": [{
+		"name": "US_WEST_2", "description": "US West (Oregon)",
+		"location": {"country": "US", "lat": "45.5272", "lon": "122.9361"}
+	  }],
+      "sizes": [
+        {"name": "small", "type": "small", "internalName": "t2.micro", "vcpu": 1, "memoryMB": 1024, "ssdGB": 0},
+        {"name": "medium", "type": "medium", "internalName": "t2.small", "vcpu": 1, "memoryMB": 2048, "ssdGB": 0},
+        {"name": "large", "type": "large", "internalName": "t2.medium", "vcpu": 2, "memoryMB": 4096, "ssdGB": 80}
+      ],
+      "config": [
+        {"name": "imageId", "value": "ami-09396c35da02d69d3"},
+        {"name": "group", "value": "sg-d7ed5bb3"}
+      ]},
+    "credentials": {
+      "params": [
+        {"name": "AWS_ACCESS_KEY_ID", "value": "{{AWS_ACCESS_KEY_ID}}"},
+        {"name": "AWS_SECRET_KEY", "value": "{{AWS_SECRET_KEY}}"}
       ]
     },
     "template": true

@@ -1,0 +1,15 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+- name: Install SQL schema files
+  copy:
+    src: "{{ item }}"
+    dest: /home/bubble/sql/{{ item }}
+    owner: bubble
+    group: postgres
+    mode: 0440
+  with_items:
+    - "bubble.sql.gz"
+
+- name: Populate database
+  shell: sudo -H -u postgres bash -c "cd && full_reset_db.sh"

@@ -64,6 +64,7 @@ import static org.cobbzilla.util.handlebars.HandlebarsUtil.registerUtilityHelper
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
+import static org.cobbzilla.util.security.ShaUtil.sha256_file;
 
 @Configuration @NoArgsConstructor @Slf4j
 public class BubbleConfiguration extends PgRestServerConfiguration
@@ -91,7 +92,6 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public BubbleConfiguration (BubbleConfiguration other) { copy(this, other); }
 
     @Getter @Setter private int defaultSslPort = 1443;
-    @Getter @Setter private int defaultMitmProxyPort = 8888;
 
     @Getter @Setter private LocalNotificationStrategy localNotificationStrategy = LocalNotificationStrategy.inline;
     public LocalNotificationStrategy localNotificationStrategy() {
@@ -159,6 +159,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         }
         return bubbleJar;
     }
+
+    @Getter(lazy=true) private final String jarSha = sha256_file(getBubbleJar());
 
     private static final AtomicReference<String> _DEFAULT_LOCALE = new AtomicReference<>();
     public static String getDEFAULT_LOCALE() {

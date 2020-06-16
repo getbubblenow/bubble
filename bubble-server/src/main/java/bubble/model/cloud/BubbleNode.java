@@ -20,7 +20,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.lang3.RandomUtils;
-import org.cobbzilla.util.security.RsaKeyPair;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
@@ -32,9 +31,11 @@ import org.hibernate.annotations.Type;
 import javax.persistence.*;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static bubble.ApiConstants.EP_NODES;
 import static bubble.model.cloud.BubbleNodeState.*;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.json.JsonUtil.fromJson;
@@ -42,6 +43,7 @@ import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.string.ValidationRegexes.IP4_MAXLEN;
 import static org.cobbzilla.util.string.ValidationRegexes.IP6_MAXLEN;
+import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySearchDepth.shallow;
@@ -53,10 +55,11 @@ import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySe
 public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbleTags<BubbleNode> {
 
     public static final String TAG_INSTANCE_ID = "instance_id";
-    public static final String TAG_SSH_KEY_ID = "ssh_key_id";
     public static final String TAG_ERROR = "X-Bubble-Error";
+    public static final String TAG_TEST = "test_instance";
 
-    private static final List<String> TAG_NAMES = Arrays.asList(TAG_INSTANCE_ID, TAG_SSH_KEY_ID, TAG_ERROR);
+    private static final List<String> TAG_NAMES = Arrays.asList(TAG_INSTANCE_ID, TAG_ERROR);
+    private static final long IP_ADDR_TIMEOUT = MINUTES.toMillis(2);
 
     @Override public Collection<String> validTags() { return TAG_NAMES; }
 
@@ -119,6 +122,10 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     public boolean sameNetwork(BubbleNode n) {
         return getNetwork() != null && n.getNetwork() != null && getNetwork().equals(n.getNetwork());
     }
+
+    @ECIndex @Column(nullable=false, updatable=false, length=60)
+    @Enumerated(EnumType.STRING)
+    @Getter @Setter private AnsibleInstallType installType;
 
     @ECSearchable @ECField(index=50)
     @ECForeignKey(entity=BubbleNode.class, cascade=false)
@@ -214,9 +221,6 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         ephemeralTags.put(name, value);
     }
 
-    @Transient @JsonIgnore @Getter @Setter private transient RsaKeyPair sshKey;
-    public boolean hasSshKey () { return sshKey != null; }
-
     @Transient @Getter @Setter private transient BubblePlan plan;
     public boolean hasPlan () { return plan != null; }
 
@@ -243,4 +247,11 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         return new BubbleNodeQuickClient(this, configuration);
     }
 
+    public void waitForIpAddresses() {
+        final long start = now();
+        while ((!hasIp4() || !hasIp6()) && now() - start < IP_ADDR_TIMEOUT) {
+            sleep(TimeUnit.SECONDS.toMillis(2), "waiting for node to have IP addresses");
+        }
+        if (!hasIp4() || !hasIp6()) die("waitForIpAddresses: timeout");
+    }
 }

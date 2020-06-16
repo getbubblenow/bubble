@@ -186,6 +186,10 @@
         "internalName": "Tokyo",
         "location": {"city": "Tokyo", "country": "JP", "region": "Kantō", "lat": "35.689722", "lon": "139.692222"}
       }, {
+        "name": "Vultr - Seoul",
+        "internalName": "Seoul",
+        "location": {"city": "Seoul", "country": "KR", "region": "Sudogwon", "lat": "37.566667", "lon": "126.966667"}
+      }, {
         "name": "Vultr - Sydney",
         "internalName": "Sydney",
         "location": {"city": "Sydney", "country": "AU", "region": "NSW", "lat": "-33.865", "lon": "151.209444"}
@@ -195,15 +199,29 @@
         "location": {"city": "Amsterdam", "country": "NL", "region": "North Holland", "lat": "52.366667", "lon": "4.9"}
       }],
       "sizes": [
-        {"name": "small", "type": "small", "internalName": "1024 MB RAM,25 GB SSD,1.00 TB BW", "vcpu": 1, "memoryMB": 1024, "ssdGB": 25},
-        {"name": "medium", "type": "medium", "internalName": "2048 MB RAM,55 GB SSD,2.00 TB BW", "vcpu": 1, "memoryMB": 2048, "ssdGB": 55},
-        {"name": "large", "type": "large", "internalName": "4096 MB RAM,80 GB SSD,3.00 TB BW", "vcpu": 2, "memoryMB": 4096, "ssdGB": 80}
+        {"name": "small", "type": "small", "internalName": "1024 MB RAM,25 GB SSD,1.00 TB BW"},
+        {"name": "medium", "type": "medium", "internalName": "2048 MB RAM,55 GB SSD,2.00 TB BW"},
+        {"name": "large", "type": "large", "internalName": "4096 MB RAM,80 GB SSD,3.00 TB BW"}
       ],
-      "config": [{"name": "os", "value": "Ubuntu 18.04 x64"}]
+      "os": "Ubuntu 20.04 x64",
+      "packer": {
+        "vars": [{"name": "VULTR_API_KEY", "value": "[[credentials.apiKey]]"}],
+        "builder": {
+          "type": "vultr",
+          "ssh_username": "root",
+          "api_key": "[[user `VULTR_API_KEY`]]",
+          "os_id": "<<os.id>>",
+          "region_id": "<<buildRegion.id>>",
+          "plan_id": "<<sizes.small.id>>",
+          "instance_label": "<<packerImageName>>",
+          "snapshot_description": "<<packerImageName>>",
+          "tag": "<<packerImageName>>"
+        }
+      }
     },
     "credentials": {
       "params": [
-        {"name": "API-Key", "value": "{{VULTR_API_KEY}}"}
+        {"name": "apiKey", "value": "{{VULTR_API_KEY}}"}
       ]
     },
     "template": true
@@ -214,7 +232,8 @@
     "type": "compute",
     "driverClass": "bubble.cloud.compute.digitalocean.DigitalOceanDriver",
     "driverConfig": {
-      "regions": [{
+      "regions": [
+        {
         "name": "DigitalOcean - New York City 1",
         "internalName": "nyc1",
         "location": {"city": "New York", "country": "US", "region": "NY", "lat": "40.661", "lon": "-73.944"}
@@ -252,15 +271,124 @@
         "location": {"city": "Bangalore", "country": "IN", "region": "Karnataka", "lat": "12.983333", "lon": "77.583333"}
       }],
       "sizes": [
-        {"name": "small", "type": "small", "internalName": "s-1vcpu-1gb", "vcpu": 1, "memoryMB": 1024, "ssdGB": 25},
-        {"name": "medium", "type": "medium", "internalName": "s-1vcpu-2gb", "vcpu": 1, "memoryMB": 2048, "ssdGB": 50},
-        {"name": "large", "type": "large", "internalName": "s-2vcpu-4gb", "vcpu": 2, "memoryMB": 4096, "ssdGB": 80}
+        {"name": "small", "type": "small", "internalName": "s-1vcpu-1gb"},
+        {"name": "medium", "type": "medium", "internalName": "s-1vcpu-2gb"},
+        {"name": "large", "type": "large", "internalName": "s-2vcpu-4gb"}
       ],
-      "config": [{"name": "os", "value": "ubuntu-18-04-x64"}]
+      "os": "ubuntu-20-04-x64",
+      "packer": {
+        "vars": [{"name": "DIGITALOCEAN_API_KEY", "value": "[[credentials.apiKey]]"}],
+        "builder": {
+          "type": "digitalocean",
+          "ssh_username": "root",
+          "api_token": "[[user `DIGITALOCEAN_API_KEY`]]",
+          "image": "<<os.name>>",
+          "region": "<<buildRegion.internalName>>",
+          "size": "<<sizes.small.internalName>>",
+          "ipv6": true,
+          "snapshot_name": "<<packerImageName>>",
+          "snapshot_regions": ["<<<imageRegions>>>"]
+        }
+      }
     },
     "credentials": {
       "params": [
         {"name": "apiKey", "value": "{{DIGITALOCEAN_API_KEY}}"}
+      ]
+    },
+    "template": true
+  },
+
+  {
+    "name": "AmazonEC2Compute",
+    "type": "compute",
+    "driverClass": "bubble.cloud.compute.ec2.AmazonEC2Driver",
+    "driverConfig": {
+      "regions": [{
+        "name": "Amazon - N. Virginia", "description": "US East 1 (N. Virginia)", "internalName": "us-east-1",
+        "location": {"city": "Arlington", "region": "VA", "country": "US", "lat": "38.880278", "lon": "-77.108333"}
+      }, {
+        "name": "Amazon - Ohio", "description": "US East 2 (Ohio)", "internalName": "us-east-2",
+        "location": {"region": "OH", "country": "US", "lat": "40.3416167", "lon": "-84.9180579"}
+      }, {
+        "name": "Amazon - N. California", "description": "US West 1 (N. California)", "internalName": "us-west-1",
+        "location": {"city": "San Jose", "country": "US", "region": "CA", "lat": "37.333333", "lon": "-121.9"}
+      }, {
+        "name": "Amazon - Oregon", "description": "US West 2 (Oregon)", "internalName": "us-west-2",
+        "location": {"city": "Hermiston", "region": "OR", "country": "US", "lat": "45.841111", "lon": "-119.291667"}
+      }, {
+        "name": "Amazon - Canada", "description": "Canada (Central)", "internalName": "ca-central-1",
+        "location": {"region": "QC", "country": "CA", "lat": "46.813889", "lon": "-71.208056"}
+      }, {
+        "name": "Amazon - Stockholm", "description": "EU (Stockholm)", "internalName": "eu-north-1",
+        "location": {"city": "Stockholm", "region": "Södermanland", "country": "SE", "lat": "59.329444", "lon": "18.068611"}
+      }, {
+        "name": "Amazon - Ireland", "description": "EU (Ireland)", "internalName": "eu-west-1",
+        "location": {"city": "Dublin", "region": "Leinster", "country": "IE", "lat": "53.35", "lon": "-6.266667"}
+      }, {
+        "name": "Amazon - London", "description": "EU (London)", "internalName": "eu-west-2",
+        "location": {"city": "London", "country": "GB", "region": "London", "lat": "51.507222", "lon": "-0.1275"}
+      }, {
+        "name": "Amazon - Milan", "description": "EU (Milan)", "internalName": "eu-west-3",
+        "location": {"city": "Milan", "country": "IT", "region": "Lombardy", "lat": "45.466944", "lon": "9.19"}
+      }, {
+        "name": "Amazon - Frankfurt", "description": "EU (Frankfurt)", "internalName": "eu-central-1",
+        "location": {"city": "Frankfurt", "country": "DE", "region": "Hesse", "lat": "50.116667", "lon": "8.683333"}
+      }, {
+        "name": "Amazon - Tokyo", "description": "Asia Pacific (Tokyo)", "internalName": "ap-northeast-1",
+        "location": {"city": "Tokyo", "country": "JP", "region": "Kantō", "lat": "35.689722", "lon": "139.692222"}
+      }, {
+        "name": "Amazon - Seoul", "description": "Asia Pacific (Seoul)", "internalName": "ap-northeast-2",
+        "location": {"city": "Seoul", "country": "KR", "region": "Sudogwon", "lat": "37.566667", "lon": "126.966667"}
+      }, {
+        "name": "Amazon - Singapore", "description": "Asia Pacific (Singapore)", "internalName": "ap-southeast-1",
+        "location": {"city": "Singapore", "country": "SG", "region": "Singapore", "lat": "1.283333", "lon": "103.833333"}
+      }, {
+        "name": "Amazon - Sydney", "description": "Asia Pacific (Sydney)", "internalName": "ap-southeast-2",
+        "location": {"city": "Sydney", "country": "AU", "region": "NSW", "lat": "-33.865", "lon": "151.209444"}
+      }, {
+        "name": "Amazon - Mumbai", "description": "Asia Pacific (Mumbai)", "internalName": "ap-south-1",
+        "location": {"city": "Mumbai", "country": "IN", "region": "Konkan", "lat": "18.975", "lon": "72.825833"}
+      }, {
+        "name": "Amazon - São Paulo", "description": "South America (São Paulo)", "internalName": "sa-east-1",
+        "location": {"city": "São Paulo", "country": "BR", "region": "São Paulo", "lat": "-23.55", "lon": "-46.633333"}
+      }],
+      "sizes": [
+        {"name": "small", "type": "small", "internalName": "t2.micro", "vcpu": 1, "memoryMB": 1024, "diskGB": 10, "diskType": "ebs_magnetic"},
+        {"name": "medium", "type": "medium", "internalName": "t2.small", "vcpu": 1, "memoryMB": 2048, "diskGB": 20, "diskType": "ebs_magnetic"},
+        {"name": "large", "type": "large", "internalName": "t2.medium", "vcpu": 2, "memoryMB": 4096, "diskGB": 40, "diskType": "ebs_magnetic"}
+      ],
+      "os": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-????????",
+      "config": [
+        {"name": "securityGroup", "value": "{{AWS_EC2_SECURITY_GROUP}}"}
+      ],
+      "packer": {
+        "vars": [
+          {"name": "AWS_ACCESS_KEY_ID", "value": "[[credentials.AWS_ACCESS_KEY_ID]]"},
+          {"name": "AWS_SECRET_KEY", "value": "[[credentials.AWS_SECRET_KEY]]"}
+        ],
+        "iterateRegions": true,
+        "builder": {
+          "type": "amazon-ebs",
+          "name": "amazon-ebs-<<region.internalName>>",
+          "access_key": "[[user `AWS_ACCESS_KEY_ID`]]",
+          "secret_key": "[[user `AWS_SECRET_KEY`]]",
+          "region": "<<region.internalName>>",
+          "ami_name": "<<packerImageName>>",
+          "ssh_username": "ubuntu",
+          "source_ami": "<<imageForRegion.id>>",
+          "instance_type": "<<sizes.small.internalName>>",
+          "vpc_id": "<<vpcForRegion.vpcId>>",
+          "availability_zone": "<<availabilityZoneForRegion>>",
+          "subnet_id": "<<subnetForRegion.subnetId>>",
+          "associate_public_ip_address": true
+        }
+      }
+    },
+    "credentials": {
+      "params": [
+        {"name": "AWS_ACCESS_KEY_ID", "value": "{{AWS_ACCESS_KEY_ID}}"},
+        {"name": "AWS_SECRET_KEY", "value": "{{AWS_SECRET_KEY}}"}
       ]
     },
     "template": true

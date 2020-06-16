@@ -13,7 +13,7 @@
 #
 # Environment variables
 #
-#   BUBBLE_ENV     : env file to load. Default is ~/.bubble.env or /home/bubble/current/bubble.env (whichever is found first)
+#   BUBBLE_ENV     : env file to load. Default is ~/.bubble.env or /home/bubble/api/bubble.env (whichever is found first)
 #
 SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)

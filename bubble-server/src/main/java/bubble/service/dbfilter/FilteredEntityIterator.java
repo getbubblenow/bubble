@@ -17,6 +17,8 @@ import bubble.model.bill.*;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeKey;
+import bubble.model.cloud.notify.ReceivedNotification;
+import bubble.model.cloud.notify.SentNotification;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
 import edu.emory.mathcs.backport.java.util.Arrays;
@@ -35,6 +37,7 @@ public class FilteredEntityIterator extends EntityIterator {
     private static final List<Class<? extends Identifiable>> POST_COPY_ENTITIES = Arrays.asList(new Class<?>[] {
         BubbleNode.class, BubbleNodeKey.class, Device.class, AccountMessage.class,
         ReferralCode.class, AccountPayment.class, Bill.class, Promotion.class,
+        ReceivedNotification.class, SentNotification.class
     });
 
     private static boolean isPostCopyEntity(Class<? extends Identifiable> clazz) {

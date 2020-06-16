@@ -6,9 +6,7 @@ package bubble.cloud.compute.delegate;
 
 import bubble.cloud.CloudRegion;
 import bubble.cloud.DelegatedCloudServiceDriverBase;
-import bubble.cloud.compute.ComputeNodeSize;
-import bubble.cloud.compute.ComputeNodeSizeType;
-import bubble.cloud.compute.ComputeServiceDriver;
+import bubble.cloud.compute.*;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.notify.compute.ComputeDriverNotification;
@@ -17,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static bubble.model.cloud.notify.NotificationType.*;
+import static org.cobbzilla.util.daemon.ZillaRuntime.notSupported;
 
 public class DelegatedComputeDriver extends DelegatedCloudServiceDriverBase implements ComputeServiceDriver {
 
@@ -51,6 +50,11 @@ public class DelegatedComputeDriver extends DelegatedCloudServiceDriverBase impl
                 .orElse(null);
     }
 
+    @Override public OsImage getOs() {
+        final BubbleNode delegate = getDelegateNode();
+        return notificationService.notifySync(delegate, compute_driver_get_os, notification());
+    }
+
     @Override public BubbleNode start(BubbleNode node) throws Exception {
         final BubbleNode delegate = getDelegateNode();
         return notificationService.notifySync(delegate, compute_driver_start, notification(node));
@@ -70,4 +74,9 @@ public class DelegatedComputeDriver extends DelegatedCloudServiceDriverBase impl
         final BubbleNode delegate = getDelegateNode();
         return notificationService.notifySync(delegate, compute_driver_status, notification(node));
     }
+
+    @Override public List<PackerImage> getAllPackerImages() { return notSupported("getPackerImages"); }
+    @Override public List<PackerImage> getPackerImagesForRegion(String region) { return notSupported("getPackerImagesForRegion"); }
+
+
 }

@@ -25,7 +25,7 @@
 #   BUBBLE_API     : which API to use. Default is local (http://127.0.0.1:PORT, where PORT is found in .bubble.env)
 #   BUBBLE_USER    : account to use. Default is root
 #   BUBBLE_PASS    : password for account. Default is root
-#   BUBBLE_ENV     : env file to load. Default is ~/.bubble.env or /home/bubble/current/bubble.env (whichever is found first)
+#   BUBBLE_ENV     : env file to load. Default is ~/.bubble.env or /home/bubble/api/bubble.env (whichever is found first)
 #   DEBUG_PORT     : if set, this is the port number the client will wait for a debugger to attach before starting
 #   BUBBLE_INCLUDE : when using the sync-model and run-script commands, this is the directory to find included files
 #                    For sync-model and migrate-model, the default is the current directory.

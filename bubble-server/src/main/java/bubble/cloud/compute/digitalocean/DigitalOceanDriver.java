@@ -5,8 +5,7 @@
 package bubble.cloud.compute.digitalocean;
 
 import bubble.cloud.CloudRegion;
-import bubble.cloud.compute.ComputeNodeSize;
-import bubble.cloud.compute.ComputeServiceDriverBase;
+import bubble.cloud.compute.*;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeState;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,10 +15,12 @@ import org.cobbzilla.util.http.HttpRequestBean;
 import org.cobbzilla.util.http.HttpResponseBean;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static bubble.model.cloud.BubbleNode.TAG_INSTANCE_ID;
-import static bubble.model.cloud.BubbleNode.TAG_SSH_KEY_ID;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
@@ -38,32 +39,36 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @Slf4j
 public class DigitalOceanDriver extends ComputeServiceDriverBase {
 
-    private static final String PARAM_API_KEY = "apiKey";
+    public static final String PARAM_API_KEY = "apiKey";
 
     public static final String DO_API_BASE = "https://api.digitalocean.com/v2/";
 
     public static final String TAG_PREFIX_CLOUD = "cloud_";
     public static final String TAG_PREFIX_NODE = "node_";
+    public static final String PACKER_IMAGES_URI = "images?private=true";
 
-    @Getter(lazy=true) private final Set<String> regionSlugs = getResourceSlugs("regions");
-    @Getter(lazy=true) private final Set<String> sizeSlugs = getResourceSlugs("sizes");
-    @Getter(lazy=true) private final Set<String> imageSlugs = getResourceSlugs("images?type=distribution");
+    @Getter(lazy=true) private final List<CloudRegion> cloudRegions = getResources("regions", new DigitalOceanRegionParser());
+    @Getter(lazy=true) private final List<ComputeNodeSize> cloudSizes = getResources("sizes", new DigitalOceanComputeNodeSizeParser());
+    @Getter(lazy=true) private final List<OsImage> cloudOsImages = getResources("images?type=distribution", new DigitalOceanOsImageParser());
 
-    private Set<String> getResourceSlugs(String uri) {
+    private <E, C extends Collection<E>> C getResources(String uri, ResourceParser<E, C> parser) {
         final int qPos = uri.indexOf('?');
         final String type = qPos == -1 ? uri : uri.substring(0, qPos);
         final JsonNode found = doGet(uri, JsonNode.class);
-        final Set<String> slugs = new HashSet<>();
+        final C results = parser.newResults();
 
         JsonNode page = found;
         do {
             final JsonNode items = page.has(type) ? page.get(type) : null;
-            if (empty(items) || !items.isArray()) return die("getResourceSlugs("+uri+"): expected "+type+" property to contain a (non-empty) array");
+            if (empty(items)) {
+                if (!parser.allowEmpty()) return die("getResources("+uri+"): expected "+type+" property to contain a (non-empty) array");
+                return null;
+            }
+            if (!items.isArray()) return die("getResources("+uri+"): expected "+type+" property to contain a (non-empty) array");
 
             for (int i=0; i<items.size(); i++) {
-                final JsonNode slug = items.get(i).get("slug");
-                if (slug == null) return die("getResourceSlugs("+uri+"): no 'slug' found in item: "+json(items.get(i)));
-                slugs.add(slug.textValue());
+                final E item = parser.parse(items.get(i));
+                if (item != null) results.add(item);
             }
 
             final String next = getNext(page);
@@ -71,7 +76,7 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
 
         } while (page != null);
 
-        return slugs;
+        return results;
     }
 
     private String getNext(JsonNode node) {
@@ -123,17 +128,6 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
         return json(response.getEntityString(), clazz, FULL_MAPPER_ALLOW_UNKNOWN_FIELDS);
     }
 
-    @Override protected HttpRequestBean registerSshKeyRequest(BubbleNode node) {
-        final Map<String, String> key = new LinkedHashMap<>();
-        key.put("name", node.getUuid()+"_"+now());
-        key.put("public_key", node.getSshKey().getSshPublicKey());
-        return postRequest("account/keys", json(key));
-    }
-
-    @Override protected String readSshKeyId(HttpResponseBean keyResponse) {
-        return ""+json(keyResponse.getEntityString(), JsonNode.class, FULL_MAPPER_ALLOW_UNKNOWN_FIELDS).get("ssh_key").get("id").intValue();
-    }
-
     @Override public List<BubbleNode> listNodes() throws IOException { return listNodes(TAG_PREFIX_CLOUD+cloud.getUuid()); }
 
     public List<BubbleNode> listNodes(String tag) throws IOException {
@@ -168,32 +162,25 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
 
     @Override public BubbleNode start(BubbleNode node) throws Exception {
 
-        final CloudRegion region = config.getRegion(node.getRegion());
+        final CloudRegion region = getRegions().stream()
+                .filter(r -> r.getInternalName().equals(node.getRegion()))
+                .findFirst()
+                .orElse(null);
+        if (region == null) return die("start: region not found: " + node.getRegion());
+
         final ComputeNodeSize size = config.getSize(node.getSize());
-        final String os = config.getConfig("os");
 
-        if (!getRegionSlugs().contains(region.getInternalName())) {
-            return die("start: region not found: " + region.getInternalName());
-        }
-        if (!getSizeSlugs().contains(size.getInternalName())) {
-            return die("start: region not found: " + region.getInternalName());
-        }
-        if (!getImageSlugs().contains(os)) {
-            return die("start: region not found: " + region.getInternalName());
-        }
-
-        final String sshKeyId = registerSshKey(node);
+        final PackerImage packerImage = getOrCreatePackerImage(node);
 
         final CreateDropletRequest createRequest = new CreateDropletRequest()
                 .setName(node.getFqdn())
                 .setRegion(region.getInternalName())
                 .setSize(size.getInternalName())
-                .setImage(os)
+                .setImage(packerImage.getId())
                 .setIpv6(true)
                 .setBackups(false)
                 .setMonitoring(false)
                 .setPrivate_networking(false)
-                .setSsh_keys(new Integer[] {Integer.valueOf(sshKeyId)})
                 .setTags(new String[] {TAG_PREFIX_CLOUD+cloud.getUuid(), TAG_PREFIX_NODE+node.getUuid()});
 
         final CreateDropletResponse droplet = doPost("droplets", json(createRequest), CreateDropletResponse.class);
@@ -224,21 +211,7 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
         return node;
     }
 
-    @Override public BubbleNode cleanupStart(BubbleNode node) throws Exception {
-        if (node.hasTag(TAG_SSH_KEY_ID)) {
-            final String keyId = node.getTag(TAG_SSH_KEY_ID);
-            final HttpRequestBean destroyKeyRequest = auth(new HttpRequestBean()
-                    .setMethod(DELETE)
-                    .setUri(DO_API_BASE+"account/keys/"+keyId));
-
-            // destroy key, check response
-            final HttpResponseBean destroyKeyResponse = getResponse(destroyKeyRequest);
-            if (destroyKeyResponse.getStatus() != NO_CONTENT) {
-                log.warn("cleanupStart: error destroying sshkey: "+ keyId);
-            }
-        }
-        return node;
-    }
+    @Override public BubbleNode cleanupStart(BubbleNode node) { return node; }
 
     @Override public BubbleNode stop(BubbleNode node) throws Exception {
         cleanupStart(node); // just in case the key is still around
@@ -256,6 +229,14 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
         final List<BubbleNode> found = listNodes(TAG_PREFIX_NODE+node.getUuid());
         if (found.isEmpty()) return node.setState(BubbleNodeState.stopped);
         return node.setState(found.get(0).getState());
+    }
+
+    @Override public List<PackerImage> getAllPackerImages() { return getPackerImages(); }
+    @Override public List<PackerImage> getPackerImagesForRegion(String region) { return getPackerImages(); }
+
+    public List<PackerImage> getPackerImages () {
+        final List<PackerImage> images = getResources(PACKER_IMAGES_URI, new DigitalOceanPackerImageParser(configuration.getVersion(), packerService.getPackerPublicKeyHash()));
+        return images == null ? Collections.emptyList() : images;
     }
 
 }

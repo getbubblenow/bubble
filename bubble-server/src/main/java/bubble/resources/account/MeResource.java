@@ -23,13 +23,14 @@ import bubble.resources.driver.DriversResource;
 import bubble.resources.notify.ReceivedNotificationsResource;
 import bubble.resources.notify.SentNotificationsResource;
 import bubble.server.BubbleConfiguration;
-import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.StandardAccountMessageService;
+import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.BubbleModelSetupService;
 import bubble.service.cloud.StandardNetworkService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Cleanup;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.TempDir;
@@ -41,6 +42,7 @@ import org.cobbzilla.wizard.client.script.ApiRunnerListener;
 import org.cobbzilla.wizard.client.script.ApiRunnerListenerStreamLogger;
 import org.cobbzilla.wizard.client.script.ApiScript;
 import org.cobbzilla.wizard.model.HashedPassword;
+import org.cobbzilla.wizard.server.config.ErrorApiConfiguration;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -55,8 +57,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static bubble.ApiConstants.*;
 import static bubble.model.account.Account.validatePassword;
@@ -112,6 +116,22 @@ public class MeResource {
         }
         return ok(accountDAO.update(me.setLocale(loc.toString())));
     }
+
+    @Getter(lazy=true) private final Map<String, String> errorApi = initErrorApi();
+    private Map<String, String> initErrorApi() {
+        final Map<String, String> err = new HashMap<>(2, 1.0f);
+        if (configuration != null) {
+            final ErrorApiConfiguration errorApi = configuration.getErrorApi();
+            if (errorApi != null) {
+                err.put("url", errorApi.getUrl());
+                err.put("key", errorApi.getKey());
+            }
+        }
+        return err;
+    }
+
+    @GET @Path(EP_ERROR_API)
+    public Response errorApi(@Context Request req) { return ok(getErrorApi()); }
 
     @POST @Path(EP_CHANGE_PASSWORD)
     public Response changePassword(@Context Request req,
@@ -276,12 +296,6 @@ public class MeResource {
     public NetworksResource getNetworks(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(NetworksResource.class, caller);
-    }
-
-    @Path(EP_ROLES)
-    public AnsibleRolesResource getAnsibleRoles(@Context ContainerRequest ctx) {
-        final Account caller = userPrincipal(ctx);
-        return configuration.subResource(AnsibleRolesResource.class, caller);
     }
 
     @Path(EP_SENT_NOTIFICATIONS)

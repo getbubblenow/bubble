@@ -1,0 +1,10 @@
+
+[program:bubble]
+stdout_logfile = /home/bubble/logs/bubble-out.log
+stderr_logfile = /home/bubble/logs/bubble-err.log
+command=sudo -u bubble bash -c "/usr/bin/java \
+  -Dfile.encoding=UTF-8 -Djava.net.preferIPv4Stack=true \
+  -XX:+UseG1GC -XX:MaxGCPauseMillis=400 {{ bubble_java_opts }} \
+  -cp /home/bubble/api/bubble.jar \
+  bubble.server.BubbleServer \
+  /home/bubble/api/bubble.env"

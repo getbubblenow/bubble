@@ -1,0 +1,117 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+- name: Install OpenJDK 11 JRE (headless), redis, uuid and jq
+  apt:
+    name: [ 'openjdk-11-jre-headless', 'redis', 'uuid', 'jq', 'zip' ]
+    state: present
+    update_cache: yes
+
+- import_tasks: postgresql.yml
+
+- name: Create bubble user
+  user:
+    name: bubble
+    comment: bubble user
+    shell: /bin/bash
+    system: yes
+    home: /home/bubble
+
+- name: Creates bubble API dir
+  file:
+    path: /home/bubble/api
+    owner: bubble
+    group: bubble
+    mode: 0555
+    state: directory
+
+- name: Creates bubble logs dir
+  file:
+    path: /home/bubble/logs
+    owner: bubble
+    group: root
+    mode: 0770
+    state: directory
+
+- name: Install bubble jar
+  copy:
+    src: bubble.jar
+    dest: /home/bubble/api/bubble.jar
+    owner: bubble
+    group: bubble
+    mode: 0444
+
+- name: Unpack site files
+  shell: cd /home/bubble && unzip -u /home/bubble/api/bubble.jar 'site/*' && chown -R bubble site
+
+- name: Install helper scripts
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    owner: root
+    group: root
+    mode: 0555
+  with_items:
+    - "bsql.sh"
+    - "random_password.sh"
+
+- name: Install standard bubble scripts
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/local/bin/"
+    owner: root
+    group: root
+    mode: 0555
+  with_fileglob:
+    - "scripts/*"
+
+- name: Link current version to the one we just installed
+  file:
+    src: /home/bubble/api
+    dest: /home/bubble/current
+    owner: bubble
+    group: bubble
+    state: link
+
+- name: Creates bubble SQL dir
+  file:
+    path: /home/bubble/sql
+    owner: bubble
+    group: postgres
+    mode: 0550
+    state: directory
+
+- name: Install DB initializer
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    owner: root
+    group: postgres
+    mode: 0550
+  with_items:
+    - init_bubble_db.sh
+
+- name: Install refresh_bubble_ssh_keys monitor
+  copy:
+    src: "refresh_bubble_ssh_keys_monitor.sh"
+    dest: "/usr/local/sbin/refresh_bubble_ssh_keys_monitor.sh"
+    owner: root
+    group: root
+    mode: 0500
+
+- name: Install refresh_bubble_ssh_keys script
+  copy:
+    src: refresh_bubble_ssh_keys.sh
+    dest: /usr/local/sbin/refresh_bubble_ssh_keys.sh
+    owner: root
+    group: root
+    mode: 0500
+
+- name: Install refresh_bubble_ssh_keys_monitor supervisor conf file
+  copy:
+    src: supervisor_refresh_bubble_ssh_keys_monitor.conf
+    dest: /etc/supervisor/conf.d/refresh_bubble_ssh_keys_monitor.conf
+
+- name: Install packer for sage node
+  shell: su - bubble bash -c install_packer.sh
+  when: install_type == 'sage'

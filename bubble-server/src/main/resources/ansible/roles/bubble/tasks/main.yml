@@ -1,0 +1,47 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+- name: Set system timezone
+  shell: timedatectl set-timezone {{ time_zone }}
+
+- name: Install helper template scripts
+  template:
+    src: "{{ item.src }}"
+    dest: "/usr/local/bin/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0555
+  with_items:
+    - { src: "full_reset_db.sh.j2", dest: "full_reset_db.sh" }
+
+- name: Generate keys
+  shell: random_password.sh /home/bubble/{{ item.file }} bubble {{ item.group }}
+  with_items:
+    - { file: '.BUBBLE_REDIS_ENCRYPTION_KEY', group: root }
+    - { file: '.BUBBLE_DB_ENCRYPTION_KEY',    group: postgres }  # postgres user needs access to DB key
+    - { file: '.BUBBLE_PG_PASSWORD',          group: postgres }  # postgres user needs access to DB password
+
+- name: Write source DB key if database does not exist
+  shell: su - postgres bash -c "init_bubble_db.sh {{ db_name }} {{ db_user }} INIT {{ db_key }}"
+
+- name: Write bubble env file
+  template:
+    src: bubble.env.j2
+    dest: /home/bubble/api/bubble.env
+    owner: bubble
+    group: bubble
+    mode: 0400
+
+- name: Install bubble self_node.json, sage_node.json and sage_key.json
+  copy:
+    src: "{{ item }}"
+    dest: /home/bubble/{{ item }}
+    owner: bubble
+    group: bubble
+    mode: 0600
+  with_items:
+    - self_node.json
+    - sage_node.json
+    - sage_key.json
+
+- import_tasks: postgresql_data.yml

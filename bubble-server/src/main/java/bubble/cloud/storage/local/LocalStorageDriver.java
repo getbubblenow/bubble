@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
-import static bubble.dao.cloud.AnsibleRoleDAO.ROLE_PATH;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -77,9 +76,6 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
             return file.exists();
         }
 
-        // Special handling when bubble has not been activated for bootstrapping ansible roles
-        if (activated() || !key.startsWith(ROLE_PATH)) return false;
-
         // check root network filesystem
         final File file = keyFileForNetwork(ROOT_NETWORK_UUID, getBaseDir(), key);
         if (file.exists()) return true;
@@ -112,9 +108,6 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
             final File f = keyFile(from, key);
             return f.exists() ? new FileInputStream(f) : null;
         }
-
-        // Special handling when bubble is not activated for bootstrapping ansible roles
-        if (activated() || !key.startsWith(ROLE_PATH)) return null;
 
         // check root network filesystem
         final File rootNetFile = keyFileForNetwork(ROOT_NETWORK_UUID, getBaseDir(), key);

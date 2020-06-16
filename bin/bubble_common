@@ -87,10 +87,10 @@ if [[ -z "${BUBBLE_USER}" ]] ; then
 fi
 
 if [[ -z "${BUBBLE_JAR}" ]] ; then
-  if [[ -f "${HOME}/current/bubble.jar" ]] ; then
-    BUBBLE_JAR="${HOME}/current/bubble.jar"
-  elif [[ -f "/home/bubble/current/bubble.jar" ]] ; then
-    BUBBLE_JAR="/home/bubble/current/bubble.jar"
+  if [[ -f "${HOME}/api/bubble.jar" ]] ; then
+    BUBBLE_JAR="${HOME}/api/bubble.jar"
+  elif [[ -f "/home/bubble/api/bubble.jar" ]] ; then
+    BUBBLE_JAR="/home/bubble/api/bubble.jar"
   elif [[ -f "${BUBBLE_SCRIPTS}/../bubble.jar" ]] ; then
     BUBBLE_JAR="${BUBBLE_SCRIPTS}/../bubble.jar"
   else

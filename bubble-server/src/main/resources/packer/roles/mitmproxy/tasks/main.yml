@@ -1,0 +1,84 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+- name: Install python3, pip, virtualenv and required dependencies
+  apt:
+    name: [ 'python3-pip', 'python3-venv', 'libc6-dev', 'libpython3-dev', 'g++', 'libffi-dev' ]
+    state: present
+    update_cache: yes
+
+- name: Create mitmproxy user
+  user:
+    name: mitmproxy
+    comment: mitmdump user
+    shell: /bin/bash
+    system: yes
+    home: /home/mitmproxy
+
+- name: Creates mitmproxy dir
+  file:
+    path: /home/mitmproxy/mitmproxy
+    owner: mitmproxy
+    group: mitmproxy
+    mode: 0755
+    state: directory
+
+- name: Download mitmproxy dist file
+  get_url:
+    url: https://github.com/getbubblenow/bubble-dist/raw/master/mitmproxy/mitmproxy.zip
+    dest: /tmp/mitmproxy.zip
+    checksum: sha256:c578ca9da75777a30f7af065583e5e29e65336a2dc346d6453dfa9c002a8bcc2
+
+- name: Unzip mitmproxy.zip
+  unarchive:
+    remote_src: yes
+    src: /tmp/mitmproxy.zip
+    dest: /home/mitmproxy/mitmproxy
+
+- name: Copy mitmdump files
+  copy:
+    src: "{{ item }}"
+    dest: "/home/mitmproxy/mitmproxy/{{ item }}"
+    owner: mitmproxy
+    group: mitmproxy
+    mode: 0500
+  with_items:
+    - bubble_api.py
+    - dns_spoofing.py
+    - bubble_passthru.py
+    - bubble_modify.py
+    - run_mitmdump.sh
+
+- name: Install cert helper scripts
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    owner: root
+    group: root
+    mode: 0500
+  with_items:
+    - install_cert.sh
+    - set_cert_name.sh
+    - reuse_bubble_mitm_certs.sh
+
+- name: Set ownership of mitmproxy files
+  shell: chown -R mitmproxy /home/mitmproxy/mitmproxy
+
+- name: Fix missing symlink for libstdc++
+  file:
+    src: /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+    dest: /usr/lib/x86_64-linux-gnu/libstdc++.so
+    owner: root
+    group: root
+    state: link
+
+- name: Install mitmproxy dependencies
+  shell: su - mitmproxy -c "bash -c 'cd /home/mitmproxy/mitmproxy && ./dev.sh'"
+
+- name: Install mitmdump_monitor
+  copy:
+    src: "mitmdump_monitor.sh"
+    dest: "/usr/local/sbin/mitmdump_monitor.sh"
+    owner: root
+    group: root
+    mode: 0500

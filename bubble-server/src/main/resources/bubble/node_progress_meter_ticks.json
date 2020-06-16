@@ -17,8 +17,8 @@
 { "percent": 76,"messageKey":"role_nginx",                  "pattern":"TASK \\[nginx : [\\w\\s]+] \\*{5,}" },
 { "percent": 81,"messageKey":"role_nginx_certbot",          "pattern":"TASK \\[nginx : Init certbot] \\*{5,}" },
 { "percent": 91,"messageKey":"role_mitmproxy",              "pattern":"TASK \\[mitmproxy : [\\w\\s]+] \\*{5,}" },
-{ "percent": 94,"messageKey":"role_bubble_finalizer",       "pattern":"TASK \\[bubble_finalizer : [\\w\\s]+] \\*{5,}" },
-{ "percent": 98,"messageKey":"role_bubble_finalizer_touch", "pattern":"TASK \\[bubble_finalizer : Touch first-time setup file] \\*{5,}" },
-{ "percent": 99,"messageKey":"role_bubble_finalizer_start", "pattern":"TASK \\[bubble_finalizer : Ensure bubble is started] \\*{5,}" },
+{ "percent": 94,"messageKey":"role_finalizer",              "pattern":"TASK \\[finalizer : [\\w\\s]+] \\*{5,}" },
+{ "percent": 98,"messageKey":"role_finalizer_touch",        "pattern":"TASK \\[finalizer : Touch first-time setup file] \\*{5,}" },
+{ "percent": 99,"messageKey":"role_finalizer_start",        "pattern":"TASK \\[finalizer : Ensure bubble is started] \\*{5,}" },
 {"percent": 100,"messageKey":"install_complete",            "pattern":"PLAY RECAP \\*{5,}" }
 ]

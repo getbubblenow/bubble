@@ -1,0 +1,6 @@
+{
+  "name": "common",
+  "config": [
+    {"name": "hostname", "value": "[[node.fqdn]]"}
+  ]
+}

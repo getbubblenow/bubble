@@ -1,0 +1,11 @@
+---
+
+- name: Create new bubble [[installType]]
+  hosts: bubble
+  connection: local
+  become: yes
+  vars:
+    install_type: [[installType]]
+  roles:
+[[#each roles]]    - [[this]]
+[[/each]]

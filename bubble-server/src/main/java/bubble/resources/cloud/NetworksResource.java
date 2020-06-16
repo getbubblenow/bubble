@@ -148,7 +148,7 @@ public class NetworksResource extends AccountOwnedResource<BubbleNetwork, Bubble
         final List<CloudService> clouds = cloudDAO.findByAccountAndType(caller.getUuid(), csType);
 
         // find closest region
-        return ok(findClosestRegions(clouds, footprint, latitude, longitude));
+        return ok(findClosestRegions(configuration, clouds, footprint, latitude, longitude));
     }
 
 

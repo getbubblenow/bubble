@@ -5,7 +5,7 @@
     "response": {
       "store": "computeClouds",
       "check": [
-        {"condition": "json.length == 2"}
+        {"condition": "json.length == 3"}
       ]
     }
   },
@@ -17,7 +17,8 @@
       "check": [
         // ensure we have at least one region from each cloud
         {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[0].getUuid(); }) != null"},
-        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[1].getUuid(); }) != null"}
+        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[1].getUuid(); }) != null"},
+        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[2].getUuid(); }) != null"}
       ]
     }
   },
@@ -29,7 +30,8 @@
       "check": [
         // ensure we have at least one region from each cloud
         {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[0].getUuid(); }) != null"},
-        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[1].getUuid(); }) != null"}
+        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[1].getUuid(); }) != null"},
+        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[2].getUuid(); }) != null"}
       ]
     }
   }

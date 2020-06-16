@@ -5,7 +5,6 @@
 package bubble.model.boot;
 
 import bubble.model.account.AccountSshKey;
-import bubble.model.cloud.AnsibleRole;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.CloudService;
 import lombok.Getter;
@@ -36,9 +35,6 @@ public class ActivationRequest {
 
     @HasValue(message="err.networkName.required")
     @Getter @Setter private String networkName = "boot-network";
-
-    @Getter @Setter private AnsibleRole[] roles;
-    public boolean hasRoles () { return !empty(roles); }
 
     @Getter @Setter private Map<String, CloudServiceConfig> cloudConfigs = new LinkedHashMap<>();
     public boolean hasCloudConfigs () { return !empty(cloudConfigs); }

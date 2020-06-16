@@ -224,7 +224,7 @@ public class GeoService {
 
         // find all cloud services available to us
         final List<CloudService> clouds = cloudDAO.findByAccountAndType(network.getAccount(), CloudServiceType.compute);
-        final List<CloudRegionRelative> closestRegions = findClosestRegions(clouds, footprint, latitude, longitude);
+        final List<CloudRegionRelative> closestRegions = findClosestRegions(configuration, clouds, footprint, latitude, longitude);
         if (closestRegions.isEmpty()) throw invalidEx("err.cloudRegions.required");
         return closestRegions;
     }

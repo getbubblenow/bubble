@@ -1,0 +1,16 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+- name: Install PostgreSQL
+  apt:
+    name: [ 'postgresql', 'libpq-dev' ]
+    state: present
+    update_cache: yes
+
+- name: Install PostgreSQL pg_bubble.conf
+  copy:
+    src: pg_bubble.conf
+    dest: /etc/postgresql/12/main/conf.d/
+    owner: postgres
+    group: postgres
+    mode: 0400

@@ -79,8 +79,10 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
         writer.flush();
     }
 
+    public boolean hasError () { return error.get(); }
+
     public void error(String line) {
-        if (error.get()) {
+        if (hasError()) {
             log.warn("error("+line+") ignored, error already set");
             return;
         }
@@ -171,4 +173,16 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
                 .setPercent(100));
     }
 
+    public NodeProgressMeter uncloseable() throws IOException {
+        return new UncloseableNodeProgressMeter(this);
+    }
+
+    private class UncloseableNodeProgressMeter extends NodeProgressMeter {
+        private NodeProgressMeter meter;
+        public UncloseableNodeProgressMeter(NodeProgressMeter meter) throws IOException {
+            super(meter.nn, meter.redis);
+            this.meter = meter;
+        }
+        @Override public void close() {}
+    }
 }

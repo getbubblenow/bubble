@@ -5,12 +5,9 @@
 #
 # Prepares the bubble.jar file for active usage.
 #
-# 1. Update role JSON in bubble-server/src/main/resources/ansible/default_roles.json
-#    Inserts "tgzB64" value with file://path to tarball
+# 1. Copy scripts to bubble-server/target/classes/scripts
 #
-# 2. Copy scripts to bubble-server/target/classes/scripts
-#
-# 3. If the environment variable INSTALL_WEB is equal to "web", also build and install the bubble-web
+# 2. If the environment variable INSTALL_WEB is equal to "web", also build and install the bubble-web
 #    site to bubble-server/target/classes/site
 #
 # Usage:
@@ -33,90 +30,17 @@ fi
 
 BUBBLE_SERVER="$(cd "${SCRIPT_DIR}/../bubble-server" && pwd)"
 CLASSES_DIR="${BUBBLE_SERVER}/target/classes"
-DEFAULT_ROLES_RELATIVE="ansible/default_roles.json"
-DEFAULT_ROLES="${CLASSES_DIR}/${DEFAULT_ROLES_RELATIVE}"
-if [[ ! -f ${DEFAULT_ROLES} ]] ; then
-  die "default roles file not found: ${DEFAULT_ROLES}"
-fi
-if [[ -z "${LOCALSTORAGE_BASE_DIR}" ]] ; then
-  for f in "${HOME}/bubble/current/bubble.env" "${HOME}/.bubble.env" ; do
-    if [[ -f "${f}" ]] ; then
-      LOCALSTORAGE_BASE_DIR=$(cat ${f} | grep -v '^#' | grep LOCALSTORAGE_BASE_DIR | awk -F '=' '{print $2}' | tr -d ' ')
-      break
-    fi
-  done
-fi
-if [[ -z "${LOCALSTORAGE_BASE_DIR}" ]] ; then
-  echo "Warning: LOCALSTORAGE_BASE_DIR env var not defined and no bubble.env found, using ${HOME}/.bubble_local_storage"
-  LOCALSTORAGE_BASE_DIR="${HOME}/.bubble_local_storage"
-fi
 
 if [[ -z "${BUBBLE_JAR}" ]] ; then
   die "bubble jar not found: ${BUBBLE_JAR}"
 fi
-
-ROLES_DIR="$(cd "${SCRIPT_DIR}/../automation/roles" && pwd)"
-if [[ ! -d ${ROLES_DIR} ]] ; then
-  die "automation/roles dir not found: ${ROLES_DIR}"
-fi
-
-LOCAL_NET_ID="$("${SCRIPT_DIR}/bconst" bubble.ApiConstants.ROOT_NETWORK_UUID 2> /dev/null)"
-if [[ -z "${LOCAL_NET_ID}" ]] ; then
-  # try to read from source file
-  LOCAL_NET_ID="$(cat "${BUBBLE_SERVER}/src/main/java/bubble/ApiConstants.java" | grep -v '//' | egrep '\s+String\s+ROOT_NETWORK_UUID' | awk -F '"' '{print $2}')"
-  if [[ -z "${LOCAL_NET_ID}" ]] ; then
-    die "ROOT_NETWORK_UUID could not be read from ApiConstants"
-  fi
-fi
-
-echo "lbs = ${LOCALSTORAGE_BASE_DIR}"
-
-UPDATED="$(mktemp /tmp/default_roles.XXXXXXX.json)"
-cd ${ROLES_DIR}
-echo "[" > "${UPDATED}"
-for role in $(ls -1) ; do
-  echo "Processing role: ${role}"
-  ROLE_JSON="${role}/files/bubble_role.json"
-  if [[ ! -f "${ROLE_JSON}" ]] ; then
-    die "Json file not found for role ${role}: ${ROLE_JSON}"
-  fi
-  if [[ $(cat ${UPDATED} | wc -c) -gt 2 ]] ; then
-    echo "," >> ${UPDATED}
-  fi
-
-  role_name="$(cat "${ROLE_JSON}" | jq -r .name)"
-  role_path="automation/roles/${role_name}.tgz"
-  TGZ_PATH="${LOCALSTORAGE_BASE_DIR}/${role_path}"
-  mkdir -p $(dirname ${TGZ_PATH}) || die "Error creating parent dir for ${TGZ_PATH}"
-  tar czf ${TGZ_PATH} ${role}
-
-  cat ${ROLE_JSON} | jq --arg tgzB64 "storage://LocalStorage/${role_path}" '. + {tgzB64: $tgzB64}' >> ${UPDATED}
-
-  echo "------------------------------"
-  echo "Generated role JSON: ${role}"
-  echo "------------------------------"
-done
-
-echo "]" >> ${UPDATED}
-
-jq . < ${UPDATED} > ${DEFAULT_ROLES} || die "Error writing ${DEFAULT_ROLES}, maybe some problems with ${UPDATED} ?"
-
-echo "------------------------------------------------------------"
-cat "${UPDATED}"
-echo "------------------------------------------------------------"
-
-cd ${LOCALSTORAGE_BASE_DIR} && jar uvf ${BUBBLE_JAR} automation || die "Error updating ${BUBBLE_JAR} with default role archives"
-mkdir -p ${LOCALSTORAGE_BASE_DIR}/${LOCAL_NET_ID} && cp -R ${LOCALSTORAGE_BASE_DIR}/automation ${LOCALSTORAGE_BASE_DIR}/${LOCAL_NET_ID}/ || die "Error creating/copying network storage dir: ${LOCALSTORAGE_BASE_DIR}/${LOCAL_NET_ID}"
 
 mkdir -p ${CLASSES_DIR}/scripts
 for script in $(cat ${BUBBLE_SERVER}/src/main/resources/ansible/bubble_scripts.txt) ; do
   cp ${SCRIPT_DIR}/${script} ${CLASSES_DIR}/scripts || die "Error copying ${SCRIPT_DIR}/${script} -> ${CLASSES_DIR}/scripts"
 done
 
-cd ${CLASSES_DIR} && jar uvf ${BUBBLE_JAR} scripts ${DEFAULT_ROLES_RELATIVE} || die "Error updating ${BUBBLE_JAR} with scripts"
-echo "Updated $(ls -1 ${ROLES_DIR} | wc -l) roles in ${DEFAULT_ROLES}"
-
-rm -f "${UPDATED}"
+cd ${CLASSES_DIR} && jar uvf ${BUBBLE_JAR} scripts || die "Error updating ${BUBBLE_JAR} with scripts"
 
 if [[ ! -z "${INSTALL_WEB}" && "${INSTALL_WEB}" == "web" ]] ; then
   mkdir -p ${CLASSES_DIR}/site
