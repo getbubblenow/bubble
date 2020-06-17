@@ -34,7 +34,7 @@ public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<Bub
 
     public static final File FIRST_TIME_FILE = new File(ApiConstants.HOME_DIR, "first_time_marker");
     public static final String UNLOCK_KEY = "__bubble_unlock_key__";
-    public static final long UNLOCK_EXPIRATION = HOURS.toSeconds(24);
+    public static final long UNLOCK_EXPIRATION = HOURS.toSeconds(48);
     public static final int UNLOCK_KEY_LEN = 6;
 
     private static AtomicReference<RedisService> redis = new AtomicReference<>();
@@ -64,20 +64,28 @@ public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<Bub
                     accountDAO.unlock();
                     return;
                 }
+
                 final BubbleNetwork network = configuration.getThisNetwork();
-
-                final String unlockKey = randomAlphabetic(UNLOCK_KEY_LEN).toUpperCase();
-                redis.get().set(UNLOCK_KEY, unlockKey, EX, UNLOCK_EXPIRATION);
-
                 final SageHelloService helloService = configuration.getBean(SageHelloService.class);
-                helloService.setUnlockMessage(new AccountMessage()
+
+                final AccountMessage readyMessage = new AccountMessage()
                         .setAccount(adminAccount.getUuid())
                         .setNetwork(network.getUuid())
                         .setName(network.getUuid())
                         .setMessageType(AccountMessageType.request)
                         .setAction(AccountAction.verify)
-                        .setTarget(ActionTarget.network)
-                        .setData(unlockKey));
+                        .setTarget(ActionTarget.network);
+                if (!network.launchLock()) {
+                    log.info("onStart: thisNetwork.launchLock was false, unlocking now");
+                    accountDAO.unlock();
+                    helloService.setUnlockMessage(readyMessage.setData(null));
+                    return;
+                }
+
+                final String unlockKey = randomAlphabetic(UNLOCK_KEY_LEN).toUpperCase();
+                redis.get().set(UNLOCK_KEY, unlockKey, EX, UNLOCK_EXPIRATION);
+                helloService.setUnlockMessage(readyMessage.setData(unlockKey));
+
             } finally {
                 if (!FIRST_TIME_FILE.delete()) {
                     log.error("onStart: error deleting: "+abs(FIRST_TIME_FILE));

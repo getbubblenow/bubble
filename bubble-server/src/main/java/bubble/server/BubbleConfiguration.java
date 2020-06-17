@@ -83,6 +83,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_LOCALES = "locales";
     public static final String TAG_CLOUD_CONFIGS = "cloudConfigs";
     public static final String TAG_LOCKED = "locked";
+    public static final String TAG_LAUNCH_LOCK = "launchLock";
     public static final String TAG_SSL_PORT = "sslPort";
     public static final String TAG_PROMO_CODE_POLICY = "promoCodePolicy";
     public static final String TAG_REQUIRE_SEND_METRICS = "requireSendMetrics";
@@ -292,6 +293,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_LOCALES, getAllLocales()},
                         {TAG_CLOUD_CONFIGS, accountDAO.activated() ? null : activationService.getCloudDefaults()},
                         {TAG_LOCKED, accountDAO.locked()},
+                        {TAG_LAUNCH_LOCK, isSageLauncher() || thisNetwork == null ? null : thisNetwork.launchLock()},
                         {TAG_SSL_PORT, getDefaultSslPort()}
                 }));
             }

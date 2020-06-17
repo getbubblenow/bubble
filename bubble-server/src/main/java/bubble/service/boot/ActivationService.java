@@ -173,6 +173,7 @@ public class ActivationService {
                 .setStorage(networkStorage != null ? networkStorage.getUuid() : localStorage.getUuid())
                 .setState(BubbleNetworkState.running)
                 .setSyncPassword(false)
+                .setLaunchLock(false)
                 .setSendErrors(false)
                 .setSendMetrics(false));
         selfNodeService.refreshThisNetwork();

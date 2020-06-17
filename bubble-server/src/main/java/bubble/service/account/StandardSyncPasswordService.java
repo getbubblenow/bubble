@@ -44,6 +44,10 @@ public class StandardSyncPasswordService implements SyncPasswordService {
                 if (network.getState() != BubbleNetworkState.running) continue;
                 if (!network.syncPassword()) continue;
                 for (BubbleNode node : nodeDAO.findByNetwork(network.getUuid())) {
+                    if (node.getUuid().equals(configuration.getThisNode().getUuid())) {
+                        log.info("syncPassword: not notifying self");
+                        continue;
+                    }
                     log.info("syncPassword: sending sync_password notification from sage to node: "+node.id());
                     notificationService.notify(node, sync_password, notification);
                 }
