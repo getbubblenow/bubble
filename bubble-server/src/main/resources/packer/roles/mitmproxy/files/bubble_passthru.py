@@ -62,13 +62,16 @@ class TlsFeedback(TlsLayer):
 def fqdn_for_addr(addr):
     fqdn = REDIS.get(REDIS_DNS_PREFIX + addr)
     if fqdn is None or len(fqdn) == 0:
-        bubble_log('check_bubble_passthru: no FQDN found for addr '+repr(addr)+', checking raw addr')
+        bubble_log('fqdn_for_addr: no FQDN found for addr '+repr(addr)+', checking raw addr')
         fqdn = b''
     return fqdn.decode()
 
 
 def check_bubble_passthru(remote_addr, addr, fqdn):
-    if bubble_passthru(remote_addr, addr, fqdn):
+    passthru = bubble_passthru(remote_addr, addr, fqdn)
+    if passthru is None:
+        return None
+    if passthru:
         bubble_log('check_bubble_passthru: bubble_passthru returned True for FQDN/addr '+repr(fqdn)+'/'+repr(addr)+', returning True')
         return {'fqdn': fqdn, 'addr': addr, 'passthru': True}
     bubble_log('check_bubble_passthru: bubble_passthru returned False for FQDN/addr '+repr(fqdn)+'/'+repr(addr)+', returning False')
@@ -87,7 +90,8 @@ def should_passthru(remote_addr, addr):
             fqdn = 'NONE'
         passthru = check_bubble_passthru(remote_addr, addr, fqdn)
         bubble_log(prefix+'check_bubble_passthru returned '+repr(passthru)+", storing in redis...")
-        redis_set(cache_key, json.dumps(passthru), ex=REDIS_PASSTHRU_DURATION)
+        if passthru is not None:
+            redis_set(cache_key, json.dumps(passthru), ex=REDIS_PASSTHRU_DURATION)
     else:
         bubble_log('found passthru_json='+str(passthru_json)+', touching key in redis')
         passthru = json.loads(passthru_json)
@@ -101,9 +105,10 @@ def next_layer(next_layer):
         client_address = next_layer.client_conn.address[0]
         server_address = next_layer.server_conn.address[0]
         passthru = should_passthru(client_address, server_address)
-        if passthru['passthru']:
+        if passthru is None or passthru['passthru']:
             bubble_log('next_layer: TLS passthru for ' + repr(next_layer.server_conn.address))
-            bubble_activity_log(client_address, server_address, 'tls_passthru', passthru['fqdn'])
+            if passthru is not None and 'fqdn' in passthru:
+                bubble_activity_log(client_address, server_address, 'tls_passthru', passthru['fqdn'])
             next_layer_replacement = RawTCPLayer(next_layer.ctx, ignore=True)
             next_layer.reply.send(next_layer_replacement)
         else:

@@ -73,7 +73,7 @@ def bubble_passthru(remote_addr, addr, fqdn):
     except Exception as e:
         bubble_log('bubble_passthru API call failed: '+repr(e))
         traceback.print_exc()
-    return False
+        return None
 
 
 def bubble_matchers(req_id, remote_addr, flow, host):
