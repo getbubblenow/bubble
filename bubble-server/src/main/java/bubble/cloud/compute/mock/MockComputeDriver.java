@@ -29,11 +29,17 @@ public class MockComputeDriver extends ComputeServiceDriverBase {
             .setName("nyc_mock")
             .setLocation(MockGeoLocationDriver.MOCK_LOCAION));
 
+    @Override public List<CloudRegion> getRegions() { return getCloudRegions(); }
+
     @Getter private final List<ComputeNodeSize> cloudSizes = singletonList(new ComputeNodeSize()
             .setName("standard")
             .setType(ComputeNodeSizeType.small));
 
+    @Override public List<ComputeNodeSize> getSizes() { return getCloudSizes(); }
+
     @Getter private final List<OsImage> cloudOsImages = singletonList(new OsImage().setName("dummy operating system"));
+
+    @Getter(lazy=true) private final OsImage os = new OsImage().setName("Ubuntu 20.04 x84").setId("ubuntu20.04x84");
 
     @Override public BubbleNode start(BubbleNode node) throws Exception {
         node.setIp4("127.0.0.1");

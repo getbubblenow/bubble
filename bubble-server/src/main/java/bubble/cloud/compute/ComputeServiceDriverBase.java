@@ -59,15 +59,17 @@ public abstract class ComputeServiceDriverBase
     @Getter(lazy=true) private final List<CloudRegion> regions = initRegions();
     private List<CloudRegion> initRegions() {
         final ArrayList<CloudRegion> cloudRegions = new ArrayList<>();
-        for (CloudRegion configRegion : config.getRegions()) {
-            final CloudRegion cloudRegion = getCloudRegions().stream()
-                    .filter(s -> s.getInternalName().equalsIgnoreCase(configRegion.getInternalName()))
-                    .findFirst()
-                    .orElse(null);
-            if (cloudRegion == null) {
-                log.warn("initRegions: config region not found: "+configRegion.getInternalName());
-            } else {
-                cloudRegions.add(configRegion.setId(cloudRegion.getId()));
+        if (config != null && config.getRegions() != null) {
+            for (CloudRegion configRegion : config.getRegions()) {
+                final CloudRegion cloudRegion = getCloudRegions().stream()
+                        .filter(s -> s.getInternalName().equalsIgnoreCase(configRegion.getInternalName()))
+                        .findFirst()
+                        .orElse(null);
+                if (cloudRegion == null) {
+                    log.warn("initRegions: config region not found: " + configRegion.getInternalName());
+                } else {
+                    cloudRegions.add(configRegion.setId(cloudRegion.getId()));
+                }
             }
         }
         return cloudRegions;
