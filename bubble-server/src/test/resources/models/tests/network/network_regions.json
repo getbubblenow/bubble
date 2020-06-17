@@ -14,11 +14,10 @@
     "comment": "list all available compute regions",
     "request": { "uri": "me/regions" },
     "response": {
+      "store": "regions",
       "check": [
-        // ensure we have at least one region from each cloud
-        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[0].getUuid(); }) != null"},
-        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[1].getUuid(); }) != null"},
-        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[2].getUuid(); }) != null"}
+        // ensure we have several regions
+        {"condition": "json.length > 5"}
       ]
     }
   },
@@ -28,10 +27,9 @@
     "request": { "uri": "me/regions/closest" },
     "response": {
       "check": [
-        // ensure we have at least one region from each cloud
-        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[0].getUuid(); }) != null"},
-        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[1].getUuid(); }) != null"},
-        {"condition": "_find(json, function (r) { return r.getCloud() == computeClouds[2].getUuid(); }) != null"}
+        // ensure we have the same number of regions and that first is closer than last
+        {"condition": "json.length === regions.length"},
+        {"condition": "json[0].getDistance() < json[json.length-1].getDistance()"}
       ]
     }
   }
