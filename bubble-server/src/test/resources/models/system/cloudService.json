@@ -157,7 +157,7 @@
         "location": {"city": "Sydney", "country": "AU", "region": "NSW", "lat": "-33.865", "lon": "151.209444"}
       }, {
         "name": "Vultr - Amsterdam",
-        "internalName": "ams3",
+        "internalName": "Amsterdam",
         "location": {"city": "Amsterdam", "country": "NL", "region": "North Holland", "lat": "52.366667", "lon": "4.9"}
       }],
       "sizes": [
