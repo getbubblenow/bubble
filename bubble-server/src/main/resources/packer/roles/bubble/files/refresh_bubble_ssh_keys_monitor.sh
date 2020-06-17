@@ -23,7 +23,7 @@ BUBBLE_KEY_MARKER=/home/bubble/.refresh_ssh_keys
 ROOT_KEY_MARKER=${SSH_KEY_BASE}/.refresh_ssh_keys
 
 if [[ ! -f ${BUBBLE_KEY_MARKER} ]] ; then
-  touch ${BUBBLE_KEY_MARKER} && chown bubble ${BUBBLE_KEY_MARKER}
+  touch ${BUBBLE_KEY_MARKER} && chown bubble ${BUBBLE_KEY_MARKER} && sleep 2s
 fi
 if [[ ! -f ${ROOT_KEY_MARKER} ]] ; then
   touch ${ROOT_KEY_MARKER}
