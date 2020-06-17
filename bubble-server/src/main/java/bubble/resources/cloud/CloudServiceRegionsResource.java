@@ -14,6 +14,7 @@ import bubble.model.cloud.BubbleFootprint;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.GeoService;
+import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,11 +29,13 @@ import static bubble.ApiConstants.EP_CLOSEST;
 import static bubble.ApiConstants.getRemoteHost;
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
+@Slf4j
 public class CloudServiceRegionsResource {
 
     private Account account;
@@ -85,8 +88,12 @@ public class CloudServiceRegionsResource {
     public List<CloudRegion> findRegions(List<CloudService> clouds, BubbleFootprint footprint) {
         final List<CloudRegion> regions = new ArrayList<>();
         for (CloudService cloud : clouds) {
-            for (CloudRegion region : cloud.getComputeDriver(configuration).getRegions(footprint)) {
-                regions.add(region.setCloud(cloud.getUuid()));
+            try {
+                for (CloudRegion region : cloud.getComputeDriver(configuration).getRegions(footprint)) {
+                    regions.add(region.setCloud(cloud.getUuid()));
+                }
+            } catch (Exception e) {
+                log.error("findRegions: error finding regions for cloud: "+cloud.getName()+"/"+cloud.getUuid()+": "+shortError(e), e);
             }
         }
         return regions;
