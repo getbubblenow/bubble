@@ -20,6 +20,7 @@ import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import bubble.service.SearchService;
+import bubble.service.account.SyncPasswordService;
 import bubble.service.boot.SelfNodeService;
 import lombok.Getter;
 import lombok.NonNull;
@@ -48,6 +49,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
 import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_ASC;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 import static org.hibernate.criterion.Restrictions.isNotNull;
 
 @Repository @Slf4j
@@ -69,6 +71,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private SelfNodeService selfNodeService;
     @Autowired private SearchService searchService;
+    @Autowired private SyncPasswordService syncPasswordService;
     @Autowired private ReferralCodeDAO referralCodeDAO;
 
     public Account newAccount(Request req, Account caller, AccountRegistration request, Account parent) {
@@ -156,12 +159,25 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         return super.postCreate(account, context);
     }
 
+    @Override public Object preUpdate(Account account) {
+        final Account current = findByUuid(account.getUuid());
+        if (current == null) throw notFoundEx(account.getUuid());
+        account.setPreviousPasswordHash(current.getHashedPassword().getHashedPassword());
+        return super.preUpdate(account);
+    }
+
     @Override public Account postUpdate(Account account, Object context) {
         searchService.flushCache(this);
         if (account.hasPolicy()) {
             final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
             policy.update(account.getPolicy());
             policyDAO.update(policy);
+        }
+        if (context instanceof Account) {
+            final Account previousState = (Account) context;
+            if (!previousState.skipSyncPassword()) {
+                syncPasswordService.syncPassword(account);
+            }
         }
         return super.postUpdate(account, context);
     }

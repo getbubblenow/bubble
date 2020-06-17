@@ -12,7 +12,6 @@ import bubble.model.HasBubbleTags;
 import bubble.model.account.Account;
 import bubble.model.account.AccountSshKey;
 import bubble.model.account.HasNetwork;
-import bubble.model.bill.AccountPlan;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
@@ -61,8 +60,11 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 })
 public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBubbleTags<BubbleNetwork> {
 
-    public static final String[] UPDATE_FIELDS = {"footprint", "description", "locale", "timezone", "state"};
-    public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "name", "domain", "sendMetrics");
+    public static final String[] UPDATE_FIELDS = {
+            "footprint", "description", "locale", "timezone", "state", "syncPassword"
+    };
+    public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS,
+            "name", "domain", "sendErrors", "sendMetrics");
 
     public static final String TAG_ALLOW_REGISTRATION = "allowRegistration";
     public static final String TAG_PARENT_ACCOUNT = "parentAccountUuid";
@@ -164,7 +166,17 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
 
     @ECSearchable @ECField(index=140)
     @Column(nullable=false)
-    @ECIndex @Getter @Setter private Boolean sendMetrics = false;
+    @ECIndex @Getter @Setter private Boolean syncPassword;
+    public boolean syncPassword() { return bool(syncPassword); }
+
+    @ECSearchable @ECField(index=150)
+    @Column(nullable=false)
+    @ECIndex @Getter @Setter private Boolean sendErrors;
+    public boolean sendErrors() { return bool(sendErrors); }
+
+    @ECSearchable @ECField(index=160)
+    @Column(nullable=false)
+    @ECIndex @Getter @Setter private Boolean sendMetrics;
     public boolean sendMetrics() { return bool(sendMetrics); }
 
     @Embedded @Getter @Setter private BubbleTags tags;
@@ -173,7 +185,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     public boolean hasForkHost () { return !empty(forkHost); }
     public boolean fork() { return hasForkHost(); }
 
-    @ECSearchable @ECField(index=140)
+    @ECSearchable @ECField(index=160)
     @Column(length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private BubbleNetworkState state = created;
 

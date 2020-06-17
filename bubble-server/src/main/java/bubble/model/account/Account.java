@@ -179,6 +179,9 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     public Account setTermsAgreed() { return setTermsAgreed(now()); }
 
     @JsonIgnore @Embedded @Getter @Setter private HashedPassword hashedPassword;
+    @JsonIgnore @Transient @Getter @Setter private String previousPasswordHash;
+    @JsonIgnore @Transient @Getter @Setter private Boolean skipSyncPassword;
+    public boolean skipSyncPassword() { return bool(skipSyncPassword); }
 
     public static final int MIN_PASSWORD_LENGTH = 8;
     public static ConstraintViolationBean validatePassword(String password) {

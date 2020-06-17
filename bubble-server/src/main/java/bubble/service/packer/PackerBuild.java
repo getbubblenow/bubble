@@ -11,8 +11,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Arrays;
-
 public class PackerBuild {
 
     @Getter @Setter private String name;
@@ -25,7 +23,11 @@ public class PackerBuild {
 
     public PackerImage toPackerImage(String name) {
         final String[] parts = artifact_id.split(":");
-        final CloudRegion[] regions = (CloudRegion[]) Arrays.stream(parts[0].split(",")).map(r -> new CloudRegion().setInternalName(r)).toArray();
+        final String[] regionNames = parts[0].split(",");
+        final CloudRegion[] regions = new CloudRegion[regionNames.length];
+        for (int i=0; i<regionNames.length; i++) {
+            regions[i] = new CloudRegion().setInternalName(regionNames[i]);
+        }
         final String id = parts[1];
         return new PackerImage()
                 .setId(id)

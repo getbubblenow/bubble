@@ -47,7 +47,7 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
 
     public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS,
             "name", "forkHost", "locale", "timezone", "domain", "network",
-            "sshKey", "sendMetrics", "plan", "footprint");
+            "sshKey", "syncPassword", "sendErrors", "sendMetrics", "plan", "footprint");
 
     @SuppressWarnings("unused")
     public AccountPlan (AccountPlan other) { copy(this, other, CREATE_FIELDS); }
@@ -153,6 +153,12 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
     @Transient @Getter @Setter private transient String forkHost = null;
     public boolean hasForkHost () { return !empty(forkHost); }
 
+    @Transient @Getter @Setter private transient Boolean syncPassword = null;
+    public boolean syncPassword () { return bool(syncPassword); }
+
+    @Transient @Getter @Setter private transient Boolean sendErrors = null;
+    public boolean sendErrors () { return bool(sendErrors); }
+
     @Transient @Getter @Setter private transient Boolean sendMetrics = null;
     public boolean sendMetrics () { return bool(sendMetrics); }
 
@@ -167,6 +173,8 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
                 .setTimezone(getTimezone())
                 .setAccount(account.getUuid())
                 .setSshKey(getSshKey())
+                .setSyncPassword(syncPassword())
+                .setSendErrors(sendErrors())
                 .setSendMetrics(sendMetrics())
                 .setDomain(domain.getUuid())
                 .setDomainName(domain.getName())

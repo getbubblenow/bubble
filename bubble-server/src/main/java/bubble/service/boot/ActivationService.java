@@ -171,7 +171,10 @@ public class ActivationService {
                 .setTag(TAG_ALLOW_REGISTRATION, true)
                 .setTag(TAG_PARENT_ACCOUNT, account.getUuid())
                 .setStorage(networkStorage != null ? networkStorage.getUuid() : localStorage.getUuid())
-                .setState(BubbleNetworkState.running));
+                .setState(BubbleNetworkState.running)
+                .setSyncPassword(false)
+                .setSendErrors(false)
+                .setSendMetrics(false));
         selfNodeService.refreshThisNetwork();
 
         // copy data outside the network to inside the network

@@ -202,6 +202,9 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             if (!request.sendMetrics() && configuration.requireSendMetrics()) {
                 throw invalidEx("err.sendMetrics.cannotDisable");
             }
+            if (!request.sendErrors() && configuration.requireSendMetrics()) {
+                throw invalidEx("err.sendErrors.cannotDisable");
+            }
             final BubbleNetwork newNetwork = networkDAO.create(request.bubbleNetwork(caller, domain, plan, storage));
             request.setNetwork(newNetwork.getUuid());
         }

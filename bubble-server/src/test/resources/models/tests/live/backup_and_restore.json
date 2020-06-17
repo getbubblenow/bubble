@@ -50,6 +50,8 @@
       "plan": "bubble",
       "networkVar": "bubbleNetwork",
       "bubbleConnectionVar": "bubbleConnection",
+      "syncPassword": true,
+      "sendErrors": true,
       "sendMetrics": true
     }
   },

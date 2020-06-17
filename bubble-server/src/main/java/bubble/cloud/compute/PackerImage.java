@@ -5,13 +5,10 @@
 package bubble.cloud.compute;
 
 import bubble.cloud.CloudRegion;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.Accessors;
 
-@NoArgsConstructor @Accessors(chain=true) @EqualsAndHashCode(of={"id", "regions"})
+@NoArgsConstructor @Accessors(chain=true) @EqualsAndHashCode(of={"id", "regions"}) @ToString
 public class PackerImage {
 
     @Getter @Setter private String id;

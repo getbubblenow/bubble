@@ -23,6 +23,8 @@
       "bubbleConnectionVar": "bubbleConnection",
       "bubbleUserSessionVar": "bubbleUserSession",
       "bubbleUserVar": "bubbleUserAccount",
+      "syncPassword": null,
+      "sendErrors": null,
       "sendMetrics": null
     }
   },
@@ -146,6 +148,8 @@
         "timezone": "<<timezone>>",
         "plan": "<<plan>>",
         "footprint": "<<footprint>>",
+        "syncPassword": <<syncPassword>>,
+        "sendErrors": <<sendErrors>>,
         "sendMetrics": <<sendMetrics>>,
         "paymentMethodObject": {
           "uuid": "{{ js '_find(paymentMethods, function(m) { return !m.hasPromotion() && m.getPaymentMethodType() != `promotional_credit`; }).getUuid()' }}"

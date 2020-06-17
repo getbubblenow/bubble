@@ -34,7 +34,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
 public enum NotificationType {
 
     // network-level notifications
-    health_check, hello_to_sage, hello_from_sage, peer_hello,
+    health_check, hello_to_sage, hello_from_sage, peer_hello, sync_password,
     register_backup, retrieve_backup, backup_response, restore_complete, fork,
 
     // driver-level notifications

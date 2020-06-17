@@ -15,9 +15,11 @@ import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.app.AppSite;
 import bubble.model.app.BubbleApp;
+import bubble.model.cloud.BubbleNode;
 import bubble.model.device.Device;
 import bubble.rule.FilterMatchDecision;
 import bubble.server.BubbleConfiguration;
+import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.DeviceIdService;
 import bubble.service.stream.StandardRuleEngineService;
 import lombok.Getter;
@@ -72,6 +74,7 @@ public class FilterHttpResource {
     @Autowired private DeviceIdService deviceIdService;
     @Autowired private RedisService redis;
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private SelfNodeService selfNodeService;
 
     private static final long ACTIVE_REQUEST_TIMEOUT = HOURS.toSeconds(4);
 
@@ -137,6 +140,9 @@ public class FilterHttpResource {
         }
         validateMitmCall(req);
 
+        // if the requested IP is the same as our IP, then always passthru
+        if (isForUs(passthruRequest)) return ok();
+
         final String vpnAddr = passthruRequest.getRemoteAddr();
         final Device device = deviceIdService.findDeviceByIp(vpnAddr);
         if (device == null) {
@@ -168,6 +174,13 @@ public class FilterHttpResource {
         }
         if (log.isDebugEnabled()) log.debug(prefix+"returning false for fqdn/addr="+passthruRequest.getFqdn()+"/"+passthruRequest.getAddr());
         return notFound();
+    }
+
+    private boolean isForUs(FilterPassthruRequest passthruRequest) {
+        final BubbleNode thisNode = selfNodeService.getThisNode();
+        return passthruRequest.hasAddr()
+                && (thisNode.hasIp4() && thisNode.getIp4().equals(passthruRequest.getAddr())
+                || thisNode.hasIp6() && thisNode.getIp6().equals(passthruRequest.getAddr()));
     }
 
     @POST @Path(EP_MATCHERS+"/{requestId}")

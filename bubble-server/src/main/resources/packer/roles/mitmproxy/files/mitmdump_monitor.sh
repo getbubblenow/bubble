@@ -19,9 +19,9 @@ ROOT_KEY_MARKER=/usr/share/bubble/mitmdump_monitor
 MITMDUMP_PID_FILE=/home/mitmproxy/mitmdump.pid
 MAX_MITM_PCT_MEM=18
 
-# Start with MITM proxy turned off
+# Start with MITM proxy turned on
 if [[ ! -f ${BUBBLE_MITM_MARKER} ]] ; then
-  echo -n off > ${BUBBLE_MITM_MARKER} && chown bubble ${BUBBLE_MITM_MARKER} || log "Error writing 'off' to ${ROOT_KEY_MARKER}"
+  echo -n on > ${BUBBLE_MITM_MARKER} && chown bubble ${BUBBLE_MITM_MARKER} || log "Error writing 'on' to ${ROOT_KEY_MARKER}"
 fi
 if [[ ! -f ${ROOT_KEY_MARKER} ]] ; then
   sleep 1s
