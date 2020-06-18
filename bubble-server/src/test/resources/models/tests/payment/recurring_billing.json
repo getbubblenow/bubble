@@ -5,10 +5,9 @@
       "uri": "users",
       "method": "put",
       "entity": {
-        "name": "test_user_recurring",
+        "name": "test_user_recurring@example.com",
         "password": "password1!",
-        "agreeToTerms": true,
-        "contact": {"type": "email", "info": "test-user@example.com"}
+        "agreeToTerms": true
       }
     }
   },
@@ -20,7 +19,7 @@
       "session": "new",
       "uri": "auth/login",
       "entity": {
-        "name": "test_user_recurring",
+        "name": "test_user_recurring@example.com",
         "password": "password1!"
       }
     },
@@ -45,7 +44,7 @@
     "comment": "as root, check email inbox for verification message",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/test-user@example.com?type=request&action=verify&target=account"
+      "uri": "debug/inbox/email/test_user_recurring@example.com?type=request&action=verify&target=account"
     },
     "response": {
       "store": "emailInbox",
@@ -346,7 +345,7 @@
     "comment": "as root, verify payment reminder message has been sent",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/test-user@example.com?type=request&action=payment&target=network"
+      "uri": "debug/inbox/email/test_user_recurring@example.com?type=request&action=payment&target=network"
     },
     "response": {
       "store": "emailInbox",
@@ -380,7 +379,7 @@
     "comment": "as root, verify nonpayment message has been sent",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/test-user@example.com?type=notice&action=payment&target=network"
+      "uri": "debug/inbox/email/test_user_recurring@example.com?type=notice&action=payment&target=network"
     },
     "response": {
       "store": "emailInbox",

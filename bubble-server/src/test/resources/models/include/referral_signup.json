@@ -19,10 +19,9 @@
       "session": "new",
       "uri": "auth/register",
       "entity": {
-        "name": "<<referredName>>",
+        "name": "<<referredName>>@example.com",
         "password": "password1!",
         "agreeToTerms": true,
-        "contact": {"type": "email", "info": "<<referredName>>@example.com"},
         "promoCode": "<<referralCode>>"
       }
     },

@@ -17,11 +17,14 @@ public class AccountRegistration extends Account {
     @Getter @Setter private String promoCode;
     public boolean hasPromoCode () { return !empty(promoCode); }
 
-    @Getter @Setter private AccountContact contact;
-    public boolean hasContact () { return contact != null; }
-
     @Getter @Setter private Boolean agreeToTerms = null;
     public boolean agreeToTerms () { return agreeToTerms != null && agreeToTerms; }
+
+    @Getter @Setter private Boolean receiveInformationalMessages = null;
+    public boolean receiveInformationalMessages () { return receiveInformationalMessages != null && receiveInformationalMessages; }
+
+    @Getter @Setter private Boolean receivePromotionalMessages = null;
+    public boolean receivePromotionalMessages () { return receivePromotionalMessages != null && receivePromotionalMessages; }
 
     @Getter @Setter private AccountPaymentMethod paymentMethodObject;
     public boolean hasPaymentMethod () { return paymentMethodObject != null; }

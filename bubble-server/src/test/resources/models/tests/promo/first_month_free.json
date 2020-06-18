@@ -5,10 +5,9 @@
       "session": "new",
       "uri": "auth/register",
       "entity": {
-        "name": "test_user_1mo_free",
+        "name": "test_user_1mo_free@example.com",
         "password": "password1!",
-        "agreeToTerms": true,
-        "contact": {"type": "email", "info": "test_user_1mo_free@example.com"}
+        "agreeToTerms": true
       }
     },
     "response": {

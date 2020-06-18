@@ -5,6 +5,7 @@
 package bubble.model.account;
 
 import bubble.cloud.CloudServiceType;
+import bubble.dao.account.AccountDAO;
 import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
@@ -40,7 +41,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 public class AccountContact implements Serializable {
 
     public static final int MAX_NICK_LENGTH = 100;
-    public static final String[] UPDATE_EXCLUDE_FIELDS = {UUID, "type", "info"};
+    public static final String[] UPDATE_EXCLUDE_FIELDS = {UUID, "type", "info", "removable"};
 
     public AccountContact(AccountContact other) { copy(this, other); }
 
@@ -67,11 +68,14 @@ public class AccountContact implements Serializable {
     @Getter @Setter private CloudServiceType type;
     @JsonIgnore public boolean isAuthenticator () { return type == CloudServiceType.authenticator; }
     @JsonIgnore public boolean isNotAuthenticator () { return !isAuthenticator(); }
-    @JsonIgnore public boolean getIsEmail () { return type == CloudServiceType.email; }
-    @JsonIgnore public boolean getIsSms () { return type == CloudServiceType.sms; }
+    @JsonIgnore public boolean isEmail () { return type == CloudServiceType.email; }
+    @JsonIgnore public boolean isSms () { return type == CloudServiceType.sms; }
 
     @Getter @Setter private Boolean verified = null;
     public boolean verified () { return bool(verified); }
+
+    @Getter @Setter private Boolean removable = true;
+    public boolean removable () { return bool(removable); }
 
     @Getter @Setter private Boolean requiredForNetworkOperations = true;
     @Getter @Setter private Boolean requiredForAccountOperations = true;
@@ -107,7 +111,12 @@ public class AccountContact implements Serializable {
 
         if (!c.hasUuid()) c.initUuid();
 
-        if (contacts == null) contacts = new AccountContact[0];
+        if (contacts == null) {
+            contacts = new AccountContact[0];
+            c.setRemovable(false); // first contact is not removable
+        } else {
+            c.setRemovable(true); // all other contacts are removable
+        }
         final AccountContact existing = Arrays.stream(contacts).filter(contactMatch(c)).findFirst().orElse(null);
         if (existing != null) {
             // updating a contact -- cannot set authFactor if verification is still required
@@ -125,6 +134,14 @@ public class AccountContact implements Serializable {
             existing.update(c);
 
         } else {
+            if (c.isEmail()) {
+                // has another user registered this as their primary email?
+                final Account registeredWithEmail = configuration.getBean(AccountDAO.class).findByEmail(c.getInfo());
+                if (registeredWithEmail != null && (account == null || !registeredWithEmail.getUuid().equals(account.getUuid()))) {
+                    throw invalidEx("err.email.registered", "Email already registered");
+                }
+            }
+
             // creating a new contact -- cannot set authFactor for contacts requiring verification
             if (c.getType().isVerifiableAuthenticationType() && c.authFactor()) {
                 throw invalidEx("err.contact.unverified", "cannot set authFactor on an unverified contact; verify first");
@@ -164,10 +181,14 @@ public class AccountContact implements Serializable {
                 .orElse(null);
     }
 
-    public static AccountContact[] remove(AccountContact contact, AccountContact[] contacts) {
+    public static AccountContact[] remove(Account account, AccountContact contact, AccountContact[] contacts) {
         if (contacts == null || contacts.length == 0) return contacts;
+        if (contact.getType() == CloudServiceType.email && contact.getInfo().equals(account.getEmail())) {
+            log.warn("remove: cannot remove account.email contact");
+            return contacts;
+        }
         final List<AccountContact> contactList = new ArrayList<>(Arrays.asList(contacts));
-        return contactList.removeIf(contactMatch(contact))
+        return contactList.removeIf(c -> c.removable() && contactMatch(contact).test(c))
                 ? contactList.toArray(new AccountContact[contacts.length-1])
                 : contacts;
     }

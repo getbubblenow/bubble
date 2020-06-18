@@ -13,10 +13,9 @@
       "uri": "users",
       "method": "put",
       "entity": {
-        "name": "test_user_simple_net",
+        "name": "test_user_simple_net@example.com",
         "password": "password1!",
-        "agreeToTerms": true,
-        "contact": {"type": "email", "info": "test-user@example.com"}
+        "agreeToTerms": true
       }
     },
     "response": {
@@ -341,10 +340,9 @@
       "uri": "users",
       "method": "put",
       "entity": {
-        "name": "bubble_user",
+        "name": "bubble_user@example.com",
         "password": "password1!",
-        "agreeToTerms": true,
-        "contact": {"type": "email", "info": "bubble-user@example.com"}
+        "agreeToTerms": true
       }
     }
   },

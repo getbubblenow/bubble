@@ -3,7 +3,6 @@
     "comment": "activate service, create account, login",
     "include": "new_account",
     "params": {
-      "password": "foobar1!",
       "email": "user-account-crud@example.com",
       "verifyEmail": "true"
     }

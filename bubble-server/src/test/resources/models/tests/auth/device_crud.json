@@ -1,11 +1,7 @@
 [
   {
     "comment": "create an account",
-    "include": "new_account",
-    "params": {
-      "name": "test-user-{{rand 5}}",
-      "password": "password1!"
-    }
+    "include": "new_account"
   },
 
   {

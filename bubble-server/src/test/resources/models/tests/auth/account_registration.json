@@ -14,9 +14,8 @@
       "session": "new",
       "uri": "auth/register",
       "entity": {
-        "name": "foobar1",
-        "password": "password1!",
-        "contact": { "type": "email", "info": "user-{{rand 5}}@example.com" }
+        "name": "account_reg_user@example.com",
+        "password": "password1!"
       }
     },
     "response": {
@@ -31,10 +30,9 @@
       "session": "new",
       "uri": "auth/register",
       "entity": {
-        "name": "foobar1",
+        "name": "account_reg_user@example.com",
         "password": "password1!",
-        "agreeToTerms": true,
-        "contact": { "type": "email", "info": "user-{{rand 5}}@example.com" }
+        "agreeToTerms": true
       }
     },
     "response": {
@@ -47,7 +45,7 @@
     "comment": "view current user",
     "request": { "uri": "me" },
     "response": {
-      "check": [ {"condition": "json.getName() == 'foobar1'"} ]
+      "check": [ {"condition": "json.getName() == 'account_reg_user@example.com'"} ]
     }
   },
 
@@ -60,12 +58,12 @@
   },
 
   {
-    "comment": "login as foobar1, works",
+    "comment": "login as account_reg_user@example.com, works",
     "request": {
       "session": "new",
       "uri": "auth/login",
       "entity": {
-        "name": "foobar1",
+        "name": "account_reg_user@example.com",
         "password": "password1!"
       }
     },
@@ -80,7 +78,7 @@
     "request": { "uri":  "me" },
     "response": {
       "store": "user1",
-      "check": [ {"condition": "json.getName() == 'foobar1'"} ]
+      "check": [ {"condition": "json.getName() == 'account_reg_user@example.com'"} ]
     }
   },
 
@@ -158,7 +156,7 @@
       "session": "new",
       "uri": "auth/register",
       "entity": {
-        "name": "foobar1",
+        "name": "account_reg_user@example.com",
         "password": "password1!",
         "agreeToTerms": true
       }
@@ -176,7 +174,7 @@
       "session": "new",
       "uri": "auth/login",
       "entity": {
-        "name": "foobar1",
+        "name": "account_reg_user@example.com",
         "password": "password1!"
       }
     },
@@ -202,7 +200,7 @@
       "session": "new",
       "uri": "auth/register",
       "entity": {
-        "name": "foobar1",
+        "name": "account_reg_user@example.com",
         "password": "password1!",
         "agreeToTerms": true
       }
@@ -219,10 +217,9 @@
       "session": "new",
       "uri": "auth/register",
       "entity": {
-        "name": "foobar2",
+        "name": "another_account_reg_user@example.com",
         "password": "password2!",
-        "agreeToTerms": true,
-        "contact": { "type": "email", "info": "user2-{{rand 5}}@example.com" }
+        "agreeToTerms": true
       }
     },
     "response": {
@@ -235,7 +232,7 @@
     "comment": "view new user",
     "request": { "uri": "me" },
     "response": {
-      "check": [ {"condition": "json.getName() == 'foobar2'"} ]
+      "check": [ {"condition": "json.getName() == 'another_account_reg_user@example.com'"} ]
     }
   }
 ]

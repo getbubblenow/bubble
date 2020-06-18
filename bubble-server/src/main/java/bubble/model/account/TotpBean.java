@@ -18,7 +18,7 @@ public class TotpBean {
 
     public TotpBean(GoogleAuthenticatorKey creds, Account account, BubbleConfiguration configuration) {
         setKey(creds.getKey());
-        setUrl(getOtpAuthTotpURL(configuration.getThisNetwork().getNetworkDomain(), account.getName()+"@"+configuration.getThisNetwork().getNetworkDomain(), creds));
+        setUrl(getOtpAuthTotpURL(configuration.getThisNetwork().getNetworkDomain(), account.getEmail()+"/"+configuration.getThisNetwork().getNetworkDomain(), creds));
         setBackupCodes(creds.getScratchCodes().toArray(new Integer[0]));
     }
 

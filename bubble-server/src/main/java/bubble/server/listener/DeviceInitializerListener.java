@@ -24,7 +24,7 @@ public class DeviceInitializerListener extends RestServerLifecycleListenerBase {
 
         if (!configuration.isSageLauncher()) {
             for (Account a : accountDAO.findAll()) {
-                if (!a.getName().equals(ROOT_USERNAME)) {
+                if (!a.getEmail().equals(ROOT_USERNAME)) {
                     deviceDAO.ensureSpareDevice(a.getUuid(), thisNode.getNetwork(), false);
                 }
             }

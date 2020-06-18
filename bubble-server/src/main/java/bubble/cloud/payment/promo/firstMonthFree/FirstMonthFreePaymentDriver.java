@@ -29,7 +29,7 @@ public class FirstMonthFreePaymentDriver extends PromotionalPaymentDriverBase<Pr
         // does the caller already have one of these?
         final List<AccountPaymentMethod> existingCreditPaymentMethods = paymentMethodDAO.findByAccountAndCloud(caller.getUuid(), promo.getCloud());
         if (!empty(existingCreditPaymentMethods)) {
-            log.warn("applyPromo: promo="+promo.getName()+", account="+caller.getName()+", account already has one of these promos applied");
+            log.warn("applyPromo: promo="+promo.getName()+", account="+caller.getEmail()+", account already has one of these promos applied");
             return true; // promo has already been applied, return true
         }
         paymentMethodDAO.create(new AccountPaymentMethod()

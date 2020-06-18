@@ -40,9 +40,7 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 import javax.validation.constraints.Size;
-import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import static bubble.ApiConstants.ACCOUNTS_ENDPOINT;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
@@ -50,6 +48,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
+import static org.cobbzilla.util.string.ValidationRegexes.EMAIL_PATTERN;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
@@ -60,8 +59,8 @@ import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySe
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @ECType(root=true)
-@ECTypeURIs(baseURI=ACCOUNTS_ENDPOINT, listFields={"name", "url", "description", "admin", "suspended"}, isDeleteDefined=false)
-@ECTypeChildren(uriPrefix=ACCOUNTS_ENDPOINT+"/{Account.name}", value={
+@ECTypeURIs(baseURI=ACCOUNTS_ENDPOINT, listFields={"email", "url", "description", "admin", "suspended"}, isDeleteDefined=false)
+@ECTypeChildren(uriPrefix=ACCOUNTS_ENDPOINT+"/{Account.email}", value={
         @ECTypeChild(type=Device.class, backref="account"),
         @ECTypeChild(type=RuleDriver.class, backref="account"),
         @ECTypeChild(type=BubbleApp.class, backref="account"),
@@ -89,8 +88,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
             "name", "referralCode", "termsAgreed", "preferredPlan");
 
     public static final String ROOT_USERNAME = "root";
-    public static final int NAME_MIN_LENGTH = 4;
-    public static final int NAME_MAX_LENGTH = 100;
+    public static final int EMAIL_MAX_LENGTH = 100;
 
     public static Account sageMask(Account sage) {
         final Account masked = new Account(sage)
@@ -106,22 +104,14 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     public static String accountField(String table) { return table.equalsIgnoreCase("account") ? UUID : "account"; }
 
     @ECSearchable(filter=true) @ECField(index=10)
-    @HasValue(message="err.name.required")
-    @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=NAME_MAX_LENGTH)
-    @Getter private String name;
-    public Account setName (String n) { this.name = n == null ? null : n.toLowerCase(); return this; }
-    public boolean hasName () { return !empty(name); }
+    @HasValue(message="err.email.required")
+    @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=EMAIL_MAX_LENGTH)
+    @Getter private String email;
+    public Account setEmail(String n) { this.email = n == null ? null : n.toLowerCase().trim(); return this; }
+    public boolean hasEmail() { return !empty(email); }
 
-    public static final Pattern VALID_NAME_PATTERN = Pattern.compile("^[A-Za-z][-\\.A-Za-z0-9_]+$");
-    public boolean hasInvalidName() { return hasName() && !VALID_NAME_PATTERN.matcher(getName()).matches(); }
-
-    private static final List<String> RESERVED_NAMES = Arrays.asList(
-            "root", "postmaster", "hostmaster", "webmaster",
-            "dns", "dnscrypt", "dnscrypt-proxy", "ftp", "www", "www-data", "postgres", "ipfs",
-            "redis", "nginx", "mitmproxy", "mitmdump", "algo", "algovpn");
-    public boolean hasReservedName () { return hasName() && isReservedName(getName()); }
-
-    public static boolean isReservedName(String name) { return RESERVED_NAMES.contains(name); }
+    @Override @Transient public String getName() { return getEmail(); }
+    public Account setName(String n) { return setEmail(n); }
 
     // make this updatable if we ever want accounts to be able to change parents
     // there might be a lot more involved in that action though (read-only parent objects that will no longer be visible, must be copied in?)
@@ -244,7 +234,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     public Account(Account other) { copy(this, other, CREATE_FIELDS); }
 
     public Account(ActivationRequest request) {
-        setName(request.getName());
+        setEmail(request.getEmail());
         setHashedPassword(new HashedPassword(request.getPassword()));
         setAdmin(true);
         setDescription(request.hasDescription() ? request.getDescription() : "root user");
@@ -253,7 +243,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     }
 
     public Account(AccountRegistration request) {
-        setName(request.getName());
+        setEmail(request.getEmail());
         setHashedPassword(new HashedPassword(request.getPassword()));
         setTermsAgreed(request.getTermsAgreed());
         setPreferredPlan(request.getPreferredPlan());
@@ -289,21 +279,17 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     @Transient @Getter @Setter private transient String remoteHost;
     @Transient @JsonIgnore @Getter @Setter private transient Boolean verifyContact;
 
-    public ValidationResult validateName () {
+    public ValidationResult validateEmail() { return validateEmail(getEmail()); }
+
+    public static ValidationResult validateEmail(String email) {
         final ValidationResult result = new ValidationResult();
-        if (!hasName()) {
-            result.addViolation("err.name.required");
+        if (empty(email)) {
+            result.addViolation("err.email.required");
         } else {
-            if (getName().length() < NAME_MIN_LENGTH) {
-                result.addViolation("err.name.tooShort");
-            } else if (getName().length() > NAME_MAX_LENGTH) {
-                result.addViolation("err.name.tooLong");
-            }
-            if (!admin() && hasReservedName()) {
-                result.addViolation("err.name.reserved");
-            }
-            if (hasInvalidName()) {
-                result.addViolation("err.name.regexFailed");
+            if (!EMAIL_PATTERN.matcher(email).matches()) {
+                result.addViolation("err.email.invalid");
+            } else if (email.length() > EMAIL_MAX_LENGTH) {
+                result.addViolation("err.email.tooLong");
             }
         }
         return result;

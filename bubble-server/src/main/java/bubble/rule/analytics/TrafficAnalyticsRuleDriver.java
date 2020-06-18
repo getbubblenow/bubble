@@ -10,6 +10,7 @@ import bubble.model.device.Device;
 import bubble.resources.stream.FilterMatchersRequest;
 import bubble.rule.AbstractAppRuleDriver;
 import bubble.rule.FilterMatchDecision;
+import bubble.rule.TrafficRecord;
 import bubble.service.stream.AppRuleHarness;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

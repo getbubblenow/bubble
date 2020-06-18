@@ -60,7 +60,7 @@ public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<Bub
                 }
                 final AccountPolicy adminPolicy = configuration.getBean(AccountPolicyDAO.class).findSingleByAccount(adminAccount.getUuid());
                 if (adminPolicy == null || !adminPolicy.hasVerifiedNonAuthenticatorAccountContacts()) {
-                    log.error("onStart: no AccountPolicy found (or no verified non-authenticator contacts) for admin account (" + adminAccount.getName() + "), cannot send first time install message, unlocking now");
+                    log.error("onStart: no AccountPolicy found (or no verified non-authenticator contacts) for admin account (" + adminAccount.getEmail() + "), cannot send first time install message, unlocking now");
                     accountDAO.unlock();
                     return;
                 }

@@ -11,8 +11,8 @@ import bubble.model.app.BubbleApp;
 import bubble.model.app.config.AppDataDriverBase;
 import bubble.model.app.config.AppDataView;
 import bubble.model.device.Device;
+import bubble.rule.TrafficRecord;
 import bubble.rule.analytics.TrafficAnalyticsRuleDriver;
-import bubble.rule.analytics.TrafficRecord;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.network.NetworkUtil;
@@ -125,7 +125,7 @@ public class TrafficAnalyticsAppDataDriver extends AppDataDriverBase {
                                 + fileExt(TYPICAL_WEB_TYPES[nextInt(0, TYPICAL_WEB_TYPES.length)]))
                         .setReferer("NONE")
                         .setAccountUuid(caller.getUuid())
-                        .setAccountName(caller.getName())
+                        .setAccountEmail(caller.getEmail())
                         .setDeviceUuid(device.getUuid())
                         .setDeviceName(device.getName()),
                 getRecentTraffic());

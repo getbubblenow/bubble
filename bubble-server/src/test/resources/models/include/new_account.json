@@ -3,7 +3,6 @@
     "comment": "declare default parameters for new_account test part",
     "include": "_defaults",
     "params": {
-      "username": "user-{{rand 10}}",
       "password": "foobar1!",
       "email": "user-{{rand 5}}@example.com",
       "rootSessionName": "rootSession",
@@ -21,11 +20,10 @@
       "uri": "users",
       "method": "put",
       "entity": {
-        "name": "<<username>>",
+        "email": "<<email>>",
         "password": "<<password>>",
         "admin": "<<admin>>",
-        "agreeToTerms": true,
-        "contact": {"type": "email", "info": "<<email>>"}
+        "agreeToTerms": true
       }
     },
     "response": {
@@ -56,7 +54,7 @@
       "session": "new",
       "uri": "auth/login",
       "entity": {
-        "name": "<<username>>",
+        "name": "<<email>>",
         "password": "<<password>>"
       }
     },
@@ -96,7 +94,7 @@
     "request": {
       "session": "new",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "<<username>>"}]
+      "entity": [{"name": "account", "value": "<<email>>"}]
     }
   },
 

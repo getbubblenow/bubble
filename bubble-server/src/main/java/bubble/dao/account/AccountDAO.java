@@ -5,6 +5,7 @@
 package bubble.dao.account;
 
 import bubble.cloud.CloudServiceDriver;
+import bubble.cloud.CloudServiceType;
 import bubble.cloud.compute.ComputeNodeSizeType;
 import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.app.*;
@@ -46,6 +47,7 @@ import static bubble.model.account.AutoUpdatePolicy.EMPTY_AUTO_UPDATE_POLICY;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
 import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_ASC;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -75,18 +77,25 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private ReferralCodeDAO referralCodeDAO;
 
     public Account newAccount(Request req, Account caller, AccountRegistration request, Account parent) {
+        final AccountContact contact = new AccountContact()
+                .setType(CloudServiceType.email)
+                .setInfo(request.getEmail())
+                .setRemovable(false)
+                .setReceiveInformationalMessages(bool(request.getReceiveInformationalMessages()))
+                .setReceivePromotionalMessages(bool(request.getReceivePromotionalMessages()));
+
         return create(new Account(request)
                 .setAdmin(caller != null && caller.admin() && request.admin())   // only admins can create other admins
                 .setRemoteHost(getRemoteHost(req))
                 .setParent(parent.getUuid())
-                .setPolicy(new AccountPolicy().setContact(request.getContact())));
+                .setPolicy(new AccountPolicy().setContact(contact, null, configuration)));
     }
 
-    public Account findByName(String name) { return findByUniqueField("name", name); }
+    public Account findByEmail(String email) { return findByUniqueField("email", email.trim()); }
 
     public Account findById(String id) {
         final Account found = findByUuid(id);
-        return found != null ? found : findByUniqueField("name", id);
+        return found != null ? found : findByUniqueField("email", id);
     }
 
     @Override public Object preCreate(Account account) {
@@ -97,11 +106,13 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         if (plan != null && plan.hasMaxAccounts()) {
             final int numAccounts = countNotDeleted();
             if (numAccounts >= plan.getMaxAccounts()) {
-                throw invalidEx("err.name.planMaxAccountLimit", "Account limit for plan reached (max "+plan.getMaxAccounts()+" accounts)");
+                throw invalidEx("err.plan.planMaxAccountLimit", "Account limit for plan reached (max "+plan.getMaxAccounts()+" accounts)");
             }
         }
 
-        final ValidationResult result = account.validateName();
+        // if activated is false, then we are creating the root account
+        // do not validate, it's not a valid email address and that is ok.
+        final ValidationResult result = !activated() ? new ValidationResult() : account.validateEmail();
         if (result.isInvalid()) throw invalidEx(result);
 
         if (account.getAutoUpdatePolicy() == null) {

@@ -3,8 +3,6 @@
     "comment": "activate service, create account, login",
     "include": "new_account",
     "params": {
-      "username": "user-to-delete",
-      "password": "foobar1!",
       "email": "user-account-deletion@example.com",
       "verifyEmail": "true"
     }
@@ -42,7 +40,7 @@
   {
     "comment": "lookup user - just checking it is the one for deletion",
     "request": { "uri": "users/{{user.uuid}}" },
-    "response": { "check": [{ "condition": "json.getName() == 'user-to-delete'" }] }
+    "response": { "check": [{ "condition": "json.getName() == 'user-account-deletion@example.com'" }] }
   },
 
   {

@@ -46,8 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 import static bubble.ApiConstants.*;
-import static bubble.model.account.Account.ADMIN_UPDATE_FIELDS;
-import static bubble.model.account.Account.validatePassword;
+import static bubble.model.account.Account.*;
 import static bubble.resources.account.AuthResource.forgotPasswordMessage;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -86,22 +85,24 @@ public class AccountsResource {
                                @Context ContainerRequest ctx,
                                AccountRegistration request) {
 
-        final AccountContext c = new AccountContext(ctx, request.getName(), true);
+        final AccountContext c = new AccountContext(ctx, request.getEmail(), true);
 
         // only admins can use this endpoint
         // regular users must use AuthResource.register
         if (!c.caller.admin()) return forbidden();
 
-        if (c.account != null) return invalid("err.user.exists", "User with name "+request.getName()+" already exists", request.getName());
+        if (c.account != null) {
+            // trying to create self -- just return self. tests sometimes do this
+            if (c.account.getUuid().equals(c.caller.getUuid())) return ok(c.caller);
+
+            // not self, trying to create a user that already exists, return error
+            return invalid("err.user.exists", "User with name "+request.getEmail()+" already exists", request.getEmail());
+        }
 
         final ValidationResult errors = new ValidationResult();
         final ConstraintViolationBean passwordViolation = validatePassword(request.getPassword());
         if (passwordViolation != null) errors.addViolation(passwordViolation);
-        if (!request.hasContact()) {
-            errors.addViolation("err.contact.required", "No contact information provided", request.getName());
-        } else {
-            request.getContact().validate(errors);
-        }
+        errors.addAll(validateEmail(request.getEmail()));
         if (!request.agreeToTerms()) {
             errors.addViolation("err.terms.required", "You must agree to the legal terms to use this service");
         } else {
@@ -283,7 +284,7 @@ public class AccountsResource {
         authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
         final AccountContact contact = policy.findContact(new AccountContact().setType(type).setInfo(info));
         if (contact == null) return notFound(type.name()+"/"+info);
-        return ok(policyDAO.update(policy.removeContact(contact)).mask());
+        return ok(policyDAO.update(policy.removeContact(c.account, contact)).mask());
     }
 
     @DELETE @Path("/{id}"+EP_POLICY+EP_CONTACTS+EP_AUTHENTICATOR)
@@ -297,7 +298,7 @@ public class AccountsResource {
         final AccountContact contact = policy.findContact(new AccountContact().setType(CloudServiceType.authenticator));
         if (contact == null) return notFound(CloudServiceType.authenticator.name());
 
-        final AccountPolicy updated = policyDAO.update(policy.removeContact(contact)).mask();
+        final AccountPolicy updated = policyDAO.update(policy.removeContact(c.account, contact)).mask();
         authenticatorService.flush(c.caller.getToken());
 
         return ok(updated);
@@ -313,7 +314,7 @@ public class AccountsResource {
 
         final AccountContact found = policy.findContact(new AccountContact().setUuid(uuid));
         if (found == null) return notFound(uuid);
-        return ok(policyDAO.update(policy.removeContact(found)).mask());
+        return ok(policyDAO.update(policy.removeContact(c.account, found)).mask());
     }
 
     @DELETE @Path("/{id}"+EP_REQUEST)

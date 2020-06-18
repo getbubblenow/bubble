@@ -5,10 +5,9 @@
       "uri": "users",
       "method": "put",
       "entity": {
-        "name": "user_with_payment_to_delete",
+        "name": "user_with_payment_to_delete@example.com",
         "password": "password1!",
-        "agreeToTerms": true,
-        "contact": { "type": "email", "info": "user_with_payment_to_delete@example.com" }
+        "agreeToTerms": true
       }
     },
     "response": { "store": "testAccount" }

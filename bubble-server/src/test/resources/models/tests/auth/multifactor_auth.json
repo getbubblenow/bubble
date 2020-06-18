@@ -3,9 +3,7 @@
     "comment": "create new account and login",
     "include": "new_account",
     "params": {
-      "username": "user-multifactor_auth",
-      "email": "user-multifactor_auth@example.com",
-      "password": "foobar1!"
+      "email": "user-multifactor_auth@example.com"
     }
   },
 
@@ -74,7 +72,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
     }
   },
 
@@ -172,7 +170,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
     },
     "response": {
       "sessionName": "userSession",
@@ -250,7 +248,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
     },
     "response": {
       "status": 422,
@@ -264,7 +262,7 @@
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
       "entity": [
-        {"name": "account", "value": "user-multifactor_auth"},
+        {"name": "account", "value": "user-multifactor_auth@example.com"},
         {"name": "totpToken", "value": "{{authenticator_token authenticator.totpKey}}"}
       ]
     },
@@ -374,7 +372,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{smsInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
     }
   },
 
@@ -461,7 +459,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{smsInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
     },
     "response": {
       "status": 422,
@@ -475,7 +473,7 @@
       "session": "userSession",
       "uri": "auth/approve/{{smsInbox.[0].ctx.confirmationToken}}",
       "entity": [
-        {"name": "account", "value": "user-multifactor_auth"},
+        {"name": "account", "value": "user-multifactor_auth@example.com"},
         {"name": "totpToken", "value": "{{authenticator_token authenticator.totpKey}}"}
       ]
     },
@@ -552,7 +550,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
     }
   },
 
@@ -621,7 +619,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
     },
     "response": {
       "sessionName": "userSession",

@@ -112,13 +112,14 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
     @Transient public AccountContact[] getAccountContacts () { return accountContactsJson == null ? null : json(accountContactsJson, AccountContact[].class); }
     public AccountPolicy setAccountContacts(AccountContact[] contacts) { return setAccountContactsJson(contacts == null ? null : json(contacts, DB_JSON_MAPPER)); }
 
-    public AccountPolicy setContact(AccountContact c) { return setContact(c, null, null); }
-
     public AccountPolicy setContact(AccountContact c, Account account, BubbleConfiguration configuration) {
         setAccountContacts(AccountContact.set(c, getAccountContacts(), account, configuration));
         return this;
     }
-    public AccountPolicy removeContact(AccountContact c) { setAccountContacts(AccountContact.remove(c, getAccountContacts())); return this; }
+    public AccountPolicy removeContact(Account account, AccountContact c) {
+        setAccountContacts(AccountContact.remove(account, c, getAccountContacts()));
+        return this;
+    }
 
     public List<AccountContact> getAllowedContacts(AccountMessage message) {
         if (!hasAccountContacts()) return Collections.emptyList();

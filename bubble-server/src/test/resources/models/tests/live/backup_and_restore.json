@@ -89,10 +89,9 @@
       "uri": "users",
       "method": "put",
       "entity": {
-        "name": "user1",
+        "name": "backup_and_restore_user@example.com",
         "password": "password1!",
-        "agreeToTerms": true,
-        "contact": {"type": "email", "info": "user-{{rand 5}}@example.com"}
+        "agreeToTerms": true
       }
     }
   },
@@ -100,7 +99,7 @@
   {
     "before": "sleep 24s",
     "comment": "lookup policy for new account",
-    "request": { "uri": "users/user1/policy" },
+    "request": { "uri": "users/backup_and_restore_user/policy" },
     "response": { "store": "user1policy" }
   },
 
@@ -195,7 +194,7 @@
   {
     "comment": "verify account we added has been restored",
     "request": {
-      "uri": "users/user1/policy"
+      "uri": "users/backup_and_restore_user/policy"
     },
     "response": {
       "check": [ {"condition": "json.getFirstEmail() == user1policy.getFirstEmail()"} ]

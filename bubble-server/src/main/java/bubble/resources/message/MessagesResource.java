@@ -103,9 +103,9 @@ public class MessagesResource {
         if (!messageCache.containsKey(cacheKey)) {
             final Properties props;
             if (isAppsGroup) {
-                if (log.isDebugEnabled()) log.debug("loadMessages: loading app messages for caller="+caller.getName()+", locale="+locale);
+                if (log.isDebugEnabled()) log.debug("loadMessages: loading app messages for caller="+caller.getEmail()+", locale="+locale);
                 props = appMessageService.loadAppMessages(caller, locale);
-                if (log.isDebugEnabled()) log.debug("loadMessages: loaded app messages for caller="+caller.getName()+", locale="+locale+", props.size="+props.size());
+                if (log.isDebugEnabled()) log.debug("loadMessages: loaded app messages for caller="+caller.getEmail()+", locale="+locale+", props.size="+props.size());
             } else {
                 props = new Properties();
                 props.load(new BufferedReader(new InputStreamReader(loadResourceAsStream(MESSAGE_RESOURCE_BASE + locale + MESSAGE_RESOURCE_PATH + group + "/" + RESOURCE_MESSAGES_PROPS), UTF8cs)));

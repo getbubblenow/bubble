@@ -201,6 +201,13 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
         return die("hostFromFqdn("+fqdn+"): expected suffix ."+getNetworkDomain());
     }
 
+    private static final List<String> RESERVED_NAMES = Arrays.asList(
+            "root", "postmaster", "hostmaster", "webmaster",
+            "dns", "dnscrypt", "dnscrypt-proxy", "ftp", "www", "www-data", "postgres", "ipfs",
+            "redis", "nginx", "mitmproxy", "mitmdump", "algo", "algovpn");
+
+    public static boolean isReservedName(String name) { return RESERVED_NAMES.contains(name); }
+
     public static HostnameValidationResult validateHostname(HasNetwork request,
                                                             AccountDAO accountDAO,
                                                             BubbleNetworkDAO networkDAO) {
@@ -211,7 +218,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
             final String name = request.getName();
             if (!validateRegexMatches(HOST_PART_PATTERN, name)) {
                 errors.addViolation("err.name.invalid");
-            } else if (Account.isReservedName(name)) {
+            } else if (isReservedName(name)) {
                 errors.addViolation("err.name.reserved");
             } else if (name.length() > NETWORK_NAME_MAXLEN) {
                 errors.addViolation("err.name.length");
@@ -225,7 +232,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
                         log.info("validateHostname: name "+tryName+" is ineligible (network="+network.getUuid()+") exists");
                         continue;
                     } else {
-                        final Account acct = accountDAO.findByName(tryName);
+                        final Account acct = accountDAO.findByEmail(tryName);
                         if (acct != null && !acct.getUuid().equals(request.getAccount())) {
                             log.info("validateHostname: name "+tryName+" is ineligible (account="+acct.getUuid()+") exists (request.account="+request.getAccount()+")");
                             continue;

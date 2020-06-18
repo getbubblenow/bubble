@@ -32,7 +32,6 @@ public interface EmailServiceDriver extends AuthenticationDriver {
 
         final RenderedEmail email = new RenderedEmail(ctx);
         email.setToEmail(contact.getInfo());
-        email.setToName(account.getName());
         email.setFromEmail(AuthenticationDriver.render("fromEmail", ctx, message, configuration, templatePath));
         email.setFromName(AuthenticationDriver.render("fromName", ctx, message, configuration, templatePath));
         email.setSubject(AuthenticationDriver.render("subject", ctx, message, configuration, templatePath));

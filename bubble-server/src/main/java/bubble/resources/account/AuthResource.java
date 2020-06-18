@@ -37,7 +37,6 @@ import bubble.service.cloud.DeviceIdService;
 import bubble.service.notify.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
-import org.cobbzilla.wizard.auth.LoginRequest;
 import org.cobbzilla.wizard.stream.FileSendableResource;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
@@ -133,7 +132,7 @@ public class AuthResource {
         if (accountDAO.activated()) {
             return invalid("err.activation.alreadyDone", "activation has already been done");
         }
-        if (!request.hasName()) return invalid("err.name.required", "name is required");
+        if (!request.hasEmail()) return invalid("err.email.required", "email is required");
 
         if (!request.hasPassword()) return invalid("err.password.required", "password is required");
         if (request.getPassword().contains("{{") && request.getPassword().contains("}}")) {
@@ -212,20 +211,14 @@ public class AuthResource {
 
         request.setAdmin(false); // cannot register admins, they must be created
 
-        final ValidationResult errors = request.validateName();
+        final ValidationResult errors = request.validateEmail();
         if (errors.isValid()) {
-            final Account existing = accountDAO.findByName(request.getName());
-            if (existing != null) errors.addViolation("err.name.registered", "Name is already registered: ", request.getName());
+            final Account existing = accountDAO.findByEmail(request.getEmail());
+            if (existing != null) errors.addViolation("err.name.registered", "Name is already registered: ", request.getEmail());
         }
 
         final ConstraintViolationBean passwordViolation = validatePassword(request.getPassword());
         if (passwordViolation != null) errors.addViolation(passwordViolation);
-
-        if (!request.hasContact()) {
-            errors.addViolation("err.contact.required", "No contact information provided", request.getName());
-        } else {
-            request.getContact().validate(errors);
-        }
 
         if (!request.agreeToTerms()) {
             errors.addViolation("err.terms.required", "You must agree to the legal terms to use this service");
@@ -301,21 +294,21 @@ public class AuthResource {
     @POST @Path(EP_LOGIN)
     public Response login(@Context Request req,
                           @Context ContainerRequest ctx,
-                          LoginRequest request,
+                          AccountLoginRequest request,
                           @QueryParam("k") String unlockKey) {
-        if (!request.hasName()) return invalid("err.name.required", "name is required");
+        if (!request.hasEmail()) return invalid("err.email.required", "email is required");
         if (!request.hasPassword()) return invalid("err.password.required", "password is required");
-        final Account account = accountDAO.findByName(request.getName());
-        if (account == null || account.deleted()) return notFound(request.getName());
+        final Account account = accountDAO.findByEmail(request.getEmail());
+        if (account == null || account.deleted()) return notFound(request.getEmail());
         if (!account.getHashedPassword().isCorrectPassword(request.getPassword())) {
-            return notFound(request.getName());
+            return notFound(request.getEmail());
         }
         if (account.suspended()) return invalid("err.account.suspended");
 
         boolean isUnlock = false;
         if (account.locked()) {
             if (!accountDAO.locked()) {
-                log.info("login: account "+account.getName()+" was locked, but system is unlocked, unlocking again");
+                log.info("login: account "+account.getEmail()+" was locked, but system is unlocked, unlocking again");
                 accountDAO.unlock();
 
             } else {
@@ -360,7 +353,7 @@ public class AuthResource {
                         );
                     }
                     return ok(new Account()
-                            .setName(account.getName())
+                            .setEmail(account.getEmail())
                             .setLoginRequest(loginRequest != null ? loginRequest.getUuid() : null)
                             .setMultifactorAuth(AccountContact.mask(authFactors)));
                 }
@@ -387,9 +380,9 @@ public class AuthResource {
     @POST @Path(EP_FORGOT_PASSWORD)
     public Response forgotPassword(@Context Request req,
                                    @Context ContainerRequest ctx,
-                                   LoginRequest request) {
-        if (!request.hasName()) return invalid("err.name.required");
-        final Account account = accountDAO.findById(request.getName());
+                                   AccountLoginRequest request) {
+        if (!request.hasEmail()) return invalid("err.email.required");
+        final Account account = accountDAO.findById(request.getEmail());
         if (account == null) return ok();
 
         accountMessageDAO.create(forgotPasswordMessage(req, account, configuration));

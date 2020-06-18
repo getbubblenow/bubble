@@ -6,7 +6,7 @@
       "method": "put",
       "uri": "auth/activate",
       "entity": {
-        "name": "root2",
+        "email": "root2",
         "password": "pass123!@x"
       }
     },
@@ -39,7 +39,7 @@
     "comment": "read self",
     "request": { "uri": "me" },
     "response": {
-      "check": [ {"condition":  "json.getName() == 'root'"} ]
+      "check": [ {"condition":  "json.getEmail() == 'root'"} ]
     }
   },
 

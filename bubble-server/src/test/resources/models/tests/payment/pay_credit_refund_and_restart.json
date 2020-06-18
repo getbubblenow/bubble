@@ -5,10 +5,9 @@
       "uri": "users",
       "method": "put",
       "entity": {
-        "name": "test_user_credit_refund_restart",
+        "name": "test_user_credit_refund_restart@example.com",
         "password": "password1!",
-        "agreeToTerms": true,
-        "contact": {"type": "email", "info": "test-user@example.com"}
+        "agreeToTerms": true
       }
     }
   },
@@ -20,7 +19,7 @@
       "session": "new",
       "uri": "auth/login",
       "entity": {
-        "name": "test_user_credit_refund_restart",
+        "name": "test_user_credit_refund_restart@example.com",
         "password": "password1!"
       }
     },
@@ -45,7 +44,7 @@
     "comment": "as root, check email inbox for verification message",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/test-user@example.com?type=request&action=verify&target=account"
+      "uri": "debug/inbox/email/test_user_credit_refund_restart@example.com?type=request&action=verify&target=account"
     },
     "response": {
       "store": "emailInbox",
@@ -198,7 +197,7 @@
         {"condition": "json[0].getAmount() < {{bills.[0].total}}"},
         // not sure if current month has 28, 29, 30 or 31 days, so let's make some reasonable bounds
         // we should only have a refund for all but one day
-        {"condition": "json[0].getAmount() > Math.round(bills[0].getTotal() - (bills[0].getTotal() / (bills[0].daysInPeriod() - 1)))"},
+        {"condition": "json[0].getAmount() >= Math.round((bills[0].daysInPeriod() - 1) * (bills[0].getTotal() / bills[0].daysInPeriod()))"},
         {"condition": "json[0].getAmount() <= Math.round(bills[0].getTotal() - (bills[0].getTotal() / bills[0].daysInPeriod()))"}
       ]
     }

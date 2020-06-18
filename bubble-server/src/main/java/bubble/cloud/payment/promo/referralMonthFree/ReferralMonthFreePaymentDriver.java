@@ -41,7 +41,7 @@ public class ReferralMonthFreePaymentDriver extends PromotionalPaymentDriverBase
         // caller must not have any bills
         final int billCount = billDAO.countByAccount(caller.getUuid());
         if (billCount != 0) {
-            log.warn("applyReferralPromo: promo="+promo.getName()+", account="+caller.getName()+", account must have no Bills, found "+billCount+" bills");
+            log.warn("applyReferralPromo: promo="+promo.getName()+", account="+caller.getEmail()+", account must have no Bills, found "+billCount+" bills");
             return false;
         }
 
@@ -51,7 +51,7 @@ public class ReferralMonthFreePaymentDriver extends PromotionalPaymentDriverBase
         // It's OK for the referredFrom user to have many of these, as long as there is not one for this user
         for (AccountPaymentMethod apm : referredFromCreditPaymentMethods) {
             if (apm.getPaymentInfo().equals(caller.getUuid())) {
-                log.error("applyReferralPromo: promo="+promo.getName()+", account="+caller.getName()+", referredFrom="+referredFrom.getName()+" has already referred this caller");
+                log.error("applyReferralPromo: promo="+promo.getName()+", account="+caller.getEmail()+", referredFrom="+referredFrom.getEmail()+" has already referred this caller");
                 return false;
             }
         }
@@ -59,18 +59,18 @@ public class ReferralMonthFreePaymentDriver extends PromotionalPaymentDriverBase
         // does the caller already have one of these?
         final List<AccountPaymentMethod> existingCreditPaymentMethods = paymentMethodDAO.findByAccountAndCloud(caller.getUuid(), promo.getCloud());
         if (!empty(existingCreditPaymentMethods)) {
-            log.warn("applyReferralPromo: promo="+promo.getName()+", account="+caller.getName()+", account already has one of these promos applied");
+            log.warn("applyReferralPromo: promo="+promo.getName()+", account="+caller.getEmail()+", account already has one of these promos applied");
             return true; // promo has already been applied, return true
         }
 
         // sanity check before using
         final ReferralCode ref = referralCodeDAO.findByUuid(referralCode.getUuid());
         if (ref == null) {
-            log.warn("applyReferralPromo: promo="+promo.getName()+", account="+caller.getName()+", referralCode "+referralCode.getUuid()+" was not found");
+            log.warn("applyReferralPromo: promo="+promo.getName()+", account="+caller.getEmail()+", referralCode "+referralCode.getUuid()+" was not found");
             return false;
         }
         if (ref.claimed()) {
-            log.warn("applyReferralPromo: promo="+promo.getName()+", account="+caller.getName()+", referralCode "+referralCode.getUuid()+" has already been claimed by "+ref.getClaimedByUuid());
+            log.warn("applyReferralPromo: promo="+promo.getName()+", account="+caller.getEmail()+", referralCode "+referralCode.getUuid()+" has already been claimed by "+ref.getClaimedByUuid());
             return false;
         }
 

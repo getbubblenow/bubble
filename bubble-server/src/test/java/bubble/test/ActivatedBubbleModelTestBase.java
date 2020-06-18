@@ -116,7 +116,7 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
             // if DB already exists, server has already been activated
             try {
                 admin = client.put(AUTH_ENDPOINT + EP_ACTIVATE, new ActivationRequest()
-                        .setName(ROOT_USERNAME)
+                        .setEmail(ROOT_USERNAME)
                         .setPassword(ROOT_PASSWORD)
                         .setNetworkName(hostname_short())
                         .addCloudConfig(dns)

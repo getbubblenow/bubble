@@ -55,7 +55,7 @@ public class IdentityResource {
                 if (caller.admin()) {
                     // only admin can find any user
                     found = ((AccountDAO) dao).findById(id);
-                } else if (id.equals(caller.getUuid()) || id.equals(caller.getName())) {
+                } else if (id.equals(caller.getUuid()) || id.equals(caller.getEmail())) {
                     // other callers can find themselves
                     found = caller;
                 } else {

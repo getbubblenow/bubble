@@ -3,8 +3,6 @@
     "comment": "activate service, create account, login for block_delete",
     "include": "new_account",
     "params": {
-      "username": "user-to-partially-delete",
-      "password": "foobar1!",
       "email": "user-partially-account-deletion@example.com",
       "verifyEmail": "true"
     }

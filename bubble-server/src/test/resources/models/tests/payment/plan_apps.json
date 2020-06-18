@@ -5,10 +5,9 @@
       "uri": "users",
       "method": "put",
       "entity": {
-        "name": "test_plan_apps_user",
+        "name": "test_plan_apps_user@example.com",
         "password": "password1!",
-        "agreeToTerms": true,
-        "contact": {"type": "email", "info": "test-user@example.com"}
+        "agreeToTerms": true
       }
     }
   },
@@ -20,7 +19,7 @@
       "session": "new",
       "uri": "auth/login",
       "entity": {
-        "name": "test_plan_apps_user",
+        "name": "test_plan_apps_user@example.com",
         "password": "password1!"
       }
     },

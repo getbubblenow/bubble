@@ -5,10 +5,9 @@
       "session": "new",
       "uri": "auth/register",
       "entity": {
-        "name": "test_user_referring_multi",
+        "name": "test_user_referring_multi@example.com",
         "password": "password1!",
-        "agreeToTerms": true,
-        "contact": {"type": "email", "info": "test_user_referring_multi@example.com"}
+        "agreeToTerms": true
       }
     },
     "response": {
@@ -66,7 +65,7 @@
   {
     "comment": "as root, grant some referral codes to the referring user",
     "request": {
-      "uri": "users/test_user_referring_multi/referralCodes",
+      "uri": "users/test_user_referring_multi@example.com/referralCodes",
       "method": "put",
       "entity": { "count": 3 }
     },
@@ -484,7 +483,7 @@
     "comment": "root: apply another AccountCredit5 promotion to referring account",
     "request": {
       "session": "rootSession",
-      "uri": "users/test_user_referring_multi/promos",
+      "uri": "users/test_user_referring_multi@example.com/promos",
       "method": "put",
       "entity": {
         "name": "AccountCredit5"

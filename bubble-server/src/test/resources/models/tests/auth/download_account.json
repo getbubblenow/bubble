@@ -3,9 +3,7 @@
     "comment": "activate service, create account, login",
     "include": "new_account",
     "params": {
-      "username": "testuser",
-      "password": "foobar1!",
-      "email": "testuser@example.com",
+      "email": "download_account_user@example.com",
       "verifyEmail": "true",
       "userSessionName": "userSession"
     }
@@ -33,7 +31,7 @@
     "comment": "as root, check email inbox for download request message",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/testuser@example.com?type=request&action=download"
+      "uri": "debug/inbox/email/download_account_user@example.com?type=request&action=download"
     },
     "response": {
       "store": "emailInbox",
@@ -59,7 +57,7 @@
     "comment": "as root, check email inbox for download confirmation",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/testuser@example.com?type=confirmation&action=download"
+      "uri": "debug/inbox/email/download_account_user@example.com?type=confirmation&action=download"
     },
     "response": {
       "store": "emailInbox",

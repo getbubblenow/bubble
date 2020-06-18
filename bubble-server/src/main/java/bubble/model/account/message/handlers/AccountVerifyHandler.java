@@ -4,7 +4,9 @@
  */
 package bubble.model.account.message.handlers;
 
+import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
+import bubble.model.account.Account;
 import bubble.model.account.AccountContact;
 import bubble.model.account.AccountPolicy;
 import bubble.model.account.message.AccountMessage;
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Slf4j
 public class AccountVerifyHandler implements AccountMessageCompletionHandler {
 
+    @Autowired private AccountDAO accountDAO;
     @Autowired private AccountPolicyDAO policyDAO;
 
     @Override public void confirm(AccountMessage message, NameAndValue[] data) {
@@ -26,10 +29,19 @@ public class AccountVerifyHandler implements AccountMessageCompletionHandler {
     }
 
     @Override public void deny(AccountMessage message) {
+        final Account account = accountDAO.findByUuid(message.getAccount());
+        if (account == null) {
+            log.warn("deny: account not found: "+message.getAccount());
+            return;
+        }
         final AccountPolicy policy = policyDAO.findSingleByAccount(message.getAccount());
-        final String contact = message.getRequest().getContact();
+        final AccountContact contact = policy.findContact(new AccountContact().setUuid(message.getRequest().getContact()));
+        if (contact == null) {
+            log.warn("deny: contact not found in policy: "+contact);
+            return;
+        }
         log.info("deny: removing contact "+ contact +" from account "+message.getAccount());
-        policy.removeContact(new AccountContact().setUuid(contact));
+        policy.removeContact(account, contact);
         policyDAO.update(policy);
     }
 

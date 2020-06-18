@@ -63,7 +63,7 @@ public class StandardSyncPasswordService implements SyncPasswordService {
             notificationService.notify(configuration.getSageNode(), sync_password, notification);
 
         } else {
-            reportError("syncPassword("+account.getName()+"/"+account.getUuid()+"): invalid installType: "+installType);
+            reportError("syncPassword("+account.getEmail()+"/"+account.getUuid()+"): invalid installType: "+installType);
         }
     }
 

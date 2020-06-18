@@ -22,9 +22,12 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 @NoArgsConstructor @Accessors(chain=true)
 public class ActivationRequest {
 
-    @HasValue(message="err.name.required")
-    @Getter @Setter private String name;
-    public boolean hasName () { return !empty(name); }
+    @HasValue(message="err.email.required")
+    @Getter @Setter private String email;
+    public boolean hasEmail() { return !empty(email); }
+
+    public String getName() { return getEmail(); }
+    public ActivationRequest setName(String n) { return setEmail(n); }
 
     @HasValue(message="err.password.required")
     @Getter @Setter private String password;

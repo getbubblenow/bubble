@@ -1,6 +1,6 @@
 [
   {
-    "name": "root",
+    "email": "root",
     "children": {
       "Device": [ {"name": "test"} ]
     }
