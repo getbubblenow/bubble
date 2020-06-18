@@ -45,6 +45,7 @@ import static bubble.model.cloud.BubbleNetwork.validateHostname;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.string.ValidationRegexes.HOST_PATTERN;
 import static org.cobbzilla.util.string.ValidationRegexes.validateRegexMatches;
+import static org.cobbzilla.wizard.model.NamedEntity.NAME_MAXLEN;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Slf4j
@@ -144,7 +145,18 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                 }
             }
         } else {
-            validateName(request, errors);
+            if (!request.hasNickname()) {
+                if (request.hasName()) {
+                    request.setNickname(request.getNickname());
+                } else {
+                    errors.addViolation("err.name.required");
+                }
+            }
+            if (request.hasNickname() && request.getNickname().length() > NAME_MAXLEN) {
+                errors.addViolation("err.name.tooLong");
+            }
+            // assign a random name for the network
+            request.setName(newNetworkName());
         }
         log.info("setReferences: after calling validateName, request.name="+request.getName());
 

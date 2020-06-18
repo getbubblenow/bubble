@@ -45,6 +45,7 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
             if (errors.isInvalid()) throw invalidEx(errors);
             if (errors.hasSuggestedName()) network.setName(errors.getSuggestedName());
         }
+        if (!network.hasNickname()) network.setNickname(network.getName());
         final AnsibleInstallType installType = network.hasForkHost() && configuration.isSageLauncher()
                 ? AnsibleInstallType.sage
                 : AnsibleInstallType.node;

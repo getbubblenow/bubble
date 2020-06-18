@@ -61,7 +61,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBubbleTags<BubbleNetwork> {
 
     public static final String[] UPDATE_FIELDS = {
-            "footprint", "description", "locale", "timezone", "state", "syncPassword", "launchLock"
+            "nickname", "footprint", "description", "locale", "timezone", "state", "syncPassword", "launchLock"
     };
     public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS,
             "name", "domain", "sendErrors", "sendMetrics");
@@ -110,7 +110,13 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
 
     @Transient @JsonIgnore public String getNetworkDomain () { return name + "." + domainName; }
 
-    @Column(nullable=false) @ECField(index=50)
+    @ECSearchable(filter=true) @ECField(index=50)
+    @ECIndex @Column(nullable=false, length=NAME_MAXLEN)
+    @Size(min=1, max=NAME_MAXLEN, message="err.nick.tooLong")
+    @Getter @Setter private String nickname;
+    public boolean hasNickname () { return !empty(nickname); }
+
+    @Column(nullable=false) @ECField(index=60)
     @Getter @Setter private Integer sslPort;
 
     @Transient @JsonIgnore public String getPublicUri() {
@@ -121,37 +127,37 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
         return getUuid().equals(ROOT_NETWORK_UUID) ? configuration.getPublicUriBase() : getPublicUri();
     }
 
-    @ECIndex @Column(nullable=false, updatable=false, length=60)
+    @ECIndex @Column(nullable=false, updatable=false, length=60) @ECField(index=70)
     @Enumerated(EnumType.STRING)
     @Getter @Setter private AnsibleInstallType installType;
 
-    @ECSearchable @ECField(index=70)
+    @ECSearchable @ECField(index=80)
     @ECForeignKey(entity=AccountSshKey.class)
     @Column(length=UUID_MAXLEN)
     @Getter @Setter private String sshKey;
     public boolean hasSshKey () { return !empty(sshKey); }
 
-    @ECSearchable @ECField(index=80)
+    @ECSearchable @ECField(index=90)
     @ECIndex @Column(nullable=false, updatable=false, length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private ComputeNodeSizeType computeSizeType;
 
-    @ECSearchable @ECField(index=90)
+    @ECSearchable @ECField(index=100)
     @ECForeignKey(entity=BubbleFootprint.class)
     @Column(nullable=false, length=UUID_MAXLEN)
     @Getter @Setter private String footprint;
     public boolean hasFootprint () { return footprint != null; }
 
-    @ECSearchable @ECField(index=100)
+    @ECSearchable @ECField(index=110)
     @ECForeignKey(entity=CloudService.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String storage;
 
-    @ECSearchable(filter=true) @ECField(index=110)
+    @ECSearchable(filter=true) @ECField(index=120)
     @Size(max=10000, message="err.description.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
-    @ECSearchable @ECField(index=120)
+    @ECSearchable @ECField(index=130)
     @Size(max=20, message="err.locale.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(20+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String locale = getDEFAULT_LOCALE();
@@ -159,27 +165,27 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
 
     // A unicode timezone alias from: cobbzilla-utils/src/main/resources/org/cobbzilla/util/time/unicode-timezones.xml
     // All unicode aliases are guaranteed to map to a Linux timezone and a Java timezone
-    @ECSearchable @ECField(index=130)
+    @ECSearchable @ECField(index=140)
     @Size(max=100, message="err.timezone.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String timezone = "America/New_York";
 
-    @ECSearchable @ECField(index=140)
+    @ECSearchable @ECField(index=150)
     @Column(nullable=false)
     @ECIndex @Getter @Setter private Boolean syncPassword;
     public boolean syncPassword() { return bool(syncPassword); }
 
-    @ECSearchable @ECField(index=150)
+    @ECSearchable @ECField(index=160)
     @Column(nullable=false)
     @ECIndex @Getter @Setter private Boolean launchLock;
     public boolean launchLock() { return bool(launchLock); }
 
-    @ECSearchable @ECField(index=160)
+    @ECSearchable @ECField(index=170)
     @Column(nullable=false)
     @ECIndex @Getter @Setter private Boolean sendErrors;
     public boolean sendErrors() { return bool(sendErrors); }
 
-    @ECSearchable @ECField(index=170)
+    @ECSearchable @ECField(index=180)
     @Column(nullable=false)
     @ECIndex @Getter @Setter private Boolean sendMetrics;
     public boolean sendMetrics() { return bool(sendMetrics); }
@@ -190,7 +196,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     public boolean hasForkHost () { return !empty(forkHost); }
     public boolean fork() { return hasForkHost(); }
 
-    @ECSearchable @ECField(index=160)
+    @ECSearchable @ECField(index=190)
     @Column(length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private BubbleNetworkState state = created;
 

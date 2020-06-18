@@ -537,7 +537,6 @@ arret
 arris
 arrow
 arsed
-arses
 arsey
 arsis
 arson
@@ -2024,7 +2023,6 @@ clint
 clipe
 clips
 clipt
-clits
 cloak
 cloam
 clock
@@ -2413,8 +2411,6 @@ cumec
 cumin
 cundy
 cunei
-cunts
-cunty
 cupel
 cupid
 cuppa
@@ -2514,7 +2510,6 @@ daman
 damar
 dames
 damme
-damns
 damps
 dampy
 dance
@@ -3103,9 +3098,6 @@ dwine
 dyads
 dyers
 dying
-dyked
-dykes
-dykey
 dykon
 dynel
 dynes
@@ -4748,7 +4740,6 @@ heles
 helio
 helix
 hello
-hells
 helms
 helos
 helot
@@ -5577,7 +5568,6 @@ kiers
 kieve
 kievs
 kight
-kikes
 kikoi
 kiley
 kilim
@@ -6618,8 +6608,6 @@ miaul
 micas
 miche
 micht
-micks
-micky
 micos
 micra
 micro
@@ -6895,7 +6883,6 @@ muddy
 mudge
 mudir
 mudra
-muffs
 mufti
 mugga
 muggs
@@ -7949,7 +7936,6 @@ pisco
 pises
 pisky
 pisos
-pissy
 piste
 pitas
 pitch
@@ -8098,7 +8084,6 @@ pooja
 pooka
 pooks
 pools
-poons
 poori
 poort
 poots
@@ -8364,7 +8349,6 @@ purty
 puses
 pushy
 pusle
-pussy
 putid
 puton
 putti
@@ -9860,7 +9844,6 @@ slurp
 slurs
 sluse
 slush
-sluts
 slyer
 slyly
 slype
@@ -10155,16 +10138,12 @@ spelt
 spend
 spent
 speos
-sperm
 spets
 speug
 spews
 spewy
 spial
-spica
 spice
-spick
-spics
 spicy
 spide
 spied
@@ -10515,7 +10494,6 @@ swami
 swamp
 swamy
 swang
-swank
 swans
 swaps
 swapt
@@ -10701,8 +10679,6 @@ tapis
 tappa
 tapus
 taras
-tardo
-tardy
 tared
 tares
 targa
@@ -11015,7 +10991,6 @@ tithe
 titis
 title
 titre
-titty
 titup
 tiyin
 tizzy
@@ -11344,8 +11319,6 @@ twaes
 twain
 twals
 twang
-twank
-twats
 tways
 tweak
 tweed

@@ -132,6 +132,10 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
     @Getter @Setter private String refundError;
 
     // Fields below are used when creating a new plan, to also create the network associated with it
+    @Size(max=NAME_MAXLEN, message="err.nick.tooLong")
+    @Transient @Getter @Setter private transient String nickname;
+    public boolean hasNickname () { return !empty(nickname); }
+
     @Size(max=10000, message="err.description.length")
     @Transient @Getter @Setter private transient String description;
 
@@ -171,6 +175,7 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
                                        CloudService storage) {
         return new BubbleNetwork()
                 .setName(getName())
+                .setNickname(getNickname())
                 .setDescription(getDescription())
                 .setLocale(getLocale())
                 .setTimezone(getTimezone())

@@ -11,6 +11,7 @@ import com.warrenstrange.googleauth.GoogleAuthenticator;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
+import org.cobbzilla.util.daemon.ZillaRuntime;
 import org.cobbzilla.util.io.FileUtil;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -232,7 +233,10 @@ public class ApiConstants {
         return val == null ? null : val.textValue();
     }
 
-    @Getter(lazy=true) private static final String[] hostPrefixes = stream2string("bubble/host-prefixes.txt").split("\n");
+    @Getter(lazy=true) private static final String[] hostPrefixes = Arrays.stream(stream2string("bubble/host-prefixes.txt")
+            .split("\n"))
+            .filter(ZillaRuntime::notEmpty)
+            .toArray(String[]::new);
 
     public static String newNodeHostname() {
         final String rand0 = getHostPrefixes()[RandomUtils.nextInt(0, getHostPrefixes().length)];
@@ -241,6 +245,14 @@ public class ApiConstants {
         final int rand3 = RandomUtils.nextInt(0, 10);
         final String rand4 = randomAlphanumeric(1).toLowerCase();
         return rand0+"-"+(rand1 < 10 ? "0"+rand1 : rand1)+rand2+"-"+rand3+rand4;
+    }
+
+    public static String newNetworkName() {
+        final String rand0 = getHostPrefixes()[RandomUtils.nextInt(0, getHostPrefixes().length)];
+        final String rand1 = randomAlphanumeric(2).toLowerCase() + RandomUtils.nextInt(10, 100) + randomAlphanumeric(1).toLowerCase();
+        final String rand2 = randomAlphanumeric(2).toLowerCase() + RandomUtils.nextInt(10, 100) + randomAlphanumeric(1).toLowerCase();
+        final String rand3 = randomAlphanumeric(2).toLowerCase() + RandomUtils.nextInt(10, 100) + randomAlphanumeric(1).toLowerCase();
+        return rand0+"-"+rand1+"-"+rand2+"-"+rand3;
     }
 
     public static String getRemoteHost(Request req) {
