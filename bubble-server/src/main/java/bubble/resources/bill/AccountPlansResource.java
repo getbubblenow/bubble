@@ -147,7 +147,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         } else {
             if (!request.hasNickname()) {
                 if (request.hasName()) {
-                    request.setNickname(request.getNickname());
+                    request.setNickname(request.getName());
                 } else {
                     errors.addViolation("err.name.required");
                 }
