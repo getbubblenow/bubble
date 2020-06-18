@@ -920,7 +920,6 @@ bekah
 belah
 belar
 belay
-belch
 belee
 belga
 belie
@@ -3514,7 +3513,6 @@ fehme
 feign
 feint
 feist
-felch
 felid
 fella
 fells
@@ -3587,7 +3585,6 @@ fidge
 fidos
 fiefs
 field
-fiend
 fient
 fiere
 fiers
@@ -3601,9 +3598,7 @@ fifty
 fight
 figos
 fiked
-fikes
 filar
-filch
 filed
 filer
 files
@@ -4332,7 +4327,6 @@ goody
 gooey
 goofs
 goofy
-googs
 goold
 gools
 gooly
@@ -4373,7 +4367,6 @@ gowks
 gowls
 gowns
 goxes
-goyim
 goyle
 graal
 grabs
@@ -4381,7 +4374,6 @@ grace
 grade
 grads
 graff
-graft
 grail
 grain
 graip
@@ -5175,7 +5167,6 @@ irade
 irate
 irids
 iring
-irked
 iroko
 irone
 irons
@@ -5204,12 +5195,8 @@ izzat
 jaaps
 jabot
 jacal
-jacks
-jacky
 jaded
 jades
-jafas
-jaffa
 jagas
 jager
 jaggs
@@ -5221,10 +5208,7 @@ jakes
 jakey
 jalap
 jalop
-jambe
-jambo
 jambs
-jambu
 james
 jammy
 jamon
@@ -5232,7 +5216,6 @@ janes
 janns
 janny
 janty
-japan
 japed
 japer
 japes
@@ -5245,7 +5228,6 @@ jasey
 jaspe
 jasps
 jatos
-jauks
 jaunt
 jaups
 javas
@@ -5261,11 +5243,8 @@ jedis
 jeels
 jeely
 jeeps
-jeers
 jefes
 jeffs
-jehad
-jehus
 jelab
 jello
 jells
@@ -5274,19 +5253,14 @@ jembe
 jemmy
 jenny
 jerid
-jerks
-jerky
 jerry
 jesse
 jests
-jesus
 jetes
 jeton
 jetty
 jeune
-jewed
 jewel
-jewie
 jhala
 jiaos
 jibba
@@ -5398,7 +5372,6 @@ kabab
 kabar
 kabob
 kacha
-kacks
 kades
 kadis
 kafir
@@ -5582,10 +5555,7 @@ kinda
 kinds
 kindy
 kines
-kings
 kinin
-kinks
-kinky
 kinos
 kiore
 kiosk
@@ -5661,7 +5631,6 @@ koffs
 kofta
 kogal
 kohas
-kohen
 kohls
 koine
 kojis
@@ -5675,8 +5644,6 @@ kombu
 konbu
 kondo
 konks
-kooks
-kooky
 koori
 kopek
 kophs
@@ -5702,16 +5669,12 @@ krait
 krang
 krans
 kranz
-kraut
-kreep
 kreng
-krewe
 krill
 krona
 krone
 kroon
 krubi
-krunk
 ksars
 kudos
 kudus
@@ -5721,7 +5684,6 @@ kugel
 kuias
 kukri
 kukus
-kulak
 kulan
 kulas
 kulfi
@@ -6062,7 +6024,6 @@ linos
 lints
 linty
 linum
-linux
 lions
 lipas
 lipid
@@ -6347,7 +6308,6 @@ maids
 maiko
 maiks
 maile
-maill
 mails
 maims
 mains
@@ -6396,12 +6356,10 @@ manga
 mange
 mango
 mangs
-mangy
 mania
 manic
 manis
 manky
-manly
 manna
 manor
 manos
@@ -6628,7 +6586,6 @@ mihis
 miked
 mikes
 mikra
-milch
 milds
 miler
 miles
@@ -8377,10 +8334,8 @@ pyxes
 pyxie
 pyxis
 pzazz
-qadis
 qaids
 qanat
-qibla
 qophs
 qorma
 quack
@@ -8407,8 +8362,6 @@ quayd
 quays
 qubit
 quean
-queen
-queer
 quell
 queme
 quena
@@ -8418,7 +8371,6 @@ quest
 queue
 queyn
 queys
-quich
 quick
 quids
 quiet
@@ -11733,8 +11685,6 @@ volta
 volte
 volti
 volts
-volva
-volve
 vomer
 voted
 voter
@@ -11757,7 +11707,6 @@ vuggs
 vuggy
 vughs
 vughy
-vulgo
 vulns
 vutty
 vying
@@ -11780,7 +11729,6 @@ wages
 wagga
 wagon
 wagyu
-wahoo
 waide
 waifs
 waift
@@ -12174,7 +12122,6 @@ yacks
 yaffs
 yager
 yagis
-yahoo
 yaird
 yakka
 yakow
