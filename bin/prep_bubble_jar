@@ -16,8 +16,9 @@
 #
 # Environment variables:
 #
-#   INSTALL_WEB   : if this is equal to 'web' then the frontend will be built and included in the jar
-#   DEBUG_BUILD   : if this is equal to 'debug' then nothing will be done, the jar will be left as-is
+#   INSTALL_WEB       : if this is equal to 'web' then the frontend will be built and included in the jar
+#   DEBUG_BUILD       : if this is equal to 'debug' then nothing will be done, the jar will be left as-is
+#   BUBBLE_PRODUCTION : if this is set to anything, then a production build will be made.
 #
 SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
@@ -42,10 +43,15 @@ done
 
 cd ${CLASSES_DIR} && jar uvf ${BUBBLE_JAR} scripts || die "Error updating ${BUBBLE_JAR} with scripts"
 
-if [[ ! -z "${INSTALL_WEB}" && "${INSTALL_WEB}" == "web" ]] ; then
+if [[ ! -z "${BUBBLE_PRODUCTION}" || ( ! -z "${INSTALL_WEB}" && "${INSTALL_WEB}" == "web" ) ]] ; then
   mkdir -p ${CLASSES_DIR}/site
   BUBBLE_WEB="$(cd "${SCRIPT_DIR}/../bubble-web" && pwd)"
-  cd ${BUBBLE_WEB} && npm install && webpack || die "Error building bubble-web"
+  if [[ ! -z "${BUBBLE_PRODUCTION}" ]] ; then
+    WEBPACK_OPTIONS="--mode=production"
+  else
+    WEBPACK_OPTIONS=""
+  fi
+  cd ${BUBBLE_WEB} && npm install && webpack ${WEBPACK_OPTIONS} || die "Error building bubble-web"
   cp -R ${BUBBLE_WEB}/dist/* ${CLASSES_DIR}/site/ || die "Error copying ${BUBBLE_WEB}/dist/* -> ${CLASSES_DIR}/site/"
   cd ${CLASSES_DIR} && jar uvf ${BUBBLE_JAR} site || die "Error updating ${BUBBLE_JAR} with site"
   echo "Installed bubble-web to ${CLASSES_DIR}/site/"
