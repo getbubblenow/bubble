@@ -71,10 +71,6 @@ errorApi:
   key: {{ERRBIT_KEY}}
   env: {{ERRBIT_ENV}}
 
-support:
-  email: '{{SUPPORT_EMAIL}}'
-  site: '{{SUPPORT_SITE}}'
-
 localNotificationStrategy: {{#exists BUBBLE_LOCAL_NOTIFY}}{{BUBBLE_LOCAL_NOTIFY}}{{else}}inline{{/exists}}
 
 letsencryptEmail: {{LETSENCRYPT_EMAIL}}
@@ -91,3 +87,25 @@ rateLimits:
   - { limit: 10000, interval: 10m, block: 1h }
   - { limit: 50000, interval: 1h, block: 24h }
   - { limit: 100000, interval: 6h, block: 96h }
+
+support:
+  email: {{SUPPORT_EMAIL}}
+  site: {{SUPPORT_SITE}}
+  locale:
+    en_US:
+      email: {{SUPPORT_EMAIL}}
+      site: {{SUPPORT_SITE}}
+
+appLinks:
+  ios: {{APP_LINK_IOS}}
+  android: {{APP_LINK_ANDROID}}
+  windows: {{APP_LINK_WINDOWS}}
+  macosx: {{APP_LINK_MACOSX}}
+  linux: {{APP_LINK_LINUX}}
+  locale:
+    en_US:
+      ios: {{APP_LINK_IOS}}
+      android: {{APP_LINK_ANDROID}}
+      windows: {{APP_LINK_WINDOWS}}
+      macosx: {{APP_LINK_MACOSX}}
+      linux: {{APP_LINK_LINUX}}

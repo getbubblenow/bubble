@@ -34,6 +34,7 @@ import bubble.service.boot.ActivationService;
 import bubble.service.boot.NodeManagerService;
 import bubble.service.boot.SageHelloService;
 import bubble.service.cloud.DeviceIdService;
+import bubble.service.cloud.GeoService;
 import bubble.service.notify.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
@@ -585,6 +586,36 @@ public class AuthResource {
         }
         sessionDAO.invalidateAllSessions(target.getUuid());
         return ok_empty();
+    }
+
+    @Autowired private GeoService geoService;
+
+    @GET @Path(EP_SUPPORT)
+    public Response getSupportInfo (@Context Request req,
+                                    @Context ContainerRequest ctx) {
+        final List<String> locales = geoService.getSupportedLocales(optionalUserPrincipal(ctx), getRemoteHost(req), normalizeLangHeader(req));
+        return ok(empty(locales) ? configuration.getSupport() : configuration.getSupport().forLocale(locales.get(0)));
+    }
+
+    @GET @Path(EP_SUPPORT+"/{locale}")
+    public Response getSupportInfo (@Context Request req,
+                                    @Context ContainerRequest ctx,
+                                    String locale) {
+        return ok(configuration.getSupport().forLocale(locale));
+    }
+
+    @GET @Path(EP_APP_LINKS)
+    public Response getAppLinks (@Context Request req,
+                                 @Context ContainerRequest ctx) {
+        final List<String> locales = geoService.getSupportedLocales(optionalUserPrincipal(ctx), getRemoteHost(req), normalizeLangHeader(req));
+        return ok(empty(locales) ? configuration.getAppLinks() : configuration.getAppLinks().forLocale(locales.get(0)));
+    }
+
+    @GET @Path(EP_APP_LINKS+"/{locale}")
+    public Response getAppLinks (@Context Request req,
+                                 @Context ContainerRequest ctx,
+                                 String locale) {
+        return ok(configuration.getAppLinks().forLocale(locale));
     }
 
     @GET @Path(EP_PATCH+"/{token}")

@@ -168,7 +168,13 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     @Getter @Setter private Long termsAgreed;
     public Account setTermsAgreed() { return setTermsAgreed(now()); }
 
-    @JsonIgnore @Embedded @Getter @Setter private HashedPassword hashedPassword;
+    @JsonIgnore @Embedded @Getter private HashedPassword hashedPassword;
+    public Account setHashedPassword (HashedPassword newPass) {
+        this.hashedPassword = newPass;
+        this.hashedPasswordChanged = true;
+        return this;
+    }
+    @JsonIgnore @Transient @Getter @Setter private boolean hashedPasswordChanged = false;
     @JsonIgnore @Transient @Getter @Setter private String previousPasswordHash;
     @JsonIgnore @Transient @Getter @Setter private Boolean skipSyncPassword;
     public boolean skipSyncPassword() { return bool(skipSyncPassword); }

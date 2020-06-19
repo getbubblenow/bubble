@@ -105,6 +105,8 @@ public class ApiConstants {
     public static final String EP_APPROVE = "/approve";
     public static final String EP_DENY = "/deny";
     public static final String EP_AUTHENTICATOR = "/authenticator";
+    public static final String EP_SUPPORT = "/support";
+    public static final String EP_APP_LINKS = "/appLinks";
     public static final String EP_PATCH = "/patch";
 
     public static final String ACCOUNTS_ENDPOINT = "/users";

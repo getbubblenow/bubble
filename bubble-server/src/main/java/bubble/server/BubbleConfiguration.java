@@ -38,7 +38,10 @@ import org.cobbzilla.wizard.cache.redis.HasRedisConfiguration;
 import org.cobbzilla.wizard.cache.redis.RedisConfiguration;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.server.RestServerHarness;
-import org.cobbzilla.wizard.server.config.*;
+import org.cobbzilla.wizard.server.config.HasDatabaseConfiguration;
+import org.cobbzilla.wizard.server.config.LegalInfo;
+import org.cobbzilla.wizard.server.config.PgRestServerConfiguration;
+import org.cobbzilla.wizard.server.config.RecaptchaConfig;
 import org.cobbzilla.wizard.util.ClasspathScanner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -208,6 +211,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     }
 
     @Getter @Setter private LegalInfo legal = new LegalInfo();
+    @Getter @Setter private AppLinks appLinks = new AppLinks();
 
     @Override @JsonIgnore public Handlebars getHandlebars() { return BubbleHandlebars.instance.getHandlebars(); }
 

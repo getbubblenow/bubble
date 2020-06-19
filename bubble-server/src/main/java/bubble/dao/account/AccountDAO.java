@@ -186,7 +186,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         }
         if (context instanceof Account) {
             final Account previousState = (Account) context;
-            if (!previousState.skipSyncPassword()) {
+            if (previousState.isHashedPasswordChanged() && !previousState.skipSyncPassword()) {
                 syncPasswordService.syncPassword(account);
             }
         }

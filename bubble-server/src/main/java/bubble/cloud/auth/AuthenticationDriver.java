@@ -61,6 +61,8 @@ public interface AuthenticationDriver extends CloudServiceDriver {
         ctx.put("message", message);
         ctx.put("contact", contact);
         ctx.put("configuration", configuration);
+        ctx.put("support", configuration.getSupport().forLocale(account.getLocale()));
+        ctx.put("appLinks", configuration.getAppLinks().forLocale(account.getLocale()));
 
         final AccountPolicy policy = configuration.getBean(AccountPolicyDAO.class).findSingleByAccount(account.getUuid());
         account.setPolicy(policy);
