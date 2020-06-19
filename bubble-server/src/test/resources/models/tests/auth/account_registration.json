@@ -195,7 +195,7 @@
   },
 
   {
-    "comment": "new session, register new user, fails because username is already used",
+    "comment": "new session, register new user, fails because email is already used",
     "request": {
       "session": "new",
       "uri": "auth/register",
@@ -207,7 +207,7 @@
     },
     "response": {
       "status": 422,
-      "check": [ {"condition": "json.has('err.name.registered')"} ]
+      "check": [ {"condition": "json.has('err.email.registered')"} ]
     }
   },
 

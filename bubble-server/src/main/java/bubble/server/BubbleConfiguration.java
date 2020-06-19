@@ -38,10 +38,7 @@ import org.cobbzilla.wizard.cache.redis.HasRedisConfiguration;
 import org.cobbzilla.wizard.cache.redis.RedisConfiguration;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.server.RestServerHarness;
-import org.cobbzilla.wizard.server.config.HasDatabaseConfiguration;
-import org.cobbzilla.wizard.server.config.LegalInfo;
-import org.cobbzilla.wizard.server.config.PgRestServerConfiguration;
-import org.cobbzilla.wizard.server.config.RecaptchaConfig;
+import org.cobbzilla.wizard.server.config.*;
 import org.cobbzilla.wizard.util.ClasspathScanner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -87,6 +84,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_SSL_PORT = "sslPort";
     public static final String TAG_PROMO_CODE_POLICY = "promoCodePolicy";
     public static final String TAG_REQUIRE_SEND_METRICS = "requireSendMetrics";
+    public static final String TAG_SUPPORT = "support";
 
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
@@ -294,7 +292,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_CLOUD_CONFIGS, accountDAO.activated() ? null : activationService.getCloudDefaults()},
                         {TAG_LOCKED, accountDAO.locked()},
                         {TAG_LAUNCH_LOCK, isSageLauncher() || thisNetwork == null ? null : thisNetwork.launchLock()},
-                        {TAG_SSL_PORT, getDefaultSslPort()}
+                        {TAG_SSL_PORT, getDefaultSslPort()},
+                        {TAG_SUPPORT, getSupport()}
                 }));
             }
             return publicSystemConfigs.get();

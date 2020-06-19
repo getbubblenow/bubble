@@ -3,24 +3,10 @@ Hello {{account.name}},
 Contact information has been added to your account named '{{account.name}}' on {{network.networkDomain}}
 
 {{#string_compare contact.uuid '==' message.contact}}{{contact.type}} - {{contact.info}}{{else}}{{message.requestContact.type}}{{#if message.requestContact.isSms}}{{message.requestContact.info}}{{/if}}{{/string_compare}} {{#if message.requestContact.nick}}({{message.requestContact.nick}}){{/if}}
-
-----------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------
-
-If you did not make this request or would like to cancel this request, please click this link:
-
-{{publicUri}}/me/action?deny={{confirmationToken}}
-
-----------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------
 {{#string_compare contact.uuid '==' message.contact}}
-If you DID make this request and are ready to verify this contact information, click the link below,
-or enter the value {{confirmationToken}} when the verification code is requested.
+To confirm this contact information, follow this link:
 
 {{publicUri}}/me/action?approve={{confirmationToken}}
-
-----------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------
 {{/string_compare}}
 
 Thank you for using Bubble!

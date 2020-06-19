@@ -97,13 +97,17 @@ public class AccountMessage extends IdentifiableBase implements HasAccount {
     public String templateName(String basename) { return getMessageType()+"/"+ getAction()+"/"+getTarget()+"/"+basename+".hbs"; }
 
     public long tokenTimeoutSeconds(AccountPolicy policy) {
-        if (getMessageType() != AccountMessageType.request) return -1;
-        switch (getTarget()) {
-            case account: return policy.getAccountOperationTimeout()/1000;
-            case network: return policy.getNodeOperationTimeout()/1000;
-            default:
-                log.warn("tokenTimeout: invalid target: "+getTarget());
-                return -1;
+        // only requests and welcome message get tokens (welcome messages also verify the initial email address)
+        if (getMessageType() == AccountMessageType.request || (getMessageType() == AccountMessageType.notice && getAction() == AccountAction.welcome)) {
+            switch (getTarget()) {
+                case account: return policy.getAccountOperationTimeout()/1000;
+                case network: return policy.getNodeOperationTimeout()/1000;
+                default:
+                    log.warn("tokenTimeout: invalid target: "+getTarget());
+                    return -1;
+            }
+        } else {
+            return -1;
         }
     }
 

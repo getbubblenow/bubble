@@ -52,7 +52,8 @@ public class StandardAccountMessageService implements AccountMessageService {
         final Account account = accountDAO.findByUuid(accountUuid);
         AccountPolicy policy = policyDAO.findSingleByAccount(accountUuid);
         if (policy == null) {
-            policy = policyDAO.create(new AccountPolicy().setAccount(accountUuid));
+            log.warn("send("+message+"): no policy for account");
+            return false;
         }
         final List<AccountContact> contacts = policy.getAllowedContacts(message);
         if (contacts.isEmpty()) {
@@ -136,9 +137,11 @@ public class StandardAccountMessageService implements AccountMessageService {
         if (account == null) account = accountDAO.findByUuid(approval.getAccount());
         final AccountMessageApprovalStatus approvalStatus = messageDAO.requestApproved(account, approval, token, data);
         if (approvalStatus == AccountMessageApprovalStatus.ok_confirmed) {
+            final AccountMessage request = messageDAO.findOperationRequest(approval);
+            if (request == null) throw invalidEx("err.approvalToken.invalid", "Request could not be found for approval: "+approval);
             final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
             final AccountMessage confirm = messageDAO.create(new AccountMessage(approval).setMessageType(AccountMessageType.confirmation));
-            approval.setRequest(messageDAO.findOperationRequest(approval));
+            approval.setRequest(request);
             approval.setRequestContact(policy.findContactByUuid(approval.getRequest().getContact()));
             getCompletionHandler(approval).confirm(approval, data);
 
@@ -158,6 +161,7 @@ public class StandardAccountMessageService implements AccountMessageService {
         throw invalidEx("err.approvalToken.invalid", "Approval cannot proceed: "+approvalStatus, approvalStatus.name());
     }
 
+    @Getter(lazy=true) private final AccountMessageCompletionHandler accountWelcomeHandler = configuration.autowire(new AccountVerifyHandler());
     @Getter(lazy=true) private final AccountMessageCompletionHandler accountLoginHandler = configuration.autowire(new AccountLoginHandler());
     @Getter(lazy=true) private final AccountMessageCompletionHandler accountPasswordHandler = configuration.autowire(new AccountPasswordHandler());
     @Getter(lazy=true) private final AccountMessageCompletionHandler accountVerifyHandler = configuration.autowire(new AccountVerifyHandler());
@@ -170,6 +174,7 @@ public class StandardAccountMessageService implements AccountMessageService {
     @Getter(lazy=true) private final Map<String, AccountMessageCompletionHandler> confirmationHandlers = initConfirmationHandlers();
     private HashMap<String, AccountMessageCompletionHandler> initConfirmationHandlers() {
         final HashMap<String, AccountMessageCompletionHandler> handlers = new HashMap<>();
+        handlers.put(ActionTarget.account+":"+AccountAction.welcome, getAccountWelcomeHandler());
         handlers.put(ActionTarget.account+":"+AccountAction.login, getAccountLoginHandler());
         handlers.put(ActionTarget.account+":"+AccountAction.password, getAccountPasswordHandler());
         handlers.put(ActionTarget.account+":"+AccountAction.verify, getAccountVerifyHandler());

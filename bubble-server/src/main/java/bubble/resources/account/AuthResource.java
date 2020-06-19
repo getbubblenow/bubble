@@ -214,7 +214,7 @@ public class AuthResource {
         final ValidationResult errors = request.validateEmail();
         if (errors.isValid()) {
             final Account existing = accountDAO.findByEmail(request.getEmail());
-            if (existing != null) errors.addViolation("err.name.registered", "Name is already registered: ", request.getEmail());
+            if (existing != null) errors.addViolation("err.email.registered", "Email is already registered: ", request.getEmail());
         }
 
         final ConstraintViolationBean passwordViolation = validatePassword(request.getPassword());

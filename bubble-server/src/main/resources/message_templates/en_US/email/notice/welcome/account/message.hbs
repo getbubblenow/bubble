@@ -2,8 +2,10 @@ Hello {{account.name}},
 
 Welcome to Bubble!
 
-You can login with your username and password here: {{publicUri}}/login
+Please confirm your email address using this link:
 
-If you have any questions, please contact your Bubble Administrator.
+{{publicUri}}/me/action?approve={{confirmationToken}}
+
+{{#if configuration.hasSupportInfo}}If you have any questions or need help, please {{#if configuration.support.hasEmailAndSite}}contact {{configuration.support.email}} or visit {{configuration.support.site}}{{else}}{{#if configuration.support.hasEmail}}contact {{configuration.support.email}}{{else}}visit {{configuration.support.site}}{{/if}}{{/if}}{{/if}}
 
 Happy bubbling!

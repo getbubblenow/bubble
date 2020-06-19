@@ -6,6 +6,7 @@ package bubble.dao.account;
 
 import bubble.dao.account.message.AccountMessageDAO;
 import bubble.model.account.Account;
+import bubble.model.account.AccountPolicy;
 import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
@@ -31,6 +32,7 @@ public class AccountInitializer implements Runnable {
 
     private Account account;
     private AccountDAO accountDAO;
+    private AccountPolicyDAO policyDAO;
     private AccountMessageDAO messageDAO;
     private SelfNodeService selfNodeService;
 
@@ -50,9 +52,14 @@ public class AccountInitializer implements Runnable {
     public Exception getError() { return error.get(); }
     public boolean hasError () { return getError() != null; }
 
-    public AccountInitializer(Account account, AccountDAO accountDAO, AccountMessageDAO messageDAO, SelfNodeService selfNodeService) {
+    public AccountInitializer(Account account,
+                              AccountDAO accountDAO,
+                              AccountPolicyDAO policyDAO,
+                              AccountMessageDAO messageDAO,
+                              SelfNodeService selfNodeService) {
         this.account = account;
         this.accountDAO = accountDAO;
+        this.policyDAO = policyDAO;
         this.messageDAO = messageDAO;
         this.selfNodeService = selfNodeService;
     }
@@ -73,10 +80,6 @@ public class AccountInitializer implements Runnable {
                         log.warn("aborting!");
                         return;
                     }
-
-                    if (account.hasPolicy() && account.getPolicy().hasAccountContacts()) {
-                        messageDAO.sendVerifyRequest(account.getRemoteHost(), account, account.getPolicy().getAccountContacts()[0]);
-                    }
                     success = true;
                     break;
                 } catch (Exception e) {
@@ -87,18 +90,22 @@ public class AccountInitializer implements Runnable {
             if (!success) throw lastEx;
             if (account.sendWelcomeEmail()) {
                 final BubbleNetwork thisNetwork = selfNodeService.getThisNetwork();
+                final String accountUuid = account.getUuid();
+                final AccountPolicy policy = policyDAO.findSingleByAccount(accountUuid);
+                final String contact = policy != null && policy.hasAccountContacts() ? policy.getAccountContacts()[0].getUuid() : null;
+                if (contact == null) die("no contact found for welcome message: account="+accountUuid);
                 messageDAO.create(new AccountMessage()
                         .setRemoteHost(account.getRemoteHost())
-                        .setAccount(account.getUuid())
-                        .setName(account.getUuid())
+                        .setAccount(accountUuid)
+                        .setName(accountUuid)
                         .setNetwork(thisNetwork.getUuid())
                         .setMessageType(AccountMessageType.notice)
                         .setAction(AccountAction.welcome)
-                        .setTarget(ActionTarget.account));
+                        .setTarget(ActionTarget.account)
+                        .setContact(contact));
             }
         } catch (Exception e) {
             error.set(e);
-            // todo: send to errbit
             die("error: "+e, e);
         } finally {
             completed.set(true);
