@@ -3,7 +3,55 @@
     "comment": "create new account and login",
     "include": "new_account",
     "params": {
-      "email": "user-multifactor_auth@example.com"
+      "email": "user-multifactor_auth_registered@example.com"
+    }
+  },
+
+  {
+    "comment": "resend verification message for registration email",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts/verify",
+      "entity": {
+        "type": "email",
+        "info": "user-multifactor_auth_registered@example.com"
+      }
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "as root, check inbox for email verification message for registration email",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/user-multifactor_auth_registered@example.com?action=verify"
+    },
+    "response": {
+      "store": "userInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, approve email verification request for registration email",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
+      "entity": [{"name": "account", "value": "user-multifactor_auth_registered@example.com"}]
+    }
+  },
+
+  {
+    "comment": "add second email to account policy",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts",
+      "entity": {
+        "type": "email",
+        "info": "user-multifactor_auth@example.com"
+      }
     }
   },
 
@@ -14,9 +62,9 @@
       "store": "policy",
       "check": [
         {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 1"},
-        {"condition": "!json.getAccountContacts()[0].authFactor()"},
-        {"condition": "!json.getAccountContacts()[0].verified()"}
+        {"condition": "json.getAccountContacts().length == 2"},
+        {"condition": "!json.getAccountContacts()[1].authFactor()"},
+        {"condition": "!json.getAccountContacts()[1].verified()"}
       ]
     }
   },
@@ -72,7 +120,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth_registered@example.com"}]
     }
   },
 
@@ -84,9 +132,9 @@
       "store": "policy",
       "check": [
         {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 1"},
-        {"condition": "!json.getAccountContacts()[0].authFactor()"},
-        {"condition": "json.getAccountContacts()[0].verified()"}
+        {"condition": "json.getAccountContacts().length == 2"},
+        {"condition": "!json.getAccountContacts()[1].authFactor()"},
+        {"condition": "json.getAccountContacts()[1].verified()"}
       ]
     }
   },
@@ -117,8 +165,8 @@
       "store": "policy",
       "check": [
         {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 1"},
-        {"condition": "json.getAccountContacts()[0].requiredAuthFactor()"}
+        {"condition": "json.getAccountContacts().length == 2"},
+        {"condition": "json.getAccountContacts()[1].requiredAuthFactor()"}
       ]
     }
   },
@@ -170,7 +218,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth_registered@example.com"}]
     },
     "response": {
       "sessionName": "userSession",
@@ -194,9 +242,9 @@
       "store": "policy",
       "check": [
         {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 2"},
-        {"condition": "json.getAccountContacts()[0].requiredAuthFactor()"},
-        {"condition": "json.getAccountContacts()[1].requiredAuthFactor()"}
+        {"condition": "json.getAccountContacts().length == 3"},
+        {"condition": "json.getAccountContacts()[1].requiredAuthFactor()"},
+        {"condition": "json.getAccountContacts()[2].requiredAuthFactor()"}
       ]
     }
   },
@@ -248,7 +296,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth_registered@example.com"}]
     },
     "response": {
       "status": 422,
@@ -262,7 +310,7 @@
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
       "entity": [
-        {"name": "account", "value": "user-multifactor_auth@example.com"},
+        {"name": "account", "value": "user-multifactor_auth_registered@example.com"},
         {"name": "totpToken", "value": "{{authenticator_token authenticator.totpKey}}"}
       ]
     },
@@ -308,8 +356,8 @@
       "store": "policy",
       "check": [
         {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 1"},
-        {"condition": "json.getAccountContacts()[0].requiredAuthFactor()"}
+        {"condition": "json.getAccountContacts().length == 2"},
+        {"condition": "json.getAccountContacts()[1].requiredAuthFactor()"}
       ]
     }
   },
@@ -372,7 +420,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{smsInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth_registered@example.com"}]
     }
   },
 
@@ -384,10 +432,10 @@
       "store": "policy",
       "check": [
         {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 2"},
-        {"condition": "json.getAccountContacts()[1].getType().name() == 'sms'"},
-        {"condition": "!json.getAccountContacts()[1].authFactor()"},
-        {"condition": "json.getAccountContacts()[1].verified()"}
+        {"condition": "json.getAccountContacts().length == 3"},
+        {"condition": "json.getAccountContacts()[2].getType().name() == 'sms'"},
+        {"condition": "!json.getAccountContacts()[2].authFactor()"},
+        {"condition": "json.getAccountContacts()[2].verified()"}
       ]
     }
   },
@@ -459,7 +507,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{smsInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth_registered@example.com"}]
     },
     "response": {
       "status": 422,
@@ -473,7 +521,7 @@
       "session": "userSession",
       "uri": "auth/approve/{{smsInbox.[0].ctx.confirmationToken}}",
       "entity": [
-        {"name": "account", "value": "user-multifactor_auth@example.com"},
+        {"name": "account", "value": "user-multifactor_auth_registered@example.com"},
         {"name": "totpToken", "value": "{{authenticator_token authenticator.totpKey}}"}
       ]
     },
@@ -505,8 +553,8 @@
       "store": "policy",
       "check": [
         {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 1"},
-        {"condition": "json.getAccountContacts()[0].getType().name() == 'sms'"}
+        {"condition": "json.getAccountContacts().length == 2"},
+        {"condition": "json.getAccountContacts()[1].getType().name() == 'sms'"}
       ]
     }
   },
@@ -550,7 +598,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth_registered@example.com"}]
     }
   },
 
@@ -619,7 +667,7 @@
     "request": {
       "session": "userSession",
       "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
-      "entity": [{"name": "account", "value": "user-multifactor_auth@example.com"}]
+      "entity": [{"name": "account", "value": "user-multifactor_auth_registered@example.com"}]
     },
     "response": {
       "sessionName": "userSession",
@@ -736,9 +784,9 @@
       "store": "policy",
       "check": [
         {"condition": "json.getAccountContacts() != null"},
-        {"condition": "json.getAccountContacts().length == 2"},
-        {"condition": "!json.getAccountContacts()[0].getInfo().startsWith('bar')"},
-        {"condition": "!json.getAccountContacts()[1].getInfo().startsWith('bar')"}
+        {"condition": "json.getAccountContacts().length == 3"},
+        {"condition": "!json.getAccountContacts()[1].getInfo().startsWith('bar')"},
+        {"condition": "!json.getAccountContacts()[2].getInfo().startsWith('bar')"}
       ]
     }
   }
