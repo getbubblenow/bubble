@@ -7,17 +7,14 @@ package bubble.cloud.compute;
 import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.CloudServiceDAO;
-import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleNode;
-import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.daemon.SimpleDaemon;
 import org.cobbzilla.util.network.NetworkUtil;
 import org.cobbzilla.util.string.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Set;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.system.Sleep.sleep;
@@ -51,33 +48,35 @@ public class NodeReaper extends SimpleDaemon {
         }
     }
 
-    private void processNode(BubbleNode node) {
-        final BubbleNode found = nodeDAO.findByIp4(node.getIp4());
-        if (found == null) {
-            if (wouldKillSelf(node)) return;
-            log.warn(prefix()+"processNode: no node exists with ip4="+node.getIp4()+", killing it");
-            final BubbleDomain domain = domainDAO.findByUuid(node.getDomain());
-            final CloudService dns = cloudDAO.findByUuid(domain.getPublicDns());
+    private void processNode(@NonNull final BubbleNode node) {
+        final var found = nodeDAO.findByIp4(node.getIp4());
+        if (found == null && !wouldKillSelf(node)) {
+            log.warn(prefix() + "processNode: no node exists with ip4=" + node.getIp4() + ", killing it");
+            final var domain = domainDAO.findByUuid(node.getDomain());
+            final var dns = domain != null ? cloudDAO.findByUuid(domain.getPublicDns()) : null;
             try {
-                dns.getDnsDriver(configuration).deleteNode(node);
+                if (dns != null) dns.getDnsDriver(configuration).deleteNode(node);
                 compute.stop(node);
-
             } catch (Exception e) {
-                log.error(prefix()+"processNode: error stopping node "+node.getIp4()+": "+e);
+                log.error(prefix() + "processNode: error stopping node " + node.getIp4(), e);
             }
         }
     }
 
-    private boolean wouldKillSelf(BubbleNode node) {
+    private boolean wouldKillSelf(@NonNull final BubbleNode node) {
         if (node.hasSameIp(configuration.getThisNode())) {
-            log.debug("processNode: not killing configuration.thisNode: "+node.getIp4()+"/"+node.getIp6());
+            log.debug(prefix() + "wouldKillSelf: not killing configuration.thisNode: "
+                      + node.getIp4() + "/" + node.getIp6());
             return true;
         }
-        final Set<String> localIps = NetworkUtil.configuredIps();
+
+        final var localIps = NetworkUtil.configuredIps();
         if (localIps.contains(node.getIp4()) || localIps.contains(node.getIp6())) {
-            log.debug("processNode: not killing self, IP matches one of: "+ StringUtil.toString(localIps));
+            log.debug(prefix() + "wouldKillSelf: not killing self, IP matches one of: "
+                      + StringUtil.toString(localIps));
             return true;
         }
+
         return false;
     }
 
