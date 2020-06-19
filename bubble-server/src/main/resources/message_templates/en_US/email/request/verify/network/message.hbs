@@ -1,11 +1,28 @@
 Hello {{account.name}},
 
-Your new Bubble is running, follow the link below to login and begin using it:
+Your new Bubble is running!
+{{#if message.data}}
+Follow the link below to unlock it:
 
-  {{publicUri}}/login{{#if message.data}}?k={{message.data}}{{/if}}
+  {{publicUri}}/login?k={{message.data}}
 
-{{#if message.data}}This link will expire in 48 hours.
+This link will expire in 48 hours. If you do not start using your Bubble within 48 hours, you will need to relaunch a new Bubble.
 
-If you do not start using your Bubble within 48 hours, you will need to relaunch a new Bubble.{{/if}}
+After you've unlocked your Bubble, you can use of our apps listed below to connect.
+{{/if}}
 
+Please install the Bubble app on your devices:
+
+  * Android -- {{appLinks.android}}
+
+  * iOS (iPhone and iPad) -- {{appLinks.ios}}
+
+  * Windows 7 and higher -- {{appLinks.windows}}
+
+  * MacOS X -- {{appLinks.macosx}}
+
+  * Linux -- {{appLinks.linux}}
+
+{{#if support.hasInfo}}If you have any questions or need help, please {{#if support.hasEmailAndSite}}visit our support site: {{support.site}} or contact us at {{support.email}}{{else}}{{#if support.hasEmail}}contact {{support.email}}{{else}}visit {{support.site}}{{/if}}{{/if}}
+{{/if}}
 Thank you for using Bubble!

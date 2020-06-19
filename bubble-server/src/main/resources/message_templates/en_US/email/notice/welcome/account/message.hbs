@@ -6,6 +6,6 @@ Please confirm your email address using this link:
 
 {{publicUri}}/me/action?approve={{confirmationToken}}
 
-{{#if configuration.hasSupportInfo}}If you have any questions or need help, please {{#if configuration.support.hasEmailAndSite}}contact {{configuration.support.email}} or visit {{configuration.support.site}}{{else}}{{#if configuration.support.hasEmail}}contact {{configuration.support.email}}{{else}}visit {{configuration.support.site}}{{/if}}{{/if}}{{/if}}
-
-Happy bubbling!
+{{#if support.hasInfo}}If you have any questions or need help, please {{#if support.hasEmailAndSite}}visit our support site: {{support.site}} or contact us at {{support.email}}{{else}}{{#if support.hasEmail}}contact {{support.email}}{{else}}visit {{support.site}}{{/if}}{{/if}}
+{{/if}}
+Thank you for using Bubble!
