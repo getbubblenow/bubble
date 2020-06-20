@@ -47,6 +47,7 @@ import static org.cobbzilla.util.network.NetworkUtil.getExternalIp;
 import static org.cobbzilla.util.string.StringUtil.truncate;
 import static org.cobbzilla.util.system.CommandShell.hostname;
 import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYYMMDDHHMMSS;
+import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 
 @Slf4j
 public class PackerJob implements Callable<List<PackerImage>> {
@@ -223,6 +224,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
         toFileOrDie(abs(tempDir) + "/packer.json", packerJson);
 
         // run packer, return handle to running packer
+        final long start = now();
         log.info("running packer for " + installType + "...");
         final int packerParallelBuilds = computeDriver.getPackerParallelBuilds();
         final CommandResult commandResult = CommandShell.exec(new Command(new CommandLine(PACKER_BINARY)
@@ -256,7 +258,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
         }
 
         if (imagesRef != null) imagesRef.set(images);
-        log.info("packer images created: "+images);
+        log.info("packer images created in "+formatDuration(now() - start)+": "+images);
         return images;
     }
 
