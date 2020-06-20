@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [[ -z "${DIGITALOCEAN_API_KEY}" ]] ; then
+  echo "DIGITALOCEAN_API_KEY not defined in environment"
+  exit 1
+fi
+
+path=${1:?no path provided}
+shift
+
+curl ${@} -s -H "Authorization: Bearer ${DIGITALOCEAN_API_KEY}" 'https://api.digitalocean.com/v2/'"${path}"''
