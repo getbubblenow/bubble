@@ -25,9 +25,19 @@
     {"name": "restore_key", "value": "[[restoreKey]]"},
     {"name": "restore_timeout", "value": "[[restoreTimeoutSeconds]]"},
     {"name": "test_mode", "value": "[[testMode]]"},
+
     {"name": "error_url", "value": "[[error_url]]"},
     {"name": "error_key", "value": "[[error_key]]"},
-    {"name": "error_env", "value": "[[error_env]]"}
+    {"name": "error_env", "value": "[[error_env]]"},
+
+    {"name": "support_email", "value": "[[support.email]]"},
+    {"name": "support_site", "value": "[[support.site]]"},
+
+    {"name": "app_link_ios", "value": "[[appLinks.ios]]"},
+    {"name": "app_link_android", "value": "[[appLinks.android]]"},
+    {"name": "app_link_windows", "value": "[[appLinks.windows]]"},
+    {"name": "app_link_macosx", "value": "[[appLinks.macosx]]"},
+    {"name": "app_link_linux", "value": "[[appLinks.linux]]"}
   ],
   "optionalConfigNames": ["restore_key", "restore_timeout", "error_url", "error_key", "error_env"]
 }

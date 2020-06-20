@@ -81,6 +81,8 @@ public class AnsiblePrepService {
         }
         ctx.put("sslPort", network.getSslPort());
         ctx.put("publicBaseUri", network.getPublicUri());
+        ctx.put("support", configuration.getSupport());
+        ctx.put("appLinks", configuration.getAppLinks());
 
         if (network.sendErrors() && configuration.hasErrorApi()) {
             final ErrorApiConfiguration errorApi = configuration.getErrorApi();

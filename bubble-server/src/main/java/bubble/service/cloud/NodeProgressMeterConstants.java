@@ -58,11 +58,11 @@ public class NodeProgressMeterConstants {
             {METER_TICK_VALIDATING_NODE_NETWORK_AND_PLAN, 1},
             {METER_TICK_CREATING_NODE, 1},
             {METER_TICK_LAUNCHING_NODE, 1},
-            {METER_TICK_PREPARING_ROLES, 2},
-            {METER_TICK_PREPARING_INSTALL, 4},
-            {METER_TICK_STARTING_INSTALL, 6},
-            {METER_TICK_COPYING_ANSIBLE, 7},
-            {METER_TICK_RUNNING_ANSIBLE, 15}
+            {METER_TICK_PREPARING_ROLES, 5},
+            {METER_TICK_PREPARING_INSTALL, 7},
+            {METER_TICK_STARTING_INSTALL, 33},
+            {METER_TICK_COPYING_ANSIBLE, 34},
+            {METER_TICK_RUNNING_ANSIBLE, 37}
     });
 
     public static List<NodeProgressMeterTick> getStandardTicks(NewNodeNotification nn) {
