@@ -28,7 +28,7 @@ public class DigitalOceanPackerImageParser extends PackerImageParserBase {
 
         final PackerImage image = new PackerImage().setName(name);
 
-        if (item.has("id")) image.setId(item.get("id").textValue());
+        if (item.has("id")) image.setId(item.get("id").asText());
 
         if (item.has("regions")) {
             final JsonNode regionsNode = item.get("regions");
