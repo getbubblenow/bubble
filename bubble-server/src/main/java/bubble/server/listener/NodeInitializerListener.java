@@ -111,7 +111,10 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
         if (thisNode != null) {
             final BubbleNetwork thisNetwork = c.getThisNetwork();
             if (thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.node) {
-                c.getBean(RedisService.class).set(TAG_CERT_VALIDATION_HOST, c.getCertValidationHost());
+                final String certValidationHost = c.getCertValidationHost();
+                if (!empty(certValidationHost)) {
+                    c.getBean(RedisService.class).set(TAG_CERT_VALIDATION_HOST, certValidationHost);
+                }
                 c.getBean(AppPrimerService.class).primeApps();
                 for (Account a : accountDAO.findAll()) {
                     c.getBean(DeviceDAO.class).ensureSpareDevice(a.getUuid(), thisNode.getNetwork(), false);
