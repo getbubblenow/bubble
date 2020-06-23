@@ -8,7 +8,7 @@
 
 SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
-. ${SCRIPT_DIR}/list_test_instances.sh
+. ${SCRIPT_DIR}/aws_list_test_instances.sh
 
 if [[ ${INSTANCES_COUNT} -gt 0 ]] ; then
 
