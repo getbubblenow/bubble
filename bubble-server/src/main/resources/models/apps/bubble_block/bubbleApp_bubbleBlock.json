@@ -5,6 +5,7 @@
   "template": true,
   "enabled": true,
   "priority": 200,
+  "canPrime": true,
   "dataConfig": {
     "dataDriver": "bubble.app.bblock.BubbleBlockAppDataDriver",
     "presentation": "app",
@@ -16,8 +17,7 @@
       {"name": "data"}
     ],
     "params": [
-      {"name": "device", "required": false, "index": 10},
-      {"name": "meta2", "required": false, "operator": "like", "index": 20}
+      {"name": "device", "required": false, "index": 10}
     ],
     "views": [
       {"name": "last_24_hours"},

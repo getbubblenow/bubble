@@ -49,14 +49,14 @@ def bubble_activity_log(client_addr, server_addr, event, data):
         'client_addr': client_addr,
         'server_addr': server_addr,
         'event': event,
-        'data': data
+        'data': str(data)
     })
     bubble_log('bubble_activity_log: setting '+key+' = '+value)
     redis_set(key, value, BUBBLE_ACTIVITY_LOG_EXPIRATION)
     pass
 
 
-def bubble_passthru(remote_addr, addr, fqdn):
+def bubble_passthru(remote_addr, addr, fqdns):
     headers = {
         'X-Forwarded-For': remote_addr,
         'Accept' : 'application/json',
@@ -65,7 +65,7 @@ def bubble_passthru(remote_addr, addr, fqdn):
     try:
         data = {
             'addr': str(addr),
-            'fqdn': str(fqdn),
+            'fqdns': fqdns,
             'remoteAddr': remote_addr
         }
         response = requests.post('http://127.0.0.1:'+bubble_port+'/api/filter/passthru', headers=headers, json=data)

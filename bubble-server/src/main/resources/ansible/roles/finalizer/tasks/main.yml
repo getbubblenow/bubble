@@ -1,8 +1,8 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-- name: Snapshot ansible roles
-  shell: snapshot_ansible.sh
+- name: Snapshot ansible roles in the background
+  command: /usr/local/bin/snapshot_ansible.sh
 
 - name: Touch first-time setup file
   shell: su - bubble bash -c "if [[ ! -f /home/bubble/first_time_marker ]] ; then echo -n install > /home/bubble/first_time_marker ; fi"

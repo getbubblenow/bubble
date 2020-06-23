@@ -14,13 +14,19 @@ import bubble.service.stream.AppRuleHarness;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
+import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Set;
 
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.io.StreamUtil.stream2bytes;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
@@ -28,7 +34,37 @@ import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 
 public interface AppRuleDriver {
 
+    Logger log = LoggerFactory.getLogger(AppRuleDriver.class);
+
     InputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[0]);
+
+    // also used in dnscrypt-proxy/plugin_reverse_resolve_cache.go
+    String REDIS_BLOCK_LISTS = "blockLists";
+    String REDIS_FILTER_LISTS = "filterLists";
+    String REDIS_LIST_SUFFIX = "~UNION";
+
+    default Set<String> getPrimedBlockDomains () { return null; }
+    default Set<String> getPrimedFilterDomains () { return null; }
+
+    static void defineRedisBlockSet(RedisService redis, String ip, String list, String[] fullyBlockedDomains) {
+        defineRedisSet(redis, ip, REDIS_BLOCK_LISTS, list, fullyBlockedDomains);
+    }
+
+    static void defineRedisFilterSet(RedisService redis, String ip, String list, String[] filterDomains) {
+        defineRedisSet(redis, ip, REDIS_FILTER_LISTS, list, filterDomains);
+    }
+
+    static void defineRedisSet(RedisService redis, String ip, String listOfListsName, String listName, String[] domains) {
+        final String listOfListsForIp = listOfListsName + "~" + ip;
+        final String unionSetName = listOfListsForIp + REDIS_LIST_SUFFIX;
+        final String ipList = listOfListsForIp + "~" + listName;
+        final String tempList = ipList + "~"+now()+randomAlphanumeric(5);
+        redis.sadd_plaintext(tempList, domains);
+        redis.rename(tempList, ipList);
+        redis.sadd_plaintext(listOfListsForIp, ipList);
+        final Long count = redis.sunionstore(unionSetName, redis.smembers(listOfListsForIp));
+        log.info("defineRedisSet("+ip+","+listOfListsName+","+listName+"): unionSetName="+unionSetName+" size="+count);
+    }
 
     AppRuleDriver getNext();
     void setNext(AppRuleDriver next);

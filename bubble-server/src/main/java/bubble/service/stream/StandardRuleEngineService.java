@@ -173,7 +173,8 @@ public class StandardRuleEngineService implements RuleEngineService {
         return sendResponse(state.getResponseStream(last));
     }
 
-    private ExpirationMap<String, List<AppRuleHarness>> ruleCache = new ExpirationMap<>(HOURS.toMillis(1), ExpirationEvictionPolicy.atime);
+    private final ExpirationMap<String, List<AppRuleHarness>> ruleCache
+            = new ExpirationMap<>(HOURS.toMillis(1), ExpirationEvictionPolicy.atime);
 
     public Map<Object, Object> flushCaches() {
         final int ruleEngineCacheSize = ruleCache.size();

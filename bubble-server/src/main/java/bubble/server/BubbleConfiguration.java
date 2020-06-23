@@ -88,6 +88,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_PROMO_CODE_POLICY = "promoCodePolicy";
     public static final String TAG_REQUIRE_SEND_METRICS = "requireSendMetrics";
     public static final String TAG_SUPPORT = "support";
+    public static final String TAG_CERT_VALIDATION_HOST = "certValidationHost"; // must match bubble_passthru.py
 
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
@@ -137,6 +138,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public boolean hasSageNode () { return getSageNode() != null; }
 
     @Getter @Setter private String letsencryptEmail;
+    @Getter @Setter private String certValidationHost;
+
     @Setter private String localStorageDir = DEFAULT_LOCAL_STORAGE_DIR;
     public String getLocalStorageDir () { return empty(localStorageDir) ? DEFAULT_LOCAL_STORAGE_DIR : localStorageDir; }
 
@@ -297,7 +300,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_LOCKED, accountDAO.locked()},
                         {TAG_LAUNCH_LOCK, isSageLauncher() || thisNetwork == null ? null : thisNetwork.launchLock()},
                         {TAG_SSL_PORT, getDefaultSslPort()},
-                        {TAG_SUPPORT, getSupport()}
+                        {TAG_SUPPORT, getSupport()},
+                        {TAG_CERT_VALIDATION_HOST, getCertValidationHost()}
                 }));
             }
             return publicSystemConfigs.get();

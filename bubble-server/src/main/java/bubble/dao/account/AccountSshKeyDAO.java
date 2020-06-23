@@ -46,18 +46,15 @@ public class AccountSshKeyDAO extends AccountOwnedEntityDAO<AccountSshKey> {
         if (key.hasExpiration() && key.expired()) throw invalidEx("err.expiration.cannotCreateSshKeyAlreadyExpired");
 
         final Account owner = accountDAO.findByUuid(key.getAccount());
-        if (key.installSshKey()) {
-            if (owner.admin()) {
-                // admin keys are always installed on a node
-                // never allow installation of a key on sage. must be manually set in the database.
-                final BubbleNetwork thisNetwork = configuration.getThisNetwork();
-                if (thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.node) {
-                    key.setInstallSshKey(true);
-                }
-            } else {
-                // never install key for non-admin
-                key.setInstallSshKey(false);
-            }
+        final BubbleNetwork thisNetwork = configuration.getThisNetwork();
+        if (thisNetwork == null || thisNetwork.getInstallType() != AnsibleInstallType.sage) {
+            // never allow installation of a key on sage. must be manually set in the database.
+            key.setInstallSshKey(false);
+
+        } else {
+            // admin keys are always installed on a node
+            // never install key for non-admin
+            key.setInstallSshKey(owner.admin() && thisNetwork.getInstallType() == AnsibleInstallType.node);
         }
 
         final String hash = sha256_hex(key.getSshPublicKey());

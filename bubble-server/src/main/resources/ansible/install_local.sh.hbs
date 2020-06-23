@@ -22,28 +22,23 @@ if [[ "$(whoami)" != "{{node.user}}" ]] ; then
 fi
 
 ANSIBLE_DIR="${ANSIBLE_HOME}/ansible"
-ID_FILE="${ANSIBLE_HOME}/.ssh/bubble_rsa"
-PUB_FILE="${ANSIBLE_HOME}/.ssh/bubble_rsa.pub"
 AUTH_KEYS="${ANSIBLE_HOME}/.ssh/authorized_keys"
 
 if [[ ! -d "${ANSIBLE_DIR}" ]] ; then
   die "Ansible dir not found or not a directory: ${ANSIBLE_DIR}"
 fi
 
-if [[ ! -f "${ID_FILE}" ]] ; then
-  ssh-keygen -t rsa -q -N '' -f ${ID_FILE} || die "Error generating RSA key"
-fi
-
 # lockout the node that started us
-cat "${PUB_FILE}" > "${AUTH_KEYS}" || die "Error updating ${AUTH_KEYS} file"
+cat /dev/null > "${AUTH_KEYS}" || die "Error truncating ${AUTH_KEYS} file"
+
+# ensure proper permissions on authorized_keys file
+chmod 600 "${AUTH_KEYS}" || die "Error setting permissions on ${AUTH_KEYS} file"
 
 # add admin ssh key, if one was given
 ADMIN_PUB_KEY="${ANSIBLE_DIR}/roles/bubble/files/admin_ssh_key.pub"
 if [[ -f "${ADMIN_PUB_KEY}" ]] ; then
   cat "${ADMIN_PUB_KEY}" >> "${AUTH_KEYS}"
 fi
-
-SSH_OPTIONS="--ssh-extra-args '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PreferredAuthentications=publickey -i ${ID_FILE}'"
 
 SKIP_TAGS=""
 if [[ -n "{{restoreKey}}" ]] ; then
@@ -55,5 +50,5 @@ cd "${ANSIBLE_DIR}" && \
   virtualenv -p python3 ./venv && \
   . ./venv/bin/activate && \
   pip3 install ansible && \
-  bash -c "ansible-playbook ${SSH_OPTIONS} ${SKIP_TAGS} --inventory ./hosts ./playbook.yml 2>&1 | tee ${LOG}" \
+  ansible-playbook ${SKIP_TAGS} --inventory ./hosts ./playbook.yml \
 || die "Error running ansible. journalctl -xe = $(journalctl -xe | tail -n 50)"

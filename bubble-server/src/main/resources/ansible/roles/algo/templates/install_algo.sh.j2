@@ -43,4 +43,10 @@ CONFIGS_BACKUP=/home/bubble/.BUBBLE_ALGO_CONFIGS.tgz
 cd ${ALGO_BASE} && tar czf ${CONFIGS_BACKUP} configs && chgrp bubble ${CONFIGS_BACKUP} && chmod 660 ${CONFIGS_BACKUP} || die "Error backing up algo configs"
 cd /home/bubble && tar xzf ${CONFIGS_BACKUP} && chgrp -R bubble configs && chown -R bubble configs && chmod 500 configs || die "Error unpacking algo configs to bubble home"
 
+# Restart algo_refresh_users_monitor and wg_monitor_connections
+supervisorctl reload && sleep 5s && supervisorctl restart algo_refresh_users_monitor && supervisorctl restart wg_monitor_connections
+
+# Restart dnscrypt-proxy
+service dnscrypt-proxy restart
+
 touch "${ALGO_BASE}/.install_marker"

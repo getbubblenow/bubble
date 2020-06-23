@@ -5,6 +5,7 @@
   "template": true,
   "enabled": true,
   "priority": 300,
+  "canPrime": true,
   "dataConfig": {
     "dataDriver": "bubble.app.social.block.UserBlockerAppDataDriver",
     "presentation": "site",

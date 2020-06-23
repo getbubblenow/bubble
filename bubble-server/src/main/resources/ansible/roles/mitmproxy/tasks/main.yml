@@ -20,9 +20,6 @@
 
 - import_tasks: route.yml
 
-- name: Restart dnscrypt-proxy
-  shell: service dnscrypt-proxy restart
-
 - name: Install supervisor conf file
   copy:
     src: supervisor_mitmproxy.conf

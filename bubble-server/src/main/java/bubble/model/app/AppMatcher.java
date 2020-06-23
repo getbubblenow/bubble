@@ -48,6 +48,8 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
     public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS, "name", "site", "rule", "passthru");
 
     public static final Pattern DEFAULT_CONTENT_TYPE_PATTERN = Pattern.compile("^text/html.*", Pattern.CASE_INSENSITIVE);
+    public static final String WILDCARD_FQDN = "*";
+    public static final String WILDCARD_URL = ".*";
 
     public AppMatcher(AppMatcher other) {
         copy(this, other, CREATE_FIELDS);
@@ -80,12 +82,14 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
     @Size(max=1024, message="err.fqdn.length")
     @ECIndex @Column(nullable=false, length=1024)
     @Getter @Setter private String fqdn;
+    @JsonIgnore @Transient public boolean isWildcardFqdn () { return fqdn != null && fqdn.equals(WILDCARD_FQDN); }
 
     @ECSearchable(filter=true) @ECField(index=60)
     @HasValue(message="err.urlRegex.required")
     @Size(max=1024, message="err.urlRegex.length")
     @Type(type=ENCRYPTED_STRING) @Column(nullable=false, columnDefinition="varchar("+(1024+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String urlRegex;
+    public boolean hasUrlRegex() { return !empty(urlRegex) && !urlRegex.equals(WILDCARD_URL); }
 
     @Transient @JsonIgnore public Pattern getUrlPattern() { return Pattern.compile(getUrlRegex()); }
     public boolean matchesUrl (String value) { return getUrlPattern().matcher(value).find(); }

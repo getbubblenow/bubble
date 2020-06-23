@@ -33,6 +33,7 @@ import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
@@ -40,19 +41,30 @@ import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.string.StringUtil.UTF8cs;
-import static org.cobbzilla.util.string.StringUtil.getPackagePath;
+import static org.cobbzilla.util.string.StringUtil.*;
 
 @Slf4j
 public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
 
-    private BlockList blockList = new BlockList();
+    private final AtomicReference<BlockList> blockList = new AtomicReference<>(new BlockList());
+    private BlockList getBlockList() { return blockList.get(); }
 
-    private static Map<String, BlockListSource> blockListCache = new ConcurrentHashMap<>();
+    private final AtomicReference<Set<String>> fullyBlockedDomains = new AtomicReference<>(Collections.emptySet());
+    @Override public Set<String> getPrimedBlockDomains() { return fullyBlockedDomains.get(); }
+
+    private final AtomicReference<Set<String>> partiallyBlockedDomains = new AtomicReference<>(Collections.emptySet());
+    @Override public Set<String> getPrimedFilterDomains() { return partiallyBlockedDomains.get(); }
+
+    private final static Map<String, BlockListSource> blockListCache = new ConcurrentHashMap<>();
 
     @Override public <C> Class<C> getConfigClass() { return (Class<C>) BubbleBlockConfig.class; }
 
-    @Override public void init(JsonNode config, JsonNode userConfig, AppRule rule, AppMatcher matcher, Account account, Device device) {
+    @Override public void init(JsonNode config,
+                               JsonNode userConfig,
+                               AppRule rule,
+                               AppMatcher matcher,
+                               Account account,
+                               Device device) {
         super.init(config, userConfig, rule, matcher, account, device);
         refreshBlockLists();
     }
@@ -61,6 +73,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
         final BubbleBlockList[] blockLists = bubbleBlockConfig.getBlockLists();
         final Set<String> refreshed = new HashSet<>();
+        final BlockList newBlockList = new BlockList();
         for (BubbleBlockList list : blockLists) {
             if (!list.enabled()) continue;
 
@@ -91,8 +104,22 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                     log.error("init: error adding additional entries: "+shortError(e));
                 }
             }
-            if (blockListSource != null) blockList.merge(blockListSource.getBlockList());
+            if (blockListSource != null) newBlockList.merge(blockListSource.getBlockList());
         }
+        blockList.set(newBlockList);
+
+        boolean doPrime = false;
+        if (!newBlockList.getFullyBlockedDomains().equals(fullyBlockedDomains.get())) {
+            fullyBlockedDomains.set(newBlockList.getFullyBlockedDomains());
+            doPrime = true;
+        }
+        if (!newBlockList.getPartiallyBlockedDomains().equals(partiallyBlockedDomains.get())) {
+            partiallyBlockedDomains.set(newBlockList.getPartiallyBlockedDomains());
+            doPrime = true;
+        }
+
+        log.info("refreshBlockLists: fullyBlockedDomains="+fullyBlockedDomains.get().size());
+        log.info("refreshBlockLists: partiallyBlockedDomains="+partiallyBlockedDomains.get().size());
         log.info("refreshBlockLists: refreshed "+refreshed.size()+" block lists: "+StringUtil.toString(refreshed));
     }
 
@@ -178,7 +205,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         }
     }
 
-    public BlockDecision getDecision(String fqdn, String uri, String userAgent) { return blockList.getDecision(fqdn, uri, userAgent, false); }
+    public BlockDecision getDecision(String fqdn, String uri, String userAgent) { return getBlockList().getDecision(fqdn, uri, userAgent, false); }
 
     public BlockDecision getDecision(String fqdn, String uri, String userAgent, boolean primary) {
         final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
@@ -189,7 +216,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                 }
             }
         }
-        return blockList.getDecision(fqdn, uri, primary);
+        return getBlockList().getDecision(fqdn, uri, primary);
     }
 
     @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
@@ -199,7 +226,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
 
         // Now that we know the content type, re-check the BlockList
         final String contentType = filterRequest.getContentType();
-        final BlockDecision decision = blockList.getDecision(request.getFqdn(), request.getUri(), contentType, true);
+        final BlockDecision decision = getBlockList().getDecision(request.getFqdn(), request.getUri(), contentType, true);
         if (log.isDebugEnabled()) log.debug(prefix+"preprocess decision was "+decision+", but now we know contentType="+contentType);
         switch (decision.getDecisionType()) {
             case block:
@@ -255,8 +282,8 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         ctx.put(CTX_BUBBLE_HOME, configuration.getPublicUriBase());
         ctx.put(CTX_BUBBLE_DATA_ID, getDataId(requestId));
         ctx.put(CTX_BUBBLE_SELECTORS, json(decision.getSelectors(), COMPACT_MAPPER));
-        ctx.put(CTX_BUBBLE_WHITELIST, json(blockList.getWhitelistDomains(), COMPACT_MAPPER));
-        ctx.put(CTX_BUBBLE_BLACKLIST, json(blockList.getBlacklistDomains(), COMPACT_MAPPER));
+        ctx.put(CTX_BUBBLE_WHITELIST, json(getBlockList().getWhitelistDomains(), COMPACT_MAPPER));
+        ctx.put(CTX_BUBBLE_BLACKLIST, json(getBlockList().getBlacklistDomains(), COMPACT_MAPPER));
         return HandlebarsUtil.apply(getHandlebars(), BUBBLE_JS_TEMPLATE, ctx);
     }
 

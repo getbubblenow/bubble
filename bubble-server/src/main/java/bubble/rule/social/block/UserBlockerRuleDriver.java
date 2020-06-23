@@ -12,6 +12,7 @@ import com.github.jknack.handlebars.Handlebars;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.input.ReaderInputStream;
+import org.cobbzilla.util.collection.SingletonSet;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexInsertionFilter;
 import org.cobbzilla.util.io.regex.RegexStreamFilter;
@@ -19,6 +20,7 @@ import org.cobbzilla.util.io.regex.RegexStreamFilter;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
@@ -49,6 +51,10 @@ public class UserBlockerRuleDriver extends AbstractAppRuleDriver {
         final String json = json(userBlockerConfig);
 
         return json(json, JsonNode.class);
+    }
+
+    @Override public Set<String> getPrimedFilterDomains() {
+        return matcher.isWildcardFqdn() ? null : new SingletonSet<>(matcher.getFqdn());
     }
 
     protected UserBlockerConfig configObject() { return json(getFullConfig(), UserBlockerConfig.class); }

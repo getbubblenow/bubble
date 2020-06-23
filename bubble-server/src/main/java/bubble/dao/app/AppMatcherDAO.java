@@ -9,6 +9,7 @@ import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.app.BubbleApp;
+import bubble.service.stream.AppPrimerService;
 import bubble.service.stream.RuleEngineService;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.criterion.Order;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static bubble.model.app.AppMatcher.WILDCARD_FQDN;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.wizard.model.Identifiable.MTIME;
 import static org.hibernate.criterion.Restrictions.*;
@@ -28,6 +30,7 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
     @Autowired private BubbleAppDAO appDAO;
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private RuleEngineService ruleEngineService;
+    @Autowired private AppPrimerService primerService;
 
     @Override public Order getDefaultSortOrder() { return PRIORITY_ASC; }
 
@@ -39,7 +42,7 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
                         eq("passthru", false),
                         or(
                                 eq("fqdn", fqdn),
-                                eq("fqdn", "*")
+                                eq("fqdn", WILDCARD_FQDN)
                         ))
         ).addOrder(PRIORITY_ASC));
     }
@@ -88,6 +91,7 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
             }
         }
         ruleEngineService.flushCaches();
+        primerService.prime(app);
         return super.postUpdate(matcher, context);
     }
 

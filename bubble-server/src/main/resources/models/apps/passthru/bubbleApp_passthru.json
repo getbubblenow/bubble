@@ -5,6 +5,7 @@
   "template": true,
   "enabled": true,
   "priority": 1000000,
+  "canPrime": false,
   "dataConfig": {
     "dataDriver": "bubble.app.passthru.TlsPassthruAppDataDriver",
     "presentation": "none",

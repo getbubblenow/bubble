@@ -457,4 +457,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @NonNull public List<Account> findDeleted() {
         return list(criteria().add(isNotNull("deleted")));
     }
+
+    @NonNull public List<Account> findNotDeleted() { return findByField("deleted", null); }
+
 }

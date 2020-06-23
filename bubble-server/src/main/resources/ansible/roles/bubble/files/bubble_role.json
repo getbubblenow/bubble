@@ -30,6 +30,8 @@
     {"name": "error_key", "value": "[[error_key]]"},
     {"name": "error_env", "value": "[[error_env]]"},
 
+    {"name": "cert_validation_host", "value": "[[cert_validation_host]]"},
+
     {"name": "support_email", "value": "[[support.email]]"},
     {"name": "support_site", "value": "[[support.site]]"},
 

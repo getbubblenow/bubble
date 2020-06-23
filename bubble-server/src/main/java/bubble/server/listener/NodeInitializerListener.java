@@ -15,13 +15,16 @@ import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.NetworkMonitorService;
+import bubble.service.stream.AppPrimerService;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
 
 import java.io.File;
 import java.util.Map;
 
+import static bubble.server.BubbleConfiguration.TAG_CERT_VALIDATION_HOST;
 import static bubble.service.boot.StandardSelfNodeService.SELF_NODE_JSON;
 import static bubble.service.boot.StandardSelfNodeService.THIS_NODE_FILE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -104,10 +107,12 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
             }
         }
 
-        // ensure default devices exist
+        // ensure default devices exist, cert_validation_host is set, and apps are primed
         if (thisNode != null) {
             final BubbleNetwork thisNetwork = c.getThisNetwork();
             if (thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.node) {
+                c.getBean(RedisService.class).set(TAG_CERT_VALIDATION_HOST, c.getCertValidationHost());
+                c.getBean(AppPrimerService.class).primeApps();
                 for (Account a : accountDAO.findAll()) {
                     c.getBean(DeviceDAO.class).ensureSpareDevice(a.getUuid(), thisNode.getNetwork(), false);
                 }

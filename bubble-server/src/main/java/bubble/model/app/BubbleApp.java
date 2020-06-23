@@ -21,12 +21,11 @@ import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
 
 import static bubble.ApiConstants.*;
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
@@ -84,7 +83,12 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @Getter @Setter private String description;
 
-    @Column(length=100000, nullable=false) @ECField(index=50)
+    @ECSearchable @ECField(index=50)
+    @Column(nullable=false, updatable=false)
+    @Getter @Setter private Boolean canPrime;
+    public boolean canPrime () { return bool(canPrime); }
+
+    @Column(length=100000, nullable=false) @ECField(index=60)
     @JsonIgnore @Getter @Setter private String dataConfigJson;
 
     @Transient public AppDataConfig getDataConfig () { return dataConfigJson == null ? null : ensureDefaults(json(dataConfigJson, AppDataConfig.class)); }
@@ -106,22 +110,22 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     // to a new node. This App will become a template/root BubbleApp for a new node, if it
     // is owned by a user and applicable to the BubblePlan (via BubblePlanApp)
     // For system apps, this can be null
-    @ECField(index=60)
+    @ECField(index=70)
     @Column(length=UUID_MAXLEN, updatable=false)
     @Getter @Setter private String templateApp;
 
-    @ECSearchable @ECField(index=70)
+    @ECSearchable @ECField(index=80)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean template = false;
 
-    @ECSearchable @ECField(index=80)
+    @ECSearchable @ECField(index=90)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
-    @ECSearchable @ECField(index=90) @Column(nullable=false)
+    @ECSearchable @ECField(index=100) @Column(nullable=false)
     @ECIndex @Getter @Setter private Integer priority;
 
-    @ECSearchable @ECField(index=100)
+    @ECSearchable @ECField(index=110)
     @ECIndex @Getter @Setter private Boolean needsUpdate = false;
 
 }

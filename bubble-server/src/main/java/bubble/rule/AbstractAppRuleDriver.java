@@ -13,6 +13,7 @@ import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
+import bubble.service.stream.AppPrimerService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
 import lombok.Getter;
@@ -39,6 +40,7 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
     @Autowired protected RedisService redis;
     @Autowired protected BubbleNetworkDAO networkDAO;
     @Autowired protected DeviceDAO deviceDAO;
+    @Autowired protected AppPrimerService appPrimerService;
 
     @Getter @Setter private AppRuleDriver next;
 

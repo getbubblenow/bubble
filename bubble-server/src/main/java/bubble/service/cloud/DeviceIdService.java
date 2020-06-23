@@ -42,7 +42,7 @@ public class DeviceIdService {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AccountDAO accountDAO;
 
-    private Map<String, Device> deviceCache = new ExpirationMap<>(MINUTES.toMillis(10));
+    private final Map<String, Device> deviceCache = new ExpirationMap<>(MINUTES.toMillis(10));
 
     public Device findDeviceByIp (String ipAddr) {
 

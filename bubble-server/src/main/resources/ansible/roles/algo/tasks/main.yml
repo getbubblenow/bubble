@@ -15,12 +15,8 @@
   when: restore_key is not defined
 
 # Don't start monitors when in restore mode, bubble_restore_monitor.sh will start it after algo is installed
-- name: Restart algo monitors
-  shell: bash -c "supervisorctl reload && sleep 5s && supervisorctl restart algo_refresh_users_monitor && supervisorctl restart wg_monitor_connections"
-  when: restore_key is not defined
-
 - name: Stop algo monitors (in restore mode)
-  shell: bash -c "supervisorctl reload && sleep 5s && supervisorctl stop algo_refresh_users_monitor && supervisorctl stop wg_monitor_connections"
+  shell: bash -c "supervisorctl stop algo_refresh_users_monitor && supervisorctl stop wg_monitor_connections"
   when: restore_key is defined
 
 # Add bubble rules

@@ -37,10 +37,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
@@ -167,12 +164,15 @@ public class FilterHttpResource {
             retained.add(matcher);
         }
 
-        final boolean passthru = ruleEngine.isTlsPassthru(account, device, retained, passthruRequest.getAddr(), passthruRequest.getFqdn());
-        if (passthru) {
-            if (log.isDebugEnabled()) log.debug(prefix+"returning true for fqdn/addr="+passthruRequest.getFqdn()+"/"+passthruRequest.getAddr());
-            return ok();
+        final String[] fqdns = passthruRequest.getFqdns();
+        for (String fqdn : fqdns) {
+            final boolean passthru = ruleEngine.isTlsPassthru(account, device, retained, passthruRequest.getAddr(), fqdn);
+            if (passthru) {
+                if (log.isDebugEnabled()) log.debug(prefix+"returning true for fqdn/addr="+fqdn+"/"+passthruRequest.getAddr());
+                return ok();
+            }
         }
-        if (log.isDebugEnabled()) log.debug(prefix+"returning false for fqdn/addr="+passthruRequest.getFqdn()+"/"+passthruRequest.getAddr());
+        if (log.isDebugEnabled()) log.debug(prefix+"returning false for fqdns/addr="+Arrays.toString(fqdns)+"/"+passthruRequest.getAddr());
         return notFound();
     }
 

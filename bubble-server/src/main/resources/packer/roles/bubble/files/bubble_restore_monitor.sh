@@ -114,8 +114,6 @@ if [[ ! -f ${CONFIGS_BACKUP} ]] ; then
 else
   ANSIBLE_HOME="/root"
   ANSIBLE_DIR="${ANSIBLE_HOME}/ansible"
-  ID_FILE="${ANSIBLE_HOME}/.ssh/bubble_rsa"
-  SSH_OPTIONS="--ssh-extra-args '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PreferredAuthentications=publickey -i ${ID_FILE}'"
 
   ALGO_BASE=${ANSIBLE_DIR}/roles/algo/algo
   if [[ ! -d ${ALGO_BASE} ]] ; then
@@ -126,7 +124,7 @@ else
   cd "${ANSIBLE_DIR}" && \
     . ./venv/bin/activate && \
     bash -c \
-      "ansible-playbook ${SSH_OPTIONS} --tags 'algo_related,always' --inventory ./hosts ./playbook.yml 2>&1 >> ${LOG}" \
+      "ansible-playbook --tags 'algo_related,always' --inventory ./hosts ./playbook.yml 2>&1 >> ${LOG}" \
   || die "Error running ansible in post-restore. journalctl -xe = $(journalctl -xe | tail -n 50)"
 fi
 

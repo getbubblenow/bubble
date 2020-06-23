@@ -13,7 +13,7 @@
   get_url:
     url: https://github.com/getbubblenow/bubble-dist/raw/master/algo/master.zip
     dest: /tmp/algo.zip
-    checksum: sha256:f9709ced6cbaf92473c975355050915657da50dfc0eaf655f178643953a9cd42
+    checksum: sha256:2e7509f20890f4b130cd2d0de7fcef1ac59f9f5f3ca180bd6dd17d9a1da8c91d
 
 - name: Unzip algo master.zip
   unarchive:

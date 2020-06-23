@@ -5,6 +5,7 @@
   "template": true,
   "enabled": true,
   "priority": 100,
+  "canPrime": false,
   "dataConfig": {
     "dataDriver": "bubble.app.analytics.TrafficAnalyticsAppDataDriver",
     "presentation": "app",

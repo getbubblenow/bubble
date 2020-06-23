@@ -16,7 +16,6 @@
   template: src=stronger_dhparams.conf dest=/etc/nginx/conf.d/stronger_dhparams.conf
 
 - include: site.yml
-- meta: flush_handlers # nginx has to be restarted right now if it has to
 
 - name: Init certbot
   shell: init_certbot.sh {{ letsencrypt_email }} {{ server_name }} {{ server_alias }}
