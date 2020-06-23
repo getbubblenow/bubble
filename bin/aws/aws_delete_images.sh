@@ -13,7 +13,7 @@ for region in $(${THISDIR}/aws_list_regions.sh) ; do
   echo 1>&2 "Deleting images matching: ${IMAGE_FILTER} in region ${region}"
   IMAGE_IDS=$(aws ec2 describe-images --filters "Name=name,Values=${IMAGE_FILTER}" | jq -r '.Images[].ImageId')
   if [[ -z "${IMAGE_IDS}" ]] ; then
-    echo 1>&2 "No images with name=${IMAGE_NAME} found in region ${region}"
+    echo 1>&2 "No images matching ${IMAGE_FILTER} found in region ${region}"
     continue
   fi
   for image in ${IMAGE_IDS} ; do
