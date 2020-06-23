@@ -42,16 +42,16 @@
   },
 
   {
-    "comment": "root: check email inbox for verification message for referring user",
+    "comment": "root: check email inbox for welcome message for referring user",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/test_user_referring_free@example.com?type=request&action=verify&target=account"
+      "uri": "debug/inbox/email/test_user_referring_free@example.com?type=notice&action=welcome&target=account"
     },
     "response": {
       "store": "emailInbox",
       "check": [
-        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
-        {"condition": "'{{json.[0].ctx.message.action}}' == 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'notice'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' == 'welcome'"},
         {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
       ]
     }
