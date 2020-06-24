@@ -1,5 +1,5 @@
 #!/bin/bash
-PREFIX="${1:?no prefix}"
-for k in $(echo 'keys '"""${PREFIX}"""'*' | redis-cli )  ; do
+KEY_MATCH="${1:?no key match}"
+for k in $(echo 'keys *'"""${KEY_MATCH}"""'*' | redis-cli )  ; do
   echo "del ${k} => $(echo "del ${k}" | redis-cli)"
 done
