@@ -6,7 +6,6 @@ package bubble.server.listener;
 
 import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.CloudServiceDAO;
-import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
@@ -117,9 +116,6 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
                     c.getBean(RedisService.class).set(TAG_CERT_VALIDATION_HOST, certValidationHost);
                 }
                 c.getBean(AppPrimerService.class).primeApps();
-                for (Account a : accountDAO.findAll()) {
-                    c.getBean(DeviceDAO.class).ensureSpareDevice(a.getUuid(), thisNode.getNetwork(), false);
-                }
                 c.getBean(DeviceIdService.class).initDeviceSecurityLevels();
             }
         }

@@ -124,7 +124,7 @@ public class StandardDeviceIdService implements DeviceIdService {
         } else {
             log.warn("findDeviceByIp("+ipAddr+") test mode, returning and possibly initializing first admin device");
             final Device device = adminDevices.get(0);
-            return device.uninitialized() ? deviceDAO.update(device.initTotpKey()) : device;
+            return !device.hasTotpKey() ? deviceDAO.update(device.initTotpKey()) : device;
         }
     }
 

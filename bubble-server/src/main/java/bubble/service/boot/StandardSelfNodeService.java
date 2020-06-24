@@ -6,6 +6,7 @@ package bubble.service.boot;
 
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.storage.local.LocalStorageDriver;
+import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountSshKeyDAO;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BubblePlanDAO;
@@ -13,6 +14,8 @@ import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
 import bubble.dao.cloud.CloudServiceDAO;
+import bubble.dao.device.DeviceDAO;
+import bubble.model.account.Account;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.*;
@@ -40,13 +43,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static bubble.ApiConstants.*;
-import static bubble.ApiConstants.EP_KEY;
 import static bubble.model.cloud.BubbleNode.nodeFromFile;
 import static bubble.model.cloud.BubbleNodeKey.nodeKeyFromFile;
 import static bubble.server.BubbleServer.disableRestoreMode;
 import static bubble.server.BubbleServer.isRestoreMode;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.function.Predicate.not;
+import static org.cobbzilla.util.daemon.ZillaRuntime.background;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.toFileOrDie;
@@ -70,6 +74,8 @@ public class StandardSelfNodeService implements SelfNodeService {
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private BubblePlanDAO planDAO;
+    @Autowired private AccountDAO accountDAO;
+    @Autowired private DeviceDAO deviceDAO;
     @Autowired private NotificationService notificationService;
     @Autowired private BubbleConfiguration configuration;
 
@@ -111,17 +117,17 @@ public class StandardSelfNodeService implements SelfNodeService {
             nodeKeyDAO.create(new BubbleNodeKey(thisNode));
         }
 
+        final var thisNetworkUuid = thisNode.getNetwork();
         if (!isRestoreMode()) {
-            final String network = thisNode.getNetwork();
 
             // ensure storage delegates use a network-specific key
             final List<String> updatedClouds = new ArrayList<>();
             cloudDAO.findByType(CloudServiceType.storage).stream()
                     .filter(cloud -> cloud.getCredentials() != null
-                            && cloud.getCredentials().needsNewNetworkKey(network)
+                            && cloud.getCredentials().needsNewNetworkKey(thisNetworkUuid)
                             && !cloud.usesDriver(LocalStorageDriver.class))
                     .forEach(cloud -> {
-                        cloudDAO.update(cloud.setCredentials(cloud.getCredentials().initNetworkKey(network)));
+                        cloudDAO.update(cloud.setCredentials(cloud.getCredentials().initNetworkKey(thisNetworkUuid)));
                         log.info("onStart: set network-specific key for storage: " + cloud.getName());
                         updatedClouds.add(cloud.getName() + "/" + cloud.getUuid());
                     });
@@ -130,10 +136,22 @@ public class StandardSelfNodeService implements SelfNodeService {
             }
         }
 
-        // start hello sage service, if we have a sage that is not ourselves
+        // start hello sage and spare devices services, if we have a sage that is not ourselves
         if (c.hasSageNode() && !c.isSelfSage()) {
             log.info("onStart: starting SageHelloService");
             c.getBean(SageHelloService.class).start();
+
+            log.info("onStart: building spare devices for all account that are not root account");
+            background(() -> {
+                if (accountDAO.findAll()
+                              .stream()
+                              .filter(not(Account::isRoot))
+                              .map(a -> deviceDAO.ensureAllSpareDevices(a.getUuid(), thisNetworkUuid))
+                              .reduce(false, Boolean::logicalOr)
+                              .booleanValue()) {
+                    deviceDAO.refreshVpnUsers();
+                }
+            });
         }
 
         // start RefundService if payments are enabled and this is a SageLauncher

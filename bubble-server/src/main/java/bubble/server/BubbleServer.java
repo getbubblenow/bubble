@@ -6,7 +6,6 @@ package bubble.server;
 
 import bubble.model.cloud.BubbleNode;
 import bubble.server.listener.BubbleFirstTimeListener;
-import bubble.server.listener.DeviceInitializerListener;
 import bubble.server.listener.NodeInitializerListener;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +49,6 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
             new SystemInitializerListener(),
             new FlywayMigrationListener<BubbleConfiguration>(),
             new NodeInitializerListener(),
-            new DeviceInitializerListener(),
             new BubbleFirstTimeListener(),
             new BrowserLauncherListener()
     });

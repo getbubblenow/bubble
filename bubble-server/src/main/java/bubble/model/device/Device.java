@@ -25,8 +25,11 @@ import javax.persistence.Enumerated;
 import javax.validation.constraints.Size;
 
 import static bubble.ApiConstants.EP_DEVICES;
+import static bubble.model.device.BubbleDeviceType.other;
+import static bubble.model.device.BubbleDeviceType.uninitialized;
 import static java.util.UUID.randomUUID;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
@@ -64,9 +67,9 @@ public class Device extends IdentifiableBase implements HasAccount {
 
     @Override public Identifiable update(Identifiable thing) { copy(this, thing, UPDATE_FIELDS); return this; }
 
-    public void initialize (Device other) {
-        copy(this, other);
-        initTotpKey();
+    public Device initDeviceType() {
+        if (empty(getDeviceType()) || getDeviceType().equals(uninitialized)) setDeviceType(other);
+        return this;
     }
 
     @ECSearchable(filter=true) @ECField(index=10)
@@ -104,7 +107,8 @@ public class Device extends IdentifiableBase implements HasAccount {
     @Size(max=300, message="err.totpKey.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(300+ENC_PAD)+") NOT NULL")
     @JsonIgnore @Getter @Setter private String totpKey;
-    public Device initTotpKey() { return setTotpKey(randomAlphanumeric(200)); }
+    public Device initTotpKey() { return hasTotpKey() ? this : setTotpKey(randomAlphanumeric(200)); }
+    public boolean hasTotpKey() { return !empty(totpKey); }
 
     // make ctime visible
     @JsonProperty public long getCtime () { return super.getCtime(); }

@@ -47,8 +47,7 @@ import static bubble.model.account.AutoUpdatePolicy.EMPTY_AUTO_UPDATE_POLICY;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
-import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.wizard.model.IdentifiableBase.CTIME_ASC;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
@@ -144,21 +143,17 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         }
     }
 
-    @Override public Account postCreate(Account account, Object context) {
+    @Override public Account postCreate(@NonNull final Account account, final Object context) {
         searchService.flushCache(this);
-        final String accountUuid = account.getUuid();
         if (account.hasPolicy()) {
-            policyDAO.create(new AccountPolicy(account.getPolicy()).setAccount(accountUuid));
+            policyDAO.create(new AccountPolicy(account.getPolicy()).setAccount(account.getUuid()));
         }
 
         // create an uninitialized device for the account, but only if this is a regular node network
         // sage networks do not allow devices, they launch and manage other regular node networks
-        final BubbleNode thisNode = configuration.getThisNode();
-        if (thisNode != null) {
-            final BubbleNetwork thisNetwork = configuration.getThisNetwork();
-            if (thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.node && account.getHashedPassword().isNotSpecial()) {
-                deviceDAO.ensureSpareDevice(accountUuid, thisNode.getNetwork(), true);
-            }
+        if (!account.isRoot() && configuration.hasSageNode() && !configuration.isSelfSage()) {
+            deviceDAO.ensureAllSpareDevices(account.getUuid(), configuration.getThisNetwork().getUuid());
+            deviceDAO.refreshVpnUsers();
         }
 
         if (account.hasParent()) {
