@@ -2,7 +2,7 @@
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
 - name: Set the cert name
-  shell: set_cert_name.sh /home/mitmproxy/mitmproxy {{ server_alias }}
+  shell: set_cert_name.sh /home/mitmproxy/mitmproxy {{ cert_name }}
 
 - name: Reuse bubble mitm certs if available
   shell: reuse_bubble_mitm_certs.sh

@@ -113,10 +113,10 @@ public class AnsiblePrepService {
 
         // if this is a fork, and current server is local, then sage will be self
         if (fork && configuration.getThisNode().localIp4()) {
-            ctx.put("sageNode", node.getUuid());
+            ctx.put("sageNode", node);
         } else {
             // otherwise, sage will be us, the node that is launching the new node
-            ctx.put("sageNode", configuration.getThisNode().getUuid());
+            ctx.put("sageNode", configuration.getThisNode());
         }
 
         final File rolesDir = new File(automation, "roles");

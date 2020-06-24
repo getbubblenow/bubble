@@ -27,6 +27,7 @@ from mitmproxy.proxy.protocol import TlsLayer, RawTCPLayer
 from mitmproxy.exceptions import TlsProtocolException
 
 from bubble_api import bubble_log, bubble_passthru, bubble_activity_log, redis_set
+from bubble_config import bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6
 import redis
 import json
 import subprocess
@@ -58,6 +59,10 @@ def get_local_ips():
         for ip in subprocess.check_output(['hostname', '-I']).split():
             local_ips.append(ip.decode())
     return local_ips
+
+
+def is_sage_request(ip, fqdns):
+    return ip == bubble_sage_ip4 or ip == bubble_sage_ip6 or bubble_sage_host in fqdns
 
 
 def passthru_cache_prefix(client_addr, server_addr):
@@ -106,11 +111,6 @@ def check_bubble_passthru(client_addr, addr, fqdns):
 
 
 def should_passthru(client_addr, addr, fqdns):
-    # always passthru for local ips
-    if addr in get_local_ips():
-        # bubble_log('should_passthru: local ip is always passthru: '+addr)
-        return {'fqdns': fqdns, 'addr': addr, 'passthru': True}
-
     cache_key = passthru_cache_prefix(client_addr, addr)
     prefix = 'should_passthru: ip='+repr(addr)+' (fqdns='+repr(fqdns)+') cache_key='+cache_key+': '
 
@@ -139,6 +139,10 @@ def next_layer(next_layer):
         security_level = get_device_security_level(client_addr)
         if server_addr in get_local_ips():
             bubble_log('next_layer: enabling passthru for LOCAL server='+server_addr+' regardless of security_level='+security_level+' for client='+client_addr)
+            passthru = FORCE_PASSTHRU
+
+        elif is_sage_request(server_addr, fqdns):
+            bubble_log('next_layer: enabling passthru for SAGE server='+server_addr+' regardless of security_level='+security_level+' for client='+client_addr)
             passthru = FORCE_PASSTHRU
 
         elif security_level == 'disabled' or security_level == 'basic':

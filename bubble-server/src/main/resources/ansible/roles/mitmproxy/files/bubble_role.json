@@ -5,6 +5,10 @@
     {"name": "bubble_network", "value": "[[node.network]]"},
     {"name": "server_name", "value": "[[node.fqdn]]"},
     {"name": "server_alias", "value": "[[network.networkDomain]]"},
-    {"name": "ssl_port", "value": "[[node.sslPort]]"}
+    {"name": "ssl_port", "value": "[[node.sslPort]]"},
+    {"name": "sage_host", "value": "[[sageNode.fqdn]]"},
+    {"name": "sage_ip4", "value": "[[sageNode.ip4]]"},
+    {"name": "sage_ip6", "value": "[[sageNode.ip6]]"},
+    {"name": "cert_name", "value": "bubble-[[network.shortId]]"}
   ]
 }

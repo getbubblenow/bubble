@@ -535,7 +535,7 @@ public class AuthResource {
         if (type == null) type = CertType.pem;
         final BubbleNetwork thisNet = configuration.getThisNetwork();
         if (thisNet == null) return die("getCaCert: thisNetwork was null");
-        final File certFile = new File(CACERTS_DIR, thisNet.getNetworkDomain()+"-ca-cert."+type.name());
+        final File certFile = new File(CACERTS_DIR, "bubble-"+thisNet.getShortId()+"-ca-cert."+type.name());
         if (!certFile.exists()) return notFound(type.name());
         return send(new FileSendableResource(certFile).setForceDownload(true));
     }
