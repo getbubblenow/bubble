@@ -20,19 +20,6 @@
 - name: Init certbot
   shell: init_certbot.sh {{ letsencrypt_email }} {{ server_name }} {{ server_alias }}
 
-- name: "Allow MITM private port"
-  iptables:
-    chain: INPUT
-    action: insert
-    rule_num: 3
-    protocol: tcp
-    destination_port: 8888
-    ctstate: NEW
-    syn: match
-    jump: ACCEPT
-    comment: Accept new local connections on mitm port
-  become: yes
-
 - name: Ensure nginx is restarted
   service:
     name: nginx
