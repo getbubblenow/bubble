@@ -4,8 +4,10 @@
  */
 package bubble.dao.device;
 
+import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.dao.app.AppDataDAO;
+import bubble.model.account.Account;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.device.BubbleDeviceType;
 import bubble.model.device.Device;
@@ -30,6 +32,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
     public static final File VPN_REFRESH_USERS_FILE = new File(HOME_DIR, ".algo_refresh_users");
 
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private AccountDAO accountDAO;
     @Autowired private AppDataDAO dataDAO;
 
     @Override public Order getDefaultSortOrder() { return ORDER_CTIME_ASC; }
@@ -62,12 +65,14 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
             } else {
                 uninitialized = devices.get(0);
             }
-            uninitialized.initialize(device);
-            final Device updated = update(uninitialized);
+            if (uninitialized != null) {
+                uninitialized.initialize(device);
+                final Device updated = update(uninitialized);
 
-            // always ensure we have one spare device
-            ensureSpareDevice(account, network, true);
-            return updated;
+                // always ensure we have one spare device
+                ensureSpareDevice(account, network, true);
+                return updated;
+            }
         }
         return super.create(device);
     }
@@ -76,6 +81,9 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
         final Device current = findByUuid(device.getUuid());
         if (current != null && current.uninitialized()) {
             device.initTotpKey();
+            if (device.getDeviceType().hasDefaultSecurityLevel()) {
+                device.setSecurityLevel(device.getDeviceType().getDefaultSecurityLevel());
+            }
         }
         if (device.getDeviceType() == null || device.getDeviceType() == BubbleDeviceType.uninitialized) {
             device.setDeviceType(BubbleDeviceType.other);
@@ -96,13 +104,22 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
     @Override public void forceDelete(String uuid) { super.delete(uuid); }
 
-    public Device ensureSpareDevice(String account, String network, boolean refreshVpnUsers) {
+    public Device ensureSpareDevice(String accountUuid, String network, boolean refreshVpnUsers) {
         final BubbleNetwork thisNetwork = configuration.getThisNetwork();
-        final List<Device> devices = findByAccountAndUninitialized(account);
+        final Account account = accountDAO.findByUuid(accountUuid);
+        if (account == null) {
+            log.warn("ensureSpareDevice: account not found: " + accountUuid);
+            return null;
+        }
+        if (account.getHashedPassword().isSpecial()) {
+            log.warn("ensureSpareDevice: not creating spare device for special user: " + accountUuid);
+            return null;
+        }
+        final List<Device> devices = findByAccountAndUninitialized(accountUuid);
         Device uninitialized;
         if (devices.isEmpty()) {
-            log.info("ensureSpareDevice: no uninitialized devices for account " + account + ", creating one");
-            uninitialized = create(newUninitializedDevice(network, account));
+            log.info("ensureSpareDevice: no uninitialized devices for account " + accountUuid + ", creating one");
+            uninitialized = create(newUninitializedDevice(network, accountUuid));
         } else {
             uninitialized = devices.get(0);
         }

@@ -42,7 +42,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 public class Device extends IdentifiableBase implements HasAccount {
 
     public static final String[] CREATE_FIELDS = { UUID, "name", "enabled", "totpKey", "deviceType" };
-    public static final String[] UPDATE_FIELDS = { "name", "enabled" };
+    public static final String[] UPDATE_FIELDS = { "name", "enabled", "securityLevel" };
 
     public static final String UNINITIALIZED_DEVICE = "__uninitialized_device__";
     public static final String UNINITIALIZED_DEVICE_LIKE = UNINITIALIZED_DEVICE+"%";
@@ -58,6 +58,7 @@ public class Device extends IdentifiableBase implements HasAccount {
                 .setName(UNINITIALIZED_DEVICE+randomUUID().toString())
                 .setNetwork(networkUuid)
                 .setAccount(accountUuid)
+                .setSecurityLevel(DeviceSecurityLevel.standard)
                 .initTotpKey();
     }
 
@@ -84,13 +85,18 @@ public class Device extends IdentifiableBase implements HasAccount {
     @Getter @Setter private BubbleDeviceType deviceType;
 
     @ECSearchable @ECField(index=40)
+    @Enumerated(EnumType.STRING) @Column(length=30, nullable=false)
+    @Getter @Setter private DeviceSecurityLevel securityLevel;
+    public boolean hasSecurityLevel () { return securityLevel != null; }
+
+    @ECSearchable @ECField(index=50)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
     public boolean uninitialized () { return name.startsWith(UNINITIALIZED_DEVICE); }
     public boolean initialized () { return !uninitialized(); }
 
-    @ECSearchable @ECField(index=50)
+    @ECSearchable @ECField(index=60)
     @ECForeignKey(entity=BubbleNetwork.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String network;

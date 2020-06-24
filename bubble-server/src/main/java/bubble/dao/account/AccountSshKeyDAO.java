@@ -47,7 +47,7 @@ public class AccountSshKeyDAO extends AccountOwnedEntityDAO<AccountSshKey> {
 
         final Account owner = accountDAO.findByUuid(key.getAccount());
         final BubbleNetwork thisNetwork = configuration.getThisNetwork();
-        if (thisNetwork == null || thisNetwork.getInstallType() != AnsibleInstallType.sage) {
+        if (thisNetwork == null || thisNetwork.getInstallType() == AnsibleInstallType.sage) {
             // never allow installation of a key on sage. must be manually set in the database.
             key.setInstallSshKey(false);
 

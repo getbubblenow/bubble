@@ -14,6 +14,7 @@ import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
+import bubble.model.device.DeviceSecurityLevel;
 import bubble.server.listener.BubbleFirstTimeListener;
 import bubble.service.boot.ActivationService;
 import bubble.service.boot.StandardSelfNodeService;
@@ -88,6 +89,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_PROMO_CODE_POLICY = "promoCodePolicy";
     public static final String TAG_REQUIRE_SEND_METRICS = "requireSendMetrics";
     public static final String TAG_SUPPORT = "support";
+    public static final String TAG_SECURITY_LEVELS = "securityLevels";
     public static final String TAG_CERT_VALIDATION_HOST = "certValidationHost"; // must match bubble_passthru.py
 
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
@@ -301,6 +303,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_LAUNCH_LOCK, isSageLauncher() || thisNetwork == null ? null : thisNetwork.launchLock()},
                         {TAG_SSL_PORT, getDefaultSslPort()},
                         {TAG_SUPPORT, getSupport()},
+                        {TAG_SECURITY_LEVELS, DeviceSecurityLevel.values()},
                         {TAG_CERT_VALIDATION_HOST, getCertValidationHost()}
                 }));
             }

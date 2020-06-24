@@ -156,7 +156,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         final BubbleNode thisNode = configuration.getThisNode();
         if (thisNode != null) {
             final BubbleNetwork thisNetwork = configuration.getThisNetwork();
-            if (thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.node) {
+            if (thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.node && account.getHashedPassword().isNotSpecial()) {
                 deviceDAO.ensureSpareDevice(accountUuid, thisNode.getNetwork(), true);
             }
         }

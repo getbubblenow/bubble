@@ -7,6 +7,7 @@ package bubble.resources.account;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
 import bubble.model.device.Device;
+import bubble.model.device.DeviceSecurityLevel;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.DeviceIdService;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
@@ -69,7 +71,19 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
             device.initTotpKey();
         }
 
+        log.info("setReferences: no securityLevel, setting to default for type "+device.getDeviceType()+": "+device.getDeviceType().getDefaultSecurityLevel());
+        if (!device.hasSecurityLevel()) device.setSecurityLevel(device.getDeviceType().getDefaultSecurityLevel());
+
         return super.setReferences(ctx, caller, device);
+    }
+
+    @POST @Path("/{id}"+EP_SECURITY_LEVEL+"/{level}")
+    public Response getIps(@Context ContainerRequest ctx,
+                           @PathParam("id") String id,
+                           @PathParam("level") DeviceSecurityLevel level) {
+        final Device device = getDao().findByAccountAndId(getAccountUuid(ctx), id);
+        if (device == null) return notFound(id);
+        return ok(getDao().update(device.setSecurityLevel(level)));
     }
 
     @Path("/{id}"+EP_VPN)

@@ -19,16 +19,20 @@ import static bubble.ApiConstants.enumFromString;
 public enum BubbleDeviceType {
 
     uninitialized (null, false),
-    windows       (CertType.cer, true),
-    macosx        (CertType.pem, true),
-    ios           (CertType.pem, true),
-    android       (CertType.cer, true),
-    linux         (CertType.crt, true),
+    windows       (CertType.cer, true, DeviceSecurityLevel.maximum),
+    macosx        (CertType.pem, true, DeviceSecurityLevel.maximum),
+    ios           (CertType.pem, true, DeviceSecurityLevel.standard),
+    android       (CertType.cer, true, DeviceSecurityLevel.basic),
+    linux         (CertType.crt, true, DeviceSecurityLevel.maximum),
     firefox       (CertType.crt, false),
     other         (null, true);
 
-    @Getter private CertType certType;
-    @Getter private boolean selectable;
+    @Getter private final CertType certType;
+    @Getter private final boolean selectable;
+    @Getter private final DeviceSecurityLevel defaultSecurityLevel;
+    public boolean hasDefaultSecurityLevel () { return defaultSecurityLevel != null; }
+
+    BubbleDeviceType (CertType certType, boolean selectable) { this(CertType.cer, selectable, null); }
 
     @JsonCreator public static BubbleDeviceType fromString (String v) { return enumFromString(BubbleDeviceType.class, v); }
 
