@@ -6,10 +6,10 @@ package bubble.resources.app;
 
 import bubble.dao.app.AppSiteDAO;
 import bubble.model.account.Account;
-import bubble.model.app.config.AppDataDriver;
-import bubble.model.app.config.AppDataView;
 import bubble.model.app.AppSite;
 import bubble.model.app.BubbleApp;
+import bubble.model.app.config.AppDataDriver;
+import bubble.model.app.config.AppDataView;
 import bubble.model.device.Device;
 import bubble.resources.account.AccountOwnedTemplateResource;
 import bubble.service.cloud.DeviceIdService;

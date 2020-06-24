@@ -6,10 +6,10 @@ import static bubble.ApiConstants.enumFromString;
 
 public enum DeviceSecurityLevel {
 
-//    disabled,  // todo: when we can identify client IP in dnscrypt-proxy, this setting will disabled DNS domain blocking
-    basic,
+    maximum,
     standard,
-    maximum;
+    basic,
+    disabled;
 
     @JsonCreator public static DeviceSecurityLevel fromString (String v) { return enumFromString(DeviceSecurityLevel.class, v); }
 

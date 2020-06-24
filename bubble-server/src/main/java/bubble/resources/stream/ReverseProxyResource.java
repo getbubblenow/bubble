@@ -35,7 +35,8 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.CONTENT_TYPE_ANY;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.cobbzilla.wizard.resources.ResourceUtil.userPrincipal;
 
 @Path(PROXY_ENDPOINT)
 @Service @Slf4j

@@ -33,26 +33,22 @@ import subprocess
 
 REDIS_DNS_PREFIX = 'bubble_dns_'
 REDIS_PASSTHRU_PREFIX = 'bubble_passthru_'
-REDIS_CLIENT_CERT_STATUS_PREFIX = 'bubble_cert_status_'
+REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX = 'bubble_device_security_level_'  # defined in StandardDeviceIdService
 REDIS_PASSTHRU_DURATION = 60 * 60  # 1 hour timeout on passthru
 
 REDIS = redis.Redis(host='127.0.0.1', port=6379, db=0)
+
+FORCE_PASSTHRU = {'passthru': True}
 
 cert_validation_host = None
 local_ips = None
 
 
-def get_ip_cert_status(client_addr):
-    status = REDIS.get(REDIS_CLIENT_CERT_STATUS_PREFIX+client_addr)
-    if status is None:
-        return None
-    enabled = status.decode() == "True"
-    return enabled
-
-
-def set_ip_cert_status(client_addr, enabled):
-    REDIS.set(REDIS_CLIENT_CERT_STATUS_PREFIX+client_addr, str(enabled))
-    bubble_log('set_ip_cert_status: set '+client_addr+' = '+str(enabled))
+def get_device_security_level(client_addr):
+    level = REDIS.get(REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX+client_addr)
+    if level is None:
+        return 'maximum'
+    return level.decode()
 
 
 def get_local_ips():
@@ -62,17 +58,6 @@ def get_local_ips():
         for ip in subprocess.check_output(['hostname', '-I']).split():
             local_ips.append(ip.decode())
     return local_ips
-
-
-def get_cert_validation_host():
-    global cert_validation_host
-    if cert_validation_host is None:
-        cert_validation_host = REDIS.get('certValidationHost')
-        if cert_validation_host is not None:
-            cert_validation_host = cert_validation_host.decode()
-    #     bubble_log('get_cert_validation_host: initialized to '+cert_validation_host)
-    # bubble_log('get_cert_validation_host: returning '+cert_validation_host)
-    return cert_validation_host
 
 
 def passthru_cache_prefix(client_addr, server_addr):
@@ -103,29 +88,15 @@ class TlsFeedback(TlsLayer):
         fqdns = fqdns_for_addr(server_address)
         try:
             super(TlsFeedback, self)._establish_tls_with_client()
-            if fqdns and get_cert_validation_host() in fqdns:
-                # bubble_log('_establish_tls_with_client: TLS success for '+repr(server_address)+', enabling SSL interception for client '+client_address)
-                set_ip_cert_status(client_address, True)
 
         except TlsProtocolException as e:
             cache_key = passthru_cache_prefix(client_address, server_address)
             bubble_log('_establish_tls_with_client: TLS error for '+repr(server_address)+', enabling passthru for client '+client_address+' with cache_key='+cache_key)
-            if fqdns and get_cert_validation_host() in fqdns:
-                set_ip_cert_status(client_address, False)
-            else:
-                redis_set(cache_key, json.dumps({'fqdns': fqdns, 'addr': server_address, 'passthru': True}), ex=REDIS_PASSTHRU_DURATION)
+            redis_set(cache_key, json.dumps({'fqdns': fqdns, 'addr': server_address, 'passthru': True}), ex=REDIS_PASSTHRU_DURATION)
             raise e
 
 
 def check_bubble_passthru(client_addr, addr, fqdns):
-    cert_status = get_ip_cert_status(client_addr)
-
-    if cert_status is not None and not cert_status:
-        bubble_log('check_bubble_passthru: returning True because cert_status for '+client_addr+' was False')
-        return {'fqdns': fqdns, 'addr': addr, 'passthru': True}
-    else:
-        bubble_log('check_bubble_passthru: request is NOT for cert_validation_host: '+cert_validation_host+", it is for one of fqdn="+repr(fqdns)+", checking bubble_passthru...")
-
     passthru = bubble_passthru(client_addr, addr, fqdns)
     if passthru is None or passthru:
         bubble_log('check_bubble_passthru: bubble_passthru returned '+repr(passthru)+' for FQDN/addr '+repr(fqdns)+'/'+repr(addr)+', returning True')
@@ -139,9 +110,6 @@ def should_passthru(client_addr, addr, fqdns):
     if addr in get_local_ips():
         # bubble_log('should_passthru: local ip is always passthru: '+addr)
         return {'fqdns': fqdns, 'addr': addr, 'passthru': True}
-    else:
-        # bubble_log('should_passthru: addr ('+addr+') is not a local ip: '+repr(get_local_ips()))
-        pass
 
     cache_key = passthru_cache_prefix(client_addr, addr)
     prefix = 'should_passthru: ip='+repr(addr)+' (fqdns='+repr(fqdns)+') cache_key='+cache_key+': '
@@ -163,25 +131,38 @@ def should_passthru(client_addr, addr, fqdns):
 
 def next_layer(next_layer):
     if isinstance(next_layer, TlsLayer) and next_layer._client_tls:
-        client_address = next_layer.client_conn.address[0]
-        server_address = next_layer.server_conn.address[0]
+        client_addr = next_layer.client_conn.address[0]
+        server_addr = next_layer.server_conn.address[0]
 
-        fqdns = fqdns_for_addr(server_address)
-        validation_host = get_cert_validation_host()
-        if fqdns and validation_host in fqdns:
-            bubble_log('next_layer: never passing thru (always getting feedback) for cert_validation_host='+validation_host)
-            next_layer.__class__ = TlsFeedback
+        fqdns = fqdns_for_addr(server_addr)
+        no_fqdns = fqdns is None or len(fqdns) == 0
+        security_level = get_device_security_level(client_addr)
+        if server_addr in get_local_ips():
+            bubble_log('next_layer: enabling passthru for LOCAL server='+server_addr+' regardless of security_level='+security_level+' for client='+client_addr)
+            passthru = FORCE_PASSTHRU
+
+        elif security_level == 'disabled' or security_level == 'basic':
+            bubble_log('next_layer: enabling passthru for server='+server_addr+' because security_level='+security_level+' for client='+client_addr)
+            passthru = FORCE_PASSTHRU
+
+        elif security_level == 'standard' and no_fqdns:
+            bubble_log('next_layer: enabling passthru for server='+server_addr+' because no FQDN found and security_level='+security_level+' for client='+client_addr)
+            passthru = FORCE_PASSTHRU
+
+        elif security_level == 'maximum' and no_fqdns:
+            bubble_log('next_layer: disabling passthru (no TlsFeedback) for server='+server_addr+' because no FQDN found and security_level='+security_level+' for client='+client_addr)
+            return
 
         else:
-            bubble_log('next_layer: checking should_passthru for client_address='+client_address)
-            passthru = should_passthru(client_address, server_address, fqdns)
-            if passthru is None or passthru['passthru']:
-                # bubble_log('next_layer: TLS passthru for ' + repr(next_layer.server_conn.address))
-                if passthru is not None and 'fqdns' in passthru:
-                    bubble_activity_log(client_address, server_address, 'tls_passthru', passthru['fqdns'])
-                next_layer_replacement = RawTCPLayer(next_layer.ctx, ignore=True)
-                next_layer.reply.send(next_layer_replacement)
-            else:
-                # bubble_log('next_layer: NO PASSTHRU (getting feedback) for client_address='+client_address+', server_address='+server_address)
-                bubble_activity_log(client_address, server_address, 'tls_intercept', passthru['fqdns'])
-                next_layer.__class__ = TlsFeedback
+            bubble_log('next_layer: checking should_passthru for server='+server_addr+', client='+client_addr+' with security_level='+security_level)
+            passthru = should_passthru(client_addr, server_addr, fqdns)
+
+        if passthru is None or passthru['passthru']:
+            bubble_log('next_layer: enabling passthru for ' + repr(next_layer.server_conn.address))
+            bubble_activity_log(client_addr, server_addr, 'tls_passthru', fqdns)
+            next_layer_replacement = RawTCPLayer(next_layer.ctx, ignore=True)
+            next_layer.reply.send(next_layer_replacement)
+        else:
+            bubble_log('next_layer: disabling passthru (with TlsFeedback) for client_addr='+client_addr+', server_addr='+server_addr)
+            bubble_activity_log(client_addr, server_addr, 'tls_intercept', fqdns)
+            next_layer.__class__ = TlsFeedback

@@ -14,6 +14,7 @@ import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.boot.SelfNodeService;
+import bubble.service.cloud.DeviceIdService;
 import bubble.service.cloud.NetworkMonitorService;
 import bubble.service.stream.AppPrimerService;
 import lombok.extern.slf4j.Slf4j;
@@ -107,7 +108,7 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
             }
         }
 
-        // ensure default devices exist, cert_validation_host is set, and apps are primed
+        // ensure default devices exist, cert_validation_host is set, apps are primed and device security levels are set
         if (thisNode != null) {
             final BubbleNetwork thisNetwork = c.getThisNetwork();
             if (thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.node) {
@@ -119,6 +120,7 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
                 for (Account a : accountDAO.findAll()) {
                     c.getBean(DeviceDAO.class).ensureSpareDevice(a.getUuid(), thisNode.getNetwork(), false);
                 }
+                c.getBean(DeviceIdService.class).initDeviceSecurityLevels();
             }
         }
 

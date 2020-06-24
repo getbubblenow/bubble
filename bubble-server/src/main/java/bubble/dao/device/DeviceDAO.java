@@ -12,6 +12,7 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.device.BubbleDeviceType;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
+import bubble.service.cloud.DeviceIdService;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AccountDAO accountDAO;
     @Autowired private AppDataDAO dataDAO;
+    @Autowired private DeviceIdService deviceIdService;
 
     @Override public Order getDefaultSortOrder() { return ORDER_CTIME_ASC; }
 
@@ -90,6 +92,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
         }
         final Device updated = super.update(device);
         ensureSpareDevice(device.getAccount(), device.getNetwork(), true);
+        deviceIdService.setDeviceSecurityLevel(updated);
         return updated;
     }
 

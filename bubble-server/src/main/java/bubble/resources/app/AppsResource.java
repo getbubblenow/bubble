@@ -5,9 +5,9 @@
 package bubble.resources.app;
 
 import bubble.model.account.Account;
+import bubble.model.app.BubbleApp;
 import bubble.model.app.config.AppDataDriver;
 import bubble.model.app.config.AppDataView;
-import bubble.model.app.BubbleApp;
 import bubble.model.device.Device;
 import bubble.service.cloud.DeviceIdService;
 import lombok.extern.slf4j.Slf4j;
