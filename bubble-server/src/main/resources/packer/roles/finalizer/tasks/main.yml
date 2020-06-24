@@ -40,14 +40,6 @@
     src: supervisor_bubble_nodemanager.conf
     dest: /etc/supervisor/conf.d/nodemanager.conf
 
-# We cannot receive notifications until nginx is running, so start bubble API as the very last step
-- name: Ensure bubble_nodemanager is started
-  supervisorctl:
-    name: '{{ item }}'
-    state: restarted
-  with_items:
-    - nodemanager
-
 - name: Creates /etc/iptables directory
   file:
     path: /etc/iptables

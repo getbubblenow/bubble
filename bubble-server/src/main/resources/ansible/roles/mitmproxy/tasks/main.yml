@@ -18,8 +18,6 @@
 - name: Ensure mitmproxy user owns all mitmproxy files
   shell: chown -R mitmproxy /home/mitmproxy/mitmproxy
 
-- import_tasks: route.yml
-
 - name: Install supervisor conf file
   copy:
     src: supervisor_mitmproxy.conf
@@ -33,11 +31,5 @@
     src: supervisor_mitmdump_monitor.conf
     dest: /etc/supervisor/conf.d/mitmdump_monitor.conf
 
-- name: restart supervisord
-  service:
-    name: supervisor
-    enabled: yes
-    state: restarted
-
-- name: Ensure mitmdump_monitor is started
-  shell: supervisorctl restart mitmdump_monitor
+- name: reload supervisord
+  shell: supervisorctl reload

@@ -16,15 +16,6 @@
     - "deb http://archive.ubuntu.com/ubuntu/ focal-updates universe"
     - "deb http://security.ubuntu.com/ubuntu/ focal-security universe"
 
-#- name: Enable ppa:certbot/certbot repository
-#  apt_repository:
-#    repo: ppa:certbot/certbot
-#    state: present
-#
-#- name: Update packages after adding new repositories
-#  apt:
-#    update_cache: yes
-
 - name: Install certbot
   apt:
     name: [ 'certbot', 'python3-certbot-nginx' ]

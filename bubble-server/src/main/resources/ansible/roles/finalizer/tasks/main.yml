@@ -2,7 +2,7 @@
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
 - name: Snapshot ansible roles in the background
-  command: /usr/local/bin/snapshot_ansible.sh
+  command: bash -c "/usr/local/bin/snapshot_ansible.sh &"
 
 - name: Touch first-time setup file
   shell: su - bubble bash -c "if [[ ! -f /home/bubble/first_time_marker ]] ; then echo -n install > /home/bubble/first_time_marker ; fi"
@@ -26,13 +26,8 @@
     dest: /etc/supervisor/conf.d/bubble.conf
 
 # We cannot receive notifications until nginx is running, so start bubble API as the very last step
-- name: Ensure bubble and bubble_nodemanager are started
-  supervisorctl:
-    name: '{{ item }}'
-    state: restarted
-  with_items:
-    - bubble
-    - nodemanager
+- name: reload supervisord
+  shell: supervisorctl reload
 
 - name: Ensure authorized SSH keys are up-to-date
   shell: su - bubble bash -c "touch /home/bubble/.refresh_ssh_keys"

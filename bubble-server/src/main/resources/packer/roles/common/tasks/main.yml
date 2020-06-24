@@ -18,7 +18,7 @@
 
 - name: Install common packages
   apt:
-    name: [ 'cloud-init', 'ntp', 'unzip', 'safe-rm', 'supervisor', 'emacs-nox', 'screen', 'xtail', 'fail2ban' ]
+    name: [ 'cloud-init', 'ntp', 'unzip', 'safe-rm', 'net-tools', 'supervisor', 'emacs-nox', 'screen', 'xtail', 'fail2ban' ]
     state: present
     update_cache: yes
 

@@ -19,9 +19,11 @@ ROOT_KEY_MARKER=/usr/share/bubble/mitmdump_monitor
 MITMDUMP_PID_FILE=/home/mitmproxy/mitmdump.pid
 MAX_MITM_PCT_MEM=18
 
-# Start with MITM proxy turned on
+# Start with MITM proxy turned on, or refresh value
 if [[ ! -f ${BUBBLE_MITM_MARKER} ]] ; then
   echo -n on > ${BUBBLE_MITM_MARKER} && chown bubble ${BUBBLE_MITM_MARKER} || log "Error writing 'on' to ${ROOT_KEY_MARKER}"
+else
+  touch ${BUBBLE_MITM_MARKER}
 fi
 if [[ ! -f ${ROOT_KEY_MARKER} ]] ; then
   sleep 1s
@@ -49,14 +51,12 @@ log "Watching marker file ${BUBBLE_MITM_MARKER} ..."
 sleep 2s && touch ${BUBBLE_MITM_MARKER} || log "Error touching ${BUBBLE_MITM_MARKER}" # first time through, always check and set on/off state
 while : ; do
   if [[ $(stat -c %Y ${BUBBLE_MITM_MARKER}) -gt $(stat -c %Y ${ROOT_KEY_MARKER}) ]] ; then
-    if [[ ! -z "$(cmp -b ${ROOT_KEY_MARKER} ${BUBBLE_MITM_MARKER})" ]] ; then
-      if [[ "$(cat ${BUBBLE_MITM_MARKER} | tr -d [[:space:]])" == "on" ]] ; then
-        ensureMitmOn
-      elif [[ "$(cat ${BUBBLE_MITM_MARKER} | tr -d [[:space:]])" == "off" ]] ; then
-        ensureMitmOff
-      else
-        log "Error: marker file ${BUBBLE_MITM_MARKER} contained invalid value: $(cat ${BUBBLE_MITM_MARKER} | head -c 5)"
-      fi
+    if [[ "$(cat ${BUBBLE_MITM_MARKER} | tr -d [[:space:]])" == "on" ]] ; then
+      ensureMitmOn
+    elif [[ "$(cat ${BUBBLE_MITM_MARKER} | tr -d [[:space:]])" == "off" ]] ; then
+      ensureMitmOff
+    else
+      log "Error: marker file ${BUBBLE_MITM_MARKER} contained invalid value: $(cat ${BUBBLE_MITM_MARKER} | head -c 5)"
     fi
   fi
 

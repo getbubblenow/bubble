@@ -17,7 +17,7 @@ vbell off
 # hardstatus on
 # hardstatus alwayslastline
 
-defscrollback 50000
+defscrollback 1000
 
 # Make it a login shell -- needed for rvm (Ruby)
 shell -${SHELL}
