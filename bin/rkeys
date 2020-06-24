@@ -1,0 +1,5 @@
+#!/bin/bash
+PREFIX="${1}"
+for k in $(echo 'keys '"""${PREFIX}"""'*' | redis-cli )  ; do
+  echo "$k => $(echo "get $k" | redis-cli)"
+done
