@@ -103,6 +103,7 @@ public class StandardDeviceIdService implements DeviceIdService {
     }
 
     @Override public void initDeviceSecurityLevels() {
+        if (configuration.testMode()) return;
         for (Device device : deviceDAO.findAll()) {
             if (device.uninitialized()) continue;
             setDeviceSecurityLevel(device);
@@ -110,6 +111,7 @@ public class StandardDeviceIdService implements DeviceIdService {
     }
 
     @Override public void setDeviceSecurityLevel(Device device) {
+        if (configuration.testMode()) return;
         for (String ip : findIpsByDevice(device.getUuid())) {
             redis.set_plaintext(REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX+ip, device.getSecurityLevel().name());
         }
