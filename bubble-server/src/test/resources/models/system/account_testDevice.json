@@ -2,7 +2,7 @@
   {
     "email": "root",
     "children": {
-      "Device": [ {"name": "test"} ]
+      "Device": [ {"name": "test", "deviceType": "other"} ]
     }
   }
 ]
