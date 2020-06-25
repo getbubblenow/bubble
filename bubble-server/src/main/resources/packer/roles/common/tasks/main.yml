@@ -35,6 +35,14 @@
     group: root
     mode: 0600
 
+- name: Install supervisor ulimit file
+  copy:
+    src: supervisor_ulimit.conf
+    dest: /etc/supervisor/conf.d/ulimit.conf
+    owner: root
+    group: root
+    mode: 0644
+
 - name: Start common services
   service:
     name: '{{ item }}'
