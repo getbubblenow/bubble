@@ -1,13 +1,13 @@
 [
-{ "percent": 38,"messageKey":"ansible_deps",     "match": "prefix", "pattern":"Building wheel for PyYAML (setup.py): started" },
-{ "percent": 41,"messageKey":"config_node",      "match": "prefix", "pattern":"PLAY [Configure new bubble node]" },
-{ "percent": 42,"messageKey":"nginx_dhparam",    "match": "prefix", "pattern":"TASK [nginx : Create a strong dhparam.pem]" },
-{ "percent": 55,"messageKey":"nginx_dh_conf",    "match": "prefix", "pattern":"TASK [Create dhparam nginx conf]" },
-{ "percent": 56,"messageKey":"nginx_certbot",    "match": "prefix", "pattern":"TASK [nginx : Init certbot]" },
-{ "percent": 58,"messageKey":"bubble_db",        "match": "prefix", "pattern":"TASK [bubble : Populate database]" },
-{ "percent": 65,"messageKey":"algo_sh",          "match": "prefix", "pattern":"TASK [Write install_algo.sh template]" },
-{ "percent": 92,"messageKey":"restart_algo",     "match": "prefix", "pattern":"TASK [Restart algo monitors]" },
-{ "percent": 95,"messageKey":"snapshot_ansible", "match": "prefix", "pattern":"TASK [finalizer : Snapshot ansible roles]" },
-{ "percent": 98,"messageKey":"touch_first_setup","match": "prefix", "pattern":"TASK [finalizer : Touch first-time setup file]" },
+{ "percent": 38,"messageKey":"ansible_deps",      "match": "prefix", "pattern":"Building wheel for PyYAML (setup.py): started" },
+{ "percent": 41,"messageKey":"config_node",       "match": "prefix", "pattern":"PLAY [Configure new bubble node]" },
+{ "percent": 42,"messageKey":"nginx_dhparam",     "match": "prefix", "pattern":"TASK [nginx : Create a strong dhparam.pem]" },
+{ "percent": 55,"messageKey":"nginx_dh_conf",     "match": "prefix", "pattern":"TASK [Create dhparam nginx conf]" },
+{ "percent": 56,"messageKey":"nginx_certbot",     "match": "prefix", "pattern":"TASK [nginx : Init certbot]" },
+{ "percent": 58,"messageKey":"bubble_db",         "match": "prefix", "pattern":"TASK [bubble : Populate database]" },
+{ "percent": 65,"messageKey":"algo_sh",           "match": "prefix", "pattern":"TASK [Write install_algo.sh template]" },
+{ "percent": 92,"messageKey":"restart_algo",      "match": "prefix", "pattern":"TASK [Restart algo monitors]" },
+{ "percent": 95,"messageKey":"mitmproxy_set_cert","match": "prefix", "pattern":"TASK [mitmproxy : Set the cert name]" },
+{ "percent": 98,"messageKey":"touch_first_setup", "match": "prefix", "pattern":"TASK [finalizer : Touch first-time setup file]" },
 { "percent": 100,"messageKey":"ssh_keys",         "match": "prefix", "pattern":"TASK [finalizer : Ensure authorized SSH keys are up-to-date]" }
 ]
