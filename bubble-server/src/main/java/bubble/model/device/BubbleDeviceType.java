@@ -25,7 +25,7 @@ public enum BubbleDeviceType {
     android       (CertType.cer, true, DeviceSecurityLevel.basic),
     linux         (CertType.crt, true, DeviceSecurityLevel.maximum),
     firefox       (CertType.crt, false),
-    other         (null, true);
+    other         (null, true, DeviceSecurityLevel.basic);
 
     @Getter private final CertType certType;
     @Getter private final boolean selectable;
