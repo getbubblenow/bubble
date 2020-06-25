@@ -377,7 +377,7 @@ public class AuthResource {
                 final BubbleNodeClient sageClient = configuration.getSageNode().getApiQuickClient(configuration);
                 try {
                     final Account sageAccount = sageClient.post(AUTH_ENDPOINT+EP_APP_LOGIN+"/"+sessionId, null, Account.class);
-                    if (sageAccount == null || !empty(sageAccount.getApiToken())) {
+                    if (sageAccount == null || empty(sageAccount.getApiToken())) {
                         // should never happen
                         log.warn("appLogin: sageLogin succeeded, but returned null account or account without api token");
                         return notFound(sessionId);

@@ -6,6 +6,7 @@ package bubble.service.cloud.job;
 
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.cloud.BubbleDomain;
+import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
@@ -20,15 +21,18 @@ public class NodeDnsJob implements Runnable {
 
     private CloudServiceDAO cloudDAO;
     private BubbleDomain domain;
+    private BubbleNetwork network;
     private BubbleNode node;
     private BubbleConfiguration configuration;
 
     public NodeDnsJob(CloudServiceDAO cloudDAO,
                       BubbleDomain domain,
+                      BubbleNetwork network,
                       BubbleNode node,
                       BubbleConfiguration configuration) {
         this.cloudDAO = cloudDAO;
         this.domain = domain;
+        this.network = network;
         this.node = node;
         this.configuration = configuration;
     }

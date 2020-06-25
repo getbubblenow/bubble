@@ -234,8 +234,8 @@ public class StandardNetworkService implements NetworkService {
             final NodeStartJob startJob = new NodeStartJob(node, nodeDAO, computeDriver);
             jobFutures.add(backgroundJobs.submit(startJob));
 
-            // Create DNS A and AAAA records for node
-            final NodeDnsJob dnsJob = new NodeDnsJob(cloudDAO, domain, node, configuration);
+            // Create DNS records for node
+            final NodeDnsJob dnsJob = new NodeDnsJob(cloudDAO, domain, network, node, configuration);
             jobFutures.add(backgroundJobs.submit(dnsJob));
 
             // Prepare ansible roles

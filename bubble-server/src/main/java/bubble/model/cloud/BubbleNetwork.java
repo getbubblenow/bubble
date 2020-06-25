@@ -34,8 +34,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static bubble.ApiConstants.EP_NETWORKS;
-import static bubble.ApiConstants.ROOT_NETWORK_UUID;
+import static bubble.ApiConstants.*;
 import static bubble.model.cloud.BubbleDomain.DOMAIN_NAME_MAXLEN;
 import static bubble.model.cloud.BubbleNetworkState.created;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
@@ -68,6 +67,8 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
 
     public static final String TAG_ALLOW_REGISTRATION = "allowRegistration";
     public static final String TAG_PARENT_ACCOUNT = "parentAccountUuid";
+
+    public static final String CERT_CNAME_PREFIX = "bubble-";
 
     private static final List<String> TAG_NAMES = Arrays.asList(TAG_ALLOW_REGISTRATION, TAG_PARENT_ACCOUNT);
     @Override public Collection<String> validTags() { return TAG_NAMES; }
@@ -109,6 +110,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     public BubbleNetwork setDomainName (String dn) { this.domainName = dn == null ? null : dn.toLowerCase(); return this; }
 
     @Transient @JsonIgnore public String getNetworkDomain () { return name + "." + domainName; }
+    @Transient @JsonIgnore public String getCertCNAME () { return CERT_CNAME_PREFIX+getShortId()+"."+getNetworkDomain(); }
 
     @ECSearchable(filter=true) @ECField(index=50)
     @ECIndex @Column(nullable=false, length=NAME_MAXLEN)

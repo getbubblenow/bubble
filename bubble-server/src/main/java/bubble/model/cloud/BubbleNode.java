@@ -20,7 +20,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.lang3.RandomUtils;
-import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
@@ -235,15 +234,15 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     @Transient @Getter @Setter private transient Boolean wasRestored;
     public boolean wasRestored() { return bool(wasRestored); }
 
-    public ApiClientBase getApiClient(BubbleConfiguration configuration) {
+    public BubbleNodeClient getApiClient(BubbleConfiguration configuration) {
         return new BubbleNodeClient(this, configuration);
     }
 
-    public ApiClientBase getDownloadClient(BubbleConfiguration configuration) {
+    public BubbleNodeClient getDownloadClient(BubbleConfiguration configuration) {
         return new BubbleNodeDownloadClient(this, configuration);
     }
 
-    public ApiClientBase getApiQuickClient(BubbleConfiguration configuration) {
+    public BubbleNodeClient getApiQuickClient(BubbleConfiguration configuration) {
         return new BubbleNodeQuickClient(this, configuration);
     }
 

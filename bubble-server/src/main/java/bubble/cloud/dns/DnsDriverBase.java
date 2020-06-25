@@ -132,6 +132,10 @@ public abstract class DnsDriverBase<T> extends CloudServiceDriverBase<T> impleme
                 .setType(DnsType.CNAME)
                 .setFqdn(network.getNetworkDomain())
                 .setValue(node.getFqdn()));
+        records.add((DnsRecord) new DnsRecord()
+                .setType(DnsType.CNAME)
+                .setFqdn(network.getCertCNAME())
+                .setValue(network.getNetworkDomain()));
         return records;
     }
 

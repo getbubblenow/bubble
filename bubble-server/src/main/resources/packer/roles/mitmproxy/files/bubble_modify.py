@@ -121,8 +121,9 @@ def responseheaders(flow):
         else:
             req_id = get_flow_ctx(flow, CTX_BUBBLE_REQUEST_ID)
             matchers = get_flow_ctx(flow, CTX_BUBBLE_MATCHERS)
+            prefix = 'responseheaders(req_id='+str(req_id)+'): '
             if req_id is not None and matchers is not None:
-                bubble_log('responseheaders: req_id='+req_id+' with matchers: '+repr(matchers))
+                bubble_log(prefix+' matchers: '+repr(matchers))
                 if HEADER_CONTENT_TYPE in flow.response.headers:
                     content_type = flow.response.headers[HEADER_CONTENT_TYPE]
                     if matchers:
@@ -134,10 +135,10 @@ def responseheaders(flow):
                                     typeRegex = '^text/html.*'
                                 if re.match(typeRegex, content_type):
                                     any_content_type_matches = True
-                                    bubble_log('responseheaders: req_id='+req_id+' found at least one matcher for content_type ('+content_type+'), filtering')
+                                    bubble_log(prefix+': found at least one matcher for content_type ('+content_type+'), filtering')
                                     break
                         if not any_content_type_matches:
-                            bubble_log('responseheaders: req_id='+req_id+' no matchers for content_type ('+content_type+'), passing thru')
+                            bubble_log(prefix+': no matchers for content_type ('+content_type+'), passing thru')
                             return
 
                         if HEADER_CONTENT_ENCODING in flow.response.headers:
@@ -146,7 +147,7 @@ def responseheaders(flow):
                             content_encoding = None
 
                         content_length_value = flow.response.headers.pop(HEADER_CONTENT_LENGTH, None)
-                        bubble_log('responseheaders: req_id='+req_id+' content_encoding='+repr(content_encoding) + ', content_type='+repr(content_type))
+                        bubble_log(prefix+': content_encoding='+repr(content_encoding) + ', content_type='+repr(content_type))
                         flow.response.stream = bubble_modify(flow, req_id, content_encoding, content_type)
                         if content_length_value:
                             flow.response.headers['transfer-encoding'] = 'chunked'
@@ -157,10 +158,10 @@ def responseheaders(flow):
                                     if hasattr(ctx, 'ctx'):
                                         ctx = ctx.ctx
                                     else:
-                                        bubble_log('responseheaders: error finding server_conn. last ctx has no further ctx. type='+str(type(ctx))+' vars='+str(vars(ctx)))
+                                        bubble_log(prefix+'error finding server_conn. last ctx has no further ctx. type='+str(type(ctx))+' vars='+str(vars(ctx)))
                                         return
                                 if not hasattr(ctx, 'server_conn'):
-                                    bubble_log('responseheaders: error finding server_conn. ctx type='+str(type(ctx))+' vars='+str(vars(ctx)))
+                                    bubble_log(prefix+'error finding server_conn. ctx type='+str(type(ctx))+' vars='+str(vars(ctx)))
                                     return
                                 content_length = int(content_length_value)
                                 ctx.server_conn.rfile.fake_chunks = content_length
@@ -168,11 +169,11 @@ def responseheaders(flow):
                                 add_flow_ctx(flow, CTX_CONTENT_LENGTH_SENT, 0)
 
                     else:
-                        bubble_log('responseheaders: no matchers, passing thru')
+                        bubble_log(prefix+'no matchers, passing thru')
                         pass
                 else:
-                    bubble_log('responseheaders: no '+HEADER_CONTENT_TYPE +' header, passing thru')
+                    bubble_log(prefix+'no '+HEADER_CONTENT_TYPE +' header, passing thru')
                     pass
             else:
-                bubble_log('responseheaders: no '+CTX_BUBBLE_MATCHERS +' in ctx, passing thru')
+                bubble_log(prefix+'no '+CTX_BUBBLE_MATCHERS +' in ctx, passing thru')
                 pass

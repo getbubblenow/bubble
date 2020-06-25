@@ -9,6 +9,8 @@
     {"name": "sage_host", "value": "[[sageNode.fqdn]]"},
     {"name": "sage_ip4", "value": "[[sageNode.ip4]]"},
     {"name": "sage_ip6", "value": "[[sageNode.ip6]]"},
-    {"name": "cert_name", "value": "bubble-[[network.shortId]]"}
+    {"name": "cert_name", "value": "bubble-[[network.shortId]]"},
+    {"name": "cert_org", "value": "Bubble [[network.shortId]]"},
+    {"name": "cert_cn", "value": "[[network.certCNAME]]"}
   ]
 }
