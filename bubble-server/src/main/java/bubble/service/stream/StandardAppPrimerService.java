@@ -47,13 +47,16 @@ public class StandardAppPrimerService implements AppPrimerService {
     @Getter(lazy=true) private final boolean primingEnabled = initPrimingEnabled();
     private boolean initPrimingEnabled() {
         if (configuration == null) return die("initPrimingEnabled: configuration was null");
+        if (configuration.testMode()) {
+            log.info("initPrimingEnabled: configuration.testMode is true, not priming");
+        }
         final BubbleNetwork thisNetwork = configuration.getThisNetwork();
         if (thisNetwork == null) {
-            log.info("primeApps: thisNetwork is null, not priming");
+            log.info("initPrimingEnabled: thisNetwork is null, not priming");
             return false;
         }
         if (thisNetwork.getInstallType() != AnsibleInstallType.node) {
-            log.info("primeApps: thisNetwork is not a node, not priming");
+            log.info("initPrimingEnabled: thisNetwork is not a node, not priming");
             return false;
         }
         return true;
