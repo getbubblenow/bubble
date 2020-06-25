@@ -81,7 +81,6 @@ public class AnsiblePrepService {
         }
         ctx.put("sslPort", network.getSslPort());
         ctx.put("publicBaseUri", network.getPublicUri());
-        ctx.put("cert_validation_host", configuration.getCertValidationHost());
         ctx.put("support", configuration.getSupport());
         ctx.put("appLinks", configuration.getAppLinks());
 

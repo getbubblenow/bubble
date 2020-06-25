@@ -88,8 +88,6 @@ rateLimits:
   - { limit: 50000, interval: 1h, block: 24h }
   - { limit: 100000, interval: 6h, block: 96h }
 
-certValidationHost: {{CERT_VALIDATION_HOST}}
-
 support:
   email: {{SUPPORT_EMAIL}}
   site: {{SUPPORT_SITE}}

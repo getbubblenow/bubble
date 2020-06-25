@@ -41,7 +41,6 @@ REDIS = redis.Redis(host='127.0.0.1', port=6379, db=0)
 
 FORCE_PASSTHRU = {'passthru': True}
 
-cert_validation_host = None
 local_ips = None
 
 

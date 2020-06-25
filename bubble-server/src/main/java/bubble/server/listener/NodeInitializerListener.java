@@ -17,14 +17,12 @@ import bubble.service.cloud.DeviceIdService;
 import bubble.service.cloud.NetworkMonitorService;
 import bubble.service.stream.AppPrimerService;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
 
 import java.io.File;
 import java.util.Map;
 
-import static bubble.server.BubbleConfiguration.TAG_CERT_VALIDATION_HOST;
 import static bubble.service.boot.StandardSelfNodeService.SELF_NODE_JSON;
 import static bubble.service.boot.StandardSelfNodeService.THIS_NODE_FILE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -107,14 +105,10 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
             }
         }
 
-        // ensure default devices exist, cert_validation_host is set, apps are primed and device security levels are set
+        // ensure default devices exist, apps are primed and device security levels are set
         if (thisNode != null) {
             final BubbleNetwork thisNetwork = c.getThisNetwork();
             if (thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.node) {
-                final String certValidationHost = c.getCertValidationHost();
-                if (!empty(certValidationHost)) {
-                    c.getBean(RedisService.class).set(TAG_CERT_VALIDATION_HOST, certValidationHost);
-                }
                 c.getBean(AppPrimerService.class).primeApps();
                 c.getBean(DeviceIdService.class).initDeviceSecurityLevels();
             }
