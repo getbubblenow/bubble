@@ -4,6 +4,7 @@
  */
 package bubble.resources.account;
 
+import bubble.client.BubbleNodeClient;
 import bubble.dao.SessionDAO;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
@@ -18,10 +19,7 @@ import bubble.model.account.message.*;
 import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.BubblePlan;
 import bubble.model.boot.ActivationRequest;
-import bubble.model.cloud.BubbleNetwork;
-import bubble.model.cloud.BubbleNode;
-import bubble.model.cloud.BubbleNodeKey;
-import bubble.model.cloud.NetworkKeys;
+import bubble.model.cloud.*;
 import bubble.model.cloud.notify.NotificationReceipt;
 import bubble.model.device.BubbleDeviceType;
 import bubble.model.device.Device;
@@ -368,12 +366,45 @@ public class AuthResource {
     public Response appLogin(@Context Request req,
                              @Context ContainerRequest ctx,
                              @PathParam("session") String sessionId) {
-        final Account sessionAccount = sessionDAO.find(sessionId);
-        if (sessionAccount == null) return notFound(sessionId);
+        Account sessionAccount = sessionDAO.find(sessionId);
+        if (sessionAccount == null) {
+            final BubbleNetwork thisNetwork = configuration.getThisNetwork();
+            if (thisNetwork != null
+                    && thisNetwork.syncPassword()
+                    && thisNetwork.getInstallType() == AnsibleInstallType.node
+                    && configuration.hasSageNode()) {
+                // check if session is valid on sage
+                final BubbleNodeClient sageClient = configuration.getSageNode().getApiQuickClient(configuration);
+                try {
+                    final Account sageAccount = sageClient.post(AUTH_ENDPOINT+EP_APP_LOGIN+"/"+sessionId, null, Account.class);
+                    if (sageAccount == null || !empty(sageAccount.getApiToken())) {
+                        // should never happen
+                        log.warn("appLogin: sageLogin succeeded, but returned null account or account without api token");
+                        return notFound(sessionId);
+
+                    } else {
+                        sessionAccount = accountDAO.findByUuid(sageAccount.getUuid());
+                        if (sessionAccount == null) {
+                            log.warn("appLogin: sageLogin succeeded, but account does not exist locally: "+sageAccount.getUuid());
+                            return notFound(sessionId);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("appLogin: error checking session with sage ("+configuration.getSageNode().id()+"): "+shortError(e));
+                    return notFound(sessionId);
+                }
+            } else {
+                return notFound(sessionId);
+            }
+        }
 
         final Account existing = optionalUserPrincipal(ctx);
         if (existing != null) {
-            sessionDAO.invalidate(existing.getApiToken());
+            if (!existing.getUuid().equals(sessionAccount.getUuid())) {
+                sessionDAO.invalidate(existing.getApiToken());
+            } else {
+                return ok(existing);
+            }
         }
         return ok(sessionAccount.setApiToken(sessionDAO.create(sessionAccount)));
     }
