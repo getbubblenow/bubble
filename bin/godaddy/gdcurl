@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if [[ -z "${GODADDY_API_KEY}" ]] ; then
+  echo "GODADDY_API_KEY not defined in environment"
+  exit 1
+fi
+if [[ -z "${GODADDY_API_SECRET}" ]] ; then
+  echo "GODADDY_API_SECRET not defined in environment"
+  exit 1
+fi
+
+URI="${1:?no uri}"
+POST_FILE="${2}"
+HTTP_METHOD=${3}
+
+API_BASE=https://api.godaddy.com/v1/domains/
+
+if [[ ! -z "${POST_FILE}" ]] ; then
+  if [[ -z "${HTTP_METHOD}" ]] ; then
+    curl -d @${POST_FILE} -s -H 'Content-Type: application/json' -H "Authorization: sso-key ${GODADDY_API_KEY}:${GODADDY_API_SECRET}" ${API_BASE}${URI}
+  else
+    curl -d @${POST_FILE} -X ${HTTP_METHOD} -s -H 'Content-Type: application/json' -H "Authorization: sso-key ${GODADDY_API_KEY}:${GODADDY_API_SECRET}" ${API_BASE}${URI}
+  fi
+else
+  curl -s -H "Authorization: sso-key ${GODADDY_API_KEY}:${GODADDY_API_SECRET}" ${API_BASE}${URI}
+fi
