@@ -13,11 +13,11 @@
   when: restore_key is defined
 
 - name: Install mitmproxy CA cert in local CA store
-  shell: install_cert.sh /home/mitmproxy/.mitmproxy/{{ server_alias }}-ca-cert.pem 600
+  shell: install_cert.sh /home/mitmproxy/.mitmproxy/{{ cert_name }}-ca-cert.pem 600
   when: install_type == 'node'
 
 - name: Install mitmproxy public certs in bubble dir
-  shell: /usr/local/bin/copy_certs_to_bubble.sh {{ server_alias }}
+  shell: /usr/local/bin/copy_certs_to_bubble.sh {{ cert_name }}
   when: install_type == 'node'
 
 - name: Install bubble supervisor conf file
