@@ -96,6 +96,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
         if (toUpdate == null) die("Cannot find device to update with uuid: " + updateRequest.getUuid());
         if (toUpdate.uninitialized()) die("Cannot update special devices: " + updateRequest.getName());
 
+        toUpdate.update(updateRequest);
         final var updated = super.update(toUpdate);
         deviceIdService.setDeviceSecurityLevel(updated);
         return updated;

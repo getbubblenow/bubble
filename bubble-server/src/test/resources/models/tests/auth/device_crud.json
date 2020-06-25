@@ -13,7 +13,7 @@
     "response": {
       "store": "userDevices",
       "check": [
-        {"condition": "json.length == 0"}
+        {"condition": "json.length === 0"}
       ]
     }
   },
@@ -24,7 +24,8 @@
       "uri": "users/{{userAccount.name}}/devices",
       "method": "put",
       "entity": {
-        "name": "root-added-device"
+        "name": "root-added-device",
+        "deviceType": "other"
       }
     },
     "response": {
@@ -37,8 +38,8 @@
     "request": { "uri": "users/{{userAccount.name}}/devices" },
     "response": {
       "check": [
-        {"condition": "json.length == 1"},
-        {"condition": "json[0].getName() == 'root-added-device'"}
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getName() === 'root-added-device'"}
       ]
     }
   },
@@ -48,7 +49,7 @@
     "request": { "uri": "users/{{userAccount.name}}/devices/root-added-device" },
     "response": {
       "check": [
-        {"condition": "json.getName() == 'root-added-device'"}
+        {"condition": "json.getName() === 'root-added-device'"}
       ]
     }
   },
@@ -58,7 +59,7 @@
     "request": { "uri": "users/{{userAccount.name}}/devices/{{device.uuid}}" },
     "response": {
       "check": [
-        {"condition": "json.getName() == 'root-added-device'"}
+        {"condition": "json.getName() === 'root-added-device'"}
       ]
     }
   },
@@ -80,8 +81,8 @@
     },
     "response": {
       "check": [
-        {"condition": "json.length == 1"},
-        {"condition": "json[0].getName() == 'root-renamed-device'"}
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getName() === 'root-renamed-device'"}
       ]
     }
   },
@@ -92,7 +93,8 @@
       "uri": "me/devices",
       "method": "put",
       "entity": {
-        "name": "user-added-device"
+        "name": "user-added-device",
+        "deviceType": "other"
       }
     },
     "response": {
@@ -105,9 +107,9 @@
     "request": { "uri": "me/devices" },
     "response": {
       "check": [
-        {"condition": "json.length == 2"},
-        {"condition": "json[0].getName() == 'root-renamed-device'"},
-        {"condition": "json[1].getName() == 'user-added-device'"}
+        {"condition": "json.length === 2"},
+        {"condition": "json[0].getName() === 'root-renamed-device'"},
+        {"condition": "json[1].getName() === 'user-added-device'"}
       ]
     }
   },
@@ -133,8 +135,8 @@
     "request": { "uri": "me/devices" },
     "response": {
       "check": [
-        {"condition": "json.length == 1"},
-        {"condition": "json[0].getName() == 'user-added-device'"}
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getName() === 'user-added-device'"}
       ]
     }
   },
@@ -153,7 +155,7 @@
     "request": { "uri": "users/{{userAccount.name}}/devices" },
     "response": {
       "check": [
-        {"condition": "json.length == 0"}
+        {"condition": "json.length === 0"}
       ]
     }
   }
