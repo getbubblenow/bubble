@@ -88,6 +88,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
         }
 
         if (newDevicesCreated) refreshVpnUsers();
+        deviceIdService.setDeviceSecurityLevel(result);
         return result;
     }
 
