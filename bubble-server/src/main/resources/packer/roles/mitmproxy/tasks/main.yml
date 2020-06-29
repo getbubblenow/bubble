@@ -58,7 +58,7 @@
   with_items:
     - bubble_api.py
     - dns_spoofing.py
-    - bubble_passthru.py
+    - bubble_conn_check.py
     - bubble_modify.py
     - run_mitmdump.sh
 
