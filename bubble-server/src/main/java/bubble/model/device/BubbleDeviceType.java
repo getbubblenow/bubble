@@ -21,8 +21,8 @@ public enum BubbleDeviceType {
     uninitialized (null, false),
     windows       (CertType.cer, true, DeviceSecurityLevel.maximum),
     macosx        (CertType.pem, true, DeviceSecurityLevel.maximum),
-    ios           (CertType.pem, true, DeviceSecurityLevel.standard),
-    android       (CertType.cer, true, DeviceSecurityLevel.basic),
+    ios           (CertType.pem, true, DeviceSecurityLevel.maximum),
+    android       (CertType.cer, true, DeviceSecurityLevel.standard),
     linux         (CertType.crt, true, DeviceSecurityLevel.maximum),
     firefox       (CertType.crt, false),
     other         (null, true, DeviceSecurityLevel.basic);
@@ -32,7 +32,7 @@ public enum BubbleDeviceType {
     @Getter private final DeviceSecurityLevel defaultSecurityLevel;
     public boolean hasDefaultSecurityLevel () { return defaultSecurityLevel != null; }
 
-    BubbleDeviceType (CertType certType, boolean selectable) { this(CertType.cer, selectable, null); }
+    BubbleDeviceType (CertType certType, boolean selectable) { this(certType, selectable, null); }
 
     @JsonCreator public static BubbleDeviceType fromString (String v) { return enumFromString(BubbleDeviceType.class, v); }
 

@@ -11,6 +11,7 @@ import bubble.model.device.Device;
 import bubble.resources.stream.FilterHttpRequest;
 import bubble.resources.stream.FilterMatchersRequest;
 import bubble.service.stream.AppRuleHarness;
+import bubble.service.stream.ConnectionCheckResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
@@ -145,6 +146,12 @@ public interface AppRuleDriver {
         return null;
     }
 
-    default boolean isTlsPassthru(AppRuleHarness harness, Account account, Device device, String addr, String fqdn) { return false; }
+    default ConnectionCheckResponse checkConnection(AppRuleHarness harness,
+                                                    Account account,
+                                                    Device device,
+                                                    String addr,
+                                                    String fqdn) {
+        return ConnectionCheckResponse.noop;
+    }
 
 }

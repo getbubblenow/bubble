@@ -39,7 +39,7 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
                 and(
                         eq("account", account),
                         eq("enabled", true),
-                        eq("passthru", false),
+                        eq("connCheck", false),
                         or(
                                 eq("fqdn", fqdn),
                                 eq("fqdn", WILDCARD_FQDN)
@@ -47,8 +47,8 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
         ).addOrder(PRIORITY_ASC));
     }
 
-    public List<AppMatcher> findByAccountAndEnabledAndPassthru(String account) {
-        return findByFields("account", account, "enabled", true, "passthru", true);
+    public List<AppMatcher> findByAccountAndEnabledAndConnCheck(String account) {
+        return findByFields("account", account, "enabled", true, "connCheck", true);
     }
 
     public List<AppMatcher> findAllChangesSince(Long lastMod) {
@@ -56,7 +56,7 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
     }
 
     @Override public Object preCreate(AppMatcher matcher) {
-        if (matcher.getPassthru() == null) matcher.setPassthru(false);
+        if (matcher.getConnCheck() == null) matcher.setConnCheck(false);
         return super.preCreate(matcher);
     }
 

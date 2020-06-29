@@ -4,7 +4,7 @@
     "AppMatcher": [{
       "name": "TlsPassthruMatcher",
       "template": true,
-      "passthru": true,
+      "connCheck": true,
       "site": "All_Sites",
       "fqdn": "*",
       "urlRegex": ".*",

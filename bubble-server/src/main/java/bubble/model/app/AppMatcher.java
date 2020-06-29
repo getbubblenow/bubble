@@ -45,7 +45,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, HasPriority {
 
     public static final String[] VALUE_FIELDS = {"fqdn", "urlRegex", "template", "enabled", "priority"};
-    public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS, "name", "site", "rule", "passthru");
+    public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS, "name", "site", "rule", "connCheck");
 
     public static final Pattern DEFAULT_CONTENT_TYPE_PATTERN = Pattern.compile("^text/html.*", Pattern.CASE_INSENSITIVE);
     public static final String WILDCARD_FQDN = "*";
@@ -131,8 +131,8 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
 
     @ECSearchable @ECField(index=120, required=EntityFieldRequired.optional)
     @ECIndex @Column(nullable=false)
-    @Getter @Setter private Boolean passthru;
-    public boolean passthru () { return bool(passthru); }
+    @Getter @Setter private Boolean connCheck;
+    public boolean connCheck () { return bool(connCheck); }
 
     @ECSearchable @ECField(index=130)
     @Column(nullable=false)

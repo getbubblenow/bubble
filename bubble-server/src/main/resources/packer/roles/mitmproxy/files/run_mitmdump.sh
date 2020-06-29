@@ -16,6 +16,6 @@ mitmdump \
   --set stream_large_bodies=5m \
   --set keep_host_header \
   -s ./dns_spoofing.py \
-  -s ./bubble_passthru.py \
+  -s ./bubble_conn_check.py \
   -s ./bubble_modify.py \
   --mode transparent

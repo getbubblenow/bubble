@@ -21,6 +21,7 @@ import bubble.rule.FilterMatchDecision;
 import bubble.server.BubbleConfiguration;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.DeviceIdService;
+import bubble.service.stream.ConnectionCheckResponse;
 import bubble.service.stream.StandardRuleEngineService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -124,23 +125,23 @@ public class FilterHttpResource {
         return null;
     }
 
-    @POST @Path(EP_PASSTHRU)
+    @POST @Path(EP_CHECK)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Response isTlsPassthru(@Context Request req,
-                                  @Context ContainerRequest request,
-                                  FilterPassthruRequest passthruRequest) {
-        final String prefix = "isPassthru: ";
-        if (passthruRequest == null || !passthruRequest.hasAddr() || !passthruRequest.hasRemoteAddr()) {
-            if (log.isDebugEnabled()) log.debug(prefix+"invalid passthruRequest, returning forbidden");
+    public Response checkConnection(@Context Request req,
+                                    @Context ContainerRequest request,
+                                    FilterConnCheckRequest connCheckRequest) {
+        final String prefix = "checkConnection: ";
+        if (connCheckRequest == null || !connCheckRequest.hasAddr() || !connCheckRequest.hasRemoteAddr()) {
+            if (log.isDebugEnabled()) log.debug(prefix+"invalid connCheckRequest, returning forbidden");
             return forbidden();
         }
         validateMitmCall(req);
 
         // if the requested IP is the same as our IP, then always passthru
-        if (isForUs(passthruRequest)) return ok();
+        if (isForUs(connCheckRequest)) return ok();
 
-        final String vpnAddr = passthruRequest.getRemoteAddr();
+        final String vpnAddr = connCheckRequest.getRemoteAddr();
         final Device device = deviceIdService.findDeviceByIp(vpnAddr);
         if (device == null) {
             if (log.isDebugEnabled()) log.debug(prefix+"device not found for IP "+vpnAddr+", returning not found");
@@ -154,7 +155,7 @@ public class FilterHttpResource {
             return notFound();
         }
 
-        final List<AppMatcher> matchers = matcherDAO.findByAccountAndEnabledAndPassthru(device.getAccount());
+        final List<AppMatcher> matchers = matcherDAO.findByAccountAndEnabledAndConnCheck(device.getAccount());
         final List<AppMatcher> retained = new ArrayList<>();
         for (AppMatcher matcher : matchers) {
             final BubbleApp app = appDAO.findByUuid(matcher.getApp());
@@ -164,23 +165,23 @@ public class FilterHttpResource {
             retained.add(matcher);
         }
 
-        final String[] fqdns = passthruRequest.getFqdns();
+        final String[] fqdns = connCheckRequest.getFqdns();
         for (String fqdn : fqdns) {
-            final boolean passthru = ruleEngine.isTlsPassthru(account, device, retained, passthruRequest.getAddr(), fqdn);
-            if (passthru) {
-                if (log.isDebugEnabled()) log.debug(prefix+"returning true for fqdn/addr="+fqdn+"/"+passthruRequest.getAddr());
-                return ok();
+            final ConnectionCheckResponse checkResponse = ruleEngine.checkConnection(account, device, retained, connCheckRequest.getAddr(), fqdn);
+            if (checkResponse != ConnectionCheckResponse.noop) {
+                if (log.isDebugEnabled()) log.debug(prefix + "returning "+checkResponse+" for fqdn/addr=" + fqdn + "/" + connCheckRequest.getAddr());
+                return ok(checkResponse);
             }
         }
-        if (log.isDebugEnabled()) log.debug(prefix+"returning false for fqdns/addr="+Arrays.toString(fqdns)+"/"+passthruRequest.getAddr());
-        return notFound();
+        if (log.isDebugEnabled()) log.debug(prefix+"returning noop for fqdns/addr="+Arrays.toString(fqdns)+"/"+ connCheckRequest.getAddr());
+        return ok(ConnectionCheckResponse.noop);
     }
 
-    private boolean isForUs(FilterPassthruRequest passthruRequest) {
+    private boolean isForUs(FilterConnCheckRequest connCheckRequest) {
         final BubbleNode thisNode = selfNodeService.getThisNode();
-        return passthruRequest.hasAddr()
-                && (thisNode.hasIp4() && thisNode.getIp4().equals(passthruRequest.getAddr())
-                || thisNode.hasIp6() && thisNode.getIp6().equals(passthruRequest.getAddr()));
+        return connCheckRequest.hasAddr()
+                && (thisNode.hasIp4() && thisNode.getIp4().equals(connCheckRequest.getAddr())
+                || thisNode.hasIp6() && thisNode.getIp6().equals(connCheckRequest.getAddr()));
     }
 
     @POST @Path(EP_MATCHERS+"/{requestId}")

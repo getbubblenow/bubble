@@ -56,7 +56,7 @@ def bubble_activity_log(client_addr, server_addr, event, data):
     pass
 
 
-def bubble_passthru(remote_addr, addr, fqdns):
+def bubble_conn_check(remote_addr, addr, fqdns, security_level):
     headers = {
         'X-Forwarded-For': remote_addr,
         'Accept' : 'application/json',
@@ -68,11 +68,17 @@ def bubble_passthru(remote_addr, addr, fqdns):
             'fqdns': fqdns,
             'remoteAddr': remote_addr
         }
-        response = requests.post('http://127.0.0.1:'+bubble_port+'/api/filter/passthru', headers=headers, json=data)
-        return response.ok
+        response = requests.post('http://127.0.0.1:'+bubble_port+'/api/filter/check', headers=headers, json=data)
+        if response.ok:
+            return response.json()
+        bubble_log('bubble_conn_check API call failed: '+repr(response))
+        return None
+
     except Exception as e:
-        bubble_log('bubble_passthru API call failed: '+repr(e))
+        bubble_log('bubble_conn_check API call failed: '+repr(e))
         traceback.print_exc()
+        if security_level is not None and security_level == 'maximum':
+            return False
         return None
 
 

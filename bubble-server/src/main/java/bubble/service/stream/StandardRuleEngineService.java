@@ -50,7 +50,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -64,6 +63,7 @@ import static org.apache.http.HttpHeaders.TRANSFER_ENCODING;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
 import static org.cobbzilla.util.http.HttpStatusCodes.OK;
+import static org.cobbzilla.wizard.cache.redis.RedisService.ALL_KEYS;
 import static org.cobbzilla.wizard.resources.ResourceUtil.send;
 
 @Service @Slf4j
@@ -179,18 +179,18 @@ public class StandardRuleEngineService implements RuleEngineService {
     public Map<Object, Object> flushCaches() {
         final int ruleEngineCacheSize = ruleCache.size();
         ruleCache.clear();
-        log.info("flushCaches: flushed "+ruleEngineCacheSize+" ruleCache entries");
+        if (log.isInfoEnabled()) log.info("flushCaches: flushed "+ruleEngineCacheSize+" ruleCache entries");
 
         final RedisService matchersCache = getMatchersCache();
-        final Collection<String> keys = matchersCache.keys("*");
-        for (String key : keys) {
-            if (log.isTraceEnabled()) log.trace("flushCaches: deleting key: "+key);
-            matchersCache.del_withPrefix(key);
-        }
-        log.info("flushCaches: flushed "+keys.size()+" matchersCache entries");
+        final Long matcherCount = matchersCache.del_matching(ALL_KEYS);
+        if (log.isInfoEnabled()) log.info("flushCaches: flushed "+matcherCount+" matchersCache entries");
+
+        final Long connCheckDeletions = redis.del_matching("bubble_conn_check_*");
+        if (log.isInfoEnabled()) log.info("flushCaches: removed "+connCheckDeletions+" conn_check cache entries");
 
         return MapBuilder.build(new Object[][] {
-                {"matchersCache", keys.size()},
+                {"connCheckCache", connCheckDeletions},
+                {"matchersCache", matcherCount},
                 {"ruleEngineCache", ruleEngineCacheSize}
         });
     }
@@ -275,11 +275,13 @@ public class StandardRuleEngineService implements RuleEngineService {
     @Getter(lazy=true) private final HttpClientBuilder httpClientBuilder = newHttpClientBuilder(1000, 50);
     public CloseableHttpClient newHttpConn() { return getHttpClientBuilder().build(); }
 
-    public boolean isTlsPassthru(Account account, Device device, List<AppMatcher> matchers, String addr, String fqdn) {
+    public ConnectionCheckResponse checkConnection(Account account, Device device, List<AppMatcher> matchers, String addr, String fqdn) {
         final List<AppRuleHarness> ruleHarnesses = initRules(account, device, matchers);
         for (AppRuleHarness harness : ruleHarnesses) {
-            if (harness.getDriver().isTlsPassthru(harness, account, device, addr, fqdn)) return true;
+            final ConnectionCheckResponse checkResponse = harness.getDriver().checkConnection(harness, account, device, addr, fqdn);
+            if (checkResponse != ConnectionCheckResponse.noop) return checkResponse;
         }
-        return false;
+        return ConnectionCheckResponse.noop;
     }
+
 }

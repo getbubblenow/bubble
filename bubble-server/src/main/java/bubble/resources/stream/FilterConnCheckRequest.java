@@ -9,7 +9,7 @@ import lombok.Setter;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
-public class FilterPassthruRequest {
+public class FilterConnCheckRequest {
 
     @Getter @Setter private String addr;
     public boolean hasAddr() { return !empty(addr); }

@@ -4,6 +4,7 @@
     "AppMatcher": [{
       "name": "BubbleBlockMatcher",
       "template": true,
+      "connCheck": true,
       "site": "All_Sites",
       "fqdn": "*",
       "urlRegex": ".*",

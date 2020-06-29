@@ -15,6 +15,7 @@ import bubble.rule.AppRuleDriver;
 import bubble.rule.FilterMatchDecision;
 import bubble.rule.analytics.TrafficAnalyticsRuleDriver;
 import bubble.service.stream.AppRuleHarness;
+import bubble.service.stream.ConnectionCheckResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.input.ReaderInputStream;
@@ -108,19 +109,34 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         }
         blockList.set(newBlockList);
 
-        boolean doPrime = false;
         if (!newBlockList.getFullyBlockedDomains().equals(fullyBlockedDomains.get())) {
             fullyBlockedDomains.set(newBlockList.getFullyBlockedDomains());
-            doPrime = true;
         }
         if (!newBlockList.getPartiallyBlockedDomains().equals(partiallyBlockedDomains.get())) {
             partiallyBlockedDomains.set(newBlockList.getPartiallyBlockedDomains());
-            doPrime = true;
         }
 
         log.info("refreshBlockLists: fullyBlockedDomains="+fullyBlockedDomains.get().size());
         log.info("refreshBlockLists: partiallyBlockedDomains="+partiallyBlockedDomains.get().size());
         log.info("refreshBlockLists: refreshed "+refreshed.size()+" block lists: "+StringUtil.toString(refreshed));
+    }
+
+    @Override public ConnectionCheckResponse checkConnection(AppRuleHarness harness,
+                                                             Account account,
+                                                             Device device,
+                                                             String addr,
+                                                             String fqdn) {
+        final BlockDecision decision = getBlockList().getFqdnDecision(fqdn);
+        final BlockDecisionType decisionType = decision.getDecisionType();
+        switch (decisionType) {
+            case allow:
+                return ConnectionCheckResponse.noop;
+            case block:
+                return ConnectionCheckResponse.block;
+            default:
+                if (log.isWarnEnabled()) log.warn("checkConnection: unexpected decision: "+decisionType+", returning noop");
+                return ConnectionCheckResponse.noop;
+        }
     }
 
     @Override public FilterMatchDecision preprocess(AppRuleHarness ruleHarness,
