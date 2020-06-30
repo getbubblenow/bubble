@@ -34,12 +34,12 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
 
     @Override public Order getDefaultSortOrder() { return PRIORITY_ASC; }
 
-    public List<AppMatcher> findByAccountAndFqdnAndEnabled(String account, String fqdn) {
+    public List<AppMatcher> findByAccountAndFqdnAndEnabledAndRequestCheck(String account, String fqdn) {
         return list(criteria().add(
                 and(
                         eq("account", account),
                         eq("enabled", true),
-                        eq("connCheck", false),
+                        eq("requestCheck", true),
                         or(
                                 eq("fqdn", fqdn),
                                 eq("fqdn", WILDCARD_FQDN)
@@ -57,6 +57,7 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
 
     @Override public Object preCreate(AppMatcher matcher) {
         if (matcher.getConnCheck() == null) matcher.setConnCheck(false);
+        if (matcher.getRequestCheck() == null) matcher.setRequestCheck(true);
         return super.preCreate(matcher);
     }
 

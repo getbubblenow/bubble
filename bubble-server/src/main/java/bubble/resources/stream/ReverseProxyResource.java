@@ -64,7 +64,7 @@ public class ReverseProxyResource {
         if (device == null) return ruleEngine.passthru(request);
 
         final URIBean ub = getUriBean(request);
-        final List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabled(account.getUuid(), ub.getHost());
+        final List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabledAndRequestCheck(account.getUuid(), ub.getHost());
         if (empty(matchers)) {
             // no matchers, pass-thru
             return ruleEngine.passthru(ub, request);

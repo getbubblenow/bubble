@@ -282,7 +282,7 @@ public class FilterHttpResource {
 
     private List<AppMatcher> getEnabledMatchers(String requestId, String accountUuid, String fqdn) {
         final String prefix = "getEnabledMatchers("+requestId+"): ";
-        List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabled(accountUuid, fqdn);
+        List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabledAndRequestCheck(accountUuid, fqdn);
         if (log.isTraceEnabled()) log.trace(prefix+"checking all enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
         matchers = matchers.stream()
                 .filter(m -> appDAO.findByAccountAndId(accountUuid, m.getApp()).enabled()).collect(Collectors.toList());
