@@ -380,6 +380,7 @@ public class StandardNetworkService implements NetworkService {
             node.setState(BubbleNodeState.running);
             nodeDAO.update(node);
             progressMeter.completed();
+            log.info("newNode: ready in "+formatDuration(now() - start));
 
         } catch (Exception e) {
             log.error("newNode: "+e, e);
