@@ -349,15 +349,6 @@ public class StandardNetworkService implements NetworkService {
             }
             if (!setupOk) return die("newNode: error setting up, all retries failed for node: "+node.getUuid());
 
-            // we are good.
-            final BubbleNetworkState finalState = nn.hasRestoreKey() ? BubbleNetworkState.restoring : BubbleNetworkState.running;
-            if (network.getState() != finalState) {
-                network.setState(finalState);
-                networkDAO.update(network);
-            }
-            node.setState(BubbleNodeState.running);
-            nodeDAO.update(node);
-
             // wait for node to be ready
             final long readyStart = now();
             boolean ready = false;
@@ -379,6 +370,15 @@ public class StandardNetworkService implements NetworkService {
             if (!ready) {
                 return die("newNode: timeout waiting for node ("+node.id()+") to be ready");
             }
+
+            // we are good.
+            final BubbleNetworkState finalState = nn.hasRestoreKey() ? BubbleNetworkState.restoring : BubbleNetworkState.running;
+            if (network.getState() != finalState) {
+                network.setState(finalState);
+                networkDAO.update(network);
+            }
+            node.setState(BubbleNodeState.running);
+            nodeDAO.update(node);
             progressMeter.completed();
 
         } catch (Exception e) {
