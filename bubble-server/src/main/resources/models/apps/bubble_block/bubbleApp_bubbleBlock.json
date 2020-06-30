@@ -135,6 +135,13 @@
             "tags": ["ads"]
           },
           {
+            "name": "Peter Lowe's Ad and tracking server list",
+            "id": "peter_lowes_ad_and_tracking_list",
+            "url": "https://pgl.yoyo.org/adservers/serverlist.php?showintro=0;hostformat=raw",
+            "description": "A comprehensive list of ad and tracking servers",
+            "tags": ["ads", "privacy"]
+          },
+          {
             "name": "Dandelion Sprout's Anti-Malware List",
             "id": "dandelion_sprouts_anti_malware_list",
             "url": "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareABP.txt",
