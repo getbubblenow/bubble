@@ -360,25 +360,24 @@ public class StandardNetworkService implements NetworkService {
 
             // wait for node to be ready
             final long readyStart = now();
-            try {
-                boolean ready = false;
-                final BubbleNodeClient nodeClient = node.getApiQuickClient(configuration);
-                while (now() - readyStart < NODE_READY_TIMEOUT) {
-                    try {
-                        if (nodeClient.get(AUTH_ENDPOINT + EP_READY).isSuccess()) {
-                            log.info("newNode: node ("+node.id()+") is ready!");
-                            ready = true;
-                            break;
-                        }
-                    } catch (Exception e) {
-                        log.warn("newNode: node ("+node.id()+") not ready yet: "+shortError(e));
+            boolean ready = false;
+            BubbleNodeClient nodeClient = null;
+            while (now() - readyStart < NODE_READY_TIMEOUT) {
+                sleep(SECONDS.toMillis(2), "newNode: waiting for node ("+node.id()+") to be ready");
+                if (nodeKeyDAO.findFirstByNode(node.getUuid()) == null) continue;
+                try {
+                    if (nodeClient == null) nodeClient = node.getApiQuickClient(configuration);
+                    if (nodeClient.get(AUTH_ENDPOINT + EP_READY).isSuccess()) {
+                        log.info("newNode: node ("+node.id()+") is ready!");
+                        ready = true;
+                        break;
                     }
+                } catch (Exception e) {
+                    log.warn("newNode: node ("+node.id()+") error checking if ready: "+shortError(e));
                 }
-                if (!ready) {
-                    return die("newNode: timeout waiting for node ("+node.id()+") to be ready: ");
-                }
-            } catch (Exception e) {
-                return die("newNode: error checking node ("+node.id()+") ready: "+shortError(e), e);
+            }
+            if (!ready) {
+                return die("newNode: timeout waiting for node ("+node.id()+") to be ready");
             }
             progressMeter.completed();
 
