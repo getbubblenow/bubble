@@ -32,6 +32,7 @@ from bubble_config import bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6
 import redis
 import json
 import subprocess
+import traceback
 
 REDIS_DNS_PREFIX = 'bubble_dns_'
 REDIS_CONN_CHECK_PREFIX = 'bubble_conn_check_'
@@ -105,23 +106,28 @@ class TlsFeedback(TlsLayer):
             super(TlsFeedback, self)._establish_tls_with_client()
 
         except TlsProtocolException as e:
-            if self.fqdns is not None and len(self.fqdns) > 0:
+            tb = traceback.format_exc()
+            if 'OpenSSL.SSL.ZeroReturnError' in tb:
+                bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', ignoring SSL zero return error for client '+client_address)
+                return
+
+            elif self.fqdns is not None and len(self.fqdns) > 0:
                 for fqdn in self.fqdns:
                     cache_key = conn_check_cache_prefix(client_address, fqdn)
                     if security_level == 'maximum':
                         redis_set(cache_key, json.dumps({'fqdn': fqdn, 'addr': server_address, 'passthru': False, 'block': True, 'reason': 'tls_failure'}), ex=REDIS_CHECK_DURATION)
-                        bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling block (security_level=maximum) for client '+client_address+' with cache_key='+cache_key+' and fqdn='+fqdn)
+                        bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling block (security_level=maximum) for client '+client_address+' with cache_key='+cache_key+' and fqdn='+fqdn+': '+repr(e))
                     else:
                         redis_set(cache_key, json.dumps({'fqdn': fqdn, 'addr': server_address, 'passthru': True, 'reason': 'tls_failure'}), ex=REDIS_CHECK_DURATION)
-                        bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling passthru for client '+client_address+' with cache_key='+cache_key+' and fqdn='+fqdn)
+                        bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling passthru for client '+client_address+' with cache_key='+cache_key+' and fqdn='+fqdn+': '+repr(e))
             else:
                 cache_key = conn_check_cache_prefix(client_address, server_address)
                 if security_level == 'maximum':
                     redis_set(cache_key, json.dumps({'fqdn': None, 'addr': server_address, 'passthru': False, 'block': True, 'reason': 'tls_failure'}), ex=REDIS_CHECK_DURATION)
-                    bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling block (security_level=maximum) for client '+client_address+' with cache_key='+cache_key+' and server_address='+server_address)
+                    bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling block (security_level=maximum) for client '+client_address+' with cache_key='+cache_key+' and server_address='+server_address+': '+repr(e))
                 else:
                     redis_set(cache_key, json.dumps({'fqdn': None, 'addr': server_address, 'passthru': True, 'reason': 'tls_failure'}), ex=REDIS_CHECK_DURATION)
-                    bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling passthru for client '+client_address+' with cache_key='+cache_key+' and server_address='+server_address)
+                    bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling passthru for client '+client_address+' with cache_key='+cache_key+' and server_address='+server_address+': '+repr(e))
             raise e
 
 

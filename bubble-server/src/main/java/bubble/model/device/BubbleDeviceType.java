@@ -19,11 +19,11 @@ import static bubble.ApiConstants.enumFromString;
 public enum BubbleDeviceType {
 
     uninitialized (null, false),
-    windows       (CertType.cer, true, DeviceSecurityLevel.maximum),
-    macosx        (CertType.pem, true, DeviceSecurityLevel.maximum),
-    ios           (CertType.pem, true, DeviceSecurityLevel.maximum),
+    windows       (CertType.cer, true, DeviceSecurityLevel.standard),
+    macosx        (CertType.pem, true, DeviceSecurityLevel.standard),
+    ios           (CertType.pem, true, DeviceSecurityLevel.standard),
     android       (CertType.cer, true, DeviceSecurityLevel.standard),
-    linux         (CertType.crt, true, DeviceSecurityLevel.maximum),
+    linux         (CertType.crt, true, DeviceSecurityLevel.standard),
     firefox       (CertType.crt, false),
     other         (null, true, DeviceSecurityLevel.basic);
 
