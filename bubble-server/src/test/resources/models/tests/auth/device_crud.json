@@ -108,8 +108,8 @@
     "response": {
       "check": [
         {"condition": "json.length === 2"},
-        {"condition": "json[0].getName() === 'user-added-device'"},
-        {"condition": "json[1].getName() === 'root-renamed-device'"}
+        {"condition": "_find(json, function (d) { return d.getName() == 'user-added-device'; }) != null"},
+        {"condition": "_find(json, function (d) { return d.getName() == 'root-renamed-device'; }) != null"}
       ]
     }
   },
