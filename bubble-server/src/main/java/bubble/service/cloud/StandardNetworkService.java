@@ -4,6 +4,7 @@
  */
 package bubble.service.cloud;
 
+import bubble.client.BubbleNodeClient;
 import bubble.cloud.CloudAndRegion;
 import bubble.cloud.compute.ComputeServiceDriver;
 import bubble.dao.account.AccountDAO;
@@ -74,7 +75,8 @@ import static bubble.service.boot.StandardSelfNodeService.*;
 import static bubble.service.cloud.NodeProgressMeter.getProgressMeterKey;
 import static bubble.service.cloud.NodeProgressMeter.getProgressMeterPrefix;
 import static bubble.service.cloud.NodeProgressMeterConstants.*;
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.daemon.Await.awaitAll;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -104,6 +106,7 @@ public class StandardNetworkService implements NetworkService {
     private static final long NET_DEADLOCK_TIMEOUT = MINUTES.toMillis(20);
     private static final long PLAN_ENABLE_TIMEOUT = PURCHASE_DELAY + SECONDS.toMillis(10);
     private static final long NODE_START_JOB_TIMEOUT = MINUTES.toMillis(30);
+    private static final long NODE_READY_TIMEOUT = MINUTES.toMillis(6);
 
     @Autowired private AccountDAO accountDAO;
     @Autowired private AccountSshKeyDAO sshKeyDAO;
@@ -354,6 +357,29 @@ public class StandardNetworkService implements NetworkService {
             }
             node.setState(BubbleNodeState.running);
             nodeDAO.update(node);
+
+            // wait for node to be ready
+            final long readyStart = now();
+            try {
+                boolean ready = false;
+                final BubbleNodeClient nodeClient = node.getApiQuickClient(configuration);
+                while (now() - readyStart < NODE_READY_TIMEOUT) {
+                    try {
+                        if (nodeClient.get(AUTH_ENDPOINT + EP_READY).isSuccess()) {
+                            log.info("newNode: node ("+node.id()+") is ready!");
+                            ready = true;
+                            break;
+                        }
+                    } catch (Exception e) {
+                        log.warn("newNode: node ("+node.id()+") not ready yet: "+shortError(e));
+                    }
+                }
+                if (!ready) {
+                    return die("newNode: timeout waiting for node ("+node.id()+") to be ready: ");
+                }
+            } catch (Exception e) {
+                return die("newNode: error checking node ("+node.id()+") ready: "+shortError(e), e);
+            }
             progressMeter.completed();
 
         } catch (Exception e) {

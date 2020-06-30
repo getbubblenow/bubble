@@ -41,9 +41,8 @@ log "Watching marker file..."
 while : ; do
   if [[ $(stat -c %Y ${BUBBLE_USER_MARKER}) -gt $(stat -c %Y ${ALGO_USER_MARKER}) ]] ; then
     touch ${ALGO_USER_MARKER}
-    sleep 5s
     log "Refreshing VPN users..."
     /usr/local/bin/algo_refresh_users.sh && log "VPN users successfully refreshed" || log "Error refreshing Algo VPN users"
   fi
-  sleep 10s
+  sleep 2s
 done

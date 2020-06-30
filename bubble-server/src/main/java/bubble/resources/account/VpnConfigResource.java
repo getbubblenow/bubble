@@ -4,7 +4,6 @@
  */
 package bubble.resources.account;
 
-import bubble.ApiConstants;
 import bubble.model.account.Account;
 import bubble.model.device.Device;
 import lombok.extern.slf4j.Slf4j;
@@ -30,14 +29,12 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 @Slf4j
 public class VpnConfigResource {
 
-    public static final String VPN_CONFIG_PATH = ApiConstants.HOME_DIR + "/configs/localhost/wireguard/";
-
     private Device device;
 
     public VpnConfigResource(Device device) { this.device = device; }
 
     public File getQRfile() {
-        final File qrFile = new File(VPN_CONFIG_PATH+device.getUuid()+".png");
+        final File qrFile = device.qrFile();
         if (!qrFile.exists()) {
             // todo: try to regenerate algo users?
             log.error("qrCode: file not found: "+abs(qrFile));
@@ -47,7 +44,7 @@ public class VpnConfigResource {
     }
 
     public File getVpnConfFile() {
-        final File confFile = new File(VPN_CONFIG_PATH+device.getUuid()+".conf");
+        final File confFile = device.vpnConfFile();
         if (!confFile.exists()) {
             // todo: try to regenerate algo users?
             log.error("confFile: file not found: "+abs(confFile));

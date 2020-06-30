@@ -13,6 +13,7 @@ import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
+import bubble.dao.device.DeviceDAO;
 import bubble.model.CertType;
 import bubble.model.account.*;
 import bubble.model.account.message.*;
@@ -92,6 +93,7 @@ public class AuthResource {
     @Autowired private StandardAuthenticatorService authenticatorService;
     @Autowired private PromotionService promoService;
     @Autowired private DeviceIdService deviceIdService;
+    @Autowired private DeviceDAO deviceDAO;
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
     @Autowired private NodeManagerService nodeManagerService;
 
@@ -105,6 +107,20 @@ public class AuthResource {
     @GET @Path(EP_CONFIGS)
     public Response getPublicSystemConfigs(@Context ContainerRequest ctx) {
         return ok(configuration.getPublicSystemConfigs());
+    }
+
+    @GET @Path(EP_READY)
+    public Response getNodeIsReady(@Context ContainerRequest ctx) {
+        try {
+            if (deviceDAO.findByAccountAndUninitialized(accountDAO.getFirstAdmin().getUuid())
+                    .stream()
+                    .anyMatch(Device::configsOk)) {
+                return ok();
+            }
+        } catch (Exception e) {
+            log.warn("getNodeIsReady: "+shortError(e));
+        }
+        return invalid("err.node.notReady");
     }
 
     @GET @Path(EP_ACTIVATE)

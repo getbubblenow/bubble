@@ -92,6 +92,7 @@ public class ApiConstants {
     public static final String AUTH_ENDPOINT = "/auth";
     public static final String EP_ACTIVATE = "/activate";
     public static final String EP_CONFIGS = "/configs";
+    public static final String EP_READY = "/ready";
     public static final String EP_REGISTER = "/register";
     public static final String EP_LOGIN = "/login";
     public static final String EP_APP_LOGIN = "/appLogin";

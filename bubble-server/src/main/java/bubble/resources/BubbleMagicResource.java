@@ -4,11 +4,8 @@
  */
 package bubble.resources;
 
-import bubble.server.BubbleConfiguration;
-import bubble.service.cloud.RequestCoordinationService;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.ContainerRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.Consumes;
@@ -27,9 +24,6 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.ok;
 @Path(BUBBLE_MAGIC_ENDPOINT)
 @Service @Slf4j
 public class BubbleMagicResource {
-
-    @Autowired private BubbleConfiguration configuration;
-    @Autowired private RequestCoordinationService requestService;
 
     @GET
     public Response get(@Context ContainerRequest ctx) {

@@ -4,6 +4,7 @@
  */
 package bubble.model.device;
 
+import bubble.ApiConstants;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccount;
 import bubble.model.cloud.BubbleNetwork;
@@ -18,11 +19,10 @@ import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
+
+import java.io.File;
 
 import static bubble.ApiConstants.EP_DEVICES;
 import static bubble.model.device.BubbleDeviceType.other;
@@ -49,6 +49,12 @@ public class Device extends IdentifiableBase implements HasAccount {
 
     public static final String UNINITIALIZED_DEVICE = "__uninitialized_device__";
     public static final String UNINITIALIZED_DEVICE_LIKE = UNINITIALIZED_DEVICE+"%";
+
+    public static final String VPN_CONFIG_PATH = ApiConstants.HOME_DIR + "/configs/localhost/wireguard/";
+
+    public File qrFile () { return new File(Device.VPN_CONFIG_PATH+getUuid()+".png"); }
+    public File vpnConfFile () { return new File(Device.VPN_CONFIG_PATH+getUuid()+".conf"); }
+    public boolean configsOk () { return qrFile().exists() && vpnConfFile().exists(); }
 
     public Device (Device other) { copy(this, other, CREATE_FIELDS); }
 

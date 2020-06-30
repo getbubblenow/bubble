@@ -10,8 +10,8 @@ import bubble.dao.app.AppDataDAO;
 import bubble.model.device.BubbleDeviceType;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
-import lombok.NonNull;
 import bubble.service.cloud.DeviceIdService;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,24 +20,29 @@ import org.springframework.stereotype.Repository;
 import javax.transaction.Transactional;
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static bubble.model.device.Device.UNINITIALIZED_DEVICE_LIKE;
 import static bubble.model.device.Device.newUninitializedDevice;
-import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.touch;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
+import static org.cobbzilla.util.system.Sleep.sleep;
 
 @Repository @Slf4j
 public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
     private static final File VPN_REFRESH_USERS_FILE = new File(HOME_DIR, ".algo_refresh_users");
     private static final short SPARE_DEVICES_PER_ACCOUNT_MAX = 10;
-    private static final short SPARE_DEVICES_PER_ACCOUNT_THRESHOLD = 5;
+    private static final short SPARE_DEVICES_PER_ACCOUNT_THRESHOLD = 10;
+    private static final long DEVICE_INIT_TIMEOUT = MINUTES.toMillis(5);
 
     @Autowired private BubbleConfiguration configuration;
-    @Autowired private AccountDAO accountDAO;
     @Autowired private AppDataDAO dataDAO;
     @Autowired private DeviceIdService deviceIdService;
 
@@ -58,38 +63,42 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
         return super.preCreate(device);
     }
 
+    private static final Object createLock = new Object();
+
     @Transactional
     @Override public Device create(@NonNull final Device device) {
-        if (device.uninitialized()) return super.create(device);
-        device.initDeviceType();
+        synchronized (createLock) {
+            if (device.uninitialized()) return super.create(device);
+            device.initDeviceType();
 
-        final var accountUuid = device.getAccount();
-        final var uninitializedDevices = findByAccountAndUninitialized(accountUuid);
+            final var accountUuid = device.getAccount();
+            var uninitializedDevices = findByAccountAndUninitialized(accountUuid);
 
-        var newDevicesCreated = false;
-        if (uninitializedDevices.size() <= SPARE_DEVICES_PER_ACCOUNT_THRESHOLD
-                && !configuration.getBean(AccountDAO.class).findByUuid(accountUuid).isRoot()) {
-            newDevicesCreated = ensureAllSpareDevices(accountUuid, device.getNetwork());
-        }
+            if (uninitializedDevices.size() <= SPARE_DEVICES_PER_ACCOUNT_THRESHOLD
+                    && !configuration.getBean(AccountDAO.class).findByUuid(accountUuid).isRoot()) {
+                if (ensureAllSpareDevices(accountUuid, device.getNetwork())) refreshVpnUsers();
+            }
+            uninitializedDevices = findByAccountAndUninitialized(accountUuid);
+            if (uninitializedDevices.isEmpty()) return die("create: no uninitialized devices exist!");
 
-        final Device result;
-        // run the above creation of spare devices in parallel, but if there were no spare devices loaded before that,
-        // create a brand new entry here:
-        if (uninitializedDevices.isEmpty()) {
-            log.info("create: no uninitialized devices for account " + accountUuid);
-            // just create the device now:
-            device.initTotpKey();
-            result = super.create(device);
-            newDevicesCreated = true;
-        } else {
-            final var uninitialized = uninitializedDevices.get(0);
+            final Device result;
+
+            Optional<Device> availableDevice = uninitializedDevices.stream().filter(Device::configsOk).findAny();
+            final long start = now();
+            while (availableDevice.isEmpty() && now() - start < DEVICE_INIT_TIMEOUT) {
+                // wait for configs to be ok
+                log.warn("create: no available uninitialized devices, waiting...");
+                sleep(SECONDS.toMillis(5), "waiting for available uninitialized device");
+                availableDevice = uninitializedDevices.stream().filter(Device::configsOk).findAny();
+            }
+            if (availableDevice.isEmpty()) return die("create: timeout waiting for available uninitialized device");
+            final var uninitialized = availableDevice.get();
             copy(uninitialized, device);
             result = super.update(uninitialized);
-        }
 
-        if (newDevicesCreated) refreshVpnUsers();
-        deviceIdService.setDeviceSecurityLevel(result);
-        return result;
+            deviceIdService.setDeviceSecurityLevel(result);
+            return result;
+        }
     }
 
     @Override @NonNull public Device update(@NonNull final Device updateRequest) {
@@ -100,6 +109,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
         toUpdate.update(updateRequest);
         final var updated = super.update(toUpdate);
         deviceIdService.setDeviceSecurityLevel(updated);
+        refreshVpnUsers();
         return updated;
     }
 

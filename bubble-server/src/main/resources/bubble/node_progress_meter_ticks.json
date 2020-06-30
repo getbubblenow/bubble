@@ -9,5 +9,5 @@
 { "percent": 92,"messageKey":"restart_algo",      "match": "prefix", "pattern":"TASK [Restart algo monitors]" },
 { "percent": 95,"messageKey":"mitmproxy_set_cert","match": "prefix", "pattern":"TASK [mitmproxy : Set the cert name]" },
 { "percent": 98,"messageKey":"touch_first_setup", "match": "prefix", "pattern":"TASK [finalizer : Touch first-time setup file]" },
-{ "percent": 100,"messageKey":"ssh_keys",         "match": "prefix", "pattern":"TASK [finalizer : Ensure authorized SSH keys are up-to-date]" }
+{ "percent": 99,"messageKey":"ssh_keys",         "match": "prefix", "pattern":"TASK [finalizer : Ensure authorized SSH keys are up-to-date]" }
 ]
