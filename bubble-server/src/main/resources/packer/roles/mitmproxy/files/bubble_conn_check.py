@@ -44,13 +44,19 @@ REDIS = redis.Redis(host='127.0.0.1', port=6379, db=0)
 FORCE_PASSTHRU = {'passthru': True}
 FORCE_BLOCK = {'block': True}
 
+# Matches enums in DeviceSecurityLevel
+SEC_MAX = 'maximum'
+SEC_STD = 'standard'
+SEC_BASIC = 'basic'
+SEC_OFF = 'disabled'
+
 local_ips = None
 
 
 def get_device_security_level(client_addr):
     level = REDIS.get(REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX+client_addr)
     if level is None:
-        return 'maximum'
+        return SEC_MAX
     return level.decode()
 
 
@@ -114,7 +120,7 @@ class TlsFeedback(TlsLayer):
             elif self.fqdns is not None and len(self.fqdns) > 0:
                 for fqdn in self.fqdns:
                     cache_key = conn_check_cache_prefix(client_address, fqdn)
-                    if security_level == 'maximum':
+                    if security_level == SEC_MAX:
                         redis_set(cache_key, json.dumps({'fqdn': fqdn, 'addr': server_address, 'passthru': False, 'block': True, 'reason': 'tls_failure'}), ex=REDIS_CHECK_DURATION)
                         bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling block (security_level=maximum) for client '+client_address+' with cache_key='+cache_key+' and fqdn='+fqdn+': '+repr(e))
                     else:
@@ -122,7 +128,7 @@ class TlsFeedback(TlsLayer):
                         bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling passthru for client '+client_address+' with cache_key='+cache_key+' and fqdn='+fqdn+': '+repr(e))
             else:
                 cache_key = conn_check_cache_prefix(client_address, server_address)
-                if security_level == 'maximum':
+                if security_level == SEC_MAX:
                     redis_set(cache_key, json.dumps({'fqdn': None, 'addr': server_address, 'passthru': False, 'block': True, 'reason': 'tls_failure'}), ex=REDIS_CHECK_DURATION)
                     bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling block (security_level=maximum) for client '+client_address+' with cache_key='+cache_key+' and server_address='+server_address+': '+repr(e))
                 else:
@@ -134,7 +140,7 @@ class TlsFeedback(TlsLayer):
 def check_bubble_connection(client_addr, server_addr, fqdns, security_level):
     check_response = bubble_conn_check(client_addr, server_addr, fqdns, security_level)
     if check_response is None or check_response == 'error':
-        if security_level == 'maximum':
+        if security_level == SEC_MAX:
             bubble_log('check_bubble_connection: bubble API returned ' + str(check_response) +' for FQDN/addr ' + str(fqdns) +'/' + str(server_addr) + ', security_level=maximum, returning Block')
             return {'fqdns': fqdns, 'addr': server_addr, 'passthru': False, 'block': True, 'reason': 'bubble_error'}
         else:
@@ -200,15 +206,15 @@ def next_layer(next_layer):
             bubble_log('next_layer: enabling passthru for SAGE server='+server_addr+' regardless of security_level='+security_level+' for client='+client_addr)
             check = FORCE_PASSTHRU
 
-        elif security_level == 'disabled' or security_level == 'basic':
+        elif security_level == SEC_OFF or security_level == SEC_BASIC:
             bubble_log('next_layer: enabling passthru for server='+server_addr+' because security_level='+security_level+' for client='+client_addr)
             check = FORCE_PASSTHRU
 
-        elif security_level == 'standard' and no_fqdns:
+        elif security_level == SEC_STD and no_fqdns:
             bubble_log('next_layer: enabling passthru for server='+server_addr+' because no FQDN found and security_level='+security_level+' for client='+client_addr)
             check = FORCE_PASSTHRU
 
-        elif security_level == 'maximum' and no_fqdns:
+        elif security_level == SEC_MAX and no_fqdns:
             bubble_log('next_layer: disabling passthru (no TlsFeedback) for server='+server_addr+' because no FQDN found and security_level='+security_level+' for client='+client_addr)
             check = FORCE_BLOCK
 
