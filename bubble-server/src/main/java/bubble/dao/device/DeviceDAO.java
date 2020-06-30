@@ -78,23 +78,29 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
                     && !configuration.getBean(AccountDAO.class).findByUuid(accountUuid).isRoot()) {
                 if (ensureAllSpareDevices(accountUuid, device.getNetwork())) refreshVpnUsers();
             }
-            uninitializedDevices = findByAccountAndUninitialized(accountUuid);
-            if (uninitializedDevices.isEmpty()) return die("create: no uninitialized devices exist!");
 
             final Device result;
+            uninitializedDevices = findByAccountAndUninitialized(accountUuid);
+            if (uninitializedDevices.isEmpty()) {
+                log.warn("create: no uninitialized devices for account " + accountUuid);
+                // just create the device now:
+                device.initTotpKey();
+                result = super.create(device);
 
-            Optional<Device> availableDevice = uninitializedDevices.stream().filter(Device::configsOk).findAny();
-            final long start = now();
-            while (availableDevice.isEmpty() && now() - start < DEVICE_INIT_TIMEOUT) {
-                // wait for configs to be ok
-                log.warn("create: no available uninitialized devices, waiting...");
-                sleep(SECONDS.toMillis(5), "waiting for available uninitialized device");
-                availableDevice = uninitializedDevices.stream().filter(Device::configsOk).findAny();
+            } else {
+                Optional<Device> availableDevice = uninitializedDevices.stream().filter(Device::configsOk).findAny();
+                final long start = now();
+                while (availableDevice.isEmpty() && now() - start < DEVICE_INIT_TIMEOUT) {
+                    // wait for configs to be ok
+                    log.warn("create: no available uninitialized devices, waiting...");
+                    sleep(SECONDS.toMillis(5), "waiting for available uninitialized device");
+                    availableDevice = uninitializedDevices.stream().filter(Device::configsOk).findAny();
+                }
+                if (availableDevice.isEmpty()) return die("create: timeout waiting for available uninitialized device");
+                final var uninitialized = availableDevice.get();
+                copy(uninitialized, device);
+                result = super.update(uninitialized);
             }
-            if (availableDevice.isEmpty()) return die("create: timeout waiting for available uninitialized device");
-            final var uninitialized = availableDevice.get();
-            copy(uninitialized, device);
-            result = super.update(uninitialized);
 
             deviceIdService.setDeviceSecurityLevel(result);
             return result;
