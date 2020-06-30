@@ -223,13 +223,13 @@ def next_layer(next_layer):
             check = check_connection(client_addr, server_addr, fqdns, security_level)
 
         if check is None or ('passthru' in check and check['passthru']):
-            bubble_log('next_layer: enabling passthru for server_addr' + server_addr+', fqdns='+str(fqdns))
+            bubble_log('next_layer: enabling passthru for server=' + server_addr+', fqdns='+str(fqdns))
             bubble_activity_log(client_addr, server_addr, 'tls_passthru', fqdns)
             next_layer_replacement = RawTCPLayer(next_layer.ctx, ignore=True)
             next_layer.reply.send(next_layer_replacement)
 
         elif 'block' in check and check['block']:
-            bubble_log('next_layer: enabling block for server_addr' + server_addr+', fqdns='+str(fqdns))
+            bubble_log('next_layer: enabling block for server=' + server_addr+', fqdns='+str(fqdns))
             bubble_activity_log(client_addr, server_addr, 'conn_block', fqdns)
             next_layer.__class__ = TlsBlock
 
