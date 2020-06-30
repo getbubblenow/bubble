@@ -88,16 +88,22 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
                 result = super.create(device);
 
             } else {
+                final Device uninitialized;
                 Optional<Device> availableDevice = uninitializedDevices.stream().filter(Device::configsOk).findAny();
                 final long start = now();
                 while (availableDevice.isEmpty() && now() - start < DEVICE_INIT_TIMEOUT) {
-                    // wait for configs to be ok
-                    log.warn("create: no available uninitialized devices, waiting...");
-                    sleep(SECONDS.toMillis(5), "waiting for available uninitialized device");
-                    availableDevice = uninitializedDevices.stream().filter(Device::configsOk).findAny();
+                    if (configuration.testMode()) {
+                        log.warn("create: no available uninitialized devices and in test mode, using first uninitialized device...");
+                        availableDevice = Optional.of(uninitializedDevices.get(0));
+                    } else {
+                        // wait for configs to be ok
+                        log.warn("create: no available uninitialized devices, waiting...");
+                        sleep(SECONDS.toMillis(5), "waiting for available uninitialized device");
+                        availableDevice = uninitializedDevices.stream().filter(Device::configsOk).findAny();
+                    }
                 }
                 if (availableDevice.isEmpty()) return die("create: timeout waiting for available uninitialized device");
-                final var uninitialized = availableDevice.get();
+                uninitialized = availableDevice.get();
                 copy(uninitialized, device);
                 result = super.update(uninitialized);
             }
