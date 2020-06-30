@@ -40,7 +40,7 @@
   get_url:
     url: https://github.com/getbubblenow/bubble-dist/raw/master/mitmproxy/mitmproxy.zip
     dest: /tmp/mitmproxy.zip
-    checksum: sha256:a8c4447197376eb1d59113a29419654ab7340d98437965592358ec947031b85b
+    checksum: sha256:1466520af16761b22f4802506cc2d81defdbe759e83bc626aec6a27a4376527a
 
 - name: Unzip mitmproxy.zip
   unarchive:
