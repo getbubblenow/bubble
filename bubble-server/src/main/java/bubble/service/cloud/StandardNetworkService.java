@@ -350,25 +350,27 @@ public class StandardNetworkService implements NetworkService {
             if (!setupOk) return die("newNode: error setting up, all retries failed for node: "+node.getUuid());
 
             // wait for node to be ready
-            final long readyStart = now();
-            boolean ready = false;
-            BubbleNodeClient nodeClient = null;
-            while (now() - readyStart < NODE_READY_TIMEOUT) {
-                sleep(SECONDS.toMillis(2), "newNode: waiting for node ("+node.id()+") to be ready");
-                if (nodeKeyDAO.findFirstByNode(node.getUuid()) == null) continue;
-                try {
-                    if (nodeClient == null) nodeClient = node.getApiQuickClient(configuration);
-                    if (nodeClient.get(AUTH_ENDPOINT + EP_READY).isSuccess()) {
-                        log.info("newNode: node ("+node.id()+") is ready!");
-                        ready = true;
-                        break;
+            if (node.getInstallType() == AnsibleInstallType.node) {
+                final long readyStart = now();
+                boolean ready = false;
+                BubbleNodeClient nodeClient = null;
+                while (now() - readyStart < NODE_READY_TIMEOUT) {
+                    sleep(SECONDS.toMillis(2), "newNode: waiting for node (" + node.id() + ") to be ready");
+                    if (nodeKeyDAO.findFirstByNode(node.getUuid()) == null) continue;
+                    try {
+                        if (nodeClient == null) nodeClient = node.getApiQuickClient(configuration);
+                        if (nodeClient.get(AUTH_ENDPOINT + EP_READY).isSuccess()) {
+                            log.info("newNode: node (" + node.id() + ") is ready!");
+                            ready = true;
+                            break;
+                        }
+                    } catch (Exception e) {
+                        log.warn("newNode: node (" + node.id() + ") error checking if ready: " + shortError(e));
                     }
-                } catch (Exception e) {
-                    log.warn("newNode: node ("+node.id()+") error checking if ready: "+shortError(e));
                 }
-            }
-            if (!ready) {
-                return die("newNode: timeout waiting for node ("+node.id()+") to be ready");
+                if (!ready) {
+                    return die("newNode: timeout waiting for node (" + node.id() + ") to be ready");
+                }
             }
 
             // we are good.
