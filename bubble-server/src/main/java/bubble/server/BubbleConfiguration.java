@@ -215,6 +215,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     @Getter @Setter private LegalInfo legal = new LegalInfo();
     @Getter @Setter private AppLinks appLinks = new AppLinks();
+    @Getter @Setter private String certificateValidationHost;
 
     @Override @JsonIgnore public Handlebars getHandlebars() { return BubbleHandlebars.instance.getHandlebars(); }
 

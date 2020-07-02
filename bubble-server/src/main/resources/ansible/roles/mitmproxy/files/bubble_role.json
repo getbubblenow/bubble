@@ -11,6 +11,7 @@
     {"name": "sage_ip6", "value": "[[sageNode.ip6]]"},
     {"name": "cert_name", "value": "bubble-[[network.shortId]]"},
     {"name": "cert_org", "value": "Bubble [[network.shortId]]"},
-    {"name": "cert_cn", "value": "[[network.certCNAME]]"}
+    {"name": "cert_cn", "value": "[[network.certCNAME]]"},
+    {"name": "cert_validation_host", "value": "[[configuration.certificateValidationHost]]"}
   ]
 }

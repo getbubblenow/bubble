@@ -109,3 +109,5 @@ appLinks:
       windows: {{APP_LINK_WINDOWS}}
       macosx: {{APP_LINK_MACOSX}}
       linux: {{APP_LINK_LINUX}}
+
+certificateValidationHost: {{CERT_VALIDATION_HOST}}

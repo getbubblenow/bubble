@@ -28,7 +28,7 @@ from mitmproxy.exceptions import TlsProtocolException
 from mitmproxy.net import tls as net_tls
 
 from bubble_api import bubble_log, bubble_conn_check, bubble_activity_log, redis_set
-from bubble_config import bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6
+from bubble_config import bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6, cert_validation_host
 import redis
 import json
 import subprocess
@@ -209,6 +209,10 @@ def next_layer(next_layer):
         elif security_level == SEC_OFF or security_level == SEC_BASIC:
             bubble_log('next_layer: enabling passthru for server='+server_addr+' because security_level='+security_level+' for client='+client_addr)
             check = FORCE_PASSTHRU
+
+        elif fqdns is not None and len(fqdns) == 1 and cert_validation_host == fqdns[0]:
+            bubble_log('next_layer: NOT enabling passthru for server='+server_addr+' because fqdn is cert_validation_host ('+cert_validation_host+') for client='+client_addr)
+            return
 
         elif security_level == SEC_STD and no_fqdns:
             bubble_log('next_layer: enabling passthru for server='+server_addr+' because no FQDN found and security_level='+security_level+' for client='+client_addr)

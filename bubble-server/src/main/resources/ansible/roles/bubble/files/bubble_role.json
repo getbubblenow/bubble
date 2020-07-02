@@ -37,7 +37,9 @@
     {"name": "app_link_android", "value": "[[appLinks.android]]"},
     {"name": "app_link_windows", "value": "[[appLinks.windows]]"},
     {"name": "app_link_macosx", "value": "[[appLinks.macosx]]"},
-    {"name": "app_link_linux", "value": "[[appLinks.linux]]"}
+    {"name": "app_link_linux", "value": "[[appLinks.linux]]"},
+
+    {"name": "cert_validation_host", "value": "[[configuration.certificateValidationHost]]"}
   ],
   "optionalConfigNames": ["restore_key", "restore_timeout", "error_url", "error_key", "error_env"]
 }
