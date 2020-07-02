@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
 DOMAIN=${1:?no domain provided}
 RECORDS_JSON="${2:?no JSON DNS records file provided}"
 
