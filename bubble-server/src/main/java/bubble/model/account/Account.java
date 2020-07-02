@@ -85,7 +85,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     public static final String[] UPDATE_FIELDS = {"url", "description", "autoUpdatePolicy"};
     public static final String[] ADMIN_UPDATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "suspended", "admin");
     public static final String[] CREATE_FIELDS = ArrayUtil.append(ADMIN_UPDATE_FIELDS,
-            "name", "referralCode", "termsAgreed", "preferredPlan");
+            "name", "termsAgreed", "preferredPlan");
 
     public static final String ROOT_USERNAME = "root";
     public static final int EMAIL_MAX_LENGTH = 100;
