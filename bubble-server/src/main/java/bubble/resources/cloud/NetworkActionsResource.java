@@ -94,7 +94,7 @@ public class NetworkActionsResource {
                                        @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         final String account = caller.admin() ? network.getAccount() : caller.getUuid();
-        return ok(networkService.listLaunchStatuses(account));
+        return ok(networkService.listLaunchStatuses(account, network.getUuid()));
     }
 
     @GET @Path(EP_STATUS+"/{uuid}")

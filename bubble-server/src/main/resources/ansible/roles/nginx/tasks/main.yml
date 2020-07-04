@@ -9,8 +9,8 @@
 # see https://weakdh.org/sysadmin.html
 - name: Create a strong dhparam.pem
   shell: openssl dhparam -out /etc/nginx/dhparams.pem 2048
-  args:
-    creates: /etc/nginx/dhparams.pem
+  async: 120
+  poll: 0
 
 - name: Create dhparam nginx conf
   template: src=stronger_dhparams.conf dest=/etc/nginx/conf.d/stronger_dhparams.conf
@@ -19,8 +19,3 @@
 
 - name: Init certbot
   shell: init_certbot.sh {{ letsencrypt_email }} {{ server_name }} {{ server_alias }}
-
-- name: Ensure nginx is restarted
-  service:
-    name: nginx
-    state: restarted

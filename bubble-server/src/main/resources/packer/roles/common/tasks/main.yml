@@ -1,6 +1,10 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
+- name: Disable unattended upgrades (ansible will re-enable them)
+  shell: systemctl stop unattended-upgrades
+  become: yes
+
 - name: Update packages
   apt:
     update_cache: yes

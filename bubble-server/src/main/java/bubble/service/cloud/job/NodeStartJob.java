@@ -16,8 +16,8 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 public class NodeStartJob implements Runnable {
 
     private BubbleNode node;
-    private BubbleNodeDAO nodeDAO;
-    private ComputeServiceDriver computeDriver;
+    private final BubbleNodeDAO nodeDAO;
+    private final ComputeServiceDriver computeDriver;
 
     public NodeStartJob(BubbleNode node,
                         BubbleNodeDAO nodeDAO,

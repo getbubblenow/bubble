@@ -99,6 +99,10 @@ public class BubbleNodeDAO extends AccountOwnedEntityDAO<BubbleNode> {
         return findByFields("account", accountUuid, "network", networkUuid);
     }
 
+    public List<BubbleNode> findRunningByAccountAndNetwork(String accountUuid, String networkUuid) {
+        return findByFields("account", accountUuid, "network", networkUuid, "state", running);
+    }
+
     public List<BubbleNode> findByAccountAndDomain(String accountUuid, String domainUuid) {
         return findByFields("account", accountUuid, "domain", domainUuid);
     }

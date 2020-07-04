@@ -19,11 +19,11 @@ public class NodeDnsJob implements Runnable {
 
     private static final long DNS_TIMEOUT = MINUTES.toMillis(60);
 
-    private CloudServiceDAO cloudDAO;
-    private BubbleDomain domain;
-    private BubbleNetwork network;
-    private BubbleNode node;
-    private BubbleConfiguration configuration;
+    private final CloudServiceDAO cloudDAO;
+    private final BubbleDomain domain;
+    private final BubbleNetwork network;
+    private final BubbleNode node;
+    private final BubbleConfiguration configuration;
 
     public NodeDnsJob(CloudServiceDAO cloudDAO,
                       BubbleDomain domain,

@@ -74,6 +74,8 @@ public class AnsiblePrepService {
         ctx.put("configuration", configuration);
         ctx.put("fork", fork);
         ctx.put("installType", installType.name());
+        ctx.put("isNode", installType == AnsibleInstallType.node);
+        ctx.put("isSage", installType == AnsibleInstallType.sage);
         ctx.put("nodeSize", computeDriver.getSize(node.getSizeType()));
         if (restoreKey != null) {
             ctx.put("restoreKey", restoreKey);

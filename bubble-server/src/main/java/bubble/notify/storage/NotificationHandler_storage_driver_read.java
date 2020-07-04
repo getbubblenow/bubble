@@ -18,7 +18,7 @@ public class NotificationHandler_storage_driver_read extends NotificationHandler
                                                 BubbleNode sender,
                                                 StorageDriverNotification notification,
                                                 CloudService storage) {
-        log.info("handleNotification: registering read for key="+notification.getKey());
+        log.debug("handleNotification: registering read for key="+notification.getKey());
         final String token = storageStreamService.registerRead(new StorageStreamRequest()
                 .setCloud(storage.getUuid())
                 .setFromNode(n.getFromNode())

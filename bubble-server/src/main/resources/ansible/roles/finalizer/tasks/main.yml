@@ -29,5 +29,14 @@
 - name: reload supervisord
   shell: supervisorctl reload
 
+- name: Ensure nginx is restarted
+  service:
+    name: nginx
+    state: restarted
+
+- name: Enable unattended upgrades
+  shell: systemctl start unattended-upgrades
+  become: yes
+
 - name: Ensure authorized SSH keys are up-to-date
   shell: su - bubble bash -c "touch /home/bubble/.refresh_ssh_keys"

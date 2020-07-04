@@ -4,13 +4,25 @@ ANSIBLE_USER="{{node.user}}"
 ANSIBLE_HOME="$(cd ~{{node.user}} && pwd)"
 LOG="${ANSIBLE_HOME}/.ansible.log"
 
+{{#if isNode}}
+# touch algo log and start tailing it
+set -m
+ALGO_LOG=/tmp/install_algo.log
+touch ${ALGO_LOG} && tail -f ${ALGO_LOG} &
+{{/if}}
+
 function log {
   echo "${1}" >> ${LOG}
 }
 
 function die {
-  echo 1>&2 "${1}"
-  log "${1}"
+  echo 1>&2 "install_local: fatal error: ${1}"
+  log "install_local: fatal error: ${1}"
+{{#if isNode}}
+  # stop ALGO_LOG tail job and remove log
+  kill %1
+  rm -f ${ALGO_LOG}
+{{/if}}
   exit 1
 }
 
@@ -28,8 +40,8 @@ if [[ ! -d "${ANSIBLE_DIR}" ]] ; then
   die "Ansible dir not found or not a directory: ${ANSIBLE_DIR}"
 fi
 
-# lockout the node that started us
-cat /dev/null > "${AUTH_KEYS}" || die "Error truncating ${AUTH_KEYS} file"
+# touch authorized_keys to ensure it exists
+touch "${AUTH_KEYS}" || die "Error touching ${AUTH_KEYS} file"
 
 # ensure proper permissions on authorized_keys file
 chmod 600 "${AUTH_KEYS}" || die "Error setting permissions on ${AUTH_KEYS} file"
@@ -45,10 +57,35 @@ if [[ -n "{{restoreKey}}" ]] ; then
   SKIP_TAGS="--skip-tags algo_related"
 fi
 
-LOG=/tmp/ansible.log
+{{#if isNode}}
+# touch algo log and start tailing it
+set -m
+touch /tmp/install_algo.log && tail -f /tmp/install_algo.log &
+{{/if}}
+
+set -o pipefail
 cd "${ANSIBLE_DIR}" && \
   virtualenv -p python3 ./venv && \
   . ./venv/bin/activate && \
   pip3 install ansible && \
-  ansible-playbook ${SKIP_TAGS} --inventory ./hosts ./playbook.yml \
+  ansible-playbook ${SKIP_TAGS} --inventory ./hosts ./playbook.yml 2>&1 | tee ${LOG} \
 || die "Error running ansible. journalctl -xe = $(journalctl -xe | tail -n 50)"
+
+# lockout the node that started us
+cat /dev/null > "${AUTH_KEYS}" || die "Error truncating ${AUTH_KEYS} file"
+
+# re-add admin ssh key, if one was given
+ADMIN_PUB_KEY="${ANSIBLE_DIR}/roles/bubble/files/admin_ssh_key.pub"
+if [[ -f "${ADMIN_PUB_KEY}" ]] ; then
+  cat "${ADMIN_PUB_KEY}" >> "${AUTH_KEYS}"
+fi
+
+{{#if isNode}}
+# stop ALGO_LOG tail job and remove log
+for j in $(jobs -lr | tr '[]' ' ' |  awk '{print $1}') ; do
+  kill %${j}
+done
+rm -f ${ALGO_LOG}
+{{/if}}
+
+exit 0

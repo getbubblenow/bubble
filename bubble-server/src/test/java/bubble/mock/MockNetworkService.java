@@ -12,6 +12,7 @@ import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.cloud.*;
 import bubble.notify.NewNodeNotification;
 import bubble.server.BubbleConfiguration;
+import bubble.service.cloud.NodeLaunchMonitor;
 import bubble.service.cloud.StandardNetworkService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class MockNetworkService extends StandardNetworkService {
     @Override protected boolean confirmLock(String network, String lock) { return true; }
     @Override protected void unlockNetwork(String network, String lock) {}
 
-    @Override public BubbleNode newNode(NewNodeNotification nn) {
+    @Override public BubbleNode newNode(NewNodeNotification nn, NodeLaunchMonitor launchMonitor) {
 
         final BubbleNetwork network = networkDAO.findByUuid(nn.getNetwork());
         final CloudService cloud = findServiceOrDelegate(nn.getCloud());

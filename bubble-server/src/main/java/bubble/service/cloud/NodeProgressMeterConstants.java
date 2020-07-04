@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static bubble.service.cloud.NodeProgressMeterTick.TickMatchType.exact;
+import static bubble.service.cloud.NodeProgressMeterTick.TickMatchType.prefix;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.reflect.FieldUtils.getAllFields;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
@@ -32,6 +32,23 @@ public class NodeProgressMeterConstants {
     public static final String METER_TICK_LAUNCHING_NODE = "BUBBLE: LAUNCHING NODE...";
     public static final String METER_TICK_PREPARING_ROLES = "BUBBLE: PREPARING ANSIBLE ROLES...";
     public static final String METER_TICK_PREPARING_INSTALL = "BUBBLE: PREPARING INSTALL FILES...";
+    public static final String METER_TICK_AWAIT_6  = "AWAIT-6";
+    public static final String METER_TICK_AWAIT_11 = "AWAIT-11";
+    public static final String METER_TICK_AWAIT_16 = "AWAIT-16";
+    public static final String METER_TICK_AWAIT_21 = "AWAIT-21";
+    public static final String METER_TICK_AWAIT_26 = "AWAIT-26";
+    public static final String METER_TICK_AWAIT_31 = "AWAIT-31";
+    public static final String METER_TICK_AWAIT_36 = "AWAIT-36";
+    public static final String METER_TICK_AWAIT_41 = "AWAIT-41";
+    public static final String METER_TICK_AWAIT_46 = "AWAIT-46";
+    public static final String METER_TICK_AWAIT_51 = "AWAIT-51";
+    public static final String METER_TICK_AWAIT_56 = "AWAIT-56";
+    public static final String METER_TICK_AWAIT_61 = "AWAIT-61";
+    public static final String METER_TICK_AWAIT_66 = "AWAIT-66";
+    public static final String METER_TICK_AWAIT_71 = "AWAIT-71";
+    public static final String METER_TICK_AWAIT_76 = "AWAIT-76";
+    public static final String METER_TICK_AWAIT_81 = "AWAIT-81";
+    public static final String METER_TICK_AWAIT_86 = "AWAIT-86";
     public static final String METER_TICK_STARTING_INSTALL = "BUBBLE: STARTING INSTALLATION...";
     public static final String METER_TICK_COPYING_ANSIBLE = "BUBBLE: COPYING ANSIBLE FILES...";
     public static final String METER_TICK_RUNNING_ANSIBLE = "BUBBLE: RUNNING ANSIBLE PLAYBOOK...";
@@ -60,9 +77,26 @@ public class NodeProgressMeterConstants {
             {METER_TICK_LAUNCHING_NODE, 1},
             {METER_TICK_PREPARING_ROLES, 5},
             {METER_TICK_PREPARING_INSTALL, 7},
-            {METER_TICK_STARTING_INSTALL, 23},
-            {METER_TICK_COPYING_ANSIBLE, 24},
-            {METER_TICK_RUNNING_ANSIBLE, 27}
+            {METER_TICK_AWAIT_6, 8},
+            {METER_TICK_AWAIT_11, 10},
+            {METER_TICK_AWAIT_16, 11},
+            {METER_TICK_AWAIT_21, 13},
+            {METER_TICK_AWAIT_26, 14},
+            {METER_TICK_AWAIT_31, 15},
+            {METER_TICK_AWAIT_36, 16},
+            {METER_TICK_AWAIT_41, 18},
+            {METER_TICK_AWAIT_46, 19},
+            {METER_TICK_AWAIT_51, 21},
+            {METER_TICK_AWAIT_56, 22},
+            {METER_TICK_AWAIT_61, 24},
+            {METER_TICK_AWAIT_66, 25},
+            {METER_TICK_AWAIT_71, 27},
+            {METER_TICK_AWAIT_76, 28},
+            {METER_TICK_AWAIT_81, 30},
+            {METER_TICK_AWAIT_86, 31},
+            {METER_TICK_STARTING_INSTALL, 32},
+            {METER_TICK_COPYING_ANSIBLE, 33},
+            {METER_TICK_RUNNING_ANSIBLE, 34}
     });
 
     public static List<NodeProgressMeterTick> getStandardTicks(NewNodeNotification nn) {
@@ -76,7 +110,7 @@ public class NodeProgressMeterConstants {
                         .setAccount(nn.getAccount())
                         .setNetwork(nn.getNetwork())
                         .setPattern(value)
-                        .setMatch(exact)
+                        .setMatch(prefix)
                         .setMessageKey(f.getName().toLowerCase())
                         .setPercent(percent));
             }

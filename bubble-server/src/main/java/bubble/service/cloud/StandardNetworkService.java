@@ -4,7 +4,6 @@
  */
 package bubble.service.cloud;
 
-import bubble.client.BubbleNodeClient;
 import bubble.cloud.CloudAndRegion;
 import bubble.cloud.compute.ComputeServiceDriver;
 import bubble.dao.account.AccountDAO;
@@ -44,6 +43,8 @@ import org.apache.commons.exec.CommandLine;
 import org.cobbzilla.util.daemon.AwaitResult;
 import org.cobbzilla.util.daemon.DaemonThreadFactory;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
+import org.cobbzilla.util.http.HttpResponseBean;
+import org.cobbzilla.util.http.HttpUtil;
 import org.cobbzilla.util.io.TempDir;
 import org.cobbzilla.util.system.Command;
 import org.cobbzilla.util.system.CommandResult;
@@ -67,16 +68,18 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static bubble.ApiConstants.*;
+import static bubble.client.BubbleNodeClient.nodeBaseUri;
 import static bubble.dao.bill.AccountPlanDAO.PURCHASE_DELAY;
 import static bubble.model.cloud.BubbleNode.TAG_ERROR;
 import static bubble.server.BubbleConfiguration.DEBUG_NODE_INSTALL_FILE;
 import static bubble.server.BubbleConfiguration.ENV_DEBUG_NODE_INSTALL;
 import static bubble.service.boot.StandardSelfNodeService.*;
+import static bubble.service.cloud.NodeLaunchException.fatalLaunchFailure;
+import static bubble.service.cloud.NodeLaunchException.launchFailureCanRetry;
 import static bubble.service.cloud.NodeProgressMeter.getProgressMeterKey;
 import static bubble.service.cloud.NodeProgressMeter.getProgressMeterPrefix;
 import static bubble.service.cloud.NodeProgressMeterConstants.*;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.daemon.Await.awaitAll;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -99,19 +102,20 @@ public class StandardNetworkService implements NetworkService {
     public static final String INSTALL_LOCAL_SH = "install_local.sh";
     public static final String INSTALL_LOCAL_TEMPLATE = stream2string(ANSIBLE_DIR + "/" + INSTALL_LOCAL_SH + ".hbs");
 
-    public static final int MAX_ANSIBLE_TRIES = 3;
+    public static final int MAX_ANSIBLE_TRIES = 5;
     public static final int RESTORE_KEY_LEN = 6;
 
-    private static final long NET_LOCK_TIMEOUT = MINUTES.toMillis(21);
-    private static final long NET_DEADLOCK_TIMEOUT = MINUTES.toMillis(20);
+    private static final long NET_LOCK_TIMEOUT = MINUTES.toMillis(11);
+    private static final long NET_DEADLOCK_TIMEOUT = MINUTES.toMillis(10);
     private static final long PLAN_ENABLE_TIMEOUT = PURCHASE_DELAY + SECONDS.toMillis(10);
-    private static final long NODE_START_JOB_TIMEOUT = MINUTES.toMillis(30);
+    private static final long NODE_START_JOB_TIMEOUT = MINUTES.toMillis(10);
+    private static final long NODE_START_JOB_AWAIT_SLEEP = SECONDS.toMillis(2);
     private static final long NODE_READY_TIMEOUT = MINUTES.toMillis(6);
 
     @Autowired private AccountDAO accountDAO;
     @Autowired private AccountSshKeyDAO sshKeyDAO;
-    @Autowired private BubbleNetworkDAO networkDAO;
-    @Autowired private BubbleNodeDAO nodeDAO;
+    @Autowired @Getter private BubbleNetworkDAO networkDAO;
+    @Autowired @Getter private BubbleNodeDAO nodeDAO;
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
     @Autowired private BubbleDomainDAO domainDAO;
     @Autowired private CloudServiceDAO cloudDAO;
@@ -128,37 +132,44 @@ public class StandardNetworkService implements NetworkService {
     @Autowired private AnsiblePrepService ansiblePrep;
     @Autowired private PackerService packerService;
     @Autowired private RestoreService restoreService;
+    @Autowired private NodeLaunchMonitor launchMonitor;
 
     @Autowired private RedisService redisService;
     @Getter(lazy=true) private final RedisService networkLocks = redisService.prefixNamespace(getClass().getSimpleName()+"_lock_");
     @Getter(lazy=true) private final RedisService networkSetupStatus = redisService.prefixNamespace(getClass().getSimpleName()+"_status_");
 
-    @NonNull public BubbleNode newNode(@NonNull final NewNodeNotification nn) {
+    @NonNull public BubbleNode newNode(@NonNull final NewNodeNotification nn, NodeLaunchMonitor launchMonitor) {
         final long start = now();
         log.info("newNode starting:\n"+json(nn));
         ComputeServiceDriver computeDriver = null;
         BubbleNode node = null;
         String lock = nn.getLock();
         NodeProgressMeter progressMeter = null;
+        final BubbleNetwork network = nn.getNetworkObject();
+        final ExecutorService backgroundJobs = DaemonThreadFactory.fixedPool(3);
         try {
-            progressMeter = new NodeProgressMeter(nn, getNetworkSetupStatus());
+            progressMeter = new NodeProgressMeter(nn, getNetworkSetupStatus(), this, launchMonitor);
             progressMeter.write(METER_TICK_CONFIRMING_NETWORK_LOCK);
 
             if (!confirmLock(nn.getNetwork(), lock)) {
                 progressMeter.error(METER_ERROR_CONFIRMING_NETWORK_LOCK);
-                return die("newNode: Error confirming network lock");
+                return launchFailureCanRetry("newNode: Error confirming network lock");
             }
 
             progressMeter.write(METER_TICK_VALIDATING_NODE_NETWORK_AND_PLAN);
-            final BubbleNetwork network = networkDAO.findByUuid(nn.getNetwork());
             if (network.getState() != BubbleNetworkState.starting) {
-                progressMeter.error(METER_ERROR_NETWORK_NOT_READY_FOR_SETUP);
-                return die("newNode: network is not in 'setup' state: "+network.getState());
+                if (network.getState() == BubbleNetworkState.stopped) {
+                    log.info("newNode: network was stopped, starting: "+network.getUuid());
+                    networkDAO.update(network.setState(BubbleNetworkState.starting));
+                } else {
+                    progressMeter.error(METER_ERROR_NETWORK_NOT_READY_FOR_SETUP);
+                    return fatalLaunchFailure("newNode: network is not in 'setup' state: " + network.getState());
+                }
             }
             final BubbleNode thisNode = configuration.getThisNode();
             if (thisNode == null || !thisNode.hasUuid() || thisNode.getNetwork() == null) {
                 progressMeter.error(METER_ERROR_NO_CURRENT_NODE_OR_NETWORK);
-                return die("newNode: thisNode not set or has no network");
+                return fatalLaunchFailure("newNode: thisNode not set or has no network");
             }
 
             BubbleNodeKey sageKey = nodeKeyDAO.findFirstByNode(thisNode.getUuid());
@@ -174,16 +185,16 @@ public class StandardNetworkService implements NetworkService {
             // ensure AccountPlan is enabled
             if (!accountPlan.enabled()) {
                 progressMeter.error(METER_ERROR_PLAN_NOT_ENABLED);
-                return die("newNode: accountPlan is not enabled: "+accountPlan.getUuid());
+                return fatalLaunchFailure("newNode: accountPlan is not enabled: "+accountPlan.getUuid());
             }
 
             // enforce network size limit, if this is an automated request
             final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
-            final List<BubbleNode> peers = nodeDAO.findByAccountAndNetwork(account.getUuid(), network.getUuid());
+            final List<BubbleNode> peers = nodeDAO.findRunningByAccountAndNetwork(account.getUuid(), network.getUuid());
             if (peers.size() >= plan.getNodesIncluded() && nn.automated()) {
                 // automated requests to go past network limit are not honored
                 progressMeter.error(METER_ERROR_PEER_LIMIT_REACHED);
-                return die("newNode: peer limit reached ("+plan.getNodesIncluded()+")");
+                return fatalLaunchFailure("newNode: peer limit reached ("+plan.getNodesIncluded()+")");
             }
 
             final CloudService cloud = findServiceOrDelegate(nn.getCloud());
@@ -192,7 +203,7 @@ public class StandardNetworkService implements NetworkService {
             final CloudService nodeCloud = cloudDAO.findByAccountAndName(network.getAccount(), cloud.getName());
             if (nodeCloud == null) {
                 progressMeter.error(METER_ERROR_NODE_CLOUD_NOT_FOUND);
-                return die("newNode: node cloud not found: "+cloud.getName()+" for account "+network.getAccount());
+                return fatalLaunchFailure("newNode: node cloud not found: "+cloud.getName()+" for account "+network.getAccount());
             }
 
             progressMeter.write(METER_TICK_CREATING_NODE);
@@ -230,7 +241,6 @@ public class StandardNetworkService implements NetworkService {
             node.setState(BubbleNodeState.starting);
             nodeDAO.update(node);
 
-            final ExecutorService backgroundJobs = DaemonThreadFactory.fixedPool(3);
             final List<Future<?>> jobFutures = new ArrayList<>();
 
             // Start the cloud compute instance
@@ -250,7 +260,7 @@ public class StandardNetworkService implements NetworkService {
                     errors, nn.fork(), nn.getRestoreKey());
             if (errors.isInvalid()) {
                 progressMeter.error(METER_ERROR_ROLE_VALIDATION_ERRORS);
-                throw new MultiViolationException(errors.getViolationBeans());
+                fatalLaunchFailure(node, new MultiViolationException(errors.getViolationBeans()));
             }
 
             progressMeter.write(METER_TICK_PREPARING_INSTALL);
@@ -303,7 +313,7 @@ public class StandardNetworkService implements NetworkService {
             final String script = getAnsibleSetupScript(automation, sshArgs, nodeUser, sshTarget);
 
             log.info("newNode: awaiting background jobs...");
-            final AwaitResult<Object> awaitResult = awaitAll(jobFutures, NODE_START_JOB_TIMEOUT);
+            final AwaitResult<Object> awaitResult = awaitAll(jobFutures, NODE_START_JOB_TIMEOUT, NODE_START_JOB_AWAIT_SLEEP, new NodeLaunchAwait(progressMeter));
             if (!awaitResult.allSucceeded()) {
                 log.warn("newNode: some background jobs failed: "+awaitResult.getFailures().values());
                 final Exception firstException = awaitResult.getFailures().values().iterator().next();
@@ -312,7 +322,7 @@ public class StandardNetworkService implements NetworkService {
                 } else {
                     progressMeter.error(METER_START_OR_DNS_ERROR);
                 }
-                return die("newNode: error in setup:" + awaitResult.getFailures().values());
+                return launchFailureCanRetry(node, "newNode: error in setup:" + awaitResult.getFailures().values());
             }
             waitForDebugger(script);
             long configStart = now();
@@ -322,58 +332,59 @@ public class StandardNetworkService implements NetworkService {
             nodeDAO.update(node);
 
             log.info("newNode: running script:\n"+script);
-            for (int i=0; i<MAX_ANSIBLE_TRIES; i++) {
+            for (int i=0; !setupOk && i<MAX_ANSIBLE_TRIES; i++) {
                 sleep((i+1) * SECONDS.toMillis(5), "waiting to try ansible setup");
-                try {
-                    // Use .uncloseable() because it the command fails due to connection timeout/refused,
-                    // the output stream is closed; if a retry succeeds, there's no output to the progressMeter
-                    final CommandResult result = ansibleSetup(script, progressMeter.uncloseable());
-                    // .... wait for ansible ...
-                    if (!result.isZeroExitStatus()) {
-                        if (result.getStderr().contains("Connection timed out")
-                                || result.getStderr().contains("SSH connection timeout")
-                                || result.getStderr().contains("Connection refused")) {
-                            log.warn("newNode: SSH connection error: "+result.getStderr());
-                            continue;
-                        }
-                        return die("newNode: error in setup:\nstdout=" + result.getStdout() + "\nstderr=" + result.getStderr());
+                // Use .uncloseable() because it the command fails due to connection timeout/refused,
+                // the output stream is closed; if a retry succeeds, there's no output to the progressMeter
+                final CommandResult result = ansibleSetup(script, progressMeter.uncloseable());
+                // .... wait for ansible ...
+                if (!result.isZeroExitStatus()) {
+                    if (result.getStderr().contains("Connection timed out")
+                            || result.getStderr().contains("SSH connection timeout")
+                            || result.getStderr().contains("Connection refused")
+                            || result.getStderr().contains("connection unexpectedly closed")) {
+                        log.warn("newNode: SSH connection error: " + result.getStderr());
+                        continue;
                     }
-                    log.info("newNode: started in "+formatDuration(now() - start));
-                    log.info("newNode: initialized in "+formatDuration(now() - configStart));
-                    setupOk = true;
-                    break;
-                } catch (Exception e) {
-                    log.error("newNode: error running ansible: "+e);
-                    progressMeter.reset();
+                    return launchFailureCanRetry(node, "newNode: error in setup:\nstdout=" + result.getStdout() + "\nstderr=" + result.getStderr());
                 }
+                log.info("newNode: started in " + formatDuration(now() - start));
+                log.info("newNode: initialized in " + formatDuration(now() - configStart));
+                setupOk = true;
             }
-            if (!setupOk) return die("newNode: error setting up, all retries failed for node: "+node.getUuid());
+            if (!setupOk) return launchFailureCanRetry(node, "newNode: error setting up, all retries failed for node: "+node.getUuid());
 
             // wait for node to be ready
             if (node.getInstallType() == AnsibleInstallType.node) {
                 final long readyStart = now();
                 boolean ready = false;
-                BubbleNodeClient nodeClient = null;
+                final String readyUri = nodeBaseUri(node, configuration) + AUTH_ENDPOINT + EP_READY;
+                int i = 1;
                 while (now() - readyStart < NODE_READY_TIMEOUT) {
                     sleep(SECONDS.toMillis(2), "newNode: waiting for node (" + node.id() + ") to be ready");
-                    if (nodeKeyDAO.findFirstByNode(node.getUuid()) == null) continue;
+                    log.info("newNode: waiting for node (" + node.id() + ") to be ready via "+readyUri);
+                    progressMeter.write("READY-CHECK-"+(i++)+" /auth/ready for node: "+node.id());
+                    launchMonitor.touch(network.getUuid());
                     try {
-                        if (nodeClient == null) nodeClient = node.getApiQuickClient(configuration);
-                        if (nodeClient.get(AUTH_ENDPOINT + EP_READY).isSuccess()) {
+                        final HttpResponseBean readyResponse = HttpUtil.getResponse(readyUri);
+                        if (readyResponse.isOk()) {
                             log.info("newNode: node (" + node.id() + ") is ready!");
                             ready = true;
                             break;
+                        } else {
+                            log.info("newNode: waiting for node (" + node.id() + ") /auth/ready call failed: "+readyResponse.getStatus());
                         }
                     } catch (Exception e) {
                         log.warn("newNode: node (" + node.id() + ") error checking if ready: " + shortError(e));
                     }
                 }
                 if (!ready) {
-                    return die("newNode: timeout waiting for node (" + node.id() + ") to be ready");
+                    return launchFailureCanRetry(node, "newNode: timeout waiting for node (" + node.id() + ") to be ready");
                 }
             }
 
             // we are good.
+            launchMonitor.touch(network.getUuid());
             final BubbleNetworkState finalState = nn.hasRestoreKey() ? BubbleNetworkState.restoring : BubbleNetworkState.running;
             if (network.getState() != finalState) {
                 network.setState(finalState);
@@ -391,13 +402,12 @@ public class StandardNetworkService implements NetworkService {
                 nodeDAO.update(node);
                 if (!progressMeter.hasError()) progressMeter.error(METER_UNKNOWN_ERROR);
                 killNode(node, "error: "+e);
-            } else {
-                final BubbleNetwork network = networkDAO.findByUuid(nn.getNetwork());
-                if (noNodesActive(network)) {
-                    // if no nodes are running, then the network is stopped
-                    networkDAO.update(network.setState(BubbleNetworkState.stopped));
-                }
             }
+            if (noNodesActive(network)) {
+                // if no nodes are running, then the network is stopped
+                networkDAO.update(network.setState(BubbleNetworkState.stopped));
+            }
+            if (e instanceof NodeLaunchException) throw (NodeLaunchException) e;
             return die("newNode: "+e, e);
 
         } finally {
@@ -408,6 +418,18 @@ public class StandardNetworkService implements NetworkService {
                     log.warn("newNode: compute.cleanupStart error: "+e, e);
                 }
             }
+
+            if (node != null && !node.isRunning()) {
+                node.setState(BubbleNodeState.unknown_error);
+                nodeDAO.update(node);
+                if (!progressMeter.hasError()) progressMeter.error(METER_UNKNOWN_ERROR);
+                killNode(node, "error: node not running: "+node.id()+": "+node.getState());
+                if (noNodesActive(network)) {
+                    // if no nodes are running, then the network is stopped
+                    networkDAO.update(network.setState(BubbleNetworkState.stopped));
+                }
+            }
+
             if (progressMeter != null) {
                 if (!progressMeter.success() && configuration.paymentsEnabled()) {
                     final AccountPlan accountPlan = accountPlanDAO.findByNetwork(nn.getNetwork());
@@ -420,7 +442,7 @@ public class StandardNetworkService implements NetworkService {
                 }
                 closeQuietly(progressMeter);
             }
-            unlockNetwork(nn.getNetwork(), lock);
+            backgroundJobs.shutdownNow();
         }
         return node;
     }
@@ -497,9 +519,9 @@ public class StandardNetworkService implements NetworkService {
     }
 
     protected void unlockNetwork(String network, String lock) {
-        log.info("lockNetwork: unlocking "+network);
+        log.info("unlockNetwork: unlocking "+network);
         getNetworkLocks().unlock(network, lock);
-        log.info("lockNetwork: unlocked "+network);
+        log.info("unlockNetwork: unlocked "+network);
     }
 
     public BubbleNode stopNode(BubbleNode node) {
@@ -586,15 +608,9 @@ public class StandardNetworkService implements NetworkService {
             dns.getDnsDriver(configuration).setNetwork(network);
 
             final CloudAndRegion cloudAndRegion = geoService.selectCloudAndRegion(network, netLocation);
-            final String host = network.fork() ? network.getForkHost() : newNodeHostname();
             final NewNodeNotification newNodeRequest = new NewNodeNotification()
-                    .setAccount(accountUuid)
-                    .setNetwork(network.getUuid())
-                    .setNetworkName(network.getName())
-                    .setDomain(network.getDomain())
                     .setFork(network.fork())
-                    .setHost(host)
-                    .setFqdn(host + "." + network.getNetworkDomain())
+                    .setNodeHost(network)
                     .setCloud(cloudAndRegion.getCloud().getUuid())
                     .setRegion(cloudAndRegion.getRegion().getInternalName())
                     .setLock(lock);
@@ -654,17 +670,11 @@ public class StandardNetworkService implements NetworkService {
             dns.getDnsDriver(configuration).setNetwork(network);
 
             final CloudAndRegion cloudAndRegion = geoService.selectCloudAndRegion(network, netLocation);
-            final String host = network.fork() ? network.getForkHost() : newNodeHostname();
             final String restoreKey = randomAlphanumeric(RESTORE_KEY_LEN).toUpperCase();
             restoreService.registerRestore(restoreKey, new NetworkKeys());
             final NewNodeNotification newNodeRequest = new NewNodeNotification()
-                    .setAccount(network.getAccount())
-                    .setNetwork(network.getUuid())
-                    .setNetworkName(network.getName())
-                    .setDomain(network.getDomain())
+                    .setNodeHost(network)
                     .setRestoreKey(restoreKey)
-                    .setHost(host)
-                    .setFqdn(host+"."+network.getNetworkDomain())
                     .setCloud(cloudAndRegion.getCloud().getUuid())
                     .setRegion(cloudAndRegion.getRegion().getInternalName())
                     .setLock(lock);
@@ -685,7 +695,7 @@ public class StandardNetworkService implements NetworkService {
 
     public void backgroundNewNode(NewNodeNotification newNodeRequest, final String existingLock) {
         final AtomicReference<String> lock = new AtomicReference<>(existingLock);
-        daemon(new NodeLauncher(newNodeRequest, lock, this));
+        daemon(new NodeLauncher(newNodeRequest, lock, this, launchMonitor));
     }
 
     public boolean stopNetwork(BubbleNetwork network) {
@@ -790,19 +800,44 @@ public class StandardNetworkService implements NetworkService {
     }
 
     public List<NodeProgressMeterTick> listLaunchStatuses(String accountUuid) {
+        return listLaunchStatuses(accountUuid, null);
+    }
+
+    public List<NodeProgressMeterTick> listLaunchStatuses(String accountUuid, String networkUuid) {
         final RedisService stats = getNetworkSetupStatus();
         final List<NodeProgressMeterTick> ticks = new ArrayList<>();
         for (String key : stats.keys(getProgressMeterPrefix(accountUuid)+"*")) {
             final String json = stats.get_withPrefix(key);
             if (json != null) {
                 try {
-                    ticks.add(json(json, NodeProgressMeterTick.class).setPattern(null));
+                    final NodeProgressMeterTick tick = json(json, NodeProgressMeterTick.class).setPattern(null);
+                    if (networkUuid != null && tick.hasNetwork() && networkUuid.equals(tick.getNetwork())) {
+                        ticks.add(tick);
+                    }
                 } catch (Exception e) {
                     log.warn("currentTicks (bad json?): "+e);
                 }
             }
         }
         return ticks;
+    }
+
+    private static class NodeLaunchAwait implements Runnable {
+
+        private final NodeProgressMeter progressMeter;
+        private int counter = 1;
+
+        public NodeLaunchAwait(NodeProgressMeter progressMeter) { this.progressMeter = progressMeter; }
+
+        @Override public void run() {
+            try {
+                final String line = "AWAIT-" + (counter++) + " still awaiting background jobs...";
+                log.info(line);
+                progressMeter.write(line);
+            } catch (IOException e) {
+                log.warn("error writing to progressMeter: "+shortError(e));
+            }
+        }
     }
 
 }

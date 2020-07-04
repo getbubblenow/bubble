@@ -31,29 +31,48 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     public static final int PIPE_SIZE = (int) (16*KB);
 
     public static final long TICK_REDIS_EXPIRATION = DAYS.toSeconds(1);
+    public static final long MAX_TOUCH_INTERVAL = SECONDS.toMillis(10);
 
     private final List<NodeProgressMeterTick> standardTicks;
 
-    private BufferedReader reader;
-    private BufferedWriter writer;
-    private List<NodeProgressMeterTick> ticks;
+    private final BufferedReader reader;
+    private final BufferedWriter writer;
+    private final List<NodeProgressMeterTick> ticks;
     private int tickPos = 0;
-    private AtomicBoolean error = new AtomicBoolean(false);
-    private AtomicBoolean closed = new AtomicBoolean(false);
-    private AtomicBoolean success = new AtomicBoolean(false);
+    private final AtomicBoolean error = new AtomicBoolean(false);
+    private final AtomicBoolean closed = new AtomicBoolean(false);
+    private final AtomicBoolean success = new AtomicBoolean(false);
     public boolean success () { return success.get(); }
 
     private final Thread thread;
 
-    private RedisService redis;
-    private NewNodeNotification nn;
-    private String key;
+    private final RedisService redis;
+    private final NewNodeNotification nn;
+    private final String key;
     private final NodeProgressMeterTick lastStandardTick;
 
-    public NodeProgressMeter(NewNodeNotification nn, RedisService redis) throws IOException {
+    private final StandardNetworkService networkService;
+    private final NodeLaunchMonitor launchMonitor;
+
+    private volatile long lastTouch = 0;
+
+    public void touch() {
+        if (now() > lastTouch + MAX_TOUCH_INTERVAL) {
+            launchMonitor.touch(nn.getNetwork());
+            networkService.confirmLock(nn.getNetwork(), nn.getLock());
+            lastTouch = now();
+        }
+    }
+
+    public NodeProgressMeter(NewNodeNotification nn,
+                             RedisService redis,
+                             StandardNetworkService networkService,
+                             NodeLaunchMonitor launchMonitor) throws IOException {
 
         this.nn = nn;
         this.redis = redis;
+        this.networkService = networkService;
+        this.launchMonitor = launchMonitor;
 
         standardTicks = getStandardTicks(nn);
         lastStandardTick = standardTicks.get(standardTicks.size()-1);
@@ -75,6 +94,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     }
 
     public void write(String line) throws IOException {
+        touch();
         writer.write(line.endsWith("\n") ? line : line+"\n");
         writer.flush();
     }
@@ -111,6 +131,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
         String line;
         try {
             while ((line = reader.readLine()) != null && !closed.get()) {
+                touch();
                 for (int i=tickPos; i<ticks.size(); i++) {
                     if (ticks.get(i).matches(line)) {
                         if (!error.get() && !closed.get()) setCurrentTick(ticks.get(i));
@@ -141,7 +162,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
             log.warn("setCurrentTick (closed, not setting): "+json);
             return;
         }
-        log.info("setCurrentTick: "+ json);
+        log.info("setCurrentTick: "+json);
         redis.set(getProgressMeterKey(key, nn.getAccount()), json, EX, TICK_REDIS_EXPIRATION);
     }
 
@@ -165,12 +186,13 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     public void completed() {
         closed.set(true);
         success.set(true);
-        background(this::close);
+        touch();
         _setCurrentTick(new NodeProgressMeterTick()
                 .setNetwork(nn.getNetwork())
                 .setAccount(nn.getAccount())
                 .setMessageKey(METER_COMPLETED)
                 .setPercent(100));
+        background(this::close);
     }
 
     public NodeProgressMeter uncloseable() throws IOException {
@@ -178,9 +200,9 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     }
 
     private class UncloseableNodeProgressMeter extends NodeProgressMeter {
-        private NodeProgressMeter meter;
+        private final NodeProgressMeter meter;
         public UncloseableNodeProgressMeter(NodeProgressMeter meter) throws IOException {
-            super(meter.nn, meter.redis);
+            super(meter.nn, meter.redis, meter.networkService, meter.launchMonitor);
             this.meter = meter;
         }
         @Override public void close() {}

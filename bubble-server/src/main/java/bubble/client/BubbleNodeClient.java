@@ -47,7 +47,7 @@ public class BubbleNodeClient extends BubbleApiClient {
 
     public BubbleNodeClient(BubbleNode toNode, BubbleConfiguration configuration) {
         // use http if connection is to localhost
-        super(new ApiConnectionInfo(baseUri(toNode, configuration)));
+        super(new ApiConnectionInfo(nodeBaseUri(toNode, configuration)));
         initKeys(toNode, configuration);
     }
 
@@ -70,7 +70,7 @@ public class BubbleNodeClient extends BubbleApiClient {
         this.toNode = toNode;
     }
 
-    private static String baseUri(BubbleNode node, BubbleConfiguration configuration) {
+    public static String nodeBaseUri(BubbleNode node, BubbleConfiguration configuration) {
         final HttpConfiguration http = configuration.getHttp();
         return SCHEME_HTTPS + node.getFqdn() + ":" + node.getSslPort() + http.getBaseUri();
     }
