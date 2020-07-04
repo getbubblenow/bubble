@@ -362,7 +362,7 @@ public class StandardNetworkService implements NetworkService {
                 int i = 1;
                 while (now() - readyStart < NODE_READY_TIMEOUT) {
                     sleep(SECONDS.toMillis(2), "newNode: waiting for node (" + node.id() + ") to be ready");
-                    log.info("newNode: waiting for node (" + node.id() + ") to be ready via "+readyUri);
+                    log.debug("newNode: waiting for node (" + node.id() + ") to be ready via "+readyUri);
                     progressMeter.write("READY-CHECK-"+(i++)+" /auth/ready for node: "+node.id());
                     launchMonitor.touch(network.getUuid());
                     try {
@@ -372,7 +372,7 @@ public class StandardNetworkService implements NetworkService {
                             ready = true;
                             break;
                         } else {
-                            log.info("newNode: waiting for node (" + node.id() + ") /auth/ready call failed: "+readyResponse.getStatus());
+                            log.debug("newNode: waiting for node (" + node.id() + ") /auth/ready call failed: "+readyResponse.getStatus());
                         }
                     } catch (Exception e) {
                         log.warn("newNode: node (" + node.id() + ") error checking if ready: " + shortError(e));

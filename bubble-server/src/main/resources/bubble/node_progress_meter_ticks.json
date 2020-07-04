@@ -39,6 +39,6 @@
 { "percent": 95,"messageKey":"ready_check",       "match": "prefix", "pattern":"READY-CHECK-1" },
 { "percent": 96,"messageKey":"ready_check",       "match": "prefix", "pattern":"READY-CHECK-7" },
 { "percent": 97,"messageKey":"ready_check",       "match": "prefix", "pattern":"READY-CHECK-13" },
-{ "percent": 98,"messageKey":"ready_check",       "match": "prefix", "pattern":"READY-CHECK-20" },
-{ "percent": 99,"messageKey":"ready_check",       "match": "prefix", "pattern":"READY-CHECK-26" }
+{ "percent": 98,"messageKey":"ready_check",       "match": "prefix", "pattern":"READY-CHECK-19" },
+{ "percent": 99,"messageKey":"ready_check",       "match": "prefix", "pattern":"READY-CHECK-25" }
 ]
