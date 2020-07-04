@@ -5,10 +5,10 @@ function die {
   exit 1
 }
 
-ALGO_BASE="$(cd $(dirname $0) && pwd)"
+ALGO_BASE="$(cd "$(dirname "$0")" && pwd)"
 CA_PASS_FILE="/home/bubble/.BUBBLE_ALGO_CA_KEY_PASSWORD"
 
-cd ${ALGO_BASE}
+cd "${ALGO_BASE}" || die "could not cd into ${ALGO_BASE}"
 
 if [[ ! -f "${ALGO_BASE}/config.cfg.hbs" ]] ; then
   die "No ${ALGO_BASE}/config.cfg.hbs found"
@@ -44,7 +44,7 @@ cd ${ALGO_BASE} && tar czf ${CONFIGS_BACKUP} configs && chgrp bubble ${CONFIGS_B
 cd /home/bubble && tar xzf ${CONFIGS_BACKUP} && chgrp -R bubble configs && chown -R bubble configs && chmod 500 configs || die "Error unpacking algo configs to bubble home"
 
 # Restart algo_refresh_users_monitor and wg_monitor_connections
-supervisorctl reload && sleep 5s && supervisorctl restart algo_refresh_users_monitor && supervisorctl restart wg_monitor_connections
+supervisorctl reload && sleep 3s && supervisorctl restart algo_refresh_users_monitor && supervisorctl restart wg_monitor_connections
 
 # Restart dnscrypt-proxy
 service dnscrypt-proxy restart

@@ -26,6 +26,17 @@
     src: config.cfg.hbs
     dest: /root/ansible/roles/algo/algo/config.cfg.hbs
 
+- name: Write prep_algo.sh script
+  copy:
+    src: prep_algo.sh
+    dest: /root/ansible/roles/algo/algo/prep_algo.sh
+    owner: root
+    group: root
+    mode: 0700
+
+- name: Run prep_algo.sh
+  shell: /root/ansible/roles/algo/algo/prep_algo.sh
+
 - name: Install algo_refresh_users script and monitor
   copy:
     src: "{{ item }}"

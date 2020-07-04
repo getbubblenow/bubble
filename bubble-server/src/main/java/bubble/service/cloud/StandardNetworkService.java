@@ -831,9 +831,7 @@ public class StandardNetworkService implements NetworkService {
 
         @Override public void run() {
             try {
-                final String line = "AWAIT-" + (counter++) + " still awaiting background jobs...";
-                log.info(line);
-                progressMeter.write(line);
+                progressMeter.write("AWAIT-" + (counter++) + " still awaiting background jobs...");
             } catch (IOException e) {
                 log.warn("error writing to progressMeter: "+shortError(e));
             }

@@ -32,6 +32,7 @@ public class NodeProgressMeterConstants {
     public static final String METER_TICK_LAUNCHING_NODE = "BUBBLE: LAUNCHING NODE...";
     public static final String METER_TICK_PREPARING_ROLES = "BUBBLE: PREPARING ANSIBLE ROLES...";
     public static final String METER_TICK_PREPARING_INSTALL = "BUBBLE: PREPARING INSTALL FILES...";
+    public static final String METER_TICK_AWAIT_1  = "AWAIT-1";
     public static final String METER_TICK_AWAIT_6  = "AWAIT-6";
     public static final String METER_TICK_AWAIT_11 = "AWAIT-11";
     public static final String METER_TICK_AWAIT_16 = "AWAIT-16";
@@ -77,26 +78,27 @@ public class NodeProgressMeterConstants {
             {METER_TICK_LAUNCHING_NODE, 1},
             {METER_TICK_PREPARING_ROLES, 5},
             {METER_TICK_PREPARING_INSTALL, 7},
-            {METER_TICK_AWAIT_6, 8},
+            {METER_TICK_AWAIT_1, 8},
+            {METER_TICK_AWAIT_6, 9},
             {METER_TICK_AWAIT_11, 10},
-            {METER_TICK_AWAIT_16, 11},
+            {METER_TICK_AWAIT_16, 12},
             {METER_TICK_AWAIT_21, 13},
-            {METER_TICK_AWAIT_26, 14},
-            {METER_TICK_AWAIT_31, 15},
-            {METER_TICK_AWAIT_36, 16},
-            {METER_TICK_AWAIT_41, 18},
-            {METER_TICK_AWAIT_46, 19},
-            {METER_TICK_AWAIT_51, 21},
-            {METER_TICK_AWAIT_56, 22},
-            {METER_TICK_AWAIT_61, 24},
-            {METER_TICK_AWAIT_66, 25},
-            {METER_TICK_AWAIT_71, 27},
-            {METER_TICK_AWAIT_76, 28},
-            {METER_TICK_AWAIT_81, 30},
-            {METER_TICK_AWAIT_86, 31},
-            {METER_TICK_STARTING_INSTALL, 32},
-            {METER_TICK_COPYING_ANSIBLE, 33},
-            {METER_TICK_RUNNING_ANSIBLE, 34}
+            {METER_TICK_AWAIT_26, 15},
+            {METER_TICK_AWAIT_31, 16},
+            {METER_TICK_AWAIT_36, 18},
+            {METER_TICK_AWAIT_41, 19},
+            {METER_TICK_AWAIT_46, 21},
+            {METER_TICK_AWAIT_51, 22},
+            {METER_TICK_AWAIT_56, 24},
+            {METER_TICK_AWAIT_61, 25},
+            {METER_TICK_AWAIT_66, 27},
+            {METER_TICK_AWAIT_71, 28},
+            {METER_TICK_AWAIT_76, 30},
+            {METER_TICK_AWAIT_81, 31},
+            {METER_TICK_AWAIT_86, 32},
+            {METER_TICK_STARTING_INSTALL, 34},
+            {METER_TICK_COPYING_ANSIBLE, 35},
+            {METER_TICK_RUNNING_ANSIBLE, 37}
     });
 
     public static List<NodeProgressMeterTick> getStandardTicks(NewNodeNotification nn) {
