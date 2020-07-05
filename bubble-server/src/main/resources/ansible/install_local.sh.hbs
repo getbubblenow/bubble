@@ -4,12 +4,25 @@ ANSIBLE_USER="{{node.user}}"
 ANSIBLE_HOME="$(cd ~{{node.user}} && pwd)"
 LOG="${ANSIBLE_HOME}/.ansible.log"
 
+# Stop unattended upgrades so that apt installs will work
+# unattended upgrades are re-enabled at the end of the ansible run
+systemctl stop unattended-upgrades
+
 {{#if isNode}}
 # touch algo log and start tailing it
 set -m
 ALGO_LOG=/tmp/install_algo.log
 touch ${ALGO_LOG} && tail -f ${ALGO_LOG} &
 {{/if}}
+
+function kill_bg_jobs {
+  for j in $(jobs -lr | tr '[]' ' ' |  awk '{print $1}') ; do
+    kill %${j}
+  done
+  if [[ ! -z "${ALGO_LOG}" && -f "${ALGO_LOG}" ]] ; then
+    rm -f ${ALGO_LOG}
+  fi
+}
 
 function log {
   echo "${1}" >> ${LOG}
@@ -20,8 +33,7 @@ function die {
   log "install_local: fatal error: ${1}"
 {{#if isNode}}
   # stop ALGO_LOG tail job and remove log
-  kill %1
-  rm -f ${ALGO_LOG}
+  kill_bg_jobs
 {{/if}}
   exit 1
 }
@@ -82,10 +94,10 @@ fi
 
 {{#if isNode}}
 # stop ALGO_LOG tail job and remove log
-for j in $(jobs -lr | tr '[]' ' ' |  awk '{print $1}') ; do
-  kill %${j}
-done
-rm -f ${ALGO_LOG}
+kill_bg_jobs
 {{/if}}
+
+# ansible should have already restarted unattended-upgrades, but just in case
+systemctl start unattended-upgrades
 
 exit 0
