@@ -103,7 +103,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     }
 
     @Getter @Setter private Boolean backupsEnabled = true;
-    public boolean backupsEnabled() { return !isSelfSage() && (backupsEnabled == null || backupsEnabled); }
+    public boolean backupsEnabled() { return (hasSageNode() || isSelfSage()) && (backupsEnabled == null || backupsEnabled); }
 
     @Override public void registerConfigHandlerbarsHelpers(Handlebars handlebars) { registerUtilityHelpers(handlebars); }
 

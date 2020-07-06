@@ -6,22 +6,32 @@ package bubble.service.cloud;
 
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
+import bubble.notify.NewNodeNotification;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
+import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.daemon.SimpleDaemon;
+import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static bubble.service.cloud.NodeProgressMeter.getProgressMeterKey;
+import static bubble.service.cloud.NodeProgressMeter.getProgressMeterPrefix;
+import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.json.JsonUtil.json;
 
 @Service @Slf4j
 public class NodeLaunchMonitor extends SimpleDaemon {
@@ -31,21 +41,29 @@ public class NodeLaunchMonitor extends SimpleDaemon {
 
     @Getter private final long sleepTime = SECONDS.toMillis(15);
 
+    @Override public void processException(Exception e) { log.warn("processException: "+shortError(e)); }
+
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private RedisService redis;
+    @Autowired private StandardNetworkService networkService;
+
+    @Getter(lazy=true) private final RedisService networkSetupStatus = redis.prefixNamespace(getClass().getSimpleName()+"_status_");
 
     private final Map<String, LauncherEntry> launcherThreads = new ConcurrentHashMap<>();
+    private final Map<String, String> canceledNetworks = new ExpirationMap<>(50, HOURS.toMillis(2));
 
-    public void register(String networkUuid, Thread t) {
+    public void register(String nnUuid, String networkUuid, Thread t) {
         startIfNotRunning();
         final LauncherEntry previousLaunch = launcherThreads.get(networkUuid);
         if (previousLaunch != null && previousLaunch.isAlive()) {
             log.warn("registerLauncher("+networkUuid+"): entry thread exists, stopping it: "+previousLaunch);
             forceEndLauncher(previousLaunch);
         }
-        launcherThreads.put(networkUuid, new LauncherEntry(networkUuid, t));
+        launcherThreads.put(networkUuid, new LauncherEntry(nnUuid, networkUuid, t));
     }
 
     public void cancel(String networkUuid) {
+        canceledNetworks.put(networkUuid, networkUuid);
         final LauncherEntry previousLaunch = launcherThreads.get(networkUuid);
         if (previousLaunch == null || !previousLaunch.isAlive()) {
             log.warn("cancel("+networkUuid+"): entry does not thread exist, or is not alive: "+previousLaunch);
@@ -102,21 +120,69 @@ public class NodeLaunchMonitor extends SimpleDaemon {
     }
 
     private void forceEndLauncher(LauncherEntry entry) {
+        final NodeProgressMeter meter = getProgressMeter(entry.getNnUuid());
+        if (meter != null) meter.cancel();
         terminate(entry.getThread(), LAUNCH_TERMINATE_TIMEOUT);
         launcherThreads.remove(entry.getNetworkUuid());
     }
 
-    @Override public void processException(Exception e) { log.warn("processException: "+shortError(e)); }
+    private final Map<String, NodeProgressMeter> progressMeters = new ExpirationMap<>(50, HOURS.toMillis(1), ExpirationEvictionPolicy.atime);
+
+    public NodeProgressMeter getProgressMeter(String nnId) { return progressMeters.get(nnId); }
+
+    public NodeProgressMeter getProgressMeter(@NonNull NewNodeNotification nn) {
+        return progressMeters.computeIfAbsent(nn.getUuid(), k -> new NodeProgressMeter(nn, getNetworkSetupStatus(), networkService, this));
+    }
+
+    public NodeProgressMeterTick getLaunchStatus(String accountUuid, String uuid) {
+        final String json = getNetworkSetupStatus().get(getProgressMeterKey(uuid, accountUuid));
+        if (json == null) return null;
+        try {
+            final NodeProgressMeterTick tick = json(json, NodeProgressMeterTick.class);
+            if (!tick.hasAccount() || !tick.getAccount().equals(accountUuid)) {
+                log.warn("getLaunchStatus: tick.account != accountUuid, returning null");
+                return null;
+            }
+            return tick.setPattern(null);
+        } catch (Exception e) {
+            return die("getLaunchStatus: "+e);
+        }
+    }
+
+    public List<NodeProgressMeterTick> listLaunchStatuses(String accountUuid) {
+        return listLaunchStatuses(accountUuid, null);
+    }
+
+    public List<NodeProgressMeterTick> listLaunchStatuses(String accountUuid, String networkUuid) {
+        final RedisService stats = getNetworkSetupStatus();
+        final List<NodeProgressMeterTick> ticks = new ArrayList<>();
+        for (String key : stats.keys(getProgressMeterPrefix(accountUuid)+"*")) {
+            final String json = stats.get_withPrefix(key);
+            if (json != null) {
+                try {
+                    final NodeProgressMeterTick tick = json(json, NodeProgressMeterTick.class).setPattern(null);
+                    if (networkUuid != null && tick.hasNetwork() && networkUuid.equals(tick.getNetwork())) {
+                        ticks.add(tick);
+                    }
+                } catch (Exception e) {
+                    log.warn("currentTicks (bad json?): "+e);
+                }
+            }
+        }
+        return ticks;
+    }
 
     @ToString
     private static class LauncherEntry {
 
+        @Getter private final String nnUuid;
         @Getter private final String networkUuid;
         @Getter private final Thread thread;
         @Getter private final long ctime;
         @Getter private volatile long mtime;
 
-        public LauncherEntry(String networkUuid, Thread thread) {
+        public LauncherEntry(String nnUuid, String networkUuid, Thread thread) {
+            this.nnUuid = nnUuid;
             this.networkUuid = networkUuid;
             this.thread = thread;
             this.ctime = now();

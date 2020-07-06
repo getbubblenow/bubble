@@ -27,7 +27,7 @@ import bubble.service.account.MitmControlService;
 import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.SelfNodeService;
-import bubble.service.cloud.StandardNetworkService;
+import bubble.service.cloud.NodeLaunchMonitor;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.auth.ChangePasswordRequest;
 import org.cobbzilla.wizard.model.HashedPassword;
@@ -168,14 +168,14 @@ public class AccountsResource {
         return ok(accountDAO.update(c.account));
     }
 
-    @Autowired private StandardNetworkService networkService;
+    @Autowired private NodeLaunchMonitor launchMonitor;
 
     @GET @Path("/{id}"+EP_STATUS)
     public Response listLaunchStatuses(@Context Request req,
                                        @Context ContainerRequest ctx,
                                        @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
-        return ok(networkService.listLaunchStatuses(c.account.getUuid()));
+        return ok(launchMonitor.listLaunchStatuses(c.account.getUuid()));
     }
 
     @Path("/{id}"+EP_PROMOTIONS)

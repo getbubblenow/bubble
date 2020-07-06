@@ -94,7 +94,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
 
     public boolean isNotDeleted(String networkUuid) {
         final AccountPlan accountPlan = findByNetwork(networkUuid);
-        return accountPlan != null && accountPlan.notDeleted() && accountPlan.notDeleted();
+        return accountPlan != null && accountPlan.notDeleting() && accountPlan.notDeleted();
     }
 
     @Override public Object preCreate(AccountPlan accountPlan) {

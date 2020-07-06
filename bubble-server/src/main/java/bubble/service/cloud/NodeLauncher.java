@@ -47,7 +47,7 @@ public class NodeLauncher implements Runnable {
                 final Thread launchThread = new Thread(new NodeLaunchThread(nodeRef, exceptionRef, networkService, newNodeRequest, launchMonitor));
                 launchThread.setDaemon(true);
                 launchThread.setName("NodeLaunchThread(network="+networkUuid+")");
-                launchMonitor.register(networkUuid, launchThread);
+                launchMonitor.register(newNodeRequest.getUuid(), networkUuid, launchThread);
 
                 log.info("NodeLauncher.run: launching node..."+newNodeRequest.getFqdn());
                 launchThread.start();

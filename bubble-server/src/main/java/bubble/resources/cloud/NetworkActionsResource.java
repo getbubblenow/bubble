@@ -21,6 +21,7 @@ import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.backup.NetworkKeysService;
+import bubble.service.cloud.NodeLaunchMonitor;
 import bubble.service.cloud.NodeProgressMeterTick;
 import bubble.service.cloud.StandardNetworkService;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,7 @@ public class NetworkActionsResource {
 
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private StandardNetworkService networkService;
+    @Autowired private NodeLaunchMonitor launchMonitor;
     @Autowired private AccountMessageDAO messageDAO;
     @Autowired private AccountPolicyDAO policyDAO;
     @Autowired private NetworkKeysService keysService;
@@ -94,7 +96,7 @@ public class NetworkActionsResource {
                                        @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         final String account = caller.admin() ? network.getAccount() : caller.getUuid();
-        return ok(networkService.listLaunchStatuses(account, network.getUuid()));
+        return ok(launchMonitor.listLaunchStatuses(account, network.getUuid()));
     }
 
     @GET @Path(EP_STATUS+"/{uuid}")
@@ -103,7 +105,7 @@ public class NetworkActionsResource {
                                         @PathParam("uuid") String uuid) {
         final Account caller = userPrincipal(ctx);
         final String account = caller.admin() ? network.getAccount() : caller.getUuid();
-        final NodeProgressMeterTick tick = networkService.getLaunchStatus(account, uuid);
+        final NodeProgressMeterTick tick = launchMonitor.getLaunchStatus(account, uuid);
         return tick == null ? notFound(uuid) : ok(tick);
     }
 

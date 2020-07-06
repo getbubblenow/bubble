@@ -27,7 +27,7 @@ import bubble.service.account.StandardAccountMessageService;
 import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.BubbleModelSetupService;
-import bubble.service.cloud.StandardNetworkService;
+import bubble.service.cloud.NodeLaunchMonitor;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Cleanup;
 import lombok.Getter;
@@ -369,13 +369,13 @@ public class MeResource {
         return configuration.subResource(ReferralCodesResource.class, caller);
     }
 
-    @Autowired private StandardNetworkService networkService;
+    @Autowired private NodeLaunchMonitor launchMonitor;
 
     @GET @Path(EP_STATUS)
     public Response listLaunchStatuses(@Context Request req,
                                        @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
-        return ok(networkService.listLaunchStatuses(caller.getUuid()));
+        return ok(launchMonitor.listLaunchStatuses(caller.getUuid()));
     }
 
     @Path(EP_PROMOTIONS)

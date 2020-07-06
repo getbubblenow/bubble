@@ -67,7 +67,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     public NodeProgressMeter(NewNodeNotification nn,
                              RedisService redis,
                              StandardNetworkService networkService,
-                             NodeLaunchMonitor launchMonitor) throws IOException {
+                             NodeLaunchMonitor launchMonitor) {
 
         this.nn = nn;
         this.redis = redis;
@@ -83,7 +83,11 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
         key = nn.getUuid();
 
         final PipedInputStream pipeIn = new PipedInputStream(PIPE_SIZE);
-        connect(pipeIn);
+        try {
+            connect(pipeIn);
+        } catch (IOException e) {
+            die("NodeProgressMeter: error connecting pipe: "+shortError(e));
+        }
 
         reader = new BufferedReader(new InputStreamReader(pipeIn));
         writer = new BufferedWriter(new OutputStreamWriter(this));
@@ -199,6 +203,18 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
         return new UncloseableNodeProgressMeter(this);
     }
 
+    public void cancel () {
+        log.info("cancel: cancelling progress meter for network: "+nn.getNetworkName());
+        closed.set(true);
+        success.set(true);
+        _setCurrentTick(new NodeProgressMeterTick()
+                .setNetwork(nn.getNetwork())
+                .setAccount(nn.getAccount())
+                .setMessageKey(METER_CANCELED)
+                .setPercent(0));
+        background(this::close);
+    }
+
     private class UncloseableNodeProgressMeter extends NodeProgressMeter {
         private final NodeProgressMeter meter;
         public UncloseableNodeProgressMeter(NodeProgressMeter meter) throws IOException {
@@ -206,5 +222,6 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
             this.meter = meter;
         }
         @Override public void close() {}
+        @Override public void cancel() { meter.cancel(); }
     }
 }

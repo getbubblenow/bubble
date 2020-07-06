@@ -76,10 +76,9 @@ import static bubble.server.BubbleConfiguration.ENV_DEBUG_NODE_INSTALL;
 import static bubble.service.boot.StandardSelfNodeService.*;
 import static bubble.service.cloud.NodeLaunchException.fatalLaunchFailure;
 import static bubble.service.cloud.NodeLaunchException.launchFailureCanRetry;
-import static bubble.service.cloud.NodeProgressMeter.getProgressMeterKey;
-import static bubble.service.cloud.NodeProgressMeter.getProgressMeterPrefix;
 import static bubble.service.cloud.NodeProgressMeterConstants.*;
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.daemon.Await.awaitAll;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -136,9 +135,9 @@ public class StandardNetworkService implements NetworkService {
 
     @Autowired private RedisService redisService;
     @Getter(lazy=true) private final RedisService networkLocks = redisService.prefixNamespace(getClass().getSimpleName()+"_lock_");
-    @Getter(lazy=true) private final RedisService networkSetupStatus = redisService.prefixNamespace(getClass().getSimpleName()+"_status_");
 
-    @NonNull public BubbleNode newNode(@NonNull final NewNodeNotification nn, NodeLaunchMonitor launchMonitor) {
+    @NonNull public BubbleNode newNode(@NonNull final NewNodeNotification nn,
+                                       NodeLaunchMonitor launchMonitor) {
         final long start = now();
         log.info("newNode starting:\n"+json(nn));
         ComputeServiceDriver computeDriver = null;
@@ -148,7 +147,7 @@ public class StandardNetworkService implements NetworkService {
         final BubbleNetwork network = nn.getNetworkObject();
         final ExecutorService backgroundJobs = DaemonThreadFactory.fixedPool(3);
         try {
-            progressMeter = new NodeProgressMeter(nn, getNetworkSetupStatus(), this, launchMonitor);
+            progressMeter = launchMonitor.getProgressMeter(nn);
             progressMeter.write(METER_TICK_CONFIRMING_NETWORK_LOCK);
 
             if (!confirmLock(nn.getNetwork(), lock)) {
@@ -536,7 +535,7 @@ public class StandardNetworkService implements NetworkService {
             log.info(prefix+"starting");
             final NotificationReceipt receipt = notificationService.notify(node, NotificationType.health_check, null);
             if (receipt == null) {
-                log.info(prefix+" health_check failed, checking via cloud");
+                log.info(prefix+"health_check failed, checking via cloud");
                 final CloudService cloud = cloudDAO.findByUuid(node.getCloud());
                 if (cloud == null) {
                     log.warn(prefix+"cloud not found: "+node.getCloud());
@@ -705,6 +704,8 @@ public class StandardNetworkService implements NetworkService {
             return true;
         }
 
+        networkDAO.update(network.setState(BubbleNetworkState.stopping));
+
         background(() -> {
             String lock = null;
             final String networkUuid = network.getUuid();
@@ -725,9 +726,6 @@ public class StandardNetworkService implements NetworkService {
                         throw invalidEx("err.node.cannotStopLocalNode", "Cannot stop local node: " + n.id(), n.id());
                     }
                 }
-
-                network.setState(BubbleNetworkState.stopping);
-                networkDAO.update(network);
 
                 final ValidationResult validationResult = new ValidationResult();
 
@@ -755,7 +753,7 @@ public class StandardNetworkService implements NetworkService {
 
             } catch (RuntimeException e) {
                 log.error("stopNetwork: error stopping: "+e);
-                if (network != null) network.setState(BubbleNetworkState.error_stopping);
+                network.setState(BubbleNetworkState.error_stopping);
                 networkDAO.update(network);
                 throw e;
 
@@ -784,44 +782,6 @@ public class StandardNetworkService implements NetworkService {
             return die("findServiceOrDelegate: invalid delegation: "+credentials.getDelegateNode());
         }
         return cloud;
-    }
-
-    public NodeProgressMeterTick getLaunchStatus(String accountUuid, String uuid) {
-        final String json = getNetworkSetupStatus().get(getProgressMeterKey(uuid, accountUuid));
-        if (json == null) return null;
-        try {
-            final NodeProgressMeterTick tick = json(json, NodeProgressMeterTick.class);
-            if (!tick.hasAccount() || !tick.getAccount().equals(accountUuid)) {
-                log.warn("getLaunchStatus: tick.account != accountUuid, returning null");
-                return null;
-            }
-            return tick.setPattern(null);
-        } catch (Exception e) {
-            return die("getLaunchStatus: "+e);
-        }
-    }
-
-    public List<NodeProgressMeterTick> listLaunchStatuses(String accountUuid) {
-        return listLaunchStatuses(accountUuid, null);
-    }
-
-    public List<NodeProgressMeterTick> listLaunchStatuses(String accountUuid, String networkUuid) {
-        final RedisService stats = getNetworkSetupStatus();
-        final List<NodeProgressMeterTick> ticks = new ArrayList<>();
-        for (String key : stats.keys(getProgressMeterPrefix(accountUuid)+"*")) {
-            final String json = stats.get_withPrefix(key);
-            if (json != null) {
-                try {
-                    final NodeProgressMeterTick tick = json(json, NodeProgressMeterTick.class).setPattern(null);
-                    if (networkUuid != null && tick.hasNetwork() && networkUuid.equals(tick.getNetwork())) {
-                        ticks.add(tick);
-                    }
-                } catch (Exception e) {
-                    log.warn("currentTicks (bad json?): "+e);
-                }
-            }
-        }
-        return ticks;
     }
 
     private static class NodeLaunchAwait implements Runnable {

@@ -68,6 +68,7 @@ public class NodeProgressMeterConstants {
     public static final String METER_ERROR_ROLE_VALIDATION_ERRORS = "BUBBLE-ERROR: ROLE VALIDATION FAILED";
 
     public static final String METER_COMPLETED = "meter_completed";
+    public static final String METER_CANCELED = "meter_canceled";
     public static final String METER_START_OR_DNS_ERROR = "meter_start_or_dns_error";
     public static final String METER_UNKNOWN_ERROR = "meter_unknown_error";
 
