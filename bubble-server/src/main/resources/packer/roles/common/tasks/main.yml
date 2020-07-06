@@ -43,6 +43,14 @@
     group: root
     mode: 0644
 
+- name: Install ensure_file_exists.sh
+  copy:
+    src: ensure_file_exists.sh
+    dest: /usr/local/bin/ensure_file_exists.sh
+    owner: root
+    group: root
+    mode: 0500
+
 - name: Start common services
   service:
     name: '{{ item }}'
