@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.http.HttpSchemes.SCHEME_FILE;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.system.Sleep.sleep;
@@ -78,32 +79,50 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
     protected abstract GeoLocation _geolocate (String ip);
 
     public File initFile(String url, String pathMatch, List<NameAndValue> headers) {
+        final File archive;
+        final File dbFile;
+        String ext;
         try {
-            final String urlWithLicense = HandlebarsUtil.apply(getHandlebars(), url, getCredentials().newContext(), '[', ']');
-            final HttpRequestBean request = new HttpRequestBean(urlWithLicense).setHeaders(headers);
-            final HttpMeta meta = HttpUtil.getHeadMetadata(request);
+            final boolean isFile = url.startsWith(SCHEME_FILE);
+            if (isFile) {
+                archive = new File(url.substring(SCHEME_FILE.length()));
+                ext = FileUtil.extension(archive);
+                dbFile = new File(archive.getParentFile(), archive.getName()+".database");
 
-            final String uniq = hashOf(url, headers);
-            final String dbKey = "dbcache_" + uniq;
-            final File dbFile = cloudDataDAO.getFile(cloud.getUuid(), dbKey);
-            if (!meta.shouldRefresh(dbFile)) return dbFile; // we are current!
+            } else {
+                final String urlWithLicense = HandlebarsUtil.apply(getHandlebars(), url, getCredentials().newContext(), '[', ']');
+                final HttpRequestBean request = new HttpRequestBean(urlWithLicense).setHeaders(headers);
+                final HttpMeta meta = HttpUtil.getHeadMetadata(request);
 
-            final String key = "urlcache_" + uniq;
-            final File archive = cloudDataDAO.getFile(cloud.getUuid(), key);
-            if (meta.shouldRefresh(archive)) {
-                downloadDbFile(request, archive);
+                final String uniq = hashOf(url, headers);
+                final String dbKey = "dbcache_" + uniq;
+                dbFile = cloudDataDAO.getFile(cloud.getUuid(), dbKey);
+                if (!meta.shouldRefresh(dbFile)) return dbFile; // we are current!
+
+                final String key = "urlcache_" + uniq;
+                archive = cloudDataDAO.getFile(cloud.getUuid(), key);
+                if (meta.shouldRefresh(archive)) {
+                    downloadDbFile(request, archive);
+                }
+
+                // create a symlink with the proper extension, so "unroll" can detect the archive type
+                ext = getExtension(url);
             }
 
-            // create a symlink with the proper extension, so "unroll" can detect the archive type
-            String ext = getExtension(url);
             if (ext.startsWith(".")) ext = ext.substring(1);
             switch (ext) {
-                case "zip": case "tgz": case "tar.gz": case "tar.bz2": break;
+                case "zip": case "tgz": case "gz": case "tar.gz": case "tar.bz2": break;
                 default: return die("initFile: unrecognized archive extension: "+ext+", from URL="+url);
             }
-            final File link = new File(abs(archive)+"."+ext);
-            if (link.exists() && !link.delete()) return die("initFile: error removing link: "+abs(link));
-            symlink(link, archive);
+
+            final File link;
+            if (!isFile) {
+                link = new File(abs(archive) + "." + ext);
+                if (link.exists() && !link.delete()) return die("initFile: error removing link: " + abs(link));
+                symlink(link, archive);
+            } else {
+                link = archive;
+            }
 
             @Cleanup("delete") final TempDir tempDir = Decompressors.unroll(link);
             final File found = findFile(tempDir, Pattern.compile(pathMatch));
