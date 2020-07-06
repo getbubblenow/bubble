@@ -6,6 +6,7 @@ package bubble.resources.cloud;
 
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.geoLocation.GeoLocation;
+import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.BubbleFootprintDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
@@ -30,6 +31,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
@@ -42,6 +44,7 @@ public class NetworksResource extends AccountOwnedResource<BubbleNetwork, Bubble
     @Autowired private BubbleDomainDAO domainDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleFootprintDAO footprintDAO;
+    @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private GeoService geoService;
 
     private BubbleDomain domain;
@@ -58,7 +61,10 @@ public class NetworksResource extends AccountOwnedResource<BubbleNetwork, Bubble
         if (caller.admin() && this.domain != null) {
             return getDao().findAllByDomain(this.domain.getUuid());
         } else {
-            return super.list(ctx);
+            return super.list(ctx).stream()
+                    .filter(BubbleNetwork::isNotRootNetwork)
+                    .filter(net -> accountPlanDAO.isNotDeleted(net.getUuid()))
+                    .collect(Collectors.toList());
         }
     }
 

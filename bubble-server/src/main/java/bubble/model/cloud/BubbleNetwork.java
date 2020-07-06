@@ -81,6 +81,9 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
         if (!hasUuid() || !getUuid().equals(ROOT_NETWORK_UUID)) super.beforeCreate();
     }
 
+    @JsonIgnore @Transient public boolean isRootNetwork () { return ROOT_NETWORK_UUID.equals(getUuid()); }
+    @JsonIgnore @Transient public boolean isNotRootNetwork () { return !isRootNetwork(); }
+
     @Transient @JsonIgnore public String getNetwork () { return getUuid(); }
 
     public static final int NETWORK_NAME_MAXLEN = 100;

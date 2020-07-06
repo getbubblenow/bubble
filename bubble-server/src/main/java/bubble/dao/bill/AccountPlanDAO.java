@@ -92,6 +92,11 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
         )));
     }
 
+    public boolean isNotDeleted(String networkUuid) {
+        final AccountPlan accountPlan = findByNetwork(networkUuid);
+        return accountPlan != null && accountPlan.notDeleted() && accountPlan.notDeleted();
+    }
+
     @Override public Object preCreate(AccountPlan accountPlan) {
         final HostnameValidationResult errors = validateHostname(accountPlan, accountDAO, networkDAO);
         if (errors.isInvalid()) throw invalidEx(errors);

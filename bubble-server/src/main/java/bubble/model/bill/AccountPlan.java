@@ -112,6 +112,7 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
     @ECSearchable @ECField(index=110) @Column(nullable=false)
     @ECIndex @Getter @Setter private Boolean deleting;
     public boolean deleting() { return bool(deleting); }
+    public boolean notDeleting() { return !deleting(); }
 
     @ECSearchable @ECField(index=120)
     @ECIndex @Getter @Setter private Long deleted;
