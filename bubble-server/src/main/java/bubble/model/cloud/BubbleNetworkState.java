@@ -14,6 +14,8 @@ public enum BubbleNetworkState {
 
     @JsonCreator public static BubbleNetworkState fromString(String v) { return enumFromString(BubbleNetworkState.class, v); }
 
-    public boolean canStartNetwork () { return this == created || this == stopped; }
+    public boolean canStart() { return this == created || this == stopped; }
+
+    public boolean canStop() { return this != stopping && this != stopped && this != error_stopping; }
 
 }

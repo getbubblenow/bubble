@@ -27,6 +27,7 @@ public class BubbleNodeKeyDAO extends AccountOwnedEntityDAO<BubbleNodeKey> {
     @Autowired private SelfNodeService selfNodeService;
 
     @Override public Order getDefaultSortOrder() { return EXPIRATION_DESC; }
+    @Override protected int getFinderMaxResults() { return Integer.MAX_VALUE; }
 
     @Override public Object preCreate(BubbleNodeKey key) {
         if (key.getExpiration() == null) key.setExpiration(defaultExpiration());

@@ -45,6 +45,21 @@ public class NodeLaunchMonitor extends SimpleDaemon {
         launcherThreads.put(networkUuid, new LauncherEntry(networkUuid, t));
     }
 
+    public void cancel(String networkUuid) {
+        final LauncherEntry previousLaunch = launcherThreads.get(networkUuid);
+        if (previousLaunch == null || !previousLaunch.isAlive()) {
+            log.warn("cancel("+networkUuid+"): entry does not thread exist, or is not alive: "+previousLaunch);
+        } else {
+            log.warn("cancel("+networkUuid+"): stopping active launch: "+previousLaunch);
+            forceEndLauncher(previousLaunch);
+        }
+    }
+
+    public boolean isRegistered(String networkUuid) {
+        final LauncherEntry launcherEntry = launcherThreads.get(networkUuid);
+        return launcherEntry != null && launcherEntry.isAlive();
+    }
+
     private synchronized void startIfNotRunning() {
         if (!getIsAlive()) {
             final BubbleNetwork thisNetwork = configuration.getThisNetwork();

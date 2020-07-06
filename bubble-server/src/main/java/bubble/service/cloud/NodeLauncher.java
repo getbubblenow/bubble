@@ -32,6 +32,9 @@ public class NodeLauncher implements Runnable {
         final BubbleNetwork network = newNodeRequest.getNetworkObject();
         try {
             for (int i=0; i<LAUNCH_MAX_RETRIES; i++) {
+                if (i > 0 && !launchMonitor.isRegistered(networkUuid)) {
+                    die("NodeLauncher.run: no longer registered: "+networkUuid);
+                }
                 if (!lock.get().equals(newNodeRequest.getLock())) {
                     die("NodeLauncher.run: existingLock (" + lock.get() + ") is different than lock in NewNodeNotification: " + newNodeRequest.getLock());
                 }

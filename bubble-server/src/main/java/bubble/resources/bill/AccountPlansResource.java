@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.model.cloud.BubbleNetwork.validateHostname;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.string.ValidationRegexes.HOST_PATTERN;
 import static org.cobbzilla.util.string.ValidationRegexes.validateRegexMatches;
 import static org.cobbzilla.wizard.model.NamedEntity.NAME_MAXLEN;
@@ -283,8 +283,12 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
 
         if (!canDelete(ctx, caller, found)) return forbidden();
 
-        getDao().delete(found.getUuid());
-        return ok(found);
+        getDao().update(found.setDeleting(true));
+
+        final String planUuid = found.getUuid();
+        background(() -> getDao().delete(planUuid));
+
+        return ok(found.setDeletedNetwork(found.getNetwork()));
     }
 
     @Path("/{id}"+EP_BILLS)

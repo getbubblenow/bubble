@@ -26,6 +26,7 @@ import static org.hibernate.criterion.Restrictions.isNotNull;
 public class BubbleNodeDAO extends AccountOwnedEntityDAO<BubbleNode> {
 
     @Getter(lazy=true) private static final BubbleNode rootNode = initRootNode();
+
     private static BubbleNode initRootNode() {
         final BubbleNode n = new BubbleNode();
         n.setUuid(ROOT_NETWORK_UUID);
@@ -34,6 +35,8 @@ public class BubbleNodeDAO extends AccountOwnedEntityDAO<BubbleNode> {
 
     @Autowired private NetworkService networkService;
     @Autowired private BubbleNetworkDAO networkDAO;
+
+    @Override protected int getFinderMaxResults() { return Integer.MAX_VALUE; }
 
     @Override protected String getNameField() { return "fqdn"; }
 
@@ -78,6 +81,7 @@ public class BubbleNodeDAO extends AccountOwnedEntityDAO<BubbleNode> {
         } catch (Exception e) {
             log.error("forceDelete: error checking/stopping node: "+node.getUuid()+": "+e);
         }
+        getConfiguration().deleteDependencies(node);
         super.forceDelete(uuid);
     }
 

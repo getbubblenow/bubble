@@ -28,7 +28,4 @@ public class ComputeNodeSize {
     @Getter @Setter private Integer networkMbps;
     @Getter @Setter private Integer transferGB;
 
-    @Setter private Integer costUnits;
-    public Integer getCostUnits () { return costUnits != null ? costUnits : type != null ? type.getCostUnits() : null; }
-
 }

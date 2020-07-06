@@ -109,26 +109,30 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
     @Getter @Setter private String nextBillDate;
     public AccountPlan setNextBillDate() { return setNextBillDate(BILL_START_END_FORMAT.print(getNextBill())); }
 
-    @ECSearchable @ECField(index=110)
+    @ECSearchable @ECField(index=110) @Column(nullable=false)
+    @ECIndex @Getter @Setter private Boolean deleting;
+    public boolean deleting() { return bool(deleting); }
+
+    @ECSearchable @ECField(index=120)
     @ECIndex @Getter @Setter private Long deleted;
     public boolean deleted() { return deleted != null; }
     public boolean notDeleted() { return !deleted(); }
 
-    @ECSearchable @ECField(index=120)
+    @ECSearchable @ECField(index=130)
     @Column(nullable=false)
     @ECIndex @Getter @Setter private Boolean closed = false;
     public boolean closed() { return bool(closed); }
     public boolean notClosed() { return !closed(); }
 
-    @ECSearchable @ECField(index=130, type=EntityFieldType.reference)
+    @ECSearchable @ECField(index=140, type=EntityFieldType.reference)
     @ECIndex(unique=true) @Column(length=UUID_MAXLEN)
     @Getter @Setter private String deletedNetwork;
     public boolean hasDeletedNetwork() { return deletedNetwork != null; }
 
-    @ECSearchable @ECField(index=140) @Column(nullable=false)
+    @ECSearchable @ECField(index=150) @Column(nullable=false)
     @Getter @Setter private Boolean refundIssued = false;
 
-    @ECSearchable @ECField(index=150, type=EntityFieldType.error)
+    @ECSearchable @ECField(index=160, type=EntityFieldType.error)
     @Getter @Setter private String refundError;
 
     // Fields below are used when creating a new plan, to also create the network associated with it

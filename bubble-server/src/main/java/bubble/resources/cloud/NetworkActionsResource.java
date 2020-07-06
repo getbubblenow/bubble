@@ -83,7 +83,7 @@ public class NetworkActionsResource {
             }
         }
 
-        if (!network.getState().canStartNetwork()) return invalid("err.network.cannotStartInCurrentState");
+        if (!network.getState().canStart()) return invalid("err.network.cannotStartInCurrentState");
         authenticatorService.ensureAuthenticated(ctx, ActionTarget.network);
 
         return _startNetwork(network, cloud, region, req);

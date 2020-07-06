@@ -76,7 +76,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
     public static final long SERVER_START_INITIAL_INTERVAL = SECONDS.toMillis(30);
     public static final long SERVER_START_POLL_INTERVAL = SECONDS.toMillis(5);
     public static final long SERVER_START_TIMEOUT = MINUTES.toMillis(10);
-    public static final long SERVER_STOP_TIMEOUT = SECONDS.toMillis(60);
+    public static final long SERVER_STOP_TIMEOUT = MINUTES.toMillis(5);
     public static final long SERVER_STOP_CHECK_INTERVAL = SECONDS.toMillis(5);
 
     private <T> List<T> loadCloudResources(String uri, ResourceParser<T, List<T>> parser) {

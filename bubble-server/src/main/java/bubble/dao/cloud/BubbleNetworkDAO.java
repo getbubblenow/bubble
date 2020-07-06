@@ -92,10 +92,7 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
         return findByUniqueFields("name", name, "domain", domainUuid);
     }
 
-    @Override public void delete(String uuid) { delete(uuid, false); }
-    @Override public void forceDelete(String uuid) { delete(uuid, true); }
-
-    public void delete(String uuid, boolean force) {
+    @Override public void delete(String uuid) {
         final BubbleNetwork network = findByUuid(uuid);
         if (network == null) return;
         try {
@@ -104,11 +101,7 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
             log.warn("delete("+uuid+"): error stopping network: "+e);
         }
         try {
-            if (force) {
-                backupDAO.findByNetwork(network.getUuid()).forEach(b -> backupDAO.forceDelete(b.getUuid()));
-            } else {
-                backupDAO.findByNetwork(network.getUuid()).forEach(b -> backupDAO.delete(b.getUuid()));
-            }
+            backupDAO.findByNetwork(network.getUuid()).forEach(b -> backupDAO.forceDelete(b.getUuid()));
         } catch (Exception e) {
             log.warn("delete("+uuid+"): error deleting backups: "+e);
         }
@@ -125,11 +118,7 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
 
         // delete nodes
         final List<BubbleNode> nodes = nodeDAO.findByNetwork(network.getUuid());
-        if (force) {
-            nodes.forEach(n -> nodeDAO.forceDelete(n.getUuid()));
-        } else {
-            nodes.forEach(n -> nodeDAO.delete(n.getUuid()));
-        }
+        nodes.forEach(n -> nodeDAO.forceDelete(n.getUuid()));
 
         // update or delete account plan
         final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(network.getAccount(), network.getUuid());
@@ -145,11 +134,7 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
         // delete all other dependencies
         getConfiguration().deleteDependencies(network);
 
-        if (force) {
-            super.forceDelete(uuid);
-        } else {
-            super.delete(uuid);
-        }
+        super.forceDelete(uuid);
     }
 
 }

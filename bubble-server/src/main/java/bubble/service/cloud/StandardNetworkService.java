@@ -595,7 +595,7 @@ public class StandardNetworkService implements NetworkService {
             if (anyNodesActive(network)) {
                 throw invalidEx("err.network.alreadyStarted");
             }
-            if (!network.getState().canStartNetwork()) {
+            if (!network.getState().canStart()) {
                 throw invalidEx("err.network.cannotStartInCurrentState");
             }
 
@@ -700,11 +700,16 @@ public class StandardNetworkService implements NetworkService {
 
     public boolean stopNetwork(BubbleNetwork network) {
         log.info("stopNetwork: stopping "+network.getNetworkDomain());
+        if (!network.getState().canStop()) {
+            log.warn("stopNetwork: canStop is false for network "+network.getUuid()+": state="+network.getState());
+            return true;
+        }
 
         String lock = null;
         final String networkUuid = network.getUuid();
         boolean stopped = false;
         try {
+            launchMonitor.cancel(networkUuid);
             lock = lockNetwork(networkUuid);
 
             network = networkDAO.findByUuid(networkUuid);
