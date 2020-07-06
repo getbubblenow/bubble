@@ -65,6 +65,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static bubble.ApiConstants.*;
@@ -252,7 +253,11 @@ public class StandardNetworkService implements NetworkService {
 
             // Prepare ansible roles
             // We must wait until after server is started, because some roles require ip4 in vars
-            node.waitForIpAddresses();
+            try {
+                node.waitForIpAddresses();
+            } catch (TimeoutException e) {
+                launchFailureCanRetry(node, e, "waitForIpAddresses error");
+            }
             progressMeter.write(METER_TICK_PREPARING_ROLES);
             final Map<String, Object> ctx = ansiblePrep.prepAnsible(
                     automation, bubbleFilesDir, account, network, node, computeDriver,

@@ -31,6 +31,7 @@ import javax.persistence.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static bubble.ApiConstants.EP_NODES;
 import static bubble.model.cloud.BubbleNodeState.*;
@@ -246,11 +247,11 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         return new BubbleNodeQuickClient(this, configuration);
     }
 
-    public void waitForIpAddresses() {
+    public void waitForIpAddresses() throws TimeoutException {
         final long start = now();
         while ((!hasIp4() || !hasIp6()) && now() - start < IP_ADDR_TIMEOUT) {
             sleep(TimeUnit.SECONDS.toMillis(2), "waiting for node to have IP addresses");
         }
-        if (!hasIp4() || !hasIp6()) die("waitForIpAddresses: timeout");
+        if (!hasIp4() || !hasIp6()) throw new TimeoutException("waitForIpAddresses: timeout");
     }
 }
