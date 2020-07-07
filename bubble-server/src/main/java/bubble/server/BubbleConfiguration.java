@@ -13,9 +13,11 @@ import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
+import bubble.model.cloud.BubbleNetworkState;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.device.DeviceSecurityLevel;
 import bubble.server.listener.BubbleFirstTimeListener;
+import bubble.service.backup.RestoreService;
 import bubble.service.boot.ActivationService;
 import bubble.service.boot.StandardSelfNodeService;
 import bubble.service.notify.LocalNotificationStrategy;
@@ -90,6 +92,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_REQUIRE_SEND_METRICS = "requireSendMetrics";
     public static final String TAG_SUPPORT = "support";
     public static final String TAG_SECURITY_LEVELS = "securityLevels";
+    public static final String TAG_RESTORE_MODE = "awaitingRestore";
 
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
@@ -290,11 +293,12 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public Map<String, Object> getPublicSystemConfigs () {
         synchronized (publicSystemConfigs) {
             if (publicSystemConfigs.get() == null) {
-                final BubbleNode thisNode = getThisNode();
                 final BubbleNetwork thisNetwork = getThisNetwork();
                 final AccountDAO accountDAO = getBean(AccountDAO.class);
                 final CloudServiceDAO cloudDAO = getBean(CloudServiceDAO.class);
                 final ActivationService activationService = getBean(ActivationService.class);
+                final RestoreService restoreService = getBean(RestoreService.class);
+
                 publicSystemConfigs.set(MapBuilder.build(new Object[][]{
                         {TAG_ALLOW_REGISTRATION, thisNetwork == null ? null : thisNetwork.getBooleanTag(TAG_ALLOW_REGISTRATION, false)},
                         {TAG_NETWORK_UUID, thisNetwork == null ? null : thisNetwork.getUuid()},
@@ -308,6 +312,10 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_CLOUD_CONFIGS, accountDAO.activated() ? null : activationService.getCloudDefaults()},
                         {TAG_LOCKED, accountDAO.locked()},
                         {TAG_LAUNCH_LOCK, isSageLauncher() || thisNetwork == null ? null : thisNetwork.launchLock()},
+                        {TAG_RESTORE_MODE, thisNetwork == null
+                                           ? false
+                                           : thisNetwork.getState() == BubbleNetworkState.restoring
+                                             && !restoreService.isRestoreStarted(thisNetwork.getUuid())},
                         {TAG_SSL_PORT, getDefaultSslPort()},
                         {TAG_SUPPORT, getSupport()},
                         {TAG_SECURITY_LEVELS, DeviceSecurityLevel.values()}

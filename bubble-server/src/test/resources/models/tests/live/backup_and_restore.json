@@ -151,18 +151,29 @@
     "response": {
       "store": "restoreNN",
       "check": [
-        {"condition": "restoreNN.getNetwork() == bubbleNetwork.getNetwork()"}
+        { "condition": "restoreNN.getNetwork() == bubbleNetwork.getNetwork()" },
+        { "condition": "restoreNN.getState().name() == 'starting'" }
       ]
     }
   },
 
   {
-    "comment": "restore node using restoreKey",
-    "before": "await_url .bubble 16m:20m 20s",
+    "comment": "wait for network and then try to login - cannot do that as network is in restoring state",
     "connection": {
       "name": "restoredBubbleConnection",
       "baseUri": "https://{{restoreNN.fqdn}}:{{serverConfig.nginxPort}}/api"
     },
+    "before": "await_url .bubble 16m:20m 20s",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": { "name": "{{username}}", "password": "password1!" }
+    },
+    "response": { "status": "401" }
+  },
+
+  {
+    "comment": "restore node using restoreKey",
     "request": {
       "uri": "auth/restore/{{restoreNN.restoreKey}}",
       "entity": {
@@ -189,6 +200,12 @@
       "sessionName": "restoredBubbleSession",
       "session": "token"
     }
+  },
+
+  {
+    "comment": "check again for bubble's status - should be running",
+    "request": { "uri": "me/networks/{{ restoreNN.getNetwork() }}" },
+    "response": { "check": [{ "condition": "json.getState().name() == 'running'" }] }
   },
 
   {

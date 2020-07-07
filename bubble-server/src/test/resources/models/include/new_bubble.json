@@ -223,5 +223,11 @@
         {"condition": "json.admin() == true"}
       ]
     }
+  },
+
+  {
+    "comment": "network should be in running state by now",
+    "request": { "uri": "me/networks/<<network>>" },
+    "response": { "check": [{ "condition": "json.getState().name() == 'running'" }] }
   }
 ]

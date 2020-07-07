@@ -99,8 +99,13 @@ log "Removing node keys"
 echo "DELETE FROM bubble_node_key" | bsql.sh
 
 # restore local storage
-log "Restoring bubble LocalStorage"
-rm -rf ${BUBBLE_HOME}/.bubble_local_storage/* && rsync -ac ${RESTORE_BASE}/LocalStorage/* ${BUBBLE_HOME}/.bubble_local_storage/ || die "Error restoring LocalStorage"
+LOCAL_STORAGE_DIR="${RESTORE_BASE}/LocalStorage"
+if [[ -d LOCAL_STORAGE_DIR ]] ; then
+  log "Restoring bubble LocalStorage"
+  rm -rf ${BUBBLE_HOME}/.bubble_local_storage/* \
+    && rsync -ac ${LOCAL_STORAGE_DIR}/* ${BUBBLE_HOME}/.bubble_local_storage/ \
+    || die "Error restoring LocalStorage"
+fi
 
 # flush redis
 log "Flushing redis"
@@ -121,11 +126,9 @@ else
   fi
   cd ${ALGO_BASE} && tar xzf ${CONFIGS_BACKUP} || die "Error restoring algo VPN configs"
 
-  cd "${ANSIBLE_DIR}" && \
-    . ./venv/bin/activate && \
-    bash -c \
-      "ansible-playbook --tags 'algo_related,always' --inventory ./hosts ./playbook.yml 2>&1 >> ${LOG}" \
-  || die "Error running ansible in post-restore. journalctl -xe = $(journalctl -xe | tail -n 50)"
+  ANSIBLE_CMD="ansible-playbook --tags 'algo_related,always' --inventory ./hosts ./playbook.yml"
+  bash -c "cd '${ANSIBLE_DIR}' && . ./venv/bin/activate && ${ANSIBLE_CMD} 2>&1 >> ${LOG}" \
+    || die "Error running ansible in post-restore. journalctl -xe = $(journalctl -xe | tail -n 50)"
 fi
 
 # restart mitm proxy service

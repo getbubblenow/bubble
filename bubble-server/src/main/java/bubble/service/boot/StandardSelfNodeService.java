@@ -26,6 +26,7 @@ import bubble.service.bill.BillingService;
 import bubble.service.bill.StandardRefundService;
 import bubble.service.notify.NotificationService;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.cache.Refreshable;
 import org.cobbzilla.util.http.HttpSchemes;
@@ -184,11 +185,8 @@ public class StandardSelfNodeService implements SelfNodeService {
         synchronized (thisNode) {
             final BubbleNode self = thisNode.get();
             if (self == null) {
-                final BubbleNode initSelf = initThisNode();
-                if (initSelf == null) {
-                    return die("getThisNode: error initializing selfNode, initThisNode returned null (should never happen)");
-                }
-                log.debug("getThisNode: setting thisNode="+initSelf.id());
+                final var initSelf = initThisNode(); // NonNull
+                log.debug("getThisNode: setting thisNode=" + initSelf.id());
                 thisNode.set(initSelf);
                 if (initSelf == NULL_NODE) {
                     if (!nullWarningPrinted.check()) log.warn("getThisNode: initThisNode returned NULL_NODE");
@@ -246,24 +244,24 @@ public class StandardSelfNodeService implements SelfNodeService {
         }
     }
 
-    private BubbleNode initSageNode(BubbleNode selfNode) {
-        BubbleNode sage = nodeDAO.findByUuid(selfNode.getSageNode());
-        if (sage == null) {
-            // do we have a local file we can fall back on?
-            if (!SAGE_NODE_FILE.exists()) {
-                log.warn("initSageNode: DB contains no entry for selfNode.sage ("+selfNode.getSageNode()+") and "+abs(SAGE_NODE_FILE)+ " does not exist, returning null");
-                return NULL_NODE;
-            }
-            sage = syncSage(selfNode, nodeFromFile(SAGE_NODE_FILE));
+    @NonNull private BubbleNode initSageNode(@NonNull final BubbleNode selfNode) {
+        var sage = nodeDAO.findByUuid(selfNode.getSageNode());
+        final var isSageNodeFilePresent = SAGE_NODE_FILE.exists();
+
+        if (sage == null && !isSageNodeFilePresent) {
+            // local file if required here to fall back on
+            log.warn("initSageNode: DB contains no entry for selfNode.sage (" + selfNode.getSageNode() + ") and "
+                     + abs(SAGE_NODE_FILE) + " does not exist, returning special null node object");
+            return NULL_NODE;
         }
-        sage = syncSage(selfNode, SAGE_NODE_FILE.exists()
-                ? nodeFromFile(SAGE_NODE_FILE)
-                : sage);
+
+        sage = syncSage(selfNode, isSageNodeFilePresent ? nodeFromFile(SAGE_NODE_FILE) : sage);
         initSageKey(sage);
+
         return sage;
     }
 
-    private BubbleNode syncSage(BubbleNode selfNode, BubbleNode sage) {
+    @NonNull private BubbleNode syncSage(@NonNull final BubbleNode selfNode, @NonNull final BubbleNode sage) {
         // if the sage has a local ip4, then selfNode is the sage. should only happen if fork was done incorrectly
         if (sage.localIp4()) {
             if (selfNode.localIp4()) return die("syncSage: selfNode is local: "+selfNode.id());
@@ -285,7 +283,7 @@ public class StandardSelfNodeService implements SelfNodeService {
         return nodeDAO.create(sage);
     }
 
-    private BubbleNode initThisNode() {
+    @NonNull private BubbleNode initThisNode() {
         if (!THIS_NODE_FILE.exists()) {
             log.warn("initThisNode: "+abs(THIS_NODE_FILE)+" does not exist, returning null");
             return NULL_NODE;
@@ -296,13 +294,14 @@ public class StandardSelfNodeService implements SelfNodeService {
         return initSelf(selfNode);
     }
 
-    private BubbleNode initSelf(BubbleNode selfNode) {
+    @NonNull private BubbleNode initSelf(@NonNull final BubbleNode selfNode) {
         log.debug("initSelf: starting with selfNode="+selfNode.id());
         final BubbleNode foundByUuid = nodeDAO.findByUuid(selfNode.getUuid());
         final BubbleNode foundByFqdn = nodeDAO.findByFqdn(selfNode.getFqdn());
         final BubbleNode foundByIp4 = nodeDAO.findByIp4(selfNode.getIp4());
         if (foundByUuid == null && foundByFqdn == null && foundByIp4 == null) {
-            // node exists in JSON but not in DB: write it to DB
+            // node exists in JSON but not in DB: write it to DB - also sage node is required to be in DB:
+            if (nodeDAO.findByUuid(selfNode.getSageNode()) == null) initSageNode(selfNode);
             return ensureRunning(nodeDAO.create(selfNode));
 
         } else if (foundByUuid != null && foundByFqdn != null) {
@@ -332,7 +331,7 @@ public class StandardSelfNodeService implements SelfNodeService {
         }
     }
 
-    private BubbleNode ensureRunning(BubbleNode selfNode) {
+    @NonNull private BubbleNode ensureRunning(@NonNull final BubbleNode selfNode) {
         return selfNode.getState() == BubbleNodeState.running
                 ? selfNode
                 : nodeDAO.update(selfNode.setState(BubbleNodeState.running));

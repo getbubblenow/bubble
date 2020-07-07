@@ -7,7 +7,7 @@
 #
 # Usage:
 #
-#     run-script script-file [options] [args]
+#     bscript script-file [options] [args]
 #
 #   script-file    : a JSON API script
 #   options        : script options, see bubble.main.BubbleScriptOptions (and parent classes) for more info

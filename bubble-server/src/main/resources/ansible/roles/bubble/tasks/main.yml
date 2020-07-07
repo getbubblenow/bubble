@@ -45,3 +45,7 @@
     - sage_key.json
 
 - import_tasks: postgresql_data.yml
+
+- name: Start monitor for restoring this bubble if applicable
+  include: restore.yml
+  when: restore_key is defined

@@ -31,11 +31,9 @@
     src: supervisor_mitmdump_monitor.conf
     dest: /etc/supervisor/conf.d/mitmdump_monitor.conf
 
-- name: "Allow MITM private port"
+- name: Allow MITM private port
   iptables:
     chain: INPUT
-    action: insert
-    rule_num: 7
     protocol: tcp
     destination_port: 8888
     ctstate: NEW
@@ -43,6 +41,9 @@
     jump: ACCEPT
     comment: Accept new local connections on mitm port
   become: yes
+  tags: algo_related
+  # ensuring that algo did its work on iptables before, so rule num 5 is ok to use
 
 - name: reload supervisord
   shell: supervisorctl reload
+  tags: always

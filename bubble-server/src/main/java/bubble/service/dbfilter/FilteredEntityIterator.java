@@ -80,7 +80,8 @@ public class FilteredEntityIterator extends EntityIterator {
             if (!AccountOwnedEntityDAO.class.isAssignableFrom(dao.getClass())) {
                 log.debug("iterate: skipping entity: " + c.getSimpleName());
             } else if (isPostCopyEntity(c)) {
-                log.debug("iterate: skipping " + c.getSimpleName() + ", will copy after other objects are copied");
+                log.debug("iterate: skipping " + c.getSimpleName()
+                          + ", will copy some of these after other objects are copied");
             } else {
                 // copy entities. this is how the re-keying works (decrypt using current spring config,
                 // encrypt using new config)

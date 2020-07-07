@@ -4,12 +4,12 @@
 - name: Snapshot ansible roles in the background
   command: bash -c "/usr/local/bin/snapshot_ansible.sh &"
 
-- name: Touch first-time setup file
-  shell: su - bubble bash -c "if [[ ! -f /home/bubble/first_time_marker ]] ; then echo -n install > /home/bubble/first_time_marker ; fi"
+- name: Create first-time setup file
+  shell: su - bubble bash -c "echo -n install > /home/bubble/first_time_marker"
   when: restore_key is not defined
 
-- name: Touch first-time setup file (restore)
-  shell: su - bubble bash -c "if [[ ! -f /home/bubble/first_time_marker ]] ; then echo -n restore > /home/bubble/first_time_marker ; fi"
+- name: Create first-time setup file (restore)
+  shell: su - bubble bash -c "echo -n restore > /home/bubble/first_time_marker"
   when: restore_key is defined
 
 - name: Install mitmproxy CA cert in local CA store
@@ -24,6 +24,19 @@
   template:
     src: "supervisor_bubble.conf.j2"
     dest: /etc/supervisor/conf.d/bubble.conf
+
+- name: save iptables v4 rules
+  shell: iptables-save > /etc/iptables/rules.v4
+  become: yes
+
+- name: save iptables v6 rules
+  shell: ip6tables-save > /etc/iptables/rules.v6
+  become: yes
+
+- name: Restart iptables
+  service:
+    name: netfilter-persistent
+    state: restarted
 
 # We cannot receive notifications until nginx is running, so start bubble API as the very last step
 - name: reload supervisord

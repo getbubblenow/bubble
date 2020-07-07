@@ -2,54 +2,42 @@
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
 # Insert additional firewall rules to allow required services to function
-- name: Allow HTTP
+# Insert them all on rule_num 5, and insert them in reverse order here:
+- name: Allow SSH
   iptables:
     chain: INPUT
-    action: insert
-    rule_num: 5
     protocol: tcp
-    destination_port: 80
+    destination_port: 22
     ctstate: NEW
     syn: match
     jump: ACCEPT
-    comment: Accept new HTTP connections
+    comment: Accept new SSH connections
   become: yes
 
-- name: Allow HTTPS
+- name: "Allow HTTP on port {{ item }}"
   iptables:
     chain: INPUT
-    action: insert
-    rule_num: 6
     protocol: tcp
-    destination_port: 443
+    destination_port: "{{ item }}"
     ctstate: NEW
     syn: match
     jump: ACCEPT
-    comment: Accept new HTTPS connections
+    comment: "Accept new HTTP ({{ item }}) connections"
+  with_items:
+    - 80
+    - 1080
   become: yes
 
-- name: Allow admin HTTPS on port 1443
+- name: "Allow HTTPS on port {{ item }}"
   iptables:
     chain: INPUT
-    action: insert
-    rule_num: 7
     protocol: tcp
-    destination_port: 1443
+    destination_port: "{{ item }}"
     ctstate: NEW
     syn: match
     jump: ACCEPT
-    comment: Accept new admin SSL connections
-  become: yes
-
-- name: Allow admin HTTP on port 1080
-  iptables:
-    chain: INPUT
-    action: insert
-    rule_num: 8
-    protocol: tcp
-    destination_port: 1080
-    ctstate: NEW
-    syn: match
-    jump: ACCEPT
-    comment: Accept new admin SSL connections
+    comment: "Accept new HTTPS ({{ item }}) connections"
+  with_items:
+    - 443
+    - 1443
   become: yes

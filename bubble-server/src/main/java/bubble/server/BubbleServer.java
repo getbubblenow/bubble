@@ -54,7 +54,8 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
     });
 
     public static final List<RestServerLifecycleListener> RESTORE_LIFECYCLE_LISTENERS = Arrays.asList(new RestServerLifecycleListener[] {
-            new NodeInitializerListener()
+            new NodeInitializerListener(),
+            new BubbleFirstTimeListener()
     });
 
     public static final String[] DEFAULT_ENV_FILE_PATHS = {

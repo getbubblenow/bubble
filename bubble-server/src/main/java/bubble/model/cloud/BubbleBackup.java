@@ -7,6 +7,7 @@ package bubble.model.cloud;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccount;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -75,4 +76,6 @@ public class BubbleBackup extends IdentifiableBase implements HasAccount {
     public boolean hasError () { return !empty(error); }
 
     public boolean canDelete() { return status.isDeletable() || getCtimeAge() > BR_STATE_LOCK_TIMEOUT; }
+
+    @JsonProperty public long getCtime () { return super.getCtime(); }
 }

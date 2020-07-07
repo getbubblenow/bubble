@@ -49,6 +49,7 @@ import org.cobbzilla.util.io.TempDir;
 import org.cobbzilla.util.system.Command;
 import org.cobbzilla.util.system.CommandResult;
 import org.cobbzilla.util.system.CommandShell;
+import org.cobbzilla.wizard.api.ApiException;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.validation.MultiViolationException;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
@@ -362,6 +363,7 @@ public class StandardNetworkService implements NetworkService {
             if (node.getInstallType() == AnsibleInstallType.node) {
                 final long readyStart = now();
                 boolean ready = false;
+                Exception lastEx = null;
                 final String readyUri = nodeBaseUri(node, configuration) + AUTH_ENDPOINT + EP_READY;
                 int i = 1;
                 while (now() - readyStart < NODE_READY_TIMEOUT) {
@@ -380,9 +382,17 @@ public class StandardNetworkService implements NetworkService {
                         }
                     } catch (Exception e) {
                         log.warn("newNode: node (" + node.id() + ") error checking if ready: " + shortError(e));
+                        lastEx = e;
                     }
                 }
                 if (!ready) {
+                    if (lastEx != null) {
+                        var responseStatus = "";
+                        if (lastEx instanceof ApiException) {
+                            responseStatus = " (HTTP status: " + ((ApiException) lastEx).getResponse().status + ")";
+                        }
+                        log.warn("newNode: the last exception in checking if ready" + responseStatus, lastEx);
+                    }
                     return launchFailureCanRetry(node, "newNode: timeout waiting for node (" + node.id() + ") to be ready");
                 }
             }
@@ -446,6 +456,7 @@ public class StandardNetworkService implements NetworkService {
                 }
                 closeQuietly(progressMeter);
             }
+            unlockNetwork(nn.getNetwork(), lock);
             backgroundJobs.shutdownNow();
         }
         return node;
@@ -660,10 +671,10 @@ public class StandardNetworkService implements NetworkService {
             // sanity checks
             final List<BubbleNode> nodes = nodeDAO.findByNetwork(network.getUuid());
             if (!nodes.isEmpty()) {
-                throw invalidEx("err.network.restore.nodesExist");
+                throw invalidEx("err.networkRestore.nodesExist");
             }
             if (network.getState() != BubbleNetworkState.stopped) {
-                throw invalidEx("err.network.restore.notStopped");
+                throw invalidEx("err.networkRestore.notStopped");
             }
             network.setState(BubbleNetworkState.starting);
             networkDAO.update(network);
@@ -688,8 +699,14 @@ public class StandardNetworkService implements NetworkService {
 
             return newNodeRequest;
 
+        } catch (SimpleViolationException e) {
+            // TODO: should this go here, or just in some specific cases within above try block?
+            //       also, should this go into other method here that are locking network?
+            try { unlockNetwork(network.getUuid(), lock); } catch (Exception e1) { }
+            log.error("startNetwork: original SimpleViolationException: ", e);
+            throw e;
         } catch (Exception e) {
-            return die("startNetwork: "+e, e);
+            return die("startNetwork: " + e, e);
         }
     }
 

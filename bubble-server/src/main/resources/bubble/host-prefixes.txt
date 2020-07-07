@@ -1418,7 +1418,6 @@ briny
 brios
 brise
 brisk
-briss
 brith
 brits
 britt
@@ -3496,7 +3495,6 @@ fease
 feast
 feats
 feaze
-fecal
 feces
 fecht
 fecit
@@ -3548,7 +3546,6 @@ fesse
 festa
 fests
 festy
-fetal
 fetas
 fetch
 feted
@@ -3557,7 +3554,6 @@ fetid
 fetor
 fetta
 fetts
-fetus
 fetwa
 feuar
 feuds
@@ -4915,7 +4911,6 @@ horde
 horis
 horme
 horns
-horny
 horse
 horst
 horsy
@@ -8060,9 +8055,6 @@ porge
 porgy
 porks
 porky
-porno
-porns
-porny
 porta
 ports
 porty

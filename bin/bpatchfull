@@ -45,7 +45,7 @@ else
     echo "Files changed, rebuilding bubble jar: "
     find "./src/main" -type f -newer "$(find "./target" -type f -name "bubble*.jar" | head -1)"
   fi
-  mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error packaging jar"
+  BUBBLE_PRODUCTION=1 mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error packaging jar"
   scp ./target/bubble*.jar ${HOST}:/tmp/bubble.jar || die "Error copying file to remote host ${HOST}"
 fi
 
@@ -55,4 +55,9 @@ if [[ ! -z "${NO_RESTART}" && "${NO_RESTART}" == "norestart" ]] ; then
 else
   echo "Patching and restarting..."
   ssh ${HOST} "cat /tmp/bubble.jar > ~bubble/api/bubble.jar && supervisorctl restart bubble"
+fi
+
+if [[ $(jar tf ./target/bubble*.jar | grep "^site/$") ]] ; then
+  echo "Deploying new web..."
+  ssh ${HOST} "cd ~bubble && jar xf /tmp/bubble.jar site && chown -R bubble:bubble site"
 fi

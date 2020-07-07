@@ -9,15 +9,14 @@
     group: root
     mode: 0500
 
+- name: Stop algo monitors just in case
+  shell: bash -c "supervisorctl stop algo_refresh_users_monitor && supervisorctl stop wg_monitor_connections"
+
 # Don't setup algo when in restore mode, bubble_restore_monitor.sh will set it up after the CA key has been restored
 - name: Run algo playbook to install algo
   shell: bash -c "/root/ansible/roles/algo/algo/install_algo.sh 2>&1 >> /tmp/install_algo.log"
-  when: restore_key is not defined
+  tags: algo_related
 
-# Don't start monitors when in restore mode, bubble_restore_monitor.sh will start it after algo is installed
-- name: Stop algo monitors (in restore mode)
-  shell: bash -c "supervisorctl stop algo_refresh_users_monitor && supervisorctl stop wg_monitor_connections"
-  when: restore_key is defined
-
-# Add bubble rules
+# Algo installation clears out iptable rules. Add needed bubble rules back:
 - include: algo_firewall.yml
+  tags: algo_related

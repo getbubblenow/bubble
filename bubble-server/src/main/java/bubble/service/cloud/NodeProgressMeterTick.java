@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 
 import static bubble.ApiConstants.enumFromString;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 
 @Accessors(chain=true)
 public class NodeProgressMeterTick {
@@ -22,6 +23,15 @@ public class NodeProgressMeterTick {
         exact, prefix, regex;
         @JsonCreator public static TickMatchType fromString(String v) { return enumFromString(TickMatchType.class, v); }
     }
+
+    public NodeProgressMeterTick() {
+        this.ctime = now();
+    }
+
+    @Setter private Long ctime;
+    // backward compatibility - the following getter may be removed and default one may be used after some time, while
+    // ctime can be changed to be of simple `long` type
+    public long getCtime() { return ctime == null ? 0 : ctime; }
 
     @Getter @Setter private String account;
     public boolean hasAccount() { return !empty(account); }

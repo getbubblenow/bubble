@@ -29,33 +29,46 @@
   become: yes
   when: fw_enable_ssh
 
-- name: Allow HTTP
+- name: "Allow HTTP on port {{ item }}"
   iptables:
     chain: INPUT
     protocol: tcp
-    destination_port: 80
+    destination_port: "{{ item }}"
     ctstate: NEW
     syn: match
     jump: ACCEPT
-    comment: Accept new HTTP connections
+    comment: "Accept new HTTP ({{ item }}) connections"
+  with_items:
+    - 80
+    - 1080
   become: yes
   when: fw_enable_http
 
-- name: Allow HTTPS
+- name: "Allow HTTPS on port {{ item }}"
   iptables:
     chain: INPUT
     protocol: tcp
-    destination_port: 443
+    destination_port: "{{ item }}"
     ctstate: NEW
     syn: match
     jump: ACCEPT
-    comment: Accept new HTTPS connections
+    comment: "Accept new HTTPS ({{ item }}) connections"
+  with_items:
+    - 443
+    - 1443
   become: yes
   when: fw_enable_http
 
 - name: Drop everything else
   iptables:
     chain: INPUT
-    jump: DROP
-    comment: Drop anything else
+    policy: DROP
+  become: yes
+
+- name: save iptables v4 rules
+  shell: iptables-save > /etc/iptables/rules.v4
+  become: yes
+
+- name: save iptables v6 rules
+  shell: ip6tables-save > /etc/iptables/rules.v6
   become: yes
