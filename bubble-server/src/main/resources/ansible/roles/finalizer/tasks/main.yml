@@ -44,7 +44,7 @@
 
 # dhparams file is created async. it takes a while and might not have finished. nginx will fail to start without it.
 - name: Ensure dhparams.pem exists
-  shell: /usr/local/bin/ensure_file_exists.sh /etc/nginx/dhparams.pem 180
+  shell: /usr/local/bin/ensure_file_exists.sh /etc/nginx/dhparams.pem 300
 
 - name: Ensure nginx is restarted
   service:
