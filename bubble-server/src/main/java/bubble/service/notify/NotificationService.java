@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.net.ConnectException;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 
@@ -122,17 +123,17 @@ public class NotificationService {
                 log.debug("_notify: <<<<< RECEIPT <<<<<< " + json(receipt, COMPACT_MAPPER) + " <<<<<<<<<<<<<<<<<<");
                 return receipt;
 
-            } catch (ConnectException | ConnectTimeoutException | ApiException e) {
+            } catch (ConnectException | ConnectTimeoutException | UnknownHostException | ApiException e) {
                 notification.setStatus(NotificationSendStatus.error);
                 notification.setException(e);
                 sentNotificationDAO.update(notification);
-                return die("_notify: " + e);
+                throw new IllegalStateException("_notify: "+shortError(e), e);
 
             } catch (Exception e) {
                 notification.setStatus(NotificationSendStatus.error);
                 notification.setException(e);
                 sentNotificationDAO.update(notification);
-                return die("_notify: " + e, e);
+                return die("_notify: "+shortError(e), e);
             }
         }
     }

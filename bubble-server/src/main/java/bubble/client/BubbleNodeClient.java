@@ -13,6 +13,7 @@ import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.entity.ContentType;
 import org.cobbzilla.util.http.ApiConnectionInfo;
 import org.cobbzilla.util.http.HttpRequestBean;
@@ -20,6 +21,8 @@ import org.cobbzilla.wizard.server.config.HttpConfiguration;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ConnectException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,8 +105,12 @@ public class BubbleNodeClient extends BubbleApiClient {
         try {
             log.debug("execute: attempting request...");
             return super.execute(client, request);
+
+        } catch (ConnectException | ConnectTimeoutException | UnknownHostException e) {
+            throw e;
+
         } catch (Exception e) {
-            return die("execute("+request+"): error: "+e);
+            throw new IllegalStateException("execute("+request+"): error: "+e, e);
         }
     }
 

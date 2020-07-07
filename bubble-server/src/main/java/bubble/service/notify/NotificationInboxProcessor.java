@@ -22,10 +22,10 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 @AllArgsConstructor @Slf4j
 public class NotificationInboxProcessor implements Runnable {
 
-    private ReceivedNotification n;
-    private Map<String, SynchronousNotification> syncRequests;
-    private BubbleConfiguration configuration;
-    private ReceivedNotificationDAO receivedNotificationDAO;
+    private final ReceivedNotification n;
+    private final Map<String, SynchronousNotification> syncRequests;
+    private final BubbleConfiguration configuration;
+    private final ReceivedNotificationDAO receivedNotificationDAO;
 
     @Override public void run() {
         try {
