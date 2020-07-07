@@ -29,6 +29,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -61,6 +62,10 @@ public class NetworksResource extends AccountOwnedResource<BubbleNetwork, Bubble
         if (caller.admin() && this.domain != null) {
             return getDao().findAllByDomain(this.domain.getUuid());
         } else {
+            if (caller.admin()) {
+                final MultivaluedMap<String, String> params = ctx.getUriInfo().getQueryParameters();
+                if (Boolean.parseBoolean(params.getFirst("all"))) return super.list(ctx);
+            }
             return super.list(ctx).stream()
                     .filter(BubbleNetwork::isNotRootNetwork)
                     .filter(net -> accountPlanDAO.isNotDeleted(net.getUuid()))

@@ -1,7 +1,7 @@
 [
   {
     "comment": "lookup networks",
-    "request": { "uri": "me/networks" },
+    "request": { "uri": "me/networks?all=true" },
     "response": {
       "store": "networks",
       "check": [ {"condition": "json.length >= 1"} ]
