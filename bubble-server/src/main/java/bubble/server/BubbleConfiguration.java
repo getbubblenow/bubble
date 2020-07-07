@@ -103,7 +103,10 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     }
 
     @Getter @Setter private Boolean backupsEnabled = true;
-    public boolean backupsEnabled() { return (hasSageNode() || isSelfSage()) && (backupsEnabled == null || backupsEnabled); }
+    @Getter @Setter private boolean backupRootNetwork = false;
+    public boolean backupsEnabled() {
+        return (!isRootNetwork() || backupRootNetwork) && (backupsEnabled == null || backupsEnabled);
+    }
 
     @Override public void registerConfigHandlerbarsHelpers(Handlebars handlebars) { registerUtilityHelpers(handlebars); }
 
@@ -131,6 +134,11 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     @JsonIgnore @Transient public synchronized BubbleNetwork getThisNetwork () {
         return getBean(StandardSelfNodeService.class).getThisNetwork();
+    }
+
+    @JsonIgnore @Transient public boolean isRootNetwork () {
+        final BubbleNetwork thisNetwork = getThisNetwork();
+        return thisNetwork != null && thisNetwork.isRootNetwork();
     }
 
     @JsonIgnore @Transient public synchronized BubbleNode getSageNode () {

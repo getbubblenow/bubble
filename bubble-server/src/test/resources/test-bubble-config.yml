@@ -77,3 +77,6 @@ disallowedCountries: {{DISALLOWED_COUNTRIES}}
 
 promoCodePolicy: {{#exists BUBBLE_PROMO_CODE_POLICY}}{{BUBBLE_PROMO_CODE_POLICY}}{{else}}optional{{/exists}}
 requireSendMetrics: false
+
+# Required for BackupTest to work. Normally root networks are not backed up.
+backupRootNetwork: true
