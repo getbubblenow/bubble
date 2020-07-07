@@ -6,12 +6,10 @@ package bubble.service.cloud;
 
 import bubble.cloud.compute.ComputeServiceDriver;
 import bubble.dao.cloud.BubbleDomainDAO;
+import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.CloudServiceDAO;
-import bubble.model.cloud.BubbleDomain;
-import bubble.model.cloud.BubbleNode;
-import bubble.model.cloud.BubbleNodeState;
-import bubble.model.cloud.CloudService;
+import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
@@ -26,6 +24,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 public class NodeService {
 
     @Autowired private BubbleNodeDAO nodeDAO;
+    @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private BubbleDomainDAO domainDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleConfiguration configuration;
@@ -40,11 +39,11 @@ public class NodeService {
         try {
             dns.getDnsDriver(configuration).deleteNode(node);
             node = compute.stop(node);
-            return nodeDAO.update(node.setState(BubbleNodeState.stopped));
+            return safeUpdateNodeState(node, BubbleNodeState.stopped);
 
         } catch (EntityNotFoundException e) {
             log.info("stopNode: node not found by compute service: "+node.id()+": "+e);
-            return nodeDAO.update(node.setState(BubbleNodeState.unreachable));
+            return safeUpdateNodeState(node, BubbleNodeState.unreachable);
 
         } catch (SimpleViolationException e) {
             log.info("stopNode: error stopping "+node.id()+": "+e);
@@ -53,6 +52,24 @@ public class NodeService {
         } catch (Exception e) {
             log.info("stopNode: error stopping "+node.id());
             return die("stopNode: "+e, e);
+        }
+    }
+
+    public BubbleNode safeUpdateNodeState(BubbleNode node, BubbleNodeState newState) {
+        // ensure node still exists
+        final BubbleNode existingNode = nodeDAO.findByUuid(node.getUuid());
+        if (existingNode == null) {
+            log.warn("stopNode: node not found, not updating: " + node.id());
+            return node;
+        } else {
+            // ensure network still exists
+            final BubbleNetwork network = networkDAO.findByUuid(node.getNetwork());
+            if (network == null) {
+                log.warn("stopNode: node exists (" + node.id() + ") but network (" + node.getNetwork() + ") does not, deleting node");
+                nodeDAO.delete(node.getUuid());
+                return node;
+            }
+            return nodeDAO.update(node.setState(newState));
         }
     }
 
