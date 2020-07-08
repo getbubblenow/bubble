@@ -174,6 +174,10 @@ public class StandardRuleEngineService implements RuleEngineService {
         // have we seen this request before?
         final ActiveStreamState state = activeProcessors.computeIfAbsent(filterRequest.getId(),
                 k -> new ActiveStreamState(filterRequest, initRules(filterRequest)));
+        if (state.isPassthru()) {
+            if (log.isDebugEnabled()) log.debug(prefix+"state is passthru");
+            return passthru(request);
+        }
         if (last) {
             if (log.isDebugEnabled()) log.debug(prefix+"adding LAST stream with length="+chunkLength);
             state.addLastChunk(request.getEntityStream(), chunkLength);

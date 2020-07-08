@@ -33,6 +33,8 @@ public class JsUserBlockerRuleDriver extends AbstractAppRuleDriver {
 
     public static final String CTX_APPLY_BLOCKS_JS = "APPLY_BLOCKS_JS";
 
+    @Override public boolean couldModify(FilterHttpRequest request) { return true; }
+
     @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
         if (!isHtml(filterRequest.getContentType())) return in;
 

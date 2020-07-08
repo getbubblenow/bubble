@@ -154,4 +154,6 @@ public interface AppRuleDriver {
         return ConnectionCheckResponse.noop;
     }
 
+    default boolean couldModify(FilterHttpRequest request) { return false; }
+
 }

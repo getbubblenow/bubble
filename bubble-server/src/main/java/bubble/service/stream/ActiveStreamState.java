@@ -5,6 +5,7 @@
 package bubble.service.stream;
 
 import bubble.resources.stream.FilterHttpRequest;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
@@ -24,6 +25,7 @@ import java.util.Map;
 
 import static java.util.concurrent.TimeUnit.DAYS;
 import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.io.NullInputStream.NULL_STREAM;
 
@@ -32,11 +34,15 @@ class ActiveStreamState {
 
     public static final long DEFAULT_BYTE_BUFFER_SIZE = (8 * Bytes.KB);
     public static final long MAX_BYTE_BUFFER_SIZE = (64 * Bytes.KB);
+
+    // do not wrap input with encoding stream until we have received at least this many bytes
+    // this avoids errors when creating a GZIPInputStream when only one or a few bytes are available
     public static final long MIN_BYTES_BEFORE_WRAP = 256;
 
     private final FilterHttpRequest request;
     private final String requestId;
     private final AppRuleHarness firstRule;
+    @Getter private final boolean passthru;
     private HttpContentEncodingType encoding;
     private MultiStream multiStream;
     private InputStream output = null;
@@ -49,6 +55,31 @@ class ActiveStreamState {
         this.requestId = request.getId();
         this.encoding = request.getEncoding();
         this.firstRule = rules.get(0);
+
+        final String prefix = "ActiveStreamState("+requestId+"): ";
+        if (empty(rules)) {
+            if (log.isDebugEnabled()) log.debug(prefix+"no rules, returning passthru");
+            passthru = true;
+
+        } else if (noApplicableRules(rules)) {
+            if (log.isDebugEnabled()) log.debug(prefix+"no applicable rules, returning passthru");
+            passthru = true;
+
+        } else {
+            passthru = false;
+        }
+    }
+
+    public boolean noApplicableRules(List<AppRuleHarness> rules) {
+        for (AppRuleHarness appRule : rules) {
+            if (appRule.getDriver().couldModify(request)) {
+                if (log.isTraceEnabled()) log.trace("noApplicableRules("+requestId+"): appRule "+appRule.getRule().getName()+"/"+appRule.getDriver().getClass().getName()+" could modify request, returning false");
+                return false;
+            } else {
+                if (log.isTraceEnabled()) log.trace("noApplicableRules("+requestId+"): appRule "+appRule.getRule().getName()+"/"+appRule.getDriver().getClass().getName()+" could NOT modify request");
+            }
+        }
+        return true;
     }
 
     private String prefix(String s) { return s+"("+requestId+"): "; }
@@ -74,6 +105,8 @@ class ActiveStreamState {
             } else {
                 multiStream.addStream(chunkStream);
             }
+            // do not wrap input with encoding stream until we have received at least MIN_BYTES_BEFORE_WRAP bytes
+            // this avoids errors when creating a GZIPInputStream when only one or a few bytes are available
             if (output == null && totalBytesWritten > MIN_BYTES_BEFORE_WRAP) {
                 output = outputStream(firstRule.getDriver().filterResponse(request, inputStream(multiStream)));
             }
