@@ -22,7 +22,7 @@ public enum BubbleDeviceType {
     windows       (CertType.cer, true, DeviceSecurityLevel.standard),
     macosx        (CertType.pem, true, DeviceSecurityLevel.standard),
     ios           (CertType.pem, true, DeviceSecurityLevel.standard),
-    android       (CertType.cer, true, DeviceSecurityLevel.standard),
+    android       (CertType.cer, true, DeviceSecurityLevel.basic),
     linux         (CertType.crt, true, DeviceSecurityLevel.standard),
     firefox       (CertType.crt, false),
     other         (null, true, DeviceSecurityLevel.basic);
