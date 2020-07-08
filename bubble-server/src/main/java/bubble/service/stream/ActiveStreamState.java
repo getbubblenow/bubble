@@ -12,7 +12,6 @@ import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.http.HttpContentEncodingType;
 import org.cobbzilla.util.io.FilterInputStreamViaOutputStream;
 import org.cobbzilla.util.io.FixedByteArrayInputStream;
-import org.cobbzilla.util.io.NullInputStream;
 import org.cobbzilla.util.io.multi.MultiStream;
 import org.cobbzilla.util.system.Bytes;
 
@@ -22,21 +21,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.DAYS;
 import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static org.cobbzilla.util.io.NullInputStream.NULL_STREAM;
 
 @Slf4j
 class ActiveStreamState {
 
     public static final long DEFAULT_BYTE_BUFFER_SIZE = (8 * Bytes.KB);
     public static final long MAX_BYTE_BUFFER_SIZE = (64 * Bytes.KB);
+    public static final long MIN_BYTES_BEFORE_WRAP = 256;
 
-    private FilterHttpRequest request;
-    private String requestId;
+    private final FilterHttpRequest request;
+    private final String requestId;
+    private final AppRuleHarness firstRule;
     private HttpContentEncodingType encoding;
     private MultiStream multiStream;
-    private AppRuleHarness firstRule;
     private InputStream output = null;
     private long totalBytesWritten = 0;
     private long totalBytesRead = 0;
@@ -66,11 +68,14 @@ class ActiveStreamState {
             final byte[] chunk = toBytes(in, chunkLength);
             if (log.isDebugEnabled()) log.debug(prefix("addChunk") + "adding " + chunk.length + " bytes");
             totalBytesWritten += chunk.length;
+            final ByteArrayInputStream chunkStream = new ByteArrayInputStream(chunk);
             if (multiStream == null) {
-                multiStream = new MultiStream(new ByteArrayInputStream(chunk));
-                output = outputStream(firstRule.getDriver().filterResponse(request, inputStream(multiStream)));
+                multiStream = new MultiStream(chunkStream);
             } else {
-                multiStream.addStream(new ByteArrayInputStream(chunk));
+                multiStream.addStream(chunkStream);
+            }
+            if (output == null && totalBytesWritten > MIN_BYTES_BEFORE_WRAP) {
+                output = outputStream(firstRule.getDriver().filterResponse(request, inputStream(multiStream)));
             }
         }
     }
@@ -79,11 +84,14 @@ class ActiveStreamState {
         final byte[] chunk = toBytes(in, chunkLength);
         if (log.isDebugEnabled()) log.debug(prefix("addLastChunk")+"adding "+chunk.length+" bytes");
         totalBytesWritten += chunk.length;
+        final ByteArrayInputStream chunkStream = new ByteArrayInputStream(chunk);
         if (multiStream == null) {
-            multiStream = new MultiStream(new ByteArrayInputStream(chunk), true);
-            output = outputStream(firstRule.getDriver().filterResponse(request, inputStream(multiStream)));
+            multiStream = new MultiStream(chunkStream, true);
         } else {
-            multiStream.addLastStream(new ByteArrayInputStream(chunk));
+            multiStream.addLastStream(chunkStream);
+        }
+        if (output == null) {
+            output = outputStream(firstRule.getDriver().filterResponse(request, inputStream(multiStream)));
         }
     }
 
@@ -93,18 +101,22 @@ class ActiveStreamState {
         // read to end of all streams, there is no more data coming in
         if (last) {
             if (log.isDebugEnabled()) log.debug(prefix+"last==true, returning full output");
-            return output;
+            return finalOutputOrNullStream();
         }
 
         if (request.hasContentLength() && totalBytesWritten >= request.getContentLength()) {
             if (log.isDebugEnabled()) log.debug(prefix+"all bytes written, returning full output");
-            return output;
+            return finalOutputOrNullStream();
         }
         final int bytesToRead = (int) (totalBytesWritten - totalBytesRead - (2 * MAX_BYTE_BUFFER_SIZE));
         if (bytesToRead < 0) {
             // we shouldn't try to read yet, less than 1024 bytes have been written
             if (log.isDebugEnabled()) log.debug(prefix + "not enough data written (bytesToRead=" + bytesToRead + "), can't read anything yet");
-            return NullInputStream.instance;
+            return NULL_STREAM;
+        }
+        if (output == null) {
+            if (log.isDebugEnabled()) log.debug(prefix + "not enough data written (output is null and bytesToRead=" + bytesToRead + "), can't read anything yet");
+            return NULL_STREAM;
         }
 
         if (log.isDebugEnabled()) log.debug(prefix+"trying to read "+bytesToRead+" bytes from output="+output.getClass().getSimpleName());
@@ -114,7 +126,7 @@ class ActiveStreamState {
         if (bytesRead == -1) {
             // nothing to return
             if (log.isDebugEnabled()) log.debug(prefix+"end of stream, returning NullInputStream");
-            return NullInputStream.instance;
+            return NULL_STREAM;
         }
 
         if (log.isDebugEnabled()) log.debug(prefix+"read "+bytesRead+", returning buffer");
@@ -123,7 +135,15 @@ class ActiveStreamState {
         return new FixedByteArrayInputStream(buffer, 0, bytesRead);
     }
 
-    private Map<String, String> doNotWrap = new ExpirationMap<>(TimeUnit.DAYS.toMillis(1), ExpirationEvictionPolicy.atime);
+    public InputStream finalOutputOrNullStream() {
+        if (output == null) {
+            if (log.isErrorEnabled()) log.error("finalOutputOrNullStream: output was null!");
+            return NULL_STREAM;
+        }
+        return output;
+    }
+
+    private final Map<String, String> doNotWrap = new ExpirationMap<>(DAYS.toMillis(1), ExpirationEvictionPolicy.atime);
 
     private InputStream inputStream(MultiStream baseStream) throws IOException {
         final String prefix = prefix("inputStream");
@@ -145,7 +165,7 @@ class ActiveStreamState {
             if (log.isDebugEnabled()) log.debug(prefix+"returning baseStream wrapped in " + wrapped.getClass().getSimpleName());
             return wrapped;
         } catch (IOException e) {
-            if (log.isWarnEnabled()) log.warn(prefix+"error wrapping with "+encoding+", sending as-is (perhaps missing a byte or two)");
+            if (log.isWarnEnabled()) log.warn(prefix+"error wrapping with "+encoding+", sending as-is (perhaps missing a byte or two): "+shortError(e), e);
             doNotWrap.put(url, url);
             return baseStream;
         }

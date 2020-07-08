@@ -139,7 +139,7 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
     @Getter @Setter private Boolean requestCheck;
     public boolean requestCheck () { return bool(requestCheck); }
 
-    @ECSearchable @ECField(index=130)
+    @ECSearchable @ECField(index=140)
     @Column(nullable=false)
     @Getter @Setter private Integer priority = 0;
 

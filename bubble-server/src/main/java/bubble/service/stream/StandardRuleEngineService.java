@@ -46,9 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.core.Response;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +61,7 @@ import static org.apache.http.HttpHeaders.TRANSFER_ENCODING;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
 import static org.cobbzilla.util.http.HttpStatusCodes.OK;
+import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.wizard.cache.redis.RedisService.ALL_KEYS;
 import static org.cobbzilla.wizard.resources.ResourceUtil.send;
 
@@ -147,6 +146,8 @@ public class StandardRuleEngineService implements RuleEngineService {
 
     private final Map<String, ActiveStreamState> activeProcessors = new ExpirationMap<>(MINUTES.toMillis(5), ExpirationEvictionPolicy.atime);
 
+    private static final boolean DEBUG_CAPTURE = false;
+
     public Response applyRulesToChunkAndSendResponse(ContainerRequest request,
                                                      FilterHttpRequest filterRequest,
                                                      Integer chunkLength,
@@ -155,21 +156,33 @@ public class StandardRuleEngineService implements RuleEngineService {
         if (!filterRequest.hasMatchers()) {
             if (log.isDebugEnabled()) log.debug(prefix+"adding no matchers, returning passthru");
             return passthru(request);
+        } else {
+            log.info(prefix+" applying ");
+        }
+
+        // for debugging problematic requests
+        if (DEBUG_CAPTURE) {
+            final byte[] bytes = IOUtils.toByteArray(request.getEntityStream());
+            final File temp = new File("/tmp/"+filterRequest.getId()+".raw");
+            try (FileOutputStream out = new FileOutputStream(temp, true)) {
+                log.debug(prefix+"stashed "+bytes.length+" bytes in "+abs(temp));
+                IOUtils.copy(new ByteArrayInputStream(bytes), out);
+            }
+            return sendResponse(new ByteArrayInputStream(bytes)); // noop for testing
         }
 
         // have we seen this request before?
         final ActiveStreamState state = activeProcessors.computeIfAbsent(filterRequest.getId(),
                 k -> new ActiveStreamState(filterRequest, initRules(filterRequest)));
         if (last) {
-            if (log.isDebugEnabled()) log.debug(prefix+"adding LAST stream");
+            if (log.isDebugEnabled()) log.debug(prefix+"adding LAST stream with length="+chunkLength);
             state.addLastChunk(request.getEntityStream(), chunkLength);
         } else {
-            if (log.isDebugEnabled()) log.debug(prefix+"adding a stream");
+            if (log.isDebugEnabled()) log.debug(prefix+"adding a stream with length="+chunkLength);
             state.addChunk(request.getEntityStream(), chunkLength);
         }
 
         if (log.isDebugEnabled()) log.debug(prefix+"sending as much filtered data as we can right now (which may be nothing)");
-//        return sendResponse(new ByteArrayInputStream(chunk)); // noop for testing
         return sendResponse(state.getResponseStream(last));
     }
 
