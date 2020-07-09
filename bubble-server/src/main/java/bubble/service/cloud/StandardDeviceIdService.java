@@ -7,6 +7,7 @@ package bubble.service.cloud;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.device.Device;
+import bubble.model.device.DeviceStatus;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationMap;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import static bubble.ApiConstants.HOME_DIR;
+import static bubble.model.device.DeviceStatus.NO_DEVICE_STATUS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -45,6 +47,7 @@ public class StandardDeviceIdService implements DeviceIdService {
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private AccountDAO accountDAO;
     @Autowired private RedisService redis;
+    @Autowired private GeoService geoService;
     @Autowired private BubbleConfiguration configuration;
 
     private final Map<String, Device> deviceCache = new ExpirationMap<>(MINUTES.toMillis(10));
@@ -115,6 +118,17 @@ public class StandardDeviceIdService implements DeviceIdService {
         for (String ip : findIpsByDevice(device.getUuid())) {
             redis.set_plaintext(REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX+ip, device.getSecurityLevel().name());
         }
+    }
+
+    private final ExpirationMap<String, DeviceStatus> deviceStatusCache = new ExpirationMap<>(MINUTES.toMillis(2));
+
+    @Override public DeviceStatus getDeviceStatus(String deviceUuid) {
+        return deviceStatusCache.computeIfAbsent(deviceUuid, k -> getLiveDeviceStatus(deviceUuid));
+    }
+
+    @Override public DeviceStatus getLiveDeviceStatus(String deviceUuid) {
+        if (configuration.testMode()) return NO_DEVICE_STATUS;
+        return new DeviceStatus(redis, accountDAO.getFirstAdmin().getUuid(), geoService, deviceUuid);
     }
 
     private Device findTestDevice(String ipAddr) {

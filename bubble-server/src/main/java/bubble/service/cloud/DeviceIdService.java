@@ -5,6 +5,7 @@
 package bubble.service.cloud;
 
 import bubble.model.device.Device;
+import bubble.model.device.DeviceStatus;
 
 import java.util.List;
 
@@ -17,5 +18,8 @@ public interface DeviceIdService {
     void initDeviceSecurityLevels();
 
     void setDeviceSecurityLevel(Device device);
+
+    DeviceStatus getDeviceStatus(String deviceUuid);
+    DeviceStatus getLiveDeviceStatus(String deviceUuid);
 
 }

@@ -20,15 +20,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.network.NetworkUtil.IPv4_ALL_ADDRS;
 
 public abstract class DnsDriverBase<T> extends CloudServiceDriverBase<T> implements DnsServiceDriver {
 
-    private static final long DNS_LOCK_TIMEOUT = TimeUnit.MINUTES.toMillis(1);
-    private static final long DNS_DEADLOCK_TIMEOUT = TimeUnit.MINUTES.toMillis(5);
+    private static final long DNS_LOCK_TIMEOUT = MINUTES.toMillis(1);
+    private static final long DNS_DEADLOCK_TIMEOUT = MINUTES.toMillis(5);
 
     @Autowired protected BubbleDomainDAO domainDAO;
     @Autowired protected BubbleNetworkDAO networkDAO;
@@ -36,10 +36,12 @@ public abstract class DnsDriverBase<T> extends CloudServiceDriverBase<T> impleme
 
     @Getter(lazy=true) private final RedisService dnsLocks = redis.prefixNamespace(getClass().getSimpleName()+"_dns_lock");
     protected synchronized String lockDomain(String domain) {
+//        log.info("lockDomain: "+domain+" called from "+stacktrace());
         return getDnsLocks().lock(domain, DNS_LOCK_TIMEOUT, DNS_DEADLOCK_TIMEOUT);
     }
 
     protected synchronized void unlockDomain(String domain, String lock) {
+//        log.info("unlockDomain: "+domain+" called from "+stacktrace());
         getDnsLocks().unlock(domain, lock);
     }
 

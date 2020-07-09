@@ -10,7 +10,9 @@ import bubble.model.device.Device;
 import bubble.model.device.DeviceSecurityLevel;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.DeviceIdService;
+import edu.emory.mathcs.backport.java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
+import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
+import static bubble.model.device.DeviceStatusFirstComparator.DEVICE_WITH_STATUS_FIRST;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -41,11 +44,22 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
 
     @Override protected List<Device> list(ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
+        final List<Device> devices;
         if (caller.admin() && ctx.getRequestUri().getQuery() != null && ctx.getRequestUri().getQuery().contains("all")) {
-            return getDao().findAll().stream().filter(Device::initialized).collect(Collectors.toList());
+            devices = getDao().findAll().stream().filter(Device::initialized).collect(Collectors.toList());
         } else {
-            return super.list(ctx).stream().filter(Device::initialized).collect(Collectors.toList());
+            devices = super.list(ctx).stream().filter(Device::initialized).collect(Collectors.toList());
         }
+        return devices;
+    }
+
+    @Override protected Device populate(ContainerRequest ctx, Device device) {
+        return device.setStatus(deviceIdService.getDeviceStatus(device.getUuid()));
+    }
+
+    @Override protected List<Device> sort(List<Device> list, Request req, ContainerRequest ctx) {
+        Collections.sort(list, DEVICE_WITH_STATUS_FIRST);
+        return list;
     }
 
     @Override protected boolean canChangeName() { return true; }
@@ -101,6 +115,14 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
         final Device device = getDao().findByAccountAndId(getAccountUuid(ctx), id);
         if (device == null) return notFound(id);
         return ok(deviceIdService.findIpsByDevice(device.getUuid()));
+    }
+
+    @GET @Path("/{id}"+EP_STATUS)
+    public Response getStatus(@Context ContainerRequest ctx,
+                              @PathParam("id") String id) {
+        final Device device = getDao().findByAccountAndId(getAccountUuid(ctx), id);
+        if (device == null) return notFound(id);
+        return ok(deviceIdService.getLiveDeviceStatus(device.getUuid()));
     }
 
 }

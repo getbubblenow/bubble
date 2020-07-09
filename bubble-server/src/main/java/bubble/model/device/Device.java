@@ -119,4 +119,7 @@ public class Device extends IdentifiableBase implements HasAccount {
     // make ctime visible
     @JsonProperty public long getCtime () { return super.getCtime(); }
 
+    @Transient @Getter @Setter private DeviceStatus status;
+    public boolean hasStatus () { return status != null && status.hasIp(); }
+
 }
