@@ -10,7 +10,6 @@ import bubble.model.device.Device;
 import bubble.model.device.DeviceSecurityLevel;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.DeviceIdService;
-import edu.emory.mathcs.backport.java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -58,7 +57,7 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
     }
 
     @Override protected List<Device> sort(List<Device> list, Request req, ContainerRequest ctx) {
-        Collections.sort(list, DEVICE_WITH_STATUS_FIRST);
+        list.sort(DEVICE_WITH_STATUS_FIRST);
         return list;
     }
 

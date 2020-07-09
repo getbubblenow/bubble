@@ -1,6 +1,6 @@
 package bubble.model.device;
 
-import java.util.Comparator;
+import java.util.*;
 
 public class DeviceStatusFirstComparator implements Comparator<Device> {
 
@@ -8,11 +8,11 @@ public class DeviceStatusFirstComparator implements Comparator<Device> {
 
     @Override public int compare(Device d1, Device d2) {
         if (d1.hasStatus() && d2.hasStatus()) {
-            return Long.compare(d1.getCtime(), d2.getCtime());
+            return Long.compare(d2.getCtime(), d1.getCtime());
         }
-        if (d1.hasStatus()) return -1;
-        if (d2.hasStatus()) return 1;
-        return Long.compare(d1.getCtime(), d2.getCtime());
+        if (d1.hasStatus()) return 1;
+        if (d2.hasStatus()) return -1;
+        return Long.compare(d2.getCtime(), d1.getCtime());
     }
 
 }
