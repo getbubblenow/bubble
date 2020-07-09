@@ -11,6 +11,7 @@ import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.main.BaseMain;
 import org.cobbzilla.wizard.dao.AbstractCRUDDAO;
+import org.cobbzilla.wizard.dao.DAO;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.server.RestServerHarness;
@@ -19,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.HashMap;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
@@ -42,6 +44,8 @@ public class RekeyWriterMain extends BaseMain<RekeyOptions> {
         IdentifiableBase.getEnforceNullUuidOnCreate().set(false);
         AbstractCRUDDAO.getRawMode().set(true);
         final boolean debugEnabled = log.isDebugEnabled();
+        final var daoMap = new HashMap<Class<? extends Identifiable>, DAO>();
+
         while (true) {
             try {
                 @Cleanup final Socket clientSocket = new Socket("127.0.0.1", options.getPort());
@@ -52,7 +56,10 @@ public class RekeyWriterMain extends BaseMain<RekeyOptions> {
                     final Identifiable entity = Identifiable.deserialize(line);
                     if (entity instanceof EndOfEntityStream) break;
                     if (debugEnabled) out("WRITER: deserialized json to: " + entity);
-                    toConfig.getDaoForEntityClass(entity.getClass()).create(entity);
+
+                    final var dao = daoMap.computeIfAbsent(entity.getClass(),
+                                                           entityClass -> toConfig.getDaoForEntityClass(entityClass));
+                    dao.create(entity);
                 }
                 out("WRITER: complete");
                 return;
