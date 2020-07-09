@@ -47,5 +47,5 @@
 - import_tasks: postgresql_data.yml
 
 - name: Start monitor for restoring this bubble if applicable
-  include: restore.yml
+  shell: bash -c 'nohup /usr/local/bin/bubble_restore_monitor.sh {{ admin_port }} {{ restore_timeout }} > /dev/null &'
   when: restore_key is defined

@@ -53,6 +53,7 @@ public class RestoreService {
 
     private static final long RESTORE_LOCK_TIMEOUT = MINUTES.toMillis(31);
     private static final long RESTORE_DEADLOCK_TIMEOUT = MINUTES.toMillis(30);
+    private static final File RESTORE_MARKER_FILE = new File(HOME_DIR, ".restore");
 
     @Autowired private RedisService redis;
     @Getter(lazy=true) private final RedisService restoreKeys = redis.prefixNamespace(getClass().getSimpleName());
@@ -65,7 +66,9 @@ public class RestoreService {
 
     public boolean isValidRestoreKey(String restoreKey) { return getRestoreKeys().exists(restoreKey); }
 
-    public boolean isRestoreStarted(String networkUuid) { return getRestoreKeys().exists(networkUuid + LOCK_SUFFIX); }
+    public boolean isRestoreStarted(String networkUuid) {
+        return getRestoreKeys().exists(networkUuid + LOCK_SUFFIX) || RESTORE_MARKER_FILE.exists();
+    }
 
     public boolean restore(String restoreKey, BubbleBackup backup) {
         final String thisNodeUuid = configuration.getThisNode().getUuid();
@@ -124,7 +127,7 @@ public class RestoreService {
                 // all successful, copy directory to a safe place
                 copyDirectory(temp, RESTORE_DIR);
                 log.info("restore: full download successful, notifying system to restore from backup at: "+abs(RESTORE_DIR));
-                touch(new File(HOME_DIR, ".restore"));
+                touch(RESTORE_MARKER_FILE);
                 return true;
 
             } catch (IOException e) {

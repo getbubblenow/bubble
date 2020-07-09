@@ -67,8 +67,9 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
     @Transactional
     @Override public Device create(@NonNull final Device device) {
+        if (isRawMode() || device.uninitialized()) return super.create(device);
+
         synchronized (createLock) {
-            if (device.uninitialized()) return super.create(device);
             device.initDeviceType();
 
             final var accountUuid = device.getAccount();
