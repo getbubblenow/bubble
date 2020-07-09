@@ -74,11 +74,11 @@ def conn_check_cache_prefix(client_addr, server_addr):
     return REDIS_CONN_CHECK_PREFIX + client_addr + '_' + server_addr
 
 
-def fqdns_for_addr(addr):
-    prefix = REDIS_DNS_PREFIX + addr
+def fqdns_for_addr(server_addr):
+    prefix = REDIS_DNS_PREFIX + server_addr
     keys = REDIS.keys(prefix + '_*')
     if keys is None or len(keys) == 0:
-        bubble_log('fqdns_for_addr: no FQDN found for addr '+str(addr)+', checking raw addr')
+        bubble_log('fqdns_for_addr: no FQDN found for addr '+str(server_addr)+', checking raw addr')
         return ''
     fqdns = []
     for k in keys:
