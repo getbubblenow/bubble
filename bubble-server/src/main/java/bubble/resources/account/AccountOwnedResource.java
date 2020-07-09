@@ -63,10 +63,10 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
                 && !caller.getParent().equals(getAccountUuid(ctx))) {
             return notFound();
         }
-        return ok(populate(ctx, list(req, ctx)));
+        return ok(sort(populate(ctx, list(req, ctx)), req, ctx));
     }
 
-    protected List<E> list(Request req, ContainerRequest ctx) { return sort(list(ctx), req, ctx); }
+    protected List<E> list(Request req, ContainerRequest ctx) { return list(ctx); }
 
     protected List<E> sort(List<E> list, Request req, ContainerRequest ctx) { return list; }
 
