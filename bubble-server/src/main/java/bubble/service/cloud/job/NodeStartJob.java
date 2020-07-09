@@ -8,11 +8,13 @@ import bubble.cloud.compute.ComputeServiceDriver;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeState;
+import lombok.extern.slf4j.Slf4j;
 
 import static bubble.service.cloud.NodeProgressMeterConstants.METER_ERROR_NO_IP;
 import static bubble.service.cloud.NodeProgressMeterConstants.METER_ERROR_STARTING_NODE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 
+@Slf4j
 public class NodeStartJob implements Runnable {
 
     private BubbleNode node;
@@ -31,7 +33,11 @@ public class NodeStartJob implements Runnable {
         try {
             node.setState(BubbleNodeState.booting);
             nodeDAO.update(node);
+
+            log.debug("run: calling computeDriver.start("+node.id()+")");
             node = computeDriver.start(node);
+            log.debug("run: computeDriver.start("+node.id()+") returned successfully");
+
             node.setState(BubbleNodeState.booted);
             nodeDAO.update(node);
 

@@ -33,6 +33,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpMethods.POST;
 import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.util.http.HttpUtil.getResponse;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -129,6 +130,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
         final HttpRequestBean serverRequest = auth(new HttpRequestBean(POST, CREATE_SERVER_URL, data));
 
         // create server, check response
+        if (log.isInfoEnabled()) log.info("start: calling Vultr to start node: "+node.id());
         final HttpResponseBean serverResponse = serverRequest.curl();  // fixme: we can do better than shelling to curl
         if (serverResponse.getStatus() != 200) return die("start: error creating server: " + serverResponse);
         final JsonNode responseJson;
@@ -138,6 +140,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
             return die("start: error creating server (error parsing response as JSON): " + serverResponse);
         }
         final var subId = responseJson.get(VULTR_SUBID).textValue();
+        if (log.isDebugEnabled()) log.debug("start: Vultr started node: "+node.id()+" SUBID="+subId);
 
         node.setState(BubbleNodeState.booting);
         node.setTag(TAG_INSTANCE_ID, subId);
@@ -151,10 +154,10 @@ public class VultrDriver extends ComputeServiceDriverBase {
             sleep(SERVER_START_POLL_INTERVAL);
             final HttpResponseBean pollResponse = getResponse(poll);
             if (pollResponse.getStatus() != OK) {
-                return die("start: error polling subid: "+subId+": "+pollResponse);
+                return die("start: error polling node "+node.id()+" subid: "+subId+": "+pollResponse);
             }
-            // todo: add timeout, if server doesn't come up within X minutes, try to kill it and report an error
             final JsonNode serverNode = json(pollResponse.getEntityString(), JsonNode.class);
+            if (log.isDebugEnabled()) log.debug("start: polled node "+node.id()+" json="+json(serverNode, COMPACT_MAPPER));
             if (serverNode != null) {
                 if (serverNode.has("tag")
                         && serverNode.get("tag").textValue().equals(cloud.getUuid())
@@ -166,7 +169,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
                     final String serverState = serverNode.get("server_state").textValue();
                     final String ip4 = serverNode.get(VULTR_V4_IP).textValue();
                     final String ip6 = serverNode.get(VULTR_V6_IP).textValue();
-                    // log.info("start: server_state="+serverState+", status="+status, "ip4="+ip4+", ip6="+ip6);
+                    // if (log.isInfoEnabled()) log.info("start: server_state="+serverState+", status="+status, "ip4="+ip4+", ip6="+ip6);
 
                     if (ip4 != null && ip4.length() > 0 && !ip4.equals("0.0.0.0")) {
                         node.setIp4(ip4);
@@ -181,7 +184,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
                         nodeDAO.update(node);
                     }
                     if (serverState.equals("ok")) {
-                        log.info("start: server is ready: "+node.id());
+                        if (log.isInfoEnabled()) log.info("start: server is ready: "+node.id());
                         startedOk = true;
                         break;
                     }
@@ -189,7 +192,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
             }
         }
         if (!startedOk) {
-            log.error("start: timeout waiting for node to boot and become available, stopping it");
+            if (log.isErrorEnabled()) log.error("start: timeout waiting for node "+node.id()+" to boot and become available, stopping it");
             stop(node);
         }
         return node;
@@ -210,16 +213,16 @@ public class VultrDriver extends ComputeServiceDriverBase {
             try {
                 _stop(node);
             } catch (EntityNotFoundException e) {
-                log.info("stop: node stopped");
+                if (log.isInfoEnabled()) log.info("stop: node stopped");
                 return node;
 
             } catch (Exception e) {
                 lastEx = e;
             }
             sleep(SERVER_STOP_CHECK_INTERVAL, "stop: waiting to try stopping again until node is not found");
-            log.warn("stop: node still running: "+node.id());
+            if (log.isWarnEnabled()) log.warn("stop: node still running: "+node.id());
         }
-        log.error("stop: error stopping node: "+node.id());
+        if (log.isErrorEnabled()) log.error("stop: error stopping node: "+node.id());
         if (lastEx != null) throw lastEx;
         return die("stop: timeout stopping node: "+node.id());
     }
@@ -231,7 +234,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
             if (ip4 == null) {
                 throw notFoundEx(node.id());
             }
-            log.warn("stop: no "+TAG_INSTANCE_ID+" tag found on node ("+node.getFqdn()+"/"+ ip4 +"), searching based in ip4...");
+            if (log.isWarnEnabled()) log.warn("stop: no "+TAG_INSTANCE_ID+" tag found on node ("+node.getFqdn()+"/"+ ip4 +"), searching based in ip4...");
             vultrNode = findByIp4(node, ip4);
         } else {
             // does the node still exist?
@@ -267,11 +270,11 @@ public class VultrDriver extends ComputeServiceDriverBase {
                 .findFirst()
                 .orElse(null);
         if (found == null) {
-            log.warn("stop: no subid tag found on node ("+node.getFqdn()+"/"+ ip4 +") and no server had this ip4");
+            if (log.isWarnEnabled()) log.warn("stop: no subid tag found on node ("+node.getFqdn()+"/"+ ip4 +") and no server had this ip4");
             return null;
         }
         if (!found.hasTag(TAG_INSTANCE_ID)) {
-            log.warn("stop: no subid tag found on node ("+node.getFqdn()+"/"+ ip4 +"), cannot stop");
+            if (log.isWarnEnabled()) log.warn("stop: no subid tag found on node ("+node.getFqdn()+"/"+ ip4 +"), cannot stop");
             return null;
         }
         return found;
@@ -292,12 +295,12 @@ public class VultrDriver extends ComputeServiceDriverBase {
                             || (ip4 != null && node.hasIp4() && ip4.textValue().equals(node.getIp4()))
                             || (ip6 != null && node.hasIp6() && ip6.textValue().equals(node.getIp6())) ? node : null;
                 } catch (Exception e) {
-                    log.error("listNode: error finding node "+node.id()+", status="+listResponse.getStatus()+": "+listResponse+": exception="+shortError(e));
+                    if (log.isErrorEnabled()) log.error("listNode: error finding node "+node.id()+", status="+listResponse.getStatus()+": "+listResponse+": exception="+shortError(e));
                     return null;
                 }
             case NOT_FOUND: return null;
             default:
-                log.error("listNode: error finding node "+node.id()+", status="+listResponse.getStatus()+": "+listResponse);
+                if (log.isErrorEnabled()) log.error("listNode: error finding node "+node.id()+", status="+listResponse.getStatus()+": "+listResponse);
                 return null;
         }
     }
@@ -320,7 +323,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
                     final String subid = iter.next();
                     final ObjectNode server = (ObjectNode) entity.get(subid);
                     if (!filter.apply(server)) {
-                        log.debug("Skipping node without cloud tag "+cloud.getUuid()+": "+subid);
+                        if (log.isDebugEnabled()) log.debug("Skipping node without cloud tag "+cloud.getUuid()+": "+subid);
                         continue;
                     }
                     final String subId = server.has(VULTR_SUBID) ? server.get(VULTR_SUBID).textValue() : null;

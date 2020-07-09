@@ -58,10 +58,18 @@ public class NodeLauncher implements Runnable {
                 if (exception != null) {
                     if (exception instanceof NodeLaunchException) {
                         final NodeLaunchException launchException = (NodeLaunchException) exception;
-                        if (launchException.isFatal()) {
-                            die("NodeLauncher.run: fatal launch exception: " + shortError(launchException));
-                        } else {
-                            log.warn("NodeLauncher.run: nonfatal launch exception for node " + launchException.nodeSummary() + " : " + shortError(launchException));
+                        switch (launchException.getType()) {
+                            case fatal:
+                                die("NodeLauncher.run: fatal launch exception: " + shortError(launchException));
+                                break;
+                            case interrupted:
+                                log.warn("NodeLauncher.run: launch interrupted, exiting early");
+                                return;
+                            case canRetry:
+                                log.warn("NodeLauncher.run: nonfatal launch exception for node " + launchException.nodeSummary() + " : " + shortError(launchException));
+                                break;
+                            default:
+                                die("NodeLauncher.run: unknown launch exception (type="+launchException.getType()+"): "+shortError(launchException));
                         }
                     } else {
                         die("NodeLauncher.run: fatal launch exception: " + shortError(exception));

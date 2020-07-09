@@ -22,6 +22,7 @@ import org.cobbzilla.wizard.util.RestResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.net.ssl.SSLException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.util.List;
@@ -123,17 +124,30 @@ public class NotificationService {
                 log.debug("_notify: <<<<< RECEIPT <<<<<< " + json(receipt, COMPACT_MAPPER) + " <<<<<<<<<<<<<<<<<<");
                 return receipt;
 
-            } catch (ConnectException | ConnectTimeoutException | UnknownHostException | ApiException e) {
+            } catch (ConnectException | ConnectTimeoutException | UnknownHostException | SSLException | ApiException e) {
                 notification.setStatus(NotificationSendStatus.error);
                 notification.setException(e);
                 sentNotificationDAO.update(notification);
-                throw new IllegalStateException("_notify: "+shortError(e), e);
+                return handleNotifyException(notification, e, true);
 
             } catch (Exception e) {
                 notification.setStatus(NotificationSendStatus.error);
                 notification.setException(e);
                 sentNotificationDAO.update(notification);
-                return die("_notify: "+shortError(e), e);
+                return handleNotifyException(notification, e, true);
+            }
+        }
+    }
+
+    public NotificationReceipt handleNotifyException(SentNotification notification, Exception e, boolean die) {
+        if (notification.getType() == NotificationType.health_check) {
+            log.error("_notify: health check failed for node "+notification.getToNode()+": "+shortError(e));
+            return null;
+        } else {
+            if (die) {
+                return die("_notify: " + shortError(e), e);
+            } else {
+                throw new IllegalStateException("_notify: "+shortError(e), e);
             }
         }
     }

@@ -49,6 +49,7 @@ import org.cobbzilla.util.io.TempDir;
 import org.cobbzilla.util.system.Command;
 import org.cobbzilla.util.system.CommandResult;
 import org.cobbzilla.util.system.CommandShell;
+import org.cobbzilla.util.system.SleepInterruptedException;
 import org.cobbzilla.wizard.api.ApiException;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.validation.MultiViolationException;
@@ -76,8 +77,7 @@ import static bubble.model.cloud.BubbleNode.TAG_ERROR;
 import static bubble.server.BubbleConfiguration.DEBUG_NODE_INSTALL_FILE;
 import static bubble.server.BubbleConfiguration.ENV_DEBUG_NODE_INSTALL;
 import static bubble.service.boot.StandardSelfNodeService.*;
-import static bubble.service.cloud.NodeLaunchException.fatalLaunchFailure;
-import static bubble.service.cloud.NodeLaunchException.launchFailureCanRetry;
+import static bubble.service.cloud.NodeLaunchException.*;
 import static bubble.service.cloud.NodeProgressMeterConstants.*;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -148,6 +148,7 @@ public class StandardNetworkService implements NetworkService {
         NodeProgressMeter progressMeter = null;
         final BubbleNetwork network = nn.getNetworkObject();
         final ExecutorService backgroundJobs = DaemonThreadFactory.fixedPool(3);
+        boolean killNode = false;
         try {
             progressMeter = launchMonitor.getProgressMeter(nn);
             progressMeter.write(METER_TICK_CONFIRMING_NETWORK_LOCK);
@@ -410,18 +411,14 @@ public class StandardNetworkService implements NetworkService {
             log.info("newNode: ready in "+formatDuration(now() - start));
 
         } catch (Exception e) {
-            log.error("newNode: "+e, e);
-            if (node != null) {
-                node.setState(BubbleNodeState.unknown_error);
-                nodeDAO.update(node);
-                if (!progressMeter.hasError()) progressMeter.error(METER_UNKNOWN_ERROR);
-                killNode(node, "error: "+e);
+            if (e instanceof SleepInterruptedException) {
+                log.warn("newNode: interrupted!");
+            } else {
+                log.error("newNode: " + e, e);
             }
-            if (noNodesActive(network)) {
-                // if no nodes are running, then the network is stopped
-                networkDAO.update(network.setState(BubbleNetworkState.stopped));
-            }
+            killNode = node != null;
             if (e instanceof NodeLaunchException) throw (NodeLaunchException) e;
+            if (e instanceof SleepInterruptedException) launchInterrupted("newNode: interrupted: "+shortError(e));
             return die("newNode: "+e, e);
 
         } finally {
@@ -434,7 +431,7 @@ public class StandardNetworkService implements NetworkService {
                 }
             }
 
-            if (node != null && !node.isRunning()) {
+            if (node != null && (killNode || !node.isRunning())) {
                 node.setState(BubbleNodeState.unknown_error);
                 nodeDAO.update(node);
                 if (!progressMeter.hasError()) progressMeter.error(METER_UNKNOWN_ERROR);
