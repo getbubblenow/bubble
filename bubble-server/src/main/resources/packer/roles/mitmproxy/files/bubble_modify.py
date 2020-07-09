@@ -8,7 +8,8 @@ import traceback
 from mitmproxy.net.http import Headers
 from bubble_config import bubble_port, bubble_host_alias
 from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, BUBBLE_URI_PREFIX, \
-    CTX_BUBBLE_REQUEST_ID, CTX_CONTENT_LENGTH, CTX_CONTENT_LENGTH_SENT, bubble_log, get_flow_ctx, add_flow_ctx
+    CTX_BUBBLE_REQUEST_ID, CTX_CONTENT_LENGTH, CTX_CONTENT_LENGTH_SENT, bubble_log, get_flow_ctx, add_flow_ctx, \
+    HEADER_FILTER_PASSTHRU, REDIS, redis_set
 
 BUFFER_SIZE = 4096
 HEADER_CONTENT_TYPE = 'Content-Type'
@@ -17,8 +18,19 @@ HEADER_CONTENT_ENCODING = 'Content-Encoding'
 HEADER_TRANSFER_ENCODING = 'Transfer-Encoding'
 BINARY_DATA_HEADER = {HEADER_CONTENT_TYPE: 'application/octet-stream'}
 
+REDIS_FILTER_PASSTHRU_PREFIX = '__chunk_filter_pass__'
+REDIS_FILTER_PASSTHRU_DURATION = 600
 
-def filter_chunk(chunk, req_id, last, content_encoding=None, content_type=None, content_length=None):
+def filter_chunk(flow, chunk, req_id, last, content_encoding=None, content_type=None, content_length=None):
+
+    # should we just passthru?
+    redis_passthru_key = REDIS_FILTER_PASSTHRU_PREFIX + flow.request.method + ':' + flow.request.url
+    do_pass = REDIS.get(redis_passthru_key)
+    if do_pass:
+        # bubble_log('filter_chunk: req_id='+req_id+': passthru found in redis, returning chunk')
+        REDIS.touch(redis_passthru_key)
+        return chunk
+
     url = 'http://127.0.0.1:' + bubble_port + '/api/filter/apply/' + req_id
     params_added = False
     if chunk and content_type:
@@ -43,6 +55,11 @@ def filter_chunk(chunk, req_id, last, content_encoding=None, content_type=None, 
         bubble_log(err_message)
         return b''
 
+    elif HEADER_FILTER_PASSTHRU in response.headers:
+        bubble_log('filter_chunk: server returned X-Bubble-Passthru, not filtering subsequent requests')
+        redis_set(redis_passthru_key, 'passthru', ex=REDIS_FILTER_PASSTHRU_DURATION)
+        return chunk
+
     return response.content
 
 
@@ -63,12 +80,12 @@ def bubble_filter_chunks(flow, chunks, req_id, content_encoding, content_type):
             else:
                 last = False
             if first:
-                yield filter_chunk(chunk, req_id, last, content_encoding, content_type, content_length)
+                yield filter_chunk(flow, chunk, req_id, last, content_encoding, content_type, content_length)
                 first = False
             else:
-                yield filter_chunk(chunk, req_id, last)
+                yield filter_chunk(flow, chunk, req_id, last)
         if not content_length:
-            yield filter_chunk(None, req_id, True)  # get the last bits of data
+            yield filter_chunk(flow, None, req_id, True)  # get the last bits of data
     except Exception as e:
         bubble_log('bubble_filter_chunks: exception='+repr(e))
         traceback.print_exc()

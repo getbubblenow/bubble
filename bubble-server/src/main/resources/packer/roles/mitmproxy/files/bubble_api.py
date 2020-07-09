@@ -20,6 +20,7 @@ MITMDUMP_PID_FILE.close()
 
 HEADER_USER_AGENT = 'User-Agent'
 HEADER_REFERER = 'Referer'
+HEADER_FILTER_PASSTHRU = 'X-Bubble-Passthru'
 
 CTX_BUBBLE_MATCHERS='X-Bubble-Matchers'
 CTX_BUBBLE_ABORT='X-Bubble-Abort'

@@ -68,6 +68,8 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.send;
 @Service @Slf4j
 public class StandardRuleEngineService implements RuleEngineService {
 
+    public static final String HEADER_PASSTHRU = "X-Bubble-Passthru";
+
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private BubbleConfiguration configuration;
@@ -138,6 +140,7 @@ public class StandardRuleEngineService implements RuleEngineService {
 
     public Response passthru(InputStream stream) {
         final SendableResource response = new SendableResource(new StreamStreamingOutput(stream))
+                .addHeader(HEADER_PASSTHRU, HEADER_PASSTHRU)
                 .setStatus(OK);
         return send(response);
     }

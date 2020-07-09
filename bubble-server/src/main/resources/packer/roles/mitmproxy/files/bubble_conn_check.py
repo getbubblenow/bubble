@@ -27,9 +27,8 @@ from mitmproxy.proxy.protocol import TlsLayer, RawTCPLayer
 from mitmproxy.exceptions import TlsProtocolException
 from mitmproxy.net import tls as net_tls
 
-from bubble_api import bubble_log, bubble_conn_check, bubble_activity_log, redis_set
+from bubble_api import bubble_log, bubble_conn_check, bubble_activity_log, REDIS, redis_set
 from bubble_config import bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6, cert_validation_host
-import redis
 import json
 import subprocess
 import traceback
@@ -38,8 +37,6 @@ REDIS_DNS_PREFIX = 'bubble_dns_'
 REDIS_CONN_CHECK_PREFIX = 'bubble_conn_check_'
 REDIS_CHECK_DURATION = 60 * 60  # 1 hour timeout
 REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX = 'bubble_device_security_level_'  # defined in StandardDeviceIdService
-
-REDIS = redis.Redis(host='127.0.0.1', port=6379, db=0)
 
 FORCE_PASSTHRU = {'passthru': True}
 FORCE_BLOCK = {'block': True}
@@ -114,8 +111,8 @@ class TlsFeedback(TlsLayer):
         except TlsProtocolException as e:
             tb = traceback.format_exc()
             if 'OpenSSL.SSL.ZeroReturnError' in tb:
-                bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', ignoring SSL zero return error for client '+client_address)
-                return
+                bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+'/fqdns='+str(self.fqdns)+', raising SSL zero return error for client '+client_address)
+                raise e
 
             elif self.fqdns is not None and len(self.fqdns) > 0:
                 for fqdn in self.fqdns:
