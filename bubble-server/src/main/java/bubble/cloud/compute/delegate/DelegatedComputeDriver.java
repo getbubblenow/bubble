@@ -10,11 +10,13 @@ import bubble.cloud.compute.*;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.notify.compute.ComputeDriverNotification;
+import org.cobbzilla.util.collection.ExpirationMap;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static bubble.model.cloud.notify.NotificationType.*;
+import static java.util.concurrent.TimeUnit.DAYS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.notSupported;
 
 public class DelegatedComputeDriver extends DelegatedCloudServiceDriverBase implements ComputeServiceDriver {
@@ -37,10 +39,15 @@ public class DelegatedComputeDriver extends DelegatedCloudServiceDriverBase impl
                 .orElse(null);
     }
 
+    private static final ExpirationMap<String, List<CloudRegion>> regionsCache = new ExpirationMap<>(DAYS.toMillis(1));
+
     @Override public List<CloudRegion> getRegions() {
         final BubbleNode delegate = getDelegateNode();
-        final CloudRegion[] regions = notificationService.notifySync(delegate, compute_driver_get_regions, notification());
-        return Arrays.asList(regions);
+        final String cacheKey = delegate.id()+"/"+cloud.getUuid();
+        return regionsCache.computeIfAbsent(cacheKey, k -> {
+            final CloudRegion[] regions = notificationService.notifySync(delegate, compute_driver_get_regions, notification());
+            return Arrays.asList(regions);
+        });
     }
 
     @Override public CloudRegion getRegion(String region) {
