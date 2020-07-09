@@ -425,6 +425,7 @@ public class StandardNetworkService implements NetworkService {
             return die("newNode: "+e, e);
 
         } finally {
+            backgroundJobs.shutdownNow();
             if (computeDriver != null) {
                 try {
                     computeDriver.cleanupStart(node);
@@ -457,7 +458,6 @@ public class StandardNetworkService implements NetworkService {
                 closeQuietly(progressMeter);
             }
             unlockNetwork(nn.getNetwork(), lock);
-            backgroundJobs.shutdownNow();
         }
         return node;
     }
