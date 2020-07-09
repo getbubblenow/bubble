@@ -13,8 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
 @AllArgsConstructor @Slf4j
@@ -51,7 +50,17 @@ public class NodeLauncher implements Runnable {
 
                 log.info("NodeLauncher.run: launching node..."+newNodeRequest.getFqdn());
                 launchThread.start();
-                launchThread.join();
+                do {
+                    launchThread.join(SECONDS.toMillis(5));
+                    log.info("NodeLauncher.run: still waiting for thread join..."+newNodeRequest.getFqdn());
+                } while (launchThread.isAlive() && !launchThread.isInterrupted());
+
+                if (launchThread.isInterrupted()) {
+                    log.warn("NodeLauncher.run: launch interrupted while waiting for join, exiting early");
+                    if (launchThread.isAlive()) terminate(launchThread, SECONDS.toMillis(1));
+                    return;
+                }
+
                 final Exception exception = exceptionRef.get();
                 final BubbleNode node = nodeRef.get();
                 log.debug("NodeLauncher.run: node="+(node == null ? "null" : node.id())+", exception="+shortError(exception));
