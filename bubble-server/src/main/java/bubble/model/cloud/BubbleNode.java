@@ -254,4 +254,8 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         }
         if (!hasIp4() || !hasIp6()) throw new TimeoutException("waitForIpAddresses: timeout");
     }
+
+    @Transient @Getter @Setter private BubbleVersionInfo sageVersion;
+    public boolean hasSageVersion () { return sageVersion != null && sageVersion.valid(); }
+
 }

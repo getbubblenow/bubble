@@ -101,26 +101,28 @@
   with_items:
     - init_bubble_db.sh
 
-- name: Install refresh_bubble_ssh_keys monitor
+- name: Install sbin monitors and scripts
   copy:
-    src: "refresh_bubble_ssh_keys_monitor.sh"
-    dest: "/usr/local/sbin/refresh_bubble_ssh_keys_monitor.sh"
+    src: "{{ item }}"
+    dest: "/usr/local/sbin/{{ item }}"
     owner: root
     group: root
     mode: 0500
-
-- name: Install refresh_bubble_ssh_keys script
-  copy:
-    src: refresh_bubble_ssh_keys.sh
-    dest: /usr/local/sbin/refresh_bubble_ssh_keys.sh
-    owner: root
-    group: root
-    mode: 0500
+  with_items:
+    - refresh_bubble_ssh_keys_monitor.sh
+    - refresh_bubble_ssh_keys.sh
+    - bubble_upgrade_monitor.sh
+    - bubble_upgrade.sh
 
 - name: Install refresh_bubble_ssh_keys_monitor supervisor conf file
   copy:
     src: supervisor_refresh_bubble_ssh_keys_monitor.conf
     dest: /etc/supervisor/conf.d/refresh_bubble_ssh_keys_monitor.conf
+
+- name: Install bubble_upgrade_monitor supervisor conf file
+  copy:
+    src: supervisor_bubble_upgrade_monitor.conf
+    dest: /etc/supervisor/conf.d/bubble_upgrade_monitor.conf
 
 - name: Install packer for sage node
   shell: su - bubble bash -c install_packer.sh

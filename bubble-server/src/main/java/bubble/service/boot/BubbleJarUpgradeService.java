@@ -1,0 +1,93 @@
+package bubble.service.boot;
+
+import bubble.dao.cloud.BubbleBackupDAO;
+import bubble.model.cloud.BackupStatus;
+import bubble.model.cloud.BubbleBackup;
+import bubble.model.cloud.BubbleVersionInfo;
+import bubble.notify.upgrade.JarUpgradeNotification;
+import bubble.server.BubbleConfiguration;
+import bubble.service.backup.BackupService;
+import bubble.service.notify.NotificationService;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.http.HttpRequestBean;
+import org.cobbzilla.wizard.cache.redis.RedisService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.io.File;
+
+import static bubble.ApiConstants.AUTH_ENDPOINT;
+import static bubble.ApiConstants.EP_UPGRADE;
+import static bubble.client.BubbleNodeClient.nodeBaseUri;
+import static bubble.model.cloud.notify.NotificationType.upgrade_request;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.http.HttpMethods.GET;
+import static org.cobbzilla.util.io.FileUtil.*;
+import static org.cobbzilla.util.system.Sleep.sleep;
+import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss_SSS;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
+
+@Service @Slf4j
+public class BubbleJarUpgradeService {
+
+    private static final long PRE_UPGRADE_BACKUP_TIMEOUT = MINUTES.toMillis(20);
+
+    @Autowired private BubbleConfiguration configuration;
+    @Autowired private BackupService backupService;
+    @Autowired private BubbleBackupDAO backupDAO;
+    @Autowired private NotificationService notificationService;
+    @Autowired private RedisService redis;
+
+    @Getter(lazy=true) private final RedisService nodeUpgradeRequests = redis.prefixNamespace(getClass().getName());
+
+    public String registerNodeUpgrade(String nodeUuid) {
+        final String key = randomAlphanumeric(10) + "." + now();
+        getNodeUpgradeRequests().set(key, nodeUuid, EX, MINUTES.toMillis(1));
+        return key;
+    }
+
+    public String getNodeForKey(String key) { return getNodeUpgradeRequests().get(key); }
+
+    public void upgrade() {
+        if (!configuration.getJarUpgradeAvailable()) {
+            log.warn("upgrade: No upgrade available, returning");
+            return;
+        }
+        final String currentVersion = configuration.getVersion();
+        final BubbleVersionInfo sageVersion = configuration.getSageVersionInfo();
+        final String newVersion = sageVersion.getVersion();
+        BubbleBackup bubbleBackup = backupService.queueBackup("before_upgrade_" + currentVersion + "_to_" + newVersion + "_on_" + DATE_FORMAT_YYYY_MM_DD_HH_mm_ss_SSS.print(now()));
+
+        // monitor backup, ensure it completes
+        final long start = now();
+        while (bubbleBackup.getStatus() != BackupStatus.backup_completed && now() - start < PRE_UPGRADE_BACKUP_TIMEOUT) {
+            sleep(SECONDS.toMillis(5), "waiting for backup to complete before upgrading");
+            bubbleBackup = backupDAO.findByUuid(bubbleBackup.getUuid());
+        }
+        if (bubbleBackup.getStatus() != BackupStatus.backup_completed) {
+            log.warn("upgrade: timeout waiting for backup to complete, status="+bubbleBackup.getStatus());
+            return;
+        }
+
+        final File upgradeJar = new File(configuration.getBubbleJar().getParentFile(), ".upgrade.jar");
+        if (upgradeJar.exists()) {
+            log.error("upgrade: jar already exists, not upgrading: "+abs(upgradeJar));
+            return;
+        }
+
+        // ask the sage to allow us to download the upgrade
+        final String key = notificationService.notifySync(configuration.getSageNode(), upgrade_request, new JarUpgradeNotification(sageVersion));
+
+        // request the jar from the sage
+        final String uri = nodeBaseUri(configuration.getSageNode(), configuration) + AUTH_ENDPOINT + EP_UPGRADE + "/" + key;
+        final HttpRequestBean requestBean = new HttpRequestBean(GET, uri);
+        final File newJar = temp(".jar");
+
+        // move to upgrade location
+        renameOrDie(newJar, upgradeJar);
+    }
+}

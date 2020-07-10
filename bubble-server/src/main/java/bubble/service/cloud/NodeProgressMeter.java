@@ -59,7 +59,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     public void touch() {
         if (now() > lastTouch + MAX_TOUCH_INTERVAL) {
             launchMonitor.touch(nn.getNetwork());
-            networkService.confirmLock(nn.getNetwork(), nn.getLock());
+            networkService.confirmNetLock(nn.getNetwork(), nn.getLock());
             lastTouch = now();
         }
     }
@@ -99,6 +99,10 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
 
     public void write(String line) throws IOException {
         touch();
+        if (closed.get()) {
+            log.warn("write("+line+"): stream closed, not writing");
+            return;
+        }
         writer.write(line.endsWith("\n") ? line : line+"\n");
         writer.flush();
     }

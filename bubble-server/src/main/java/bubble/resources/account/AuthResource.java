@@ -30,6 +30,7 @@ import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.backup.RestoreService;
 import bubble.service.bill.PromotionService;
 import bubble.service.boot.ActivationService;
+import bubble.service.boot.BubbleJarUpgradeService;
 import bubble.service.boot.NodeManagerService;
 import bubble.service.boot.SageHelloService;
 import bubble.service.cloud.DeviceIdService;
@@ -673,6 +674,34 @@ public class AuthResource {
         final File patch = nodeManagerService.findPatch(token);
         if (patch == null) return notFound(token);
         return send(new FileSendableResource(patch));
+    }
+
+    @Autowired private BubbleJarUpgradeService upgradeService;
+
+    @GET @Path(EP_UPGRADE+"/{key}")
+    @Produces(APPLICATION_OCTET_STREAM)
+    public Response getUpgrade(@Context Request req,
+                               @Context ContainerRequest ctx,
+                               @PathParam("key") String key) {
+        final String nodeUuid = upgradeService.getNodeForKey(key);
+        if (nodeUuid == null) {
+            log.warn("getUpgrade: key not found: "+key);
+            return unauthorized();
+        }
+
+        final BubbleNode node = nodeDAO.findByUuid(nodeUuid);
+        if (node == null) {
+            log.warn("getUpgrade: node not found: "+nodeUuid);
+            return unauthorized();
+        }
+
+        final String remoteAddr = req.getRemoteAddr();
+        if (!node.hasSameIp(remoteAddr)) {
+            log.warn("getUpgrade: node has wrong IP (request came from "+remoteAddr+"): "+node.id());
+            return unauthorized();
+        }
+
+        return send(new FileSendableResource(configuration.getBubbleJar()));
     }
 
 }

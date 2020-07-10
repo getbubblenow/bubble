@@ -28,7 +28,7 @@ public class MockNetworkService extends StandardNetworkService {
     @Autowired private BubbleConfiguration configuration;
 
     @Override protected String lockNetwork(String network) { return "lock"; }
-    @Override protected boolean confirmLock(String network, String lock) { return true; }
+    @Override protected boolean confirmNetLock(String network, String lock) { return true; }
     @Override protected void unlockNetwork(String network, String lock) {}
 
     @Override public BubbleNode newNode(NewNodeNotification nn, NodeLaunchMonitor launchMonitor) {
@@ -70,9 +70,7 @@ public class MockNetworkService extends StandardNetworkService {
         return true;
     }
 
-    @Override public BubbleNode stopNode(BubbleNode node) {
-        return node.setState(BubbleNodeState.stopped);
-    }
+    @Override public void stopNode(BubbleNode node) { node.setState(BubbleNodeState.stopped); }
 
     @Override public BubbleNode killNode(BubbleNode node, String message) {
         return node.setState(BubbleNodeState.stopped);

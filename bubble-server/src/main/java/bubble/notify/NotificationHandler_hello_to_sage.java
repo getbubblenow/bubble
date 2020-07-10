@@ -32,7 +32,7 @@ public class NotificationHandler_hello_to_sage extends ReceivedNotificationHandl
             log.info("hello_to_sage: returning peers: "+peers.stream().map(BubbleNode::getFqdn).collect(joining(", ")));
             node.setPeers(peers);
 
-            notificationService.notify(node, hello_from_sage, node);
+            notificationService.notify(node, hello_from_sage, node.setSageVersion(configuration.getVersionInfo()));
         }
     }
 }

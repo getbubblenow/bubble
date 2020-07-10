@@ -197,6 +197,7 @@ public class ApiConstants {
     public static final String EP_PROMOTIONS = PROMOTIONS_ENDPOINT;
     public static final String EP_FORK = "/fork";
     public static final String EP_NODE_MANAGER = "/nodeman";
+    public static final String EP_UPGRADE = "/upgrade";
 
     public static final String DETECT_ENDPOINT = "/detect";
     public static final String EP_LOCALE = "/locale";

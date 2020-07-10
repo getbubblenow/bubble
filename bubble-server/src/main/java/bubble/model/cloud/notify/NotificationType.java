@@ -37,6 +37,10 @@ public enum NotificationType {
     health_check, hello_to_sage, hello_from_sage, peer_hello, sync_password,
     register_backup, retrieve_backup, backup_response, restore_complete, fork,
 
+    // upgrade notifications
+    upgrade_request (String.class),
+    upgrade_response (true),
+
     // driver-level notifications
 
     // delegated dns driver notifications

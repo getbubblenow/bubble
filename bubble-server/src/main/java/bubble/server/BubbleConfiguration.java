@@ -11,10 +11,7 @@ import bubble.client.BubbleApiClient;
 import bubble.cloud.CloudServiceDriver;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.CloudServiceDAO;
-import bubble.model.cloud.AnsibleInstallType;
-import bubble.model.cloud.BubbleNetwork;
-import bubble.model.cloud.BubbleNetworkState;
-import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.*;
 import bubble.model.device.DeviceSecurityLevel;
 import bubble.server.listener.BubbleFirstTimeListener;
 import bubble.service.backup.RestoreService;
@@ -68,6 +65,7 @@ import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.security.ShaUtil.sha256_file;
+import static org.cobbzilla.wizard.model.SemanticVersion.isNewerVersion;
 
 @Configuration @NoArgsConstructor @Slf4j
 public class BubbleConfiguration extends PgRestServerConfiguration
@@ -93,6 +91,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_SUPPORT = "support";
     public static final String TAG_SECURITY_LEVELS = "securityLevels";
     public static final String TAG_RESTORE_MODE = "awaitingRestore";
+    public static final String TAG_JAR_VERSION = "jarVersion";
+    public static final String TAG_JAR_UPGRADE_AVAILABLE = "jarUpgradeAvailable";
 
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
@@ -243,6 +243,24 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         }
         return properties.getProperty(META_PROP_BUBBLE_VERSION);
     }
+    @Getter(lazy=true) private final BubbleVersionInfo versionInfo = initBubbleVersionInfo();
+    private BubbleVersionInfo initBubbleVersionInfo() {
+        return new BubbleVersionInfo()
+                .setVersion(getVersion())
+                .setSha256(getJarSha());
+    }
+
+    @Getter private BubbleVersionInfo sageVersionInfo;
+    public void setSageVersionInfo(BubbleVersionInfo version) {
+        sageVersionInfo = version;
+        final boolean isNewer = isNewerVersion(getVersionInfo().getVersion(), sageVersionInfo.getVersion());
+        if (!jarUpgradeAvailable && isNewer) {
+            jarUpgradeAvailable = true;
+            refreshPublicSystemConfigs();
+        }
+    }
+    public boolean hasSageVersionInfo () { return sageVersionInfo != null; }
+    @Getter private Boolean jarUpgradeAvailable = false;
 
     @JsonIgnore public String getUnlockKey () { return BubbleFirstTimeListener.getUnlockKey(); }
 
@@ -318,7 +336,9 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                                              && !restoreService.isRestoreStarted(thisNetwork.getUuid())},
                         {TAG_SSL_PORT, getDefaultSslPort()},
                         {TAG_SUPPORT, getSupport()},
-                        {TAG_SECURITY_LEVELS, DeviceSecurityLevel.values()}
+                        {TAG_SECURITY_LEVELS, DeviceSecurityLevel.values()},
+                        {TAG_JAR_VERSION, getVersion()},
+                        {TAG_JAR_UPGRADE_AVAILABLE, getJarUpgradeAvailable() ? getSageVersionInfo() : null}
                 }));
             }
             return publicSystemConfigs.get();

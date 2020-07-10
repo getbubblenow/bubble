@@ -16,6 +16,6 @@ public enum BubbleNetworkState {
 
     public boolean canStart() { return this == created || this == stopped; }
 
-    public boolean canStop() { return this != stopping && this != stopped && this != error_stopping; }
+    public boolean canStop() { return this != stopped && this != error_stopping; }
 
 }

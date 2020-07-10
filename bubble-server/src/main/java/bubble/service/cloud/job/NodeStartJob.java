@@ -5,9 +5,7 @@
 package bubble.service.cloud.job;
 
 import bubble.cloud.compute.ComputeServiceDriver;
-import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.model.cloud.BubbleNode;
-import bubble.model.cloud.BubbleNodeState;
 import lombok.extern.slf4j.Slf4j;
 
 import static bubble.service.cloud.NodeProgressMeterConstants.METER_ERROR_NO_IP;
@@ -18,28 +16,28 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 public class NodeStartJob implements Runnable {
 
     private BubbleNode node;
-    private final BubbleNodeDAO nodeDAO;
+//    private final BubbleNodeDAO nodeDAO;
     private final ComputeServiceDriver computeDriver;
 
     public NodeStartJob(BubbleNode node,
-                        BubbleNodeDAO nodeDAO,
+//                        BubbleNodeDAO nodeDAO,
                         ComputeServiceDriver computeDriver) {
         this.node = node;
-        this.nodeDAO = nodeDAO;
+//        this.nodeDAO = nodeDAO;
         this.computeDriver = computeDriver;
     }
 
     @Override public void run() {
         try {
-            node.setState(BubbleNodeState.booting);
-            nodeDAO.update(node);
+//            node.setState(BubbleNodeState.booting);
+//            nodeDAO.update(node);
 
             log.debug("run: calling computeDriver.start("+node.id()+")");
             node = computeDriver.start(node);
             log.debug("run: computeDriver.start("+node.id()+") returned successfully");
 
-            node.setState(BubbleNodeState.booted);
-            nodeDAO.update(node);
+//            node.setState(BubbleNodeState.booted);
+//            nodeDAO.update(node);
 
             if (!node.hasIp4()) {
                 throw new NodeJobException(METER_ERROR_NO_IP, "node booted but has no IP");

@@ -32,12 +32,13 @@ public class NodeLauncher implements Runnable {
         try {
             for (int i=0; i<LAUNCH_MAX_RETRIES; i++) {
                 if (i > 0 && !launchMonitor.isRegistered(networkUuid)) {
-                    throw new IllegalStateException("NodeLauncher.run: no longer registered: "+networkUuid);
+                    log.warn("NodeLauncher.run: no longer registered: "+networkUuid);
+                    return;
                 }
                 if (!lock.get().equals(newNodeRequest.getLock())) {
                     die("NodeLauncher.run: existingLock (" + lock.get() + ") is different than lock in NewNodeNotification: " + newNodeRequest.getLock());
                 }
-                if (!networkService.confirmLock(networkUuid, lock.get())) {
+                if (!networkService.confirmNetLock(networkUuid, lock.get())) {
                     die("NodeLauncher.run: error confirming lock (" + lock.get() + ") for network: " + networkUuid);
                 }
 
@@ -52,12 +53,11 @@ public class NodeLauncher implements Runnable {
                 launchThread.start();
                 do {
                     launchThread.join(SECONDS.toMillis(5));
-                    log.info("NodeLauncher.run: still waiting for thread join..."+newNodeRequest.getFqdn());
+                    if (log.isTraceEnabled()) log.trace("NodeLauncher.run: still waiting for thread join: "+newNodeRequest.getFqdn()+" stack="+stacktrace(launchThread));
                 } while (launchThread.isAlive() && !launchThread.isInterrupted());
 
                 if (launchThread.isInterrupted()) {
                     log.warn("NodeLauncher.run: launch interrupted while waiting for join, exiting early");
-                    if (launchThread.isAlive()) terminate(launchThread, SECONDS.toMillis(1));
                     return;
                 }
 
@@ -81,7 +81,7 @@ public class NodeLauncher implements Runnable {
                                 die("NodeLauncher.run: unknown launch exception (type="+launchException.getType()+"): "+shortError(launchException));
                         }
                     } else {
-                        die("NodeLauncher.run: fatal launch exception: " + shortError(exception));
+                        die("NodeLauncher.run: fatal launch exception: " + shortError(exception), exception);
                     }
                 }
                 if (node != null && node.isRunning()) {

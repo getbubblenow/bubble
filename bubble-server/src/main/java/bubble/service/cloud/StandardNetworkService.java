@@ -136,7 +136,8 @@ public class StandardNetworkService implements NetworkService {
     @Autowired private NodeLaunchMonitor launchMonitor;
 
     @Autowired private RedisService redisService;
-    @Getter(lazy=true) private final RedisService networkLocks = redisService.prefixNamespace(getClass().getSimpleName()+"_lock_");
+    @Getter(lazy=true) private final RedisService networkLocks = redisService.prefixNamespace(getClass().getSimpleName()+"_net_lock_");
+    @Getter(lazy=true) private final RedisService nodeKillLocks = redisService.prefixNamespace(getClass().getSimpleName()+"_node_kill_lock_");
 
     @NonNull public BubbleNode newNode(@NonNull final NewNodeNotification nn,
                                        NodeLaunchMonitor launchMonitor) {
@@ -153,7 +154,7 @@ public class StandardNetworkService implements NetworkService {
             progressMeter = launchMonitor.getProgressMeter(nn);
             progressMeter.write(METER_TICK_CONFIRMING_NETWORK_LOCK);
 
-            if (!confirmLock(nn.getNetwork(), lock)) {
+            if (!confirmNetLock(nn.getNetwork(), lock)) {
                 progressMeter.error(METER_ERROR_CONFIRMING_NETWORK_LOCK);
                 return launchFailureCanRetry("newNode: Error confirming network lock");
             }
@@ -246,7 +247,7 @@ public class StandardNetworkService implements NetworkService {
             final List<Future<?>> jobFutures = new ArrayList<>();
 
             // Start the cloud compute instance
-            final NodeStartJob startJob = new NodeStartJob(node, nodeDAO, computeDriver);
+            final NodeStartJob startJob = new NodeStartJob(node, computeDriver);
             jobFutures.add(backgroundJobs.submit(startJob));
 
             // Create DNS records for node
@@ -436,10 +437,6 @@ public class StandardNetworkService implements NetworkService {
                 nodeDAO.update(node);
                 if (!progressMeter.hasError()) progressMeter.error(METER_UNKNOWN_ERROR);
                 killNode(node, "error: node not running: "+node.id()+": "+node.getState());
-                if (noNodesActive(network)) {
-                    // if no nodes are running, then the network is stopped
-                    networkDAO.update(network.setState(BubbleNetworkState.stopped));
-                }
             }
 
             if (progressMeter != null) {
@@ -498,25 +495,30 @@ public class StandardNetworkService implements NetworkService {
     }
 
     public BubbleNode killNode(BubbleNode node, String message) {
-        if (node == null) return die("(but node was null?): "+message);
-        node.setState(BubbleNodeState.error_stopping);
-        node.setTag(TAG_ERROR, message);
-        if (node.hasUuid()) nodeDAO.update(node);
+        if (node == null) return die("killNode: node was null (message=" + message + ")");
+        String lock = null;
         try {
-            stopNode(node);  // kill it
-        } catch (Exception e) {
-            log.warn("killNode("+node.id()+"): error stopping: "+e);
-        }
-        node.setState(BubbleNodeState.error_stopped);
-        if (node.hasUuid()) nodeDAO.update(node);
+            lock = lockNode(node.getUuid());
+            if (nodeDAO.findByUuid(node.getUuid()) == null) {
+                log.warn("killNode: node already deleted");
+                return node;
+            }
 
-        final BubbleNetwork network = networkDAO.findByUuid(node.getNetwork());
-        if (noNodesActive(network)) {
-            // if no nodes are running, then the network is stopped
-            networkDAO.update(network.setState(BubbleNetworkState.stopped));
-        }
+            node.setState(BubbleNodeState.error_stopping);
+            node.setTag(TAG_ERROR, message);
+            if (node.hasUuid()) nodeDAO.update(node);
+            try {
+                stopNode(node);  // kill it
+            } catch (Exception e) {
+                log.warn("killNode(" + node.id() + "): error stopping: " + e);
+            }
+            node.setState(BubbleNodeState.error_stopped);
+            nodeDAO.update(node);
+            return node;
 
-        return node;
+        } finally {
+            if (lock != null) unlockNode(node.getUuid(), lock);
+        }
     }
 
     protected String lockNetwork(String network) {
@@ -526,7 +528,7 @@ public class StandardNetworkService implements NetworkService {
         return lock;
     }
 
-    protected boolean confirmLock(String network, String lock) {
+    protected boolean confirmNetLock(String network, String lock) {
         return getNetworkLocks().confirmLock(network, lock);
     }
 
@@ -536,10 +538,27 @@ public class StandardNetworkService implements NetworkService {
         log.info("unlockNetwork: unlocked "+network);
     }
 
-    public BubbleNode stopNode(BubbleNode node) {
+    protected String lockNode(String node) {
+        log.info("lockNode: locking "+node);
+        final String lock = getNodeKillLocks().lock(node, NET_LOCK_TIMEOUT, NET_DEADLOCK_TIMEOUT);
+        log.info("lockNode: locked "+node);
+        return lock;
+    }
+
+    protected boolean confirmNodeLock(String node, String lock) {
+        return getNodeKillLocks().confirmLock(node, lock);
+    }
+
+    protected void unlockNode(String node, String lock) {
+        log.info("unlockNode: unlocking "+node);
+        getNodeKillLocks().unlock(node, lock);
+        log.info("unlockNode: unlocked "+node);
+    }
+
+    public void stopNode(BubbleNode node) {
         log.info("stopNode: stopping "+node.id());
         final CloudService cloud = cloudDAO.findByUuid(node.getCloud());
-        return nodeService.stopNode(cloud.getComputeDriver(configuration), node);
+        nodeService.stopNode(cloud.getComputeDriver(configuration), node);
     }
 
     public boolean isReachable(BubbleNode node) {
@@ -547,6 +566,7 @@ public class StandardNetworkService implements NetworkService {
         try {
             log.info(prefix+"starting");
             final NotificationReceipt receipt = notificationService.notify(node, NotificationType.health_check, null);
+            BubbleNodeState state = null;
             if (receipt == null) {
                 log.info(prefix+"health_check failed, checking via cloud");
                 final CloudService cloud = cloudDAO.findByUuid(node.getCloud());
@@ -556,14 +576,14 @@ public class StandardNetworkService implements NetworkService {
                 }
                 final BubbleNode status = cloud.getComputeDriver(configuration).status(node);
                 if (status != null) {
-                    final BubbleNodeState state = status.getState();
+                    state = status.getState();
                     if (state != null && state.active()) {
                         log.info(prefix + "cloud status was: " + state + ", returning true");
                         return true;
                     }
                 }
             }
-            log.warn(prefix+"no way of reaching node, returning false");
+            log.warn(prefix+"no way of reaching node "+node.id()+" (state="+state+"), returning false");
             return false;
 
         } catch (Exception e) {

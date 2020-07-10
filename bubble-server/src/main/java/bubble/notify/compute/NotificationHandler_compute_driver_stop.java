@@ -19,7 +19,8 @@ public class NotificationHandler_compute_driver_stop extends NotificationHandler
     @Override protected BubbleNode handle(ReceivedNotification n,
                                           ComputeDriverNotification notification,
                                           ComputeServiceDriver compute) throws Exception {
-        return nodeService.stopNode(compute, notification.getNode());
+        nodeService.stopNode(compute, notification.getNode());
+        return notification.getNode();
     }
 
 }

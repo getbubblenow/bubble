@@ -55,6 +55,16 @@ public class VultrDriver extends ComputeServiceDriverBase {
     public static final String VULTR_SUBID = "SUBID";
     public static final String VULTR_V4_IP = "main_ip";
     public static final String VULTR_V6_IP = "v6_main_ip";
+    public static final String VULTR_LABEL = "label";
+
+    public static final String VULTR_STATUS = "status";
+    public static final String VULTR_STATUS_PENDING = "pending";
+    public static final String VULTR_STATUS_ACTIVE = "active";
+
+    public static final String VULTR_SERVER_STATE = "server_state";
+    public static final String VULTR_STATE_NONE = "none";
+    public static final String VULTR_STATE_OK = "ok";
+    public static final String VULTR_STATE_LOCKED = "locked";
 
     public static final String CREATE_SERVER_URL = VULTR_API_BASE + "server/create";
     public static final String DESTROY_SERVER_URL = VULTR_API_BASE + "server/destroy";
@@ -144,7 +154,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
 
         node.setState(BubbleNodeState.booting);
         node.setTag(TAG_INSTANCE_ID, subId);
-        nodeDAO.update(node);
+//        nodeDAO.update(node);
 
         final long start = now();
         boolean startedOk = false;
@@ -161,29 +171,29 @@ public class VultrDriver extends ComputeServiceDriverBase {
             if (serverNode != null) {
                 if (serverNode.has("tag")
                         && serverNode.get("tag").textValue().equals(cloud.getUuid())
-                        && serverNode.has("status")
-                        && serverNode.has("server_state")
+                        && serverNode.has(VULTR_STATUS)
+                        && serverNode.has(VULTR_SERVER_STATE)
                         && serverNode.has(VULTR_V4_IP)) {
 
-                    final String status = serverNode.get("status").textValue();
-                    final String serverState = serverNode.get("server_state").textValue();
+                    final String status = serverNode.get(VULTR_STATUS).textValue();
+                    final String serverState = serverNode.get(VULTR_SERVER_STATE).textValue();
                     final String ip4 = serverNode.get(VULTR_V4_IP).textValue();
                     final String ip6 = serverNode.get(VULTR_V6_IP).textValue();
                     // if (log.isInfoEnabled()) log.info("start: server_state="+serverState+", status="+status, "ip4="+ip4+", ip6="+ip6);
 
                     if (ip4 != null && ip4.length() > 0 && !ip4.equals("0.0.0.0")) {
                         node.setIp4(ip4);
-                        nodeDAO.update(node);
+//                        nodeDAO.update(node);
                     }
                     if (ip6 != null && ip6.length() > 0) {
                         node.setIp6(ip6);
-                        nodeDAO.update(node);
+//                        nodeDAO.update(node);
                     }
-                    if (status.equals("active") && (node.hasIp4() || node.hasIp6())) {
+                    if (status.equals(VULTR_STATUS_ACTIVE) && (node.hasIp4() || node.hasIp6())) {
                         node.setState(BubbleNodeState.booted);
-                        nodeDAO.update(node);
+//                        nodeDAO.update(node);
                     }
-                    if (serverState.equals("ok")) {
+                    if (serverState.equals(VULTR_STATE_OK)) {
                         if (log.isInfoEnabled()) log.info("start: server is ready: "+node.id());
                         startedOk = true;
                         break;
@@ -217,6 +227,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
                 return node;
 
             } catch (Exception e) {
+                if (log.isInfoEnabled()) log.info("stop: _stop failed with: "+shortError(e));
                 lastEx = e;
             }
             sleep(SERVER_STOP_CHECK_INTERVAL, "stop: waiting to try stopping again until node is not found");
@@ -228,30 +239,19 @@ public class VultrDriver extends ComputeServiceDriverBase {
     }
 
     public BubbleNode _stop(BubbleNode node) throws IOException {
-        BubbleNode vultrNode;
-        final String ip4 = node.getIp4();
-        if (!node.hasTag(TAG_INSTANCE_ID)) {
-            if (ip4 == null) {
-                throw notFoundEx(node.id());
-            }
-            if (log.isWarnEnabled()) log.warn("stop: no "+TAG_INSTANCE_ID+" tag found on node ("+node.getFqdn()+"/"+ ip4 +"), searching based in ip4...");
-            vultrNode = findByIp4(node, ip4);
-        } else {
-            // does the node still exist?
-            vultrNode = listNode(node);
-            if (vultrNode == null) {
-                vultrNode = findByIp4(node, ip4);
-            }
-        }
+        // does the node still exist?
+        BubbleNode vultrNode = listNode(node);
         if (vultrNode == null) {
             throw notFoundEx(node.id());
         }
 
         final String subId = vultrNode.getTag(TAG_INSTANCE_ID);
         if (subId == null) {
+            if (log.isErrorEnabled()) log.error("_stop: node "+node.id()+" is missing tag "+TAG_INSTANCE_ID+", cannot stop, throwing invalidEx");
             throw invalidEx("err.node.stop.error", "stop: no " + VULTR_SUBID + " on node, returning");
         }
 
+        if (log.isInfoEnabled()) log.info("_stop: calling stopServer("+subId+") for node "+node.id());
         stopServer(subId);
         return node;
     }
@@ -291,14 +291,17 @@ public class VultrDriver extends ComputeServiceDriverBase {
                     final JsonNode subId = jsonNode.get(VULTR_SUBID);
                     final JsonNode ip4 = jsonNode.get(VULTR_V4_IP);
                     final JsonNode ip6 = jsonNode.get(VULTR_V6_IP);
-                    return (subId != null && node.hasTag(TAG_INSTANCE_ID) && subId.textValue().equals(node.getTag(TAG_INSTANCE_ID)))
-                            || (ip4 != null && node.hasIp4() && ip4.textValue().equals(node.getIp4()))
-                            || (ip6 != null && node.hasIp6() && ip6.textValue().equals(node.getIp6())) ? node : null;
+                    if (log.isTraceEnabled()) log.trace("listNode("+node.id()+") found node: "+json(jsonNode, COMPACT_MAPPER));
+                    if (subId != null) node.setTag(TAG_INSTANCE_ID, subId.textValue());
+                    return node.setIp4(ip4 == null ? null : ip4.textValue()).setIp6(ip6 == null ? null : ip6.textValue());
+
                 } catch (Exception e) {
                     if (log.isErrorEnabled()) log.error("listNode: error finding node "+node.id()+", status="+listResponse.getStatus()+": "+listResponse+": exception="+shortError(e));
                     return null;
                 }
-            case NOT_FOUND: return null;
+            case NOT_FOUND:
+                if (log.isDebugEnabled()) log.debug("listNode("+node.id()+") returned 404 Not Found");
+                return null;
             default:
                 if (log.isErrorEnabled()) log.error("listNode: error finding node "+node.id()+", status="+listResponse.getStatus()+": "+listResponse);
                 return null;
@@ -323,7 +326,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
                     final String subid = iter.next();
                     final ObjectNode server = (ObjectNode) entity.get(subid);
                     if (!filter.apply(server)) {
-                        if (log.isDebugEnabled()) log.debug("Skipping node without cloud tag "+cloud.getUuid()+": "+subid);
+                        if (log.isTraceEnabled()) log.trace("Skipping node without cloud tag "+cloud.getUuid()+": "+subid);
                         continue;
                     }
                     final String subId = server.has(VULTR_SUBID) ? server.get(VULTR_SUBID).textValue() : null;
@@ -339,41 +342,53 @@ public class VultrDriver extends ComputeServiceDriverBase {
     }
 
     @Override public BubbleNode status(BubbleNode node) throws Exception {
-        if (node.hasTag(TAG_INSTANCE_ID)) {
-            final BubbleNode found = listNode(node);
-            if (found == null) return node.setState(BubbleNodeState.stopped);
-            return node;
-
-        } else if (node.hasIp4()) {
-            // find by IPv4
-            final HttpRequestBean listServerRequest = auth(new HttpRequestBean(LIST_SERVERS_URL));
-            final HttpResponseBean listResponse = getResponse(listServerRequest);
-            switch (listResponse.getStatus()) {
-                case OK:
-                    final JsonNode entity = json(listResponse.getEntityString(), JsonNode.class);
-                    for (Iterator<String> iter = entity.fieldNames(); iter.hasNext(); ) {
-                        final String subid = iter.next();
-                        final ObjectNode server = (ObjectNode) entity.get(subid);
-                        final String ip4 = server.has(VULTR_V4_IP) ? server.get(VULTR_V4_IP).textValue() : "";
-                        if (ip4.equals(node.getIp4())) {
-                            if (server.has("power_status") && server.get("power_status").textValue().equals("running")
-                                    && server.has("server_state") && server.get("server_state").textValue().equals("ok")) {
-                                final String ip6 = server.has(VULTR_V6_IP) ? server.get(VULTR_V6_IP).textValue() : null;
-                                return node.setIp4(ip4).setIp6(ip6).setState(BubbleNodeState.running);
+        // find by label
+        final HttpRequestBean listServerRequest = auth(new HttpRequestBean(LIST_SERVERS_URL+"?"+VULTR_LABEL+"="+node.getFqdn()));
+        final HttpResponseBean listResponse = getResponse(listServerRequest);
+        switch (listResponse.getStatus()) {
+            case OK:
+                final JsonNode entity = json(listResponse.getEntityString(), JsonNode.class);
+                for (Iterator<String> iter = entity.fieldNames(); iter.hasNext(); ) {
+                    final String subid = iter.next();
+                    final ObjectNode server = (ObjectNode) entity.get(subid);
+                    final String label = server.has(VULTR_LABEL) ? server.get(VULTR_LABEL).textValue() : "";
+                    if (label.equals(node.getFqdn())) {
+                        if (log.isDebugEnabled()) log.debug("status("+node.id()+"): found json: "+json(server, COMPACT_MAPPER));
+                        if (server.has(VULTR_SERVER_STATE) && server.has(VULTR_STATUS)) {
+                            final String status = server.get(VULTR_STATUS).textValue();
+                            final String serverState = server.get(VULTR_SERVER_STATE).textValue();
+                            final String ip4 = server.has(VULTR_V4_IP) ? server.get(VULTR_V4_IP).textValue() : null;
+                            final String ip6 = server.has(VULTR_V6_IP) ? server.get(VULTR_V6_IP).textValue() : null;
+                            node.setIp4(ip4).setIp6(ip6);
+                            if (status.equals(VULTR_STATUS_PENDING) || serverState.equals(VULTR_STATE_NONE)) {
+                                if (log.isDebugEnabled()) log.debug("status("+node.id()+"): pending/none: returning node status==starting");
+                                return node.setState(BubbleNodeState.starting);
                             }
+                            if (status.equals(VULTR_STATUS_ACTIVE)) {
+                                if (serverState.equals(VULTR_STATE_OK)) {
+                                    if (log.isDebugEnabled()) log.debug("status(" + node.id() + "): active/ok: returning node status==running");
+                                    return node.setState(BubbleNodeState.running);
+
+                                } else if (serverState.equals(VULTR_STATE_LOCKED)) {
+                                    if (log.isDebugEnabled()) log.debug("status(" + node.id() + "): active/locked: returning node status==starting");
+                                    return node.setState(BubbleNodeState.starting);
+                                }
+                            }
+                            if (log.isDebugEnabled()) log.debug("status("+node.id()+"): status/state = "+status+"/"+serverState+": returning node status==unknown_error");
+                            return node.setState(BubbleNodeState.unknown_error);
                         }
                     }
-                case NOT_FOUND: case PRECONDITION_FAILED:
-                    log.error("status: error response from API, returning unknown");
-                    return node.setState(BubbleNodeState.unknown_error);
+                }
+                log.error("status: error finding node "+node.id()+", status="+listResponse.getStatus()+": "+listResponse);
+                return node.setState(BubbleNodeState.unknown_error);
 
-                default:
-                    log.error("status: error finding node "+node.id()+", status="+listResponse.getStatus()+": "+listResponse);
-                    return node.setState(BubbleNodeState.unknown_error);
-            }
-        } else {
-            // Node has no IP4
-            return node.setState(BubbleNodeState.unknown_error);
+            case NOT_FOUND: case PRECONDITION_FAILED:
+                log.error("status: error response from API, returning unknown");
+                return node.setState(BubbleNodeState.unknown_error);
+
+            default:
+                log.error("status: error finding node "+node.id()+", status="+listResponse.getStatus()+": "+listResponse);
+                return node.setState(BubbleNodeState.unknown_error);
         }
     }
 

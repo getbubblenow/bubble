@@ -28,8 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static bubble.service.cloud.NodeProgressMeter.getProgressMeterKey;
 import static bubble.service.cloud.NodeProgressMeter.getProgressMeterPrefix;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 
@@ -37,7 +36,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 public class NodeLaunchMonitor extends SimpleDaemon {
 
     private static final long LAUNCH_ACTIVITY_TIMEOUT = SECONDS.toMillis(180);
-    private static final long LAUNCH_TERMINATE_TIMEOUT = SECONDS.toMillis(5);
+    private static final long LAUNCH_TERMINATE_TIMEOUT = MINUTES.toMillis(6);
 
     @Getter private final long sleepTime = SECONDS.toMillis(15);
 
@@ -50,7 +49,6 @@ public class NodeLaunchMonitor extends SimpleDaemon {
     @Getter(lazy=true) private final RedisService networkSetupStatus = redis.prefixNamespace(getClass().getSimpleName()+"_status_");
 
     private final Map<String, LauncherEntry> launcherThreads = new ConcurrentHashMap<>();
-    private final Map<String, String> canceledNetworks = new ExpirationMap<>(50, HOURS.toMillis(2));
 
     public void register(String nnUuid, String networkUuid, Thread t) {
         startIfNotRunning();
@@ -63,7 +61,6 @@ public class NodeLaunchMonitor extends SimpleDaemon {
     }
 
     public void cancel(String networkUuid) {
-        canceledNetworks.put(networkUuid, networkUuid);
         final LauncherEntry previousLaunch = launcherThreads.get(networkUuid);
         if (previousLaunch == null || !previousLaunch.isAlive()) {
             log.warn("cancel("+networkUuid+"): entry does not thread exist, or is not alive: "+previousLaunch);

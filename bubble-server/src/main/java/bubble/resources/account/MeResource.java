@@ -26,6 +26,7 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
+import bubble.service.boot.BubbleJarUpgradeService;
 import bubble.service.boot.BubbleModelSetupService;
 import bubble.service.cloud.NodeLaunchMonitor;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -65,8 +66,7 @@ import java.util.Map;
 import static bubble.ApiConstants.*;
 import static bubble.model.account.Account.validatePassword;
 import static bubble.resources.account.AuthResource.forgotPasswordMessage;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
-import static org.cobbzilla.util.daemon.ZillaRuntime.errorString;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -404,6 +404,15 @@ public class MeResource {
 
         final ApiClientBase api = configuration.newApiClient().setToken(caller.getToken());
         return ok(modelSetupService.setupModel(api, caller, modelFile));
+    }
+
+    @Autowired private BubbleJarUpgradeService jarUpgradeService;
+
+    @POST @Path(EP_UPGRADE)
+    public Response uploadModel(@Context Request req,
+                                @Context ContainerRequest ctx) {
+        background(() -> jarUpgradeService.upgrade());
+        return ok(configuration.getPublicSystemConfigs());
     }
 
 }

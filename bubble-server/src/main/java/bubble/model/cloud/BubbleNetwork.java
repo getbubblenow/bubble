@@ -34,7 +34,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static bubble.ApiConstants.*;
+import static bubble.ApiConstants.EP_NETWORKS;
+import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.model.cloud.BubbleDomain.DOMAIN_NAME_MAXLEN;
 import static bubble.model.cloud.BubbleNetworkState.created;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
@@ -52,7 +53,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
         @ECTypeChild(type=BubbleNode.class, backref="network")
 })
 @Entity @NoArgsConstructor @Accessors(chain=true)
-@Slf4j @ToString(of={"name", "domainName", "installType"})
+@Slf4j @ToString(of={"name", "domainName", "installType", "state"})
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "name"}),
         @ECIndex(unique=true, of={"name", "domainName"})
