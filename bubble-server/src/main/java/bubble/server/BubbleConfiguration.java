@@ -91,6 +91,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_SUPPORT = "support";
     public static final String TAG_SECURITY_LEVELS = "securityLevels";
     public static final String TAG_RESTORE_MODE = "awaitingRestore";
+    public static final String TAG_RESTORING_IN_PROGRESS = "restoreInProgress";
     public static final String TAG_JAR_VERSION = "jarVersion";
     public static final String TAG_JAR_UPGRADE_AVAILABLE = "jarUpgradeAvailable";
 
@@ -309,13 +310,14 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     private final AtomicReference<Map<String, Object>> publicSystemConfigs = new AtomicReference<>();
     public Map<String, Object> getPublicSystemConfigs () {
+        final var thisNetwork = getThisNetwork();
+        final var awaitingRestore = thisNetwork != null && thisNetwork.getState() == BubbleNetworkState.restoring;
+
         synchronized (publicSystemConfigs) {
             if (publicSystemConfigs.get() == null) {
-                final BubbleNetwork thisNetwork = getThisNetwork();
                 final AccountDAO accountDAO = getBean(AccountDAO.class);
                 final CloudServiceDAO cloudDAO = getBean(CloudServiceDAO.class);
                 final ActivationService activationService = getBean(ActivationService.class);
-                final RestoreService restoreService = getBean(RestoreService.class);
 
                 publicSystemConfigs.set(MapBuilder.build(new Object[][]{
                         {TAG_ALLOW_REGISTRATION, thisNetwork == null ? null : thisNetwork.getBooleanTag(TAG_ALLOW_REGISTRATION, false)},
@@ -330,16 +332,21 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_CLOUD_CONFIGS, accountDAO.activated() ? null : activationService.getCloudDefaults()},
                         {TAG_LOCKED, accountDAO.locked()},
                         {TAG_LAUNCH_LOCK, isSageLauncher() || thisNetwork == null ? null : thisNetwork.launchLock()},
-                        {TAG_RESTORE_MODE, thisNetwork == null
-                                           ? false
-                                           : thisNetwork.getState() == BubbleNetworkState.restoring
-                                             && !restoreService.isRestoreStarted(thisNetwork.getUuid())},
+                        {TAG_RESTORE_MODE, awaitingRestore},
+                        {TAG_RESTORING_IN_PROGRESS, awaitingRestore
+                                                    && getBean(RestoreService.class).isSelfRestoreStarted()},
                         {TAG_SSL_PORT, getDefaultSslPort()},
                         {TAG_SUPPORT, getSupport()},
                         {TAG_SECURITY_LEVELS, DeviceSecurityLevel.values()},
                         {TAG_JAR_VERSION, getVersion()},
                         {TAG_JAR_UPGRADE_AVAILABLE, getJarUpgradeAvailable() ? getSageVersionInfo() : null}
                 }));
+            } else {
+                // some things has to be refreshed all the time in some cases:
+                if (awaitingRestore) {
+                    publicSystemConfigs.get().put(TAG_RESTORING_IN_PROGRESS,
+                                                  getBean(RestoreService.class).isSelfRestoreStarted());
+                }
             }
             return publicSystemConfigs.get();
         }

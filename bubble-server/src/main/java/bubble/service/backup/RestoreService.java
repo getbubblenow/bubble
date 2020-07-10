@@ -35,7 +35,6 @@ import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.security.CryptStream.BUFFER_SIZE;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
-import static org.cobbzilla.wizard.cache.redis.RedisService.LOCK_SUFFIX;
 
 @Service @Slf4j
 public class RestoreService {
@@ -66,8 +65,9 @@ public class RestoreService {
 
     public boolean isValidRestoreKey(String restoreKey) { return getRestoreKeys().exists(restoreKey); }
 
-    public boolean isRestoreStarted(String networkUuid) {
-        return getRestoreKeys().exists(networkUuid + LOCK_SUFFIX) || RESTORE_MARKER_FILE.exists();
+    public boolean isSelfRestoreStarted() {
+        // only one restore may be started, hence
+        return getRestoreKeys().keys("*").size() > 0 || RESTORE_MARKER_FILE.exists();
     }
 
     public boolean restore(String restoreKey, BubbleBackup backup) {
