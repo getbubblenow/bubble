@@ -536,8 +536,6 @@ array
 arret
 arris
 arrow
-arsed
-arsey
 arsis
 arson
 artal
@@ -757,7 +755,6 @@ baler
 bales
 balks
 balky
-balls
 bally
 balms
 balmy
@@ -1268,8 +1265,6 @@ boost
 booth
 boots
 booty
-booze
-boozy
 borak
 boral
 boras
@@ -1399,7 +1394,6 @@ breve
 brews
 breys
 briar
-bribe
 brick
 bride
 brief
@@ -2341,7 +2335,6 @@ cromb
 crome
 crone
 cronk
-crony
 crool
 croon
 crops
