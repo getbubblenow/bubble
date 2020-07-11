@@ -235,7 +235,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     public ApiClientBase newApiClient() { return new BubbleApiClient(new ApiConnectionInfo(getLoopbackApiBase())); }
 
-    public String getVersion () {
+    private String getVersion () {
         final Properties properties = new Properties();
         try {
             properties.load(loadResourceAsStream("META-INF/bubble/bubble.properties"));
@@ -244,12 +244,18 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         }
         return properties.getProperty(META_PROP_BUBBLE_VERSION);
     }
+
     @Getter(lazy=true) private final BubbleVersionInfo versionInfo = initBubbleVersionInfo();
     private BubbleVersionInfo initBubbleVersionInfo() {
+        final String version = getVersion();
+        final String[] parts = version.split("\\s+");
+        final String shortVersion = parts[parts.length-1];
         return new BubbleVersionInfo()
-                .setVersion(getVersion())
+                .setVersion(version)
+                .setShortVersion(shortVersion)
                 .setSha256(getJarSha());
     }
+    public String getShortVersion () { return getVersionInfo().getShortVersion(); }
 
     @Getter private BubbleVersionInfo sageVersion;
     public void setSageVersion(BubbleVersionInfo version) {

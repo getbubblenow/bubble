@@ -183,7 +183,7 @@ public class AmazonEC2Driver extends ComputeServiceDriverBase {
         final ArrayList<Filter> filters = new ArrayList<>();
         filters.add(new Filter("root-device-type", new SingletonList<>("ebs")));
         filters.add(new Filter("state", new SingletonList<>("available")));
-        filters.add(new Filter("name", new SingletonList<>("packer_*_"+packerService.getPackerPublicKeyHash()+"_"+configuration.getVersion()+"_*")));
+        filters.add(new Filter("name", new SingletonList<>("packer_*_"+packerService.getPackerPublicKeyHash()+"_"+configuration.getShortVersion()+"_*")));
         final AmazonEC2 ec2 = getEc2Client(region);
         final DescribeImagesRequest imageRequest = new DescribeImagesRequest().withFilters(filters);
         final DescribeImagesResult imagesResult = ec2.describeImages(imageRequest);

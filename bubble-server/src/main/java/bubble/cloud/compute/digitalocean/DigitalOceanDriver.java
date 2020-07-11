@@ -235,7 +235,7 @@ public class DigitalOceanDriver extends ComputeServiceDriverBase {
     @Override public List<PackerImage> getPackerImagesForRegion(String region) { return getPackerImages(); }
 
     public List<PackerImage> getPackerImages () {
-        final List<PackerImage> images = getResources(PACKER_IMAGES_URI, new DigitalOceanPackerImageParser(configuration.getVersion(), packerService.getPackerPublicKeyHash()));
+        final List<PackerImage> images = getResources(PACKER_IMAGES_URI, new DigitalOceanPackerImageParser(configuration.getShortVersion(), packerService.getPackerPublicKeyHash()));
         return images == null ? Collections.emptyList() : images;
     }
 

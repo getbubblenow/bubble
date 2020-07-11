@@ -66,8 +66,8 @@ public class BubbleJarUpgradeService {
         final BubbleVersionInfo sageVersion = configuration.getSageVersion();
 
         if (BACKUP_BEFORE_UPGRADE) {
-            final String currentVersion = configuration.getVersion();
-            final String newVersion = sageVersion.getVersion();
+            final String currentVersion = configuration.getShortVersion();
+            final String newVersion = sageVersion.getShortVersion();
             BubbleBackup bubbleBackup = backupService.queueBackup("before_upgrade_" + currentVersion + "_to_" + newVersion + "_on_" + DATE_FORMAT_YYYY_MM_DD_HH_mm_ss_SSS.print(now()));
 
             // monitor backup, ensure it completes

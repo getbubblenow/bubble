@@ -91,7 +91,7 @@ public class PackerService {
         final File pubKeyFile = new File(keyDir, PACKER_KEY_NAME+".pub");
         final File privateKeyFile = new File(keyDir, PACKER_KEY_NAME);
         if (!pubKeyFile.exists() || !privateKeyFile.exists()) {
-            final String comment = configuration.getVersion() + "_" + configuration.getJarSha();
+            final String comment = configuration.getShortVersion() + "_" + configuration.getJarSha();
             execScript("ssh-keygen -t rsa -q -N '' -C '"+comment+"' -f "+abs(privateKeyFile));
             if (!pubKeyFile.exists() || !privateKeyFile.exists()) return die("initPackerKey: error creating packer key");
         }

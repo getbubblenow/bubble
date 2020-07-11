@@ -193,7 +193,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
                 .replace(INSTALL_TYPE_VAR, installType.name())
                 .replace(SAGE_HOST_VAR, truncate(hostname(), 19))
                 .replace(PACKER_KEY_VAR, packerService.getPackerPublicKeyHash())
-                .replace(BUBBLE_VERSION_VAR, configuration.getVersion())
+                .replace(BUBBLE_VERSION_VAR, configuration.getShortVersion())
                 .replace(TIMESTAMP_VAR, TimeUtil.format(now(), DATE_FORMAT_YYYYMMDDHHMMSS));
         if (imageName.length() > 128) return die("imageName.length > 128: "+imageName); // sanity check
         ctx.put(PACKER_IMAGE_NAME_VAR, imageName);

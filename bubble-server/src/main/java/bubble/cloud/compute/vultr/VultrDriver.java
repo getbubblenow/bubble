@@ -396,7 +396,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
     @Override public List<PackerImage> getPackerImagesForRegion(String region) { return getPackerImages(); }
 
     public List<PackerImage> getPackerImages () {
-        final List<PackerImage> images = loadCloudResources(SNAPSHOT_URL, new VultrPackerImageParser(configuration.getVersion(), packerService.getPackerPublicKeyHash()));
+        final List<PackerImage> images = loadCloudResources(SNAPSHOT_URL, new VultrPackerImageParser(configuration.getShortVersion(), packerService.getPackerPublicKeyHash()));
         return images == null ? Collections.emptyList() : images;
     }
 

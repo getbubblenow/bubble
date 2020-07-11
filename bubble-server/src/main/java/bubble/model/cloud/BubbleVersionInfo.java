@@ -13,6 +13,7 @@ import static org.cobbzilla.wizard.model.SemanticVersion.isNewerVersion;
 public class BubbleVersionInfo {
 
     @Getter @Setter private String version;
+    @Getter @Setter private String shortVersion;
     @Getter @Setter private String sha256;
 
     public boolean valid() { return !empty(version) && !empty(sha256); }
