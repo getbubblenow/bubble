@@ -28,6 +28,7 @@ import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.BubbleJarUpgradeService;
 import bubble.service.boot.BubbleModelSetupService;
+import bubble.service.boot.SageHelloService;
 import bubble.service.cloud.NodeLaunchMonitor;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Cleanup;
@@ -62,10 +63,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static bubble.ApiConstants.*;
 import static bubble.model.account.Account.validatePassword;
 import static bubble.resources.account.AuthResource.forgotPasswordMessage;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -406,11 +409,35 @@ public class MeResource {
         return ok(modelSetupService.setupModel(api, caller, modelFile));
     }
 
+    @Autowired private SageHelloService sageHelloService;
     @Autowired private BubbleJarUpgradeService jarUpgradeService;
 
+    private final AtomicLong lastUpgradeCheck = new AtomicLong(0);
+    private static final long UPGRADE_CHECK_INTERVAL = MINUTES.toMillis(5);
+
+    @GET @Path(EP_UPGRADE)
+    public Response checkForUpgrade(@Context Request req,
+                                    @Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        if (!caller.admin()) return forbidden();
+        authenticatorService.ensureAuthenticated(ctx);
+
+        synchronized (lastUpgradeCheck) {
+            if (now() - lastUpgradeCheck.get() > UPGRADE_CHECK_INTERVAL) {
+                lastUpgradeCheck.set(now());
+                sageHelloService.interrupt();
+            }
+        }
+        return ok_empty();
+    }
+
     @POST @Path(EP_UPGRADE)
-    public Response uploadModel(@Context Request req,
-                                @Context ContainerRequest ctx) {
+    public Response upgrade(@Context Request req,
+                            @Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        if (!caller.admin()) return forbidden();
+        authenticatorService.ensureAuthenticated(ctx);
+
         background(() -> jarUpgradeService.upgrade());
         return ok(configuration.getPublicSystemConfigs());
     }

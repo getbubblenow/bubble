@@ -43,6 +43,13 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
     @Override public void handleNotification(ReceivedNotification n) {
         // Upstream is telling us about our peers
         final BubbleNode payloadNode = n.getNode();
+
+        // First check to see if the sage reported a new jar version available
+        if (payloadNode.hasSageVersion()) {
+            log.info("handleNotification: payload node has sage version: "+payloadNode.getSageVersion());
+            configuration.setSageVersion(payloadNode.getSageVersion());
+        }
+
         final BubbleNode thisNode = configuration.getThisNode();
         final List<BubbleNode> peers = payloadNode.getPeers();
         int peerCount = 0;

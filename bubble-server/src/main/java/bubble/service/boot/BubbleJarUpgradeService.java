@@ -8,24 +8,26 @@ import bubble.notify.upgrade.JarUpgradeNotification;
 import bubble.server.BubbleConfiguration;
 import bubble.service.backup.BackupService;
 import bubble.service.notify.NotificationService;
+import lombok.Cleanup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.http.HttpRequestBean;
+import org.cobbzilla.util.http.HttpUtil;
+import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.InputStream;
 
-import static bubble.ApiConstants.AUTH_ENDPOINT;
-import static bubble.ApiConstants.EP_UPGRADE;
+import static bubble.ApiConstants.*;
 import static bubble.client.BubbleNodeClient.nodeBaseUri;
 import static bubble.model.cloud.notify.NotificationType.upgrade_request;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
-import static org.cobbzilla.util.http.HttpMethods.GET;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss_SSS;
@@ -52,28 +54,35 @@ public class BubbleJarUpgradeService {
 
     public String getNodeForKey(String key) { return getNodeUpgradeRequests().get(key); }
 
+    // set to 'false' for faster debugging of upgrade process
+    private static final boolean BACKUP_BEFORE_UPGRADE = true;
+
     public void upgrade() {
         if (!configuration.getJarUpgradeAvailable()) {
             log.warn("upgrade: No upgrade available, returning");
             return;
         }
-        final String currentVersion = configuration.getVersion();
-        final BubbleVersionInfo sageVersion = configuration.getSageVersionInfo();
-        final String newVersion = sageVersion.getVersion();
-        BubbleBackup bubbleBackup = backupService.queueBackup("before_upgrade_" + currentVersion + "_to_" + newVersion + "_on_" + DATE_FORMAT_YYYY_MM_DD_HH_mm_ss_SSS.print(now()));
 
-        // monitor backup, ensure it completes
-        final long start = now();
-        while (bubbleBackup.getStatus() != BackupStatus.backup_completed && now() - start < PRE_UPGRADE_BACKUP_TIMEOUT) {
-            sleep(SECONDS.toMillis(5), "waiting for backup to complete before upgrading");
-            bubbleBackup = backupDAO.findByUuid(bubbleBackup.getUuid());
-        }
-        if (bubbleBackup.getStatus() != BackupStatus.backup_completed) {
-            log.warn("upgrade: timeout waiting for backup to complete, status="+bubbleBackup.getStatus());
-            return;
+        final BubbleVersionInfo sageVersion = configuration.getSageVersion();
+
+        if (BACKUP_BEFORE_UPGRADE) {
+            final String currentVersion = configuration.getVersion();
+            final String newVersion = sageVersion.getVersion();
+            BubbleBackup bubbleBackup = backupService.queueBackup("before_upgrade_" + currentVersion + "_to_" + newVersion + "_on_" + DATE_FORMAT_YYYY_MM_DD_HH_mm_ss_SSS.print(now()));
+
+            // monitor backup, ensure it completes
+            final long start = now();
+            while (bubbleBackup.getStatus() != BackupStatus.backup_completed && now() - start < PRE_UPGRADE_BACKUP_TIMEOUT) {
+                sleep(SECONDS.toMillis(5), "waiting for backup to complete before upgrading");
+                bubbleBackup = backupDAO.findByUuid(bubbleBackup.getUuid());
+            }
+            if (bubbleBackup.getStatus() != BackupStatus.backup_completed) {
+                log.warn("upgrade: timeout waiting for backup to complete, status=" + bubbleBackup.getStatus());
+                return;
+            }
         }
 
-        final File upgradeJar = new File(configuration.getBubbleJar().getParentFile(), ".upgrade.jar");
+        final File upgradeJar = new File(HOME_DIR, "upgrade.jar");
         if (upgradeJar.exists()) {
             log.error("upgrade: jar already exists, not upgrading: "+abs(upgradeJar));
             return;
@@ -81,13 +90,23 @@ public class BubbleJarUpgradeService {
 
         // ask the sage to allow us to download the upgrade
         final String key = notificationService.notifySync(configuration.getSageNode(), upgrade_request, new JarUpgradeNotification(sageVersion));
+        log.info("upgrade: received upgrade key from sage: "+key);
 
         // request the jar from the sage
-        final String uri = nodeBaseUri(configuration.getSageNode(), configuration) + AUTH_ENDPOINT + EP_UPGRADE + "/" + key;
-        final HttpRequestBean requestBean = new HttpRequestBean(GET, uri);
-        final File newJar = temp(".jar");
+        final String uri = AUTH_ENDPOINT + EP_UPGRADE + "/" + configuration.getThisNode().getUuid() + "/" + key;
+        final String url = nodeBaseUri(configuration.getSageNode(), configuration) + uri;
+        final File newJar;
+        try {
+            newJar = temp(".jar");
+            @Cleanup final InputStream in = HttpUtil.getUrlInputStream(url);
+            FileUtil.toFile(newJar, in);
+        } catch (Exception e) {
+            log.error("upgrade: error downloading jar: "+shortError(e));
+            return;
+        }
 
-        // move to upgrade location
+        // move to upgrade location, should trigger upgrade monitor
+        log.info("upgrade: writing upgradeJar: "+abs(upgradeJar));
         renameOrDie(newJar, upgradeJar);
     }
 }

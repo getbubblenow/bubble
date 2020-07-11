@@ -251,16 +251,18 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                 .setSha256(getJarSha());
     }
 
-    @Getter private BubbleVersionInfo sageVersionInfo;
-    public void setSageVersionInfo(BubbleVersionInfo version) {
-        sageVersionInfo = version;
-        final boolean isNewer = isNewerVersion(getVersionInfo().getVersion(), sageVersionInfo.getVersion());
+    @Getter private BubbleVersionInfo sageVersion;
+    public void setSageVersion(BubbleVersionInfo version) {
+        sageVersion = version;
+        final boolean isNewer = version == null ? false : isNewerVersion(getVersionInfo().getVersion(), sageVersion.getVersion());
         if (!jarUpgradeAvailable && isNewer) {
             jarUpgradeAvailable = true;
-            refreshPublicSystemConfigs();
+        } else {
+            jarUpgradeAvailable = false;
         }
+        refreshPublicSystemConfigs();
     }
-    public boolean hasSageVersionInfo () { return sageVersionInfo != null; }
+    public boolean hasSageVersion () { return sageVersion != null; }
     @Getter private Boolean jarUpgradeAvailable = false;
 
     @JsonIgnore public String getUnlockKey () { return BubbleFirstTimeListener.getUnlockKey(); }
@@ -339,7 +341,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_SUPPORT, getSupport()},
                         {TAG_SECURITY_LEVELS, DeviceSecurityLevel.values()},
                         {TAG_JAR_VERSION, getVersion()},
-                        {TAG_JAR_UPGRADE_AVAILABLE, getJarUpgradeAvailable() ? getSageVersionInfo() : null}
+                        {TAG_JAR_UPGRADE_AVAILABLE, getJarUpgradeAvailable() ? getSageVersion() : null}
                 }));
             } else {
                 // some things has to be refreshed all the time in some cases:

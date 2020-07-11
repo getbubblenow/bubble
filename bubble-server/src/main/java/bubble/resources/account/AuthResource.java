@@ -678,26 +678,25 @@ public class AuthResource {
 
     @Autowired private BubbleJarUpgradeService upgradeService;
 
-    @GET @Path(EP_UPGRADE+"/{key}")
+    @GET @Path(EP_UPGRADE+"/{node}/{key}")
     @Produces(APPLICATION_OCTET_STREAM)
     public Response getUpgrade(@Context Request req,
                                @Context ContainerRequest ctx,
+                               @PathParam("node") String nodeUuid,
                                @PathParam("key") String key) {
-        final String nodeUuid = upgradeService.getNodeForKey(key);
-        if (nodeUuid == null) {
+        final String nodeForKey = upgradeService.getNodeForKey(key);
+        if (nodeForKey == null) {
             log.warn("getUpgrade: key not found: "+key);
             return unauthorized();
         }
-
-        final BubbleNode node = nodeDAO.findByUuid(nodeUuid);
-        if (node == null) {
-            log.warn("getUpgrade: node not found: "+nodeUuid);
+        if (!nodeForKey.equals(nodeUuid)) {
+            log.warn("getUpgrade: key not for provided node");
             return unauthorized();
         }
 
-        final String remoteAddr = req.getRemoteAddr();
-        if (!node.hasSameIp(remoteAddr)) {
-            log.warn("getUpgrade: node has wrong IP (request came from "+remoteAddr+"): "+node.id());
+        final BubbleNode node = nodeDAO.findByUuid(nodeForKey);
+        if (node == null) {
+            log.warn("getUpgrade: node not found: "+nodeForKey);
             return unauthorized();
         }
 

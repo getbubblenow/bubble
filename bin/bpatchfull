@@ -14,8 +14,6 @@
 # Patch the bubble.jar on a remote node.
 # This script updates the entire jar file, and takes a lot longer than bpatch
 #
-# You install the JDK on the remote node first: apt install openjdk-11-jdk-headless
-#
 SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/bubble_common
@@ -57,7 +55,7 @@ else
   ssh ${HOST} "cat /tmp/bubble.jar > ~bubble/api/bubble.jar && supervisorctl restart bubble"
 fi
 
-if [[ $(jar tf ./target/bubble*.jar | grep "^site/$") ]] ; then
+if unzip -Z -1 ./target/bubble*.jar | grep -q "^site/$" ; then
   echo "Deploying new web..."
-  ssh ${HOST} "cd ~bubble && jar xf /tmp/bubble.jar site && chown -R bubble:bubble site"
+  ssh ${HOST} "cd ~bubble && unzip -o /tmp/bubble.jar 'site/*' && chown -R bubble:bubble site"
 fi

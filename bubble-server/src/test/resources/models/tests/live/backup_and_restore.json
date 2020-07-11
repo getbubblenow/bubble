@@ -138,7 +138,7 @@
 
   {
     "comment": "wait for network to stop",
-    "before": "await_url me/networks/{{bubbleNetwork.network}} 5m 10s await_json.getState().name() == 'stopped'",
+    "before": "await_url me/networks/{{bubbleNetwork.network}} 5m 10s await_json.getState().name() === 'stopped'",
     "request": { "uri": "me" }
   },
 

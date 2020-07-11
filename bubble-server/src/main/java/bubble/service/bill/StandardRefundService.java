@@ -32,13 +32,17 @@ public class StandardRefundService extends SimpleDaemon implements RefundService
     @Autowired private AccountPaymentMethodDAO paymentMethodDAO;
     @Autowired private BubbleConfiguration configuration;
 
-    @Override public void processRefunds () { interrupt(); }
+    @Override public void processRefunds () {
+        log.info("processRefunds: interrupting thread...");
+        interrupt();
+    }
 
     @Override protected long getSleepTime() { return REFUND_CHECK_INTERVAL; }
 
     @Override protected boolean canInterruptSleep() { return true; }
 
     @Override protected void process() {
+        log.info("process: handling refunds...");
         // iterate over all account plans that have been deleted but not yet closed
         final List<AccountPlan> pendingPlans = accountPlanDAO.findByDeletedAndNotClosedAndNoRefundIssued();
         for (AccountPlan accountPlan : pendingPlans) {

@@ -34,6 +34,7 @@ public class SageHelloService extends SimpleDaemon {
 
     @Override protected long getStartupDelay() { return HELLO_SAGE_START_DELAY; }
     @Override protected long getSleepTime() { return HELLO_SAGE_INTERVAL; }
+    @Override protected boolean canInterruptSleep() { return true; }
 
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private BubbleConfiguration configuration;

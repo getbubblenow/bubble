@@ -184,7 +184,7 @@
   },
 
   {
-    "before": "sleep 15s",
+    "before": "await_url me/payments 1m 2s await_json.length === 2",
     "comment": "verify refund payment has been processed",
     "request": { "uri": "me/payments" },
     "response": {
