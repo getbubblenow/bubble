@@ -247,11 +247,15 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         return new BubbleNodeQuickClient(this, configuration);
     }
 
+    @JsonIgnore @Transient @Getter @Setter private volatile RuntimeException launchException;
+    public boolean hasLaunchException () { return launchException != null; }
+
     public void waitForIpAddresses() throws TimeoutException {
         final long start = now();
-        while ((!hasIp4() || !hasIp6()) && now() - start < IP_ADDR_TIMEOUT) {
+        while ((!hasIp4() || !hasIp6()) && !hasLaunchException() && now() - start < IP_ADDR_TIMEOUT) {
             sleep(TimeUnit.SECONDS.toMillis(2), "waiting for node to have IP addresses");
         }
+        if (hasLaunchException()) throw launchException;
         if (!hasIp4() || !hasIp6()) throw new TimeoutException("waitForIpAddresses: timeout");
     }
 

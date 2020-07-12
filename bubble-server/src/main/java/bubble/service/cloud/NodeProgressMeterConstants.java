@@ -5,6 +5,7 @@
 package bubble.service.cloud;
 
 import bubble.notify.NewNodeNotification;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.MapBuilder;
 
 import java.lang.reflect.Field;
@@ -22,6 +23,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.constValue;
 import static org.cobbzilla.util.reflect.ReflectionUtil.isStaticFinalString;
 
+@Slf4j
 public class NodeProgressMeterConstants {
 
     public static final String TICK_PREFIX = "METER_TICK_";
@@ -63,14 +65,15 @@ public class NodeProgressMeterConstants {
     public static final String METER_ERROR_PEER_LIMIT_REACHED = "BUBBLE-ERROR: PEER LIMIT REACHED";
     public static final String METER_ERROR_NODE_CLOUD_NOT_FOUND = "BUBBLE-ERROR: NODE CLOUD NOT FOUND";
     public static final String METER_ERROR_STARTING_NODE = "BUBBLE-ERROR: ERROR STARTING NODE";
+    public static final String METER_ERROR_UNAVAILABLE_LOCATION = "BUBBLE-ERROR: UNAVAILABLE LOCATION";
+    public static final String METER_ERROR_RETRY_UNAVAILABLE_LOCATION = "BUBBLE-ERROR: UNAVAILABLE LOCATION (WILL RETRY)";
     public static final String METER_ERROR_DNS = "BUBBLE-ERROR: ERROR SETTING DNS ENTRIES FOR NODE";
     public static final String METER_ERROR_NO_IP = "BUBBLE-ERROR: NODE STARTED BUT HAS NO IP ADDRESS";
     public static final String METER_ERROR_ROLE_VALIDATION_ERRORS = "BUBBLE-ERROR: ROLE VALIDATION FAILED";
-
-    public static final String METER_COMPLETED = "meter_completed";
-    public static final String METER_CANCELED = "meter_canceled";
-    public static final String METER_START_OR_DNS_ERROR = "meter_start_or_dns_error";
-    public static final String METER_UNKNOWN_ERROR = "meter_unknown_error";
+    public static final String METER_ERROR_START_OR_DNS = "meter_error_start_or_dns";
+    public static final String METER_ERROR_CANCELED = "meter_error_canceled";
+    public static final String METER_ERROR_UNKNOWN = "meter_error_unknown";
+    public static final String METER_COMPLETED_OK = "meter_completed_ok";
 
     private static final Map<String, Integer> STANDARD_TICKS = MapBuilder.build(new Object[][] {
             {METER_TICK_CONFIRMING_NETWORK_LOCK, 1},
@@ -134,7 +137,9 @@ public class NodeProgressMeterConstants {
 
     public static String getErrorMessageKey (String error) {
         final String messageKey = ERRORS.get(error);
-        return messageKey != null ? messageKey : METER_UNKNOWN_ERROR;
+        if (messageKey != null) return messageKey;
+        if (log.isWarnEnabled()) log.warn("getErrorMessageKey("+error+"): no found, returning METER_ERROR_UNKNOWN ("+METER_ERROR_UNKNOWN+")");
+        return METER_ERROR_UNKNOWN;
     }
 
 

@@ -11,6 +11,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
 @NoArgsConstructor @Accessors(chain=true)
@@ -25,8 +26,11 @@ public class NetLocation implements Serializable {
     @Getter @Setter private String region;
     public boolean hasRegion () { return !empty(region); }
 
-    public static NetLocation fromCloudAndRegion(String cloud, String region) {
-        return new NetLocation().setCloud(cloud).setRegion(region);
+    @Getter @Setter private Boolean exactRegion;
+    public boolean exactRegion () { return bool(exactRegion); }
+
+    public static NetLocation fromCloudAndRegion(String cloud, String region, Boolean exactRegion) {
+        return new NetLocation().setCloud(cloud).setRegion(region).setExactRegion(exactRegion);
     }
 
     public static NetLocation fromIp(String ip) {

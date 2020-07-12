@@ -5,48 +5,55 @@
 package bubble.service.cloud.job;
 
 import bubble.cloud.compute.ComputeServiceDriver;
+import bubble.cloud.compute.UnavailableComputeLocationException;
 import bubble.model.cloud.BubbleNode;
 import lombok.extern.slf4j.Slf4j;
 
-import static bubble.service.cloud.NodeProgressMeterConstants.METER_ERROR_NO_IP;
-import static bubble.service.cloud.NodeProgressMeterConstants.METER_ERROR_STARTING_NODE;
+import static bubble.service.cloud.NodeProgressMeterConstants.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 
 @Slf4j
 public class NodeStartJob implements Runnable {
 
     private BubbleNode node;
-//    private final BubbleNodeDAO nodeDAO;
     private final ComputeServiceDriver computeDriver;
 
     public NodeStartJob(BubbleNode node,
-//                        BubbleNodeDAO nodeDAO,
                         ComputeServiceDriver computeDriver) {
         this.node = node;
-//        this.nodeDAO = nodeDAO;
         this.computeDriver = computeDriver;
     }
 
     @Override public void run() {
         try {
-//            node.setState(BubbleNodeState.booting);
-//            nodeDAO.update(node);
-
             log.debug("run: calling computeDriver.start("+node.id()+")");
+            node.setLaunchException(null);
             node = computeDriver.start(node);
             log.debug("run: computeDriver.start("+node.id()+") returned successfully");
 
-//            node.setState(BubbleNodeState.booted);
-//            nodeDAO.update(node);
-
             if (!node.hasIp4()) {
+                node.setLaunchException(new IllegalStateException("node booted but has no IP"));
                 throw new NodeJobException(METER_ERROR_NO_IP, "node booted but has no IP");
             }
 
         } catch (NodeJobException e) {
+            log.debug("run: computeDriver.start("+node.id()+") returning with launchError(NodeJobException): "+shortError(e));
+            node.setLaunchException(e);
             throw e;
 
+        } catch (UnavailableComputeLocationException e) {
+            log.debug("run: computeDriver.start("+node.id()+") returning with launchError(UnavailableComputeLocationException): "+shortError(e));
+            node.setLaunchException(e);
+            throw new NodeJobException(METER_ERROR_UNAVAILABLE_LOCATION, "node cannot be launched at this location", e);
+
+        } catch (RuntimeException e) {
+            log.debug("run: computeDriver.start("+node.id()+") returning with launchError(RuntimeException): "+shortError(e));
+            node.setLaunchException(e);
+            throw new NodeJobException(METER_ERROR_STARTING_NODE, "error starting node: "+shortError(e), e);
+
         } catch (Exception e) {
+            log.debug("run: computeDriver.start("+node.id()+") returning with launchError(Exception): "+shortError(e));
+            node.setLaunchException(new IllegalStateException(shortError(e), e));
             throw new NodeJobException(METER_ERROR_STARTING_NODE, "error starting node: "+shortError(e), e);
         }
     }

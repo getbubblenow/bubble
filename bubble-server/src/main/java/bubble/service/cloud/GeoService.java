@@ -30,10 +30,7 @@ import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -173,7 +170,7 @@ public class GeoService {
     }
 
     @Getter(lazy=true) private final RedisService timezoneRedis = redis.prefixNamespace(getClass().getName()+".timezone");
-    private Map<String, GeoTimeZone> timezoneCache = new ExpirationMap<>(MEMORY_CACHE_TIME);
+    private final Map<String, GeoTimeZone> timezoneCache = new ExpirationMap<>(MEMORY_CACHE_TIME);
 
     public GeoTimeZone getTimeZone (final Account account, String ip) {
         final AtomicReference<Account> acct = new AtomicReference<>(account);
@@ -211,10 +208,23 @@ public class GeoService {
     }
 
     public List<CloudRegionRelative> getCloudRegionRelatives(BubbleNetwork network, String userIp) {
+        return getCloudRegionRelatives(network, userIp, null);
+    }
+
+    public List<CloudRegionRelative> getCloudRegionRelatives(BubbleNetwork network,
+                                                             String userIp,
+                                                             Collection<CloudAndRegion> exclude) {
         final GeoLocation geo = locate(network.getAccount(), userIp);
         final double latitude = geo.getLatitude();
         final double longitude = geo.getLongitude();
+        return getCloudRegionRelatives(network, latitude, longitude, exclude);
 
+    }
+
+    public List<CloudRegionRelative> getCloudRegionRelatives(BubbleNetwork network,
+                                                             double latitude,
+                                                             double longitude,
+                                                             Collection<CloudAndRegion> exclude) {
         // do we have a footprint?
         BubbleFootprint footprint = null;
         if (network.hasFootprint()) {
@@ -224,17 +234,23 @@ public class GeoService {
 
         // find all cloud services available to us
         final List<CloudService> clouds = cloudDAO.findByAccountAndType(network.getAccount(), CloudServiceType.compute);
-        final List<CloudRegionRelative> closestRegions = findClosestRegions(configuration, clouds, footprint, latitude, longitude);
+        final List<CloudRegionRelative> closestRegions = findClosestRegions(configuration, clouds, footprint, latitude, longitude, exclude);
         if (closestRegions.isEmpty()) throw invalidEx("err.cloudRegions.required");
         return closestRegions;
     }
 
     public CloudAndRegion selectCloudAndRegion(BubbleNetwork network, NetLocation netLocation) {
+        return selectCloudAndRegion(network, netLocation, Collections.emptyList());
+    }
+
+    public CloudAndRegion selectCloudAndRegion(BubbleNetwork network,
+                                               NetLocation netLocation,
+                                               Collection<CloudAndRegion> exclude) {
         final CloudRegion closest;
         final String cloudUuid;
         if (netLocation.hasIp()) {
             // determine closest POP to userIp from cloud compute service
-            final List<CloudRegionRelative> closestRegions = getCloudRegionRelatives(network, netLocation.getIp());
+            final List<CloudRegionRelative> closestRegions = getCloudRegionRelatives(network, netLocation.getIp(), exclude);
             closest = closestRegions.get(0);
             cloudUuid = closest.getCloud();
             final CloudService cloud = cloudDAO.findByUuid(cloudUuid);
@@ -248,9 +264,30 @@ public class GeoService {
                 log.error("selectCloudAndRegion (network="+network.getUuid()+"): netLocation.cloud="+netLocation.getCloud()+" not found under account="+network.getAccount());
                 throw notFoundEx(netLocation.getCloud());
             }
-            closest = cloud.getComputeDriver(configuration).getRegion(netLocation.getRegion());
-            if (closest == null) throw notFoundEx(netLocation.getRegion());
-            return new CloudAndRegion(cloud, closest);
+            final CloudRegion desiredRegion = cloud.getComputeDriver(configuration).getRegion(netLocation.getRegion());
+            if (desiredRegion == null) throw notFoundEx(netLocation.getRegion());
+
+            final GeoLocation desiredLocation = desiredRegion.getLocation();
+            final List<CloudRegionRelative> candidateRegions = getCloudRegionRelatives(network, desiredLocation.getLatitude(), desiredLocation.getLongitude(), exclude);
+
+            if (candidateRegions.isEmpty()) return die("selectCloudAndRegion: no candidate regions found, desiredRegion="+desiredRegion);
+
+            // If multiple candidate regions have distance zero, choose the one that is in the same cloud
+            final CloudRegionRelative preciseRegion = candidateRegions.stream()
+                    .filter(r -> r.getDistance() == 0)
+                    .filter(r -> r.getCloud().equals(netLocation.getCloud()))
+                    .filter(r -> !netLocation.exactRegion() || r.getInternalName().equals(netLocation.getRegion()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (preciseRegion != null) return new CloudAndRegion(cloud, preciseRegion);
+            if (netLocation.exactRegion()) {
+                log.error("selectCloudAndRegion: exactRegion was set, and region was not a candidate: "+netLocation.getRegion());
+                throw notFoundEx(netLocation.getRegion());
+            }
+
+            // No precise region available, use the closest
+            return new CloudAndRegion(cloud, candidateRegions.get(0));
 
         } else {
             return die("selectCloudAndRegion: no IP or region provided to launch first node");

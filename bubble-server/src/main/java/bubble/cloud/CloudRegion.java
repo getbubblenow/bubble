@@ -5,6 +5,7 @@
 package bubble.cloud;
 
 import bubble.cloud.geoLocation.GeoLocation;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -12,7 +13,9 @@ import lombok.experimental.Accessors;
 
 import static java.util.UUID.randomUUID;
 
-@Accessors(chain=true) @ToString(of={"cloud","name","internalName"})
+@Accessors(chain=true)
+@EqualsAndHashCode(of={"cloud", "internalName"})
+@ToString(of={"cloud", "name", "internalName"})
 public class CloudRegion {
 
     public static final CloudRegion[] EMPTY_REGIONS = new CloudRegion[0];
@@ -29,7 +32,5 @@ public class CloudRegion {
     @Getter @Setter private String description;
 
     @Getter @Setter private GeoLocation location;
-
-    @Getter @Setter private Double costFactor = 1.0d;
 
 }

@@ -31,6 +31,7 @@ import static bubble.service.cloud.NodeProgressMeter.getProgressMeterPrefix;
 import static java.util.concurrent.TimeUnit.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.reflect.ReflectionUtil.closeQuietly;
 
 @Service @Slf4j
 public class NodeLaunchMonitor extends SimpleDaemon {
@@ -54,7 +55,7 @@ public class NodeLaunchMonitor extends SimpleDaemon {
         startIfNotRunning();
         final LauncherEntry previousLaunch = launcherThreads.get(networkUuid);
         if (previousLaunch != null && previousLaunch.isAlive()) {
-            log.warn("registerLauncher("+networkUuid+"): entry thread exists, stopping it: "+previousLaunch);
+            log.warn("register("+networkUuid+"): entry thread exists, stopping it: "+previousLaunch);
             forceEndLauncher(previousLaunch);
         }
         launcherThreads.put(networkUuid, new LauncherEntry(nnUuid, networkUuid, t));
@@ -71,8 +72,7 @@ public class NodeLaunchMonitor extends SimpleDaemon {
     }
 
     public boolean isRegistered(String networkUuid) {
-        final LauncherEntry launcherEntry = launcherThreads.get(networkUuid);
-        return launcherEntry != null && launcherEntry.isAlive();
+        return launcherThreads.containsKey(networkUuid);
     }
 
     private synchronized void startIfNotRunning() {
@@ -102,8 +102,12 @@ public class NodeLaunchMonitor extends SimpleDaemon {
     }
 
     public void unregister(String networkUuid) {
-        log.info("unregister: removing network="+networkUuid);
-        launcherThreads.remove(networkUuid);
+        log.info("unregister: removing network="+networkUuid+" from "+stacktrace());
+        final LauncherEntry entry = launcherThreads.remove(networkUuid);
+        if (entry != null) {
+            final NodeProgressMeter progressMeter = progressMeters.get(entry.nnUuid);
+            if (progressMeter != null) closeQuietly(progressMeter);
+        }
     }
 
     @Override protected void process() {
@@ -119,8 +123,8 @@ public class NodeLaunchMonitor extends SimpleDaemon {
     private void forceEndLauncher(LauncherEntry entry) {
         final NodeProgressMeter meter = getProgressMeter(entry.getNnUuid());
         if (meter != null) meter.cancel();
+        unregister(entry.getNetworkUuid());
         terminate(entry.getThread(), LAUNCH_TERMINATE_TIMEOUT);
-        launcherThreads.remove(entry.getNetworkUuid());
     }
 
     private final Map<String, NodeProgressMeter> progressMeters = new ExpirationMap<>(50, HOURS.toMillis(1), ExpirationEvictionPolicy.atime);

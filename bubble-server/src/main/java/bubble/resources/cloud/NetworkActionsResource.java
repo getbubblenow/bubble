@@ -72,7 +72,8 @@ public class NetworkActionsResource {
     public Response startNetwork(@Context Request req,
                                  @Context ContainerRequest ctx,
                                  @QueryParam("cloud") String cloud,
-                                 @QueryParam("region") String region) {
+                                 @QueryParam("region") String region,
+                                 @QueryParam("exactRegion") Boolean exactRegion) {
 
         final Account caller = userPrincipal(ctx);
         if (!authAccount(caller)) return forbidden();
@@ -88,7 +89,7 @@ public class NetworkActionsResource {
         if (!network.getState().canStart()) return invalid("err.network.cannotStartInCurrentState");
         authenticatorService.ensureAuthenticated(ctx, ActionTarget.network);
 
-        return _startNetwork(network, cloud, region, req);
+        return _startNetwork(network, cloud, region, exactRegion, req);
     }
 
     @GET @Path(EP_STATUS)
@@ -173,13 +174,14 @@ public class NetworkActionsResource {
     public Response restoreNetwork(@Context Request req,
                                    @Context ContainerRequest ctx,
                                    @QueryParam("cloud") String cloud,
-                                   @QueryParam("region") String region) {
+                                   @QueryParam("region") String region,
+                                   @QueryParam("exactRegion") Boolean exactRegion) {
         final Account caller = userPrincipal(ctx);
         if (!authAccount(caller)) return forbidden();
 
         authenticatorService.ensureAuthenticated(ctx, ActionTarget.network);
 
-        return ok(networkService.restoreNetwork(network, cloud, region, req));
+        return ok(networkService.restoreNetwork(network, cloud, region, exactRegion, req));
     }
 
     @PUT @Path(EP_FORK +"/{fqdn}")
@@ -187,7 +189,8 @@ public class NetworkActionsResource {
                          @Context ContainerRequest ctx,
                          @PathParam("fqdn") String fqdn,
                          @QueryParam("cloud") String cloud,
-                         @QueryParam("region") String region) {
+                         @QueryParam("region") String region,
+                         @QueryParam("exactRegion") Boolean exactRegion) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();
 
@@ -221,19 +224,20 @@ public class NetworkActionsResource {
 
         network.setForkHost(network.hostFromFqdn(fqdn));
 
-        return _startNetwork(network, cloud, region, req);
+        return _startNetwork(network, cloud, region, exactRegion, req);
     }
 
     public Response _startNetwork(BubbleNetwork network,
                                   String cloud,
                                   String region,
+                                  Boolean exactRegion,
                                   Request req) {
         if ((region != null && cloud == null) || (region == null && cloud != null)) {
             throw invalidEx("err.netlocation.invalid", "must specify both cloud and region, or neither");
         }
 
         final NetLocation netLocation = (region != null)
-                ? NetLocation.fromCloudAndRegion(cloud, region)
+                ? NetLocation.fromCloudAndRegion(cloud, region, exactRegion)
                 : NetLocation.fromIp(getRemoteHost(req));
 
         return ok(networkService.startNetwork(network, netLocation));

@@ -114,9 +114,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
             log.warn("error("+line+") ignored, error already set");
             return;
         }
-        closed.set(true);
         error.set(true);
-        background(this::close);
         setCurrentTick(newTick(getErrorMessageKey(line), line));
     }
 
@@ -128,11 +126,19 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
                 .setDetails(line);
     }
 
-    public void reset() {
+    public void resetToPreAnsible() {
+        reset(standardTicks.size());
+        _setCurrentTick(lastStandardTick);
+    }
+
+    public void fullReset() {
+        reset(0);
+    }
+
+    private void reset(int tickPos) {
         if (closed.get()) die("reset: progress meter is closed, cannot reset");
         error.set(false);
-        tickPos = standardTicks.size();
-        _setCurrentTick(lastStandardTick);
+        this.tickPos = tickPos;
     }
 
     @Override public void run() {
@@ -167,10 +173,10 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     public void _setCurrentTick(NodeProgressMeterTick tick, boolean allowForce) {
         final String json = json(tick, COMPACT_MAPPER);
         if (!allowForce && closed.get()) {
-            log.warn("setCurrentTick (closed, not setting): "+json);
+            log.warn("_setCurrentTick (closed, not setting): "+json);
             return;
         }
-        log.info("setCurrentTick: "+json);
+        if (log.isTraceEnabled()) log.trace("_setCurrentTick: "+json+" from: "+stacktrace());
         redis.set(getProgressMeterKey(key, nn.getAccount()), json, EX, TICK_REDIS_EXPIRATION);
     }
 
@@ -180,6 +186,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     public static final long THREAD_KILL_TIMEOUT = SECONDS.toMillis(5);
 
     @Override public void close() {
+        if (log.isTraceEnabled()) log.trace("close: called from: "+stacktrace());
         closed.set(true);
         try {
             super.close();
@@ -192,13 +199,14 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     }
 
     public void completed() {
+        if (log.isTraceEnabled()) log.trace("completed: called from: "+stacktrace());
         closed.set(true);
         success.set(true);
         touch();
         _setCurrentTick(new NodeProgressMeterTick()
                 .setNetwork(nn.getNetwork())
                 .setAccount(nn.getAccount())
-                .setMessageKey(METER_COMPLETED)
+                .setMessageKey(METER_COMPLETED_OK)
                 .setPercent(100));
         background(this::close);
     }
@@ -208,13 +216,13 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     }
 
     public void cancel () {
-        log.info("cancel: cancelling progress meter for network: "+nn.getNetworkName());
+        if (log.isTraceEnabled()) log.trace("cancel: cancelling progress meter for network: "+nn.getNetworkName()+" from "+stacktrace());
         closed.set(true);
         success.set(true);
         _setCurrentTick(new NodeProgressMeterTick()
                 .setNetwork(nn.getNetwork())
                 .setAccount(nn.getAccount())
-                .setMessageKey(METER_CANCELED)
+                .setMessageKey(METER_ERROR_CANCELED)
                 .setPercent(0));
         background(this::close);
     }

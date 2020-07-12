@@ -6,10 +6,14 @@ package bubble.service.cloud;
 
 import bubble.model.cloud.BubbleNode;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+
+@Slf4j
 public class NodeLaunchException extends RuntimeException {
 
-    public enum NodeLaunchExceptionType { fatal, canRetry, interrupted }
+    public enum NodeLaunchExceptionType { fatal, canRetry, interrupted, unavailableRegion }
 
     @Getter private final BubbleNode node;
     public boolean hasNode () { return node != null; }
@@ -21,6 +25,11 @@ public class NodeLaunchException extends RuntimeException {
         super(message, e);
         this.node = node;
         this.type = type;
+        if (log.isTraceEnabled()) log.trace("NodeLaunchException created: "+this);
+    }
+
+    @Override public String toString() {
+        return "{NodeLaunchException type="+type+", message="+getMessage()+", cause="+(getCause() == null ? "null" : shortError(getCause()))+"}";
     }
 
     private NodeLaunchException (BubbleNode node, Exception e, NodeLaunchExceptionType type) {
@@ -63,5 +72,12 @@ public class NodeLaunchException extends RuntimeException {
     public static <T> T launchInterrupted (BubbleNode node, String message) { throw new NodeLaunchException(node, message, NodeLaunchExceptionType.interrupted); }
     public static <T> T launchInterrupted (BubbleNode node, Exception e) { throw new NodeLaunchException(node, e, NodeLaunchExceptionType.interrupted); }
     public static <T> T launchInterrupted (BubbleNode node, Exception e, String message) { throw new NodeLaunchException(node, e, message, NodeLaunchExceptionType.interrupted); }
+
+    public static <T> T unavailableRegion (String message) { throw new NodeLaunchException(message, NodeLaunchExceptionType.unavailableRegion); }
+    public static <T> T unavailableRegion (Exception e, String message) { throw new NodeLaunchException(e, message, NodeLaunchExceptionType.unavailableRegion); }
+    public static <T> T unavailableRegion (Exception e) { throw new NodeLaunchException(e, NodeLaunchExceptionType.unavailableRegion); }
+    public static <T> T unavailableRegion (BubbleNode node, String message) { throw new NodeLaunchException(node, message, NodeLaunchExceptionType.unavailableRegion); }
+    public static <T> T unavailableRegion (BubbleNode node, Exception e) { throw new NodeLaunchException(node, e, NodeLaunchExceptionType.unavailableRegion); }
+    public static <T> T unavailableRegion (BubbleNode node, Exception e, String message) { throw new NodeLaunchException(node, e, message, NodeLaunchExceptionType.unavailableRegion); }
 
 }

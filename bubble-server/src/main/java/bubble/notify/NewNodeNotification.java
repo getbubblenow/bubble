@@ -4,8 +4,11 @@
  */
 package bubble.notify;
 
+import bubble.cloud.CloudAndRegion;
 import bubble.model.account.AccountContact;
 import bubble.model.cloud.BubbleNetwork;
+import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.NetLocation;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,6 +16,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import javax.persistence.Transient;
+import java.util.ArrayList;
 import java.util.List;
 
 import static bubble.ApiConstants.newNodeHostname;
@@ -31,8 +35,16 @@ public class NewNodeNotification {
     @Getter @Setter @JsonIgnore private BubbleNetwork networkObject;
     @Getter @Setter private String domain;
     @Getter @Setter private String fqdn;
-    @Getter @Setter private String cloud;
-    @Getter @Setter private String region;
+    @Getter @Setter private NetLocation netLocation;
+
+    @Transient @JsonIgnore @Getter @Setter private List<CloudAndRegion> excludeRegions;
+    public NewNodeNotification excludeRegion (String cloudUuid, String regionInternalName) {
+        if (excludeRegions == null) excludeRegions = new ArrayList<>();
+        excludeRegions.add(new CloudAndRegion(cloudUuid, regionInternalName));
+        return this;
+    }
+    public NewNodeNotification excludeCurrentRegion (BubbleNode node) { return excludeRegion(node.getCloud(), node.getRegion()); }
+
     @Getter @Setter private Boolean automated;
     public boolean automated () { return automated != null && automated; }
 

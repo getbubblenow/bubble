@@ -6,6 +6,7 @@ package bubble.service.cloud;
 
 import bubble.cloud.CloudAndRegion;
 import bubble.cloud.compute.ComputeServiceDriver;
+import bubble.cloud.compute.UnavailableComputeLocationException;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
 import bubble.dao.account.AccountSshKeyDAO;
@@ -63,6 +64,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -87,7 +89,6 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.reflect.ReflectionUtil.closeQuietly;
 import static org.cobbzilla.util.system.CommandShell.chmod;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
@@ -152,6 +153,7 @@ public class StandardNetworkService implements NetworkService {
         boolean killNode = false;
         try {
             progressMeter = launchMonitor.getProgressMeter(nn);
+            progressMeter.fullReset();
             progressMeter.write(METER_TICK_CONFIRMING_NETWORK_LOCK);
 
             if (!confirmNetLock(nn.getNetwork(), lock)) {
@@ -161,7 +163,7 @@ public class StandardNetworkService implements NetworkService {
 
             progressMeter.write(METER_TICK_VALIDATING_NODE_NETWORK_AND_PLAN);
             if (network.getState() != BubbleNetworkState.starting) {
-                if (network.getState() == BubbleNetworkState.stopped) {
+                if (network.getState().isStopped()) {
                     log.info("newNode: network was stopped, starting: "+network.getUuid());
                     networkDAO.update(network.setState(BubbleNetworkState.starting));
                 } else {
@@ -200,7 +202,8 @@ public class StandardNetworkService implements NetworkService {
                 return fatalLaunchFailure("newNode: peer limit reached ("+plan.getNodesIncluded()+")");
             }
 
-            final CloudService cloud = findServiceOrDelegate(nn.getCloud());
+            final CloudAndRegion cloudAndRegion = geoService.selectCloudAndRegion(network, nn.getNetLocation(), nn.getExcludeRegions());
+            final CloudService cloud = findServiceOrDelegate(cloudAndRegion.getCloud().getUuid());
             computeDriver = cloud.getComputeDriver(configuration);
 
             final CloudService nodeCloud = cloudDAO.findByAccountAndName(network.getAccount(), cloud.getName());
@@ -222,7 +225,7 @@ public class StandardNetworkService implements NetworkService {
                     .setSizeType(network.getComputeSizeType())
                     .setSize(computeDriver.getSize(network.getComputeSizeType()).getInternalName())
                     .setCloud(nodeCloud.getUuid())
-                    .setRegion(nn.getRegion()));
+                    .setRegion(cloudAndRegion.getRegion().getInternalName()));
 
             // if we are forking, we will be our own sage
             final BubbleNode sageNode;
@@ -233,9 +236,6 @@ public class StandardNetworkService implements NetworkService {
             } else {
                 sageNode = thisNode;
             }
-
-            @Cleanup("delete") final TempDir automation = new TempDir();
-            final File bubbleFilesDir = mkdirOrDie(new File(abs(automation) + "/roles/bubble/files"));
 
             // build automation directory for this run
             final ValidationResult errors = new ValidationResult();
@@ -259,54 +259,34 @@ public class StandardNetworkService implements NetworkService {
             try {
                 node.waitForIpAddresses();
             } catch (TimeoutException e) {
-                launchFailureCanRetry(node, e, "waitForIpAddresses error");
+                final AwaitResult<Object> awaitResult = awaitAll(jobFutures, SECONDS.toMillis(5));
+                log.info("newNode: timeout waiting for IP addresses, awaitResult="+awaitResult);
+                if (awaitResult.allSucceeded()) {
+                    // should not happen
+                    return launchFailureCanRetry(node, e, "waitForIpAddresses timeout");
+                } else {
+                    final Collection<Exception> failures = awaitResult.getFailures().values();
+                    if (empty(failures)) {
+                        return processLaunchException(node, "waitForIpAddresses");
+                    } else {
+                        for (Exception failure : failures) {
+                            if (log.isDebugEnabled()) log.debug("newNode: failure=" + shortError(failure));
+                            if (failure instanceof NodeJobException) {
+                                final NodeJobException jobException = (NodeJobException) failure;
+                                if (jobException.isComputeLocationUnavailable()) {
+                                    return unavailableRegion(node, failure, jobException.getMessage());
+                                }
+                            }
+                        }
+                        final Exception firstFailure = failures.iterator().next();
+                        return launchFailureCanRetry(node, firstFailure, "waitForIpAddress timeout: " + shortError(firstFailure));
+                    }
+                }
             }
-            progressMeter.write(METER_TICK_PREPARING_ROLES);
-            final Map<String, Object> ctx = ansiblePrep.prepAnsible(
-                    automation, bubbleFilesDir, account, network, node, computeDriver,
-                    errors, nn.fork(), nn.getRestoreKey());
-            if (errors.isInvalid()) {
-                progressMeter.error(METER_ERROR_ROLE_VALIDATION_ERRORS);
-                fatalLaunchFailure(node, new MultiViolationException(errors.getViolationBeans()));
-            }
 
-            progressMeter.write(METER_TICK_PREPARING_INSTALL);
-            node.setState(BubbleNodeState.preparing_install);
-            nodeDAO.update(node);
-
-            // This node is on our network, or is the very first server. We must run ansible on it ourselves.
-            // write playbook file
-            writeFile(automation, ctx, PLAYBOOK_YML, PLAYBOOK_TEMPLATE);
-
-            // write inventory file
-            final File inventory = new File(automation, "hosts");
+            @Cleanup("delete") final TempDir automation = new TempDir();
             final File sshKeyFile = packerService.getPackerPrivateKey();
-            toFile(inventory, "[bubble]\n127.0.0.1"
-                    + " ansible_python_interpreter=/usr/bin/python3\n");
-
-            // write SSH key, if present
-            if (network.hasSshKey()) {
-                final File sshPubKeyFile = new File(bubbleFilesDir, "admin_ssh_key.pub");
-                final AccountSshKey sshKey = sshKeyDAO.findByAccountAndId(network.getAccount(), network.getSshKey());
-                if (sshKey == null) throw invalidEx("err.sshPublicKey.notFound");
-                // add a newline before in case authorized_keys file does not end in a new line
-                // add a newline after so keys appended later will be OK
-                toFile(sshPubKeyFile, "\n"+sshKey.getSshPublicKey()+"\n");
-            }
-            copyScripts(bubbleFilesDir);
-
-            // write self_node.json file
-            writeFile(bubbleFilesDir, null, SELF_NODE_JSON, json(node
-                    .setPlan(plan)
-                    .setRestoreKey(nn.getRestoreKey())));
-
-            // write sage_node.json file
-            writeFile(bubbleFilesDir, null, SAGE_NODE_JSON, json(BubbleNode.sageMask(sageNode)));
-            writeFile(bubbleFilesDir, null, SAGE_KEY_JSON, json(BubbleNodeKey.sageMask(sageKey)));
-
-            // write install_local.sh script
-            final File installLocalScript = writeFile(automation, ctx, INSTALL_LOCAL_SH, INSTALL_LOCAL_TEMPLATE);
-            chmod(installLocalScript, "500");
+            prepareLaunchFiles(nn, computeDriver, node, progressMeter, network, sageKey, account, plan, sageNode, automation, errors, sshKeyFile);
 
             // run ansible
             final String sshArgs = "-o UserKnownHostsFile=/dev/null "
@@ -322,14 +302,19 @@ public class StandardNetworkService implements NetworkService {
             log.info("newNode: awaiting background jobs...");
             final AwaitResult<Object> awaitResult = awaitAll(jobFutures, NODE_START_JOB_TIMEOUT, NODE_START_JOB_AWAIT_SLEEP, new NodeLaunchAwait(progressMeter));
             if (!awaitResult.allSucceeded()) {
-                log.warn("newNode: some background jobs failed: "+awaitResult.getFailures().values());
-                final Exception firstException = awaitResult.getFailures().values().iterator().next();
-                if (firstException instanceof NodeJobException) {
-                    progressMeter.error(((NodeJobException) firstException).getMeterError());
+                log.warn("newNode: some background jobs failed, result="+ awaitResult);
+                final Collection<Exception> exceptions = awaitResult.getFailures().values();
+                if (exceptions.isEmpty()) {
+                    return processLaunchException(node, "awaitingBeforeAnsible");
                 } else {
-                    progressMeter.error(METER_START_OR_DNS_ERROR);
+                    final Exception firstException = exceptions.iterator().next();
+                    if (firstException instanceof NodeJobException) {
+                        progressMeter.error(((NodeJobException) firstException).getMeterError());
+                    } else {
+                        progressMeter.error(METER_ERROR_START_OR_DNS);
+                    }
+                    return launchFailureCanRetry(node, "newNode: error in setup:" + exceptions);
                 }
-                return launchFailureCanRetry(node, "newNode: error in setup:" + awaitResult.getFailures().values());
             }
             waitForDebugger(script);
             long configStart = now();
@@ -371,6 +356,7 @@ public class StandardNetworkService implements NetworkService {
                 while (now() - readyStart < NODE_READY_TIMEOUT) {
                     sleep(SECONDS.toMillis(2), "newNode: waiting for node (" + node.id() + ") to be ready");
                     log.debug("newNode: waiting for node (" + node.id() + ") to be ready via "+readyUri);
+                    progressMeter.resetToPreAnsible();
                     progressMeter.write("READY-CHECK-"+(i++)+" /auth/ready for node: "+node.id());
                     launchMonitor.touch(network.getUuid());
                     try {
@@ -412,14 +398,26 @@ public class StandardNetworkService implements NetworkService {
             log.info("newNode: ready in "+formatDuration(now() - start));
 
         } catch (Exception e) {
+            killNode = node != null;
             if (e instanceof SleepInterruptedException) {
                 log.warn("newNode: interrupted!");
-            } else {
-                log.error("newNode: " + e, e);
+                return launchInterrupted(node, e, "newNode: interrupted: "+shortError(e));
+
+            } else if (e instanceof NodeLaunchException) {
+                log.warn("newNode: NodeLaunchException: "+shortError(e));
+                throw (NodeLaunchException) e;
+
+            } else if (e instanceof UnavailableComputeLocationException) {
+                log.warn("newNode: UnavailableComputeLocationException: "+shortError(e));
+                if (progressMeter != null) {
+                    if (nn.getNetLocation().exactRegion()) {
+                        progressMeter.error(METER_ERROR_UNAVAILABLE_LOCATION);
+                    } else {
+                        progressMeter.error(METER_ERROR_RETRY_UNAVAILABLE_LOCATION);
+                    }
+                }
+                return unavailableRegion(node, e, "newNode: unavailable location: "+shortError(e));
             }
-            killNode = node != null;
-            if (e instanceof NodeLaunchException) throw (NodeLaunchException) e;
-            if (e instanceof SleepInterruptedException) launchInterrupted("newNode: interrupted: "+shortError(e));
             return die("newNode: "+e, e);
 
         } finally {
@@ -435,8 +433,12 @@ public class StandardNetworkService implements NetworkService {
             if (node != null && (killNode || !node.isRunning())) {
                 node.setState(BubbleNodeState.unknown_error);
                 nodeDAO.update(node);
-                if (!progressMeter.hasError()) progressMeter.error(METER_UNKNOWN_ERROR);
+                if (!progressMeter.hasError()) progressMeter.error(METER_ERROR_UNKNOWN);
                 killNode(node, "error: node not running: "+node.id()+": "+node.getState());
+                if (!anyNodesActive(network)) {
+                    log.warn("newNode: no nodes active, setting network state to 'stopped'");
+                    networkDAO.update(network.setState(BubbleNetworkState.error_stopping));
+                }
             }
 
             if (progressMeter != null) {
@@ -449,11 +451,72 @@ public class StandardNetworkService implements NetworkService {
                         }
                     }
                 }
-                closeQuietly(progressMeter);
             }
-            unlockNetwork(nn.getNetwork(), lock);
         }
         return node;
+    }
+
+    @NonNull private BubbleNode processLaunchException(BubbleNode node, String prefix) {
+        if (node.hasLaunchException()) {
+            final RuntimeException launchException = node.getLaunchException();
+            if (launchException instanceof UnavailableComputeLocationException) {
+                log.info("newNode: "+prefix+" received UnavailableComputeLocationException, throwing");
+                return unavailableRegion(node, launchException, shortError(launchException));
+            } else {
+                return launchFailureCanRetry(node, launchException, prefix+" launchException: "+shortError(launchException));
+            }
+        } else {
+            return launchFailureCanRetry(node, prefix+": waitForIpAddress timeout (no failures, no launch exception??)");
+        }
+    }
+
+    private void prepareLaunchFiles(@NonNull NewNodeNotification nn, ComputeServiceDriver computeDriver, BubbleNode node, NodeProgressMeter progressMeter, BubbleNetwork network, BubbleNodeKey sageKey, Account account, BubblePlan plan, BubbleNode sageNode, TempDir automation, ValidationResult errors, File sshKeyFile) throws IOException {
+        final File bubbleFilesDir = mkdirOrDie(new File(abs(automation) + "/roles/bubble/files"));
+        progressMeter.write(METER_TICK_PREPARING_ROLES);
+        final Map<String, Object> ctx = ansiblePrep.prepAnsible(
+                automation, bubbleFilesDir, account, network, node, computeDriver,
+                errors, nn.fork(), nn.getRestoreKey());
+        if (errors.isInvalid()) {
+            progressMeter.error(METER_ERROR_ROLE_VALIDATION_ERRORS);
+            fatalLaunchFailure(node, new MultiViolationException(errors.getViolationBeans()));
+        }
+
+        progressMeter.write(METER_TICK_PREPARING_INSTALL);
+        node.setState(BubbleNodeState.preparing_install);
+        nodeDAO.update(node);
+
+        // This node is on our network, or is the very first server. We must run ansible on it ourselves.
+        // write playbook file
+        writeFile(automation, ctx, PLAYBOOK_YML, PLAYBOOK_TEMPLATE);
+
+        // write inventory file
+        final File inventory = new File(automation, "hosts");
+        toFile(inventory, "[bubble]\n127.0.0.1"
+                + " ansible_python_interpreter=/usr/bin/python3\n");
+
+        // write SSH key, if present
+        if (network.hasSshKey()) {
+            final File sshPubKeyFile = new File(bubbleFilesDir, "admin_ssh_key.pub");
+            final AccountSshKey sshKey = sshKeyDAO.findByAccountAndId(network.getAccount(), network.getSshKey());
+            if (sshKey == null) throw invalidEx("err.sshPublicKey.notFound");
+            // add a newline before in case authorized_keys file does not end in a new line
+            // add a newline after so keys appended later will be OK
+            toFile(sshPubKeyFile, "\n"+sshKey.getSshPublicKey()+"\n");
+        }
+        copyScripts(bubbleFilesDir);
+
+        // write self_node.json file
+        writeFile(bubbleFilesDir, null, SELF_NODE_JSON, json(node
+                .setPlan(plan)
+                .setRestoreKey(nn.getRestoreKey())));
+
+        // write sage_node.json file
+        writeFile(bubbleFilesDir, null, SAGE_NODE_JSON, json(BubbleNode.sageMask(sageNode)));
+        writeFile(bubbleFilesDir, null, SAGE_KEY_JSON, json(BubbleNodeKey.sageMask(sageKey)));
+
+        // write install_local.sh script
+        final File installLocalScript = writeFile(automation, ctx, INSTALL_LOCAL_SH, INSTALL_LOCAL_TEMPLATE);
+        chmod(installLocalScript, "500");
     }
 
     public void waitForDebugger(String script) {
@@ -639,12 +702,10 @@ public class StandardNetworkService implements NetworkService {
             final CloudService dns = cloudDAO.findByUuid(domain.getPublicDns());
             dns.getDnsDriver(configuration).setNetwork(network);
 
-            final CloudAndRegion cloudAndRegion = geoService.selectCloudAndRegion(network, netLocation);
             final NewNodeNotification newNodeRequest = new NewNodeNotification()
                     .setFork(network.fork())
                     .setNodeHost(network)
-                    .setCloud(cloudAndRegion.getCloud().getUuid())
-                    .setRegion(cloudAndRegion.getRegion().getInternalName())
+                    .setNetLocation(netLocation)
                     .setLock(lock);
 
             // notify user that new bubble is launching
@@ -675,10 +736,14 @@ public class StandardNetworkService implements NetworkService {
 
     public boolean noNodesActive(BubbleNetwork network) { return !anyNodesActive(network); }
 
-    public NewNodeNotification restoreNetwork(BubbleNetwork network, String cloud, String region, Request req) {
+    public NewNodeNotification restoreNetwork(BubbleNetwork network,
+                                              String cloud,
+                                              String region,
+                                              Boolean exactRegion,
+                                              Request req) {
 
         final NetLocation netLocation = (region != null)
-                ? NetLocation.fromCloudAndRegion(cloud, region)
+                ? NetLocation.fromCloudAndRegion(cloud, region, exactRegion)
                 : NetLocation.fromIp(getRemoteHost(req));
 
         String lock = null;
@@ -707,8 +772,7 @@ public class StandardNetworkService implements NetworkService {
             final NewNodeNotification newNodeRequest = new NewNodeNotification()
                     .setNodeHost(network)
                     .setRestoreKey(restoreKey)
-                    .setCloud(cloudAndRegion.getCloud().getUuid())
-                    .setRegion(cloudAndRegion.getRegion().getInternalName())
+                    .setNetLocation(netLocation)
                     .setLock(lock);
 
             // start background process to create node

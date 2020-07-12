@@ -4,7 +4,6 @@
  */
 package bubble.notify;
 
-import bubble.cloud.CloudRegionRelative;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
@@ -14,12 +13,12 @@ import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
-import bubble.model.cloud.CloudService;
+import bubble.model.cloud.NetLocation;
 import bubble.model.cloud.notify.ReceivedNotification;
 import bubble.service.boot.StandardSelfNodeService;
-import bubble.service.notify.NotificationService;
 import bubble.service.cloud.GeoService;
 import bubble.service.cloud.StandardNetworkService;
+import bubble.service.notify.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -99,39 +98,17 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
                         log.warn("hello_from_sage: No sage node found: "+selfNodeService.getSageNode());
                     } else {
                         final BubbleNetwork network = networkDAO.findByUuid(thisNode.getNetwork());
-                        final List<CloudRegionRelative> closestRegions = geoService.getCloudRegionRelatives(network, thisNode.getIp4());
-                        if (closestRegions.isEmpty()) {
-                            log.warn("hello_from_sage: no regions found");
-                        } else {
-                            // find the closest region that is not our current region
-                            CloudRegionRelative closestNotUs = null;
-                            for (CloudRegionRelative r : closestRegions) {
-                                if (r.getInternalName().equalsIgnoreCase(thisNode.getRegion()) || r.getName().equalsIgnoreCase(thisNode.getRegion())) {
-                                    continue;
-                                }
-                                closestNotUs = r;
-                                break;
-                            }
-                            if (closestNotUs == null) {
-                                // there is only one region
-                                closestNotUs = closestRegions.get(0);
-                            }
-                            final CloudService cloud = cloudDAO.findByUuid(closestNotUs.getCloud());
-                            if (cloud == null) {
-                                log.warn("hello_from_sage: cloud not found, cannot request new node: "+closestNotUs.getCloud());
-                            } else {
-                                final NewNodeNotification newNodeRequest = new NewNodeNotification()
-                                        .setAccount(network.getAccount())
-                                        .setNetwork(network.getUuid())
-                                        .setNetworkName(network.getName())
-                                        .setDomain(network.getDomain())
-                                        .setCloud(cloud.getUuid())
-                                        .setRegion(closestNotUs.getInternalName())
-                                        .setAutomated(true);
-                                log.info("hello_from_sage: requesting new node : " + json(newNodeRequest));
-                                networkService.backgroundNewNode(newNodeRequest);
-                            }
-                        }
+                        // find the closest region that is not our current region
+                        final NewNodeNotification newNodeRequest = new NewNodeNotification()
+                                .setAccount(network.getAccount())
+                                .setNetwork(network.getUuid())
+                                .setNetworkName(network.getName())
+                                .setDomain(network.getDomain())
+                                .setNetLocation(NetLocation.fromCloudAndRegion(thisNode.getCloud(), thisNode.getRegion(), false))
+                                .excludeCurrentRegion(thisNode)
+                                .setAutomated(true);
+                        log.info("hello_from_sage: requesting new node : " + json(newNodeRequest));
+                        networkService.backgroundNewNode(newNodeRequest);
                     }
                 }
             }

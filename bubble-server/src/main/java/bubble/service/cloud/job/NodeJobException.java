@@ -4,11 +4,12 @@
  */
 package bubble.service.cloud.job;
 
+import bubble.cloud.compute.UnavailableComputeLocationException;
 import lombok.Getter;
 
 public class NodeJobException extends RuntimeException {
 
-    @Getter private String meterError;
+    @Getter private final String meterError;
 
     public NodeJobException(String meterError, String message, Exception e) {
         super(message, e);
@@ -19,5 +20,7 @@ public class NodeJobException extends RuntimeException {
         super(message);
         this.meterError = meterError;
     }
+
+    public boolean isComputeLocationUnavailable () { return getCause() instanceof UnavailableComputeLocationException; }
 
 }

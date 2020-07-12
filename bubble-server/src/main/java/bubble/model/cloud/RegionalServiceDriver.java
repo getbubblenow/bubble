@@ -4,6 +4,7 @@
  */
 package bubble.model.cloud;
 
+import bubble.cloud.CloudAndRegion;
 import bubble.cloud.CloudRegion;
 import bubble.cloud.CloudRegionRelative;
 import bubble.server.BubbleConfiguration;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,15 @@ public interface RegionalServiceDriver {
                                                         BubbleFootprint footprint,
                                                         double latitude,
                                                         double longitude) {
+        return findClosestRegions(configuration, clouds, footprint, latitude, longitude, null);
+    }
+
+    static List<CloudRegionRelative> findClosestRegions(BubbleConfiguration configuration,
+                                                        List<CloudService> clouds,
+                                                        BubbleFootprint footprint,
+                                                        double latitude,
+                                                        double longitude,
+                                                        Collection<CloudAndRegion> exclude) {
 
         final List<CloudRegionRelative> allRegions = new ArrayList<>();
         for (CloudService c : clouds) {
@@ -39,6 +50,10 @@ public interface RegionalServiceDriver {
             if (regions != null) {
                 for (CloudRegion region : regions) {
                     if (footprint != null && !footprint.isAllowedCountry(region.getLocation().getCountry())) {
+                        continue;
+                    }
+                    if (exclude != null && exclude.contains(new CloudAndRegion(c, region))) {
+                        log.info("findClosestRegions: skipping excluded region: "+region);
                         continue;
                     }
                     final CloudRegionRelative r = new CloudRegionRelative(region);

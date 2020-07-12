@@ -4,6 +4,7 @@
  */
 package bubble.mock;
 
+import bubble.cloud.CloudServiceType;
 import bubble.cloud.compute.ComputeServiceDriver;
 import bubble.cloud.compute.mock.MockComputeDriver;
 import bubble.dao.cloud.BubbleNetworkDAO;
@@ -16,8 +17,6 @@ import bubble.service.cloud.NodeLaunchMonitor;
 import bubble.service.cloud.StandardNetworkService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 
 @Service
 public class MockNetworkService extends StandardNetworkService {
@@ -34,12 +33,13 @@ public class MockNetworkService extends StandardNetworkService {
     @Override public BubbleNode newNode(NewNodeNotification nn, NodeLaunchMonitor launchMonitor) {
 
         final BubbleNetwork network = networkDAO.findByUuid(nn.getNetwork());
-        final CloudService cloud = findServiceOrDelegate(nn.getCloud());
-        final CloudService nodeCloud = cloudDAO.findByAccountAndName(network.getAccount(), cloud.getName());
-        if (nodeCloud == null) return die("newNode: node cloud not found: "+cloud.getName()+" for account "+network.getAccount());
+        final CloudService cloud = cloudDAO.findByAccountAndType(network.getAccount(), CloudServiceType.compute)
+                .stream()
+                .filter(c -> c.getDriverClass().equals(MockComputeDriver.class.getName()))
+                .findFirst()
+                .orElseThrow();
 
         final ComputeServiceDriver computeDriver = cloud.getComputeDriver(configuration);
-        if (!(computeDriver instanceof MockComputeDriver)) return die("newNode: expected MockComputeDriver");
 
         final BubbleNode node = nodeDAO.create(new BubbleNode()
                 .setHost(nn.getHost())
@@ -52,8 +52,8 @@ public class MockNetworkService extends StandardNetworkService {
                 .setAccount(network.getAccount())
                 .setSizeType(network.getComputeSizeType())
                 .setSize(computeDriver.getSize(network.getComputeSizeType()).getInternalName())
-                .setCloud(nodeCloud.getUuid())
-                .setRegion(nn.getRegion()));
+                .setCloud(cloud.getUuid())
+                .setRegion(nn.getNetLocation().getRegion()));
 
         network.setState(BubbleNetworkState.running);
         networkDAO.update(network);

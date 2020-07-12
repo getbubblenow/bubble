@@ -18,4 +18,8 @@ public enum BubbleNetworkState {
 
     public boolean canStop() { return this != stopped && this != error_stopping; }
 
+    public boolean isStopped() {
+         return this == BubbleNetworkState.stopped || this == BubbleNetworkState.error_stopping;
+    }
+
 }

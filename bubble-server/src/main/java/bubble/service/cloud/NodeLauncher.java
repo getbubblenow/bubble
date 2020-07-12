@@ -69,16 +69,33 @@ public class NodeLauncher implements Runnable {
                         final NodeLaunchException launchException = (NodeLaunchException) exception;
                         switch (launchException.getType()) {
                             case fatal:
-                                die("NodeLauncher.run: fatal launch exception: " + shortError(launchException));
+                                die("NodeLauncher.run: fatal launch exception: " + shortError(launchException), launchException);
                                 break;
+
                             case interrupted:
                                 log.warn("NodeLauncher.run: launch interrupted, exiting early");
                                 return;
+
                             case canRetry:
                                 log.warn("NodeLauncher.run: nonfatal launch exception for node " + launchException.nodeSummary() + " : " + shortError(launchException));
                                 break;
+
+                            case unavailableRegion:
+                                log.warn("NodeLauncher.run: unavailableRegion for node " + launchException.nodeSummary() + " : " + shortError(launchException));
+                                if (newNodeRequest.getNetLocation().exactRegion()) {
+                                    die("NodeLauncher.run: unavailableRegion and exactRegion set, cannot launch");
+                                } else {
+                                    if (launchException.getNode() != null) {
+                                        log.warn("NodeLauncher.run: unavailableRegion and exactRegion not set, trying another region");
+                                        newNodeRequest.excludeCurrentRegion(launchException.getNode());
+                                    } else {
+                                        die("NodeLauncher.run: unavailableRegion but node was null!");
+                                    }
+                                }
+                                break;
+
                             default:
-                                die("NodeLauncher.run: unknown launch exception (type="+launchException.getType()+"): "+shortError(launchException));
+                                die("NodeLauncher.run: unknown launch exception (type="+launchException.getType()+"): "+shortError(launchException), launchException);
                         }
                     } else {
                         die("NodeLauncher.run: fatal launch exception: " + shortError(exception), exception);
