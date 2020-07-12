@@ -12,7 +12,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.daemon.SimpleDaemon;
@@ -82,7 +81,7 @@ public class NodeLaunchMonitor extends SimpleDaemon {
                 die("register: thisNetwork is null");
 
             } else if (configuration.isSageLauncher() || thisNetwork.getInstallType() == AnsibleInstallType.sage) {
-                log.info("register: first registration, starting launch monitor");
+                if (log.isInfoEnabled()) log.info("register: first registration, starting launch monitor");
                 start();
 
             } else {
@@ -94,15 +93,15 @@ public class NodeLaunchMonitor extends SimpleDaemon {
     public void touch(String networkUuid) {
         final LauncherEntry entry = launcherThreads.get(networkUuid);
         if (entry == null) {
-            log.warn("touch: network not found: "+networkUuid+" from: "+ExceptionUtils.getStackTrace(new Exception()));
+            log.warn("touch: network not found: "+networkUuid);
             return;
         }
         entry.touch();
-        log.debug("touch: touched network: "+networkUuid);
+        if (log.isDebugEnabled()) log.debug("touch: touched network: "+networkUuid);
     }
 
     public void unregister(String networkUuid) {
-        log.info("unregister: removing network="+networkUuid+" from "+stacktrace());
+        if (log.isDebugEnabled()) log.debug("unregister: removing network="+networkUuid+" from "+stacktrace());
         final LauncherEntry entry = launcherThreads.remove(networkUuid);
         if (entry != null) {
             final NodeProgressMeter progressMeter = progressMeters.get(entry.nnUuid);
