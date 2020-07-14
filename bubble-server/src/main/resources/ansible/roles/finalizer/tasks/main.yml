@@ -42,9 +42,12 @@
 - name: reload supervisord
   shell: supervisorctl reload
 
-# dhparams file is created async. it takes a while and might not have finished. nginx will fail to start without it.
-- name: Ensure dhparams.pem exists
-  shell: /usr/local/bin/ensure_file_exists.sh /etc/nginx/dhparams.pem 300
+- name: Ensure nginx required files exist
+  shell: /usr/local/bin/ensure_file_exists.sh {{ item }} 300
+  with_items:
+    - /etc/nginx/dhparams.pem
+    - /etc/letsencrypt/live/{{ server_alias }}/fullchain.pem
+    - /etc/letsencrypt/live/{{ server_name }}/fullchain.pem
 
 - name: Ensure nginx is restarted
   service:
