@@ -56,7 +56,7 @@
 <!--    <logger name="bubble.service.cloud.NodeLauncher" level="DEBUG" />-->
 <!--    <logger name="bubble.service.cloud.NodeService" level="DEBUG" />-->
 <!--    <logger name="bubble.service.cloud.NodeProgressMeter" level="DEBUG" />-->
-    <logger name="bubble.cloud.compute.vultr" level="DEBUG" />
+<!--    <logger name="bubble.cloud.compute.vultr" level="DEBUG" />-->
     <logger name="bubble.resources.message" level="INFO" />
     <logger name="bubble.app.analytics" level="DEBUG" />
     <logger name="bubble.app.passthru" level="DEBUG" />

@@ -107,8 +107,8 @@ public class StandardNetworkService implements NetworkService {
     public static final int MAX_ANSIBLE_TRIES = 5;
     public static final int RESTORE_KEY_LEN = 6;
 
-    private static final long NET_LOCK_TIMEOUT = MINUTES.toMillis(11);
-    private static final long NET_DEADLOCK_TIMEOUT = MINUTES.toMillis(10);
+    private static final long NET_LOCK_TIMEOUT = MINUTES.toMillis(4);
+    private static final long NET_DEADLOCK_TIMEOUT = MINUTES.toMillis(3);
     private static final long PLAN_ENABLE_TIMEOUT = PURCHASE_DELAY + SECONDS.toMillis(10);
     private static final long NODE_START_JOB_TIMEOUT = MINUTES.toMillis(10);
     private static final long NODE_START_JOB_AWAIT_SLEEP = SECONDS.toMillis(2);
@@ -587,16 +587,18 @@ public class StandardNetworkService implements NetworkService {
     protected String lockNetwork(String network) {
         log.info("lockNetwork: locking "+network);
         final String lock = getNetworkLocks().lock(network, NET_LOCK_TIMEOUT, NET_DEADLOCK_TIMEOUT);
-        log.info("lockNetwork: locked "+network);
+        log.info("lockNetwork: locked "+network+" received lock="+lock);
         return lock;
     }
 
     protected boolean confirmNetLock(String network, String lock) {
-        return getNetworkLocks().confirmLock(network, lock);
+        final boolean confirmed = getNetworkLocks().confirmLock(network, lock, NET_LOCK_TIMEOUT);
+        log.info("confirmNetLock: confirming "+network+" with lock="+lock+" --> "+confirmed);
+        return confirmed;
     }
 
     protected void unlockNetwork(String network, String lock) {
-        log.info("unlockNetwork: unlocking "+network);
+        log.info("unlockNetwork: unlocking "+network+" with lock="+lock);
         getNetworkLocks().unlock(network, lock);
         log.info("unlockNetwork: unlocked "+network);
     }
@@ -609,7 +611,7 @@ public class StandardNetworkService implements NetworkService {
     }
 
     protected boolean confirmNodeLock(String node, String lock) {
-        return getNodeKillLocks().confirmLock(node, lock);
+        return getNodeKillLocks().confirmLock(node, lock, NET_LOCK_TIMEOUT);
     }
 
     protected void unlockNode(String node, String lock) {

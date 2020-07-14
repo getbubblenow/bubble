@@ -42,10 +42,12 @@
 - name: reload supervisord
   shell: supervisorctl reload
 
+- name: Ensure nginx dhparams.pem file exists and is valid
+  shell: /usr/local/bin/init_dhparams.sh wait
+
 - name: Ensure nginx required files exist
   shell: /usr/local/bin/ensure_file_exists.sh {{ item }} 300
   with_items:
-    - /etc/nginx/dhparams.pem
     - /etc/letsencrypt/live/{{ server_alias }}/fullchain.pem
     - /etc/letsencrypt/live/{{ server_name }}/fullchain.pem
 

@@ -8,9 +8,15 @@ LOG="${ANSIBLE_HOME}/.ansible.log"
 # unattended upgrades are re-enabled at the end of the ansible run
 systemctl stop unattended-upgrades
 
+# Enable job control. Allows us to start creating dhparam in the background right now.
+{{#if isNode}}# For node, also allows us to install AlgoVPN in the background.{{/if}}
+set -m
+
+# see https://weakdh.org/sysadmin.html
+/usr/local/bin/init_dhparams.sh run &
+
 {{#if isNode}}
 # touch algo log and start tailing it
-set -m
 ALGO_LOG=/tmp/install_algo.log
 touch ${ALGO_LOG} && tail -f ${ALGO_LOG} &
 {{/if}}
@@ -19,9 +25,11 @@ function kill_bg_jobs {
   for j in $(jobs -lr | tr '[]' ' ' |  awk '{print $1}') ; do
     kill %${j}
   done
+{{#if isNode}}
   if [[ ! -z "${ALGO_LOG}" && -f "${ALGO_LOG}" ]] ; then
     rm -f ${ALGO_LOG}
   fi
+{{/if}}
 }
 
 function log {
@@ -81,7 +89,7 @@ cd "${ANSIBLE_DIR}" && \
   . ./venv/bin/activate && \
   pip3 install ansible && \
   ansible-playbook ${SKIP_TAGS} --inventory ./hosts ./playbook.yml 2>&1 | tee ${LOG} \
-|| die "Error running ansible. journalctl -xe = $(journalctl -xe | tail -n 50)"
+|| die "Error running ansible. journalctl -xe = $(journalctl -xe | tail -n 50) ___openssl=$(ps auxwwwwwww | grep openssl) ___dhparams=$(cat /etc/nginx/dhparams.pem)"
 
 # lockout the node that started us
 cat /dev/null > "${AUTH_KEYS}" || die "Error truncating ${AUTH_KEYS} file"
@@ -92,10 +100,8 @@ if [[ -f "${ADMIN_PUB_KEY}" ]] ; then
   cat "${ADMIN_PUB_KEY}" >> "${AUTH_KEYS}"
 fi
 
-{{#if isNode}}
-# stop ALGO_LOG tail job and remove log
+{{#if isNode}}# stop ALGO_LOG tail job and remove log{{/if}}
 kill_bg_jobs
-{{/if}}
 
 # ansible should have already restarted unattended-upgrades, but just in case
 systemctl start unattended-upgrades

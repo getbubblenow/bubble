@@ -6,12 +6,6 @@
     name: nginx
     state: stopped
 
-# see https://weakdh.org/sysadmin.html
-- name: Create a strong dhparam.pem
-  shell: openssl dhparam -out /etc/nginx/dhparams.pem 2048
-  async: 120
-  poll: 0
-
 - name: Create dhparam nginx conf
   template: src=stronger_dhparams.conf dest=/etc/nginx/conf.d/stronger_dhparams.conf
 
