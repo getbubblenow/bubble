@@ -4,10 +4,6 @@
 #
 THISDIR=$(cd $(dirname ${0}) && pwd)
 VCURL=${THISDIR}/vcurl
-LABEL=${1}
+LABEL=${1?no label provided}
 
-if [[ -z "${LABEL}" ]] ; then
-  ${VCURL} server/list | jq .
-else
-  ${VCURL} server/list?label=${LABEL} | jq .
-fi
+${VCURL} server/list?label=${LABEL} | jq -r '.[].SUBID'
