@@ -214,8 +214,10 @@ public class VultrDriver extends ComputeServiceDriverBase {
                             }
                             if (log.isDebugEnabled()) log.debug("start("+node.id()+"): good news: startedOk="+startedOk+", server_state="+serverState+", status="+status+", power_status="+powerStatus+", ip4="+ip4+", ip6="+ip6);
                         } else {
+                            if (startedOk > 0) {
+                                if (log.isWarnEnabled()) log.warn("start("+node.id()+"): resetting startedOk="+startedOk+" to 0, server_state="+serverState+", status="+status+", power_status="+powerStatus+", ip4="+ip4+", ip6="+ip6);
+                            }
                             startedOk = 0;
-                            if (log.isDebugEnabled()) log.debug("start("+node.id()+"): bad news 1: reset startedOk="+startedOk+", server_state="+serverState+", status="+status+", power_status="+powerStatus+", ip4="+ip4+", ip6="+ip6);
                         }
                     } else {
                         startedOk = 0;
