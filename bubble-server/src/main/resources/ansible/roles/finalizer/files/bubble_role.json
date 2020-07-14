@@ -1,6 +1,7 @@
 {
   "name": "finalizer",
   "config": [
+    {"name": "server_name", "value": "[[node.fqdn]]"},
     {"name": "server_alias", "value": "[[network.networkDomain]]"},
     {"name": "restore_key", "value": "[[restoreKey]]"},
     {"name": "install_type", "value": "[[installType]]"},
