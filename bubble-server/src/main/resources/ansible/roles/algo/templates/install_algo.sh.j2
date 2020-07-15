@@ -43,6 +43,34 @@ CONFIGS_BACKUP=/home/bubble/.BUBBLE_ALGO_CONFIGS.tgz
 cd ${ALGO_BASE} && tar czf ${CONFIGS_BACKUP} configs && chgrp bubble ${CONFIGS_BACKUP} && chmod 660 ${CONFIGS_BACKUP} || die "Error backing up algo configs"
 cd /home/bubble && tar xzf ${CONFIGS_BACKUP} && chgrp -R bubble configs && chown -R bubble configs && chmod 500 configs || die "Error unpacking algo configs to bubble home"
 
+# Write VPN subnets to mitmproxy
+WG_IP4=$(cat ${ALGO_BASE}/config.cfg | grep wireguard_network_ipv4 | grep -v '^#' | awk -F': ' '{print $2}' | tr -d ' ')
+if [[ -z ${WG_IP4} ]] ; then
+  die "wireguard_network_ipv4 not found in ${ALGO_BASE}/config.cfg"
+fi
+WG_IP6=$(cat ${ALGO_BASE}/config.cfg | grep wireguard_network_ipv6 | grep -v '^#' | awk -F': ' '{print $2}' | tr -d ' ')
+if [[ -z ${WG_IP6} ]] ; then
+  die "wireguard_network_ipv6 not found in ${ALGO_BASE}/config.cfg"
+fi
+
+VPN_IP4_PY=/home/mitmproxy/mitmproxy/bubble_vpn4.py
+if [[ ! -f ${VPN_IP4_PY} || $(cat ${VPN_IP4_PY} | grep -c ${WG_IP4}) -eq 0 ]] ; then
+  echo "
+wireguard_network_ipv4 = '${WG_IP4}'
+" > ${VPN_IP4_PY} || die "Error writing VPN subnet to ${VPN_IP4_PY}"
+  chown mitmproxy.mitmproxy ${VPN_IP4_PY} || die "Error setting owner of ${VPN_IP4_PY} to mitmproxy"
+  chmod 500 ${VPN_IP4_PY} || die "Error setting permissions on ${VPN_PY}"
+fi
+
+VPN_IP6_PY=/home/mitmproxy/mitmproxy/bubble_vpn6.py
+if [[ ! -f ${VPN_IP6_PY} || $(cat ${VPN_IP6_PY} | grep -c ${WG_IP6}) -eq 0 ]] ; then
+  echo "
+wireguard_network_ipv6 = '${WG_IP6}'
+" > ${VPN_IP6_PY} || die "Error writing VPN subnet to ${VPN_IP6_PY}"
+  chown mitmproxy.mitmproxy ${VPN_IP6_PY} || die "Error setting owner of ${VPN_IP6_PY} to mitmproxy"
+  chmod 500 ${VPN_IP6_PY} || die "Error setting permissions on ${VPN_IP6_PY}"
+fi
+
 # Restart algo_refresh_users_monitor and wg_monitor_connections
 supervisorctl reload && sleep 3s && supervisorctl restart algo_refresh_users_monitor && supervisorctl restart wg_monitor_connections
 

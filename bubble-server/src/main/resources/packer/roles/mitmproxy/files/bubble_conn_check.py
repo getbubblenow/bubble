@@ -29,6 +29,9 @@ from mitmproxy.net import tls as net_tls
 
 from bubble_api import bubble_log, bubble_conn_check, bubble_activity_log, REDIS, redis_set
 from bubble_config import bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6, cert_validation_host
+from bubble_vpn4 import wireguard_network_ipv4
+from bubble_vpn6 import wireguard_network_ipv6
+from netaddr import IPAddress, IPNetwork
 import json
 import subprocess
 import traceback
@@ -49,6 +52,9 @@ SEC_OFF = 'disabled'
 
 local_ips = None
 
+VPN_IP4_CIDR = IPNetwork(wireguard_network_ipv4)
+VPN_IP6_CIDR = IPNetwork(wireguard_network_ipv6)
+
 
 def get_device_security_level(client_addr):
     level = REDIS.get(REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX+client_addr)
@@ -68,6 +74,11 @@ def get_local_ips():
 
 def is_sage_request(ip, fqdns):
     return ip == bubble_sage_ip4 or ip == bubble_sage_ip6 or bubble_sage_host in fqdns
+
+
+def is_not_from_vpn(client_addr):
+    ip = IPAddress(client_addr)
+    return ip not in VPN_IP4_CIDR and ip not in VPN_IP6_CIDR
 
 
 def conn_check_cache_prefix(client_addr, server_addr):
@@ -202,6 +213,11 @@ def next_layer(next_layer):
         elif is_sage_request(server_addr, fqdns):
             bubble_log('next_layer: enabling passthru for SAGE server='+server_addr+' regardless of security_level='+security_level+' for client='+client_addr)
             check = FORCE_PASSTHRU
+
+        elif is_not_from_vpn(client_addr):
+            bubble_log('next_layer: enabling block for non-VPN client='+client_addr+', fqdns='+str(fqdns))
+            bubble_activity_log(client_addr, server_addr, 'conn_block_non_vpn', fqdns)
+            next_layer.__class__ = TlsBlock
 
         elif security_level == SEC_OFF or security_level == SEC_BASIC:
             bubble_log('next_layer: enabling passthru for server='+server_addr+' because security_level='+security_level+' for client='+client_addr)
