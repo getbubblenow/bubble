@@ -210,14 +210,14 @@ def next_layer(next_layer):
             bubble_log('next_layer: enabling passthru for LOCAL server='+server_addr+' regardless of security_level='+security_level+' for client='+client_addr)
             check = FORCE_PASSTHRU
 
-        elif is_sage_request(server_addr, fqdns):
-            bubble_log('next_layer: enabling passthru for SAGE server='+server_addr+' regardless of security_level='+security_level+' for client='+client_addr)
-            check = FORCE_PASSTHRU
-
         elif is_not_from_vpn(client_addr):
             bubble_log('next_layer: enabling block for non-VPN client='+client_addr+', fqdns='+str(fqdns))
             bubble_activity_log(client_addr, server_addr, 'conn_block_non_vpn', fqdns)
             next_layer.__class__ = TlsBlock
+
+        elif is_sage_request(server_addr, fqdns):
+            bubble_log('next_layer: enabling passthru for SAGE server='+server_addr+' regardless of security_level='+security_level+' for client='+client_addr)
+            check = FORCE_PASSTHRU
 
         elif security_level == SEC_OFF or security_level == SEC_BASIC:
             bubble_log('next_layer: enabling passthru for server='+server_addr+' because security_level='+security_level+' for client='+client_addr)
