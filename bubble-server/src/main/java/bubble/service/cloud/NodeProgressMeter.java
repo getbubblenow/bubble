@@ -177,8 +177,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
             log.warn("_setCurrentTick (closed, not setting): "+json);
             return;
         }
-//        if (log.isTraceEnabled()) log.trace("_setCurrentTick: "+json+" from: "+stacktrace());
-        if (log.isInfoEnabled()) log.info("_setCurrentTick: "+json+" from: "+stacktrace());
+        if (log.isTraceEnabled()) log.trace("_setCurrentTick: "+json+" from: "+stacktrace());
         redis.set(getProgressMeterKey(key, nn.getAccount()), json, EX, TICK_REDIS_EXPIRATION);
     }
 
