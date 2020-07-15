@@ -14,3 +14,12 @@
     owner: postgres
     group: postgres
     mode: 0400
+
+- name: Install PostgreSQL pg_sage.conf
+  copy:
+    src: pg_sage.conf
+    dest: /etc/postgresql/12/main/conf.d/
+    owner: postgres
+    group: postgres
+    mode: 0400
+  when: install_type == 'sage'
