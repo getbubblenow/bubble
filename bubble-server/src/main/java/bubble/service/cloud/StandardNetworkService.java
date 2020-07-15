@@ -324,7 +324,7 @@ public class StandardNetworkService implements NetworkService {
             nodeDAO.update(node);
 
             log.info("newNode: running script:\n"+script);
-            for (int i=0; !setupOk && i<MAX_ANSIBLE_TRIES; i++) {
+            for (int i=0; i<MAX_ANSIBLE_TRIES; i++) {
                 sleep((i+1) * SECONDS.toMillis(5), "waiting to try ansible setup");
                 // Use .uncloseable() because it the command fails due to connection timeout/refused,
                 // the output stream is closed; if a retry succeeds, there's no output to the progressMeter
@@ -343,6 +343,7 @@ public class StandardNetworkService implements NetworkService {
                 log.info("newNode: started in " + formatDuration(now() - start));
                 log.info("newNode: initialized in " + formatDuration(now() - configStart));
                 setupOk = true;
+                break;
             }
             if (!setupOk) return launchFailureCanRetry(node, "newNode: error setting up, all retries failed for node: "+node.getUuid());
 
@@ -356,7 +357,6 @@ public class StandardNetworkService implements NetworkService {
                 while (now() - readyStart < NODE_READY_TIMEOUT) {
                     sleep(SECONDS.toMillis(2), "newNode: waiting for node (" + node.id() + ") to be ready");
                     log.debug("newNode: waiting for node (" + node.id() + ") to be ready via "+readyUri);
-                    progressMeter.resetToPreAnsible();
                     progressMeter.write("READY-CHECK-"+(i++)+" /auth/ready for node: "+node.id());
                     launchMonitor.touch(network.getUuid());
                     try {

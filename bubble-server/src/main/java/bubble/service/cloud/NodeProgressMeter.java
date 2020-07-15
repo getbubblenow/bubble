@@ -5,6 +5,7 @@
 package bubble.service.cloud;
 
 import bubble.notify.NewNodeNotification;
+import lombok.Getter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.cache.redis.RedisService;
@@ -38,7 +39,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     private final BufferedReader reader;
     private final BufferedWriter writer;
     private final List<NodeProgressMeterTick> ticks;
-    private int tickPos = 0;
+    @Getter private int tickPos = 0;
     private final AtomicBoolean error = new AtomicBoolean(false);
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final AtomicBoolean success = new AtomicBoolean(false);
@@ -127,15 +128,15 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
     }
 
     public void resetToPreAnsible() {
-        reset(standardTicks.size());
+        resetToTick(standardTicks.size());
         _setCurrentTick(lastStandardTick);
     }
 
     public void fullReset() {
-        reset(0);
+        resetToTick(0);
     }
 
-    private void reset(int tickPos) {
+    public void resetToTick(int tickPos) {
         if (closed.get()) die("reset: progress meter is closed, cannot reset");
         error.set(false);
         this.tickPos = tickPos;
@@ -176,7 +177,8 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
             log.warn("_setCurrentTick (closed, not setting): "+json);
             return;
         }
-        if (log.isTraceEnabled()) log.trace("_setCurrentTick: "+json+" from: "+stacktrace());
+//        if (log.isTraceEnabled()) log.trace("_setCurrentTick: "+json+" from: "+stacktrace());
+        if (log.isInfoEnabled()) log.info("_setCurrentTick: "+json+" from: "+stacktrace());
         redis.set(getProgressMeterKey(key, nn.getAccount()), json, EX, TICK_REDIS_EXPIRATION);
     }
 
