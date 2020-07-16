@@ -11,8 +11,8 @@ mitmdump \
   --no-http2 \
   --set block_global=false \
   --set block_private=false \
-  --set termlog_verbosity=debug \
-  --set flow_detail=3 \
+  --set termlog_verbosity=warn \
+  --set flow_detail=0 \
   --set stream_large_bodies=5m \
   --set keep_host_header \
   -s ./dns_spoofing.py \

@@ -17,7 +17,7 @@ function log {
 BUBBLE_MITM_MARKER=/home/bubble/.mitmdump_monitor
 ROOT_KEY_MARKER=/usr/share/bubble/mitmdump_monitor
 MITMDUMP_PID_FILE=/home/mitmproxy/mitmdump.pid
-MAX_MITM_PCT_MEM=18
+MIN_PCT_FREE=3
 
 # Start with MITM proxy turned on, or refresh value
 if [[ ! -f ${BUBBLE_MITM_MARKER} ]] ; then
@@ -63,11 +63,12 @@ while : ; do
   # Check process memory usage, restart mitmdump if memory goes above max % allowed
   if [[ -f ${MITMDUMP_PID_FILE} && -s ${MITMDUMP_PID_FILE} ]] ; then
     MITM_PID="$(cat ${MITMDUMP_PID_FILE})"
+    PCT_FREE=$(expr $(free | grep -m 1 Mem: | awk '{print $7"00 / "$2}'))
     PCT_MEM="$(ps q ${MITM_PID} -o %mem --no-headers | tr -d [[:space:]] | cut -f1 -d. | sed 's/[^0-9]*//g')"
     # log "Info: mitmdump pid ${MITM_PID} using ${PCT_MEM}% of memory"
     if [[ ! -z "${PCT_MEM}" ]] ; then
-      if [[ ${PCT_MEM} -ge ${MAX_MITM_PCT_MEM} ]] ; then
-        log "Warn: mitmdump: pid=$(cat ${MITMDUMP_PID_FILE}) memory used > max, restarting: ${PCT_MEM}% >= ${MAX_MITM_PCT_MEM}%"
+      if [[ ${PCT_FREE} -lt ${MIN_PCT_FREE} ]] ; then
+        log "Warn: mitmdump: less than ${MIN_PCT_FREE}% mem available, restarting: mitm used ${PCT_MEM}%, ${PCT_FREE}% free"
         supervisorctl restart mitmdump
       fi
     else
