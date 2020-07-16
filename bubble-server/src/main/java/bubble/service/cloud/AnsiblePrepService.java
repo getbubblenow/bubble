@@ -77,6 +77,7 @@ public class AnsiblePrepService {
         ctx.put("isNode", installType == AnsibleInstallType.node);
         ctx.put("isSage", installType == AnsibleInstallType.sage);
         ctx.put("nodeSize", computeDriver.getSize(node.getSizeType()));
+        ctx.put("jvmMaxRamDivisor", installType == AnsibleInstallType.sage ? "1.7" : "4");
         if (restoreKey != null) {
             ctx.put("restoreKey", restoreKey);
             ctx.put("restoreTimeoutSeconds", RESTORE_MONITOR_SCRIPT_TIMEOUT_SECONDS);
