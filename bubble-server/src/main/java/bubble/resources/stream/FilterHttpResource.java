@@ -84,12 +84,12 @@ public class FilterHttpResource {
         return json(json, FilterHttpRequest.class);
     }
 
-    private Map<String, Account> accountCache = new ExpirationMap<>(MINUTES.toMillis(10));
+    private final Map<String, Account> accountCache = new ExpirationMap<>(MINUTES.toMillis(10));
     public Account findCaller(String accountUuid) {
         return accountCache.computeIfAbsent(accountUuid, uuid -> accountDAO.findByUuid(uuid));
     }
 
-    private Map<String, Device> deviceCache = new ExpirationMap<>(MINUTES.toMillis(10));
+    private final Map<String, Device> deviceCache = new ExpirationMap<>(MINUTES.toMillis(10));
     public Device findDevice(String deviceUuid) {
         return deviceCache.computeIfAbsent(deviceUuid, uuid -> deviceDAO.findByUuid(uuid));
     }
@@ -273,7 +273,7 @@ public class FilterHttpResource {
         final FilterMatchersResponse response = new FilterMatchersResponse()
                 .setDecision(empty(retainMatchers) ? FilterMatchDecision.no_match : FilterMatchDecision.match)
                 .setRequest(filterRequest)
-                .setMatchers(new ArrayList<>(retainMatchers.values()));
+                .setMatchers(empty(retainMatchers) ? Collections.emptyList() : new ArrayList<>(retainMatchers.values()));
 
         if (log.isDebugEnabled()) log.debug(prefix+"preprocess decision for "+filterRequest.getUrl()+": "+response+", retainMatchers="+names(retainMatchers.values()));
 
@@ -287,6 +287,8 @@ public class FilterHttpResource {
         matchers = matchers.stream()
                 .filter(m -> appDAO.findByAccountAndId(accountUuid, m.getApp()).enabled()).collect(Collectors.toList());
         if (log.isTraceEnabled()) log.trace(prefix+"after removing disabled apps, enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
+        if (matchers.isEmpty()) return matchers;
+
         matchers = matchers.stream()
                 .filter(m -> {
                     final AppSite site = siteDAO.findByAccountAndAppAndId(accountUuid, m.getApp(), m.getSite());
@@ -297,6 +299,8 @@ public class FilterHttpResource {
                     return site.enabled();
                 }).collect(Collectors.toList());
         if (log.isTraceEnabled()) log.trace(prefix+"after removing disabled sites, enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
+        if (matchers.isEmpty()) return matchers;
+
         matchers = matchers.stream()
                 .filter(m -> {
                     final AppRule rule = ruleDAO.findByAccountAndAppAndId(accountUuid, m.getApp(), m.getRule());

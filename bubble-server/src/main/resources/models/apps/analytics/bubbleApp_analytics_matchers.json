@@ -4,6 +4,7 @@
     "AppMatcher": [{
       "name": "TrafficAnalyticsMatcher",
       "template": true,
+      "requestCheck": true,
       "site": "All_Sites",
       "fqdn": "*",
       "urlRegex": ".*",

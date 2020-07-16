@@ -5,7 +5,7 @@
     "params": {
       "fqdn": "foo.example.com",
       "uri": "/bar",
-      "jsCheck": "json.getMatchers().length == 0"
+      "jsCheck": "json.getMatchers().length === 0"
     }
   },
 
@@ -15,7 +15,7 @@
     "params": {
       "fqdn": "foo.example.com",
       "uri": "/baz",
-      "jsCheck": "json.getMatchers().length == 0"
+      "jsCheck": "json.getMatchers().length === 0"
     }
   },
 
@@ -25,7 +25,7 @@
     "params": {
       "fqdn": "bar.example.com",
       "uri": "/qux",
-      "jsCheck": "json.getMatchers().length == 0"
+      "jsCheck": "json.getMatchers().length === 0"
     }
   },
 
@@ -34,7 +34,7 @@
     "request": { "uri": "me/apps/TrafficAnalytics/data" },
     "response": {
       "check": [
-        {"condition": "json.length == 8"},
+        {"condition": "json.length === 8"},
         {"condition": "_find(json, function (d) { return d.getKey().startsWith('foo.example.com@hourly') }) != null"},
         {"condition": "_find(json, function (d) { return d.getKey().startsWith('foo.example.com@hourly') }).getData() == 2"},
         {"condition": "_find(json, function (d) { return d.getKey().startsWith('bar.example.com@hourly') }) != null"},

@@ -11,6 +11,7 @@ import bubble.model.device.DeviceStatus;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationMap;
+import org.cobbzilla.util.collection.SingletonList;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.FilenamePrefixFilter;
 import org.cobbzilla.wizard.cache.redis.RedisService;
@@ -94,8 +95,13 @@ public class StandardDeviceIdService implements DeviceIdService {
         });
     }
 
+    public static final SingletonList<String> TEST_DEVICE_IP_LIST = new SingletonList<>("127.0.0.1");
+
     @Override public List<String> findIpsByDevice(String deviceUuid) {
-        if (!WG_DEVICES_DIR.exists()) throw invalidEx("err.deviceDir.notFound");
+        if (!WG_DEVICES_DIR.exists()) {
+            if (configuration.testMode()) return TEST_DEVICE_IP_LIST;
+            throw invalidEx("err.deviceDir.notFound");
+        }
         final File deviceFile = new File(WG_DEVICES_DIR, DEVICE_FILE_PREFIX+deviceUuid);
         if (!deviceFile.exists() || deviceFile.length() == 0) return Collections.emptyList();
         try {
