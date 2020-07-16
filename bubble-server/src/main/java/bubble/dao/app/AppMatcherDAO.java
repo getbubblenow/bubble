@@ -20,7 +20,6 @@ import java.util.List;
 
 import static bubble.model.app.AppMatcher.WILDCARD_FQDN;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.wizard.model.Identifiable.MTIME;
 import static org.hibernate.criterion.Restrictions.*;
 
 @Repository @Slf4j
@@ -51,13 +50,9 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
         return findByFields("account", account, "enabled", true, "connCheck", true);
     }
 
-    public List<AppMatcher> findAllChangesSince(Long lastMod) {
-        return list(criteria().add(gt(MTIME, lastMod)));
-    }
-
     @Override public Object preCreate(AppMatcher matcher) {
         if (matcher.getConnCheck() == null) matcher.setConnCheck(false);
-        if (matcher.getRequestCheck() == null) matcher.setRequestCheck(true);
+        if (matcher.getRequestCheck() == null) matcher.setRequestCheck(false);
         return super.preCreate(matcher);
     }
 

@@ -5,6 +5,7 @@
       "name": "MRMatcher",
       "site": "MarginalRevolution",
       "template": true,
+      "requestCheck": true,
       "fqdn": "marginalrevolution.com",
       "urlRegex": "(/marginalrevolution)?/20\\d{2}/\\d{2}/\\w+",
       "rule": "mr_user_blocker"

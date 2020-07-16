@@ -339,6 +339,26 @@ public class FilterHttpResource {
         }
         final String prefix = "filterHttp("+requestId+"): ";
 
+        final FilterMatchersResponse matchersResponse = getMatchersResponseByRequestId(requestId);
+        if (matchersResponse == null) {
+            if (log.isWarnEnabled()) log.warn(prefix+"FilterMatchersResponse not found, returning passthru");
+            return passthru(request);
+        }
+
+        if (log.isTraceEnabled()) log.trace(prefix+"found FilterMatchersResponse: "+json(matchersResponse, COMPACT_MAPPER));
+        if (matchersResponse.hasAbort()) {
+            if (log.isWarnEnabled()) log.warn(prefix+"FilterMatchersResponse has abort code "+matchersResponse.httpStatus()+", MITM should have aborted. We are aborting now.");
+            return status(matchersResponse.httpStatus());
+
+        } else if (!matchersResponse.hasRequestCheckMatchers()) {
+            if (log.isWarnEnabled()) log.warn(prefix+"FilterMatchersResponse has no requestCheck matchers, returning passthru");
+            return passthru(request);
+
+        } else if (!matchersResponse.hasRequest()) {
+            if (log.isWarnEnabled()) log.warn(prefix + "FilterMatchersResponse has no request, returning passthru");
+            return passthru(request);
+        }
+
         final boolean isLast = bool(last);
 
         // can we handle the encoding?
@@ -364,46 +384,27 @@ public class FilterHttpResource {
             chunkLength = null;
         }
 
-        final FilterMatchersResponse matchersResponse = getMatchersResponseByRequestId(requestId);
-        if (matchersResponse == null) {
-            if (log.isWarnEnabled()) log.warn(prefix+"FilterMatchersResponse not found, returning passthru");
-            return passthru(request);
 
-        }
-        if (log.isTraceEnabled()) log.trace(prefix+"found FilterMatchersResponse: "+json(matchersResponse, COMPACT_MAPPER));
-        if (matchersResponse.hasAbort()) {
-            if (log.isWarnEnabled()) log.warn(prefix+"FilterMatchersResponse has abort code "+matchersResponse.httpStatus()+", MITM should have aborted. We are aborting now.");
-            return status(matchersResponse.httpStatus());
-
-        } else if (!matchersResponse.hasMatchers()) {
-            if (log.isWarnEnabled()) log.warn(prefix+"FilterMatchersResponse has no matchers, returning passthru");
-            return passthru(request);
-
-        } else if (!matchersResponse.hasRequest()) {
-            if (log.isWarnEnabled()) log.warn(prefix + "FilterMatchersResponse has no request, returning passthru");
-            return passthru(request);
-
-        } else {
-            final FilterMatchDecision decision = matchersResponse.getDecision();
-            if (decision != FilterMatchDecision.match) {
-                switch (decision) {
-                    case no_match: case pass_thru:
-                        if (log.isWarnEnabled()) log.warn(prefix + "FilterMatchersResponse decision was no_match/pass_thru (should not have received this): "+ decision +", returning passthru");
-                        return passthru(request);
-                    case abort_not_found:
-                    case abort_ok:
-                        if (log.isWarnEnabled()) log.warn(prefix + "FilterMatchersResponse decision was abort: "+ decision +", returning "+matchersResponse.httpStatus());
-                        return status(matchersResponse.httpStatus());
-                    default:
-                        if (log.isWarnEnabled()) log.warn(prefix + "FilterMatchersResponse decision was unknown: "+ decision +", returning passthru");
-                        return passthru(request);
-                }
-
-            } else if (!matchersResponse.getRequest().hasDevice()) {
-                if (log.isWarnEnabled()) log.warn(prefix+"FilterMatchersResponse has no device, returning passthru");
-                return passthru(request);
+        final FilterMatchDecision decision = matchersResponse.getDecision();
+        if (decision != FilterMatchDecision.match) {
+            switch (decision) {
+                case no_match: case pass_thru:
+                    if (log.isWarnEnabled()) log.warn(prefix + "FilterMatchersResponse decision was no_match/pass_thru (should not have received this): "+ decision +", returning passthru");
+                    return passthru(request);
+                case abort_not_found:
+                case abort_ok:
+                    if (log.isWarnEnabled()) log.warn(prefix + "FilterMatchersResponse decision was abort: "+ decision +", returning "+matchersResponse.httpStatus());
+                    return status(matchersResponse.httpStatus());
+                default:
+                    if (log.isWarnEnabled()) log.warn(prefix + "FilterMatchersResponse decision was unknown: "+ decision +", returning passthru");
+                    return passthru(request);
             }
+
+        } else if (!matchersResponse.getRequest().hasDevice()) {
+            if (log.isWarnEnabled()) log.warn(prefix+"FilterMatchersResponse has no device, returning passthru");
+            return passthru(request);
         }
+
         matchersResponse.setRequestId(requestId);
 
         FilterHttpRequest filterRequest = getActiveRequest(requestId);

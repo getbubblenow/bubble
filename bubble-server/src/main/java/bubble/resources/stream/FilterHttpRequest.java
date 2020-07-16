@@ -15,6 +15,7 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.util.http.HttpContentEncodingType;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
@@ -50,4 +51,9 @@ public class FilterHttpRequest {
         return false;
     }
 
+    @JsonIgnore public String getMatcherNames() {
+        return !hasMatchers() ? "no-matchers" : getMatchers().stream()
+                .map(AppMatcher::getName)
+                .collect(Collectors.joining(", "));
+    }
 }

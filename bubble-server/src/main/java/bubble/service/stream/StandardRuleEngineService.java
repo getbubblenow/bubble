@@ -160,7 +160,7 @@ public class StandardRuleEngineService implements RuleEngineService {
             if (log.isDebugEnabled()) log.debug(prefix+"adding no matchers, returning passthru");
             return passthru(request);
         } else {
-            log.info(prefix+" applying ");
+            log.info(prefix+" applying matchers: "+filterRequest.getMatcherNames());
         }
 
         // for debugging problematic requests

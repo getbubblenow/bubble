@@ -33,6 +33,10 @@ public class FilterMatchersResponse {
     @Getter @Setter private List<AppMatcher> matchers;
     public boolean hasMatchers() { return !empty(matchers); }
 
+    public boolean hasRequestCheckMatchers() {
+        return hasMatchers() && getMatchers().stream().anyMatch(AppMatcher::requestCheck);
+    }
+
     public FilterMatchersResponse setRequestId(String requestId) {
         if (request == null) {
             if (log.isWarnEnabled()) log.warn("setRequestId("+requestId+"): request is null, cannot set");
