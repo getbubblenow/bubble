@@ -6646,7 +6646,6 @@ mixup
 mizen
 mizzy
 mneme
-moans
 moats
 mobby
 mobes
@@ -6665,7 +6664,6 @@ modge
 modii
 modus
 moers
-mofos
 moggy
 mogul
 mohel
@@ -6711,16 +6709,12 @@ monos
 monte
 month
 monty
-moobs
 mooch
 moods
 moody
 mooed
-mooks
 moola
-mooli
 mools
-moong
 moons
 moony
 moops
@@ -6730,9 +6724,6 @@ moose
 moots
 moove
 moped
-moper
-mopes
-mopey
 moppy
 mopsy
 mopus
@@ -6811,8 +6802,6 @@ mucho
 mucic
 mucid
 mucin
-mucks
-mucky
 mucor
 mucro
 mucus
@@ -6834,7 +6823,6 @@ mulch
 mulct
 muled
 mules
-muley
 mulga
 mulla
 mulls
