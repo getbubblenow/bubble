@@ -17,7 +17,13 @@ function log {
 BUBBLE_MITM_MARKER=/home/bubble/.mitm_monitor
 ROOT_KEY_MARKER=/usr/share/bubble/mitm_monitor
 MITM_PORT_FILE=/home/mitmproxy/mitmproxy_port
-MIN_PCT_FREE=2
+
+TOTAL_MEM=$(free | grep -m 1 Mem: | awk '{print $2}')
+
+# For 1GB system, MIN_PCT_FREE is 2%
+# For 2GB system, MIN_PCT_FREE is 5%
+# For 4GB system, MIN_PCT_FREE is 11%
+MIN_PCT_FREE=$(expr $(expr $(expr ${TOTAL_MEM} / 500) \* 14) / 10000)
 
 # Start with MITM proxy turned on, or refresh value
 if [[ ! -f ${BUBBLE_MITM_MARKER} ]] ; then
@@ -57,7 +63,7 @@ function fullMitmReset {
   log "Full mitm reset completed"
 }
 
-log "Watching marker file ${BUBBLE_MITM_MARKER} ..."
+log "Watching marker file ${BUBBLE_MITM_MARKER} MIN_PCT_FREE=${MIN_PCT_FREE}%"
 sleep 2s && touch ${BUBBLE_MITM_MARKER} || log "Error touching ${BUBBLE_MITM_MARKER}" # first time through, always check and set on/off state
 while : ; do
   if [[ $(stat -c %Y ${BUBBLE_MITM_MARKER}) -gt $(stat -c %Y ${ROOT_KEY_MARKER}) ]] ; then
