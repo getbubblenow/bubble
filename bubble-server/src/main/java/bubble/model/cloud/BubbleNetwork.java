@@ -216,7 +216,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     private static final List<String> RESERVED_NAMES = Arrays.asList(
             "root", "postmaster", "hostmaster", "webmaster",
             "dns", "dnscrypt", "dnscrypt-proxy", "ftp", "www", "www-data", "postgres", "ipfs",
-            "redis", "nginx", "mitmproxy", "mitmdump", "algo", "algovpn");
+            "redis", "nginx", "mitm", "mitmproxy", "mitmdump", "algo", "algovpn");
 
     public static boolean isReservedName(String name) { return RESERVED_NAMES.contains(name); }
 

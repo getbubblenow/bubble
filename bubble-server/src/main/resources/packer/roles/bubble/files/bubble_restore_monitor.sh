@@ -60,9 +60,10 @@ fi
 log "Stopping bubble service"
 supervisorctl stop bubble
 
-# stop mitmdump service
-log "Stopping mitmproxy service"
-supervisorctl stop mitmdump
+# stop mitm services
+log "Stopping mitm services"
+supervisorctl stop mitm8888
+supervisorctl stop mitm9999
 
 # restore bubble.jar
 log "Restoring bubble.jar"
@@ -133,7 +134,8 @@ fi
 
 # restart mitm proxy service
 log "Restarting mitmproxy"
-supervisorctl restart mitmdump
+supervisorctl restart mitm8888
+supervisorctl restart mitm9999
 
 # restart bubble service
 log "Restore complete: restarting bubble API"

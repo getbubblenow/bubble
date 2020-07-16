@@ -26,10 +26,10 @@ public class MitmControlService {
 
     @Autowired private SelfNodeService selfNodeService;
 
-    public static final File MITM_CONTROL_FILE = new File("/home/bubble/.mitmdump_monitor");
-    public static final File MITM_ROOT_CONTROL_FILE = new File("/usr/share/bubble/mitmdump_monitor");
+    public static final File MITM_CONTROL_FILE = new File("/home/bubble/.mitm_monitor");
+    public static final File MITM_ROOT_CONTROL_FILE = new File("/usr/share/bubble/mitm_monitor");
 
-    // must be longer than the sleep time in mitmdump_monitor.sh (currently 5 seconds)
+    // must be longer than the sleep time in mitm_monitor.sh (currently 5 seconds)
     private static final long MITM_CONTROL_TIMEOUT = SECONDS.toMillis(10);
     private static final long MITM_MONITOR_SLEEP = SECONDS.toMillis(1);
 

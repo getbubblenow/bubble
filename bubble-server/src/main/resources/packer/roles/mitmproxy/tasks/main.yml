@@ -20,10 +20,10 @@
     value: 0
     sysctl_set: yes
 
-- name: Create mitmproxy user
+- name: Create mitm user
   user:
     name: mitmproxy
-    comment: mitmdump user
+    comment: mitm user
     shell: /bin/bash
     system: yes
     home: /home/mitmproxy
@@ -48,7 +48,7 @@
     src: /tmp/mitmproxy.zip
     dest: /home/mitmproxy/mitmproxy
 
-- name: Copy mitmdump files
+- name: Copy mitm files
   copy:
     src: "{{ item }}"
     dest: "/home/mitmproxy/mitmproxy/{{ item }}"
@@ -60,7 +60,7 @@
     - dns_spoofing.py
     - bubble_conn_check.py
     - bubble_modify.py
-    - run_mitmdump.sh
+    - run_mitm.sh
 
 - name: Install cert helper scripts
   copy:
@@ -88,10 +88,10 @@
 - name: Install mitmproxy dependencies
   shell: su - mitmproxy -c "bash -c 'cd /home/mitmproxy/mitmproxy && ./dev.sh'"
 
-- name: Install mitmdump_monitor
+- name: Install mitm_monitor
   copy:
-    src: "mitmdump_monitor.sh"
-    dest: "/usr/local/sbin/mitmdump_monitor.sh"
+    src: "mitm_monitor.sh"
+    dest: "/usr/local/sbin/mitm_monitor.sh"
     owner: root
     group: root
     mode: 0500

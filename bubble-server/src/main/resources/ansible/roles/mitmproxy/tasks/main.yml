@@ -18,31 +18,53 @@
 - name: Ensure mitmproxy user owns all mitmproxy files
   shell: chown -R mitmproxy /home/mitmproxy/mitmproxy
 
-- name: Install supervisor conf file
-  copy:
-    src: supervisor_mitmproxy.conf
-    dest: /etc/supervisor/conf.d/mitmproxy.conf
+- name: Install mitmproxy1 supervisor conf file
+  template:
+    src: supervisor_mitmproxy.conf.j2
+    dest: /etc/supervisor/conf.d/mitm8888.conf
     owner: root
     group: root
     mode: 0400
+  vars:
+    port: 8888
 
-- name: Install mitmdump_monitor supervisor conf file
+- name: Install mitmproxy2 supervisor conf file
+  template:
+    src: supervisor_mitmproxy.conf.j2
+    dest: /etc/supervisor/conf.d/mitm9999.conf
+    owner: root
+    group: root
+    mode: 0400
+  vars:
+    port: 9999
+
+- name: Install mitmproxy_port file
   copy:
-    src: supervisor_mitmdump_monitor.conf
-    dest: /etc/supervisor/conf.d/mitmdump_monitor.conf
+    src: mitmproxy_port
+    dest: /home/mitmproxy/mitmproxy_port
+    owner: mitmproxy
+    group: mitmproxy
+    mode: 0600
 
-- name: Allow MITM private port
+- name: Install mitmproxy_monitor supervisor conf file
+  copy:
+    src: supervisor_mitmproxy_monitor.conf
+    dest: /etc/supervisor/conf.d/mitmproxy_monitor.conf
+
+- name: Allow mitmproxy private ports
   iptables:
     chain: INPUT
     protocol: tcp
-    destination_port: 8888
+    destination_port: "{{ item }}"
     ctstate: NEW
     syn: match
     jump: ACCEPT
     comment: Accept new local connections on mitm port
   become: yes
   tags: algo_related
-  # ensuring that algo did its work on iptables before, so rule num 5 is ok to use
+  with_items:
+    - 8888
+    - 9999
 
 - name: reload supervisord
   shell: supervisorctl reload

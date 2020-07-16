@@ -12,12 +12,6 @@ import redis
 import json
 from bubble_config import bubble_network, bubble_port
 
-# Write python PID to file so that mitmdump_monitor.sh can check for excessive memory usage and restart if needed
-MITMDUMP_PID_FILE_PATH = '/home/mitmproxy/mitmdump.pid'
-MITMDUMP_PID_FILE = open(MITMDUMP_PID_FILE_PATH, "w")
-MITMDUMP_PID_FILE.write("%d" % os.getpid())
-MITMDUMP_PID_FILE.close()
-
 HEADER_USER_AGENT = 'User-Agent'
 HEADER_REFERER = 'Referer'
 HEADER_FILTER_PASSTHRU = 'X-Bubble-Passthru'
