@@ -137,7 +137,11 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
         }
     }
 
-    @Override public void forceDelete(String uuid) { super.delete(uuid); }
+    @Override public void forceDelete(String uuid) {
+        dataDAO.deleteDevice(uuid);
+        super.delete(uuid);
+        refreshVpnUsers();
+    }
 
     @Transactional
     public synchronized boolean ensureAllSpareDevices(@NonNull final String account, @NonNull final String network) {
