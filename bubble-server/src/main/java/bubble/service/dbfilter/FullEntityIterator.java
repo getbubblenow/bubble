@@ -7,6 +7,8 @@ package bubble.service.dbfilter;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.wizard.model.Identifiable;
+import org.hibernate.criterion.Order;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -25,9 +27,9 @@ public class FullEntityIterator extends EntityIterator {
     }
 
     protected void iterate() {
-        config.getEntityClasses().forEach(c -> {
-            addEntities(true, c, config.getDaoForEntityClass(c).findAll(), network, null, null);
-        });
+        config.getEntityClasses()
+              .forEach(c -> addEntities(true, c, config.getDaoForEntityClass(c).findAll(Order.asc(Identifiable.CTIME)),
+                                        network, null, null));
         log.info("iterate: completed");
     }
 
