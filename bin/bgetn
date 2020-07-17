@@ -33,6 +33,6 @@ if [[ ${JSON} = \{* ]] ; then
 elif [[ "${JSON}" = \[* ]] ; then
   echo "${JSON}" | jq -r .[].name
 else
-  echo "not sure what to do with JSON:"
-  echo "${JSON}"
+  die "Invalid JSON received:
+${JSON}"
 fi
