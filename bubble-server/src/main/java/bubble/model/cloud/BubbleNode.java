@@ -182,7 +182,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
 
     @ECSearchable(filter=true) @ECField(type=EntityFieldType.ip4, index=130)
     @ECIndex(unique=true) @Column(length=IP4_MAXLEN)
-    @Getter @Setter private String ip4;
+    @Getter @Setter private volatile String ip4;
     public boolean hasIp4() { return ip4 != null; }
     public boolean localIp4() { return ip4 == null || isLocalIpv4(ip4); }
 
@@ -190,7 +190,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
 
     @ECSearchable(filter=true) @ECField(type=EntityFieldType.ip6, index=140)
     @ECIndex(unique=true) @Column(length=IP6_MAXLEN)
-    @Getter @Setter private String ip6;
+    @Getter @Setter private volatile String ip6;
     public boolean hasIp6() { return ip6 != null; }
 
     public boolean hasSameIp(BubbleNode other) {
@@ -262,8 +262,8 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
 
     public void waitForIpAddresses(NodeProgressMeter progressMeter) throws TimeoutException, IOException {
         final long start = now();
-        long lastWrite = start;
-        while ((!hasIp4() || !hasIp6()) && !hasLaunchException() && now() - start < getIpTimeout()) {
+        long lastWrite = 0;
+        while ((!hasIp4() || !hasIp6()) && !hasLaunchException() && now() - start < ipTimeout()) {
             sleep(SECONDS.toMillis(2), "waiting for node to have IP addresses");
             if (progressMeter != null && isPackerImageCreation() && now() - lastWrite > LAUNCH_ACTIVITY_TIMEOUT/2) {
                 log.info("waitForIpAddresses: packerImageCreation is true, keeping progress meter alive");
@@ -275,9 +275,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
         if (!hasIp4() || !hasIp6()) throw new TimeoutException("waitForIpAddresses: timeout");
     }
 
-    private long getIpTimeout() {
-        return isPackerImageCreation() ? PACKER_IP_ADDR_TIMEOUT : IP_ADDR_TIMEOUT;
-    }
+    private long ipTimeout() { return isPackerImageCreation() ? PACKER_IP_ADDR_TIMEOUT : IP_ADDR_TIMEOUT; }
 
     @Transient @Getter @Setter private BubbleVersionInfo sageVersion;
     public boolean hasSageVersion () { return sageVersion != null && sageVersion.valid(); }

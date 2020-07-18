@@ -80,15 +80,32 @@ public class PackerJob implements Callable<List<PackerImage>> {
     @Autowired private GeoService geoService;
     @Autowired private PackerService packerService;
 
-    @Getter private CloudService cloud;
-    @Getter private AnsibleInstallType installType;
-    @Getter private AtomicReference<List<PackerImage>> imagesRef;
+    @Getter private final CloudService cloud;
+    @Getter private final AnsibleInstallType installType;
+    @Getter private final List<AtomicReference<List<PackerImage>>> imagesRefList = new ArrayList<>();
     @Getter private List<PackerImage> images = new ArrayList<>();
 
-    public PackerJob(CloudService cloud, AnsibleInstallType installType, AtomicReference<List<PackerImage>> imagesRef) {
+    public PackerJob(CloudService cloud, AnsibleInstallType installType) {
         this.cloud = cloud;
         this.installType = installType;
-        this.imagesRef = imagesRef;
+    }
+
+    public void addImagesRef(AtomicReference<List<PackerImage>> imagesRef) {
+        synchronized (imagesRefList) {
+            if (!images.isEmpty()) {
+                imagesRef.set(images);
+            } else {
+                imagesRefList.add(imagesRef);
+            }
+        }
+    }
+
+    private void setImagesRefs() {
+        synchronized (imagesRefList) {
+            for (AtomicReference<List<PackerImage>> ref : imagesRefList) {
+                ref.set(images);
+            }
+        }
     }
 
     public String cacheKey() { return PackerService.cacheKey(cloud, installType); }
@@ -157,7 +174,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
                     // this image is for all regions
                     log.info("packer image already exists for "+installType+" for all regions");
                     images = existingForInstallType;
-                    if (imagesRef != null) imagesRef.set(images);
+                    setImagesRefs();
                     return images;
 
                 } else {
@@ -175,7 +192,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
                     if (empty(imagesToCreate)) {
                         log.info("packer image already exists for "+installType+" for all regions");
                         images = existingForInstallType;
-                        if (imagesRef != null) imagesRef.set(images);
+                        setImagesRefs();
                         return images;
                     }
                     ctx.put(IMAGE_REGIONS_VAR, toInnerStringList(imagesToCreate));
@@ -257,7 +274,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
             images.addAll(finalizedImages);
         }
 
-        if (imagesRef != null) imagesRef.set(images);
+        setImagesRefs();
         log.info("packer images created in "+formatDuration(now() - start)+": "+images);
         return images;
     }

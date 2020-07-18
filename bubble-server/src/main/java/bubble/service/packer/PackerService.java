@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -43,24 +42,25 @@ public class PackerService {
             .stream().filter(s -> !empty(s)).collect(Collectors.toList());
     public static final String PACKER_KEY_NAME = "packer_rsa";
 
-    private final Map<String, Future<List<PackerImage>>> activeJobs = new ConcurrentHashMap<>(16);
+    private final Map<String, PackerJob> activeJobs = new ConcurrentHashMap<>(16);
     private final Map<String, List<PackerImage>> completedJobs = new ConcurrentHashMap<>(16);
     private final ExecutorService pool = DaemonThreadFactory.fixedPool(5);
 
     @Autowired private BubbleConfiguration configuration;
 
-    public List<PackerImage> writePackerImages(CloudService cloud,
-                                               AnsibleInstallType installType,
-                                               AtomicReference<List<PackerImage>> imagesRef) {
+    public void writePackerImages(CloudService cloud,
+                                  AnsibleInstallType installType,
+                                  AtomicReference<List<PackerImage>> imagesRef) {
         final String cacheKey = cacheKey(cloud, installType);
         synchronized (activeJobs) {
             final List<PackerImage> images = completedJobs.get(cacheKey);
-            if (images != null) return images;
-            activeJobs.computeIfAbsent(cacheKey, k -> {
-                final PackerJob packerJob = configuration.autowire(new PackerJob(cloud, installType, imagesRef));
-                return pool.submit(packerJob);
+            if (images != null) return;
+            final PackerJob job = activeJobs.computeIfAbsent(cacheKey, k -> {
+                final PackerJob packerJob = configuration.autowire(new PackerJob(cloud, installType));
+                pool.submit(packerJob);
+                return packerJob;
             });
-            return null;
+            job.addImagesRef(imagesRef);
         }
     }
 
