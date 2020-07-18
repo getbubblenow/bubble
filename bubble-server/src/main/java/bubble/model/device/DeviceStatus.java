@@ -54,7 +54,7 @@ public class DeviceStatus {
                     setPort(Integer.parseInt(endpoint.substring(lastColon + 1)));
                     if (geoService != null) {
                         try {
-                            setLocation(geoService.locate(geoAccount, getIp()));
+                            setLocation(geoService.locate(geoAccount, getIp(), true));
                         } catch (Exception e) {
                             log.error("DeviceStatus: error calling geoService for ip="+getIp()+": "+shortError(e));
                         }
