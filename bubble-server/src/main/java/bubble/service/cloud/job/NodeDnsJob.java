@@ -10,14 +10,19 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
+import lombok.extern.slf4j.Slf4j;
 
 import static bubble.service.cloud.NodeProgressMeterConstants.METER_ERROR_DNS;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static org.cobbzilla.util.system.Sleep.sleep;
 
+@Slf4j
 public class NodeDnsJob implements Runnable {
 
     private static final long DNS_TIMEOUT = MINUTES.toMillis(60);
+    private static final int MAX_DNS_ATTEMPTS = 10;
 
     private final CloudServiceDAO cloudDAO;
     private final BubbleDomain domain;
@@ -41,7 +46,19 @@ public class NodeDnsJob implements Runnable {
         try {
             node.waitForIpAddresses();
             final CloudService dnsService = cloudDAO.findByUuid(domain.getPublicDns());
-            dnsService.getDnsDriver(configuration).setNode(node);
+            Exception lastEx = null;
+            for (int i=0; i<MAX_DNS_ATTEMPTS; i++) {
+                try {
+                    dnsService.getDnsDriver(configuration).setNode(node);
+                    lastEx = null;
+                    break;
+                } catch (Exception e) {
+                    lastEx = e;
+                    log.error("run(attempt "+i+"): "+shortError(e));
+                    sleep(SECONDS.toMillis(3)*i, "waiting to retry DnsDriver.setNode("+node.id()+")");
+                }
+            }
+            if (lastEx != null) throw lastEx;
 
             // ensure this hostname is visible in our DNS and in public DNS,
             // or else node can't create its own letsencrypt SSL cert
