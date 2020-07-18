@@ -14,11 +14,13 @@ import bubble.model.account.Account;
 import bubble.model.account.HasNetwork;
 import bubble.model.bill.BubblePlan;
 import bubble.server.BubbleConfiguration;
+import bubble.service.cloud.NodeProgressMeter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
@@ -29,13 +31,16 @@ import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static bubble.ApiConstants.EP_NODES;
 import static bubble.model.cloud.BubbleNodeState.*;
+import static bubble.service.cloud.NodeLaunchMonitor.LAUNCH_ACTIVITY_TIMEOUT;
+import static bubble.service.cloud.NodeProgressMeterConstants.METER_TICK_PACKER_IMAGE;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.json.JsonUtil.fromJson;
@@ -52,6 +57,7 @@ import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySe
 @ECTypeURIs(baseURI=EP_NODES, listFields={"name", "ip4"})
 @Entity @NoArgsConstructor @Accessors(chain=true)
 @ECIndexes({ @ECIndex(unique=true, of={"domain", "network", "host"}) })
+@Slf4j
 public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbleTags<BubbleNode> {
 
     public static final String TAG_INSTANCE_ID = "instance_id";
@@ -59,7 +65,6 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     public static final String TAG_TEST = "test_instance";
 
     private static final List<String> TAG_NAMES = Arrays.asList(TAG_INSTANCE_ID, TAG_ERROR);
-    private static final long IP_ADDR_TIMEOUT = MINUTES.toMillis(2);
 
     @Override public Collection<String> validTags() { return TAG_NAMES; }
 
@@ -250,16 +255,33 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     @JsonIgnore @Transient @Getter @Setter private volatile RuntimeException launchException;
     public boolean hasLaunchException () { return launchException != null; }
 
-    public void waitForIpAddresses() throws TimeoutException {
+    public static final long IP_ADDR_TIMEOUT = MINUTES.toMillis(2);
+    public static final long PACKER_IP_ADDR_TIMEOUT = MINUTES.toMillis(35);
+
+    public void waitForIpAddresses() throws TimeoutException, IOException { waitForIpAddresses(null); }
+
+    public void waitForIpAddresses(NodeProgressMeter progressMeter) throws TimeoutException, IOException {
         final long start = now();
-        while ((!hasIp4() || !hasIp6()) && !hasLaunchException() && now() - start < IP_ADDR_TIMEOUT) {
-            sleep(TimeUnit.SECONDS.toMillis(2), "waiting for node to have IP addresses");
+        long lastWrite = start;
+        while ((!hasIp4() || !hasIp6()) && !hasLaunchException() && now() - start < getIpTimeout()) {
+            sleep(SECONDS.toMillis(2), "waiting for node to have IP addresses");
+            if (progressMeter != null && isPackerImageCreation() && now() - lastWrite > LAUNCH_ACTIVITY_TIMEOUT/2) {
+                log.info("waitForIpAddresses: packerImageCreation is true, keeping progress meter alive");
+                progressMeter.write(METER_TICK_PACKER_IMAGE);
+                lastWrite = now();
+            }
         }
         if (hasLaunchException()) throw launchException;
         if (!hasIp4() || !hasIp6()) throw new TimeoutException("waitForIpAddresses: timeout");
     }
 
+    private long getIpTimeout() {
+        return isPackerImageCreation() ? PACKER_IP_ADDR_TIMEOUT : IP_ADDR_TIMEOUT;
+    }
+
     @Transient @Getter @Setter private BubbleVersionInfo sageVersion;
     public boolean hasSageVersion () { return sageVersion != null && sageVersion.valid(); }
+
+    @Transient @JsonIgnore @Getter @Setter private volatile boolean packerImageCreation = false;
 
 }

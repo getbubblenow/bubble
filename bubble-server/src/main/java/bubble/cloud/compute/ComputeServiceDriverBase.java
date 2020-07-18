@@ -116,6 +116,7 @@ public abstract class ComputeServiceDriverBase
     public PackerImage getOrCreatePackerImage(BubbleNode node) {
         PackerImage packerImage = getPackerImage(node.getInstallType(), node.getRegion());
         if (packerImage == null) {
+            node.setPackerImageCreation(true);
             final AtomicReference<List<PackerImage>> imagesRef = new AtomicReference<>();
             packerService.writePackerImages(cloud, node.getInstallType(), imagesRef);
             long start = now();

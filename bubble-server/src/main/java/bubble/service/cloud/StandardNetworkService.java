@@ -111,6 +111,7 @@ public class StandardNetworkService implements NetworkService {
     private static final long NET_DEADLOCK_TIMEOUT = MINUTES.toMillis(3);
     private static final long PLAN_ENABLE_TIMEOUT = PURCHASE_DELAY + SECONDS.toMillis(10);
     private static final long NODE_START_JOB_TIMEOUT = MINUTES.toMillis(10);
+    private static final long PACKER_NODE_START_JOB_TIMEOUT = BubbleNode.PACKER_IP_ADDR_TIMEOUT;
     private static final long NODE_START_JOB_AWAIT_SLEEP = SECONDS.toMillis(2);
     private static final long NODE_READY_TIMEOUT = MINUTES.toMillis(6);
 
@@ -257,7 +258,7 @@ public class StandardNetworkService implements NetworkService {
             // Prepare ansible roles
             // We must wait until after server is started, because some roles require ip4 in vars
             try {
-                node.waitForIpAddresses();
+                node.waitForIpAddresses(progressMeter);
             } catch (TimeoutException e) {
                 final AwaitResult<Object> awaitResult = awaitAll(jobFutures, SECONDS.toMillis(5));
                 log.info("newNode: timeout waiting for IP addresses, awaitResult="+awaitResult);
@@ -299,8 +300,9 @@ public class StandardNetworkService implements NetworkService {
             final String nodeUser = node.getUser();
             final String script = getAnsibleSetupScript(automation, sshArgs, nodeUser, sshTarget);
 
-            log.info("newNode: awaiting background jobs...");
-            final AwaitResult<Object> awaitResult = awaitAll(jobFutures, NODE_START_JOB_TIMEOUT, NODE_START_JOB_AWAIT_SLEEP, new NodeLaunchAwait(progressMeter));
+            final long nodeStartTimeout = node.isPackerImageCreation() ? PACKER_NODE_START_JOB_TIMEOUT : NODE_START_JOB_TIMEOUT;
+            if (log.isInfoEnabled()) log.info("newNode: awaiting background jobs (packer="+node.isPackerImageCreation()+") timeout="+formatDuration(nodeStartTimeout));
+            final AwaitResult<Object> awaitResult = awaitAll(jobFutures, nodeStartTimeout, NODE_START_JOB_AWAIT_SLEEP, new NodeLaunchAwait(progressMeter));
             if (!awaitResult.allSucceeded()) {
                 log.warn("newNode: some background jobs failed, result="+ awaitResult);
                 final Collection<Exception> exceptions = awaitResult.getFailures().values();

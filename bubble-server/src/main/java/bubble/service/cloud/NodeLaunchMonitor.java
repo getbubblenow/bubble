@@ -35,7 +35,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.closeQuietly;
 @Service @Slf4j
 public class NodeLaunchMonitor extends SimpleDaemon {
 
-    private static final long LAUNCH_ACTIVITY_TIMEOUT = SECONDS.toMillis(180);
+    public static final long LAUNCH_ACTIVITY_TIMEOUT = SECONDS.toMillis(180);
     private static final long LAUNCH_TERMINATE_TIMEOUT = MINUTES.toMillis(6);
 
     @Getter private final long sleepTime = SECONDS.toMillis(15);

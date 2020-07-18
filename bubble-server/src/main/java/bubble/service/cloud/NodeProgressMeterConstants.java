@@ -32,6 +32,7 @@ public class NodeProgressMeterConstants {
     public static final String METER_TICK_VALIDATING_NODE_NETWORK_AND_PLAN = "BUBBLE: VALIDATING NODE, NETWORK, AND PLAN...";
     public static final String METER_TICK_CREATING_NODE = "BUBBLE: CREATING NODE...";
     public static final String METER_TICK_LAUNCHING_NODE = "BUBBLE: LAUNCHING NODE...";
+    public static final String METER_TICK_PACKER_IMAGE = "BUBBLE: CREATING PACKER IMAGE...";
     public static final String METER_TICK_PREPARING_ROLES = "BUBBLE: PREPARING ANSIBLE ROLES...";
     public static final String METER_TICK_PREPARING_INSTALL = "BUBBLE: PREPARING INSTALL FILES...";
     public static final String METER_TICK_AWAIT_1  = "AWAIT-1";
@@ -80,6 +81,7 @@ public class NodeProgressMeterConstants {
             {METER_TICK_VALIDATING_NODE_NETWORK_AND_PLAN, 1},
             {METER_TICK_CREATING_NODE, 1},
             {METER_TICK_LAUNCHING_NODE, 1},
+            {METER_TICK_PACKER_IMAGE, 1},
             {METER_TICK_PREPARING_ROLES, 5},
             {METER_TICK_PREPARING_INSTALL, 7},
             {METER_TICK_AWAIT_1, 8},
