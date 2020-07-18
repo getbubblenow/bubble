@@ -5,8 +5,10 @@
 package bubble.service.cloud;
 
 import bubble.dao.cloud.BubbleNetworkDAO;
+import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNetworkState;
+import bubble.model.cloud.BubbleNode;
 import bubble.service.boot.StandardSelfNodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.daemon.SimpleDaemon;
@@ -30,6 +32,7 @@ public class NetworkMonitorService extends SimpleDaemon {
     @Override protected long getSleepTime() { return CHECK_INTERVAL; }
 
     @Autowired private BubbleNetworkDAO networkDAO;
+    @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private StandardNetworkService networkService;
     @Autowired private StandardSelfNodeService selfNodeService;
 
@@ -52,7 +55,13 @@ public class NetworkMonitorService extends SimpleDaemon {
 
                 if (networkService.anyNodesActive(network)) {
                     switch (network.getState()) {
-                        case starting: case running: case restoring: continue;
+                        case created: case starting: case running: case restoring: continue;
+                        case stopped: case error_stopping:
+                            // delete nodes, network is dead
+                            for (BubbleNode node : nodeDAO.findByNetwork(network.getUuid())) {
+                                log.warn(getName()+": network "+network.getNetworkDomain()+" has nodes running but state is "+network.getState()+", deleting node: "+node.id()+", state="+node.getState());
+                                nodeDAO.forceDelete(node.getUuid());
+                            }
                         default:
                             reportError(getName()+": network "+network.getNetworkDomain()+" has nodes running but state is "+network.getState());
                     }
