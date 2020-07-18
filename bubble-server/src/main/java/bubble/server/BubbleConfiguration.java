@@ -164,10 +164,11 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                 bubbleJar = jar;
             } else if (jar.getName().equals("classes")) {
                 // Look for jar in directory above classes
-                final File[] jarFile = jar.getParentFile().listFiles(new FilenameRegexFilter("bubble-server-\\d+\\.\\d+\\.\\d+[-\\w]*.jar"));
-                if (jarFile == null || jarFile.length == 0) return die("no matching jar files found");
-                if (jarFile.length > 1) return die("multiple matching jar files found: "+ArrayUtils.toString(jarFile));
-                bubbleJar = jarFile[0];
+                final File jarDir = jar.getParentFile();
+                final File[] jarFiles = jarDir.listFiles(new FilenameRegexFilter("bubble-server-\\d+\\.\\d+\\.\\d+[-\\w]*.jar"));
+                if (jarFiles == null || jarFiles.length == 0) return die("no matching jar files found in "+abs(jarDir));
+                if (jarFiles.length > 1) return die("multiple matching jar files found: "+ArrayUtils.toString(jarFiles)+" in "+abs(jarDir));
+                bubbleJar = jarFiles[0];
             } else {
                 return die("getBubbleJar: invalid/unsupported jar location detected: "+abs(jar));
             }
