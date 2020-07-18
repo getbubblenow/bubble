@@ -116,9 +116,9 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
             partiallyBlockedDomains.set(newBlockList.getPartiallyBlockedDomains());
         }
 
-        log.info("refreshBlockLists: fullyBlockedDomains="+fullyBlockedDomains.get().size());
-        log.info("refreshBlockLists: partiallyBlockedDomains="+partiallyBlockedDomains.get().size());
-        log.info("refreshBlockLists: refreshed "+refreshed.size()+" block lists: "+StringUtil.toString(refreshed));
+        log.debug("refreshBlockLists: fullyBlockedDomains="+fullyBlockedDomains.get().size());
+        log.debug("refreshBlockLists: partiallyBlockedDomains="+partiallyBlockedDomains.get().size());
+        log.debug("refreshBlockLists: refreshed "+refreshed.size()+" block lists: "+StringUtil.toString(refreshed));
     }
 
     @Override public ConnectionCheckResponse checkConnection(AppRuleHarness harness,

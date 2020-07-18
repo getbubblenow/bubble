@@ -64,7 +64,7 @@ public interface AppRuleDriver {
         redis.rename(tempList, ipList);
         redis.sadd_plaintext(listOfListsForIp, ipList);
         final Long count = redis.sunionstore(unionSetName, redis.smembers(listOfListsForIp));
-        log.info("defineRedisSet("+ip+","+listOfListsName+","+listName+"): unionSetName="+unionSetName+" size="+count);
+        log.debug("defineRedisSet("+ip+","+listOfListsName+","+listName+"): unionSetName="+unionSetName+" size="+count);
     }
 
     AppRuleDriver getNext();

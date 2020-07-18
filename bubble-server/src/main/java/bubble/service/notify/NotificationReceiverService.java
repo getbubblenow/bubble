@@ -4,19 +4,18 @@
  */
 package bubble.service.notify;
 
+import bubble.client.BubbleNodeClient;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
 import bubble.dao.cloud.notify.ReceivedNotificationDAO;
-import bubble.model.cloud.BubbleNetwork;
-import bubble.model.cloud.BubbleNetworkState;
-import bubble.model.cloud.BubbleNode;
-import bubble.model.cloud.BubbleNodeKey;
+import bubble.model.cloud.*;
 import bubble.model.cloud.notify.NotificationReceipt;
 import bubble.model.cloud.notify.ReceivedNotification;
 import bubble.model.cloud.notify.SentNotification;
 import bubble.server.BubbleConfiguration;
 import bubble.service.backup.RestoreService;
+import lombok.Cleanup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.security.RsaMessage;
@@ -27,10 +26,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Set;
 
-import static bubble.ApiConstants.MAX_NOTIFY_LOG;
+import static bubble.ApiConstants.*;
 import static bubble.model.cloud.BubbleNodeKey.TOKEN_GENERATION_LIMIT;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.configuredIpsAndExternalIp;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalHost;
@@ -166,9 +165,28 @@ public class NotificationReceiverService {
             log.info("findFromKey: accepting key with valid restoreKey ("+restoreKey+"): registered new node key: " + fromKeyUuid + " for node: " + fromNodeUuid);
             return fromKey;
 
+        } else if (!currentKeys.isEmpty()) {
+            try {
+                @Cleanup final BubbleNodeClient client = fromNode.getApiQuickClient(configuration);
+                log.warn("findFromKey: received message with unrecognized key ("+fromKeyUuid+") from node "+fromNodeUuid+", existing key is valid and are not expiring soon, will verify new key using recent key: "+client.getToKey());
+                final String challenge = randomAlphanumeric(100) + "." + now();
+                final NodeKeyVerification notification = new NodeKeyVerification().setChallenge(challenge);
+                final RsaMessage response = client.post(AUTH_ENDPOINT + EP_VERIFY_KEY, notification, RsaMessage.class);
+                if (client.getFromKey().decrypt(response, client.getToKey().getRsaKey()).equals(challenge)) {
+                    fromKey = createFromKey(fromNode, fromKeyUuid, remoteHost, message);
+                    log.warn("findFromKey: accepting key with valid challenge response to previous key: registered new node key: " + fromKeyUuid + " for node: " + fromNodeUuid);
+                    return fromKey;
+                } else {
+                    log.warn("findFromKey: new key not accepted, current keys exist that are not expiring soon, and node failed verification challenge");
+                    throw forbiddenEx();
+                }
+            } catch (Exception e) {
+                log.warn("findFromKey: new key not accepted, current keys exist that are not expiring soon, and node failed verification challenge: "+shortError(e));
+                throw forbiddenEx();
+            }
+
         } else {
-            // todo: send verify_key synchronous message to node, if it can verify the key, then we'll accept it
-            log.warn("findFromKey: new key not accepted, current keys exist that are not expiring soon, node should use one of those");
+            log.warn("findFromKey: new key not accepted and no current keys exist for node: "+fromNodeUuid);
             throw forbiddenEx();
         }
     }

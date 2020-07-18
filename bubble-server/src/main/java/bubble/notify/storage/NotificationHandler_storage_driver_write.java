@@ -33,6 +33,7 @@ public class NotificationHandler_storage_driver_write extends NotificationHandle
     private InputStream loadWrite(ReceivedNotification n, StorageDriverNotification notification) {
         final BubbleNode fromNode = nodeDAO.findByUuid(n.getFromNode());
         if (fromNode == null) return die("loadWrite: fromNode not found: "+n.getUuid());
+        // todo: when do we cleanup this client?
         final ApiClientBase nodeClient = fromNode.getApiClient(configuration);
         try {
             final String readUri = NOTIFY_ENDPOINT + EP_READ + "/" + notification.getToken();

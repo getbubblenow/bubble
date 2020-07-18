@@ -109,6 +109,7 @@ public class ApiConstants {
     public static final String EP_SUPPORT = "/support";
     public static final String EP_APP_LINKS = "/appLinks";
     public static final String EP_PATCH = "/patch";
+    public static final String EP_VERIFY_KEY = "/verifyKey";
 
     public static final String ACCOUNTS_ENDPOINT = "/users";
     public static final String EP_POLICY = "/policy";

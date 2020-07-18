@@ -8,6 +8,7 @@ import bubble.dao.cloud.BubbleNodeKeyDAO;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeKey;
 import bubble.server.BubbleConfiguration;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpResponse;
@@ -44,9 +45,9 @@ public class BubbleNodeClient extends BubbleApiClient {
     public static final String H_BUBBLE_RESTORE_KEY = "X-Bubble-Restore-Key";
 
     private BubbleNode fromNode;
-    private BubbleNodeKey fromKey;
+    @Getter private BubbleNodeKey fromKey;
     private BubbleNode toNode;
-    private BubbleNodeKey toKey;
+    @Getter private BubbleNodeKey toKey;
 
     public BubbleNodeClient(BubbleNode toNode, BubbleConfiguration configuration) {
         // use http if connection is to localhost

@@ -73,20 +73,24 @@ public class InboundNotifyResource {
                 log.warn("receiveNotification: missing " + H_BUBBLE_FROM_NODE_KEY + " request header");
                 return forbidden();
             }
+            if (log.isTraceEnabled()) log.trace("receiveNotification: header "+H_BUBBLE_FROM_NODE_KEY+"="+fromKeyUuid);
+
             final String fromNodeUuid = req.getHeader(H_BUBBLE_FROM_NODE_UUID);
             if (fromNodeUuid == null) {
                 log.warn("receiveNotification: missing " + H_BUBBLE_FROM_NODE_UUID + " request header");
                 return forbidden();
             }
+            if (log.isTraceEnabled()) log.trace("receiveNotification: header "+H_BUBBLE_FROM_NODE_UUID+"="+fromNodeUuid);
+
             final BubbleNode fromNode = nodeDAO.findByUuid(fromNodeUuid);
             if (fromNode == null) {
                 log.warn("receiveNotification: fromNode not found: "+fromNodeUuid);
                 return forbidden();
             }
+            if (log.isTraceEnabled()) log.trace("receiveNotification: fromNode="+fromNode.id());
 
             final String restoreKey = req.getHeader(H_BUBBLE_RESTORE_KEY);
-
-            log.debug("receiveNotification: header value for "+H_BUBBLE_RESTORE_KEY+"="+restoreKey);
+            if (log.isTraceEnabled()) log.trace("receiveNotification: header "+H_BUBBLE_RESTORE_KEY+"="+restoreKey);
 
             // Find our key as receiver
             final String toKeyUuid = req.getHeader(H_BUBBLE_TO_NODE_KEY);
@@ -94,6 +98,7 @@ public class InboundNotifyResource {
                 log.warn("receiveNotification: missing " + H_BUBBLE_TO_NODE_KEY + " request header");
                 return forbidden();
             }
+            if (log.isTraceEnabled()) log.trace("receiveNotification: header "+H_BUBBLE_TO_NODE_KEY+"="+toKeyUuid);
 
             final NotificationReceipt receipt = notificationReceiverService.receive(new InboundNotification()
                     .setMessage(message)

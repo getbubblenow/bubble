@@ -37,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.TempDir;
 import org.cobbzilla.util.string.LocaleUtil;
+import org.cobbzilla.wizard.api.CrudOperation;
 import org.cobbzilla.wizard.auth.ChangePasswordRequest;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.client.script.ApiRunner;
@@ -44,6 +45,7 @@ import org.cobbzilla.wizard.client.script.ApiRunnerListener;
 import org.cobbzilla.wizard.client.script.ApiRunnerListenerStreamLogger;
 import org.cobbzilla.wizard.client.script.ApiScript;
 import org.cobbzilla.wizard.model.HashedPassword;
+import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.server.config.ErrorApiConfiguration;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.glassfish.grizzly.http.server.Request;
@@ -59,10 +61,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static bubble.ApiConstants.*;
@@ -405,8 +404,9 @@ public class MeResource {
         final File modelFile = new File(temp, name);
         FileUtil.toFileOrDie(modelFile, in);
 
-        final ApiClientBase api = configuration.newApiClient().setToken(caller.getToken());
-        return ok(modelSetupService.setupModel(api, caller, modelFile));
+        @Cleanup final ApiClientBase api = configuration.newApiClient().setToken(caller.getToken());
+        final Map<CrudOperation, Collection<Identifiable>> model = modelSetupService.setupModel(api, caller, modelFile);
+        return ok(model);
     }
 
     @Autowired private SageHelloService sageHelloService;

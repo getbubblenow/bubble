@@ -36,8 +36,10 @@ import bubble.service.boot.SageHelloService;
 import bubble.service.cloud.DeviceIdService;
 import bubble.service.cloud.GeoService;
 import bubble.service.notify.NotificationService;
+import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
+import org.cobbzilla.util.security.RsaMessage;
 import org.cobbzilla.wizard.stream.FileSendableResource;
 import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
@@ -57,9 +59,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static bubble.ApiConstants.*;
+import static bubble.client.BubbleNodeClient.*;
 import static bubble.model.account.Account.validatePassword;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static bubble.model.cloud.BubbleNetwork.TAG_PARENT_ACCOUNT;
+import static bubble.model.cloud.notify.NotificationType.hello_to_sage;
 import static bubble.model.cloud.notify.NotificationType.retrieve_backup;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static bubble.server.BubbleServer.getRestoreKey;
@@ -392,7 +396,7 @@ public class AuthResource {
                     && thisNetwork.getInstallType() == AnsibleInstallType.node
                     && configuration.hasSageNode()) {
                 // check if session is valid on sage
-                final BubbleNodeClient sageClient = configuration.getSageNode().getApiQuickClient(configuration);
+                @Cleanup final BubbleNodeClient sageClient = configuration.getSageNode().getApiQuickClient(configuration);
                 try {
                     final Account sageAccount = sageClient.post(AUTH_ENDPOINT+EP_APP_LOGIN+"/"+sessionId, null, Account.class);
                     if (sageAccount == null || empty(sageAccount.getApiToken())) {
@@ -425,6 +429,86 @@ public class AuthResource {
             }
         }
         return ok(sessionAccount.setApiToken(sessionDAO.create(sessionAccount)));
+    }
+
+    @POST @Path(EP_VERIFY_KEY)
+    public Response verifyNodeKey(@Context Request req,
+                                  @Context ContainerRequest ctx,
+                                  RsaMessage message) {
+        final BubbleNode thisNode = configuration.getThisNode();
+        if (thisNode == null) {
+            log.info("verifyNodeKey: thisNode was null");
+            return notFound();
+        }
+
+        final String fromNodeUuid = req.getHeader(H_BUBBLE_FROM_NODE_UUID);
+        if (empty(fromNodeUuid)) {
+            log.info("verifyNodeKey: header "+H_BUBBLE_FROM_NODE_UUID+" not found");
+            return notFound(H_BUBBLE_FROM_NODE_UUID);
+        }
+
+        final String fromKeyUuid = req.getHeader(H_BUBBLE_FROM_NODE_KEY);
+        if (empty(fromKeyUuid)) {
+            log.info("verifyNodeKey: header "+H_BUBBLE_FROM_NODE_KEY+" not found");
+            return notFound(H_BUBBLE_FROM_NODE_KEY);
+        }
+
+        final String toKeyUuid = req.getHeader(H_BUBBLE_TO_NODE_KEY);
+        if (empty(toKeyUuid)) {
+            log.info("verifyNodeKey: header "+H_BUBBLE_TO_NODE_KEY+" not found");
+            return notFound(H_BUBBLE_TO_NODE_KEY);
+        }
+
+        final BubbleNodeKey fromKey = nodeKeyDAO.findByNodeAndUuid(fromNodeUuid, fromKeyUuid);
+        if (fromKey == null) {
+            log.info("verifyNodeKey: fromKey not found: "+fromKeyUuid);
+            return notFound(fromKeyUuid);
+        }
+
+        final BubbleNodeKey verifyKey = nodeKeyDAO.findByNodeAndUuid(thisNode.getUuid(), toKeyUuid);
+        if (verifyKey == null) {
+            log.info("verifyNodeKey: verifyKey not found: "+toKeyUuid);
+            return notFound(toKeyUuid);
+        }
+
+        try {
+            final NodeKeyVerification verification = json(verifyKey.decrypt(message, fromKey.getRsaKey()), NodeKeyVerification.class);
+            final String challenge = verification.getChallenge();
+            final RsaMessage response = verifyKey.encrypt(challenge, fromKey.getRsaKey());
+            log.info("verifyNodeKey: returning encrypted challenge: "+challenge+" to node "+fromNodeUuid);
+            return ok(response);
+
+        } catch (Exception e) {
+            log.error("verifyNodeKey: "+shortError(e));
+            return notFound();
+        }
+    }
+
+    @POST @Path(EP_REKEY)
+    public Response rekeyNode(@Context Request req,
+                              @Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        if (!caller.admin()) return forbidden();
+
+        final BubbleNode thisNode = configuration.getThisNode();
+        if (thisNode == null) return notFound();
+        return ok(nodeKeyDAO.create(new BubbleNodeKey(thisNode)));
+    }
+
+    @POST @Path("/sage_hello")
+    public Response sageHello (@Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        if (!caller.admin()) return forbidden();
+
+        final BubbleNode selfNode = configuration.getThisNode();
+        if (selfNode != null && selfNode.hasSageNode() && !selfNode.getUuid().equals(selfNode.getSageNode())) {
+            final BubbleNode sageNode = nodeDAO.findByUuid(selfNode.getSageNode());
+            if (sageNode != null) {
+                final NotificationReceipt receipt = notificationService.notify(sageNode, hello_to_sage, selfNode);
+                return ok(receipt);
+            }
+        }
+        return notFound();
     }
 
     @POST @Path(EP_FORGOT_PASSWORD)

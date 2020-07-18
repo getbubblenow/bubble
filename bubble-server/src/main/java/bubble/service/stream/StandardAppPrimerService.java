@@ -140,13 +140,13 @@ public class StandardAppPrimerService implements AppPrimerService {
                             final AppRuleDriver appRuleDriver = rule.initDriver(driver, matcher, account, device);
                             final Set<String> blocks = appRuleDriver.getPrimedBlockDomains();
                             if (empty(blocks)) {
-                                log.info("_prime: no blockDomains for app/rule/matcher: " + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
+                                log.debug("_prime: no blockDomains for device/app/rule/matcher: " + device.getName() + "/" + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
                             } else {
                                 blockDomains.addAll(blocks);
                             }
                             final Set<String> filters = appRuleDriver.getPrimedFilterDomains();
                             if (empty(filters)) {
-                                log.info("_prime: no filterDomains for app/rule/matcher: " + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
+                                log.debug("_prime: no filterDomains for device/app/rule/matcher: " + device.getName() + "/" + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
                             } else {
                                 filterDomains.addAll(filters);
                             }

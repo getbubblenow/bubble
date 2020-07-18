@@ -57,7 +57,7 @@ public class NodeManagerResource {
     public static final String AUTH_BASIC_PREFIX = "Basic ";
     public static final long MAX_PATCH_SIZE = 200 * Bytes.MB;
 
-    private BubbleNode node;
+    private final BubbleNode node;
 
     public NodeManagerResource (BubbleNode node) { this.node = node; }
 

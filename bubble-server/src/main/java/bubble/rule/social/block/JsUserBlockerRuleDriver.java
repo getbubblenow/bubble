@@ -12,14 +12,17 @@ import lombok.Getter;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
+import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexReplacementFilter;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
+import static bubble.ApiConstants.HOME_DIR;
 import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -44,7 +47,16 @@ public class JsUserBlockerRuleDriver extends AbstractAppRuleDriver {
         return new ReaderInputStream(reader, UTF8cs);
     }
 
-    @Getter(lazy=true) private final String siteJsTemplate = stream2string(json(config, JsUserBlockerConfig.class).getSiteJsTemplate());
+    @Getter(lazy=true) private final String _siteJsTemplate = stream2string(json(config, JsUserBlockerConfig.class).getSiteJsTemplate());
+    public String getSiteJsTemplate () {
+        if (configuration.getEnvironment().containsKey("DEBUG_JS_SITE_TEMPLATES")) {
+            final File jsTemplateFile = new File(HOME_DIR + "/siteJsTemplates/" + json(config, JsUserBlockerConfig.class).getSiteJsTemplate());
+            if (jsTemplateFile.exists()) {
+                return FileUtil.toStringOrDie(jsTemplateFile);
+            }
+        }
+        return get_siteJsTemplate();
+    }
 
     private String getBubbleJs(String requestId) {
         final Map<String, Object> ctx = new HashMap<>();

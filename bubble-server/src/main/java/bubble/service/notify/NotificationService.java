@@ -4,6 +4,7 @@
  */
 package bubble.service.notify;
 
+import bubble.client.BubbleNodeClient;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
 import bubble.dao.cloud.notify.ReceivedNotificationDAO;
 import bubble.dao.cloud.notify.SentNotificationDAO;
@@ -64,12 +65,6 @@ public class NotificationService {
                 : node.getApiClient(configuration);
         final String toNodeUuid = node.getUuid();
         return notify(api, toNodeUuid, type, payload);
-    }
-
-    public NotificationReceipt notifyWithEnhancedReceipt(BubbleNode node, NotificationType type, Object payload) {
-        final ApiClientBase api = node.getApiClient(configuration);
-        final String toNodeUuid = node.getUuid();
-        return notifyWithEnhancedReceipt(api, toNodeUuid, type, payload);
     }
 
     public NotificationReceipt notify(ApiClientBase api, String toNodeUuid, NotificationType type, Object payload) {
@@ -176,8 +171,9 @@ public class NotificationService {
             // register callback for response
             log.debug("notifySync ("+notification.getClass().getSimpleName()+"/"+notification.getId()+"): sending notification: "+activeNotification.getId());
             syncRequests.put(notification.getId(), notification);
+            @Cleanup final BubbleNodeClient apiClient = delegate.getApiClient(configuration);
             final NotificationReceipt receipt = _notify(
-                    delegate.getApiClient(configuration),
+                    apiClient,
                     delegate.getUuid(),
                     type,
                     notification,

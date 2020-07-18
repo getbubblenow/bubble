@@ -19,6 +19,7 @@ import bubble.model.boot.CloudServiceConfig;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Cleanup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
@@ -221,7 +222,7 @@ public class ActivationService {
                 }
                 if (!accountDAO.activated()) die("bootstrapThisNode: timeout waiting for activation to complete, default objects not created");
 
-                final ApiClientBase api = configuration.newApiClient().setToken(account.getToken());
+                @Cleanup final ApiClientBase api = configuration.newApiClient().setToken(account.getToken());
                 final Map<CrudOperation, Collection<Identifiable>> objects
                         = modelSetupService.setupModel(api, account, "manifest-defaults");
                 log.info("bootstrapThisNode: created default objects\n"+json(objects));
