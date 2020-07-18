@@ -5,7 +5,7 @@
 #
 # Write a model to a bubble server
 #
-# Usage:  model [-u/--update-all] model-file
+# Usage:  bmodel [-u/--update-all] model-file
 #
 #   -u or --update : if present, every entity that is not otherwise created will be updated
 #   model-file     : a manifest.json file or a single model JSON file
