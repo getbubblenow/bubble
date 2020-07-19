@@ -7,7 +7,7 @@
       "template": true,
       "requestCheck": true,
       "fqdn": "twitter.com",
-      "urlRegex": "/search",
+      "urlRegex": ".*",
       "rule": "twitter_user_blocker"
     }]
   }

@@ -1,9 +1,67 @@
-function {{JS_PREFIX}}_apply_blocks(blocked_users) {
-  // hooray from filesystem! edited
-  console.log('apply_blocks starting at '+new Date()+', blocked_users='+JSON.stringify(blocked_users));
+function {{JS_PREFIX}}_getElementsByXPath(xpath, parent) {
+  let results = [];
+  let query = document.evaluate(xpath, parent || document,
+  null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+  for (let i = 0, length = query.snapshotLength; i < length; ++i) {
+    results.push(query.snapshotItem(i));
+  }
+  return results;
 }
 
-function {{JS_PREFIX}}_consider_block(comments, blocked_users) {
-  // hooray from filesystem!
-  console.log('consider_block starting, blocked_users='+JSON.stringify(blocked_users));
+function {{JS_PREFIX}}_apply_blocks(blocked_users) {
+  let sitePrefix = 'https://twitter.com/';
+  let authors = {{JS_PREFIX}}_getElementsByXPath('//article//a');
+  for (let i=0; i<authors.length; i++) {
+      let author = authors[i];
+      if (author.href && author.href.startsWith(sitePrefix)
+          && author.href.indexOf('?', sitePrefix.length) == -1
+          && author.href.indexOf('/', sitePrefix.length) == -1) {
+          let authorName = author.href.substring(sitePrefix.length);
+          if (blocked_users !== null && blocked_users.includes(authorName)) {
+              // walk parents until we find the article, then go up 3 more divs
+              let node = author;
+              while (node.tagName.toUpperCase() != 'ARTICLE') {
+                  node = node.parentNode;
+                  if (node === null) break;
+              }
+              if (node !== null) {
+                  for (let p = 0; p < 3; p++) {
+                      node = node.parentNode;
+                      if (node === null) break;
+                  }
+                  if (node !== null && node.parentNode != null) {
+                      console.log('removing post by author: ' + authorName);
+                      try {
+                          node.style = 'display: none';
+                      } catch (e) {
+                          console.log('error removing post by author: ' + authorName+': '+e);
+                      }
+                  }
+              }
+
+          } else {
+              // find nested span. first link is avatar image, doesn't have span. second link should have span.
+              let span = author.getElementsByTagName('span');
+              if (span.length > 0) {
+                  let authorWrapper = author.parentNode.parentNode;
+                  if (authorWrapper.innerHTML.indexOf('{{JS_PREFIX}}_bubble_block') == -1) {
+                      let blockControl = document.createElement('span');
+                      blockControl.className = '{{JS_PREFIX}}_bubble_block';
+                      let preText = document.createTextNode('\u00a0\u00a0[');
+                      let blockLink = document.createElement('a');
+                      let boldHolder = document.createElement('b');
+                      let linkText = document.createTextNode('X');
+                      boldHolder.appendChild(linkText);
+                      blockLink.addEventListener("click", function (event) { {{JS_PREFIX}}_block_user(authorName); return false; });
+                      blockLink.appendChild(boldHolder);
+                      let postText = document.createTextNode(']');
+                      blockControl.appendChild(preText);
+                      blockControl.appendChild(blockLink);
+                      blockControl.appendChild(postText);
+                      authorWrapper.appendChild(blockControl);
+                  }
+              }
+          }
+      }
+  }
 }
