@@ -5,7 +5,6 @@
       "name": "TlsPassthruMatcher",
       "template": true,
       "connCheck": true,
-      "requestCheck": false,
       "site": "All_Sites",
       "fqdn": "*",
       "urlRegex": ".*",

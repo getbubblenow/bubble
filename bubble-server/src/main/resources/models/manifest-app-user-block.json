@@ -5,5 +5,7 @@
   "apps/user_block/reason/bubbleApp_userBlock_reason",
   "apps/user_block/reason/bubbleApp_userBlock_reason_matchers",
   "apps/user_block/mr/bubbleApp_userBlock_mr",
-  "apps/user_block/mr/bubbleApp_userBlock_mr_matchers"
+  "apps/user_block/mr/bubbleApp_userBlock_mr_matchers",
+  "apps/user_block/twitter/bubbleApp_userBlock_twitter",
+  "apps/user_block/twitter/bubbleApp_userBlock_twitter_matchers"
 ]

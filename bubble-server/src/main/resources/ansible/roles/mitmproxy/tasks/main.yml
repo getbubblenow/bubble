@@ -48,8 +48,8 @@
 
 - name: Install mitmproxy_monitor supervisor conf file
   copy:
-    src: supervisor_mitmproxy_monitor.conf
-    dest: /etc/supervisor/conf.d/mitmproxy_monitor.conf
+    src: supervisor_mitm_monitor.conf
+    dest: /etc/supervisor/conf.d/mitm_monitor.conf
 
 - name: Allow mitmproxy private ports
   iptables:

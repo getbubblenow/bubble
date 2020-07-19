@@ -60,7 +60,6 @@ function {{JS_PREFIX}}_block_user (author) {
 
 {{{APPLY_BLOCKS_JS}}}
 
-
 {{JS_PREFIX}}_onReady(function() {
     const controlDivId = '{{JS_PREFIX}}_controlDiv';
     let bubbleControlDiv = document.getElementById(controlDivId);
@@ -74,4 +73,3 @@ function {{JS_PREFIX}}_block_user (author) {
     }
     bubbleControlDiv.innerHTML = bubbleControlDiv.innerHTML + '<br/><a href="{{{BUBBLE_HOME}}}/app/UserBlocker/site/{{SITE}}/view/blocked_users"><img width="64" src="/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true"/></a>';
 });
-

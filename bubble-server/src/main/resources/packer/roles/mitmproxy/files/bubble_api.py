@@ -13,6 +13,7 @@ import json
 from bubble_config import bubble_network, bubble_port
 
 HEADER_USER_AGENT = 'User-Agent'
+HEADER_CONTENT_SECURITY_POLICY = 'Content-Security-Policy'
 HEADER_REFERER = 'Referer'
 HEADER_FILTER_PASSTHRU = 'X-Bubble-Passthru'
 

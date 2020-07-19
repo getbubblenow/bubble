@@ -1,0 +1,14 @@
+[{
+  "name": "UserBlocker",
+  "children": {
+    "AppMatcher": [{
+      "name": "TwitterSearchMatcher",
+      "site": "Twitter",
+      "template": true,
+      "requestCheck": true,
+      "fqdn": "twitter.com",
+      "urlRegex": "/search",
+      "rule": "twitter_user_blocker"
+    }]
+  }
+}]

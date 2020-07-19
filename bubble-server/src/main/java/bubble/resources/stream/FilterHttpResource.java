@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 import static bubble.ApiConstants.*;
 import static bubble.resources.stream.FilterMatchersResponse.NO_MATCHERS;
 import static bubble.service.stream.StandardRuleEngineService.MATCHERS_CACHE_TIMEOUT;
+import static com.google.common.net.HttpHeaders.CONTENT_SECURITY_POLICY;
 import static java.util.Collections.emptyMap;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -105,9 +106,9 @@ public class FilterHttpResource {
         final String matchersJson = cache.get(cacheKey);
         if (matchersJson != null) {
             final FilterMatchersResponse cached = json(matchersJson, FilterMatchersResponse.class);
-            cache.set(requestId, json(cached.setRequestId(requestId), COMPACT_MAPPER), EX, MATCHERS_CACHE_TIMEOUT);
+            cache.set(requestId, json(cached, COMPACT_MAPPER), EX, MATCHERS_CACHE_TIMEOUT);
             if (log.isTraceEnabled()) log.trace(prefix+"found cached response for cacheKey="+cacheKey+" and set for requestId "+requestId+": "+json(cached, COMPACT_MAPPER));
-            return cached;
+            return cached.setRequestId(requestId);
         }
 
         final FilterMatchersResponse response = findMatchers(filterRequest, req, request);
@@ -388,7 +389,6 @@ public class FilterHttpResource {
             chunkLength = null;
         }
 
-
         final FilterMatchDecision decision = matchersResponse.getDecision();
         if (decision != FilterMatchDecision.match) {
             switch (decision) {
@@ -442,7 +442,8 @@ public class FilterHttpResource {
                     .setAccount(caller)
                     .setEncoding(encoding)
                     .setContentType(contentType)
-                    .setContentLength(contentLength);
+                    .setContentLength(contentLength)
+                    .setContentSecurityPolicy(req.getHeader(CONTENT_SECURITY_POLICY));
             if (log.isDebugEnabled()) log.trace(prefix+"start filterRequest="+json(filterRequest, COMPACT_MAPPER));
             getActiveRequestCache().set(requestId, json(filterRequest, COMPACT_MAPPER), EX, ACTIVE_REQUEST_TIMEOUT);
         } else {
