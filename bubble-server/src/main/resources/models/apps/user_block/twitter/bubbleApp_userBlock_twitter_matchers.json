@@ -2,7 +2,7 @@
   "name": "UserBlocker",
   "children": {
     "AppMatcher": [{
-      "name": "TwitterSearchMatcher",
+      "name": "TwitterMatcher",
       "site": "Twitter",
       "template": true,
       "requestCheck": true,
