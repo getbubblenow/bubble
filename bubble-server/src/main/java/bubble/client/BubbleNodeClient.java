@@ -18,7 +18,6 @@ import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.entity.ContentType;
 import org.cobbzilla.util.http.ApiConnectionInfo;
 import org.cobbzilla.util.http.HttpRequestBean;
-import org.cobbzilla.wizard.server.config.HttpConfiguration;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +31,6 @@ import static bubble.server.BubbleServer.getRestoreKey;
 import static bubble.server.BubbleServer.isRestoreMode;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.notSupported;
-import static org.cobbzilla.util.http.HttpSchemes.SCHEME_HTTPS;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 
@@ -51,7 +49,7 @@ public class BubbleNodeClient extends BubbleApiClient {
 
     public BubbleNodeClient(BubbleNode toNode, BubbleConfiguration configuration) {
         // use http if connection is to localhost
-        super(new ApiConnectionInfo(nodeBaseUri(toNode, configuration)));
+        super(new ApiConnectionInfo(configuration.nodeBaseUri(toNode)));
         initKeys(toNode, configuration);
     }
 
@@ -72,11 +70,6 @@ public class BubbleNodeClient extends BubbleApiClient {
         }
 
         this.toNode = toNode;
-    }
-
-    public static String nodeBaseUri(BubbleNode node, BubbleConfiguration configuration) {
-        final HttpConfiguration http = configuration.getHttp();
-        return SCHEME_HTTPS + node.getFqdn() + ":" + node.getSslPort() + http.getBaseUri();
     }
 
     @Override protected <T> void setRequestEntity(HttpEntityEnclosingRequest entityRequest, T data, ContentType contentType) {

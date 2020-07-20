@@ -2,7 +2,7 @@
  * Copyright (c) 2020 Bubble, Inc.  All rights reserved.
  * For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
  */
-package bubble.service.boot;
+package bubble.service.upgrade;
 
 import bubble.dao.cloud.BubbleBackupDAO;
 import bubble.model.cloud.BackupStatus;
@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.InputStream;
 
 import static bubble.ApiConstants.*;
-import static bubble.client.BubbleNodeClient.nodeBaseUri;
 import static bubble.model.cloud.notify.NotificationType.upgrade_request;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -98,7 +97,7 @@ public class BubbleJarUpgradeService {
 
         // request the jar from the sage
         final String uri = AUTH_ENDPOINT + EP_UPGRADE + "/" + configuration.getThisNode().getUuid() + "/" + key;
-        final String url = nodeBaseUri(configuration.getSageNode(), configuration) + uri;
+        final String url = configuration.nodeBaseUri(configuration.getSageNode()) + uri;
         final File newJar;
         try {
             newJar = temp(".jar");

@@ -95,7 +95,4 @@ public class RuleDriver extends IdentifiableBase implements AccountTemplate {
 
     @Embedded @Getter @Setter private SemanticVersion version;
 
-    @ECSearchable @ECField(index=90)
-    @ECIndex @Getter @Setter private Boolean needsUpdate = false;
-
 }

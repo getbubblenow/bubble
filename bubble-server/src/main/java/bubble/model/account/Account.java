@@ -198,10 +198,8 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     @Embedded @Getter @Setter private AutoUpdatePolicy autoUpdatePolicy;
 
-    public boolean wantsNewStuff () { return autoUpdatePolicy != null && autoUpdatePolicy.newStuff(); }
-    public boolean wantsDriverUpdates() { return autoUpdatePolicy != null && autoUpdatePolicy.driverUpdates(); }
+    public boolean wantsJarUpdates() { return autoUpdatePolicy != null && autoUpdatePolicy.jarUpdates(); }
     public boolean wantsAppUpdates() { return autoUpdatePolicy != null && autoUpdatePolicy.appUpdates(); }
-    public boolean wantsDataUpdates() { return autoUpdatePolicy != null && autoUpdatePolicy.dataUpdates(); }
 
     public static final long INIT_WAIT_INTERVAL = MILLISECONDS.toMillis(250);
     public static final long INIT_WAIT_TIMEOUT = SECONDS.toMillis(60);

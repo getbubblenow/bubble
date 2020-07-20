@@ -15,6 +15,7 @@ import bubble.notify.ReceivedNotificationHandler;
 import bubble.notify.payment.PaymentResult;
 import bubble.notify.payment.PaymentValidationResult;
 import bubble.notify.storage.StorageResult;
+import bubble.notify.upgrade.AppsUpgradeNotification;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -40,6 +41,8 @@ public enum NotificationType {
     // upgrade notifications
     upgrade_request (String.class),
     upgrade_response (true),
+    upgrade_apps_request (AppsUpgradeNotification.class),
+    upgrade_apps_response (true),
 
     // driver-level notifications
 

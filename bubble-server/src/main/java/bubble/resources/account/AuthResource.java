@@ -30,12 +30,12 @@ import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.backup.RestoreService;
 import bubble.service.bill.PromotionService;
 import bubble.service.boot.ActivationService;
-import bubble.service.boot.BubbleJarUpgradeService;
 import bubble.service.boot.NodeManagerService;
 import bubble.service.boot.SageHelloService;
 import bubble.service.cloud.DeviceIdService;
 import bubble.service.cloud.GeoService;
 import bubble.service.notify.NotificationService;
+import bubble.service.upgrade.BubbleJarUpgradeService;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
@@ -733,7 +733,7 @@ public class AuthResource {
     @GET @Path(EP_SUPPORT+"/{locale}")
     public Response getSupportInfo (@Context Request req,
                                     @Context ContainerRequest ctx,
-                                    String locale) {
+                                    @PathParam("locale") String locale) {
         return ok(configuration.getSupport().forLocale(locale));
     }
 
@@ -747,7 +747,7 @@ public class AuthResource {
     @GET @Path(EP_APP_LINKS+"/{locale}")
     public Response getAppLinks (@Context Request req,
                                  @Context ContainerRequest ctx,
-                                 String locale) {
+                                 @PathParam("locale") String locale) {
         return ok(configuration.getAppLinks().forLocale(locale));
     }
 

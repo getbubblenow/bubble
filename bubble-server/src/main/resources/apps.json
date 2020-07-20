@@ -1,0 +1,1486 @@
+{
+  "id" : "979b7850-ed94-4200-97da-4ea73045fb6f",
+  "drivers" : [ {
+    "uuid" : "0e022cda-7069-41f8-ba43-f6ab304ff085",
+    "name" : "BubbleBlockRuleDriver",
+    "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+    "template" : true,
+    "enabled" : true,
+    "driverClass" : "bubble.rule.bblock.BubbleBlockRuleDriver",
+    "version" : {
+      "major" : 1,
+      "minor" : 0,
+      "patch" : 0
+    },
+    "userConfig" : {
+      "fields" : [ ]
+    },
+    "shortId" : "0e022cda"
+  }, {
+    "uuid" : "f314f0ed-2144-4141-850d-c607a7ab010c",
+    "name" : "JsUserBlockerRuleDriver",
+    "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+    "template" : true,
+    "enabled" : true,
+    "driverClass" : "bubble.rule.social.block.JsUserBlockerRuleDriver",
+    "version" : {
+      "major" : 1,
+      "minor" : 0,
+      "patch" : 0
+    },
+    "userConfig" : {
+      "fields" : [ ]
+    },
+    "shortId" : "f314f0ed"
+  }, {
+    "uuid" : "c487b2ba-65f7-462f-af7f-c1ca2af5bc8a",
+    "name" : "TlsPassthruRuleDriver",
+    "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+    "template" : true,
+    "enabled" : true,
+    "driverClass" : "bubble.rule.passthru.TlsPassthruRuleDriver",
+    "version" : {
+      "major" : 1,
+      "minor" : 0,
+      "patch" : 0
+    },
+    "userConfig" : {
+      "fields" : [ ]
+    },
+    "shortId" : "c487b2ba"
+  }, {
+    "uuid" : "49125b81-03af-438d-8603-7dab3c9f1111",
+    "name" : "TrafficAnalyticsRuleDriver",
+    "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+    "template" : true,
+    "enabled" : true,
+    "driverClass" : "bubble.rule.analytics.TrafficAnalyticsRuleDriver",
+    "version" : {
+      "major" : 1,
+      "minor" : 0,
+      "patch" : 0
+    },
+    "userConfig" : {
+      "fields" : [ ]
+    },
+    "shortId" : "49125b81"
+  }, {
+    "uuid" : "abc524fb-6b40-4e67-b8a3-582b6fb2208e",
+    "name" : "UserBlockerRuleDriver",
+    "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+    "template" : true,
+    "enabled" : true,
+    "driverClass" : "bubble.rule.social.block.UserBlockerRuleDriver",
+    "version" : {
+      "major" : 1,
+      "minor" : 0,
+      "patch" : 0
+    },
+    "userConfig" : {
+      "fields" : [ ]
+    },
+    "shortId" : "abc524fb"
+  } ],
+  "apps" : [ {
+    "uuid" : "5e23d5ca-e2eb-4317-a992-7081383961b1",
+    "children" : {
+      "AppMatcher" : [ {
+        "uuid" : "a4a22808-8b06-470c-bbc0-21a3934a367c",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "name" : "TrafficAnalyticsMatcher",
+        "app" : "5e23d5ca-e2eb-4317-a992-7081383961b1",
+        "site" : "fc07ab36-d89e-42ca-8e8f-4a50ffaec5aa",
+        "fqdn" : "*",
+        "urlRegex" : ".*",
+        "rule" : "e030e9d7-5fee-4e00-9164-0666c18389c2",
+        "template" : true,
+        "enabled" : true,
+        "connCheck" : false,
+        "requestCheck" : true,
+        "priority" : 0,
+        "shortId" : "a4a22808"
+      } ],
+      "AppRule" : [ {
+        "uuid" : "e030e9d7-5fee-4e00-9164-0666c18389c2",
+        "name" : "traffic_analytics",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "5e23d5ca-e2eb-4317-a992-7081383961b1",
+        "template" : true,
+        "enabled" : true,
+        "priority" : 0,
+        "driver" : "49125b81-03af-438d-8603-7dab3c9f1111",
+        "config" : {
+          "filterPatterns" : [ "\\.stripe\\.com", "\\.stripe\\.network" ]
+        },
+        "shortId" : "e030e9d7"
+      } ],
+      "AppMessage" : [ {
+        "uuid" : "cfbafbb0-233d-4356-8c2a-735d0c132070",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "5e23d5ca-e2eb-4317-a992-7081383961b1",
+        "locale" : "en_US",
+        "priority" : 1,
+        "template" : true,
+        "enabled" : true,
+        "messages" : [ {
+          "name" : "name",
+          "value" : "Snitcher"
+        }, {
+          "name" : "icon",
+          "value" : "classpath:models/apps/analytics/snitcher-icon.svg"
+        }, {
+          "name" : "summary",
+          "value" : "Traffic Analytics"
+        }, {
+          "name" : "description",
+          "value" : "Review recent traffic for your devices. Block stuff that you don't like."
+        }, {
+          "name" : "field.ctime",
+          "value" : "When"
+        }, {
+          "name" : "field.requestTime",
+          "value" : "When"
+        }, {
+          "name" : "field.accountName",
+          "value" : "Account"
+        }, {
+          "name" : "field.fqdn",
+          "value" : "Host"
+        }, {
+          "name" : "field.device",
+          "value" : "Device"
+        }, {
+          "name" : "field.deviceName",
+          "value" : "Device"
+        }, {
+          "name" : "field.ip",
+          "value" : "From IP"
+        }, {
+          "name" : "field.uri",
+          "value" : "Path"
+        }, {
+          "name" : "field.userAgent",
+          "value" : "User Agent"
+        }, {
+          "name" : "field.referer",
+          "value" : "Referer"
+        }, {
+          "name" : "field.data",
+          "value" : "Count"
+        }, {
+          "name" : "param.meta2",
+          "value" : "Site"
+        }, {
+          "name" : "param.device",
+          "value" : "Device"
+        }, {
+          "name" : "action.filterHost",
+          "value" : "Block Host"
+        }, {
+          "name" : "action.filterUrl",
+          "value" : "Block URL"
+        }, {
+          "name" : "view.recent",
+          "value" : "Recent Traffic"
+        }, {
+          "name" : "view.recent.requestTime.format",
+          "value" : "{{MMM}} {{d}} @ {{h}}:{{m}}:{{s}}{{a}}"
+        }, {
+          "name" : "view.last_24_hours",
+          "value" : "Last 24 Hours"
+        }, {
+          "name" : "view.last_24_hours.ctime.format",
+          "value" : "{{MMM}} {{d}} @ {{h}}{{a}}"
+        }, {
+          "name" : "view.last_7_days",
+          "value" : "Last 7 Days"
+        }, {
+          "name" : "view.last_7_days.ctime.format",
+          "value" : "{{MMM}} {{d}}, {{YYYY}}"
+        }, {
+          "name" : "view.last_30_days",
+          "value" : "Last 30 Days"
+        }, {
+          "name" : "view.last_30_days.ctime.format",
+          "value" : "{{MMM}} {{d}}, {{YYYY}}"
+        }, {
+          "name" : "config.view.manageFilters",
+          "value" : "Manage Filters"
+        }, {
+          "name" : "config.field.analyticsFilter",
+          "value" : "Filter Pattern"
+        }, {
+          "name" : "config.field.analyticsFilter.description",
+          "value" : "Skip logging for URLs that match this pattern"
+        }, {
+          "name" : "config.action.addFilter",
+          "value" : "Add New Filter"
+        }, {
+          "name" : "config.button.addFilter",
+          "value" : "Add"
+        }, {
+          "name" : "config.action.removeFilter",
+          "value" : "Remove"
+        } ],
+        "shortId" : "cfbafbb0"
+      } ],
+      "AppSite" : [ {
+        "uuid" : "fc07ab36-d89e-42ca-8e8f-4a50ffaec5aa",
+        "name" : "All_Sites",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "5e23d5ca-e2eb-4317-a992-7081383961b1",
+        "template" : true,
+        "enabled" : true,
+        "description" : "All websites",
+        "url" : "*",
+        "shortId" : "fc07ab36"
+      } ]
+    },
+    "name" : "TrafficAnalytics",
+    "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+    "url" : "https://getbubblenow.com/apps/analytics",
+    "description" : "Traffic analytics for your Bubble",
+    "canPrime" : false,
+    "template" : true,
+    "enabled" : true,
+    "priority" : 100,
+    "dataConfig" : {
+      "presentation" : "app",
+      "dataDriver" : "bubble.app.analytics.TrafficAnalyticsAppDataDriver",
+      "fields" : [ {
+        "name" : "ctime",
+        "displayName" : "Ctime",
+        "mode" : "standard",
+        "control" : "text",
+        "customFormat" : true,
+        "when" : "view !== \"recent\""
+      }, {
+        "name" : "requestTime",
+        "displayName" : "Request Time",
+        "mode" : "standard",
+        "control" : "text",
+        "customFormat" : true,
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "accountName",
+        "displayName" : "Account Name",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "deviceName",
+        "displayName" : "Device Name",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "ip",
+        "displayName" : "Ip",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "fqdn",
+        "displayName" : "Fqdn",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "uri",
+        "displayName" : "Uri",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "userAgent",
+        "displayName" : "User Agent",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "referer",
+        "displayName" : "Referer",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "device",
+        "displayName" : "Device",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view !== \"recent\""
+      }, {
+        "name" : "data",
+        "displayName" : "Data",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view !== \"recent\""
+      } ],
+      "params" : [ {
+        "name" : "device",
+        "required" : false,
+        "index" : 10,
+        "displayName" : "Device",
+        "mode" : "standard",
+        "control" : "text",
+        "operator" : "eq",
+        "when" : "view !== \"recent\""
+      }, {
+        "name" : "meta2",
+        "required" : false,
+        "index" : 20,
+        "displayName" : "Meta2",
+        "mode" : "standard",
+        "control" : "text",
+        "operator" : "like",
+        "when" : "view !== \"recent\""
+      } ],
+      "actions" : [ {
+        "name" : "filterHost",
+        "when" : "view === \"recent\"",
+        "route" : "/app/BubbleBlock/config/manageRules/local?action=createRule&rule={{fqdn}}"
+      }, {
+        "name" : "filterUrl",
+        "when" : "view === \"recent\"",
+        "route" : "/app/BubbleBlock/config/manageRules/local?action=createRule&rule={{ encodeURIComponent( fqdn + (uri.startsWith('/') ? uri : '/'+uri) ) }}"
+      } ],
+      "views" : [ {
+        "presentation" : "app",
+        "layout" : "tiles",
+        "name" : "recent",
+        "priority" : 0
+      }, {
+        "presentation" : "app",
+        "layout" : "table",
+        "name" : "last_24_hours",
+        "priority" : 0
+      }, {
+        "presentation" : "app",
+        "layout" : "table",
+        "name" : "last_7_days",
+        "priority" : 0
+      }, {
+        "presentation" : "app",
+        "layout" : "table",
+        "name" : "last_30_days",
+        "priority" : 0
+      } ],
+      "configDriver" : "bubble.app.analytics.TrafficAnalyticsAppConfigDriver",
+      "configFields" : [ {
+        "name" : "analyticsFilter",
+        "displayName" : "Analytics Filter",
+        "mode" : "standard",
+        "control" : "text",
+        "truncate" : false
+      }, {
+        "name" : "ctime",
+        "displayName" : "Ctime",
+        "mode" : "standard",
+        "control" : "text",
+        "customFormat" : true,
+        "when" : "view !== \"recent\""
+      }, {
+        "name" : "requestTime",
+        "displayName" : "Request Time",
+        "mode" : "standard",
+        "control" : "text",
+        "customFormat" : true,
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "accountName",
+        "displayName" : "Account Name",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "deviceName",
+        "displayName" : "Device Name",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "ip",
+        "displayName" : "Ip",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "fqdn",
+        "displayName" : "Fqdn",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "uri",
+        "displayName" : "Uri",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "userAgent",
+        "displayName" : "User Agent",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "referer",
+        "displayName" : "Referer",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view === \"recent\""
+      }, {
+        "name" : "device",
+        "displayName" : "Device",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view !== \"recent\""
+      }, {
+        "name" : "data",
+        "displayName" : "Data",
+        "mode" : "standard",
+        "control" : "text",
+        "when" : "view !== \"recent\""
+      } ],
+      "configViews" : [ {
+        "name" : "manageFilters",
+        "scope" : "app",
+        "root" : true,
+        "fields" : [ "analyticsFilter" ],
+        "actions" : [ {
+          "name" : "removeFilter",
+          "scope" : "item",
+          "index" : 10
+        }, {
+          "name" : "addFilter",
+          "scope" : "app",
+          "index" : 10,
+          "params" : [ "analyticsFilter" ],
+          "button" : "addFilter"
+        } ]
+      } ]
+    },
+    "shortId" : "5e23d5ca"
+  }, {
+    "uuid" : "12ed9f89-5335-41fe-bb14-b5a7d34b0246",
+    "children" : {
+      "AppMatcher" : [ {
+        "uuid" : "caa7959d-3119-456d-8d53-a0b6de9bfd71",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "name" : "BubbleBlockMatcher",
+        "app" : "12ed9f89-5335-41fe-bb14-b5a7d34b0246",
+        "site" : "5bb7f4f0-a54f-4f1e-b61a-815a05f4de44",
+        "fqdn" : "*",
+        "urlRegex" : ".*",
+        "rule" : "fda8e014-9209-45fb-84b3-832b6750e5b6",
+        "template" : true,
+        "enabled" : true,
+        "connCheck" : true,
+        "requestCheck" : false,
+        "priority" : -1000,
+        "shortId" : "caa7959d"
+      } ],
+      "AppRule" : [ {
+        "uuid" : "fda8e014-9209-45fb-84b3-832b6750e5b6",
+        "name" : "bubble_block",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "12ed9f89-5335-41fe-bb14-b5a7d34b0246",
+        "template" : true,
+        "enabled" : true,
+        "priority" : 0,
+        "driver" : "0e022cda-7069-41f8-ba43-f6ab304ff085",
+        "config" : {
+          "blockLists" : [ {
+            "name" : "EasyList",
+            "id" : "easylist",
+            "url" : "https://v.firebog.net/hosts/Easylist.txt",
+            "description" : "EasyList is the primary filter list that removes most adverts from international web pages, including unwanted frames, images, and objects. It is the most popular list used by many ad blockers and forms the basis of over a dozen combination and supplementary filter lists.",
+            "tags" : [ "ads" ]
+          }, {
+            "name" : "Peter Lowe's Ad and tracking server list",
+            "id" : "peter_lowes_ad_and_tracking_list",
+            "url" : "https://pgl.yoyo.org/adservers/serverlist.php?showintro=0;hostformat=raw",
+            "description" : "A comprehensive list of ad and tracking servers",
+            "tags" : [ "ads", "privacy" ]
+          }, {
+            "name" : "Dandelion Sprout's Anti-Malware List",
+            "id" : "dandelion_sprouts_anti_malware_list",
+            "url" : "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareABP.txt",
+            "description" : "Most anti-malware lists are pretty big and can cover a 5- or 6-digit amount of specific domains. But my list hereby claims to remove more than 25% of all known malware sites with just a 2-digit amount of entries. This is mostly done by blocking top-level domains that have become devastatingly abused by spammers, usually because they allowed for free and uncontrolled domain registrations. There's also additional categories that cover unusual malware and phishing domains that very few other lists seem to cover.",
+            "tags" : [ "malware", "phishing" ]
+          }, {
+            "name" : "Bubble Ads/Tracking List",
+            "id" : "bubble_ads_and_trackers1",
+            "url" : "https://raw.githubusercontent.com/getbubblenow/bubble-filter-lists/master/ads_and_trackers1.txt",
+            "description" : "Blocks lots of ads and trackers, with a focus on ads and trackers used in native mobile apps",
+            "tags" : [ "ads", "privacy" ]
+          }, {
+            "name" : "Bubble Custom List",
+            "id" : "local",
+            "url" : "",
+            "description" : "A place to maintain your own block rules for this Bubble.",
+            "tags" : [ "custom" ]
+          } ]
+        },
+        "shortId" : "fda8e014"
+      } ],
+      "AppMessage" : [ {
+        "uuid" : "d9a52173-4bfa-45b6-8a53-29dc7767c05a",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "12ed9f89-5335-41fe-bb14-b5a7d34b0246",
+        "locale" : "en_US",
+        "priority" : 1,
+        "template" : true,
+        "enabled" : true,
+        "messages" : [ {
+          "name" : "name",
+          "value" : "Block Party!"
+        }, {
+          "name" : "icon",
+          "value" : "classpath:models/apps/bubble_block/blockparty-icon.svg"
+        }, {
+          "name" : "summary",
+          "value" : "Network Filter"
+        }, {
+          "name" : "description",
+          "value" : "Block adware, malware, phishing/scam sites, and much more"
+        }, {
+          "name" : "field.ctime",
+          "value" : "When"
+        }, {
+          "name" : "field.fqdn",
+          "value" : "URL"
+        }, {
+          "name" : "field.device",
+          "value" : "Device"
+        }, {
+          "name" : "field.uri",
+          "value" : "Path"
+        }, {
+          "name" : "field.data",
+          "value" : "Count"
+        }, {
+          "name" : "view.last_24_hours",
+          "value" : "Last 24 Hours"
+        }, {
+          "name" : "view.last_24_hours.ctime.format",
+          "value" : "{{MMM}} {{d}} @ {{h}}{{a}}"
+        }, {
+          "name" : "view.last_7_days",
+          "value" : "Last 7 Days"
+        }, {
+          "name" : "view.last_7_days.ctime.format",
+          "value" : "{{MMM}} {{d}}, {{YYYY}}"
+        }, {
+          "name" : "view.last_30_days",
+          "value" : "Last 30 Days"
+        }, {
+          "name" : "view.last_30_days.ctime.format",
+          "value" : "{{MMM}} {{d}}, {{YYYY}}"
+        }, {
+          "name" : "config.view.manageLists",
+          "value" : "Manage Filter Lists"
+        }, {
+          "name" : "config.view.manageList",
+          "value" : "Manage Filter List"
+        }, {
+          "name" : "config.view.manageRules",
+          "value" : "Manage Filter Rules"
+        }, {
+          "name" : "config.view.manageUserAgents",
+          "value" : "Manage User-Agents"
+        }, {
+          "name" : "config.field.name",
+          "value" : "Name"
+        }, {
+          "name" : "config.field.description",
+          "value" : "Description"
+        }, {
+          "name" : "config.field.url",
+          "value" : "URL"
+        }, {
+          "name" : "config.field.url.description",
+          "value" : "URL of the Filter List"
+        }, {
+          "name" : "config.field.tagString",
+          "value" : "Tags"
+        }, {
+          "name" : "config.field.tagString.description",
+          "value" : "A comma-separated list of tags"
+        }, {
+          "name" : "config.field.tags",
+          "value" : "Tags"
+        }, {
+          "name" : "config.field.enabled",
+          "value" : "Enabled"
+        }, {
+          "name" : "config.field.rule",
+          "value" : "Rule"
+        }, {
+          "name" : "config.field.rule.description",
+          "value" : "Enter a rule. Can be a hostname, or use AdBlockPlus format"
+        }, {
+          "name" : "config.field.ruleType",
+          "value" : "Rule Type"
+        }, {
+          "name" : "config.field.testUrl",
+          "value" : "Test URL"
+        }, {
+          "name" : "config.field.testUrl.description",
+          "value" : "URL to check against filters"
+        }, {
+          "name" : "config.field.testUserAgent",
+          "value" : "Test User-Agent"
+        }, {
+          "name" : "config.field.testUserAgent.description",
+          "value" : "User-Agent to check against filters"
+        }, {
+          "name" : "config.field.testUrlPrimary",
+          "value" : "Primary"
+        }, {
+          "name" : "config.field.testUrlPrimary.description",
+          "value" : "A primary request will receive either an ALLOW or BLOCK decision from your Bubble. A non-primary request (for example a request for a webpage) may additionally receive a FILTER decision. This means the request will be permitted, but the response will be instrumented with Bubble filters to remove ads, malware and blocked elements."
+        }, {
+          "name" : "config.field.urlRegex",
+          "value" : "URL"
+        }, {
+          "name" : "config.field.urlRegex.description",
+          "value" : "A regular expression to match against the URL"
+        }, {
+          "name" : "config.field.userAgentRegex",
+          "value" : "User-Agent"
+        }, {
+          "name" : "config.field.userAgentRegex.description",
+          "value" : "A regular expression to match against the User-Agent"
+        }, {
+          "name" : "config.action.enableList",
+          "value" : "Enable"
+        }, {
+          "name" : "config.action.disableList",
+          "value" : "Disable"
+        }, {
+          "name" : "config.action.manageList",
+          "value" : "Edit"
+        }, {
+          "name" : "config.action.removeList",
+          "value" : "Remove"
+        }, {
+          "name" : "config.action.createList",
+          "value" : "Add New"
+        }, {
+          "name" : "config.button.createList",
+          "value" : "Add"
+        }, {
+          "name" : "config.action.updateList",
+          "value" : "Update"
+        }, {
+          "name" : "config.action.manageRules",
+          "value" : "Rules"
+        }, {
+          "name" : "config.action.manageUserAgents",
+          "value" : "User-Agents"
+        }, {
+          "name" : "config.action.removeRule",
+          "value" : "Remove Rule"
+        }, {
+          "name" : "config.action.createRule",
+          "value" : "Add New Rule"
+        }, {
+          "name" : "config.button.createRule",
+          "value" : "Add"
+        }, {
+          "name" : "config.action.createUserAgentBlock",
+          "value" : "Add New User-Agent Rule"
+        }, {
+          "name" : "config.button.createUserAgentBlock",
+          "value" : "Add"
+        }, {
+          "name" : "config.action.removeUserAgentBlock",
+          "value" : "Remove Rule"
+        }, {
+          "name" : "config.button.removeUserAgentBlock",
+          "value" : "Remove"
+        }, {
+          "name" : "config.action.testUrl",
+          "value" : "Test URL"
+        }, {
+          "name" : "config.button.testUrl",
+          "value" : "Test"
+        }, {
+          "name" : "config.response.block",
+          "value" : "Block"
+        }, {
+          "name" : "config.response.block.description",
+          "value" : "Requests to this URL would be blocked by your Bubble"
+        }, {
+          "name" : "config.response.allow",
+          "value" : "Allow"
+        }, {
+          "name" : "config.response.allow.description",
+          "value" : "Requests to this URL would be allowed by your Bubble, and would not be filtered"
+        }, {
+          "name" : "config.response.filter",
+          "value" : "Filter"
+        }, {
+          "name" : "config.response.filter.description",
+          "value" : "Requests to this URL would be allowed by your Bubble, but would be filtered"
+        } ],
+        "shortId" : "d9a52173"
+      } ],
+      "AppSite" : [ {
+        "uuid" : "5bb7f4f0-a54f-4f1e-b61a-815a05f4de44",
+        "name" : "All_Sites",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "12ed9f89-5335-41fe-bb14-b5a7d34b0246",
+        "template" : true,
+        "enabled" : true,
+        "description" : "All websites",
+        "url" : "*",
+        "shortId" : "5bb7f4f0"
+      } ]
+    },
+    "name" : "BubbleBlock",
+    "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+    "url" : "https://getbubblenow.com/apps/bblock",
+    "description" : "Block Adware, Malware and More",
+    "canPrime" : true,
+    "template" : true,
+    "enabled" : true,
+    "priority" : 200,
+    "dataConfig" : {
+      "presentation" : "app",
+      "dataDriver" : "bubble.app.bblock.BubbleBlockAppDataDriver",
+      "fields" : [ {
+        "name" : "ctime",
+        "displayName" : "Ctime",
+        "mode" : "standard",
+        "control" : "text",
+        "customFormat" : true
+      }, {
+        "name" : "device",
+        "displayName" : "Device",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "fqdn",
+        "displayName" : "Fqdn",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "uri",
+        "displayName" : "Uri",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "data",
+        "displayName" : "Data",
+        "mode" : "standard",
+        "control" : "text"
+      } ],
+      "params" : [ {
+        "name" : "device",
+        "required" : false,
+        "index" : 10,
+        "displayName" : "Device",
+        "mode" : "standard",
+        "control" : "text",
+        "operator" : "eq"
+      } ],
+      "views" : [ {
+        "presentation" : "app",
+        "layout" : "table",
+        "name" : "last_24_hours",
+        "priority" : 0
+      }, {
+        "presentation" : "app",
+        "layout" : "table",
+        "name" : "last_7_days",
+        "priority" : 0
+      }, {
+        "presentation" : "app",
+        "layout" : "table",
+        "name" : "last_30_days",
+        "priority" : 0
+      } ],
+      "configDriver" : "bubble.app.bblock.BubbleBlockAppConfigDriver",
+      "configFields" : [ {
+        "name" : "name",
+        "displayName" : "Name",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "description",
+        "displayName" : "Description",
+        "mode" : "standard",
+        "control" : "textarea"
+      }, {
+        "name" : "url",
+        "displayName" : "Url",
+        "mode" : "standard",
+        "type" : "http_url",
+        "control" : "text"
+      }, {
+        "name" : "tags",
+        "displayName" : "Tags",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "tagString",
+        "displayName" : "Tag String",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "enabled",
+        "displayName" : "Enabled",
+        "mode" : "readOnly",
+        "type" : "flag",
+        "control" : "flag"
+      }, {
+        "name" : "rule",
+        "displayName" : "Rule",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "ruleType",
+        "displayName" : "Rule Type",
+        "mode" : "readOnly",
+        "control" : "text"
+      }, {
+        "name" : "testUrl",
+        "displayName" : "Test Url",
+        "mode" : "standard",
+        "type" : "http_url",
+        "control" : "text"
+      }, {
+        "name" : "testUserAgent",
+        "required" : false,
+        "displayName" : "Test User Agent",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "testUrlPrimary",
+        "displayName" : "Test Url Primary",
+        "mode" : "standard",
+        "type" : "flag",
+        "control" : "flag"
+      }, {
+        "name" : "urlRegex",
+        "required" : false,
+        "displayName" : "Url Regex",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "userAgentRegex",
+        "displayName" : "User Agent Regex",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "ctime",
+        "displayName" : "Ctime",
+        "mode" : "standard",
+        "control" : "text",
+        "customFormat" : true
+      }, {
+        "name" : "device",
+        "displayName" : "Device",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "fqdn",
+        "displayName" : "Fqdn",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "uri",
+        "displayName" : "Uri",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "data",
+        "displayName" : "Data",
+        "mode" : "standard",
+        "control" : "text"
+      } ],
+      "configViews" : [ {
+        "name" : "manageLists",
+        "scope" : "app",
+        "root" : true,
+        "fields" : [ "name", "description", "url", "enabled", "tagString" ],
+        "actions" : [ {
+          "name" : "enableList",
+          "scope" : "item",
+          "when" : "!item.enabled",
+          "index" : 10
+        }, {
+          "name" : "disableList",
+          "scope" : "item",
+          "when" : "item.enabled",
+          "index" : 20
+        }, {
+          "name" : "manageList",
+          "scope" : "item",
+          "view" : "manageList",
+          "index" : 30
+        }, {
+          "name" : "manageRules",
+          "scope" : "item",
+          "when" : "item.url === \\'\\'",
+          "view" : "manageRules",
+          "index" : 40
+        }, {
+          "name" : "removeList",
+          "scope" : "item",
+          "when" : "item.url !== ''",
+          "index" : 50
+        }, {
+          "name" : "createList",
+          "scope" : "app",
+          "view" : "manageList",
+          "index" : 10,
+          "params" : [ "url" ],
+          "button" : "createList"
+        }, {
+          "name" : "testUrl",
+          "scope" : "app",
+          "successMessage" : "decisionType",
+          "index" : 20,
+          "params" : [ "testUrl", "testUrlPrimary" ],
+          "button" : "testUrl"
+        } ]
+      }, {
+        "name" : "manageList",
+        "scope" : "item",
+        "root" : false,
+        "fields" : [ "name", "description", "url", "tagString", "enabled" ],
+        "actions" : [ {
+          "name" : "updateList",
+          "scope" : "item",
+          "successView" : "manageLists",
+          "index" : 10
+        }, {
+          "name" : "enableList",
+          "scope" : "item",
+          "when" : "!item.enabled",
+          "index" : 20
+        }, {
+          "name" : "disableList",
+          "scope" : "item",
+          "when" : "item.enabled",
+          "index" : 30
+        }, {
+          "name" : "manageRules",
+          "scope" : "item",
+          "when" : "item.url === ''",
+          "view" : "manageRules",
+          "index" : 40
+        }, {
+          "name" : "removeList",
+          "scope" : "item",
+          "when" : "item.url !== ''",
+          "successView" : "manageLists",
+          "index" : 50
+        } ]
+      }, {
+        "name" : "manageRules",
+        "scope" : "item",
+        "root" : false,
+        "fields" : [ "rule" ],
+        "actions" : [ {
+          "name" : "removeRule",
+          "scope" : "item",
+          "index" : 10
+        }, {
+          "name" : "createRule",
+          "scope" : "app",
+          "index" : 10,
+          "params" : [ "rule" ],
+          "button" : "createRule"
+        }, {
+          "name" : "testUrl",
+          "scope" : "app",
+          "successMessage" : "decisionType",
+          "index" : 20,
+          "params" : [ "testUrl", "testUserAgent", "testUrlPrimary" ],
+          "button" : "testUrl"
+        } ]
+      }, {
+        "name" : "manageUserAgents",
+        "scope" : "app",
+        "root" : true,
+        "fields" : [ "userAgentRegex", "urlRegex" ],
+        "actions" : [ {
+          "name" : "removeUserAgentBlock",
+          "scope" : "item",
+          "index" : 10
+        }, {
+          "name" : "createUserAgentBlock",
+          "scope" : "app",
+          "index" : 10,
+          "params" : [ "userAgentRegex", "urlRegex" ],
+          "button" : "createUserAgentBlock"
+        }, {
+          "name" : "testUrl",
+          "scope" : "app",
+          "successMessage" : "decisionType",
+          "index" : 20,
+          "params" : [ "testUrl", "testUserAgent", "testUrlPrimary" ],
+          "button" : "testUrl"
+        } ]
+      } ]
+    },
+    "shortId" : "12ed9f89"
+  }, {
+    "uuid" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+    "children" : {
+      "AppMatcher" : [ {
+        "uuid" : "a9f35a6b-7fb0-40b4-9154-ede9a481f5b7",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "name" : "HNCommentMatcher",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "site" : "7569f7f0-6ad0-4709-9a77-c217e4fc7ccb",
+        "fqdn" : "news.ycombinator.com",
+        "urlRegex" : "/item\\?id=\\d+",
+        "rule" : "30dfe23b-e7d7-4fe6-8aa9-9620d028df97",
+        "template" : true,
+        "enabled" : true,
+        "connCheck" : false,
+        "requestCheck" : true,
+        "priority" : 0,
+        "shortId" : "a9f35a6b"
+      }, {
+        "uuid" : "e4be80d1-56d8-4dd1-9bba-baefb0c91989",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "name" : "HNThreadsMatcher",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "site" : "7569f7f0-6ad0-4709-9a77-c217e4fc7ccb",
+        "fqdn" : "news.ycombinator.com",
+        "urlRegex" : "/threads\\?id=\\w+",
+        "rule" : "30dfe23b-e7d7-4fe6-8aa9-9620d028df97",
+        "template" : true,
+        "enabled" : true,
+        "connCheck" : false,
+        "requestCheck" : true,
+        "priority" : 0,
+        "shortId" : "e4be80d1"
+      }, {
+        "uuid" : "2e175923-44fd-40b4-a1da-849cc7941582",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "name" : "MRMatcher",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "site" : "76bb15ba-c184-43e4-99e6-989957e7cb62",
+        "fqdn" : "marginalrevolution.com",
+        "urlRegex" : "(/marginalrevolution)?/20\\d{2}/\\d{2}/\\w+",
+        "rule" : "b17ef6a7-6de9-4ab1-8335-dfd9e834008a",
+        "template" : true,
+        "enabled" : true,
+        "connCheck" : false,
+        "requestCheck" : true,
+        "priority" : 0,
+        "shortId" : "2e175923"
+      }, {
+        "uuid" : "157232b8-5ed3-4c8f-9837-c3ea6edf0eb9",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "name" : "ReasonMatcher",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "site" : "e6adce40-8b78-44a7-b7f3-394fe6856de4",
+        "fqdn" : "reason.com",
+        "urlRegex" : "/20\\d{2}/\\d{2}/\\d{2}/[-\\w]+/",
+        "rule" : "75716dd0-ebbd-4410-99d3-86ab0a206849",
+        "template" : true,
+        "enabled" : true,
+        "connCheck" : false,
+        "requestCheck" : true,
+        "priority" : 0,
+        "shortId" : "157232b8"
+      }, {
+        "uuid" : "7b634b87-ca36-4b13-828b-803c71a2c17c",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "name" : "TwitterMatcher",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "site" : "d78bbb36-75f0-4974-b3f3-b5cf93780582",
+        "fqdn" : "twitter.com",
+        "urlRegex" : ".*",
+        "rule" : "a904ee63-039d-4914-8ec7-7d5d22d9e0ca",
+        "template" : true,
+        "enabled" : true,
+        "connCheck" : false,
+        "requestCheck" : true,
+        "priority" : 0,
+        "shortId" : "7b634b87"
+      } ],
+      "AppRule" : [ {
+        "uuid" : "30dfe23b-e7d7-4fe6-8aa9-9620d028df97",
+        "name" : "hn_user_blocker",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "template" : true,
+        "enabled" : true,
+        "priority" : 0,
+        "driver" : "f314f0ed-2144-4141-850d-c607a7ab010c",
+        "config" : {
+          "siteJsTemplate" : "bubble/rule/social/block/site/HackerNews.js.hbs"
+        },
+        "shortId" : "30dfe23b"
+      }, {
+        "uuid" : "b17ef6a7-6de9-4ab1-8335-dfd9e834008a",
+        "name" : "mr_user_blocker",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "template" : true,
+        "enabled" : true,
+        "priority" : 0,
+        "driver" : "f314f0ed-2144-4141-850d-c607a7ab010c",
+        "config" : {
+          "siteJsTemplate" : "bubble/rule/social/block/site/MR.js.hbs"
+        },
+        "shortId" : "b17ef6a7"
+      }, {
+        "uuid" : "75716dd0-ebbd-4410-99d3-86ab0a206849",
+        "name" : "reason_user_blocker",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "template" : true,
+        "enabled" : true,
+        "priority" : 0,
+        "driver" : "f314f0ed-2144-4141-850d-c607a7ab010c",
+        "config" : {
+          "siteJsTemplate" : "bubble/rule/social/block/site/Reason.js.hbs"
+        },
+        "shortId" : "75716dd0"
+      }, {
+        "uuid" : "a904ee63-039d-4914-8ec7-7d5d22d9e0ca",
+        "name" : "twitter_user_blocker",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "template" : true,
+        "enabled" : true,
+        "priority" : 0,
+        "driver" : "f314f0ed-2144-4141-850d-c607a7ab010c",
+        "config" : {
+          "siteJsTemplate" : "bubble/rule/social/block/site/Twitter.js.hbs",
+          "insertionRegex" : "<\\s*html[^>]*>"
+        },
+        "shortId" : "a904ee63"
+      } ],
+      "AppMessage" : [ {
+        "uuid" : "aa88397b-644a-48d9-aafa-b2bc912c49cd",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "locale" : "en_US",
+        "priority" : 1,
+        "template" : true,
+        "enabled" : true,
+        "messages" : [ {
+          "name" : "name",
+          "value" : "Shadow Ban"
+        }, {
+          "name" : "icon",
+          "value" : "classpath:models/apps/user_block/shadowban-icon.svg"
+        }, {
+          "name" : "summary",
+          "value" : "User Blocker"
+        }, {
+          "name" : "description",
+          "value" : "Throw the garbage to the curb!"
+        }, {
+          "name" : "view.blocked_users",
+          "value" : "Manage Blocked Users"
+        }, {
+          "name" : "field.key",
+          "value" : "Username"
+        }, {
+          "name" : "field.enabled",
+          "value" : "Enforce Block"
+        }, {
+          "name" : "field.ctime",
+          "value" : "Created"
+        }, {
+          "name" : "action.enable",
+          "value" : "Enforce Block"
+        }, {
+          "name" : "action.disable",
+          "value" : "Disable Block"
+        }, {
+          "name" : "action.delete",
+          "value" : "Delete Block"
+        } ],
+        "shortId" : "aa88397b"
+      } ],
+      "AppSite" : [ {
+        "uuid" : "7569f7f0-6ad0-4709-9a77-c217e4fc7ccb",
+        "name" : "HackerNews",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "template" : true,
+        "enabled" : true,
+        "description" : "A blog and discussion site for technology news, operated by YCombinator",
+        "url" : "https://news.ycombinator.com",
+        "shortId" : "7569f7f0"
+      }, {
+        "uuid" : "76bb15ba-c184-43e4-99e6-989957e7cb62",
+        "name" : "MarginalRevolution",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "template" : true,
+        "enabled" : true,
+        "description" : "An economics blog by Tyler Cowen and Alex Tabarrok, professors at George Mason University",
+        "url" : "https://marginalrevolution.com",
+        "shortId" : "76bb15ba"
+      }, {
+        "uuid" : "e6adce40-8b78-44a7-b7f3-394fe6856de4",
+        "name" : "Reason",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "template" : true,
+        "enabled" : true,
+        "description" : "A leading libertarian magazine",
+        "url" : "https://reason.com",
+        "shortId" : "e6adce40"
+      }, {
+        "uuid" : "d78bbb36-75f0-4974-b3f3-b5cf93780582",
+        "name" : "Twitter",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "0a6b53b5-ef6a-4826-979d-7c0b1fce1ea2",
+        "template" : true,
+        "enabled" : true,
+        "description" : "what’s happening in the world and what people are talking about right now.",
+        "url" : "https://twitter.com",
+        "shortId" : "d78bbb36"
+      } ]
+    },
+    "name" : "UserBlocker",
+    "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+    "url" : "https://getbubblenow.com/apps/UserBlocker",
+    "description" : "ShadowBan User Blocker",
+    "canPrime" : true,
+    "template" : true,
+    "enabled" : true,
+    "priority" : 300,
+    "dataConfig" : {
+      "presentation" : "site",
+      "dataDriver" : "bubble.app.social.block.UserBlockerAppDataDriver",
+      "fields" : [ {
+        "name" : "key",
+        "displayName" : "Key",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "enabled",
+        "displayName" : "Enabled",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "ctime",
+        "displayName" : "Ctime",
+        "mode" : "standard",
+        "control" : "text"
+      } ],
+      "actions" : [ {
+        "name" : "enable",
+        "when" : "!data.enabled"
+      }, {
+        "name" : "disable",
+        "when" : "data.enabled"
+      }, {
+        "name" : "delete"
+      } ],
+      "views" : [ {
+        "presentation" : "site",
+        "layout" : "table",
+        "name" : "blocked_users",
+        "priority" : 0
+      } ],
+      "configFields" : [ {
+        "name" : "key",
+        "displayName" : "Key",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "enabled",
+        "displayName" : "Enabled",
+        "mode" : "standard",
+        "control" : "text"
+      }, {
+        "name" : "ctime",
+        "displayName" : "Ctime",
+        "mode" : "standard",
+        "control" : "text"
+      } ]
+    },
+    "shortId" : "0a6b53b5"
+  }, {
+    "uuid" : "7af54a16-c7e9-4f80-b7ef-45353689ba9b",
+    "children" : {
+      "AppMatcher" : [ {
+        "uuid" : "f0e275af-e461-4d7e-932b-12fff0881a11",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "name" : "TlsPassthruMatcher",
+        "app" : "7af54a16-c7e9-4f80-b7ef-45353689ba9b",
+        "site" : "2793e94c-34c5-4ec2-a3d3-426518fc4a55",
+        "fqdn" : "*",
+        "urlRegex" : ".*",
+        "rule" : "a446487a-d841-468e-925b-e3435b2f2a50",
+        "template" : true,
+        "enabled" : true,
+        "connCheck" : true,
+        "requestCheck" : false,
+        "priority" : -1000000,
+        "shortId" : "f0e275af"
+      } ],
+      "AppRule" : [ {
+        "uuid" : "a446487a-d841-468e-925b-e3435b2f2a50",
+        "name" : "passthru",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "7af54a16-c7e9-4f80-b7ef-45353689ba9b",
+        "template" : true,
+        "enabled" : true,
+        "priority" : 0,
+        "driver" : "c487b2ba-65f7-462f-af7f-c1ca2af5bc8a",
+        "config" : {
+          "fqdnList" : [ ],
+          "feedList" : [ {
+            "feedUrl" : "https://raw.githubusercontent.com/getbubblenow/bubble-filter-lists/master/tls_passthru.txt"
+          } ]
+        },
+        "shortId" : "a446487a"
+      } ],
+      "AppMessage" : [ {
+        "uuid" : "e3874ec0-e9c5-4ad5-a33d-3a489f58ed38",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "7af54a16-c7e9-4f80-b7ef-45353689ba9b",
+        "locale" : "en_US",
+        "priority" : 1,
+        "template" : true,
+        "enabled" : true,
+        "messages" : [ {
+          "name" : "name",
+          "value" : "DirectConnect"
+        }, {
+          "name" : "icon",
+          "value" : "classpath:models/apps/passthru/passthru-icon.svg"
+        }, {
+          "name" : "summary",
+          "value" : "Network Bypass"
+        }, {
+          "name" : "description",
+          "value" : "Do not perform SSL interception for certificate-pinned domains"
+        }, {
+          "name" : "config.view.manageDomains",
+          "value" : "Manage Bypass Domains"
+        }, {
+          "name" : "config.view.manageFeeds",
+          "value" : "Manage Bypass Domain Feeds"
+        }, {
+          "name" : "config.field.passthruFqdn",
+          "value" : "Domain"
+        }, {
+          "name" : "config.field.passthruFqdn.description",
+          "value" : "Bypass traffic interception for this hostname"
+        }, {
+          "name" : "config.field.feedName",
+          "value" : "Name"
+        }, {
+          "name" : "config.field.feedUrl",
+          "value" : "Bypass Domains List URL"
+        }, {
+          "name" : "config.field.feedUrl.description",
+          "value" : "URL returning a list of bypass domains and/or hostnames, one per line"
+        }, {
+          "name" : "config.action.addFqdn",
+          "value" : "Add New Bypass Domain"
+        }, {
+          "name" : "config.button.addFqdn",
+          "value" : "Add"
+        }, {
+          "name" : "config.action.removeFqdn",
+          "value" : "Remove"
+        }, {
+          "name" : "config.action.addFeed",
+          "value" : "Add New Bypass Domain Feed"
+        }, {
+          "name" : "config.button.addFeed",
+          "value" : "Add"
+        }, {
+          "name" : "config.action.removeFeed",
+          "value" : "Remove"
+        } ],
+        "shortId" : "e3874ec0"
+      } ],
+      "AppSite" : [ {
+        "uuid" : "2793e94c-34c5-4ec2-a3d3-426518fc4a55",
+        "name" : "All_Sites",
+        "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+        "app" : "7af54a16-c7e9-4f80-b7ef-45353689ba9b",
+        "template" : true,
+        "enabled" : true,
+        "description" : "All websites",
+        "url" : "*",
+        "shortId" : "2793e94c"
+      } ]
+    },
+    "name" : "TlsPassthru",
+    "account" : "a4e4921a-0755-4b91-a858-7b4888b7433b",
+    "url" : "https://getbubblenow.com/apps/passthru",
+    "description" : "Do not perform SSL interception for certificate-pinned domains",
+    "canPrime" : false,
+    "template" : true,
+    "enabled" : true,
+    "priority" : 1000000,
+    "dataConfig" : {
+      "presentation" : "none",
+      "dataDriver" : "bubble.app.passthru.TlsPassthruAppDataDriver",
+      "configDriver" : "bubble.app.passthru.TlsPassthruAppConfigDriver",
+      "configFields" : [ {
+        "name" : "passthruFqdn",
+        "displayName" : "Passthru Fqdn",
+        "mode" : "standard",
+        "type" : "hostname",
+        "control" : "text",
+        "truncate" : false
+      }, {
+        "name" : "feedName",
+        "displayName" : "Feed Name",
+        "mode" : "standard",
+        "control" : "text",
+        "truncate" : false
+      }, {
+        "name" : "feedUrl",
+        "displayName" : "Feed Url",
+        "mode" : "standard",
+        "type" : "http_url",
+        "control" : "text"
+      } ],
+      "configViews" : [ {
+        "name" : "manageDomains",
+        "scope" : "app",
+        "root" : true,
+        "fields" : [ "passthruFqdn" ],
+        "actions" : [ {
+          "name" : "removeFqdn",
+          "scope" : "item",
+          "index" : 10
+        }, {
+          "name" : "addFqdn",
+          "scope" : "app",
+          "index" : 10,
+          "params" : [ "passthruFqdn" ],
+          "button" : "addFqdn"
+        } ]
+      }, {
+        "name" : "manageFeeds",
+        "scope" : "app",
+        "root" : true,
+        "fields" : [ "feedName", "feedUrl" ],
+        "actions" : [ {
+          "name" : "removeFeed",
+          "scope" : "item",
+          "index" : 10
+        }, {
+          "name" : "addFeed",
+          "scope" : "app",
+          "index" : 10,
+          "params" : [ "feedUrl" ],
+          "button" : "addFeed"
+        } ]
+      } ]
+    },
+    "shortId" : "7af54a16"
+  } ]
+}

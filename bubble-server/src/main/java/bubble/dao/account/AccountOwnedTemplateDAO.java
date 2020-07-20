@@ -16,9 +16,17 @@ public class AccountOwnedTemplateDAO<E extends AccountTemplate> extends AccountO
         return findByFields("account", accountUuid, "enabled", true, "template", true);
     }
 
-    public E findPublicTemplate(String parentUuid, String id) {
-        final E found = findByUniqueFields("account", parentUuid, "enabled", true, "template", true, UUID, id);
-        return found != null ? found : findByUniqueFields("account", parentUuid, "enabled", true, "template", true, getNameField(), id);
+    public List<E> findPublicTemplatesByApp(String accountUuid, String appUuid) {
+        return findByFields("account", accountUuid, "app", appUuid, "enabled", true, "template", true);
+    }
+
+    public E findPublicTemplate(String accountUuid, String id) {
+        final E found = findByUniqueFields("account", accountUuid, "enabled", true, "template", true, UUID, id);
+        return found != null ? found : findByUniqueFields("account", accountUuid, "enabled", true, "template", true, getNameField(), id);
+    }
+
+    public E findPublicTemplateByName(String accountUuid, String name) {
+        return findByUniqueFields("account", accountUuid, "enabled", true, "template", true, "name", name);
     }
 
 }

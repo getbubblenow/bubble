@@ -8,7 +8,7 @@ import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.notify.ReceivedNotification;
 import bubble.notify.DelegatedNotificationHandlerBase;
-import bubble.service.boot.BubbleJarUpgradeService;
+import bubble.service.upgrade.BubbleJarUpgradeService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static bubble.model.cloud.notify.NotificationType.upgrade_response;

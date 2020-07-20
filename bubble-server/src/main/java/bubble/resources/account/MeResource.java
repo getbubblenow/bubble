@@ -26,7 +26,7 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
-import bubble.service.boot.BubbleJarUpgradeService;
+import bubble.service.upgrade.BubbleJarUpgradeService;
 import bubble.service.boot.BubbleModelSetupService;
 import bubble.service.boot.SageHelloService;
 import bubble.service.cloud.NodeLaunchMonitor;

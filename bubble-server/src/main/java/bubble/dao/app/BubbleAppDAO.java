@@ -41,4 +41,8 @@ public class BubbleAppDAO extends AccountOwnedTemplateDAO<BubbleApp> {
         return findByUniqueFields("account", accountUuid, "templateApp", templateAppUuid);
     }
 
+    public BubbleApp findByAccountAndName(String accountUuid, String name) {
+        return findByUniqueFields("account", accountUuid, "name", name);
+    }
+
 }

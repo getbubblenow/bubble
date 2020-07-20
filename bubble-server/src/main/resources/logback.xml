@@ -66,7 +66,8 @@
     <logger name="bubble.rule.passthru" level="DEBUG" />
 <!--    <logger name="bubble.service.cloud.StandardNetworkService" level="INFO" />-->
 <!--    <logger name="bubble.service.cloud.AnsiblePrepService" level="DEBUG" />-->
-    <logger name="bubble.abp.BlockSpec" level="DEBUG" />
+    <logger name="bubble.abp" level="WARN" />
+    <!--    <logger name="bubble.abp.BlockSpec" level="DEBUG" />-->
     <logger name="bubble.resources.notify" level="WARN" />
 <!--    <logger name="bubble.resources.notify.InboundNotifyResource" level="TRACE" />-->
     <logger name="bubble.client" level="WARN" />

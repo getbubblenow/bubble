@@ -19,6 +19,8 @@ public interface AccountTemplate extends HasAccount {
     default boolean disabled() { return !enabled(); }
 
     Boolean getEnabled();
+    <T extends AccountTemplate> T setEnabled(Boolean t);
+
     Boolean getTemplate();
     <T extends AccountTemplate> T setTemplate(Boolean t);
 

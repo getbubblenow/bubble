@@ -4,6 +4,8 @@
  */
 package bubble.client;
 
+import bubble.model.cloud.BubbleNode;
+import bubble.server.BubbleConfiguration;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.cobbzilla.util.http.ApiConnectionInfo;
@@ -20,6 +22,10 @@ public class BubbleApiClient extends ApiClientBase {
     }
 
     public BubbleApiClient(ApiConnectionInfo connectionInfo) { super(connectionInfo); }
+
+    public BubbleApiClient(BubbleNode node, BubbleConfiguration configuration) {
+        super(new ApiConnectionInfo(configuration.nodeBaseUri(node)));
+    }
 
     @Override public String getTokenHeader() { return SESSION_HEADER; }
 

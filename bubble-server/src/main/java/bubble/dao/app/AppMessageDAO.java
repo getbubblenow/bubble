@@ -4,7 +4,6 @@
  */
 package bubble.dao.app;
 
-import bubble.dao.account.AccountOwnedTemplateDAO;
 import bubble.model.app.AppMessage;
 import org.hibernate.criterion.Order;
 import org.springframework.stereotype.Repository;
@@ -14,7 +13,7 @@ import java.util.List;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 
 @Repository
-public class AppMessageDAO extends AccountOwnedTemplateDAO<AppMessage> {
+public class AppMessageDAO extends AppTemplateEntityDAO<AppMessage> {
 
     @Override public Boolean getHasNameField() { return false; }
 
@@ -22,10 +21,6 @@ public class AppMessageDAO extends AccountOwnedTemplateDAO<AppMessage> {
 
     public AppMessage findByAccountAndAppAndLocale (String account, String app, String locale) {
         return findByUniqueFields("account", account, "app", app, "locale", locale, "enabled", true);
-    }
-
-    public List<AppMessage> findByAccountAndApp (String account, String app) {
-        return findByFields("account", account, "app", app, "enabled", true);
     }
 
     public AppMessage findByAccountAndAppAndDefaultLocale(String account, String app) {
@@ -44,7 +39,5 @@ public class AppMessageDAO extends AccountOwnedTemplateDAO<AppMessage> {
         if (message != null) return message;
         return findByAccountAndAppAndHighestPriority(account, app);
     }
-
-    public List<AppMessage> findByApp(String app) { return findByField("app", app); }
 
 }

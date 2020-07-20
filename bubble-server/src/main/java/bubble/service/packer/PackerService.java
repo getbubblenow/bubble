@@ -60,7 +60,7 @@ public class PackerService {
                 pool.submit(packerJob);
                 return packerJob;
             });
-            job.addImagesRef(imagesRef);
+            if (imagesRef != null) job.addImagesRef(imagesRef);
         }
     }
 

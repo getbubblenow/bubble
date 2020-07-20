@@ -9,5 +9,6 @@ import bubble.model.account.AccountTemplate;
 public interface AppTemplateEntity extends AccountTemplate {
 
     String getApp();
+    <T extends AppTemplateEntity> T setApp(String app);
 
 }

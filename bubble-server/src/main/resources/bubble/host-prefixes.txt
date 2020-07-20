@@ -9213,7 +9213,6 @@ scrat
 scraw
 scray
 scree
-screw
 scrim
 scrip
 scrod
@@ -9608,7 +9607,6 @@ sizes
 skags
 skail
 skald
-skank
 skart
 skate
 skats
@@ -9828,12 +9826,10 @@ snebs
 sneck
 sneds
 sneed
-sneer
 snees
 snell
 snibs
 snick
-snide
 snies
 sniff
 snift
@@ -10016,14 +10012,12 @@ spalt
 spams
 spane
 spang
-spank
 spans
 spard
 spare
 spark
 spars
 spart
-spasm
 spate
 spats
 spaul
@@ -10095,8 +10089,6 @@ spode
 spods
 spoil
 spoke
-spoof
-spook
 spool
 spoom
 spoon
@@ -10226,7 +10218,6 @@ stime
 stims
 stimy
 sting
-stink
 stint
 stipa
 stipe

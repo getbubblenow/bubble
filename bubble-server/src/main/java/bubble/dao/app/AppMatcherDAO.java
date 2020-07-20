@@ -78,12 +78,6 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
                     // todo: if they want new stuff, should we create it now?
                     continue;
                 }
-                if (account.wantsAppUpdates()) {
-                    accountMatcher.update(matcher);
-                    update(accountMatcher);
-                } else {
-                    appDAO.update(accountApp.setNeedsUpdate(true));
-                }
             }
         }
         ruleEngineService.flushCaches();

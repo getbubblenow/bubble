@@ -48,8 +48,10 @@ import org.springframework.stereotype.Service;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static bubble.client.BubbleApiClient.newHttpClientBuilder;
 import static java.util.Collections.emptyList;
@@ -62,6 +64,8 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
 import static org.cobbzilla.util.http.HttpStatusCodes.OK;
 import static org.cobbzilla.util.io.FileUtil.abs;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.cache.redis.RedisService.ALL_KEYS;
 import static org.cobbzilla.wizard.resources.ResourceUtil.send;
 
@@ -196,23 +200,34 @@ public class StandardRuleEngineService implements RuleEngineService {
     private final ExpirationMap<String, List<AppRuleHarness>> ruleCache
             = new ExpirationMap<>(HOURS.toMillis(1), ExpirationEvictionPolicy.atime);
 
+    private final AtomicBoolean cachedFlushingEnabled = new AtomicBoolean(true);
+    public void enableCacheFlushing () { cachedFlushingEnabled.set(true); }
+    public void disableCacheFlushing () { cachedFlushingEnabled.set(false); }
+
     public Map<Object, Object> flushCaches() {
-        final int ruleEngineCacheSize = ruleCache.size();
-        ruleCache.clear();
-        if (log.isInfoEnabled()) log.info("flushCaches: flushed "+ruleEngineCacheSize+" ruleCache entries");
+        if (!cachedFlushingEnabled.get()) {
+            if (log.isDebugEnabled()) log.debug("flushCaches: flushing disabled");
+            return Collections.emptyMap();
+        } else {
+            final int ruleEngineCacheSize = ruleCache.size();
+            ruleCache.clear();
+            if (log.isDebugEnabled()) log.debug("flushCaches: flushed "+ruleEngineCacheSize+" ruleCache entries");
 
-        final RedisService matchersCache = getMatchersCache();
-        final Long matcherCount = matchersCache.del_matching(ALL_KEYS);
-        if (log.isInfoEnabled()) log.info("flushCaches: flushed "+matcherCount+" matchersCache entries");
+            final RedisService matchersCache = getMatchersCache();
+            final Long matcherCount = matchersCache.del_matching(ALL_KEYS);
+            if (log.isDebugEnabled()) log.debug("flushCaches: flushed "+matcherCount+" matchersCache entries");
 
-        final Long connCheckDeletions = redis.del_matching("bubble_conn_check_*");
-        if (log.isInfoEnabled()) log.info("flushCaches: removed "+connCheckDeletions+" conn_check cache entries");
+            final Long connCheckDeletions = redis.del_matching("bubble_conn_check_*");
+            if (log.isDebugEnabled()) log.debug("flushCaches: removed "+connCheckDeletions+" conn_check cache entries");
 
-        return MapBuilder.build(new Object[][] {
-                {"connCheckCache", connCheckDeletions},
-                {"matchersCache", matcherCount},
-                {"ruleEngineCache", ruleEngineCacheSize}
-        });
+            final Map<Object, Object> flushStatus = MapBuilder.build(new Object[][]{
+                    {"connCheckCache", connCheckDeletions},
+                    {"matchersCache", matcherCount},
+                    {"ruleEngineCache", ruleEngineCacheSize}
+            });
+            if (log.isInfoEnabled()) log.info("flushCaches: flushed: "+json(flushStatus, COMPACT_MAPPER));
+            return flushStatus;
+        }
     }
 
     private List<AppRuleHarness> initRules(FilterHttpRequest filterRequest) {

@@ -8,15 +8,14 @@ import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
-import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.NetLocation;
 import bubble.model.cloud.notify.ReceivedNotification;
+import bubble.service.upgrade.AppUpgradeService;
 import bubble.service.boot.StandardSelfNodeService;
-import bubble.service.cloud.GeoService;
 import bubble.service.cloud.StandardNetworkService;
 import bubble.service.notify.NotificationService;
 import lombok.extern.slf4j.Slf4j;
@@ -34,10 +33,9 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
     @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private BubblePlanDAO planDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
-    @Autowired private GeoService geoService;
-    @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private StandardNetworkService networkService;
     @Autowired private StandardSelfNodeService selfNodeService;
+    @Autowired private AppUpgradeService appUpgradeService;
 
     @Override public void handleNotification(ReceivedNotification n) {
         // Upstream is telling us about our peers
@@ -47,6 +45,9 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
         if (payloadNode.hasSageVersion()) {
             log.info("handleNotification: payload node has sage version: "+payloadNode.getSageVersion());
             configuration.setSageVersion(payloadNode.getSageVersion());
+
+            // start the app upgrade service, if not running
+            if (!appUpgradeService.getIsAlive()) appUpgradeService.start();
         }
 
         final BubbleNode thisNode = configuration.getThisNode();

@@ -38,10 +38,7 @@ import org.cobbzilla.wizard.cache.redis.HasRedisConfiguration;
 import org.cobbzilla.wizard.cache.redis.RedisConfiguration;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.server.RestServerHarness;
-import org.cobbzilla.wizard.server.config.HasDatabaseConfiguration;
-import org.cobbzilla.wizard.server.config.LegalInfo;
-import org.cobbzilla.wizard.server.config.PgRestServerConfiguration;
-import org.cobbzilla.wizard.server.config.RecaptchaConfig;
+import org.cobbzilla.wizard.server.config.*;
 import org.cobbzilla.wizard.util.ClasspathScanner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -61,6 +58,7 @@ import static bubble.server.BubbleServer.getConfigurationSource;
 import static java.util.Collections.emptyMap;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.handlebars.HandlebarsUtil.registerUtilityHelpers;
+import static org.cobbzilla.util.http.HttpSchemes.SCHEME_HTTPS;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
@@ -102,6 +100,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     @Getter @Setter private int defaultSslPort = 1443;
 
     @Getter @Setter private LocalNotificationStrategy localNotificationStrategy = LocalNotificationStrategy.inline;
+
     public LocalNotificationStrategy localNotificationStrategy() {
         return localNotificationStrategy == null ? LocalNotificationStrategy.inline : localNotificationStrategy;
     }
@@ -236,6 +235,12 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     public ApiClientBase newApiClient() { return new BubbleApiClient(new ApiConnectionInfo(getLoopbackApiBase())); }
 
+    public ApiClientBase sageApiClient() { return new BubbleApiClient(getSageNode(), this); }
+
+    public String nodeBaseUri(BubbleNode node) {
+        return SCHEME_HTTPS + node.getFqdn() + ":" + node.getSslPort() + getHttp().getBaseUri();
+    }
+
     private String getVersion () {
         final Properties properties = new Properties();
         try {
@@ -271,6 +276,10 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     }
     public boolean hasSageVersion () { return sageVersion != null; }
     @Getter private Boolean jarUpgradeAvailable = false;
+
+    public boolean sameVersionAsSage () {
+        return hasSageVersion() && getSageVersion().getVersion().equals(getVersionInfo().getVersion());
+    }
 
     @JsonIgnore public String getUnlockKey () { return BubbleFirstTimeListener.getUnlockKey(); }
 

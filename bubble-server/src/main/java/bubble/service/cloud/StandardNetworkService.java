@@ -73,7 +73,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static bubble.ApiConstants.*;
-import static bubble.client.BubbleNodeClient.nodeBaseUri;
 import static bubble.dao.bill.AccountPlanDAO.PURCHASE_DELAY;
 import static bubble.model.cloud.BubbleNode.TAG_ERROR;
 import static bubble.server.BubbleConfiguration.DEBUG_NODE_INSTALL_FILE;
@@ -354,7 +353,7 @@ public class StandardNetworkService implements NetworkService {
                 final long readyStart = now();
                 boolean ready = false;
                 Exception lastEx = null;
-                final String readyUri = nodeBaseUri(node, configuration) + AUTH_ENDPOINT + EP_READY;
+                final String readyUri = configuration.nodeBaseUri(node) + AUTH_ENDPOINT + EP_READY;
                 int i = 1;
                 while (now() - readyStart < NODE_READY_TIMEOUT) {
                     sleep(SECONDS.toMillis(2), "newNode: waiting for node (" + node.id() + ") to be ready");

@@ -9,6 +9,7 @@ import bubble.model.account.AccountTemplate;
 import bubble.model.app.config.AppDataConfig;
 import bubble.model.app.config.AppDataField;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,12 +22,16 @@ import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Transient;
 import javax.validation.constraints.Size;
+import java.util.Map;
 
 import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
@@ -125,7 +130,19 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @ECSearchable @ECField(index=100) @Column(nullable=false)
     @ECIndex @Getter @Setter private Integer priority;
 
-    @ECSearchable @ECField(index=110)
-    @ECIndex @Getter @Setter private Boolean needsUpdate = false;
+    public String cacheKey() {
+        final StringBuilder b = new StringBuilder();
+        final String appName = getName();
+        b.append(BubbleApp.class.getName()).append(":").append(appName).append("\n");
+        if (hasChildren()) {
+            for (Map.Entry<String, JsonNode[]> entry : getChildren().entrySet()) {
+                final String key = entry.getKey();
+                for (JsonNode n : entry.getValue()) {
+                    b.append(appName).append(":").append(key).append(":").append(json(n, COMPACT_MAPPER)).append("\n");
+                }
+            }
+        }
+        return b.toString();
+    }
 
 }

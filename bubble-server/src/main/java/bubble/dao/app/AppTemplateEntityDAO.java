@@ -31,7 +31,7 @@ public class AppTemplateEntityDAO<E extends AppTemplateEntity> extends AccountOw
         return findByUniqueFields("account", account, "app", app, getNameField(), id);
     }
 
-    public List<E> findByAccount(String account) { return findByField("account", account); }
+    public List<E> findByAccount(String account) { return findAllByField("account", account); }
 
     public List<E> findByApp(String app) { return findByField("app", app); }
 

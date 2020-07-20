@@ -84,6 +84,8 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
     @ECForeignKey(entity=Device.class)
     @Column(updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String device;
+    public boolean hasDevice () { return device != null; }
+    public boolean hasNoDevice () { return !hasDevice(); }
 
     @ECSearchable(fkDepth=ECForeignKeySearchDepth.none) @ECField(index=30)
     @ECForeignKey(entity=BubbleApp.class)
