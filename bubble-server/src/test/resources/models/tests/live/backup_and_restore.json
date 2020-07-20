@@ -42,11 +42,10 @@
     "params": {
       "sageFqdn": "{{sageFqdn}}",
       "rootPassword": "{{sageRootPass}}",
-      "username": "{{username}}",
+      "email": "{{username}}@example.com",
       "password": "password1!",
       "userSessionVar": "userSession",
       "network": "bubble-{{rand 5}}",
-      "email": "{{username}}@example.com",
       "plan": "bubble",
       "networkVar": "bubbleNetwork",
       "bubbleConnectionVar": "bubbleConnection",
@@ -68,10 +67,10 @@
   },
 
   {
-    "comment": "add verified email to root account on new node",
+    "comment": "add verified email to the account on new node",
     "include": "add_approved_contact",
     "params": {
-      "username": "{{username}}",
+      "username": "{{username}}@example.com",
       "userSession": "bubbleUserSession",
       "userConnection": "bubbleConnection",
       "contactInfo": "{{username}}@example.com",
@@ -99,7 +98,7 @@
   {
     "before": "sleep 24s",
     "comment": "lookup policy for new account",
-    "request": { "uri": "users/backup_and_restore_user/policy" },
+    "request": { "uri": "users/backup_and_restore_user@example.com/policy" },
     "response": { "store": "user1policy" }
   },
 
@@ -163,7 +162,7 @@
       "name": "restoredBubbleConnection",
       "baseUri": "https://{{restoreNN.fqdn}}:{{serverConfig.nginxPort}}/api"
     },
-    "before": "await_url .bubble 16m:20m 20s",
+    "before": "await_url .bubble 10m:15m 20s",
     "request": {
       "session": "new",
       "uri": "auth/login",
@@ -211,7 +210,7 @@
   {
     "comment": "verify account we added has been restored",
     "request": {
-      "uri": "users/backup_and_restore_user/policy"
+      "uri": "users/backup_and_restore_user@example.com/policy"
     },
     "response": {
       "check": [ {"condition": "json.getFirstEmail() == user1policy.getFirstEmail()"} ]

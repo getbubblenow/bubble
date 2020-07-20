@@ -7,11 +7,10 @@
       "rootPassword": "password1!",
       "sageFqdn": "_required",
       "sageConnectionVar": "sageConnection",
-      "username": "user-<<rand 5>>",
+      "email": "user-<<rand 5>>@example.com",
       "password": "<<rand 10>>",
       "userSessionVar": "userSession",
       "network": "_required",
-      "email": "user-<<rand 5>>@example.com",
       "domain": "{{defaultDomain}}",
       "locale": "en_US",
       "timezone": "EST",
@@ -51,9 +50,9 @@
   },
 
   {
-    "comment": "does a user exist with username <<username>> ?",
+    "comment": "does a user exist with email <<email>> ?",
     "request": {
-      "uri": "users/<<username>>"
+      "uri": "users/<<email>>"
     },
     "response": {
       "okStatus": [ 200, 404 ],
@@ -62,16 +61,15 @@
   },
 
   {
-    "comment": "create user on sage if not exist: <<username>>",
+    "comment": "create user on sage if not exist: <<email>>",
     "unless": "userAccount.getName() != null",
     "request": {
       "method": "put",
       "uri": "users",
       "entity": {
-        "name": "<<username>>",
+        "name": "<<email>>",
         "password": "<<password>>",
-        "agreeToTerms": true,
-        "contact": {"type": "email", "info": "<<email>>"}
+        "agreeToTerms": true
       }
     },
     "response": {
@@ -80,12 +78,12 @@
   },
 
   {
-    "comment": "login as user on sage: <<username>>",
+    "comment": "login as user on sage: <<email>>",
     "request": {
       "session": "new",
       "uri": "auth/login",
       "entity": {
-        "name": "<<username>>",
+        "name": "<<email>>",
         "password": "<<password>>"
       }
     },
@@ -100,7 +98,7 @@
     "comment": "add email contact for the new user, if not already present",
     "include": "add_approved_contact",
     "params": {
-      "username": "<<username>>",
+      "username": "<<email>>",
       "userSession": "<<userSessionVar>>",
       "userConnection": "<<sageConnectionVar>>",
       "rootSession": "rootSession",
@@ -162,7 +160,7 @@
   {
     "comment": "start the network. sets up the first node, which does the rest",
     "request": {
-      "uri": "me/networks/<<network>>/actions/start?cloud=<<urlEncode compute>>&region=<<urlEncode region>>",
+      "uri": "me/networks/{{ plan.name }}/actions/start?cloud=<<urlEncode compute>>&region=<<urlEncode region>>",
       "method": "post"
     },
     "response": {
@@ -172,10 +170,10 @@
 
   {
     "comment": "call API of deployed node after some grace period, ensure it is running",
-    "before": "await_url .bubble 20m:20m 20s",
+    "before": "await_url .bubble 10m:15m 20s",
     "connection": {
       "name": "<<bubbleConnectionVar>>",
-      "baseUri": "https://{{<<networkVar>>.host}}.<<network>>.<<domain>>:{{serverConfig.nginxPort}}/api"
+      "baseUri": "https://{{<<networkVar>>.host}}.{{ plan.name }}.<<domain>>:{{serverConfig.nginxPort}}/api"
     },
     "request": { "uri" : ".bubble" },
     "response": { "raw": true, "check": [{ "condition": "response.json == 'you are ok. the magic is ok too.'" }] }
@@ -184,7 +182,9 @@
   {
     "comment": "now list DNS for the network, should now see a DNS A record for new instance",
     "connection": { "name": "<<sageConnectionVar>>" },
-    "request": { "uri": "me/networks/<<network>>/dns/find?type=A&name={{<<networkVar>>.host}}.<<network>>.<<domain>>" },
+    "request": {
+      "uri": "me/networks/{{ plan.name }}/dns/find?type=A&name={{<<networkVar>>.host}}.{{ plan.name }}.<<domain>>"
+    },
     "response": { "store": "dnsRecords", "check": [{ "condition": "json.length == 1" }] }
   },
 
@@ -202,7 +202,7 @@
       "session": "new",
       "uri" : "auth/login?k={{await_json.[0].ctx.message.data}}",
       "entity": {
-        "name": "<<username>>",
+        "name": "<<email>>",
         "password": "<<password>>"
       }
     },
@@ -219,15 +219,16 @@
     "response": {
       "store": "<<bubbleUserVar>>",
       "check": [
-        {"condition": "json.getName() == '<<username>>'"},
-        {"condition": "json.admin() == true"}
+        { "condition": "json.getName() == '<<email>>'" },
+        { "condition": "json.getEmail() == '<<email>>'" },
+        { "condition": "json.admin() == true" }
       ]
     }
   },
 
   {
     "comment": "network should be in running state by now",
-    "request": { "uri": "me/networks/<<network>>" },
+    "request": { "uri": "me/networks/{{ plan.name }}" },
     "response": { "check": [{ "condition": "json.getState().name() == 'running'" }] }
   }
 ]

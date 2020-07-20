@@ -5665,7 +5665,6 @@ kuias
 kukri
 kukus
 kulan
-kulas
 kulfi
 kumys
 kuris
