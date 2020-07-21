@@ -25,6 +25,7 @@ import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.system.Sleep.sleep;
+import static org.cobbzilla.wizard.server.RestServerBase.reportError;
 
 @Slf4j
 public class NodeReaper extends SimpleDaemon {
@@ -63,14 +64,18 @@ public class NodeReaper extends SimpleDaemon {
         if (wouldKillSelf(node)) return;
         final var found = nodeDAO.findByIp4(node.getIp4());
         if (found == null) {
-            log.warn(prefix() + "processNode: no node exists with ip4=" + node.getIp4() + ", killing it");
+            final String message = prefix() + "processNode: no node exists with ip4=" + node.getIp4() + ", killing it";
+            log.warn(message);
+            reportError(message);
             final var domain = domainDAO.findByUuid(node.getDomain());
             final var dns = domain != null ? cloudDAO.findByUuid(domain.getPublicDns()) : null;
             try {
                 if (dns != null) dns.getDnsDriver(configuration).deleteNode(node);
                 compute.stop(node);
             } catch (Exception e) {
-                log.error(prefix() + "processNode: error stopping node " + node.getIp4(), e);
+                final String errMessage = prefix() + "processNode: error stopping node " + node.getIp4();
+                reportError(errMessage, e);
+                log.error(errMessage, e);
             }
         } else {
             if (networkService.isReachable(node)) {
@@ -78,7 +83,9 @@ public class NodeReaper extends SimpleDaemon {
             } else {
                 final long downTime = unreachableSince.computeIfAbsent(node.getUuid(), k -> now());
                 if (now() - downTime > MAX_DOWNTIME_BEFORE_DELETION) {
-                    log.warn(prefix()+"processNode: deleting node ("+node.id()+") that has been down since "+ TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss.print(downTime));
+                    final String message = prefix() + "processNode: deleting node (" + node.id() + ") that has been down since " + TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss.print(downTime);
+                    log.warn(message);
+                    reportError(message);
                     nodeDAO.delete(node.getUuid());
                 }
             }
