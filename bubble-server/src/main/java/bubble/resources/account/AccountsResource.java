@@ -237,7 +237,7 @@ public class AccountsResource {
             log.error("setContact: contact not set: "+contact);
             return serverError();
         }
-        if (!added.verified()) {
+        if (!added.verified() && added.getType().isVerifiableAuthenticationType()) {
             log.info("setContact: contact is new, sending verify message");
             messageDAO.sendVerifyRequest(getRemoteHost(req), c.account, contact);
         }
