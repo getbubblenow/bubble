@@ -6,7 +6,10 @@ package bubble.service.packer;
 
 import bubble.cloud.CloudRegion;
 import bubble.cloud.CloudRegionRelative;
-import bubble.cloud.compute.*;
+import bubble.cloud.compute.ComputeConfig;
+import bubble.cloud.compute.ComputeServiceDriver;
+import bubble.cloud.compute.PackerConfig;
+import bubble.cloud.compute.PackerImage;
 import bubble.cloud.geoLocation.GeoLocation;
 import bubble.dao.account.AccountDAO;
 import bubble.model.account.Account;
@@ -45,7 +48,7 @@ import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.getExternalIp;
 import static org.cobbzilla.util.string.StringUtil.truncate;
-import static org.cobbzilla.util.system.CommandShell.hostname;
+import static org.cobbzilla.util.system.CommandShell.domainname;
 import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYYMMDDHHMMSS;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 
@@ -57,12 +60,12 @@ public class PackerJob implements Callable<List<PackerImage>> {
     public static final String PACKER_IMAGE_PREFIX = "packer_bubble_";
 
     public static final String INSTALL_TYPE_VAR = "@@TYPE@@";
-    public static final String SAGE_HOST_VAR = "@@SAGE_HOST@@";
+    public static final String SAGE_NET_VAR = "@@SAGE_NET@@";
     public static final String PACKER_KEY_VAR = "@@PACKER_KEY_HASH@@";
     public static final String BUBBLE_VERSION_VAR = "@@BUBBLE_VERSION@@";
     public static final String TIMESTAMP_VAR = "@@TIMESTAMP@@";
     public static final String PACKER_IMAGE_NAME_TEMPLATE = PACKER_IMAGE_PREFIX + INSTALL_TYPE_VAR
-            + "_" + SAGE_HOST_VAR
+            + "_" + SAGE_NET_VAR
             + "_" + PACKER_KEY_VAR
             + "_" + BUBBLE_VERSION_VAR
             + "_" + TIMESTAMP_VAR;
@@ -208,7 +211,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
 
         final String imageName = PACKER_IMAGE_NAME_TEMPLATE
                 .replace(INSTALL_TYPE_VAR, installType.name())
-                .replace(SAGE_HOST_VAR, truncate(hostname(), 19))
+                .replace(SAGE_NET_VAR, truncate(domainname(), 19))
                 .replace(PACKER_KEY_VAR, packerService.getPackerPublicKeyHash())
                 .replace(BUBBLE_VERSION_VAR, configuration.getShortVersion())
                 .replace(TIMESTAMP_VAR, TimeUtil.format(now(), DATE_FORMAT_YYYYMMDDHHMMSS));
