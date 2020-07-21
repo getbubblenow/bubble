@@ -9,14 +9,21 @@ import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.cloud.BubbleNode;
 import bubble.server.BubbleConfiguration;
+import bubble.service.cloud.NetworkService;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.daemon.SimpleDaemon;
 import org.cobbzilla.util.network.NetworkUtil;
 import org.cobbzilla.util.string.StringUtil;
+import org.cobbzilla.util.time.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
 @Slf4j
@@ -24,6 +31,7 @@ public class NodeReaper extends SimpleDaemon {
 
     private static final long STARTUP_DELAY = MINUTES.toMillis(30);
     private static final long KILL_CHECK_INTERVAL = MINUTES.toMillis(30);
+    private static final long MAX_DOWNTIME_BEFORE_DELETION = DAYS.toMillis(2);
 
     private final ComputeServiceDriverBase compute;
 
@@ -36,6 +44,9 @@ public class NodeReaper extends SimpleDaemon {
     @Autowired private BubbleDomainDAO domainDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private NetworkService networkService;
+
+    private final Map<String, Long> unreachableSince = new HashMap<>(100);
 
     private String prefix() { return compute.getClass().getSimpleName()+": "; }
 
@@ -49,8 +60,9 @@ public class NodeReaper extends SimpleDaemon {
     }
 
     private void processNode(@NonNull final BubbleNode node) {
+        if (wouldKillSelf(node)) return;
         final var found = nodeDAO.findByIp4(node.getIp4());
-        if (found == null && !wouldKillSelf(node)) {
+        if (found == null) {
             log.warn(prefix() + "processNode: no node exists with ip4=" + node.getIp4() + ", killing it");
             final var domain = domainDAO.findByUuid(node.getDomain());
             final var dns = domain != null ? cloudDAO.findByUuid(domain.getPublicDns()) : null;
@@ -59,6 +71,16 @@ public class NodeReaper extends SimpleDaemon {
                 compute.stop(node);
             } catch (Exception e) {
                 log.error(prefix() + "processNode: error stopping node " + node.getIp4(), e);
+            }
+        } else {
+            if (networkService.isReachable(node)) {
+                unreachableSince.remove(node.getUuid());
+            } else {
+                final long downTime = unreachableSince.computeIfAbsent(node.getUuid(), k -> now());
+                if (now() - downTime > MAX_DOWNTIME_BEFORE_DELETION) {
+                    log.warn(prefix()+"processNode: deleting node ("+node.id()+") that has been down since "+ TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss.print(downTime));
+                    nodeDAO.delete(node.getUuid());
+                }
             }
         }
     }
