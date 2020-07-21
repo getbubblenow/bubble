@@ -35,6 +35,7 @@ import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.util.http.HttpUtil.getResponse;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.system.CommandShell.domainname;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
@@ -145,7 +146,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
                 "&VPSPLANID=" + planId +
                 "&OSID=" + getSnapshotOsId() +
                 "&SNAPSHOTID=" + packerImage.getId() +
-                "&tag=" + cloud.getUuid() +
+                "&tag=" + domainname()+"_"+cloud.getUuid() +
                 "&label=" + node.getFqdn() +
                 "&enable_ipv6=yes";
         final HttpRequestBean serverRequest = auth(new HttpRequestBean(POST, CREATE_SERVER_URL, data));
@@ -320,7 +321,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
     @Override public List<BubbleNode> listNodes() throws IOException {
         return listNodes(server -> {
             final String tag = server.has("tag") ? server.get("tag").textValue() : null;
-            return tag != null && tag.equals(cloud.getUuid());
+            return tag != null && tag.contains(cloud.getUuid()) && tag.contains(domainname());
         });
     }
 
@@ -335,7 +336,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
                     final String subid = iter.next();
                     final ObjectNode server = (ObjectNode) entity.get(subid);
                     if (!filter.apply(server)) {
-                        if (log.isTraceEnabled()) log.trace("Skipping node without cloud tag "+cloud.getUuid()+": "+subid);
+                        if (log.isTraceEnabled()) log.trace("Skipping node - wrong cloud tag (not "+cloud.getUuid()+" or domainname (not "+domainname()+"): "+subid);
                         continue;
                     }
                     final String subId = server.has(VULTR_SUBID) ? server.get(VULTR_SUBID).textValue() : null;
