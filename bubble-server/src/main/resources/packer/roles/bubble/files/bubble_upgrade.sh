@@ -71,4 +71,21 @@ if [[ -z "${API_OK}" || "${API_OK}" != "ok" ]] ; then
 else
   log "Upgrading web site files..."
   cd ~bubble && unzip -o "${BUBBLE_JAR}" 'site/*' && chown -R bubble:bubble site || die "Error updating web files..."
+
+  log "Upgrading mitm files"
+  MITM_PORT_FILE=/home/mitmproxy/mitmproxy_port
+  CURRENT_MITM_PORT=$(cat ${MITM_PORT_FILE})
+  if [[ -z "${CURRENT_MITM_PORT}" || "${CURRENT_MITM_PORT}" == "8888" ]] ; then
+    CURRENT_MITM_PORT=8888
+    OTHER_MITM_PORT=9999
+  else
+    CURRENT_MITM_PORT=9999
+    OTHER_MITM_PORT=8888
+  fi
+  # todo: add health check. if restarting mitm on OTHER_MITM_PORT fails, revert the changes
+  cd /tmp \
+    && unzip -o "${BUBBLE_JAR}" 'packer/roles/mitmproxy/files/*.py' \
+    && cp packer/roles/mitmproxy/files/*.py /home/mitmproxy/mitmproxy/ \
+    && supervisorctl restart mitm${OTHER_MITM_PORT} \
+    && supervisorctl restart mitm${CURRENT_MITM_PORT} || die "Error updating mitm files"
 fi
