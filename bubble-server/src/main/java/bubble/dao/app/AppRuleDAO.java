@@ -22,7 +22,12 @@ import org.springframework.stereotype.Repository;
     }
 
     @Override public void delete(String uuid) {
-        super.delete(uuid);
-        ruleEngineService.flushCaches();
+        final AppRule rule = findByUuid(uuid);
+        if (rule != null) {
+            getConfiguration().deleteDependencies(rule);
+            super.delete(uuid);
+            ruleEngineService.flushCaches();
+        }
     }
+
 }

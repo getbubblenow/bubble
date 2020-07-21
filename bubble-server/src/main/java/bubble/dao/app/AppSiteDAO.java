@@ -25,7 +25,11 @@ public class AppSiteDAO extends AppTemplateEntityDAO<AppSite> {
     }
 
     @Override public void delete(String uuid) {
-        super.delete(uuid);
-        ruleEngineService.flushCaches();
+        final AppSite site = findByUuid(uuid);
+        if (site != null) {
+            getConfiguration().deleteDependencies(site);
+            super.delete(uuid);
+            ruleEngineService.flushCaches();
+        }
     }
 }

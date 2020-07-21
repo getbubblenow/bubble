@@ -14,10 +14,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class BubbleAppDAO extends AccountOwnedTemplateDAO<BubbleApp> {
 
-    @Autowired private AppMatcherDAO matcherDAO;
-    @Autowired private AppRuleDAO ruleDAO;
-    @Autowired private AppMessageDAO messageDAO;
-    @Autowired private AppDataDAO dataDAO;
     @Autowired private RuleEngineService ruleEngineService;
 
     @Override public Order getDefaultSortOrder() { return PRIORITY_ASC; }
@@ -29,12 +25,11 @@ public class BubbleAppDAO extends AccountOwnedTemplateDAO<BubbleApp> {
 
     @Override public void delete(String uuid) {
         final BubbleApp app = findByUuid(uuid);
-        matcherDAO.delete(matcherDAO.findByApp(app.getUuid()));
-        ruleDAO.delete(ruleDAO.findByApp(app.getUuid()));
-        messageDAO.delete(messageDAO.findByApp(app.getUuid()));
-        dataDAO.deleteApp(uuid);
-        super.delete(uuid);
-        ruleEngineService.flushCaches();
+        if (app != null) {
+            getConfiguration().deleteDependencies(app);
+            super.delete(uuid);
+            ruleEngineService.flushCaches();
+        }
     }
 
     public BubbleApp findByAccountAndTemplateApp(String accountUuid, String templateAppUuid) {

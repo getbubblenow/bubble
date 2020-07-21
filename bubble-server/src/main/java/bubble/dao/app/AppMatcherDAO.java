@@ -28,6 +28,7 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
     @Autowired private AccountDAO accountDAO;
     @Autowired private BubbleAppDAO appDAO;
     @Autowired private AppRuleDAO ruleDAO;
+    @Autowired private AppDataDAO dataDAO;
     @Autowired private RuleEngineService ruleEngineService;
     @Autowired private AppPrimerService primerService;
 
@@ -86,7 +87,11 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
     }
 
     @Override public void delete(String uuid) {
-        super.delete(uuid);
-        ruleEngineService.flushCaches();
+        final AppMatcher matcher = findByUuid(uuid);
+        if (matcher != null) {
+            getConfiguration().deleteDependencies(matcher);
+            super.delete(uuid);
+            ruleEngineService.flushCaches();
+        }
     }
 }
