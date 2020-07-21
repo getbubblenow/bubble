@@ -425,10 +425,19 @@ public class AuthResource {
             if (!existing.getUuid().equals(sessionAccount.getUuid())) {
                 sessionDAO.invalidate(existing.getApiToken());
             } else {
+                markAuthenticated(existing);
                 return ok(existing);
             }
         }
+        markAuthenticated(sessionAccount);
         return ok(sessionAccount.setApiToken(sessionDAO.create(sessionAccount)));
+    }
+
+    private void markAuthenticated(Account sessionAccount) {
+        final AccountPolicy policy = policyDAO.findSingleByAccount(sessionAccount.getUuid());
+        if (policy.hasVerifiedAuthenticator()) {
+            authenticatorService.markAsAuthenticated(sessionAccount.getToken(), policy);
+        }
     }
 
     @POST @Path(EP_VERIFY_KEY)
