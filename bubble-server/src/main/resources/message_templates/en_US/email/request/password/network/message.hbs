@@ -1,24 +1,11 @@
 Hello {{account.name}},
 
-Someone has requested the network keys for {{network.nickname}}
+Someone has requested the Bubble Restore Key for {{network.nickname}}
 
 The request was made on {{format_epoch message.ctime 'MMM dd, YYYY' network.timezone}} at {{format_epoch message.ctime 'hh:mm a, ZZZ' network.timezone}} from IP address {{message.remoteHost}}.
 
-----------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------
-
-If you did not make this request or would like to cancel this request, please click this link:
-
-  {{publicUri}}/action?deny={{confirmationToken}}
-
-----------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------
-
-If you DID make this request and would like to view keys for your network, click the link below.
+To approve this request to download keys for your network, click the link below.
 
   {{publicUri}}/action?approve={{confirmationToken}}
-
-----------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------
 
 Thank you for using Bubble!
