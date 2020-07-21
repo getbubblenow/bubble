@@ -80,6 +80,7 @@ import static bubble.server.BubbleConfiguration.ENV_DEBUG_NODE_INSTALL;
 import static bubble.service.boot.StandardSelfNodeService.*;
 import static bubble.service.cloud.NodeLaunchException.*;
 import static bubble.service.cloud.NodeProgressMeterConstants.*;
+import static bubble.service.packer.PackerService.PACKER_KEY_NAME;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
@@ -514,6 +515,15 @@ public class StandardNetworkService implements NetworkService {
         // write sage_node.json file
         writeFile(bubbleFilesDir, null, SAGE_NODE_JSON, json(BubbleNode.sageMask(sageNode)));
         writeFile(bubbleFilesDir, null, SAGE_KEY_JSON, json(BubbleNodeKey.sageMask(sageKey)));
+
+        // write packer keys if launching sage
+        if (network.getInstallType() == AnsibleInstallType.sage) {
+            final File packerPubKeyFile = new File(bubbleFilesDir, PACKER_KEY_NAME+".pub");
+            copyFile(packerService.getPackerPublicKey(), packerPubKeyFile);
+
+            final File packerPrivateKeyFile = new File(bubbleFilesDir, PACKER_KEY_NAME);
+            copyFile(packerService.getPackerPrivateKey(), packerPrivateKeyFile);
+        }
 
         // write install_local.sh script
         final File installLocalScript = writeFile(automation, ctx, INSTALL_LOCAL_SH, INSTALL_LOCAL_TEMPLATE);

@@ -130,6 +130,7 @@ public abstract class ComputeServiceDriverBase
             if (packerImage == null) {
                 return die("getPackerImage: error creating packer image");
             }
+            node.setPackerImageCreation(false);
         }
         return packerImage;
     }

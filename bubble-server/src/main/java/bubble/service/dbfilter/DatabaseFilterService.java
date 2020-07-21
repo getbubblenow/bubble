@@ -51,6 +51,7 @@ public class DatabaseFilterService {
 
     public static final String ENV_OLD_DB_KEY = "OLD_DB_KEY";
     public static final String ENV_NEW_DB_KEY = "NEW_DB_KEY";
+    public static final String[] FLYWAY_DUMP_OPTIONS = {"--table=flyway_schema_history", "--data-only"};
 
     @Autowired private BubbleConfiguration configuration;
 
@@ -148,6 +149,15 @@ public class DatabaseFilterService {
                 return die("copyDatabase: writer exited with an error (dbName="+dbName+"): "+writeResult.get());
             }
 
+            // copy flyway schema table
+            log.debug("copyDatabase: dumping flyway_schema_version data");
+            final CommandResult flywayData = pgExec("pg_dump", dbConfig.getDatabaseName(), null, null, FLYWAY_DUMP_OPTIONS);
+            if (!flywayData.isZeroExitStatus()) return die("copyDatabase: error dumping flyway_schema_version data: "+flywayData);
+
+            log.debug("copyDatabase: inserting flyway_schema_version data");
+            final CommandResult flywayInsert = pgExec("psql", dbName, new ByteArrayInputStream(flywayData.getStdout().getBytes()), null);
+            if (!flywayInsert.isZeroExitStatus()) return die("copyDatabase: error inserting flyway_schema_version data: "+flywayInsert);
+
             // dump new DB
             log.info("copyDatabase: dumping new database: "+dbName);
             try (OutputStream out = new GZIPOutputStream(new FileOutputStream(pgDumpFile))) {
@@ -177,8 +187,14 @@ public class DatabaseFilterService {
     }
 
     public CommandResult pgExec(String command, String dbName, InputStream in, OutputStream out) throws IOException {
-        final Command pgCommand = new Command(new CommandLine(command)
-                .addArguments(configuration.pgOptions(dbName)))
+        return pgExec(command, dbName, in, out, null);
+    }
+
+    public CommandResult pgExec(String command, String dbName, InputStream in, OutputStream out, String[] args) throws IOException {
+        final CommandLine commandLine = new CommandLine(command)
+                .addArguments(configuration.pgOptions(dbName));
+        if (args != null) commandLine.addArguments(args);
+        final Command pgCommand = new Command(commandLine)
                 .setEnv(configuration.pgEnv())
                 .setStdin(in)
                 .setOut(out)

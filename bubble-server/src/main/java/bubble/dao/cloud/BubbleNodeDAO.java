@@ -64,16 +64,6 @@ public class BubbleNodeDAO extends AccountOwnedEntityDAO<BubbleNode> {
     @Override public void delete(String uuid) {
         final BubbleNode node = findByUuid(uuid);
         if (node == null) return;
-        if (node.isRunning() || networkService.isReachable(node)) {
-            throw invalidEx("err.node.running", "Node must be stopped before deleting");
-        }
-        getConfiguration().deleteDependencies(node);
-        super.delete(uuid);
-    }
-
-    @Override public void forceDelete(String uuid) {
-        final BubbleNode node = findByUuid(uuid);
-        if (node == null) return;
         try {
             if (node.isRunning() || networkService.isReachable(node)) {
                 networkService.killNode(node, "forceDelete");
@@ -82,7 +72,7 @@ public class BubbleNodeDAO extends AccountOwnedEntityDAO<BubbleNode> {
             log.error("forceDelete: error checking/stopping node: "+node.getUuid()+": "+e);
         }
         getConfiguration().deleteDependencies(node);
-        super.forceDelete(uuid);
+        super.delete(uuid);
     }
 
     public List<BubbleNode> findPeersByNetwork(String network) {

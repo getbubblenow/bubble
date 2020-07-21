@@ -54,6 +54,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
     public static final String SNAPSHOT_URL = VULTR_API_BASE + "snapshot/list";
 
     public static final String VULTR_SUBID = "SUBID";
+    public static final String VULTR_TAG = "tag";
     public static final String VULTR_V4_IP = "main_ip";
     public static final String VULTR_V6_IP = "v6_main_ip";
     public static final String VULTR_LABEL = "label";
@@ -185,8 +186,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
             final JsonNode serverNode = json(pollResponse.getEntityString(), JsonNode.class);
             // if (log.isDebugEnabled()) log.debug("start: polled node "+node.id()+" json="+json(serverNode, COMPACT_MAPPER));
             if (serverNode != null) {
-                if (serverNode.has("tag")
-                        && serverNode.get("tag").textValue().equals(cloud.getUuid())
+                if (hasCorrectTag(serverNode)
                         && serverNode.has(VULTR_STATUS)
                         && serverNode.has(VULTR_SERVER_STATE)
                         && serverNode.has(VULTR_POWER_STATUS)
@@ -200,9 +200,11 @@ public class VultrDriver extends ComputeServiceDriverBase {
                     if (log.isDebugEnabled()) log.debug("start("+node.id()+"): found server_state="+serverState+", status="+status+", power_status="+powerStatus+", ip4="+ip4+", ip6="+ip6);
 
                     if (ip4 != null && ip4.length() > 0 && !ip4.equals("0.0.0.0")) {
+                        if (log.isTraceEnabled()) log.trace("start("+node.id()+") setting ip4="+ip4);
                         node.setIp4(ip4);
                     }
                     if (ip6 != null && ip6.length() > 0) {
+                        if (log.isTraceEnabled()) log.trace("start("+node.id()+") setting ip6="+ip6);
                         node.setIp6(ip6);
                     }
                     if (status.equals(VULTR_STATUS_ACTIVE) && (node.hasIp4() || node.hasIp6())) {
@@ -319,10 +321,12 @@ public class VultrDriver extends ComputeServiceDriverBase {
     }
 
     @Override public List<BubbleNode> listNodes() throws IOException {
-        return listNodes(server -> {
-            final String tag = server.has("tag") ? server.get("tag").textValue() : null;
-            return tag != null && tag.contains(cloud.getUuid()) && tag.contains(domainname());
-        });
+        return listNodes(this::hasCorrectTag);
+    }
+
+    private boolean hasCorrectTag(JsonNode server) {
+        final String tag = server.has(VULTR_TAG) ? server.get(VULTR_TAG).textValue() : null;
+        return tag != null && tag.contains(cloud.getUuid()) && tag.contains(domainname());
     }
 
     public List<BubbleNode> listNodes(Function<ObjectNode, Boolean> filter) throws IOException {
@@ -449,7 +453,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
         // find the server(s)
         try {
             servers = listNodes(server -> {
-                final String tag = server.has("tag") ? server.get("tag").textValue() : null;
+                final String tag = server.has(VULTR_TAG) ? server.get(VULTR_TAG).textValue() : null;
                 return tag != null && tag.contains("_"+installType.name()+"_") && tag.contains(keyHash);
             });
         } catch (IOException e) {

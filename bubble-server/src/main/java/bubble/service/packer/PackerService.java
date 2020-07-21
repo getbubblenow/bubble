@@ -84,7 +84,7 @@ public class PackerService {
     public File getPackerPrivateKey () { return initPackerKey(false); }
     public String getPackerPublicKeyHash () { return ShaUtil.sha256_file(getPackerPublicKey()); }
 
-    private synchronized File initPackerKey(boolean pub) {
+    public synchronized File initPackerKey(boolean pub) {
         final File keyDir = new File(System.getProperty("user.home"),".ssh");
         if (!keyDir.exists()) mkdirOrDie(keyDir);
         chmod(keyDir, "700");

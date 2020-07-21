@@ -49,3 +49,29 @@
 - name: Start monitor for restoring this bubble if applicable
   shell: bash -c 'nohup /usr/local/bin/bubble_restore_monitor.sh {{ admin_port }} {{ restore_timeout }} > /dev/null &'
   when: restore_key is defined
+
+- name: Create .ssh directory for packer keys
+  file:
+    path: /home/bubble/.ssh
+    owner: bubble
+    group: bubble
+    state: directory
+  when: install_type == 'sage'
+
+- name: Install packer public key for sage
+  copy:
+    src: packer_rsa.pub
+    dest: /home/bubble/.ssh/packer_rsa.pub
+    owner: bubble
+    group: bubble
+    mode: 0400
+  when: install_type == 'sage'
+
+- name: Install packer private key for sage
+  copy:
+    src: packer_rsa
+    dest: /home/bubble/.ssh/packer_rsa
+    owner: bubble
+    group: bubble
+    mode: 0400
+  when: install_type == 'sage'
