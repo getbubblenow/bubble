@@ -11,7 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
 @NoArgsConstructor @Slf4j
 public class BubbleBlockConfig {
@@ -20,8 +23,14 @@ public class BubbleBlockConfig {
     public boolean inPageBlocks() { return inPageBlocks != null && inPageBlocks; }
 
     @Getter @Setter private BubbleUserAgentBlock[] userAgentBlocks;
+    public boolean hasUserAgentBlocks () { return !empty(userAgentBlocks); }
 
     @Getter @Setter private BubbleBlockList[] blockLists;
+    public boolean hasBlockLists () { return !empty(blockLists); }
+    public void addBlockList(BubbleBlockList blockList) { blockLists = ArrayUtil.append(blockLists, blockList); }
+    public boolean hasBlockList(BubbleBlockList list) {
+        return hasBlockLists() && Arrays.stream(blockLists).anyMatch(l -> l.getUrl().equals(list.getUrl()));
+    }
 
     public BubbleBlockConfig updateList(BubbleBlockList list) {
         if (blockLists == null) {

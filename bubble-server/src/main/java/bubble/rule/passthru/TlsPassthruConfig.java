@@ -11,6 +11,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.cobbzilla.util.cache.AutoRefreshingReference;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.string.StringUtil;
@@ -37,6 +38,7 @@ public class TlsPassthruConfig {
 
     @Getter @Setter private String[] fqdnList;
     public boolean hasFqdnList () { return !empty(fqdnList); }
+    public boolean hasFqdn(String fqdn) { return hasFqdnList() && ArrayUtils.indexOf(fqdnList, fqdn) != -1; }
 
     public TlsPassthruConfig addFqdn(String fqdn) {
         return setFqdnList(Arrays.stream(ArrayUtil.append(fqdnList, fqdn)).collect(Collectors.toSet()).toArray(String[]::new));
@@ -51,6 +53,9 @@ public class TlsPassthruConfig {
 
     @Getter @Setter private TlsPassthruFeed[] feedList;
     public boolean hasFeedList () { return !empty(feedList); }
+    public boolean hasFeed (TlsPassthruFeed feed) {
+        return hasFeedList() && Arrays.stream(feedList).anyMatch(f -> f.getFeedUrl().equals(feed.getFeedUrl()));
+    }
 
     public TlsPassthruConfig addFeed(TlsPassthruFeed feed) {
         final Set<TlsPassthruFeed> feeds = getFeedSet();

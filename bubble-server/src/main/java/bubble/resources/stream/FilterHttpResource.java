@@ -444,7 +444,7 @@ public class FilterHttpResource {
                     .setContentType(contentType)
                     .setContentLength(contentLength)
                     .setContentSecurityPolicy(req.getHeader(CONTENT_SECURITY_POLICY));
-            if (log.isDebugEnabled()) log.trace(prefix+"start filterRequest="+json(filterRequest, COMPACT_MAPPER));
+            if (log.isTraceEnabled()) log.trace(prefix+"start filterRequest="+json(filterRequest, COMPACT_MAPPER));
             getActiveRequestCache().set(requestId, json(filterRequest, COMPACT_MAPPER), EX, ACTIVE_REQUEST_TIMEOUT);
         } else {
             if (!isContentTypeMatch(matchersResponse, filterRequest.getContentType())) {

@@ -73,10 +73,12 @@ public class JsUserBlockerRuleDriver extends AbstractAppRuleDriver {
 
     public String getScriptOpen(FilterHttpRequest filterRequest) {
         if (filterRequest.hasScriptNonce()) {
+            // log.info("getScriptOpen: using nonce="+filterRequest.getScriptNonce());
             return getUserBlockerConfig().hasScriptOpen()
                     ? getUserBlockerConfig().getScriptOpen().replace(NONCE_VAR, filterRequest.getScriptNonce())
                     : DEFAULT_SCRIPT_NONCE_OPEN.replace(NONCE_VAR, filterRequest.getScriptNonce());
         } else {
+            // log.info("getScriptOpen: no nonce");
             return getUserBlockerConfig().hasScriptOpen()
                     ? getUserBlockerConfig().getScriptOpen()
                     : DEFAULT_SCRIPT_OPEN;

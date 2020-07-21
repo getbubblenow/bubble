@@ -39,8 +39,10 @@
 <!--    <logger name="org.cobbzilla.wizard.dao.SqlViewSearchHelper" level="DEBUG" />-->
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
     <logger name="bubble.service.notify.NotificationService" level="WARN" />
-    <logger name="bubble.rule.bblock.BubbleBlockRuleDriver" level="INFO" />
-    <logger name="bubble.rule.analytics.TrafficAnalyticsRuleDriver" level="DEBUG" />
+    <logger name="bubble.rule.bblock.BubbleBlockRuleDriver" level="WARN" />
+    <logger name="bubble.rule.analytics.TrafficAnalyticsRuleDriver" level="ERROR" />
+    <logger name="bubble.rule.social.block" level="DEBUG" />
+    <logger name="bubble.rule.passthru" level="WARN" />
 <!--    <logger name="org.cobbzilla.util.io.multi.MultiStream" level="TRACE" />-->
 <!--    <logger name="bubble.filters.BubbleRateLimitFilter" level="TRACE" />-->
 <!--    <logger name="org.cobbzilla.wizard.filters.RateLimitFilter" level="TRACE" />-->
@@ -62,8 +64,6 @@
     <logger name="bubble.app.passthru" level="DEBUG" />
     <logger name="org.cobbzilla.util.io.regex.RegexFilterReader" level="WARN" />
     <logger name="org.cobbzilla.util.io.multi" level="INFO" />
-    <logger name="bubble.rule.social.block" level="INFO" />
-    <logger name="bubble.rule.passthru" level="DEBUG" />
 <!--    <logger name="bubble.service.cloud.StandardNetworkService" level="INFO" />-->
 <!--    <logger name="bubble.service.cloud.AnsiblePrepService" level="DEBUG" />-->
     <logger name="bubble.abp" level="WARN" />

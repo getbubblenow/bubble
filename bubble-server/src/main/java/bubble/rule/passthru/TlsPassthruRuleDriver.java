@@ -9,7 +9,11 @@ import bubble.model.device.Device;
 import bubble.rule.AbstractAppRuleDriver;
 import bubble.service.stream.AppRuleHarness;
 import bubble.service.stream.ConnectionCheckResponse;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.ArrayUtil;
+
+import static org.cobbzilla.util.json.JsonUtil.json;
 
 @Slf4j
 public class TlsPassthruRuleDriver extends AbstractAppRuleDriver {
@@ -24,6 +28,26 @@ public class TlsPassthruRuleDriver extends AbstractAppRuleDriver {
         }
         if (log.isDebugEnabled()) log.debug("checkConnection: returning noop for fqdn/addr="+fqdn+"/"+addr);
         return ConnectionCheckResponse.noop;
+    }
+
+    @Override public JsonNode upgradeRuleConfig(JsonNode sageRuleConfig, JsonNode localRuleConfig) {
+        final TlsPassthruConfig sageConfig = json(sageRuleConfig, getConfigClass());
+        final TlsPassthruConfig localConfig = json(sageRuleConfig, getConfigClass());
+        if (sageConfig.hasFqdnList()) {
+            for (String fqdn : sageConfig.getFqdnList()) {
+                if (!localConfig.hasFqdnList() || localConfig.hasFqdn(fqdn)) {
+                    localConfig.setFqdnList(ArrayUtil.append(localConfig.getFqdnList(), fqdn));
+                }
+            }
+        }
+        if (sageConfig.hasFeedList()) {
+            for (TlsPassthruFeed feed : sageConfig.getFeedList()) {
+                if (!localConfig.hasFeed(feed)) {
+                    localConfig.setFeedList(ArrayUtil.append(localConfig.getFeedList(), feed));
+                }
+            }
+        }
+        return json(json(localConfig), JsonNode.class);
     }
 
 }

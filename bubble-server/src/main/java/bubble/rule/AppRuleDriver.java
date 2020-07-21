@@ -156,4 +156,9 @@ public interface AppRuleDriver {
 
     default boolean couldModify(FilterHttpRequest request) { return false; }
 
+    default JsonNode upgradeRuleConfig(JsonNode sageRuleConfig,
+                                       JsonNode localRuleConfig) {
+        return sageRuleConfig;
+    }
+
 }

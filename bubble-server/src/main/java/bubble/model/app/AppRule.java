@@ -4,9 +4,11 @@
  */
 package bubble.model.app;
 
+import bubble.dao.app.RuleDriverDAO;
 import bubble.model.account.Account;
 import bubble.model.device.Device;
 import bubble.rule.AppRuleDriver;
+import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
@@ -111,6 +113,14 @@ public class AppRule extends IdentifiableBaseParentEntity implements AppTemplate
     }
 
     @Override public Identifiable update(Identifiable other) { copy(this, other, UPDATE_FIELDS); return this; }
+
+    @Override public <T extends AppTemplateEntity> void upgrade(T sageRule, BubbleConfiguration configuration) {
+        final RuleDriverDAO ruleDriverDAO = (RuleDriverDAO) configuration.getDaoForEntityClass(RuleDriver.class);
+        final RuleDriver ruleDriver = ruleDriverDAO.findByUuid(getDriver());
+        final AppRuleDriver appRuleDriver = ruleDriver.getDriver();
+        final JsonNode upgradedConfig = appRuleDriver.upgradeRuleConfig(getConfig(), ((AppRule) sageRule).getConfig());
+        setConfig(upgradedConfig);
+    }
 
     @Transient public JsonNode getConfig () { return json(configJson, JsonNode.class); }
     public AppRule setConfig(JsonNode config) { return setConfigJson(json(config, DB_JSON_MAPPER)); }

@@ -42,7 +42,8 @@ import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.string.StringUtil.*;
+import static org.cobbzilla.util.string.StringUtil.UTF8cs;
+import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 
 @Slf4j
 public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
@@ -68,6 +69,20 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                                Device device) {
         super.init(config, userConfig, rule, matcher, account, device);
         refreshBlockLists();
+    }
+
+    @Override public JsonNode upgradeRuleConfig(JsonNode sageRuleConfig,
+                                                JsonNode localRuleConfig) {
+        final BubbleBlockConfig sageConfig = json(sageRuleConfig, getConfigClass());
+        final BubbleBlockConfig localConfig = json(localRuleConfig, getConfigClass());
+        if (sageConfig.hasBlockLists()) {
+            for (BubbleBlockList sageList : sageConfig.getBlockLists()) {
+                if (!localConfig.hasBlockLists() || !localConfig.hasBlockList(sageList)) {
+                    localConfig.addBlockList(sageList);
+                }
+            }
+        }
+        return json(json(localConfig), JsonNode.class);
     }
 
     public void refreshBlockLists() {

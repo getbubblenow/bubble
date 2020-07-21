@@ -165,7 +165,7 @@ public class AppObjectUpgradeHandler<T extends AppTemplateEntity> {
                 } else {
                     // preserve existing "enabled" flag
                     boolean enabled = myAppObject.enabled();
-                    myAppObject.update(sageCopy);
+                    myAppObject.upgrade(sageCopy, configuration);
                     myAppObject.setEnabled(enabled);
                     log.info("updateAppObjects: updating " + className + ": " + sageCopy.getName());
                     myAppObject = dao.update(myAppObject);
