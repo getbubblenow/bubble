@@ -70,31 +70,20 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
                       let blockControl = document.createElement('div');
                       blockControl.style.textAlign = 'center';
                       tweet.className = tweet.className += ' {{JS_PREFIX}}_bubble_block';
-                      // <img width="64" src="/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true"/>
-                      // blockControl.setAttribute('white-space', 'no-wrap');
-                      // blockControl.setAttribute('float', 'left');
+
                       let line = document.createElement('hr');
                       let imgHolder = document.createElement('img');
                       imgHolder.src = '/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true';
                       imgHolder.width = 32;
-                      // let preText = document.createTextNode('[');
+
                       let blockLink = document.createElement('a');
-                      // let boldHolder = document.createElement('b');
-                      // let linkText = document.createTextNode('X');
-                      // boldHolder.appendChild(linkText);
                       blockLink.addEventListener("click", function (event) { {{JS_PREFIX}}_block_user(authorName); return false; });
                       blockLink.appendChild(line);
                       blockLink.appendChild(imgHolder);
-                      //let postText = document.createTextNode(']\u00a0');
-                      // let postText = document.createTextNode(']');
-                      // blockControl.appendChild(preText);
                       blockControl.appendChild(blockLink);
-                      // blockControl.appendChild(postText);
 
                       authorDiv.setAttribute('white-space', 'no-wrap');
                       authorDiv.parentNode.appendChild(blockControl);
-                      <!--authorDiv.parentNode.removeChild(authorDiv);-->
-                      <!--blockControl.appendChild(authorDiv);-->
                   }
               }
           }
