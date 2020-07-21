@@ -239,7 +239,9 @@ public class AppUpgradeService extends SimpleDaemon {
             handler.updateAppObjects(configuration, account, myApp, sageApp, sageDrivers, accountDrivers.get(account.getUuid()));
         }
         for (AppObjectUpgradeHandler handler : APP_UPGRADE_HANDLERS_REVERSED) {
-            handler.removeAppObjects(configuration, account, myApp, sageApp, sageDrivers, accountDrivers.get(account.getUuid()));
+            if (handler.shouldDelete()) {
+                handler.removeAppObjects(configuration, account, myApp, sageApp, sageDrivers, accountDrivers.get(account.getUuid()));
+            }
         }
     }
 

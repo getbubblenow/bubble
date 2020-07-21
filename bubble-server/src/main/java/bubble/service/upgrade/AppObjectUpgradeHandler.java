@@ -98,6 +98,8 @@ public class AppObjectUpgradeHandler<T extends AppTemplateEntity> {
                             .setMatcher(myMatcher.getUuid())
                             .setSite(myMatcher.getSite());
                 }
+
+                @Override public boolean shouldDelete() { return false; }
             }
     };
 
@@ -196,5 +198,7 @@ public class AppObjectUpgradeHandler<T extends AppTemplateEntity> {
                           BubbleApp myApp) {
         return sageObject;
     }
+
+    public boolean shouldDelete() { return true; }
 
 }
