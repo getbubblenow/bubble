@@ -1,0 +1,125 @@
+[
+  {
+    "comment": "create new account and login",
+    "include": "new_account",
+    "params": {
+      "email": "user-totp_auth@example.com"
+    }
+  },
+
+  {
+    "comment": "resend verification message for registration email",
+    "request": {
+      "uri": "users/{{userAccount.name}}/policy/contacts/verify",
+      "entity": {
+        "type": "email",
+        "info": "{{userAccount.name}}"
+      }
+    }
+  },
+
+  {
+    "before": "sleep 1s",
+    "comment": "as root, check inbox for email verification message for registration email",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/{{userAccount.name}}?action=verify"
+    },
+    "response": {
+      "store": "userInbox",
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' === 'request'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' === 'verify'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' === 'account'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "as user, approve email verification request for registration email",
+    "request": {
+      "session": "userSession",
+      "uri": "auth/approve/{{userInbox.[0].ctx.confirmationToken}}",
+      "entity": [{"name": "account", "value": "{{userAccount.name}}"}]
+    }
+  },
+
+  {
+    "comment": "add authenticator as required auth factor",
+    "include": "add_authenticator",
+    "params": {
+      "userId": "{{userAccount.name}}",
+      "authFactor": "required"
+    }
+  },
+
+  {
+    "comment": "re-read policy, authenticator is now a required auth factor",
+    "request": { "uri": "users/{{userAccount.name}}/policy" },
+    "response": {
+      "store": "policy",
+      "check": [
+        {"condition": "json.getAccountContacts() != null"},
+        {"condition": "json.getAccountContacts().length === 2"},
+        {"condition": "json.getAccountContacts()[0].getType().name() === 'email'"},
+        {"condition": "!json.getAccountContacts()[0].requiredAuthFactor()"},
+        {"condition": "json.getAccountContacts()[1].getType().name() === 'authenticator'"},
+        {"condition": "json.getAccountContacts()[1].requiredAuthFactor()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "log out",
+    "request": { "uri": "auth/logout" }
+  },
+
+  {
+    "comment": "new session, login as user, receive MFA info",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.totpToken.required')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "same session, login again with TOTP token, succeeds",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!",
+        "totpToken": "{{authenticator_token authenticator.totpKey}}"
+      }
+    },
+    "response": {
+      "sessionName": "newLoginSession",
+      "session": "token",
+      "check": [
+        {"condition": "json.getMultifactorAuth() === null"},
+        {"condition": "json.getToken() != null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "read self account, succeeds",
+    "request": { "uri": "me" },
+    "response": {
+      "check": [
+        {"condition": "json.getName() === '{{userAccount.name}}'"}
+      ]
+    }
+  }
+]

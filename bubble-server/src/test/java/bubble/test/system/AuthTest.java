@@ -31,6 +31,7 @@ public class AuthTest extends ActivatedBubbleModelTestBase {
     @Test public void testForgotPassword () throws Exception { modelTest("auth/forgot_password"); }
     @Test public void testChangePassword () throws Exception { modelTest("auth/change_password"); }
     @Test public void testChangeAdminPassword () throws Exception { modelTest("auth/change_admin_password"); }
+    @Test public void testTotpAuth () throws Exception { modelTest("auth/totp_auth"); }
     @Test public void testMultifactorAuth () throws Exception { modelTest("auth/multifactor_auth"); }
     @Test public void testDownloadAccount () throws Exception { modelTest("auth/download_account"); }
     @Test public void testNetworkAuth () throws Exception { modelTest("auth/network_auth"); }
