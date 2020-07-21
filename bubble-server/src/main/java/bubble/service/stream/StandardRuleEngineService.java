@@ -88,7 +88,7 @@ public class StandardRuleEngineService implements RuleEngineService {
                                           Account account,
                                           Device device,
                                           AppMatcher matcher) {
-        final AppRuleHarness ruleHarness = initRules(account, device, new SingletonList<AppMatcher>(matcher)).get(0);
+        final AppRuleHarness ruleHarness = initRules(account, device, new SingletonList<>(matcher)).get(0);
         return ruleHarness.getDriver().preprocess(ruleHarness, filter, account, device, req, request);
     }
 

@@ -8,14 +8,17 @@ function {{JS_PREFIX}}_getElementsByXPath(xpath, parent) {
   return results;
 }
 
+const {{JS_PREFIX}}_site_host = location.protocol + '//' + window.location.hostname + '/';
+
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
-  let sitePrefix = 'https://twitter.com/';
   let authors = {{JS_PREFIX}}_getElementsByXPath('//article//a');
+  let sitePrefix = {{JS_PREFIX}}_site_host;
   for (let i=0; i<authors.length; i++) {
       let author = authors[i];
       if (author.href && author.href.startsWith(sitePrefix)
           && author.href.indexOf('?', sitePrefix.length) == -1
-          && author.href.indexOf('/', sitePrefix.length) == -1) {
+          && author.href.indexOf('/', sitePrefix.length) == -1
+          && author.className.indexOf('_bubble_blocked') == -1) {
           let authorName = author.href.substring(sitePrefix.length);
           if (blocked_users !== null && blocked_users.includes(authorName)) {
               // walk parents until we find the article, then go up 3 more divs
@@ -32,6 +35,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
                   if (node !== null && node.parentNode != null) {
                       console.log('removing post by author: ' + authorName);
                       try {
+                          author.className = author.className + ' _bubble_blocked';
                           node.style = 'display: none';
                       } catch (e) {
                           console.log('error removing post by author: ' + authorName+': '+e);
@@ -40,25 +44,57 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
               }
 
           } else {
-              // find nested span. first link is avatar image, doesn't have span. second link should have span.
-              let span = author.getElementsByTagName('span');
-              if (span.length > 0) {
+              // walk up until we find the tweet
+              let tweet = author;
+              while (tweet.getAttribute('data-testid') === 'undefined' || tweet.getAttribute('data-testid') === null || tweet.getAttribute('data-testid') !== 'tweet') {
+                  if (tweet.parentNode === document) {
+                      tweet = null;
+                      break;
+                  } else {
+                      tweet = tweet.parentNode;
+                  }
+              }
+              if (tweet === null) {
+                  console.log('tweet node not found for author: '+authorName);
+                  continue;
+              } else {
+                  // console.log('FOUND tweet node for author: '+authorName);
+              }
+
+              // have we visited this tweet before?
+              if (tweet.className.indexOf('{{JS_PREFIX}}_bubble_block') == -1) {
+                  // console.log('VISITING tweet node for author: '+authorName);
                   let authorWrapper = author.parentNode.parentNode;
-                  if (authorWrapper.innerHTML.indexOf('{{JS_PREFIX}}_bubble_block') == -1) {
-                      let blockControl = document.createElement('span');
-                      blockControl.className = '{{JS_PREFIX}}_bubble_block';
-                      let preText = document.createTextNode('\u00a0\u00a0[');
+                  let authorDiv = authorWrapper.firstChild;
+                  if (typeof authorDiv.tagName !== 'undefined' && authorDiv.tagName.toUpperCase() === 'DIV') {
+                      let blockControl = document.createElement('div');
+                      blockControl.style.textAlign = 'center';
+                      tweet.className = tweet.className += ' {{JS_PREFIX}}_bubble_block';
+                      // <img width="64" src="/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true"/>
+                      // blockControl.setAttribute('white-space', 'no-wrap');
+                      // blockControl.setAttribute('float', 'left');
+                      let line = document.createElement('hr');
+                      let imgHolder = document.createElement('img');
+                      imgHolder.src = '/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true';
+                      imgHolder.width = 32;
+                      // let preText = document.createTextNode('[');
                       let blockLink = document.createElement('a');
-                      let boldHolder = document.createElement('b');
-                      let linkText = document.createTextNode('X');
-                      boldHolder.appendChild(linkText);
+                      // let boldHolder = document.createElement('b');
+                      // let linkText = document.createTextNode('X');
+                      // boldHolder.appendChild(linkText);
                       blockLink.addEventListener("click", function (event) { {{JS_PREFIX}}_block_user(authorName); return false; });
-                      blockLink.appendChild(boldHolder);
-                      let postText = document.createTextNode(']');
-                      blockControl.appendChild(preText);
+                      blockLink.appendChild(line);
+                      blockLink.appendChild(imgHolder);
+                      //let postText = document.createTextNode(']\u00a0');
+                      // let postText = document.createTextNode(']');
+                      // blockControl.appendChild(preText);
                       blockControl.appendChild(blockLink);
-                      blockControl.appendChild(postText);
-                      authorWrapper.appendChild(blockControl);
+                      // blockControl.appendChild(postText);
+
+                      authorDiv.setAttribute('white-space', 'no-wrap');
+                      authorDiv.parentNode.appendChild(blockControl);
+                      <!--authorDiv.parentNode.removeChild(authorDiv);-->
+                      <!--blockControl.appendChild(authorDiv);-->
                   }
               }
           }

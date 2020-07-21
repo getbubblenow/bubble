@@ -72,7 +72,6 @@ public class JsUserBlockerRuleDriver extends AbstractAppRuleDriver {
             : DEFAULT_INSERTION_REGEX;
 
     public String getScriptOpen(FilterHttpRequest filterRequest) {
-        log.info("getScriptOption: scriptNonce="+filterRequest.getScriptNonce());
         if (filterRequest.hasScriptNonce()) {
             return getUserBlockerConfig().hasScriptOpen()
                     ? getUserBlockerConfig().getScriptOpen().replace(NONCE_VAR, filterRequest.getScriptNonce())

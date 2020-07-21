@@ -9,6 +9,14 @@
       "fqdn": "twitter.com",
       "urlRegex": ".*",
       "rule": "twitter_user_blocker"
+    }, {
+      "name": "TwitterMobileMatcher",
+      "site": "Twitter",
+      "template": true,
+      "requestCheck": true,
+      "fqdn": "mobile.twitter.com",
+      "urlRegex": ".*",
+      "rule": "twitter_user_blocker"
     }]
   }
 }]
