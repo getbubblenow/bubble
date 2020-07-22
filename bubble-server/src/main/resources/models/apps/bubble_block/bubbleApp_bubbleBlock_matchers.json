@@ -5,6 +5,7 @@
       "name": "BubbleBlockMatcher",
       "template": true,
       "connCheck": true,
+      "requestCheck": true,
       "site": "All_Sites",
       "fqdn": "*",
       "urlRegex": ".*",
