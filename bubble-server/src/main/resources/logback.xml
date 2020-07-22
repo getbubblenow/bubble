@@ -40,6 +40,10 @@
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
     <logger name="bubble.service.notify.NotificationService" level="WARN" />
     <logger name="bubble.rule.bblock.BubbleBlockRuleDriver" level="WARN" />
+    <logger name="bubble.abp" level="WARN" />
+<!--    <logger name="bubble.abp.BubbleBlockCondition" level="DEBUG" />-->
+<!--    <logger name="bubble.abp.BubbleBlockConditionOperation" level="DEBUG" />-->
+<!--    <logger name="bubble.abp.BlockSpec" level="DEBUG" />-->
     <logger name="bubble.rule.analytics.TrafficAnalyticsRuleDriver" level="ERROR" />
     <logger name="bubble.rule.social.block" level="DEBUG" />
     <logger name="bubble.rule.passthru" level="WARN" />
@@ -66,8 +70,6 @@
     <logger name="org.cobbzilla.util.io.multi" level="INFO" />
 <!--    <logger name="bubble.service.cloud.StandardNetworkService" level="INFO" />-->
 <!--    <logger name="bubble.service.cloud.AnsiblePrepService" level="DEBUG" />-->
-    <logger name="bubble.abp" level="WARN" />
-    <!--    <logger name="bubble.abp.BlockSpec" level="DEBUG" />-->
     <logger name="bubble.resources.notify" level="WARN" />
 <!--    <logger name="bubble.resources.notify.InboundNotifyResource" level="TRACE" />-->
     <logger name="bubble.client" level="WARN" />
