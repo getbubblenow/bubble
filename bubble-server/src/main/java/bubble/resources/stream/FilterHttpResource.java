@@ -27,6 +27,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.http.HttpContentEncodingType;
+import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -75,7 +76,17 @@ public class FilterHttpResource {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private SelfNodeService selfNodeService;
 
-    private static final long ACTIVE_REQUEST_TIMEOUT = HOURS.toSeconds(4);
+    @Getter(lazy=true) private static final String debugFqdn = initDebugFqdn();
+    private static String initDebugFqdn() {
+        try {
+            return FileUtil.toString(HOME_DIR+"/debug_fqdn").trim();
+        } catch (Exception e) {
+            log.debug("initDebugFqdn: "+shortError(e));
+            return "~debug_fqdn_disabled~";  // will never match any fqdn
+        }
+    }
+
+    private static final long ACTIVE_REQUEST_TIMEOUT = HOURS.toSeconds(12);
 
     @Getter(lazy=true) private final RedisService activeRequestCache = redis.prefixNamespace(getClass().getSimpleName()+".requests");
 
@@ -101,6 +112,7 @@ public class FilterHttpResource {
         final RedisService cache = ruleEngine.getMatchersCache();
 
         final String requestId = filterRequest.getRequestId();
+        final boolean extraLog = filterRequest.getFqdn().contains(getDebugFqdn());
         final String prefix = "getMatchersResponse("+requestId+"): ";
         final String cacheKey = filterRequest.cacheKey();
         final String matchersJson = cache.get(cacheKey);
@@ -108,11 +120,13 @@ public class FilterHttpResource {
             final FilterMatchersResponse cached = json(matchersJson, FilterMatchersResponse.class);
             cache.set(requestId, json(cached, COMPACT_MAPPER), EX, MATCHERS_CACHE_TIMEOUT);
             if (log.isTraceEnabled()) log.trace(prefix+"found cached response for cacheKey="+cacheKey+" and set for requestId "+requestId+": "+json(cached, COMPACT_MAPPER));
+            else if (extraLog) log.error(prefix+"found cached response for cacheKey="+cacheKey+" and set for requestId "+requestId+": "+json(cached, COMPACT_MAPPER));
             return cached.setRequestId(requestId);
         }
 
         final FilterMatchersResponse response = findMatchers(filterRequest, req, request);
         if (log.isTraceEnabled()) log.trace(prefix+"writing cache-miss to redis under keys "+cacheKey+" and "+requestId+": "+json(response, COMPACT_MAPPER));
+        else if (extraLog) log.error(prefix+"writing cache-miss to redis under keys "+cacheKey+" and "+requestId+": "+json(response, COMPACT_MAPPER));
         cache.set(cacheKey, json(response, COMPACT_MAPPER), EX, MATCHERS_CACHE_TIMEOUT);
         cache.set(requestId, json(response, COMPACT_MAPPER), EX, MATCHERS_CACHE_TIMEOUT);
         return response;
@@ -192,17 +206,21 @@ public class FilterHttpResource {
                                    @Context ContainerRequest request,
                                    @PathParam("requestId") String requestId,
                                    FilterMatchersRequest filterRequest) {
+        boolean extraLog = requestId.contains(getDebugFqdn());
         if (filterRequest == null || !filterRequest.hasRequestId() || empty(requestId) || !requestId.equals(filterRequest.getRequestId())) {
             if (log.isDebugEnabled()) log.debug("selectMatchers: no filterRequest, missing requestId, or mismatch, returning forbidden");
+            else if (extraLog) log.error("selectMatchers: no filterRequest, missing requestId, or mismatch, returning forbidden");
             return forbidden();
         }
         validateMitmCall(req);
 
         final String prefix = "selectMatchers("+filterRequest.getRequestId()+"): ";
         if (log.isDebugEnabled()) log.debug(prefix+"starting for filterRequest="+json(filterRequest, COMPACT_MAPPER));
+        else if (extraLog) log.error(prefix+"starting for filterRequest="+json(filterRequest, COMPACT_MAPPER));
 
         if (!filterRequest.hasRemoteAddr()) {
             if (log.isDebugEnabled()) log.debug(prefix+"no VPN address provided, returning no matchers");
+            else if (extraLog) log.error(prefix+"no VPN address provided, returning no matchers");
             return ok(NO_MATCHERS);
         }
 
@@ -210,6 +228,7 @@ public class FilterHttpResource {
         final Device device = deviceIdService.findDeviceByIp(vpnAddr);
         if (device == null) {
             if (log.isDebugEnabled()) log.debug(prefix+"device not found for IP "+vpnAddr+", returning no matchers");
+            else if (extraLog) log.error(prefix+"device not found for IP "+vpnAddr+", returning no matchers");
             return ok(NO_MATCHERS);
         } else if (log.isTraceEnabled()) {
             log.trace(prefix+"found device "+device.id()+" for IP "+vpnAddr);
@@ -217,22 +236,25 @@ public class FilterHttpResource {
         filterRequest.setDevice(device.getUuid());
         final FilterMatchersResponse response = getMatchersResponse(filterRequest, req, request);
         if (log.isDebugEnabled()) log.debug(prefix+"returning response: "+json(response, COMPACT_MAPPER));
+        else if (extraLog) log.error(prefix+"returning response: "+json(response, COMPACT_MAPPER));
         return ok(response);
     }
 
     private FilterMatchersResponse findMatchers(FilterMatchersRequest filterRequest, Request req, ContainerRequest request) {
-
         final String requestId = filterRequest.getRequestId();
+        boolean extraLog = requestId.contains(getDebugFqdn());
         final String prefix = "findMatchers("+ requestId +"): ";
         final Device device = findDevice(filterRequest.getDevice());
         if (device == null) {
             if (log.isDebugEnabled()) log.debug(prefix+"findDevice("+ filterRequest.getDevice() +") returned null, returning no matchers");
+            else if (extraLog) log.error(prefix+"findDevice("+ filterRequest.getDevice() +") returned null, returning no matchers");
             return NO_MATCHERS;
         }
         final String accountUuid = device.getAccount();
         final Account caller = findCaller(accountUuid);
         if (caller == null) {
             if (log.isDebugEnabled()) log.debug(prefix+"account "+ accountUuid +" not found for device "+device.id()+", returning no matchers");
+            else if (extraLog) log.error(prefix+"account "+ accountUuid +" not found for device "+device.id()+", returning no matchers");
             return NO_MATCHERS;
         }
 
@@ -250,12 +272,15 @@ public class FilterHttpResource {
                     if (matcher.hasUserAgentRegex()) {
                         if (!matcher.matchesUserAgent(filterRequest.getUserAgent())) {
                             if (log.isDebugEnabled()) log.debug(prefix+"matcher "+matcher.getName()+" with pattern "+matcher.getUrlRegex()+" found match for uri: '"+uri+"', but user-agent pattern "+matcher.getUserAgentRegex()+" does not match user-agent="+filterRequest.getUserAgent());
+                            else if (extraLog) log.error(prefix+"matcher "+matcher.getName()+" with pattern "+matcher.getUrlRegex()+" found match for uri: '"+uri+"', but user-agent pattern "+matcher.getUserAgentRegex()+" does not match user-agent="+filterRequest.getUserAgent());
                             continue;
                         } else {
                             if (log.isDebugEnabled()) log.debug(prefix + "matcher " + matcher.getName() + " with pattern " + matcher.getUrlRegex() + " found match for uri: '" + uri + "' and for user-agent pattern "+matcher.getUserAgentRegex()+" for user-agent="+filterRequest.getUserAgent());
+                            else if (extraLog) log.error(prefix + "matcher " + matcher.getName() + " with pattern " + matcher.getUrlRegex() + " found match for uri: '" + uri + "' and for user-agent pattern "+matcher.getUserAgentRegex()+" for user-agent="+filterRequest.getUserAgent());
                         }
                     } else {
                         if (log.isDebugEnabled()) log.debug(prefix + "matcher " + matcher.getName() + " with pattern " + matcher.getUrlRegex() + " found match for uri: '" + uri + "'");
+                        else if (extraLog) log.error(prefix + "matcher " + matcher.getName() + " with pattern " + matcher.getUrlRegex() + " found match for uri: '" + uri + "'");
                     }
                     final FilterMatchDecision matchResponse = ruleEngine.preprocess(filterRequest, req, request, caller, device, matcher);
                     switch (matchResponse) {
@@ -267,6 +292,7 @@ public class FilterHttpResource {
                     }
                 } else {
                     if (log.isDebugEnabled()) log.debug(prefix+"matcher "+matcher.getName()+" with pattern "+matcher.getUrlRegex()+" did NOT match uri: '"+uri+"'");
+                    else if (extraLog) log.error(prefix+"matcher "+matcher.getName()+" with pattern "+matcher.getUrlRegex()+" did NOT match uri: '"+uri+"'");
                 }
             }
         }
@@ -277,42 +303,50 @@ public class FilterHttpResource {
                 .setMatchers(empty(retainMatchers) ? Collections.emptyList() : new ArrayList<>(retainMatchers.values()));
 
         if (log.isDebugEnabled()) log.debug(prefix+"preprocess decision for "+filterRequest.getUrl()+": "+response+", retainMatchers="+names(retainMatchers.values()));
+        else if (extraLog) log.error(prefix+"preprocess decision for "+filterRequest.getUrl()+": "+response+", retainMatchers="+names(retainMatchers.values()));
 
         return response;
     }
 
     private List<AppMatcher> getEnabledMatchers(String requestId, String accountUuid, String fqdn) {
+        boolean extraLog = fqdn.contains(getDebugFqdn());
         final String prefix = "getEnabledMatchers("+requestId+"): ";
         List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabledAndRequestCheck(accountUuid, fqdn);
         if (log.isTraceEnabled()) log.trace(prefix+"checking all enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
+        else if (extraLog) log.error(prefix+"checking all enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
         matchers = matchers.stream()
                 .filter(m -> appDAO.findByAccountAndId(accountUuid, m.getApp()).enabled()).collect(Collectors.toList());
         if (log.isTraceEnabled()) log.trace(prefix+"after removing disabled apps, enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
+        else if (extraLog) log.error(prefix+"after removing disabled apps, enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
         if (matchers.isEmpty()) return matchers;
 
         matchers = matchers.stream()
                 .filter(m -> {
                     final AppSite site = siteDAO.findByAccountAndAppAndId(accountUuid, m.getApp(), m.getSite());
                     if (site == null) {
-                        log.warn(prefix+"site "+m.getSite()+" not found for matcher "+m.getName()+"/"+m.getUuid());
+                        if (log.isWarnEnabled()) log.warn(prefix+"site "+m.getSite()+" not found for matcher "+m.getName()+"/"+m.getUuid());
+                        else if (extraLog) log.error(prefix+"site "+m.getSite()+" not found for matcher "+m.getName()+"/"+m.getUuid());
                         return false;
                     }
                     return site.enabled();
                 }).collect(Collectors.toList());
         if (log.isTraceEnabled()) log.trace(prefix+"after removing disabled sites, enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
+        else if (extraLog) log.error(prefix+"after removing disabled sites, enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
         if (matchers.isEmpty()) return matchers;
 
         matchers = matchers.stream()
                 .filter(m -> {
                     final AppRule rule = ruleDAO.findByAccountAndAppAndId(accountUuid, m.getApp(), m.getRule());
                     if (rule == null) {
-                        log.warn(prefix+"rule "+m.getRule()+" not found for matcher "+m.getName()+"/"+m.getUuid());
+                        if (log.isWarnEnabled()) log.warn(prefix+"rule "+m.getRule()+" not found for matcher "+m.getName()+"/"+m.getUuid());
+                        else if (extraLog) log.error(prefix+"rule "+m.getRule()+" not found for matcher "+m.getName()+"/"+m.getUuid());
                         return false;
                     }
                     return rule.enabled();
                 }).collect(Collectors.toList());
         if (log.isTraceEnabled()) log.trace(prefix+"after removing disabled rules, enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));
         else if (log.isDebugEnabled()) log.debug(prefix+"found "+matchers.size()+" candidate matchers: "+names(matchers));
+        else if (extraLog) log.error(prefix+"found "+matchers.size()+" candidate matchers: "+names(matchers));
         return matchers;
     }
 
