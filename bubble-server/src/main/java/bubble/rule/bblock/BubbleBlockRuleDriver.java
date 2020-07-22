@@ -36,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static bubble.resources.stream.FilterHttpResource.getDebugFqdn;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
@@ -160,17 +161,19 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                                                     Device device,
                                                     Request req,
                                                     ContainerRequest request) {
+        final boolean extraLog = filter.getFqdn().contains(getDebugFqdn());
         final String app = ruleHarness.getRule().getApp();
         final String site = ruleHarness.getMatcher().getSite();
         final String fqdn = filter.getFqdn();
         final String prefix = "preprocess("+filter.getRequestId()+"): ";
 
         final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
-        final BlockDecision decision = getDecision(filter.getFqdn(), filter.getUri(), filter.getUserAgent());
+        final BlockDecision decision = getPreprocessDecision(filter.getFqdn(), filter.getUri(), filter.getUserAgent(), filter.getReferer());
         final BlockDecisionType decisionType = decision.getDecisionType();
         switch (decisionType) {
             case block:
                 if (log.isInfoEnabled()) log.info(prefix+"decision is BLOCK");
+                else if (extraLog) log.error(prefix+"decision is BLOCK");
                 incrementCounters(account, device, app, site, fqdn);
                 return FilterMatchDecision.abort_not_found;  // block this request
 
@@ -180,6 +183,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                     if (refererDecision != null) return refererDecision;
                 }
                 if (log.isInfoEnabled()) log.info(prefix+"decision is ALLOW");
+                else if (extraLog) log.error(prefix+"decision is ALLOW");
                 return FilterMatchDecision.no_match;
 
             case filter:
@@ -189,20 +193,24 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                 }
                 final List<BlockSpec> specs = decision.getSpecs();
                 if (empty(specs)) {
-                    log.warn(prefix+"decision was 'filter' but no specs were found, returning no_match");
+                    if (log.isWarnEnabled()) log.warn(prefix+"decision was 'filter' but no specs were found, returning no_match");
+                    else if (extraLog) log.error(prefix+"decision was 'filter' but no specs were found, returning no_match");
                     return FilterMatchDecision.no_match;
                 } else {
                     if (!bubbleBlockConfig.inPageBlocks()) {
                         for (BlockSpec spec : specs) {
                             if (spec.hasNoSelector()) {
-                                log.info(prefix+"decision was FILTER but a URL block was triggered and inPageBlocks are disabled (returning abort_not_found)");
+                                if (log.isInfoEnabled()) log.info(prefix+"decision was FILTER but a URL block was triggered and inPageBlocks are disabled (returning abort_not_found)");
+                                else if (extraLog) log.error(prefix+"decision was FILTER but a URL block was triggered and inPageBlocks are disabled (returning abort_not_found)");
                                 return FilterMatchDecision.abort_not_found;
                             }
                         }
-                        log.info(prefix+"decision was FILTER but no URL-blocks and inPageBlocks are disabled (returning no_match)");
+                        if (log.isInfoEnabled()) log.info(prefix+"decision was FILTER but no URL-blocks and inPageBlocks are disabled (returning no_match)");
+                        else if (extraLog) log.error(prefix+"decision was FILTER but no URL-blocks and inPageBlocks are disabled (returning no_match)");
                         return FilterMatchDecision.no_match;
                     }
                     if (log.isInfoEnabled()) log.info(prefix+"decision is FILTER (returning match)");
+                    else if (extraLog) log.error(prefix+"decision is FILTER (returning match)");
                     return FilterMatchDecision.match;
                 }
         }
@@ -221,7 +229,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final String refererPath = refererURI.getPath();
         final String userAgent = filter.getUserAgent();
         if (log.isInfoEnabled()) log.info(prefix+"decision for URL was ALLOW, checking against referer: host="+refererURI.getHost()+", path="+refererURI.getPath());
-        final BlockDecision refererDecision = getDecision(refererHost, refererPath, userAgent);
+        final BlockDecision refererDecision = getPreprocessDecision(refererHost, refererPath, userAgent, refererHost);
         switch (refererDecision.getDecisionType()) {
             case block:
                 if (log.isInfoEnabled()) log.info(prefix+"decision for URL was ALLOW but for referer is BLOCK");
@@ -236,18 +244,28 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         }
     }
 
-    public BlockDecision getDecision(String fqdn, String uri, String userAgent) { return getBlockList().getDecision(fqdn, uri, userAgent, false); }
+    public BlockDecision getPreprocessDecision(String fqdn, String uri, String userAgent, String referer) {
+        if (isBlockedUserAgent(uri, userAgent)) return BlockDecision.BLOCK;
+        return getBlockList().getDecision(fqdn, uri, null, referer, false);
+    }
 
     public BlockDecision getDecision(String fqdn, String uri, String userAgent, boolean primary) {
-        final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
-        if (!empty(userAgent) && !empty(bubbleBlockConfig.getUserAgentBlocks())) {
-            for (BubbleUserAgentBlock uaBlock : bubbleBlockConfig.getUserAgentBlocks()) {
-                if (uaBlock.hasUrlRegex() && uaBlock.urlMatches(uri)) {
-                    if (uaBlock.userAgentMatches(userAgent)) return BlockDecision.BLOCK;
+        if (isBlockedUserAgent(uri, userAgent)) return BlockDecision.BLOCK;
+        return getBlockList().getDecision(fqdn, uri, primary);
+    }
+
+    private boolean isBlockedUserAgent(String uri, String userAgent) {
+        if (!empty(userAgent)) {
+            final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
+            if (!empty(bubbleBlockConfig.getUserAgentBlocks())) {
+                for (BubbleUserAgentBlock uaBlock : bubbleBlockConfig.getUserAgentBlocks()) {
+                    if (uaBlock.hasUrlRegex() && uaBlock.urlMatches(uri)) {
+                        if (uaBlock.userAgentMatches(userAgent)) return true;
+                    }
                 }
             }
         }
-        return getBlockList().getDecision(fqdn, uri, primary);
+        return false;
     }
 
     @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
@@ -255,9 +273,14 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final FilterMatchersRequest request = filterRequest.getMatchersResponse().getRequest();
         final String prefix = "doFilterResponse("+filterRequest.getId()+"): ";
 
+        // todo: add support for stream blockers: we may allow the request but wrap the returned InputStream
+        // if the wrapper detects it should be blocked, then the connection cut short
+        // for example: if the content-type is image/* we can read the image header, if the dimensions of the image
+        // are a standard IAB ad unit, kill the connection, or replace the image with our data
+
         // Now that we know the content type, re-check the BlockList
         final String contentType = filterRequest.getContentType();
-        final BlockDecision decision = getBlockList().getDecision(request.getFqdn(), request.getUri(), contentType, true);
+        final BlockDecision decision = getBlockList().getDecision(request.getFqdn(), request.getUri(), contentType, request.getReferer(), true);
         if (log.isDebugEnabled()) log.debug(prefix+"preprocess decision was "+decision+", but now we know contentType="+contentType);
         switch (decision.getDecisionType()) {
             case block:
