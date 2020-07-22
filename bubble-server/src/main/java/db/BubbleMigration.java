@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.spring.config.rdbms.RdbmsConfig;
-import org.flywaydb.core.api.migration.JavaMigration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.jasypt.hibernate4.encryptor.HibernatePBEStringEncryptor;
 
 /**
@@ -27,7 +27,7 @@ import org.jasypt.hibernate4.encryptor.HibernatePBEStringEncryptor;
  * For example: V2020042301__add_account_payment_archived.sql
  */
 @Slf4j
-public abstract class BubbleMigration implements JavaMigration {
+public abstract class BubbleMigration extends BaseJavaMigration {
 
     @Getter @Setter private static BubbleConfiguration configuration;
 

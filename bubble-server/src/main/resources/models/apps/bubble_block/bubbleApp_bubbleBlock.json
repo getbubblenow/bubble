@@ -53,7 +53,7 @@
         {"name": "removeList", "index": 50, "when": "item.url !== ''"},
         {
           "name": "createList", "scope": "app", "index": 10,
-          "params": ["url"],
+          "params": [ "name", "description", "url", "tagString" ],
           "button": "createList"
         },
         {
