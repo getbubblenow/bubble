@@ -27,7 +27,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.http.HttpContentEncodingType;
-import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -75,16 +74,6 @@ public class FilterHttpResource {
     @Autowired private RedisService redis;
     @Autowired private BubbleConfiguration configuration;
     @Autowired private SelfNodeService selfNodeService;
-
-    @Getter(lazy=true) private static final String debugFqdn = initDebugFqdn();
-    private static String initDebugFqdn() {
-        try {
-            return FileUtil.toString(HOME_DIR+"/debug_fqdn").trim();
-        } catch (Exception e) {
-            log.debug("initDebugFqdn: "+shortError(e));
-            return "~debug_fqdn_disabled~";  // will never match any fqdn
-        }
-    }
 
     private static final long ACTIVE_REQUEST_TIMEOUT = HOURS.toSeconds(12);
 

@@ -56,6 +56,16 @@ public class ApiConstants {
 
     public static final ObjectMapper DB_JSON_MAPPER = COMPACT_MAPPER;
 
+    @Getter(lazy=true) private static final String debugFqdn = initDebugFqdn();
+    private static String initDebugFqdn() {
+        try {
+            return FileUtil.toString(HOME_DIR+"/debug_fqdn").trim();
+        } catch (Exception e) {
+            log.debug("initDebugFqdn: "+shortError(e));
+            return "~debug_fqdn_disabled~";  // will never match any fqdn
+        }
+    }
+
     private static String initDefaultDomain() {
         final File f = new File(HOME_DIR, ".BUBBLE_DEFAULT_DOMAIN");
         final String domain = FileUtil.toStringOrDie(f);
