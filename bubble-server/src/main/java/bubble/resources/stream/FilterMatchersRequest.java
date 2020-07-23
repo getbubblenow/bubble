@@ -10,8 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
-import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class FilterMatchersRequest {

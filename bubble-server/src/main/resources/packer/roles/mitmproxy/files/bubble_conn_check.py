@@ -206,6 +206,7 @@ def next_layer(next_layer):
         next_layer.fqdns = fqdns
         no_fqdns = fqdns is None or len(fqdns) == 0
         security_level = get_device_security_level(client_addr)
+        check = None
         if server_addr in get_local_ips():
             bubble_log('next_layer: enabling passthru for LOCAL server='+server_addr+' regardless of security_level='+security_level+' for client='+client_addr)
             check = FORCE_PASSTHRU

@@ -3,14 +3,14 @@
 #
 import requests
 import traceback
+import re
 import sys
-import os
 import time
 import uuid
 import datetime
 import redis
 import json
-from bubble_config import bubble_network, bubble_port
+from bubble_config import bubble_network, bubble_port, debug_capture_fqdn
 
 HEADER_USER_AGENT = 'User-Agent'
 HEADER_CONTENT_SECURITY_POLICY = 'Content-Security-Policy'
@@ -28,6 +28,12 @@ BUBBLE_URI_PREFIX='/__bubble/'
 REDIS = redis.Redis(host='127.0.0.1', port=6379, db=0)
 BUBBLE_ACTIVITY_LOG_PREFIX = 'bubble_activity_log_'
 BUBBLE_ACTIVITY_LOG_EXPIRATION = 600
+
+# This regex extracts splits the host header into host and port.
+# Handles the edge case of IPv6 addresses containing colons.
+# https://bugzilla.mozilla.org/show_bug.cgi?id=45891
+parse_host_header = re.compile(r"^(?P<host>[^:]+|\[.+\])(?::(?P<port>\d+))?$")
+
 
 def redis_set(name, value, ex):
     REDIS.set(name, value, nx=True, ex=ex)
@@ -53,6 +59,10 @@ def bubble_activity_log(client_addr, server_addr, event, data):
 
 
 def bubble_conn_check(remote_addr, addr, fqdns, security_level):
+    if debug_capture_fqdn and fqdns and debug_capture_fqdn in fqdns:
+        bubble_log('bubble_conn_check: debug_capture_fqdn detected, returning noop: '+debug_capture_fqdn)
+        return 'noop'
+
     headers = {
         'X-Forwarded-For': remote_addr,
         'Accept' : 'application/json',
@@ -78,7 +88,22 @@ def bubble_conn_check(remote_addr, addr, fqdns, security_level):
         return None
 
 
+DEBUG_MATCHER_NAME = 'DebugCaptureMatcher'
+DEBUG_MATCHER = {
+    'decision': 'match',
+    'matchers': [{
+        'name': DEBUG_MATCHER_NAME,
+        'contentTypeRegex': '.*',
+        "urlRegex": ".*",
+        'rule': DEBUG_MATCHER_NAME
+    }]
+}
+
 def bubble_matchers(req_id, remote_addr, flow, host):
+    if debug_capture_fqdn and host and debug_capture_fqdn == host:
+        bubble_log('bubble_matchers: debug_capture_fqdn detected, returning DEBUG_MATCHER: '+debug_capture_fqdn)
+        return DEBUG_MATCHER
+
     headers = {
         'X-Forwarded-For': remote_addr,
         'Accept' : 'application/json',

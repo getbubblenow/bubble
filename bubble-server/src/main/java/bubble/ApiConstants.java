@@ -56,25 +56,6 @@ public class ApiConstants {
 
     public static final ObjectMapper DB_JSON_MAPPER = COMPACT_MAPPER;
 
-    // for some reason @Getter(lazy=true) causes compilation problems when other classes try to call getter
-    // so we implement lombok lazy-getter logic manuall here
-    private static final AtomicReference<String> debugFqdn = new AtomicReference<>();
-    public static String getDebugFqdn () {
-        if (debugFqdn.get() == null) {
-            synchronized (debugFqdn) {
-                if (debugFqdn.get() == null) {
-                    try {
-                        debugFqdn.set(FileUtil.toString(HOME_DIR + "/debug_fqdn").trim());
-                    } catch (Exception e) {
-                        log.debug("initDebugFqdn: " + shortError(e));
-                        debugFqdn.set("~debug_fqdn_disabled~");  // will never match any fqdn
-                    }
-                }
-            }
-        }
-        return debugFqdn.get();
-    }
-
     private static String initDefaultDomain() {
         final File f = new File(HOME_DIR, ".BUBBLE_DEFAULT_DOMAIN");
         final String domain = FileUtil.toStringOrDie(f);

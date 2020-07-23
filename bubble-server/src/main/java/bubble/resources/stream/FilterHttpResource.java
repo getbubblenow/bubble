@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.resources.stream.FilterMatchersResponse.NO_MATCHERS;
+import static bubble.service.stream.HttpStreamDebug.getLogFqdn;
 import static bubble.service.stream.StandardRuleEngineService.MATCHERS_CACHE_TIMEOUT;
 import static com.google.common.net.HttpHeaders.CONTENT_SECURITY_POLICY;
 import static java.util.Collections.emptyMap;
@@ -101,7 +102,7 @@ public class FilterHttpResource {
         final RedisService cache = ruleEngine.getMatchersCache();
 
         final String requestId = filterRequest.getRequestId();
-        final boolean extraLog = filterRequest.getFqdn().contains(getDebugFqdn());
+        final boolean extraLog = filterRequest.getFqdn().contains(getLogFqdn());
         final String prefix = "getMatchersResponse("+requestId+"): ";
         final String cacheKey = filterRequest.cacheKey();
         final String matchersJson = cache.get(cacheKey);
@@ -195,7 +196,7 @@ public class FilterHttpResource {
                                    @Context ContainerRequest request,
                                    @PathParam("requestId") String requestId,
                                    FilterMatchersRequest filterRequest) {
-        boolean extraLog = requestId.contains(getDebugFqdn());
+        boolean extraLog = requestId.contains(getLogFqdn());
         if (filterRequest == null || !filterRequest.hasRequestId() || empty(requestId) || !requestId.equals(filterRequest.getRequestId())) {
             if (log.isDebugEnabled()) log.debug("selectMatchers: no filterRequest, missing requestId, or mismatch, returning forbidden");
             else if (extraLog) log.error("selectMatchers: no filterRequest, missing requestId, or mismatch, returning forbidden");
@@ -223,6 +224,7 @@ public class FilterHttpResource {
             log.trace(prefix+"found device "+device.id()+" for IP "+vpnAddr);
         }
         filterRequest.setDevice(device.getUuid());
+
         final FilterMatchersResponse response = getMatchersResponse(filterRequest, req, request);
         if (log.isDebugEnabled()) log.debug(prefix+"returning response: "+json(response, COMPACT_MAPPER));
         else if (extraLog) log.error(prefix+"returning response: "+json(response, COMPACT_MAPPER));
@@ -231,7 +233,7 @@ public class FilterHttpResource {
 
     private FilterMatchersResponse findMatchers(FilterMatchersRequest filterRequest, Request req, ContainerRequest request) {
         final String requestId = filterRequest.getRequestId();
-        boolean extraLog = requestId.contains(getDebugFqdn());
+        boolean extraLog = requestId.contains(getLogFqdn());
         final String prefix = "findMatchers("+ requestId +"): ";
         final Device device = findDevice(filterRequest.getDevice());
         if (device == null) {
@@ -298,7 +300,7 @@ public class FilterHttpResource {
     }
 
     private List<AppMatcher> getEnabledMatchers(String requestId, String accountUuid, String fqdn) {
-        boolean extraLog = fqdn.contains(getDebugFqdn());
+        boolean extraLog = fqdn.contains(getLogFqdn());
         final String prefix = "getEnabledMatchers("+requestId+"): ";
         List<AppMatcher> matchers = matcherDAO.findByAccountAndFqdnAndEnabledAndRequestCheck(accountUuid, fqdn);
         if (log.isTraceEnabled()) log.trace(prefix+"checking all enabled matchers for fqdn: "+json(matchers, COMPACT_MAPPER));

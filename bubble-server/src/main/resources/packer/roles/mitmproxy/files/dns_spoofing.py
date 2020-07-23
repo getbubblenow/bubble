@@ -4,14 +4,10 @@
 import re
 import time
 import uuid
-from bubble_api import bubble_matchers, bubble_log, bubble_activity_log, CTX_BUBBLE_MATCHERS, BUBBLE_URI_PREFIX, CTX_BUBBLE_ABORT, CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_REQUEST_ID, add_flow_ctx
+from bubble_api import bubble_matchers, bubble_log, bubble_activity_log, \
+    CTX_BUBBLE_MATCHERS, BUBBLE_URI_PREFIX, CTX_BUBBLE_ABORT, CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_REQUEST_ID, \
+    add_flow_ctx, parse_host_header
 from bubble_config import bubble_host, bubble_host_alias
-
-# This regex extracts splits the host header into host and port.
-# Handles the edge case of IPv6 addresses containing colons.
-# https://bugzilla.mozilla.org/show_bug.cgi?id=45891
-parse_host_header = re.compile(r"^(?P<host>[^:]+|\[.+\])(?::(?P<port>\d+))?$")
-
 
 class Rerouter:
     @staticmethod

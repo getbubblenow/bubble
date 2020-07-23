@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static bubble.ApiConstants.getDebugFqdn;
+import static bubble.service.stream.HttpStreamDebug.getLogFqdn;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
@@ -161,7 +161,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                                                     Device device,
                                                     Request req,
                                                     ContainerRequest request) {
-        final boolean extraLog = filter.getFqdn().contains(getDebugFqdn());
+        final boolean extraLog = filter.getFqdn().contains(getLogFqdn());
         final String app = ruleHarness.getRule().getApp();
         final String site = ruleHarness.getMatcher().getSite();
         final String fqdn = filter.getFqdn();

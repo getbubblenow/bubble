@@ -6,10 +6,10 @@ import requests
 import urllib
 import traceback
 from mitmproxy.net.http import Headers
-from bubble_config import bubble_port, bubble_host_alias
+from bubble_config import bubble_port, bubble_host_alias, debug_capture_fqdn
 from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, BUBBLE_URI_PREFIX, \
     CTX_BUBBLE_REQUEST_ID, CTX_CONTENT_LENGTH, CTX_CONTENT_LENGTH_SENT, bubble_log, get_flow_ctx, add_flow_ctx, \
-    HEADER_FILTER_PASSTHRU, HEADER_CONTENT_SECURITY_POLICY, REDIS, redis_set
+    HEADER_FILTER_PASSTHRU, HEADER_CONTENT_SECURITY_POLICY, REDIS, redis_set, parse_host_header
 
 BUFFER_SIZE = 4096
 HEADER_CONTENT_TYPE = 'Content-Type'
@@ -23,6 +23,31 @@ REDIS_FILTER_PASSTHRU_PREFIX = '__chunk_filter_pass__'
 REDIS_FILTER_PASSTHRU_DURATION = 600
 
 def filter_chunk(flow, chunk, req_id, last, content_encoding=None, content_type=None, content_length=None, csp=None):
+    if debug_capture_fqdn:
+        host = None
+        if flow.client_conn.tls_established:
+            sni = flow.client_conn.connection.get_servername()
+            if sni:
+                host = str(sni)
+        else:
+            host_header = flow.request.host_header
+            if host_header:
+                m = parse_host_header.match(host_header)
+                if m:
+                    host = str(m.group("host").strip("[]"))
+        if host:
+            if host.startswith("b'"):
+                host = host[2:-1]
+            if host == debug_capture_fqdn:
+                bubble_log('filter_chunk: debug_capture_fqdn detected, capturing: '+debug_capture_fqdn)
+                f = open('/tmp/bubble_capture_'+req_id, mode='ab', buffering=0)
+                f.write(chunk)
+                f.close()
+                return chunk
+            else:
+                bubble_log('filter_chunk: debug_capture_fqdn detected but host='+repr(host)+', NOT capturing: '+debug_capture_fqdn)
+        else:
+            bubble_log('filter_chunk: debug_capture_fqdn detected but no host could be detected, NOT capturing: '+debug_capture_fqdn)
 
     # should we just passthru?
     redis_passthru_key = REDIS_FILTER_PASSTHRU_PREFIX + flow.request.method + ':' + flow.request.url
@@ -161,10 +186,10 @@ def responseheaders(flow):
                                     typeRegex = '^text/html.*'
                                 if re.match(typeRegex, content_type):
                                     any_content_type_matches = True
-                                    bubble_log(prefix+': found at least one matcher for content_type ('+content_type+'), filtering')
+                                    bubble_log(prefix+'found at least one matcher for content_type ('+content_type+'), filtering')
                                     break
                         if not any_content_type_matches:
-                            bubble_log(prefix+': no matchers for content_type ('+content_type+'), passing thru')
+                            bubble_log(prefix+'no matchers for content_type ('+content_type+'), passing thru')
                             return
 
                         if HEADER_CONTENT_ENCODING in flow.response.headers:
@@ -178,7 +203,7 @@ def responseheaders(flow):
                             csp = None
 
                         content_length_value = flow.response.headers.pop(HEADER_CONTENT_LENGTH, None)
-                        bubble_log(prefix+': content_encoding='+repr(content_encoding) + ', content_type='+repr(content_type))
+                        bubble_log(prefix+'content_encoding='+repr(content_encoding) + ', content_type='+repr(content_type))
                         flow.response.stream = bubble_modify(flow, req_id, content_encoding, content_type, csp)
                         if content_length_value:
                             flow.response.headers['transfer-encoding'] = 'chunked'

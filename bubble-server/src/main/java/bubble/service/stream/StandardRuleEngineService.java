@@ -46,7 +46,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.core.Response;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +65,6 @@ import static org.apache.http.HttpHeaders.TRANSFER_ENCODING;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
 import static org.cobbzilla.util.http.HttpStatusCodes.OK;
-import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.cache.redis.RedisService.ALL_KEYS;
@@ -153,8 +154,6 @@ public class StandardRuleEngineService implements RuleEngineService {
 
     private final Map<String, ActiveStreamState> activeProcessors = new ExpirationMap<>(MINUTES.toMillis(5), ExpirationEvictionPolicy.atime);
 
-    private static final boolean DEBUG_CAPTURE = false;
-
     public Response applyRulesToChunkAndSendResponse(ContainerRequest request,
                                                      FilterHttpRequest filterRequest,
                                                      Integer chunkLength,
@@ -165,17 +164,6 @@ public class StandardRuleEngineService implements RuleEngineService {
             return passthru(request);
         } else {
             log.info(prefix+" applying matchers: "+filterRequest.getMatcherNames());
-        }
-
-        // for debugging problematic requests
-        if (DEBUG_CAPTURE) {
-            final byte[] bytes = IOUtils.toByteArray(request.getEntityStream());
-            final File temp = new File("/tmp/"+filterRequest.getId()+".raw");
-            try (FileOutputStream out = new FileOutputStream(temp, true)) {
-                log.debug(prefix+"stashed "+bytes.length+" bytes in "+abs(temp));
-                IOUtils.copy(new ByteArrayInputStream(bytes), out);
-            }
-            return sendResponse(new ByteArrayInputStream(bytes)); // noop for testing
         }
 
         // have we seen this request before?
