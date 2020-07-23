@@ -38,16 +38,12 @@ def filter_chunk(flow, chunk, req_id, last, content_encoding=None, content_type=
         if host:
             if host.startswith("b'"):
                 host = host[2:-1]
-            if host == debug_capture_fqdn:
-                bubble_log('filter_chunk: debug_capture_fqdn detected, capturing: '+debug_capture_fqdn)
+            if host in debug_capture_fqdn:
+                bubble_log('filter_chunk: debug_capture_fqdn detected, capturing: '+host)
                 f = open('/tmp/bubble_capture_'+req_id, mode='ab', buffering=0)
                 f.write(chunk)
                 f.close()
                 return chunk
-            else:
-                bubble_log('filter_chunk: debug_capture_fqdn detected but host='+repr(host)+', NOT capturing: '+debug_capture_fqdn)
-        else:
-            bubble_log('filter_chunk: debug_capture_fqdn detected but no host could be detected, NOT capturing: '+debug_capture_fqdn)
 
     # should we just passthru?
     redis_passthru_key = REDIS_FILTER_PASSTHRU_PREFIX + flow.request.method + ':' + flow.request.url
@@ -74,7 +70,8 @@ def filter_chunk(flow, chunk, req_id, last, content_encoding=None, content_type=
             url = url + '?last=true'
 
     if csp:
-        bubble_log('filter_chunk: url='+url+' (csp='+csp+')')
+        # bubble_log('filter_chunk: url='+url+' (csp='+csp+')')
+        bubble_log('filter_chunk: url='+url+' (with csp)')
         filter_headers = {
             HEADER_CONTENT_TYPE: CONTENT_TYPE_BINARY,
             HEADER_CONTENT_SECURITY_POLICY: csp

@@ -17,4 +17,5 @@ list_bubble_databases
 cleanup_bubble_databases
 install_packer.sh
 rkeys
+rmembers
 rdelkeys

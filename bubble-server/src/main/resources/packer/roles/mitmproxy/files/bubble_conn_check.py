@@ -40,6 +40,7 @@ REDIS_DNS_PREFIX = 'bubble_dns_'
 REDIS_CONN_CHECK_PREFIX = 'bubble_conn_check_'
 REDIS_CHECK_DURATION = 60 * 60  # 1 hour timeout
 REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX = 'bubble_device_security_level_'  # defined in StandardDeviceIdService
+REDIS_KEY_DEVICE_SITE_MAX_SECURITY_LEVEL_PREFIX = 'bubble_device_site_max_security_level_'  # defined in StandardDeviceIdService
 
 FORCE_PASSTHRU = {'passthru': True}
 FORCE_BLOCK = {'block': True}
@@ -56,11 +57,24 @@ VPN_IP4_CIDR = IPNetwork(wireguard_network_ipv4)
 VPN_IP6_CIDR = IPNetwork(wireguard_network_ipv6)
 
 
-def get_device_security_level(client_addr):
+def get_device_security_level(client_addr, fqdns):
     level = REDIS.get(REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX+client_addr)
     if level is None:
-        return SEC_MAX
-    return level.decode()
+        return {'level': SEC_MAX}
+    level = level.decode()
+    if level == SEC_STD:
+        bubble_log('get_device_security_level: checking for max_required_fqdns against fqdns='+repr(fqdns))
+        if fqdns:
+            max_required_fqdns = REDIS.smembers(REDIS_KEY_DEVICE_SITE_MAX_SECURITY_LEVEL_PREFIX+client_addr)
+            if max_required_fqdns is not None:
+                bubble_log('get_device_security_level: found max_required_fqdns='+repr(max_required_fqdns))
+                for max_required in max_required_fqdns:
+                    max_required = max_required.decode()
+                    for fqdn in fqdns:
+                        if max_required == fqdn or (max_required.startswith('*.') and fqdn.endswith(max_required[1:])):
+                            bubble_log('get_device_security_level: returning maximum for fqdn '+fqdn+' based on max_required='+max_required)
+                            return {'level': SEC_MAX, 'pinned': True}
+    return {'level': level}
 
 
 def get_local_ips():
@@ -115,7 +129,7 @@ class TlsFeedback(TlsLayer):
     def _establish_tls_with_client(self):
         client_address = self.client_conn.address[0]
         server_address = self.server_conn.address[0]
-        security_level = get_device_security_level(client_address)
+        security_level = self.security_level
         try:
             super(TlsFeedback, self)._establish_tls_with_client()
 
@@ -128,15 +142,19 @@ class TlsFeedback(TlsLayer):
             elif self.fqdns is not None and len(self.fqdns) > 0:
                 for fqdn in self.fqdns:
                     cache_key = conn_check_cache_prefix(client_address, fqdn)
-                    if security_level == SEC_MAX:
-                        redis_set(cache_key, json.dumps({'fqdns': [fqdn], 'addr': server_address, 'passthru': False, 'block': True, 'reason': 'tls_failure'}), ex=REDIS_CHECK_DURATION)
-                        bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling block (security_level=maximum) for client '+client_address+' with cache_key='+cache_key+' and fqdn='+fqdn+': '+repr(e))
+                    if security_level['level'] == SEC_MAX:
+                        if 'pinned' in security_level and security_level['pinned']:
+                            redis_set(cache_key, json.dumps({'fqdns': [fqdn], 'addr': server_address, 'passthru': False, 'block': False, 'reason': 'tls_failure_pinned'}), ex=REDIS_CHECK_DURATION)
+                            bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling block (security_level=maximum/pinned) for client '+client_address+' with cache_key='+cache_key+' and fqdn='+fqdn+': '+repr(e))
+                        else:
+                            redis_set(cache_key, json.dumps({'fqdns': [fqdn], 'addr': server_address, 'passthru': False, 'block': True, 'reason': 'tls_failure'}), ex=REDIS_CHECK_DURATION)
+                            bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling block (security_level=maximum) for client '+client_address+' with cache_key='+cache_key+' and fqdn='+fqdn+': '+repr(e))
                     else:
                         redis_set(cache_key, json.dumps({'fqdns': [fqdn], 'addr': server_address, 'passthru': True, 'reason': 'tls_failure'}), ex=REDIS_CHECK_DURATION)
                         bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling passthru for client '+client_address+' with cache_key='+cache_key+' and fqdn='+fqdn+': '+repr(e))
             else:
                 cache_key = conn_check_cache_prefix(client_address, server_address)
-                if security_level == SEC_MAX:
+                if security_level['level'] == SEC_MAX:
                     redis_set(cache_key, json.dumps({'fqdns': None, 'addr': server_address, 'passthru': False, 'block': True, 'reason': 'tls_failure'}), ex=REDIS_CHECK_DURATION)
                     bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+', enabling block (security_level=maximum) for client '+client_address+' with cache_key='+cache_key+' and server_address='+server_address+': '+repr(e))
                 else:
@@ -148,7 +166,7 @@ class TlsFeedback(TlsLayer):
 def check_bubble_connection(client_addr, server_addr, fqdns, security_level):
     check_response = bubble_conn_check(client_addr, server_addr, fqdns, security_level)
     if check_response is None or check_response == 'error':
-        if security_level == SEC_MAX:
+        if security_level['level'] == SEC_MAX:
             bubble_log('check_bubble_connection: bubble API returned ' + str(check_response) +' for FQDN/addr ' + str(fqdns) +'/' + str(server_addr) + ', security_level=maximum, returning Block')
             return {'fqdns': fqdns, 'addr': server_addr, 'passthru': False, 'block': True, 'reason': 'bubble_error'}
         else:
@@ -205,10 +223,11 @@ def next_layer(next_layer):
             bubble_log('next_layer: NO fqdn in sni, using fqdns from DNS: '+ str(fqdns))
         next_layer.fqdns = fqdns
         no_fqdns = fqdns is None or len(fqdns) == 0
-        security_level = get_device_security_level(client_addr)
+        security_level = get_device_security_level(client_addr, fqdns)
+        next_layer.security_level = security_level
         check = None
         if server_addr in get_local_ips():
-            bubble_log('next_layer: enabling passthru for LOCAL server='+server_addr+' regardless of security_level='+security_level+' for client='+client_addr)
+            bubble_log('next_layer: enabling passthru for LOCAL server='+server_addr+' regardless of security_level='+repr(security_level)+' for client='+client_addr)
             check = FORCE_PASSTHRU
 
         elif is_not_from_vpn(client_addr):
@@ -217,27 +236,27 @@ def next_layer(next_layer):
             next_layer.__class__ = TlsBlock
 
         elif is_sage_request(server_addr, fqdns):
-            bubble_log('next_layer: enabling passthru for SAGE server='+server_addr+' regardless of security_level='+security_level+' for client='+client_addr)
+            bubble_log('next_layer: enabling passthru for SAGE server='+server_addr+' regardless of security_level='+repr(security_level)+' for client='+client_addr)
             check = FORCE_PASSTHRU
 
-        elif security_level == SEC_OFF or security_level == SEC_BASIC:
-            bubble_log('next_layer: enabling passthru for server='+server_addr+' because security_level='+security_level+' for client='+client_addr)
+        elif security_level['level'] == SEC_OFF or security_level['level'] == SEC_BASIC:
+            bubble_log('next_layer: enabling passthru for server='+server_addr+' because security_level='+repr(security_level)+' for client='+client_addr)
             check = FORCE_PASSTHRU
 
         elif fqdns is not None and len(fqdns) == 1 and cert_validation_host == fqdns[0]:
             bubble_log('next_layer: NOT enabling passthru for server='+server_addr+' because fqdn is cert_validation_host ('+cert_validation_host+') for client='+client_addr)
             return
 
-        elif security_level == SEC_STD and no_fqdns:
-            bubble_log('next_layer: enabling passthru for server='+server_addr+' because no FQDN found and security_level='+security_level+' for client='+client_addr)
+        elif security_level['level'] == SEC_STD and no_fqdns:
+            bubble_log('next_layer: enabling passthru for server='+server_addr+' because no FQDN found and security_level='+repr(security_level)+' for client='+client_addr)
             check = FORCE_PASSTHRU
 
-        elif security_level == SEC_MAX and no_fqdns:
-            bubble_log('next_layer: disabling passthru (no TlsFeedback) for server='+server_addr+' because no FQDN found and security_level='+security_level+' for client='+client_addr)
+        elif security_level['level'] == SEC_MAX and no_fqdns:
+            bubble_log('next_layer: disabling passthru (no TlsFeedback) for server='+server_addr+' because no FQDN found and security_level='+repr(security_level)+' for client='+client_addr)
             check = FORCE_BLOCK
 
         else:
-            bubble_log('next_layer: calling check_connection for server='+server_addr+', fqdns='+str(fqdns)+', client='+client_addr+' with security_level='+security_level)
+            bubble_log('next_layer: calling check_connection for server='+server_addr+', fqdns='+str(fqdns)+', client='+client_addr+' with security_level='+repr(security_level))
             check = check_connection(client_addr, server_addr, fqdns, security_level)
 
         if check is None or ('passthru' in check and check['passthru']):

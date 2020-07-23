@@ -5,6 +5,7 @@
 package bubble.model.app;
 
 import bubble.model.account.Account;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,8 +18,12 @@ import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Transient;
 
 import static bubble.ApiConstants.EP_SITES;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
 @ECType(root=true)
@@ -36,7 +41,9 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 })
 public class AppSite extends IdentifiableBase implements AppTemplateEntity {
 
-    public static final String[] VALUE_FIELDS = {"template", "enabled", "description", "url"};
+    public static final String[] VALUE_FIELDS = {
+            "template", "enabled", "description", "url", "maxSecurityHosts", "enableMaxSecurityHosts"
+    };
     public static final String[] CREATE_FIELDS = ArrayUtil.append(VALUE_FIELDS, "name", "app");
 
     public AppSite (AppSite other) { copy(this, other, CREATE_FIELDS); }
@@ -76,5 +83,18 @@ public class AppSite extends IdentifiableBase implements AppTemplateEntity {
     @ECSearchable(filter=true) @ECField(index=70, type=EntityFieldType.opaque_string)
     @Column(nullable=false, length=1024)
     @Getter @Setter private String url;
+
+    // Json array of hosts that should always get maximum security
+    @ECField(index=80)
+    @Column(length=5000)
+    @JsonIgnore @Getter @Setter private String maxSecurityHostsJson;
+
+    @Transient public String[] getMaxSecurityHosts () { return empty(maxSecurityHostsJson) ? null : json(maxSecurityHostsJson, String[].class); }
+    public AppSite setMaxSecurityHosts(String[] hosts) { return setMaxSecurityHostsJson(empty(hosts) ? null : json(hosts, COMPACT_MAPPER)); }
+    public boolean hasMaxSecurityHosts () { return !empty(getMaxSecurityHosts()); }
+
+    @ECField(index=90)
+    @Getter @Setter private Boolean enableMaxSecurityHosts;
+    public boolean enableMaxSecurityHosts() { return enableMaxSecurityHosts == null ? true : enableMaxSecurityHosts; }
 
 }

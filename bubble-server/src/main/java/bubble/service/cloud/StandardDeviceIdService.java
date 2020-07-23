@@ -5,7 +5,9 @@
 package bubble.service.cloud;
 
 import bubble.dao.account.AccountDAO;
+import bubble.dao.app.AppSiteDAO;
 import bubble.dao.device.DeviceDAO;
+import bubble.model.app.AppSite;
 import bubble.model.device.Device;
 import bubble.model.device.DeviceStatus;
 import bubble.server.BubbleConfiguration;
@@ -44,11 +46,13 @@ public class StandardDeviceIdService implements DeviceIdService {
 
     // used in dnscrypt-proxy and mitmproxy to check device security level
     public static final String REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX = "bubble_device_security_level_";
+    public static final String REDIS_KEY_DEVICE_SITE_MAX_SECURITY_LEVEL_PREFIX = "bubble_device_site_max_security_level_";
 
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private AccountDAO accountDAO;
     @Autowired private RedisService redis;
     @Autowired private GeoService geoService;
+    @Autowired private AppSiteDAO siteDAO;
     @Autowired private BubbleConfiguration configuration;
 
     private final Map<String, Device> deviceCache = new ExpirationMap<>(MINUTES.toMillis(10));
@@ -123,6 +127,17 @@ public class StandardDeviceIdService implements DeviceIdService {
         if (configuration.testMode()) return;
         for (String ip : findIpsByDevice(device.getUuid())) {
             redis.set_plaintext(REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX+ip, device.getSecurityLevel().name());
+
+            for (AppSite site : siteDAO.findByAccount(device.getAccount())) {
+                if (site.hasMaxSecurityHosts()) {
+                    final String siteKey = REDIS_KEY_DEVICE_SITE_MAX_SECURITY_LEVEL_PREFIX + ip;
+                    if (site.enableMaxSecurityHosts()) {
+                        redis.sadd_plaintext(siteKey, site.getMaxSecurityHosts());
+                    } else {
+                        redis.srem(siteKey, site.getMaxSecurityHosts());
+                    }
+                }
+            }
         }
     }
 

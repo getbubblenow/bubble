@@ -59,9 +59,11 @@ def bubble_activity_log(client_addr, server_addr, event, data):
 
 
 def bubble_conn_check(remote_addr, addr, fqdns, security_level):
-    if debug_capture_fqdn and fqdns and debug_capture_fqdn in fqdns:
-        bubble_log('bubble_conn_check: debug_capture_fqdn detected, returning noop: '+debug_capture_fqdn)
-        return 'noop'
+    if debug_capture_fqdn and fqdns:
+        for f in debug_capture_fqdn:
+            if f in fqdns:
+                bubble_log('bubble_conn_check: debug_capture_fqdn detected, returning noop: '+f)
+                return 'noop'
 
     headers = {
         'X-Forwarded-For': remote_addr,
@@ -83,7 +85,7 @@ def bubble_conn_check(remote_addr, addr, fqdns, security_level):
     except Exception as e:
         bubble_log('bubble_conn_check API call failed: '+repr(e))
         traceback.print_exc()
-        if security_level is not None and security_level == 'maximum':
+        if security_level is not None and security_level['level'] == 'maximum':
             return False
         return None
 
@@ -100,8 +102,8 @@ DEBUG_MATCHER = {
 }
 
 def bubble_matchers(req_id, remote_addr, flow, host):
-    if debug_capture_fqdn and host and debug_capture_fqdn == host:
-        bubble_log('bubble_matchers: debug_capture_fqdn detected, returning DEBUG_MATCHER: '+debug_capture_fqdn)
+    if debug_capture_fqdn and host and host in debug_capture_fqdn:
+        bubble_log('bubble_matchers: debug_capture_fqdn detected, returning DEBUG_MATCHER: '+host)
         return DEBUG_MATCHER
 
     headers = {

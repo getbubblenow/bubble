@@ -5,6 +5,7 @@
 package bubble.dao.app;
 
 import bubble.model.app.AppSite;
+import bubble.service.cloud.DeviceIdService;
 import bubble.service.stream.RuleEngineService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -13,15 +14,18 @@ import org.springframework.stereotype.Repository;
 public class AppSiteDAO extends AppTemplateEntityDAO<AppSite> {
 
     @Autowired private RuleEngineService ruleEngineService;
+    @Autowired private DeviceIdService deviceService;
 
     @Override public AppSite postCreate(AppSite site, Object context) {
         // todo: update entities based on this template if account has updates enabled
+        if (site.hasMaxSecurityHosts()) deviceService.initDeviceSecurityLevels();
         return super.postCreate(site, context);
     }
 
-    @Override public AppSite postUpdate(AppSite entity, Object context) {
+    @Override public AppSite postUpdate(AppSite site, Object context) {
         ruleEngineService.flushCaches();
-        return super.postUpdate(entity, context);
+        if (site.hasMaxSecurityHosts()) deviceService.initDeviceSecurityLevels();
+        return super.postUpdate(site, context);
     }
 
     @Override public void delete(String uuid) {
