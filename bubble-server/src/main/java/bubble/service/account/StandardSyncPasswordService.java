@@ -39,6 +39,10 @@ public class StandardSyncPasswordService implements SyncPasswordService {
             log.info("syncPassword: not syncing non-admin password");
             return;
         }
+        if (!account.syncPassword()) {
+            log.info("syncPassword: password sync disabled for account: "+account.getName());
+            return;
+        }
         final AnsibleInstallType installType = thisNetwork.getInstallType();
         final SyncPasswordNotification notification = new SyncPasswordNotification(account);
         if (installType == AnsibleInstallType.sage) {

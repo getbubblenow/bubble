@@ -10,7 +10,11 @@ import bubble.auth.PromoCodePolicy;
 import bubble.client.BubbleApiClient;
 import bubble.cloud.CloudServiceDriver;
 import bubble.dao.account.AccountDAO;
+import bubble.dao.bill.AccountPlanDAO;
+import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.CloudServiceDAO;
+import bubble.model.bill.AccountPlan;
+import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.*;
 import bubble.model.device.DeviceSecurityLevel;
 import bubble.server.listener.BubbleFirstTimeListener;
@@ -38,7 +42,10 @@ import org.cobbzilla.wizard.cache.redis.HasRedisConfiguration;
 import org.cobbzilla.wizard.cache.redis.RedisConfiguration;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.server.RestServerHarness;
-import org.cobbzilla.wizard.server.config.*;
+import org.cobbzilla.wizard.server.config.HasDatabaseConfiguration;
+import org.cobbzilla.wizard.server.config.LegalInfo;
+import org.cobbzilla.wizard.server.config.PgRestServerConfiguration;
+import org.cobbzilla.wizard.server.config.RecaptchaConfig;
 import org.cobbzilla.wizard.util.ClasspathScanner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -92,6 +99,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_RESTORING_IN_PROGRESS = "restoreInProgress";
     public static final String TAG_JAR_VERSION = "jarVersion";
     public static final String TAG_JAR_UPGRADE_AVAILABLE = "jarUpgradeAvailable";
+    public static final String TAG_MAX_USERS = "maxUsers";
 
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
@@ -336,6 +344,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                 final AccountDAO accountDAO = getBean(AccountDAO.class);
                 final CloudServiceDAO cloudDAO = getBean(CloudServiceDAO.class);
                 final ActivationService activationService = getBean(ActivationService.class);
+                final AccountPlan accountPlan = thisNetwork == null ? null : getBean(AccountPlanDAO.class).findByNetwork(thisNetwork.getUuid());
+                final BubblePlan plan = accountPlan == null ? null : getBean(BubblePlanDAO.class).findByUuid(accountPlan.getPlan());
 
                 publicSystemConfigs.set(MapBuilder.build(new Object[][]{
                         {TAG_ALLOW_REGISTRATION, thisNetwork == null ? null : thisNetwork.getBooleanTag(TAG_ALLOW_REGISTRATION, false)},
@@ -357,7 +367,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_SUPPORT, getSupport()},
                         {TAG_SECURITY_LEVELS, DeviceSecurityLevel.values()},
                         {TAG_JAR_VERSION, getVersion()},
-                        {TAG_JAR_UPGRADE_AVAILABLE, getJarUpgradeAvailable() ? getSageVersion() : null}
+                        {TAG_JAR_UPGRADE_AVAILABLE, getJarUpgradeAvailable() ? getSageVersion() : null},
+                        {TAG_MAX_USERS, plan == null ? null : plan.getMaxAccounts()}
                 }));
             } else {
                 // some things has to be refreshed all the time in some cases:

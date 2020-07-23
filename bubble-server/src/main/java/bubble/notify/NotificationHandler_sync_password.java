@@ -35,6 +35,10 @@ public class NotificationHandler_sync_password extends ReceivedNotificationHandl
                 reportError("sync_password: account not found: "+notification.getAccountUuid());
                 return;
             }
+            if (!account.syncPassword()) {
+                log.info("sync_password: account "+account.getName()+" has syncPassword disabled, not synchronizing");
+                return;
+            }
 
             account.getHashedPassword().setHashedPassword(notification.getHashedPassword());
 
