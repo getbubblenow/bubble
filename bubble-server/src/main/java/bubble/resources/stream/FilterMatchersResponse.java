@@ -39,7 +39,7 @@ public class FilterMatchersResponse {
 
     public FilterMatchersResponse setRequestId(String requestId) {
         if (request == null) {
-            if (log.isWarnEnabled()) log.warn("setRequestId("+requestId+"): request is null, cannot set");
+            if (log.isInfoEnabled()) log.info("setRequestId("+requestId+"): request is null, cannot set");
         } else {
             request.setRequestId(requestId);
         }
