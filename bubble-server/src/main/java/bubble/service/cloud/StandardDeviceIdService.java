@@ -126,14 +126,17 @@ public class StandardDeviceIdService implements DeviceIdService {
     @Override public void setDeviceSecurityLevel(Device device) {
         if (configuration.testMode()) return;
         for (String ip : findIpsByDevice(device.getUuid())) {
-            redis.set_plaintext(REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX+ip, device.getSecurityLevel().name());
+            if (log.isDebugEnabled()) log.debug("setDeviceSecurityLevel("+device.getName()+") setting "+REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX+ip+" = "+device.getSecurityLevel().name());
+            redis.set_plaintext(REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX + ip, device.getSecurityLevel().name());
 
             for (AppSite site : siteDAO.findByAccount(device.getAccount())) {
+                final String siteKey = REDIS_KEY_DEVICE_SITE_MAX_SECURITY_LEVEL_PREFIX + ip;
                 if (site.hasMaxSecurityHosts()) {
-                    final String siteKey = REDIS_KEY_DEVICE_SITE_MAX_SECURITY_LEVEL_PREFIX + ip;
                     if (site.enableMaxSecurityHosts()) {
+                        if (log.isDebugEnabled()) log.debug("setDeviceSecurityLevel("+device.getName()+") adding to "+REDIS_KEY_DEVICE_SITE_MAX_SECURITY_LEVEL_PREFIX+ip+": "+ site.getMaxSecurityHostsJson());
                         redis.sadd_plaintext(siteKey, site.getMaxSecurityHosts());
                     } else {
+                        if (log.isDebugEnabled()) log.debug("setDeviceSecurityLevel("+device.getName()+") removing from "+REDIS_KEY_DEVICE_SITE_MAX_SECURITY_LEVEL_PREFIX+ip+": "+ site.getMaxSecurityHostsJson());
                         redis.srem(siteKey, site.getMaxSecurityHosts());
                     }
                 }
