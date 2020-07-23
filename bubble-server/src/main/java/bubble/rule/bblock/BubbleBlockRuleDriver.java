@@ -33,10 +33,10 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static bubble.service.stream.HttpStreamDebug.getLogFqdn;
+import static java.util.concurrent.TimeUnit.DAYS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
@@ -97,7 +97,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
             BlockListSource blockListSource = blockListCache.get(list.getId());
             if (list.hasUrl()) {
                 final String listUrl = list.getUrl();
-                if (blockListSource == null || blockListSource.age() > TimeUnit.DAYS.toMillis(5)) {
+                if (blockListSource == null || blockListSource.age() > DAYS.toMillis(5)) {
                     try {
                         final BlockListSource newList = new BlockListSource()
                                 .setUrl(listUrl)
