@@ -5,6 +5,7 @@
 package bubble.cloud.dns.godaddy;
 
 import bubble.model.cloud.BubbleDomain;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,7 +15,7 @@ import org.cobbzilla.util.dns.DnsType;
 
 import static org.cobbzilla.util.dns.DnsRecord.OPT_NS_NAME;
 
-@NoArgsConstructor @Accessors(chain=true)
+@NoArgsConstructor @Accessors(chain=true) @EqualsAndHashCode(of={"name", "type", "data"})
 public class GoDaddyDnsRecord {
 
     public static final GoDaddyDnsRecord[] EMPTY_ARRAY = new GoDaddyDnsRecord[0];

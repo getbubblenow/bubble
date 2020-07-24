@@ -4,6 +4,7 @@
  */
 package bubble.main;
 
+import bubble.cloud.dns.godaddy.GoDaddyDnsCleanerMain;
 import bubble.main.http.BubbleHttpDeleteMain;
 import bubble.main.http.BubbleHttpGetMain;
 import bubble.main.http.BubbleHttpPostMain;
@@ -36,7 +37,8 @@ public class BubbleMain {
             {"rekey", RekeyDatabaseMain.class},
             {"generate-algo-conf", GenerateAlgoConfMain.class},
             {"const", ConstMain.class},
-            {"file-header", FileHeaderMain.class}
+            {"file-header", FileHeaderMain.class},
+            {"gd-cleanup", GoDaddyDnsCleanerMain.class}
     });
 
     public static void main(String[] args) throws Exception {

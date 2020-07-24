@@ -195,18 +195,20 @@ public class GoDaddyDnsDriver extends DnsDriverBase<GoDaddyDnsConfig> {
     private final Map<String, GoDaddyDnsRecord[]> listCache = new ExpirationMap<>(SECONDS.toMillis(10));
 
     public GoDaddyDnsRecord[] listGoDaddyDnsRecords(final String goDaddyApiUrl) {
-        return listCache.computeIfAbsent(goDaddyApiUrl, url -> {
-            final var request = auth(url);
-            final HttpResponseBean response;
-            try {
-                response = HttpUtil.getResponse(request);
-            } catch (Exception e) {
-                log.error("listGoDaddyDnsRecords(" + url + "): " + e, e);
-                return GoDaddyDnsRecord.EMPTY_ARRAY;
-            }
-            if (!response.isOk()) throw new IllegalStateException("listGoDaddyDnsRecords: " + response);
-            return json(response.getEntityString(), GoDaddyDnsRecord[].class);
-        });
+        return listCache.computeIfAbsent(goDaddyApiUrl, this::_listGoDaddyDnsRecords);
+    }
+
+    public GoDaddyDnsRecord[] _listGoDaddyDnsRecords(String url) {
+        final var request = auth(url);
+        final HttpResponseBean response;
+        try {
+            response = HttpUtil.getResponse(request);
+        } catch (Exception e) {
+            log.error("listGoDaddyDnsRecords(" + url + "): " + e, e);
+            return GoDaddyDnsRecord.EMPTY_ARRAY;
+        }
+        if (!response.isOk()) throw new IllegalStateException("listGoDaddyDnsRecords: " + response);
+        return json(response.getEntityString(), GoDaddyDnsRecord[].class);
     }
 
     public HttpRequestBean auth(String url) { return new HttpRequestBean(url).setHeader(AUTHORIZATION, getAuthValue()); }

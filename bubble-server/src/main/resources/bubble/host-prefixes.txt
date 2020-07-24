@@ -2561,7 +2561,6 @@ dearn
 dears
 deary
 deash
-death
 deave
 deaws
 deawy
@@ -2570,10 +2569,6 @@ debar
 debby
 debel
 debes
-debit
-debts
-debud
-debug
 debur
 debus
 debut
@@ -2600,7 +2595,6 @@ deers
 deets
 deeve
 deevs
-defat
 defer
 deffo
 defis
@@ -2636,9 +2630,6 @@ deman
 demes
 demic
 demit
-demob
-demon
-demos
 dempt
 demur
 denar
@@ -2664,13 +2655,11 @@ derns
 deros
 derro
 derry
-derth
 dervs
 deshi
 desks
 desse
 deter
-detox
 deuce
 devas
 devel
@@ -2679,7 +2668,6 @@ devon
 devot
 dewan
 dewar
-dewax
 dewed
 dexes
 dexie
@@ -2730,19 +2718,16 @@ dined
 diner
 dines
 dinge
-dingo
 dings
 dingy
 dinic
 dinks
-dinky
 dinna
 dinos
 dints
 diode
 diols
 diota
-dippy
 dipso
 diram
 direr
@@ -2751,7 +2736,6 @@ dirke
 dirks
 dirls
 dirts
-dirty
 disas
 disci
 disco
@@ -2768,7 +2752,6 @@ ditsy
 ditto
 ditts
 ditty
-ditzy
 divan
 divas
 dived
@@ -2838,7 +2821,6 @@ donas
 donee
 doner
 donga
-dongs
 donko
 donna
 donne
@@ -2939,7 +2921,6 @@ drays
 dread
 dream
 drear
-dreck
 dreed
 drees
 dregs
@@ -2982,7 +2963,6 @@ drove
 drown
 drows
 drubs
-drugs
 druid
 drums
 drunk
@@ -3073,7 +3053,6 @@ dwams
 dwang
 dwarf
 dwaum
-dweeb
 dwell
 dwelt
 dwile
@@ -3129,7 +3108,6 @@ edile
 edits
 educe
 educt
-eejit
 eerie
 eeven
 eevns
@@ -3221,8 +3199,6 @@ ender
 endew
 endow
 endue
-enema
-enemy
 enews
 enfix
 eniac
@@ -3389,9 +3365,7 @@ fados
 faena
 faery
 faffs
-faggy
 fagin
-fagot
 faiks
 fails
 faine
@@ -3400,11 +3374,6 @@ faint
 fairs
 fairy
 faith
-faked
-faker
-fakes
-fakey
-fakie
 fakir
 falaj
 falls
@@ -3436,18 +3405,9 @@ farle
 farls
 farms
 faros
-farse
-farts
 fasci
 fasti
 fasts
-fatal
-fated
-fates
-fatly
-fatso
-fatty
-fatwa
 faugh
 fauld
 fault
@@ -3500,13 +3460,9 @@ felid
 fella
 fells
 felly
-felon
 felts
 felty
 femal
-femes
-femme
-femmy
 femur
 fence
 fends
@@ -3539,9 +3495,7 @@ fetid
 fetor
 fetta
 fetts
-fetwa
 feuar
-feuds
 feued
 fever
 fewer
@@ -3646,7 +3600,6 @@ flail
 flair
 flake
 flaks
-flaky
 flame
 flamm
 flams
@@ -3673,7 +3626,6 @@ flees
 fleet
 flegs
 fleme
-flesh
 flews
 flexo
 fleys
@@ -3698,7 +3650,6 @@ flobs
 flock
 flocs
 floes
-flogs
 flong
 flood
 floor
@@ -3720,8 +3671,6 @@ flues
 fluey
 fluff
 fluid
-fluke
-fluky
 flume
 flump
 flung
@@ -3831,7 +3780,6 @@ frats
 fraud
 fraus
 frays
-freak
 freed
 freer
 frees
@@ -11742,7 +11690,6 @@ warty
 wases
 washy
 wasps
-waspy
 waste
 wasts
 watap
@@ -11815,7 +11762,6 @@ welly
 welsh
 welts
 wembs
-wench
 wends
 wenge
 wenny
@@ -11862,9 +11808,6 @@ whigs
 while
 whilk
 whims
-whine
-whins
-whiny
 whios
 whips
 whipt
@@ -11936,7 +11879,6 @@ wingy
 winks
 winna
 winns
-winos
 winze
 wiped
 wiper
@@ -11961,9 +11903,6 @@ withe
 withs
 withy
 witty
-wived
-wiver
-wives
 wizen
 wizes
 woads
@@ -11981,16 +11920,12 @@ wonks
 wonky
 wonts
 woods
-woody
-wooed
-wooer
 woofs
 woofy
 woold
 wools
 wooly
 woons
-woops
 woose
 woosh
 wootz
@@ -12054,7 +11989,6 @@ xenia
 xenic
 xenon
 xeric
-xerox
 xerus
 xoana
 xrays
@@ -12183,16 +12117,12 @@ yogis
 yoick
 yojan
 yoked
-yokel
 yoker
 yokes
-yokul
 yolks
 yolky
 yomim
 yomps
-yonic
-yonis
 yonks
 yoofs
 yoops
@@ -12232,7 +12162,6 @@ yummo
 yummy
 yumps
 yupon
-yuppy
 yurta
 yurts
 yuzus
@@ -12272,7 +12201,6 @@ zibet
 ziffs
 zigan
 zilas
-zilch
 zilla
 zills
 zimbi
