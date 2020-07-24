@@ -97,6 +97,7 @@ public class ApiConstants {
     public static final String EP_LOGIN = "/login";
     public static final String EP_APP_LOGIN = "/appLogin";
     public static final String EP_LOGOUT = "/logout";
+    public static final String EP_TRUST = "/trust";
     public static final String EP_FORGOT_PASSWORD = "/forgotPassword";
     public static final String EP_CHANGE_PASSWORD = "/changePassword";
     public static final String EP_ERROR_API = "/errorApi";
@@ -106,6 +107,7 @@ public class ApiConstants {
     public static final String EP_APPROVE = "/approve";
     public static final String EP_DENY = "/deny";
     public static final String EP_AUTHENTICATOR = "/authenticator";
+    public static final String EP_TIME = "/time";
     public static final String EP_SUPPORT = "/support";
     public static final String EP_APP_LINKS = "/appLinks";
     public static final String EP_PATCH = "/patch";
@@ -132,7 +134,7 @@ public class ApiConstants {
     public static final String EP_LIST = "/list";
     public static final String EP_LIST_NEXT = "/listNext";
     public static final String EP_WRITE = "/write";
-    public static final String EP_DELETE = "/meta";
+    public static final String EP_DELETE = "/delete";
     public static final String EP_REKEY = "/rekey";
 
     public static final String DOMAINS_ENDPOINT = "/domains";

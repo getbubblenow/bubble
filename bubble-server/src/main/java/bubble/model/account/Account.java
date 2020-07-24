@@ -88,6 +88,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
             "name", "termsAgreed", "preferredPlan");
 
     public static final String ROOT_USERNAME = "root";
+    public static final String ROOT_EMAIL = "root@local.local";
     public static final int EMAIL_MAX_LENGTH = 100;
 
     public static Account sageMask(Account sage) {
@@ -239,6 +240,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     @Transient public String getToken() { return getApiToken(); }
     public Account setToken(String token) { return setApiToken(token); }
+    public boolean hasToken () { return !empty(getApiToken()); }
 
     public Account(Account other) { copy(this, other, CREATE_FIELDS); }
 

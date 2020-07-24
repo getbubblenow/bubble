@@ -42,6 +42,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static bubble.ApiConstants.getRemoteHost;
+import static bubble.model.account.Account.ROOT_EMAIL;
+import static bubble.model.account.Account.ROOT_USERNAME;
 import static bubble.model.account.AccountTemplate.copyTemplateObjects;
 import static bubble.model.account.AutoUpdatePolicy.EMPTY_AUTO_UPDATE_POLICY;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
@@ -90,7 +92,10 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
                 .setPolicy(new AccountPolicy().setContact(contact, null, configuration)));
     }
 
-    public Account findByEmail(String email) { return findByUniqueField("email", email.trim()); }
+    public Account findByEmail(String email) {
+        if (email.equals(ROOT_EMAIL)) email = ROOT_USERNAME;
+        return findByUniqueField("email", email.trim());
+    }
 
     public Account findById(String id) {
         final Account found = findByUuid(id);

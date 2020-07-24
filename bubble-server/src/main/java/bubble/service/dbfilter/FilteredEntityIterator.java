@@ -12,6 +12,7 @@ import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccount;
 import bubble.model.account.ReferralCode;
+import bubble.model.account.TrustedClient;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.bill.AccountPayment;
 import bubble.model.bill.Bill;
@@ -41,7 +42,7 @@ public class FilteredEntityIterator extends EntityIterator {
     private static final List<Class<? extends Identifiable>> POST_COPY_ENTITIES = Arrays.asList(new Class[] {
         BubbleNode.class, BubbleNodeKey.class, Device.class, AccountMessage.class,
         ReferralCode.class, AccountPayment.class, Bill.class, Promotion.class,
-        ReceivedNotification.class, SentNotification.class
+        ReceivedNotification.class, SentNotification.class, TrustedClient.class
     });
 
     private static boolean isPostCopyEntity(Class<? extends Identifiable> clazz) {

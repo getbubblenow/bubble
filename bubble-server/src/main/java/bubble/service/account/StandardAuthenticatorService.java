@@ -12,6 +12,7 @@ import bubble.model.account.AccountPolicy;
 import bubble.model.account.AuthenticatorRequest;
 import bubble.model.account.message.ActionTarget;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.userPrincipal;
 
-@Service
+@Service @Slf4j
 public class StandardAuthenticatorService implements AuthenticatorService {
 
     @Autowired private SessionDAO sessionDAO;
@@ -76,6 +77,10 @@ public class StandardAuthenticatorService implements AuthenticatorService {
         if (policy == null || !policy.hasVerifiedAuthenticator()) return;
         if (target != null) {
             final AccountContact authenticator = policy.getAuthenticator();
+            if (authenticator == null) {
+                log.info("ensureAuthenticated("+account.getName()+"): no authenticator configured");
+                return;
+            }
             switch (target) {
                 case account: if (!authenticator.requiredForAccountOperations()) return; break;
                 case network: if (!authenticator.requiredForNetworkOperations()) return; break;

@@ -7,6 +7,7 @@ package bubble.test.live;
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.storage.s3.S3StorageConfig;
 import bubble.dao.cloud.CloudServiceDAO;
+import bubble.model.account.Account;
 import bubble.model.cloud.CloudService;
 import bubble.model.cloud.RekeyRequest;
 import bubble.model.cloud.StorageMetadata;
@@ -21,6 +22,7 @@ import org.cobbzilla.util.http.HttpResponseBean;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.security.CryptoUtil;
 import org.cobbzilla.wizard.api.NotFoundException;
+import org.cobbzilla.wizard.auth.LoginRequest;
 import org.junit.Test;
 
 import java.io.*;
@@ -29,8 +31,11 @@ import java.util.List;
 import static bubble.ApiConstants.*;
 import static bubble.cloud.storage.StorageCryptStream.MIN_DISTINCT_LENGTH;
 import static bubble.cloud.storage.StorageCryptStream.MIN_KEY_LENGTH;
+import static bubble.model.account.Account.ROOT_USERNAME;
 import static bubble.model.cloud.CloudCredentials.PARAM_KEY;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpMethods.DELETE;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -66,6 +71,11 @@ public class S3StorageTest extends NetworkTestBase {
         assertNotNull("No S3 cloud found", s3cloud);
         final S3StorageConfig config = json(s3cloud.getDriverConfigJson(), S3StorageConfig.class);
         cloudDAO.update(s3cloud.setDriverConfigJson(json(config.setListFetchSize(LIST_FETCH_SIZE))));
+
+        comment = "login, start api session";
+        final Account root = getApi().post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_USERNAME, ROOT_PASSWORD), Account.class);
+        if (empty(root.getToken())) die("modelTest: error logging in root user (was MFA configured in a previous test?): "+json(root));
+        getApi().pushToken(root.getToken());
 
         comment = "start with empty storage";
         final HttpRequestBean predelete = new HttpRequestBean()

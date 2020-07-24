@@ -121,5 +121,164 @@
         {"condition": "json.getName() === '{{userAccount.name}}'"}
       ]
     }
+  },
+
+  {
+    "comment": "login a third time with new session, TOTP still required",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.totpToken.required')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "using previous valid session, set 'trustDevice' for this device",
+    "request": {
+      "session": "newLoginSession",
+      "uri": "auth/trust",
+      "method": "put",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!"
+      }
+    },
+    "response": {
+      "store": "trusted"
+    }
+  },
+
+  {
+    "comment": "logout of newLoginSession",
+    "request": { "uri": "auth/logout" }
+  },
+
+  {
+    "comment": "get server time",
+    "request": {
+      "uri": "auth/time"
+    },
+    "response": { "store": "serverTime" }
+  },
+
+  {
+    "comment": "login using trusted clientId, TOTP not required",
+    "request": {
+      "session": "new",
+      "uri": "auth/trust",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!",
+        "trustHash": "{{sha256expr '[[serverTime]]-392f466c-cd17-11ea-bf46-0bb4a63a0769-[[trusted.id]]'}}",
+        "trustSalt": "{{serverTime}}-392f466c-cd17-11ea-bf46-0bb4a63a0769"
+      }
+    },
+    "response": {
+      "sessionName": "trustedSession",
+      "session": "token",
+      "check": [
+        {"condition": "json.getMultifactorAuth() === null"},
+        {"condition": "json.getToken() != null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "read self account using trustedSession, succeeds",
+    "request": { "uri": "me" },
+    "response": {
+      "check": [
+        {"condition": "json.getName() === '{{userAccount.name}}'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "remove trust for this device, fails because we used the same serverTime",
+    "request": {
+      "uri": "auth/trust/delete",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!",
+        "trustHash": "{{sha256expr '[[serverTime]]-392f466c-cd17-11ea-bf46-0bb4a63a0769-[[trusted.id]]'}}",
+        "trustSalt": "{{serverTime}}-392f466c-cd17-11ea-bf46-0bb4a63a0769"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.trustHash.invalid')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "get updated server time",
+    "request": {
+      "uri": "auth/time"
+    },
+    "response": { "store": "serverTime" }
+  },
+
+
+  {
+    "comment": "remove trust for this device, succeeds",
+    "request": {
+      "uri": "auth/trust/delete",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!",
+        "trustHash": "{{sha256expr '[[serverTime]]-392f466c-cd17-11ea-bf46-0bb4a63a0769-[[trusted.id]]'}}",
+        "trustSalt": "{{serverTime}}-392f466c-cd17-11ea-bf46-0bb4a63a0769"
+      }
+    }
+  },
+
+  {
+    "comment": "login a fifth time with new session, TOTP required again",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.totpToken.required')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "login 5th session with TOTP token, succeeds",
+    "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {
+        "name": "{{userAccount.name}}",
+        "password": "foobar1!",
+        "totpToken": "{{authenticator_token authenticator.totpKey}}"
+      }
+    },
+    "response": {
+      "sessionName": "newLoginSession",
+      "session": "token",
+      "check": [
+        {"condition": "json.getMultifactorAuth() === null"},
+        {"condition": "json.getToken() != null"}
+      ]
+    }
   }
 ]

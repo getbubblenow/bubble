@@ -104,9 +104,15 @@ public class AuthResource {
 
     public Account updateLastLogin(Account account) { return accountDAO.update(account.setLastLogin()); }
 
-    public String newLoginSession(Account account) {
+    public static Account updateLastLogin(Account account, AccountDAO accountDAO) {
+        return accountDAO.update(account.setLastLogin());
+    }
+
+    public String newLoginSession(Account account) { return newLoginSession(account, accountDAO, sessionDAO); }
+
+    public static String newLoginSession(Account account, AccountDAO accountDAO, SessionDAO sessionDAO) {
         if (account.getLastLogin() == null) account.setFirstLogin(true);
-        return sessionDAO.create(updateLastLogin(account));
+        return sessionDAO.create(updateLastLogin(account, accountDAO));
     }
 
     @GET @Path(EP_CONFIGS)
@@ -352,7 +358,7 @@ public class AuthResource {
                     // try totp token now
                     account.setToken(authenticatorService.authenticate(account, policy, new AuthenticatorRequest()
                             .setAccount(account.getUuid())
-                            .setAuthenticate(true)
+//                            .setAuthenticate(true)
                             .setToken(request.getTotpToken())));
                     authFactors.removeIf(AccountContact::isAuthenticator);
                 }
@@ -381,7 +387,8 @@ public class AuthResource {
             }
         }
 
-        return ok(account.setToken(newLoginSession(account)));
+        if (!account.hasToken()) account.setToken(newLoginSession(account));
+        return ok(account);
     }
 
     @POST @Path(EP_APP_LOGIN+"/{session}")
@@ -439,6 +446,9 @@ public class AuthResource {
             authenticatorService.markAsAuthenticated(sessionAccount.getToken(), policy);
         }
     }
+
+    @Path(EP_TRUST)
+    public TrustedAuthResource getTrustedAuthResource() { return configuration.subResource(TrustedAuthResource.class); }
 
     @POST @Path(EP_VERIFY_KEY)
     public Response verifyNodeKey(@Context Request req,
@@ -729,6 +739,8 @@ public class AuthResource {
         sessionDAO.invalidateAllSessions(target.getUuid());
         return ok_empty();
     }
+
+    @GET @Path(EP_TIME) public Response serverTime() { return ok(now()); }
 
     @Autowired private GeoService geoService;
 
