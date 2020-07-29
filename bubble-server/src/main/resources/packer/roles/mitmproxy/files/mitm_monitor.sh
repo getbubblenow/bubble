@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-LOG=/tmp/mitm_monitor.log
+LOG=/var/log/bubble/mitm_monitor.log
 
 function die {
   echo 1>&2 "${1}"

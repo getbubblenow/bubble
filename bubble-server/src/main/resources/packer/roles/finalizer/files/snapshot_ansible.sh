@@ -5,7 +5,7 @@
 SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 
-LOG=/tmp/$(basename ${0}).log
+LOG=/var/log/bubble/snapshot_ansible.log
 
 function die {
   echo 1>&2 "${1}"

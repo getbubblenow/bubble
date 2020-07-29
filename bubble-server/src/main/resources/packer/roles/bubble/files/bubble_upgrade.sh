@@ -5,7 +5,7 @@
 BUBBLE_HOME="/home/bubble"
 UPGRADE_JAR="${BUBBLE_HOME}/upgrade.jar"
 BUBBLE_JAR="${BUBBLE_HOME}/api/bubble.jar"
-LOG=/tmp/bubble.upgrade.log
+LOG=/var/log/bubble/upgrade.log
 
 function die {
   echo 1>&2 "${1}"

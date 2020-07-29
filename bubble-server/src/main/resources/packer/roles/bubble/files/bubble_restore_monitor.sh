@@ -12,7 +12,7 @@ BUBBLE_SELF_NODE="${BUBBLE_HOME}/${SELF_NODE}"
 ADMIN_PORT=${1:?no admin port provided}
 TIMEOUT=${2:-3600}  # 60 minutes default timeout
 
-LOG=/tmp/bubble.restore.log
+LOG=/var/log/bubble/restore.log
 
 function die {
   echo 1>&2 "${1}"
@@ -111,6 +111,8 @@ fi
 # flush redis
 log "Flushing redis"
 echo "FLUSHALL" | redis-cli || die "Error flushing redis"
+# but reset the log flag to true (EX in 7 days) - do this here so logs from following lines will be logged
+echo 'set bubble.StandardSelfNodeService.bubble_server_logs_enabled "true" EX 604800' | redis-cli
 
 # restore algo configs
 log "Restoring algo configs"

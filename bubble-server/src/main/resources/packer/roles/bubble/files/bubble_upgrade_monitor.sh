@@ -6,7 +6,7 @@ THIS_DIR="$(cd "$(dirname "${0}")" && pwd)"
 
 BUBBLE_HOME="/home/bubble"
 UPGRADE_JAR="${BUBBLE_HOME}/upgrade.jar"
-LOG=/tmp/bubble.upgrade.log
+LOG=/var/log/bubble/upgrade.log
 
 function log {
   echo "$(date): ${1}" >> ${LOG}

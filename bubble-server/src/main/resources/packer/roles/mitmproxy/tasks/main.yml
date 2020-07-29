@@ -27,6 +27,7 @@
     shell: /bin/bash
     system: yes
     home: /home/mitmproxy
+    groups: bubble-log
 
 - name: Creates mitmproxy dir
   file:

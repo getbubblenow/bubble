@@ -10,6 +10,7 @@ import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.resources.account.ReadOnlyAccountOwnedResource;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -19,6 +20,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import java.util.List;
 
+import static bubble.ApiConstants.EP_LOGS;
 import static bubble.ApiConstants.EP_NODE_MANAGER;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -81,6 +83,12 @@ public class NodesResource extends ReadOnlyAccountOwnedResource<BubbleNode, Bubb
         if (node == null) throw notFoundEx(id);
         if (!caller.admin() && !caller.getUuid().equals(node.getAccount())) throw forbiddenEx();
         return configuration.subResource(NodeManagerResource.class, node);
+    }
+
+    @Path(EP_LOGS)
+    public LogsResource getLogs(@NonNull @Context final ContainerRequest ctx, @PathParam("id") String id) {
+        final Account caller = userPrincipal(ctx);
+        return configuration.subResource(LogsResource.class, caller);
     }
 
 }

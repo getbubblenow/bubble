@@ -34,6 +34,7 @@ import org.cobbzilla.util.http.HttpUtil;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.util.system.OneWayFlag;
+import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -56,6 +57,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.toFileOrDie;
 import static org.cobbzilla.util.json.JsonUtil.*;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @Service @Slf4j
 public class StandardSelfNodeService implements SelfNodeService {
@@ -68,6 +70,10 @@ public class StandardSelfNodeService implements SelfNodeService {
     public static final File SAGE_NODE_FILE = new File(HOME_DIR, SAGE_NODE_JSON);
     public static final File SAGE_KEY_FILE = new File(HOME_DIR, SAGE_KEY_JSON);
     public static final long MIN_SAGE_KEY_TTL = MINUTES.toMillis(5);
+
+    private static final String REDIS_LOG_FLAG_KEY = "bubble_server_logs_enabled";
+    private static final long TTL_LOG_FLAG_NODE = DAYS.toSeconds(7);
+    private static final long TTL_LOG_FLAG_SAGE = DAYS.toSeconds(30);
 
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
@@ -83,6 +89,9 @@ public class StandardSelfNodeService implements SelfNodeService {
     private static final AtomicReference<BubbleNode> thisNode = new AtomicReference<>();
     private static final AtomicReference<BubbleNode> sageNode = new AtomicReference<>();
     private static final AtomicBoolean wasRestored = new AtomicBoolean(false);
+
+    @Autowired private RedisService redisService;
+    @Getter(lazy=true) private final RedisService nodeConfig = redisService.prefixNamespace(getClass().getSimpleName());
 
     @Override public boolean initThisNode(BubbleNode thisNode) {
         log.info("initThisNode: initializing with thisNode="+thisNode.id());
@@ -432,4 +441,20 @@ public class StandardSelfNodeService implements SelfNodeService {
         return planDAO.findByUuid(accountPlan.getPlan());
     }
 
+    @Override
+    public Boolean getLogFlag() {
+        if (!getNodeConfig().exists(REDIS_LOG_FLAG_KEY)) return false;
+        return Boolean.valueOf(getNodeConfig().get_plaintext(REDIS_LOG_FLAG_KEY));
+    }
+
+    @Override
+    public void setLogFlag(final boolean logFlag) {
+        if (logFlag) {
+            getNodeConfig().set_plaintext(REDIS_LOG_FLAG_KEY, "true", EX,
+                                          isSelfSage() ? TTL_LOG_FLAG_SAGE : TTL_LOG_FLAG_NODE);
+        } else {
+            // just (try to) remove the flag
+            getNodeConfig().del(REDIS_LOG_FLAG_KEY);
+        }
+    }
 }

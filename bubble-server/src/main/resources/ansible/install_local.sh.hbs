@@ -2,7 +2,7 @@
 
 ANSIBLE_USER="{{node.user}}"
 ANSIBLE_HOME="$(cd ~{{node.user}} && pwd)"
-LOG="${ANSIBLE_HOME}/.ansible.log"
+LOG=/var/log/bubble/ansible.log
 
 # Stop unattended upgrades so that apt installs will work
 # unattended upgrades are re-enabled at the end of the ansible run
@@ -17,7 +17,7 @@ set -m
 
 {{#if isNode}}
 # touch algo log and start tailing it
-ALGO_LOG=/tmp/install_algo.log
+ALGO_LOG=/var/log/bubble/install_algo.log
 touch ${ALGO_LOG} && tail -f ${ALGO_LOG} &
 {{/if}}
 
@@ -80,7 +80,7 @@ fi
 {{#if isNode}}
 # touch algo log and start tailing it
 set -m
-touch /tmp/install_algo.log && tail -f /tmp/install_algo.log &
+touch ${ALGO_LOG} && tail -f ${ALGO_LOG} &
 {{/if}}
 
 set -o pipefail

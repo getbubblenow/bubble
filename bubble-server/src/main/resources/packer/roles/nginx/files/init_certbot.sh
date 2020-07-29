@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-LOG=/tmp/init_certbot.log
+LOG=/var/log/bubble/init_certbot.log
 
 function log {
   echo "$(date): ${1}" >> ${LOG}

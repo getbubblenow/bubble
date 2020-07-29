@@ -14,7 +14,7 @@
 
 # Don't setup algo when in restore mode, bubble_restore_monitor.sh will set it up after the CA key has been restored
 - name: Run algo playbook to install algo
-  shell: bash -c "/root/ansible/roles/algo/algo/install_algo.sh 2>&1 >> /tmp/install_algo.log"
+  shell: bash -c "/root/ansible/roles/algo/algo/install_algo.sh 2>&1 >> /var/log/bubble/install_algo.log"
   tags: algo_related
 
 # Algo installation clears out iptable rules. Add needed bubble rules back:

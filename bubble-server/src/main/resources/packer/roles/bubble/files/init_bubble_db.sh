@@ -4,7 +4,7 @@
 #
 echo "$@" > /tmp/init.args
 
-LOG=/dev/null
+LOG=/var/log/bubble/init_db.log
 
 function die {
   echo 1>&2 "${1}"

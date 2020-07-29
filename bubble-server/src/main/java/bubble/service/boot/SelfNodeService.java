@@ -23,4 +23,7 @@ public interface SelfNodeService {
     void setActivated(BubbleNode thisNode);
 
     BubblePlan getThisPlan();
+
+    Boolean getLogFlag();
+    void setLogFlag(final boolean logFlag);
 }
