@@ -31,7 +31,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 @Service @Slf4j
 public class StorageStreamService {
 
-    public static final long TOKEN_TTL = SECONDS.toMillis(30);
+    public static final long TOKEN_TTL = SECONDS.toSeconds(30);
 
     public static final String WR_PREFIX = "writeRequest:";
 

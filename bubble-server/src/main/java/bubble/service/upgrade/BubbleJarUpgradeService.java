@@ -51,7 +51,7 @@ public class BubbleJarUpgradeService {
 
     public String registerNodeUpgrade(String nodeUuid) {
         final String key = randomAlphanumeric(10) + "." + now();
-        getNodeUpgradeRequests().set(key, nodeUuid, EX, MINUTES.toMillis(1));
+        getNodeUpgradeRequests().set(key, nodeUuid, EX, MINUTES.toSeconds(1));
         return key;
     }
 
