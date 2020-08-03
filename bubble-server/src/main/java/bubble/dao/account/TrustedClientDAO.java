@@ -16,8 +16,8 @@ public class TrustedClientDAO extends AccountOwnedEntityDAO<TrustedClient> {
         return super.preCreate(trusted.setTrustId(randomUUID().toString()));
     }
 
-    @Override public TrustedClient postCreate(TrustedClient trusted, Object context) {
-        return super.postCreate(trusted, context);
+    public TrustedClient findByAccountAndDevice(String accountUuid, String deviceUuid) {
+        return findByUniqueFields("account", accountUuid, "device", deviceUuid);
     }
 
 }

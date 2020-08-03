@@ -51,7 +51,7 @@ public class GenerateAlgoConfMain extends BaseMain<GenerateAlgoConfOptions> {
 
     private List<String> loadDevices() {
         try {
-            final String sqlResult = execScript("echo \"select uuid from device where enabled = TRUE\" | PGPASSWORD=\"$(cat /home/bubble/.BUBBLE_PG_PASSWORD)\" psql -U bubble -h 127.0.0.1 bubble -qt");
+            final String sqlResult = execScript("echo \"select uuid from device where enabled = TRUE and device_type != 'non_vpn'\" | PGPASSWORD=\"$(cat /home/bubble/.BUBBLE_PG_PASSWORD)\" psql -U bubble -h 127.0.0.1 bubble -qt");
             final List<String> deviceUuids = Arrays.stream(sqlResult.split("\n"))
                     .filter(device -> !empty(device))
                     .map(String::trim)

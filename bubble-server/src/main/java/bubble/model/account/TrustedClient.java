@@ -5,6 +5,7 @@
 package bubble.model.account;
 
 
+import bubble.model.device.Device;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,6 +33,11 @@ public class TrustedClient extends IdentifiableBase implements HasAccount {
     @ECForeignKey(entity=Account.class)
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String account;
+
+    @ECSearchable @ECField(index=20)
+    @ECForeignKey(entity=Device.class)
+    @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
+    @Getter @Setter private String device;
 
     @ECField(index=20)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")

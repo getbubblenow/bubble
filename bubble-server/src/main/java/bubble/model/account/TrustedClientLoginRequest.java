@@ -31,6 +31,10 @@ public class TrustedClientLoginRequest {
     private String password;
     public boolean hasPassword () { return !empty(password); }
 
+    @HasValue(message="err.device.required")
+    @Getter @Setter private String device;
+    public boolean hasDevice () { return !empty(device); }
+
     // require timestamp to begin with a '1'.
     // note: this means this pattern will break on October 11, 2603
     private static final String TRUST_HASH_REGEX = "^1[\\d]{10}-"+UUID_REGEX+"-"+UUID_REGEX+"$";

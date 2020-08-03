@@ -25,6 +25,7 @@ public enum BubbleDeviceType {
     android       (CertType.cer, true, DeviceSecurityLevel.basic),
     linux         (CertType.crt, true, DeviceSecurityLevel.standard),
     firefox       (CertType.crt, false),
+    web_client    (null, false, DeviceSecurityLevel.disabled),
     other         (null, true, DeviceSecurityLevel.basic);
 
     @Getter private final CertType certType;
@@ -35,6 +36,9 @@ public enum BubbleDeviceType {
     BubbleDeviceType (CertType certType, boolean selectable) { this(certType, selectable, null); }
 
     @JsonCreator public static BubbleDeviceType fromString (String v) { return enumFromString(BubbleDeviceType.class, v); }
+
+    public boolean isNonVpnDevice () { return this == web_client; }
+    public boolean isVpnDevice () { return !isNonVpnDevice(); }
 
     @Getter(lazy=true) private static final List<BubbleDeviceType> selectableTypes = initSelectable();
     private static List<BubbleDeviceType> initSelectable() {

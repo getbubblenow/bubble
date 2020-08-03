@@ -8,8 +8,10 @@ import bubble.dao.SessionDAO;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
 import bubble.dao.account.TrustedClientDAO;
+import bubble.dao.device.DeviceDAO;
 import bubble.model.account.*;
 import bubble.model.account.message.ActionTarget;
+import bubble.model.device.Device;
 import bubble.service.account.StandardAuthenticatorService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +23,6 @@ import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 import static bubble.ApiConstants.EP_DELETE;
 import static bubble.resources.account.AuthResource.newLoginSession;
@@ -41,6 +42,7 @@ public class TrustedAuthResource {
 
     @Autowired private AccountDAO accountDAO;
     @Autowired private AccountPolicyDAO policyDAO;
+    @Autowired private DeviceDAO deviceDAO;
     @Autowired private SessionDAO sessionDAO;
     @Autowired private StandardAuthenticatorService authenticatorService;
     @Autowired private TrustedClientDAO trustedClientDAO;
@@ -55,10 +57,20 @@ public class TrustedAuthResource {
         final Account account = validateAccountLogin(request.getEmail(), request.getPassword());
         if (!account.getUuid().equals(caller.getUuid())) return notFound(request.getEmail());
 
+        final Device device = deviceDAO.findByAccountAndId(account.getUuid(), request.getDevice());
+        if (device == null) return notFound(request.getDevice());
+
+        // is there an existing trusted client for this device?
+        final TrustedClient existing = trustedClientDAO.findByAccountAndDevice(account.getUuid(), device.getUuid());
+        if (existing != null) return invalid("err.device.alreadyTrusted");
+
         final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
         authenticatorService.ensureAuthenticated(ctx, policy, ActionTarget.account);
 
-        return ok(new TrustedClientResponse(trustedClientDAO.create(new TrustedClient().setAccount(account.getUuid())).getTrustId()));
+        final TrustedClient trusted = new TrustedClient()
+                .setAccount(account.getUuid())
+                .setDevice(device.getUuid());
+        return ok(new TrustedClientResponse(trustedClientDAO.create(trusted).getTrustId()));
     }
 
     @POST
@@ -75,15 +87,17 @@ public class TrustedAuthResource {
         return ok(account.setToken(newLoginSession(account, accountDAO, sessionDAO)));
     }
 
-    @POST @Path(EP_DELETE)
+    @DELETE @Path(EP_DELETE+"/{device}")
     public Response removeTrustedClient(@Context ContainerRequest ctx,
-                                        @Valid TrustedClientLoginRequest request) {
+                                        @PathParam("device") String deviceId) {
         final Account caller = userPrincipal(ctx);
-        final Account validated = validateAccountLogin(request.getEmail(), request.getPassword());
-        if (!validated.getUuid().equals(caller.getUuid())) return notFound(request.getEmail());
 
-        final Account account = validateTrustedCall(request);
-        final TrustedClient trusted = findTrustedClient(account, request);
+        final Device device = deviceDAO.findByAccountAndId(caller.getUuid(), deviceId);
+        if (device == null) return notFound(deviceId);
+
+        final TrustedClient trusted = trustedClientDAO.findByAccountAndDevice(caller.getUuid(), device.getUuid());
+        if (trusted == null) return notFound(deviceId);
+
         trustedClientDAO.delete(trusted.getUuid());
         return ok_empty();
     }
@@ -116,9 +130,12 @@ public class TrustedAuthResource {
     }
 
     private TrustedClient findTrustedClient(Account account, TrustedClientLoginRequest request) {
-        final List<TrustedClient> trustedClients = trustedClientDAO.findByAccount(account.getUuid());
-        final TrustedClient trusted = trustedClients.stream().filter(c -> c.isValid(request)).findFirst().orElse(null);
+        final TrustedClient trusted = trustedClientDAO.findByAccountAndDevice(account.getUuid(), request.getDevice());
         if (trusted == null) {
+            log.warn("findTrustedClient: no TrustedClient found for device");
+            throw notFoundEx(request.getDevice());
+        }
+        if (!trusted.isValid(request)) {
             log.warn("findTrustedClient: no TrustedClient found for salt/hash");
             throw notFoundEx(request.getTrustHash());
         }

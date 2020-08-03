@@ -46,7 +46,7 @@
     group: mitmproxy
     mode: 0600
 
-- name: Install mitmproxy_monitor supervisor conf file
+- name: Install mitm_monitor supervisor conf file
   copy:
     src: supervisor_mitm_monitor.conf
     dest: /etc/supervisor/conf.d/mitm_monitor.conf

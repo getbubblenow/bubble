@@ -124,6 +124,21 @@
   },
 
   {
+    "comment": "create web client device",
+    "request": {
+      "uri": "me/devices",
+      "method": "put",
+      "entity": {
+        "name": "firefox-{{rand 10}}",
+        "deviceType": "web_client"
+      }
+    },
+    "response": {
+      "store": "device"
+    }
+  },
+
+  {
     "comment": "login a third time with new session, TOTP still required",
     "request": {
       "session": "new",
@@ -149,7 +164,8 @@
       "method": "put",
       "entity": {
         "name": "{{userAccount.name}}",
-        "password": "foobar1!"
+        "password": "foobar1!",
+        "device": "{{device.uuid}}"
       }
     },
     "response": {
@@ -178,6 +194,7 @@
       "entity": {
         "name": "{{userAccount.name}}",
         "password": "foobar1!",
+        "device": "{{device.uuid}}",
         "trustHash": "{{sha256expr '[[serverTime]]-392f466c-cd17-11ea-bf46-0bb4a63a0769-[[trusted.id]]'}}",
         "trustSalt": "{{serverTime}}-392f466c-cd17-11ea-bf46-0bb4a63a0769"
       }
@@ -203,43 +220,10 @@
   },
 
   {
-    "comment": "remove trust for this device, fails because we used the same serverTime",
-    "request": {
-      "uri": "auth/trust/delete",
-      "entity": {
-        "name": "{{userAccount.name}}",
-        "password": "foobar1!",
-        "trustHash": "{{sha256expr '[[serverTime]]-392f466c-cd17-11ea-bf46-0bb4a63a0769-[[trusted.id]]'}}",
-        "trustSalt": "{{serverTime}}-392f466c-cd17-11ea-bf46-0bb4a63a0769"
-      }
-    },
-    "response": {
-      "status": 422,
-      "check": [
-        {"condition": "json.has('err.trustHash.invalid')"}
-      ]
-    }
-  },
-
-  {
-    "comment": "get updated server time",
-    "request": {
-      "uri": "auth/time"
-    },
-    "response": { "store": "serverTime" }
-  },
-
-
-  {
     "comment": "remove trust for this device, succeeds",
     "request": {
-      "uri": "auth/trust/delete",
-      "entity": {
-        "name": "{{userAccount.name}}",
-        "password": "foobar1!",
-        "trustHash": "{{sha256expr '[[serverTime]]-392f466c-cd17-11ea-bf46-0bb4a63a0769-[[trusted.id]]'}}",
-        "trustSalt": "{{serverTime}}-392f466c-cd17-11ea-bf46-0bb4a63a0769"
-      }
+      "uri": "auth/trust/delete/{{device.uuid}}",
+      "method": "delete"
     }
   },
 
