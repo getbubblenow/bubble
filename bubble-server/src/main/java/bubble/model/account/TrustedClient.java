@@ -26,7 +26,10 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @Entity @ECType(root=true) @Slf4j
 @NoArgsConstructor @Accessors(chain=true)
-@ECIndexes({@ECIndex(unique=true, of={"account", "trustId"})})
+@ECIndexes({
+        @ECIndex(unique=true, of={"account", "trustId"}),
+        @ECIndex(unique=true, of={"account", "device"})
+})
 public class TrustedClient extends IdentifiableBase implements HasAccount {
 
     @ECSearchable @ECField(index=10)
