@@ -4,3 +4,11 @@
 - name: Set hostname to {{ hostname }}
   hostname:
     name: '{{ hostname }}'
+
+- name: Set log flag to true with EX of 7 days for non-sage nodes
+  shell: echo 'set bubble.StandardSelfNodeService.bubble_server_logs_enabled "true" EX 604800' | redis-cli
+  when: install_type != 'sage'
+
+- name: Set log flag to true with EX of 30 days for sage nodes
+  shell: echo 'set bubble.StandardSelfNodeService.bubble_server_logs_enabled "true" EX 2592000' | redis-cli
+  when: install_type == 'sage'

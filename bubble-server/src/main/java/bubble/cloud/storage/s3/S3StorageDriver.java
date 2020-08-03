@@ -50,7 +50,7 @@ import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 public class S3StorageDriver extends StorageServiceDriverBase<S3StorageConfig> {
 
     public static final long STALE_REQUEST_TIMEOUT = HOURS.toMillis(1);
-    public static final long LISTING_TIMEOUT = MINUTES.toMillis(10);
+    public static final long LISTING_IN_REDIS_TTL = MINUTES.toSeconds(10);
 
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private RedisService redis;
@@ -238,7 +238,7 @@ public class S3StorageDriver extends StorageServiceDriverBase<S3StorageConfig> {
         listing.getObjectSummaries().forEach(o -> keys.add(o.getKey().substring(rootPrefix.length())));
 
         final ListingRequest listingRequest = new ListingRequest(key, listing);
-        getActiveListings().set(listRequestId, json(listingRequest), EX, LISTING_TIMEOUT);
+        getActiveListings().set(listRequestId, json(listingRequest), EX, LISTING_IN_REDIS_TTL);
 
         return new StorageListing()
                 .setListingId(listRequestId)
@@ -258,7 +258,7 @@ public class S3StorageDriver extends StorageServiceDriverBase<S3StorageConfig> {
 
         listingRequest.objectListing = s3client.listNextBatchOfObjects(listingRequest.objectListing);
         listingRequest.objectListing.getObjectSummaries().forEach(o -> keys.add(o.getKey().substring(rootPrefix.length())));
-        activeListings.set(listingId, json(listingRequest), EX, LISTING_TIMEOUT);
+        activeListings.set(listingId, json(listingRequest), EX, LISTING_IN_REDIS_TTL);
 
         return new StorageListing()
                 .setListingId(listingId)

@@ -29,4 +29,7 @@ public class DbFilterSelfNodeService implements SelfNodeService {
 
     @Override public BubblePlan getThisPlan() { return notSupported("getThisPlan"); }
 
+    @Override public Boolean getLogFlag() { return notSupported("getLogFlag"); }
+    @Override public void setLogFlag(boolean logFlag) { notSupported("setLogFlag"); }
+
 }

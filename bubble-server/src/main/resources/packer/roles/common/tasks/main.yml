@@ -57,3 +57,30 @@
     state: restarted
   with_items:
     - fail2ban
+
+- name: Create bubble-log group
+  group:
+    name: bubble-log
+
+- name: Add root user to newly created group
+  user:
+    name: root
+    groups: bubble-log
+    append: yes
+
+- name: Create bubble user
+  user:
+    name: bubble
+    comment: bubble user
+    shell: /bin/bash
+    system: yes
+    home: /home/bubble
+    groups: bubble-log
+
+- name: Creates bubble logs dir
+  file:
+    path: /var/log/bubble
+    owner: bubble
+    group: bubble-log
+    mode: 0770
+    state: directory

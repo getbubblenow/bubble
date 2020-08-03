@@ -4,7 +4,7 @@
 #
 TARGET_FILE=${1:?no target file provided}
 TIMEOUT=${2:?no timeout provided}
-LOG=/tmp/ensure_file_$(echo ${TARGET_FILE} | tr '/' '_').log
+LOG=/var/log/bubble/ensure_file_$(echo ${TARGET_FILE} | tr '/' '_').log
 
 start=$(date +%s)
 while [[ ! -s ${TARGET_FILE} && $(expr $(date +%s) - ${start}) -le ${TIMEOUT} ]] ; do

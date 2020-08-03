@@ -9,28 +9,12 @@
 
 - import_tasks: postgresql.yml
 
-- name: Create bubble user
-  user:
-    name: bubble
-    comment: bubble user
-    shell: /bin/bash
-    system: yes
-    home: /home/bubble
-
 - name: Creates bubble API dir
   file:
     path: /home/bubble/api
     owner: bubble
     group: bubble
     mode: 0555
-    state: directory
-
-- name: Creates bubble logs dir
-  file:
-    path: /home/bubble/logs
-    owner: bubble
-    group: root
-    mode: 0770
     state: directory
 
 - name: Install bubble jar
@@ -113,6 +97,7 @@
     - refresh_bubble_ssh_keys.sh
     - bubble_upgrade_monitor.sh
     - bubble_upgrade.sh
+    - log_manager.sh
 
 - name: Install refresh_bubble_ssh_keys_monitor supervisor conf file
   copy:
@@ -123,6 +108,13 @@
   copy:
     src: supervisor_bubble_upgrade_monitor.conf
     dest: /etc/supervisor/conf.d/bubble_upgrade_monitor.conf
+
+- name: Install log_namager monitor cron
+  cron:
+    name: "Log flag check and manager"
+    minute: "*/5"
+    user: "root"
+    job: "log_manager.sh"
 
 - name: Install packer for sage node
   shell: su - bubble bash -c install_packer.sh

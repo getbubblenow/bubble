@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-LOG=/tmp/bubble.refresh_bubble_ssh_keys.log
+LOG=/var/log/bubble/refresh_bubble_ssh_keys.log
 
 function die {
   echo 1>&2 "${1}"
