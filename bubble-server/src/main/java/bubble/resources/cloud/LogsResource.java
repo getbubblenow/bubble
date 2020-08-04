@@ -10,9 +10,13 @@ import lombok.NonNull;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.annotation.Nullable;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
@@ -33,17 +37,26 @@ public class LogsResource {
 
     @GET @Path(EP_STATUS)
     @NonNull public Response getLoggingStatus(@NonNull @Context final ContainerRequest ctx) {
-        return ok(selfNodeService.getLogFlag());
+        final var flag = new HashMap<String, Object>(2);
+        flag.put("flag", selfNodeService.getLogFlag());
+        flag.put("expireAt", selfNodeService.getLogFlagExpirationTime().orElse(null));
+        return ok(flag);
     }
 
     @POST @Path(EP_START)
-    @NonNull public Response startLogging(@NonNull @Context final ContainerRequest ctx) { return setLogFlag(true); }
-    @POST @Path(EP_STOP)
-    @NonNull public Response stopLogging(@NonNull @Context final ContainerRequest ctx) { return setLogFlag(false); }
+    @NonNull public Response startLogging(@NonNull @Context final ContainerRequest ctx,
+                                          @Nullable @QueryParam("ttlDays") final Byte ttlDays) {
+        return setLogFlag(true, Optional.ofNullable(ttlDays));
+    }
 
-    @NonNull private Response setLogFlag(final boolean b) {
+    @POST @Path(EP_STOP)
+    @NonNull public Response stopLogging(@NonNull @Context final ContainerRequest ctx) {
+        return setLogFlag(false, Optional.empty());
+    }
+
+    @NonNull private Response setLogFlag(final boolean b, @NonNull final Optional<Byte> ttlInDays) {
         if (!account.admin()) throw forbiddenEx(); // caller must be admin
-        selfNodeService.setLogFlag(b);
+        selfNodeService.setLogFlag(b, ttlInDays.map(days -> (int) TimeUnit.DAYS.toSeconds(days)));
         return ok();
     }
 }

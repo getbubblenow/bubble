@@ -8,7 +8,10 @@ import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.service.boot.SelfNodeService;
+import lombok.NonNull;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.notSupported;
 
@@ -29,7 +32,12 @@ public class DbFilterSelfNodeService implements SelfNodeService {
 
     @Override public BubblePlan getThisPlan() { return notSupported("getThisPlan"); }
 
-    @Override public Boolean getLogFlag() { return notSupported("getLogFlag"); }
-    @Override public void setLogFlag(boolean logFlag) { notSupported("setLogFlag"); }
+    @Override public boolean getLogFlag() { return notSupported("getLogFlag"); }
+    @Override @NonNull public Optional<Long> getLogFlagExpirationTime() {
+        return notSupported("getLogFlagExpirationTime");
+    }
+    @Override public void setLogFlag(boolean logFlag, @NonNull final Optional<Integer> ttlInSeconds) {
+        notSupported("setLogFlag");
+    }
 
 }

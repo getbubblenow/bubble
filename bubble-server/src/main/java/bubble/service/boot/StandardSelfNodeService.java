@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -52,8 +53,7 @@ import static bubble.server.BubbleServer.isRestoreMode;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.function.Predicate.not;
-import static org.cobbzilla.util.daemon.ZillaRuntime.background;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.toFileOrDie;
 import static org.cobbzilla.util.json.JsonUtil.*;
@@ -72,8 +72,8 @@ public class StandardSelfNodeService implements SelfNodeService {
     public static final long MIN_SAGE_KEY_TTL = MINUTES.toMillis(5);
 
     private static final String REDIS_LOG_FLAG_KEY = "bubble_server_logs_enabled";
-    private static final long TTL_LOG_FLAG_NODE = DAYS.toSeconds(7);
-    private static final long TTL_LOG_FLAG_SAGE = DAYS.toSeconds(30);
+    private static final int TTL_LOG_FLAG_NODE = (int) DAYS.toSeconds(7);
+    private static final int TTL_LOG_FLAG_SAGE = (int) DAYS.toSeconds(30);
 
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
@@ -442,16 +442,22 @@ public class StandardSelfNodeService implements SelfNodeService {
     }
 
     @Override
-    public Boolean getLogFlag() {
-        if (!getNodeConfig().exists(REDIS_LOG_FLAG_KEY)) return false;
-        return Boolean.valueOf(getNodeConfig().get_plaintext(REDIS_LOG_FLAG_KEY));
+    public boolean getLogFlag() {
+        var flagStr = getNodeConfig().get_plaintext(REDIS_LOG_FLAG_KEY);
+        return empty(flagStr) ? false : Boolean.valueOf(flagStr);
     }
 
     @Override
-    public void setLogFlag(final boolean logFlag) {
+    @NonNull public Optional<Long> getLogFlagExpirationTime() {
+        var ttl = getNodeConfig().get_ttl(REDIS_LOG_FLAG_KEY);
+        return ttl < 0 ? Optional.empty() : Optional.of(now() + ttl * 1000);
+    }
+
+    @Override
+    public void setLogFlag(final boolean logFlag, @NonNull final Optional<Integer> ttlInSeconds) {
         if (logFlag) {
             getNodeConfig().set_plaintext(REDIS_LOG_FLAG_KEY, "true", EX,
-                                          isSelfSage() ? TTL_LOG_FLAG_SAGE : TTL_LOG_FLAG_NODE);
+                                          ttlInSeconds.orElse(isSelfSage() ? TTL_LOG_FLAG_SAGE : TTL_LOG_FLAG_NODE));
         } else {
             // just (try to) remove the flag
             getNodeConfig().del(REDIS_LOG_FLAG_KEY);
