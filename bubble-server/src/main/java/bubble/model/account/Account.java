@@ -79,10 +79,12 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @Entity @NoArgsConstructor @Accessors(chain=true) @Slf4j
 public class Account extends IdentifiableBaseParentEntity implements TokenPrincipal, SqlViewSearchResult {
 
-    public static final String[] UPDATE_FIELDS = {"url", "description", "autoUpdatePolicy", "syncPassword"};
+    public static final String[] UPDATE_FIELDS = {
+            "url", "description", "autoUpdatePolicy", "syncPassword", "preferredPlan"
+    };
     public static final String[] ADMIN_UPDATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "suspended", "admin");
     public static final String[] CREATE_FIELDS = ArrayUtil.append(ADMIN_UPDATE_FIELDS,
-            "name", "termsAgreed", "preferredPlan");
+            "name", "termsAgreed");
 
     public static final String ROOT_USERNAME = "root";
     public static final String ROOT_EMAIL = "root@local.local";

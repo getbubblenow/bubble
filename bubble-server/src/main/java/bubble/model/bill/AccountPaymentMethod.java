@@ -49,7 +49,7 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
 
     @Override public ScrubbableField[] fieldsToScrub() { return SCRUB_FIELDS; }
 
-    public static final String[] CREATE_FIELDS = {"paymentMethodType", "paymentInfo", "maskedPaymentInfo", "cloud"};
+    public static final String[] CREATE_FIELDS = {"paymentMethodType", "paymentInfo", "maskedPaymentInfo", "cloud", "preferredPlan"};
     public static final String[] VALIDATION_SET_FIELDS = {"paymentInfo", "maskedPaymentInfo"};
 
     public AccountPaymentMethod(AccountPaymentMethod other) { copy(this, other, CREATE_FIELDS); }
@@ -160,7 +160,11 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
         if (hasPreferredPlan()) {
             final BubblePlanDAO planDAO = configuration.getBean(BubblePlanDAO.class);
             final BubblePlan plan = planDAO.findById(preferredPlan);
-            if (plan == null) result.addViolation("err.plan.notFound");
+            if (plan == null) {
+                result.addViolation("err.plan.notFound");
+            } else {
+                setPreferredPlan(plan.getUuid());
+            }
         }
         return result;
     }
