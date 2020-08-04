@@ -62,8 +62,8 @@ public class NodeReaper extends SimpleDaemon {
 
     private void processNode(@NonNull final BubbleNode node) {
         if (wouldKillSelf(node)) return;
-        final var found = nodeDAO.findByIp4(node.getIp4());
-        if (found == null) {
+        final var nodeFromDB = nodeDAO.findByIp4(node.getIp4());
+        if (nodeFromDB == null) {
             final String message = prefix() + "processNode: no node exists with ip4=" + node.getIp4() + ", killing it";
             log.warn(message);
             reportError(message);
@@ -78,15 +78,19 @@ public class NodeReaper extends SimpleDaemon {
                 log.error(errMessage, e);
             }
         } else {
-            if (networkService.isReachable(node)) {
-                unreachableSince.remove(node.getUuid());
+            if (networkService.isReachable(nodeFromDB)) {
+                unreachableSince.remove(nodeFromDB.getUuid());
             } else {
-                final long downTime = unreachableSince.computeIfAbsent(node.getUuid(), k -> now());
-                if (now() - downTime > MAX_DOWNTIME_BEFORE_DELETION) {
-                    final String message = prefix() + "processNode: deleting node (" + node.id() + ") that has been down since " + TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss.print(downTime);
+                final var downTime = unreachableSince.get(nodeFromDB.getUuid());
+                if (downTime == null) {
+                    unreachableSince.put(nodeFromDB.getUuid(), now());
+                } else if (now() - downTime > MAX_DOWNTIME_BEFORE_DELETION) {
+                    final var message = prefix() + "processNode: deleting node that has been down since "
+                                        + TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss.print(downTime)
+                                        + " node=" + nodeFromDB.id();
                     log.warn(message);
                     reportError(message);
-                    nodeDAO.delete(node.getUuid());
+                    nodeDAO.delete(nodeFromDB.getUuid());
                 }
             }
         }
