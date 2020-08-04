@@ -6,6 +6,7 @@ package bubble.model.bill;
 
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.payment.PaymentServiceDriver;
+import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccountNoName;
@@ -102,6 +103,9 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
     @Transient @Getter @Setter private transient Boolean requireValidatedEmail = null;
     public boolean requireValidatedEmail() { return requireValidatedEmail == null || requireValidatedEmail; }
 
+    @Transient @Getter @Setter private transient String preferredPlan;
+    public boolean hasPreferredPlan() { return !empty(preferredPlan); }
+
     public ValidationResult validate(ValidationResult result, BubbleConfiguration configuration) {
 
         if (!hasPaymentMethodType()) {
@@ -143,7 +147,7 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
                 if (empty(getPaymentInfo())) {
                     result.addViolation("err.paymentInfo.required");
                 } else {
-                    log.info("validate: starting validation of payment method with this.requireValidatedEmail="+requireValidatedEmail);
+                    log.debug("validate: starting validation of payment method with this.requireValidatedEmail="+requireValidatedEmail);
                     final PaymentValidationResult validationResult = paymentDriver.validate(this);
                     if (validationResult.hasErrors()) {
                         result.addAll(validationResult.getViolations());
@@ -153,7 +157,11 @@ public class AccountPaymentMethod extends IdentifiableBase implements HasAccount
                 }
             }
         }
-
+        if (hasPreferredPlan()) {
+            final BubblePlanDAO planDAO = configuration.getBean(BubblePlanDAO.class);
+            final BubblePlan plan = planDAO.findById(preferredPlan);
+            if (plan == null) result.addViolation("err.plan.notFound");
+        }
         return result;
     }
 

@@ -75,4 +75,11 @@ public class AccountPaymentMethodsResource extends AccountOwnedResource<AccountP
         return false;
     }
 
+    @Override protected Object daoCreate(AccountPaymentMethod apm) {
+        if (apm.hasPreferredPlan()) {
+            final Account account = accountDAO.findByUuid(apm.getAccount());
+            accountDAO.update(account.setPreferredPlan(apm.getPreferredPlan()));
+        }
+        return super.daoCreate(apm);
+    }
 }

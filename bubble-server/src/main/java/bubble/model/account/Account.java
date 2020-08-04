@@ -8,10 +8,7 @@ import bubble.dao.account.AccountInitializer;
 import bubble.model.app.AppData;
 import bubble.model.app.BubbleApp;
 import bubble.model.app.RuleDriver;
-import bubble.model.bill.AccountPayment;
-import bubble.model.bill.AccountPaymentMethod;
-import bubble.model.bill.AccountPlan;
-import bubble.model.bill.Bill;
+import bubble.model.bill.*;
 import bubble.model.boot.ActivationRequest;
 import bubble.model.cloud.*;
 import bubble.model.cloud.notify.ReceivedNotification;
@@ -198,6 +195,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     }
 
     @Column(length=UUID_MAXLEN)
+    @ECForeignKey(entity=BubblePlan.class, index=false, cascade=false)
     @Getter @Setter private String preferredPlan;
     public boolean hasPreferredPlan () { return !empty(preferredPlan); }
 
