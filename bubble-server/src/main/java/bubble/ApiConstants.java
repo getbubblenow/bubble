@@ -85,7 +85,7 @@ public class ApiConstants {
 
     public static final String SESSION_HEADER = "X-Bubble-Session";
 
-    public static final String MESSAGE_RESOURCE_BASE = "message_templates/";
+    public static final String MESSAGE_RESOURCE_BASE = "messages/";
 
     public static final String ENTITY_CONFIGS_ENDPOINT = "/ec";
 

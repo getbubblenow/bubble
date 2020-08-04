@@ -1,2 +1,0 @@
-{{#string_compare contact.uuid '==' message.contact}}SMS Phone added on {{network.nickname}}: {{contact.info}}
-To approve: {{publicUri}}/me/action?approve={{confirmationToken}}{{else}}{{#if message.requestContact.isEmail}}Email added on {{network.nickname}}: {{message.requestContact.info}}{{else}}Auth added: {{message.requestContact.type}}{{/if}}{{/string_compare}}

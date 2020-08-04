@@ -50,6 +50,9 @@ for repo in ${UTIL_REPOS} ; do
 done
 popd
 
+MESSAGES_REPO=bubble-server/src/main/resources/messages
+pushd ${MESSAGES_REPO} && git checkout master && popd || die "Error installing ${MESSAGES_REPO}"
+
 if [[ -z "${BUBBLE_SETUP_MODE}" || "${BUBBLE_SETUP_MODE}" == "web" ]] ; then
   INSTALL_WEB=web mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error building bubble jar"
 
