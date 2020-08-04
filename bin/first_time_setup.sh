@@ -7,7 +7,7 @@
 # Installs utility libraries.
 #
 # Before from running this script, if you want to run the Bubble Server, install dependencies
-# with the first_time_ubuntu.sh script. If you're running something other than Ubuntu 18.04,
+# with the first_time_ubuntu.sh script. If you're running something other than Ubuntu (18.04 or 20.04),
 # please add a first_time_<your-OS>.sh in this directory.
 #
 # If you're going to run the Bubble Server, you will also need
