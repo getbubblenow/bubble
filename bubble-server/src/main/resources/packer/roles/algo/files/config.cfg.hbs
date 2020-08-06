@@ -127,8 +127,10 @@ wireguard_network_ipv4: 10.19.49.0/24
 wireguard_network_ipv6: fd9d:bc11:4021::/48
 
 # Randomly generated IP address for the local dns resolver
-local_service_ip: "{{ '172.16.0.1' | ipmath(1048573 | random(seed=algo_server_name + ansible_fqdn)) }}"
-local_service_ipv6: "{{ 'fd00::1' | ipmath(1048573 | random(seed=algo_server_name + ansible_fqdn)) }}"
+local_service_ip: "<<rand_ip '172.16.0.0/12' '!domain'>>"
+local_service_ipv6: "<<rand_ip 'fd00::/8' '!domain'>>"
+#local_service_ip: "{{ '172.16.0.1' | ipmath(1048573 | random(seed=algo_server_name + ansible_fqdn)) }}"
+#local_service_ipv6: "{{ 'fd00::1' | ipmath(1048573 | random(seed=algo_server_name + ansible_fqdn)) }}"
 
 
 congrats:
