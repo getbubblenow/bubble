@@ -640,30 +640,37 @@ public class StandardNetworkService implements NetworkService {
     public boolean isReachable(BubbleNode node) {
         final String prefix = "isReachable(" + node.id() + "): ";
         try {
-            log.info(prefix+"starting");
-            final NotificationReceipt receipt = notificationService.notify(node, NotificationType.health_check, null);
-            BubbleNodeState state = null;
-            if (receipt == null) {
-                log.info(prefix+"health_check failed, checking via cloud");
-                final CloudService cloud = cloudDAO.findByUuid(node.getCloud());
-                if (cloud == null) {
-                    log.warn(prefix+"cloud not found: "+node.getCloud());
-                    return false;
-                }
-                final BubbleNode status = cloud.getComputeDriver(configuration).status(node);
-                if (status != null) {
-                    state = status.getState();
-                    if (state != null && state.active()) {
-                        log.info(prefix + "cloud status was: " + state + ", returning true");
-                        return true;
-                    }
-                }
-            }
-            log.warn(prefix+"no way of reaching node "+node.id()+" (state="+state+"), returning false");
-            return false;
+            log.info(prefix + "starting");
 
+            final NotificationReceipt receipt = notificationService.notify(node, NotificationType.health_check, null);
+            if (receipt != null) {
+                log.debug(prefix + "receiving regular health_check receipt - all ok");
+                return true;
+            }
+
+            log.info(prefix+"health_check failed, checking via cloud");
+            final CloudService cloud = cloudDAO.findByUuid(node.getCloud());
+            if (cloud == null) {
+                log.warn(prefix + "cloud not found: " + node.getCloud());
+                return false;
+            }
+
+            final BubbleNode status = cloud.getComputeDriver(configuration).status(node);
+            if (status == null) {
+                log.warn(prefix + "node's status not found on the cloud: " + node.getCloud());
+                return false;
+            }
+
+            final BubbleNodeState state = status.getState();
+            if (state != null && state.active()) {
+                log.info(prefix + "node's state on cloud was ok: " + state);
+                return true;
+            } else {
+                log.warn(prefix + "bad node's state on cloud: " + state);
+                return false;
+            }
         } catch (Exception e) {
-            log.warn(prefix+e);
+            log.warn(prefix + e, e);
             return false;
         }
     }
