@@ -72,6 +72,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.RestServerBase.reportError;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -91,7 +92,12 @@ public class MeResource {
     public Response me(@Context ContainerRequest ctx) {
         try {
             final Account account = userPrincipal(ctx);
-            return ok(account.setPolicy(policyDAO.findSingleByAccount(account.getUuid())));
+            final Account acct = accountDAO.findByUuid(account.getUuid());
+            if (acct == null) {
+                reportError("MeResource.me: account in session but not in DB: "+account.getName()+"/"+account.getUuid());
+                return unauthorized();
+            }
+            return ok(acct.setPolicy(policyDAO.findSingleByAccount(account.getUuid())));
         } catch (Exception e) {
             return notFound();
         }
