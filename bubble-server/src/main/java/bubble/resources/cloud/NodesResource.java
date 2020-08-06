@@ -85,10 +85,4 @@ public class NodesResource extends ReadOnlyAccountOwnedResource<BubbleNode, Bubb
         return configuration.subResource(NodeManagerResource.class, node);
     }
 
-    @Path(EP_LOGS)
-    public LogsResource getLogs(@NonNull @Context final ContainerRequest ctx, @PathParam("id") String id) {
-        final Account caller = userPrincipal(ctx);
-        return configuration.subResource(LogsResource.class, caller);
-    }
-
 }
