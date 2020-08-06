@@ -37,7 +37,6 @@ import org.cobbzilla.util.http.ApiConnectionInfo;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.FilenameRegexFilter;
 import org.cobbzilla.util.io.JarLister;
-import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.cache.redis.HasRedisConfiguration;
 import org.cobbzilla.wizard.cache.redis.RedisConfiguration;
 import org.cobbzilla.wizard.client.ApiClientBase;
@@ -49,8 +48,6 @@ import org.cobbzilla.wizard.server.config.RecaptchaConfig;
 import org.cobbzilla.wizard.util.ClasspathScanner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.beans.Transient;
 import java.io.File;
@@ -210,22 +207,12 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     @Getter(lazy=true) private final String[] allLocales = initAllLocales();
     private String[] initAllLocales() {
         try {
-            final PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(getClass().getClassLoader());
-            final Resource[] resources = resolver.getResources("classpath*:/"+MESSAGE_RESOURCE_BASE+"*");
-            final String[] locales;
-            if (resources.length == 0) {
-                // read from jar file
-                locales = new JarLister(getBubbleJar(), "^"+MESSAGE_RESOURCE_BASE+"[\\w]{2}(_[\\w]{2})?/$", name -> name.substring(MESSAGE_RESOURCE_BASE.length()).replace("/", ""))
-                        .list().toArray(StringUtil.EMPTY_ARRAY);
-            } else {
-                locales = Arrays.stream(resources).map(Resource::getFilename).collect(Collectors.toList()).toArray(StringUtil.EMPTY_ARRAY);
-            }
+            final String[] locales = new JarLister(getBubbleJar(), "^" + MESSAGE_RESOURCE_BASE + "[\\w]{2}(_[\\w]{2})?/$",
+                    name -> name.substring(MESSAGE_RESOURCE_BASE.length()).replace("/", ""))
+                    .list().toArray(String[]::new);
             final String defaultLocale = !empty(this.defaultLocale) ? this.defaultLocale : DEFAULT_LOCALE;
-            if (locales.length == 0) {
-                return die("initAllLocales: defaultLocale "+defaultLocale+" not found, because NO locales were found");
-            }
             if (!ArrayUtils.contains(locales, defaultLocale)) {
-                return die("initAllLocales: defaultLocale "+defaultLocale+" not found among locales: "+ ArrayUtils.toString(locales));
+                return die("initAllLocales: defaultLocale " + defaultLocale + " not found among locales: " + ArrayUtils.toString(locales));
             }
             return locales;
         } catch (Exception e) {
