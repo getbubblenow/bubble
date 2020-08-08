@@ -1,0 +1,26 @@
+[
+  {
+    "comment": "declare default parameters for new_account test part",
+    "include": "_defaults",
+    "params": {
+      "email": "_required",
+      "rootSessionName": "rootSession",
+      "expectedCount": "1"
+    }
+  },
+  {
+    "comment": "root: confirm <<email>> received exactly one first_payment notification",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/<<email>>?type=notice&action=first_payment&target=network"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length === <<expectedCount>>"},
+        {"condition": "'{{json.[0].ctx.message.messageType}}' === 'notice'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' === 'first_payment'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' === 'network'"}
+      ]
+    }
+  }
+]
