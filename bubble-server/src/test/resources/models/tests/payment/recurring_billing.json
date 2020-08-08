@@ -262,7 +262,7 @@
   },
 
   {
-    "before": "fast_forward_and_bill 62d 20s",
+    "before": "fast_forward_and_bill 66d 60s",
     "comment": "3rd fast-forward: fast-forward even more, +66 days, we have missed a billing cycle, so two new bills should be created",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
     "response": {

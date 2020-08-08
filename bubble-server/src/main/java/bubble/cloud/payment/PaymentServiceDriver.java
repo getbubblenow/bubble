@@ -22,6 +22,12 @@ public interface PaymentServiceDriver extends CloudServiceDriver {
     default PaymentValidationResult claim(AccountPaymentMethod paymentMethod) { return notSupported("claim"); }
     default PaymentValidationResult claim(AccountPlan accountPlan) { return notSupported("claim"); }
 
+    long amountDue(String accountPlanUuid, String billUuid, String paymentMethodUuid);
+
+    default boolean anyAmountDue(String accountPlanUuid, String billUuid, String paymentMethodUuid) {
+        return amountDue(accountPlanUuid, billUuid, paymentMethodUuid) > 0;
+    }
+
     boolean authorize(BubblePlan plan, String accountPlanUuid, String billUuid, AccountPaymentMethod paymentMethod);
 
     boolean cancelAuthorization(BubblePlan plan, String accountPlanUuid, AccountPaymentMethod paymentMethod);

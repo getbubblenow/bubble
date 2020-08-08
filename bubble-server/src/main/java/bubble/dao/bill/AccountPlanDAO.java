@@ -92,6 +92,15 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
         )));
     }
 
+    public List<AccountPlan> findBillableAccountPlans(long startTime, long endTime) {
+        return list(criteria().add(and(
+                isNull("deleted"),
+                eq("closed", false),
+                ge("nextBill", startTime),
+                lt("nextBill", endTime)
+        )));
+    }
+
     public boolean isNotDeleted(String networkUuid) {
         final AccountPlan accountPlan = findByNetwork(networkUuid);
         return accountPlan != null && accountPlan.notDeleting() && accountPlan.notDeleted();

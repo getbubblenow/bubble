@@ -58,27 +58,12 @@ public abstract class PromotionalPaymentDriverBase<T> extends PaymentDriverBase<
             return ZERO_CHARGE;
         }
 
-        // check minimum
-        if (chargeAmount < promotion.getMinValue()) {
-            log.warn("charge: chargeAmount ("+chargeAmount+") < promotion.minValue ("+promotion.getMinValue()+"), returning zero");
-            return ZERO_CHARGE;
-        }
-
         // mark deleted so it will not be found/applied for future transactions
         log.info("charge: applying promotion: "+paymentMethod.getPromotion()+" via AccountPaymentMethod: "+paymentMethod.getUuid());
         paymentMethodDAO.update(paymentMethod.setDeleted());
 
-        return getChargeResult(chargeAmount, promotion);
-    }
-
-    protected ChargeResult getChargeResult(long chargeAmount, Promotion promotion) {
-        // apply up to maximum
-        if (chargeAmount > promotion.getMaxValue()) {
-            log.warn("charge: chargeAmount ("+chargeAmount+") > promotion.maxValue ("+promotion.getMinValue()+"), returning maxValue");
-            return new ChargeResult().setAmountCharged(promotion.getMaxValue()).setChargeId(getClass().getSimpleName());
-        } else {
-            return new ChargeResult().setAmountCharged(chargeAmount).setChargeId(getClass().getSimpleName());
-        }
+        final long promoValue = getPromoValue(chargeAmount, promotion);
+        return promoValue == 0 ? ZERO_CHARGE : new ChargeResult().setAmountCharged(promoValue).setChargeId(getClass().getSimpleName());
     }
 
     @Override protected String refund(AccountPlan accountPlan,

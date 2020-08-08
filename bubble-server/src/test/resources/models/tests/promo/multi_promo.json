@@ -55,9 +55,9 @@
     "response": {
       "store": "emailInbox",
       "check": [
-        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'notice'"},
-        {"condition": "'{{json.[0].ctx.message.action}}' == 'welcome'"},
-        {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
+        {"condition": "'{{json.[0].ctx.message.messageType}}' === 'notice'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' === 'welcome'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' === 'account'"}
       ]
     }
   },
@@ -199,7 +199,7 @@
     "comment": "referring: verify the network is running",
     "request": { "uri": "me/networks/{{referringAccountPlan.network}}" },
     "response": {
-      "check": [ {"condition": "json.getState().name() == 'running'"} ]
+      "check": [ {"condition": "json.getState().name() === 'running'"} ]
     }
   },
 
@@ -237,7 +237,7 @@
       "store": "referringCreditPaymentMethod",
       "check": [
         {"condition": "json.getPaymentMethodType().name() === 'credit'"},
-        {"condition": "json.getMaskedPaymentInfo() == 'XXXX-XXXX-XXXX-4242'"}
+        {"condition": "json.getMaskedPaymentInfo() === 'XXXX-XXXX-XXXX-4242'"}
       ]
     }
   },
@@ -308,9 +308,54 @@
 
   // Second Month -- referred users use their referral credit. referring user pays with card
   {
-    "before": "fast_forward_and_bill 31d 30s",
-    "comment": "referring: fast-forward +31 days, verify a new bill exists for referring",
-    "request": { "uri": "me/plans/{{referringAccountPlan.uuid}}/bills" },
+    "before": "fast_forward_and_bill 29d 60s",
+    "comment": "root: fast-forward +29 days, verify referring user received notice about first real payment",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/test_user_referring_multi@example.com?type=notice&action=first_payment&target=network"
+    },
+    "response": {
+      "check": [
+        {"condition": "'{{json.[0].ctx.message.messageType}}' === 'notice'"},
+        {"condition": "'{{json.[0].ctx.message.action}}' === 'first_payment'"},
+        {"condition": "'{{json.[0].ctx.message.target}}' === 'network'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "root: verify referred user 1 did NOT received notice about first real payment",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/referred_multi_1@example.com?type=notice&action=first_payment&target=network"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length === 0"}
+      ]
+    }
+  },
+
+  {
+    "comment": "root: verify referred user 1 did receive some email (at least a welcome message)",
+    "request": {
+      "session": "rootSession",
+      "uri": "debug/inbox/email/referred_multi_2@example.com"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length > 0"}
+      ]
+    }
+  },
+
+  {
+    "before": "fast_forward_and_bill 2d 30s",
+    "comment": "referring: fast-forward +2 days, verify a new bill exists for referring",
+    "request": {
+      "session": "referringUserSession",
+      "uri": "me/plans/{{referringAccountPlan.uuid}}/bills"
+    },
     "response": {
       "check": [
         {"condition": "json.length === 2"},
@@ -584,7 +629,7 @@
 
   // Fifth Month -- referreds pay with card, referring pays with 3rd referral credit
   {
-    "before": "fast_forward_and_bill 31d 30s",
+    "before": "fast_forward_and_bill 31d 60s",
     "comment": "referring: fourth fast-forward +31 days, verify a new bill exists for referring",
     "request": {
       "session": "referringUserSession",

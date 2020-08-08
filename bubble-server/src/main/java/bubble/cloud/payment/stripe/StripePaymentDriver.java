@@ -262,6 +262,10 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
         final RedisService refundCache = getRefundCache();
         try {
             final AuthCharge authCharge = getAuthCharge(authCache, authCacheKey);
+            if (authCharge == null) {
+                log.warn("cancelAuthorization: no auth to cancel");
+                return true;
+            }
             final String chargeId = authCharge.getChargeId();
             final long amount = authCharge.getAmount();
 
@@ -344,6 +348,9 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
             }
 
             final AuthCharge authCharge = getAuthCharge(authCache, authCacheKey);
+            if (authCharge == null) {
+                throw invalidEx("err.purchase.authNotFound");
+            }
             final String chargeId = authCharge.getChargeId();
             final long amount = authCharge.getAmount();
             if (amount != chargeAmount) {
@@ -413,7 +420,10 @@ public class StripePaymentDriver extends PaymentDriverBase<StripePaymentDriverCo
 
     private AuthCharge getAuthCharge(RedisService authCache, String authCacheKey) {
         final String authChargeJson = authCache.get(authCacheKey);
-        if (authChargeJson == null) throw invalidEx("err.purchase.authNotFound");
+        if (authChargeJson == null) {
+            log.warn("getAuthCharge: err.purchase.authNotFound");
+            return null;
+        }
         return json(authChargeJson, AuthCharge.class);
     }
 

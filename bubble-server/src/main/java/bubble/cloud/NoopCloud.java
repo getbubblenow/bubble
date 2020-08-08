@@ -152,6 +152,11 @@ public class NoopCloud implements
         return null;
     }
 
+    @Override public long amountDue(String accountPlanUuid, String billUuid, String paymentMethodUuid) {
+        if (log.isDebugEnabled()) log.debug("amountDue(accountPlanUuid=" + accountPlanUuid + ")");
+        return 0;
+    }
+
     @Override public boolean authorize(BubblePlan plan, String accountPlanUuid, String billUuid, AccountPaymentMethod paymentMethod) {
         if (log.isDebugEnabled()) log.debug("authorize(plan=" + plan + ")");
         return false;

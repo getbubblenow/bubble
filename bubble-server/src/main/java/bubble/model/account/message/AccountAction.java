@@ -10,7 +10,7 @@ import static bubble.ApiConstants.enumFromString;
 
 public enum AccountAction {
 
-    login, password, verify, download, start, stop, delete, welcome, info, promo, payment;
+    login, password, verify, download, start, stop, delete, welcome, info, promo, first_payment, payment;
 
     @JsonCreator public static AccountAction fromString (String v) { return enumFromString(AccountAction.class, v); }
 

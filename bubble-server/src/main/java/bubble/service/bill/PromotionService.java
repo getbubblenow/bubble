@@ -153,6 +153,16 @@ public class PromotionService {
         return null;
     }
 
+    public long checkPromotions(BubblePlan plan,
+                                AccountPlan accountPlan,
+                                Bill bill,
+                                AccountPaymentMethod paymentMethod,
+                                PaymentServiceDriver paymentDriver,
+                                List<Promotion> promos,
+                                long chargeAmount) {
+        return _usePromotions(plan, accountPlan, bill, paymentMethod, paymentDriver, promos, chargeAmount, true);
+    }
+
     public long usePromotions(BubblePlan plan,
                               AccountPlan accountPlan,
                               Bill bill,
@@ -160,16 +170,28 @@ public class PromotionService {
                               PaymentServiceDriver paymentDriver,
                               List<Promotion> promos,
                               long chargeAmount) {
+        return _usePromotions(plan, accountPlan, bill, paymentMethod, paymentDriver, promos, chargeAmount, false);
+    }
+
+    public long _usePromotions(BubblePlan plan,
+                               AccountPlan accountPlan,
+                               Bill bill,
+                               AccountPaymentMethod paymentMethod,
+                               PaymentServiceDriver paymentDriver,
+                               List<Promotion> promos,
+                               long chargeAmount,
+                               boolean checkOnly) {
+        final String prefix = "_usePromotions(checkOnly="+checkOnly+"): ";
         if (configuration.promoCodesDisabled()) {
-            log.warn("usePromotions: promo codes are disabled, not using");
+            log.warn(prefix + "promo codes are disabled, not using");
             return chargeAmount;
         }
         if (chargeAmount <= 0) {
-            log.error("usePromotions: chargeAmount <= 0 : "+chargeAmount);
+            log.error(prefix + "chargeAmount <= 0 : " +chargeAmount);
             return chargeAmount;
         }
         if (paymentDriver instanceof PromotionalPaymentServiceDriver) {
-            log.warn("usePromotions: must be used with another payment driver, not a "+paymentDriver.getClass().getName());
+            log.warn(prefix + "must be used with another payment driver, not a " +paymentDriver.getClass().getName());
             return chargeAmount;
         }
 
@@ -181,28 +203,36 @@ public class PromotionService {
         for (Promotion promo : promos) {
             final AccountPaymentMethod apm = promo.getPaymentMethod();
             final CloudService promoCloud = cloudDAO.findByUuid(promo.getCloud());
-            final String prefix = getClass().getSimpleName()+": ";
             if (promoCloud == null) {
-                reportError(prefix+"purchase: cloud "+promo.getCloud()+" not found for promotion "+promo.getName());
+                reportError(prefix+"cloud "+promo.getCloud()+" not found for promotion "+promo.getName());
                 continue;
             }
             if (promoCloud.getType() != CloudServiceType.payment) {
-                reportError(prefix+"purchase: cloud "+promo.getCloud()+" for promotion "+promo.getName()+" has wrong type (expected 'payment'): "+promoCloud.getType());
+                reportError(prefix+"cloud "+promo.getCloud()+" for promotion "+promo.getName()+" has wrong type (expected 'payment'): "+promoCloud.getType());
                 continue;
             }
             if (!promo.getCurrency().equals(plan.getCurrency())) {
-                reportError(prefix+"purchase: promotion "+promo.getName()+" has wrong currency (expected "+plan.getCurrency()+" for plan "+plan.getName()+"): "+promoCloud.getType());
+                reportError(prefix+"promotion "+promo.getName()+" has wrong currency (expected "+plan.getCurrency()+" for plan "+plan.getName()+"): "+promoCloud.getType());
                 continue;
             }
-            log.info("purchase: using Promotion: "+promo.getName());
+            log.info(prefix+"examining Promotion: "+promo.getName());
             try {
                 final PaymentServiceDriver promoPaymentDriver = promoCloud.getPaymentDriver(configuration);
                 final PromotionalPaymentServiceDriver promoDriver = (PromotionalPaymentServiceDriver) promoPaymentDriver;
                 if (!promoDriver.canUseNow(bill, promo, promoDriver, promos, used, accountPlan, paymentMethod)) {
-                    log.warn("purchase: Promotion "+promo.getName()+" cannot currently be used for accountPlan "+ accountPlanUuid);
+                    log.warn(prefix+"Promotion "+promo.getName()+" cannot currently be used for accountPlan "+ accountPlanUuid);
                     continue;
                 }
-                promoDriver.purchase(accountPlanUuid, apm.getUuid(), bill.getUuid());
+                if (checkOnly) {
+                    chargeAmount -= promoDriver.getPromoValue(chargeAmount, promo);
+                    if (chargeAmount <= 0) {
+                        log.info(prefix+"chargeAmount <= 0 ("+chargeAmount+") returning 0");
+                        return 0;
+                    }
+                    continue;
+                } else {
+                    promoDriver.purchase(accountPlanUuid, apm.getUuid(), bill.getUuid());
+                }
                 used.add(promo);
 
                 // verify AccountPayments exists for new payment with promo
@@ -211,34 +241,34 @@ public class PromotionService {
                         .filter(c -> c.getPaymentMethod().equals(apm.getUuid()))
                         .collect(Collectors.toList());
                 if (empty(creditsByThisPromo)) {
-                    log.warn("purchase: applying promotion did not result in an AccountPayment to Bill "+bill.getUuid());
+                    log.warn(prefix+"applying promotion did not result in an AccountPayment to Bill "+bill.getUuid());
                     continue;
                 }
                 if (creditsByThisPromo.size() > 1) {
-                    reportError("purchase: multiple credits applied by promo: "+promo.getName()+": "+StringUtil.toString(creditsByThisPromo));
+                    reportError("multiple credits applied by promo: "+promo.getName()+": "+StringUtil.toString(creditsByThisPromo));
                 }
 
                 if (paymentDriver.getPaymentMethodType().requiresAuth() && !paymentDriver.cancelAuthorization(plan, accountPlanUuid, paymentMethod)) {
-                    log.warn("purchase: error cancelling authorization for accountPlanUuid=" + accountPlanUuid + ", paymentMethod=" + paymentMethod.getUuid());
+                    log.warn(prefix+"error cancelling authorization for accountPlanUuid=" + accountPlanUuid + ", paymentMethod=" + paymentMethod.getUuid());
                 }
                 if (totalPayments(creditsApplied) >= bill.getTotal()) {
-                    log.info("purchase: applying promotion paid full bill, canceled current payment authorization");
+                    log.info(prefix+"applying promotion paid full bill, canceled current payment authorization");
                     return 0;
                 } else {
                     final int promoCredits = totalPayments(creditsByThisPromo);
-                    log.info("purchase: promotion applied credits of " + promoCredits + " on a bill of " + bill.getTotal() + ", using current paymentMethod to pay the remainder; reauthorizing now...");
+                    log.info(prefix+"promotion applied credits of " + promoCredits + " on a bill of " + bill.getTotal() + ", using current paymentMethod to pay the remainder; reauthorizing now...");
                     chargeAmount -= promoCredits;
                     if (paymentDriver.getPaymentMethodType().requiresAuth() && !paymentDriver.authorize(plan, accountPlanUuid, bill.getUuid(), paymentMethod)) {
-                        reportError(prefix+"purchase: after applying credit and cancelling previous charge authorization, new charge authorization failed");
+                        reportError(prefix+"after applying credit and cancelling previous charge authorization, new charge authorization failed");
                         continue;
                     }
                     if (chargeAmount <= 0) {
-                        log.info("purchase: chargeAmount < 0 ("+chargeAmount+") returning 0");
+                        log.info(prefix+"chargeAmount <= 0 ("+chargeAmount+") returning 0");
                         return 0;
                     }
                 }
             } catch (Exception e) {
-                reportError(prefix+"purchase: error applying promotion "+promo.getName()+" to accountPlan "+accountPlanUuid+": "+shortError(e));
+                reportError(prefix+"error applying promotion "+promo.getName()+" to accountPlan "+accountPlanUuid+": "+shortError(e));
                 continue;
             }
         }

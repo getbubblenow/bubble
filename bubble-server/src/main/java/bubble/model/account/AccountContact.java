@@ -218,7 +218,7 @@ public class AccountContact implements Serializable {
         }
 
         switch (action) {
-            case payment:
+            case payment: case first_payment:
                 switch (type) {
                     case request: case notice:
                         return target == ActionTarget.network && getType() != CloudServiceType.authenticator;

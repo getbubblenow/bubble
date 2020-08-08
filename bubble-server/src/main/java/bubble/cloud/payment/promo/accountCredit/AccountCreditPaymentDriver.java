@@ -4,7 +4,6 @@
  */
 package bubble.cloud.payment.promo.accountCredit;
 
-import bubble.cloud.payment.ChargeResult;
 import bubble.cloud.payment.promo.PromotionalPaymentDriverBase;
 import bubble.cloud.payment.promo.PromotionalPaymentServiceDriver;
 import bubble.model.account.Account;
@@ -40,12 +39,10 @@ public class AccountCreditPaymentDriver extends PromotionalPaymentDriverBase<Acc
         return promo.getPaymentMethod().notDeleted();
     }
 
-    @Override protected ChargeResult getChargeResult(long chargeAmount, Promotion promotion) {
-        if (config.fullBill()) {
-            return new ChargeResult().setAmountCharged(chargeAmount).setChargeId(getClass().getName());
-        }
+    @Override public long getPromoValue(long chargeAmount, Promotion promotion) {
+        if (config.fullBill()) return chargeAmount;
         final int amount = chargeAmount > config.getCreditAmount() ? config.getCreditAmount() : (int) chargeAmount;
-        return super.getChargeResult(amount, promotion);
+        return super.getPromoValue(amount, promotion);
     }
 
 }

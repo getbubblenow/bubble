@@ -25,9 +25,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.EP_PAY;
 import static bubble.ApiConstants.EP_PAYMENTS;
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.http.URIUtil.queryParams;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -68,21 +70,25 @@ public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
         return bill;
     }
 
-    private Map<String, AccountPaymentMethod> paymentMethodCache = new ExpirationMap<>(ExpirationEvictionPolicy.atime);
+    private final Map<String, AccountPaymentMethod> paymentMethodCache = new ExpirationMap<>(ExpirationEvictionPolicy.atime);
     private AccountPaymentMethod findPaymentMethod(String paymentMethodUuid) {
         return paymentMethodCache.computeIfAbsent(paymentMethodUuid, k -> paymentMethodDAO.findByUuid(k));
     }
 
     @Override protected List<Bill> list(ContainerRequest ctx) {
         if (accountPlan == null) return super.list(ctx);
-        return getDao().findByAccountAndAccountPlan(getAccountUuid(ctx), accountPlan.getUuid());
+        final long now = now();
+        // don't show bills for future service
+        return getDao().findByAccountAndAccountPlan(getAccountUuid(ctx), accountPlan.getUuid()).stream()
+                .filter(b -> findPlan(b.getPlan()).getPeriod().periodMillis(b.getPeriodStart()) < now)
+                .collect(Collectors.toList());
     }
 
     @Override protected Bill populate(ContainerRequest ctx, Bill bill) {
         return super.populate(ctx, bill.setPlanObject(findPlan(bill.getPlan())));
     }
 
-    private Map<String, BubblePlan> planCache = new ExpirationMap<>(ExpirationEvictionPolicy.atime);
+    private final Map<String, BubblePlan> planCache = new ExpirationMap<>(ExpirationEvictionPolicy.atime);
     private BubblePlan findPlan(String planUuid) { return planCache.computeIfAbsent(planUuid, k -> planDAO.findByUuid(k)); }
 
     @Path("/{id}"+EP_PAYMENTS)

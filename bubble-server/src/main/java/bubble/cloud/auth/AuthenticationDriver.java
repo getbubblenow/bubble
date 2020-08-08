@@ -5,17 +5,30 @@
 package bubble.cloud.auth;
 
 import bubble.cloud.CloudServiceDriver;
+import bubble.cloud.payment.PaymentServiceDriver;
 import bubble.dao.account.AccountPolicyDAO;
+import bubble.dao.bill.AccountPaymentMethodDAO;
+import bubble.dao.bill.AccountPlanDAO;
+import bubble.dao.bill.BillDAO;
+import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
+import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.account.AccountContact;
 import bubble.model.account.AccountPolicy;
+import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.AccountMessage;
+import bubble.model.bill.AccountPaymentMethod;
+import bubble.model.bill.AccountPlan;
+import bubble.model.bill.Bill;
+import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAccountMessageService;
+import bubble.service.message.MessageService;
 import com.github.jknack.handlebars.Handlebars;
 import org.apache.commons.collections4.map.SingletonMap;
 import org.apache.commons.lang3.ArrayUtils;
@@ -28,6 +41,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.io.FileUtil.basename;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 
@@ -50,29 +64,63 @@ public interface AuthenticationDriver extends CloudServiceDriver {
 
     @Override default boolean test () { return true; }
 
+    static <T> T bean(BubbleConfiguration configuration, Class<T> beanClass) {
+        return configuration.getBean(beanClass);
+    }
+
     default Map<String, Object> buildContext(Account account, AccountMessage message, AccountContact contact) {
         return buildContext(account, message, contact, getConfiguration());
     }
 
-    static Map<String, Object> buildContext(Account account, AccountMessage message, AccountContact contact,
+    static Map<String, Object> buildContext(Account account,
+                                            AccountMessage message,
+                                            AccountContact contact,
                                             BubbleConfiguration configuration) {
+        final BubbleConfiguration c = configuration;
+        final String locale = account.getLocale();
         final Map<String, Object> ctx = new HashMap<>();
         ctx.put("account", account);
         ctx.put("message", message);
         ctx.put("contact", contact);
-        ctx.put("configuration", configuration);
-        ctx.put("support", configuration.getSupport().forLocale(account.getLocale()));
-        ctx.put("appLinks", configuration.getAppLinks().forLocale(account.getLocale()));
+        ctx.put("configuration", c);
+        ctx.put("support", c.getSupport().forLocale(locale));
+        ctx.put("appLinks", c.getAppLinks().forLocale(locale));
 
-        final AccountPolicy policy = configuration.getBean(AccountPolicyDAO.class).findSingleByAccount(account.getUuid());
+        final AccountPolicy policy = bean(c, AccountPolicyDAO.class).findSingleByAccount(account.getUuid());
         account.setPolicy(policy);
-        ctx.put("confirmationToken", configuration.getBean(StandardAccountMessageService.class).confirmationToken(policy, message, contact));
+        ctx.put("confirmationToken", bean(c, StandardAccountMessageService.class).confirmationToken(policy, message, contact));
 
-        final BubbleNode node = getNode(message, configuration);
-        final BubbleNetwork network = getNetwork(message, configuration);
+        final Map<String, String> messages = bean(c, MessageService.class).formatStandardMessages(locale);
+        final BubbleNode node = getNode(message, c);
+        final BubbleNetwork network = getNetwork(message, c);
+        if (message.getAction() == AccountAction.first_payment) {
+            final AccountPlan accountPlan = getAccountPlan(network, c);
+            if (accountPlan != null) {
+                final BubblePlan plan = bean(c, BubblePlanDAO.class).findByUuid(accountPlan.getPlan());
+                final Bill bill = bean(c, BillDAO.class).findFirstUnpaidByAccountPlan(accountPlan.getUuid());
+                final AccountPaymentMethod paymentMethod = bean(c, AccountPaymentMethodDAO.class).findByUuid(accountPlan.getPaymentMethod());
+                if (paymentMethod == null) return die("buildContext: paymentMethod "+accountPlan.getPaymentMethod()+" not found for accountPlan: "+accountPlan.getUuid());
+
+                final CloudService paymentService = bean(c, CloudServiceDAO.class).findByUuid(paymentMethod.getCloud());
+                if (paymentService == null) return die("buildContext: payment cloud "+paymentMethod.getCloud()+" not found for paymentMethod: "+paymentMethod.getUuid()+", accountPlan: "+accountPlan.getUuid());
+
+                final PaymentServiceDriver paymentDriver = paymentService.getPaymentDriver(c);
+                final long amountDue = paymentDriver.amountDue(accountPlan.getUuid(), bill.getUuid(), paymentMethod.getUuid());
+
+                ctx.put("plan", plan);
+                ctx.put("now", now());
+                ctx.put("nextBillAmount", amountDue);
+                ctx.put("nextBillDate", plan.getPeriod().periodMillis(bill.getPeriodStart()));
+                ctx.put("billPeriodUnit", messages.get("price_period_"+plan.getPeriod().name()+"_unit"));
+                ctx.put("billDateFormat", messages.get("label_date").replace("{", "").replace("}", ""));
+                ctx.put("timezone", network.getTimezone());
+                ctx.put("currencySymbol", messages.get("currency_symbol_"+plan.getCurrency()));
+                ctx.put("currencyDecimal", messages.get("currency_decimal_"+plan.getCurrency()));
+            }
+        }
         ctx.put("node", node);
         ctx.put("network", network);
-        ctx.put("publicUri", network.getPublicUri(configuration));
+        ctx.put("publicUri", network.getPublicUri(c));
         return ctx;
     }
 
@@ -86,8 +134,12 @@ public interface AuthenticationDriver extends CloudServiceDriver {
     }
 
     static BubbleNetwork getNetwork(AccountMessage message, BubbleConfiguration configuration) {
-        final BubbleNetworkDAO networkDAO = configuration.getBean(BubbleNetworkDAO.class);
+        final BubbleNetworkDAO networkDAO = bean(configuration, BubbleNetworkDAO.class);
         return networkDAO.findByUuid(message.getNetwork());
+    }
+
+    static AccountPlan getAccountPlan(BubbleNetwork network, BubbleConfiguration configuration) {
+        return bean(configuration, AccountPlanDAO.class).findByAccountAndNetwork(network.getAccount(), network.getUuid());
     }
 
     default String render(String basename, Map<String, Object> ctx, AccountMessage message) {

@@ -104,6 +104,7 @@ public enum NotificationType {
     // delegated payment driver notifications
     payment_driver_validate (PaymentValidationResult.class),
     payment_driver_claim (PaymentValidationResult.class),
+    payment_driver_amount_due (Long.class),
     payment_driver_authorize (PaymentResult.class),
     payment_driver_cancel_authorization (PaymentResult.class),
     payment_driver_purchase (PaymentResult.class),

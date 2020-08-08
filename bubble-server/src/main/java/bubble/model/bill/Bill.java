@@ -18,6 +18,9 @@ import org.hibernate.annotations.Type;
 import javax.persistence.*;
 import java.util.List;
 
+import static bubble.service.bill.BillingService.ADVANCE_BILLING;
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_LONG;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_LONG;
 import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySearchDepth.shallow;
@@ -68,6 +71,12 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
 
     public int daysInPeriod () { return BillPeriod.daysInPeriod(periodStart, periodEnd); }
 
+    public boolean isDue (BubblePlan plan) { return isDue(plan, now()); }
+
+    public boolean isDue (BubblePlan plan, long now) {
+        return plan.getPeriod().periodMillis(getPeriodStart()) < now;
+    }
+
     @ECSearchable @ECField(index=80)
     @Type(type=ENCRYPTED_LONG) @Column(updatable=false, columnDefinition="varchar("+(ENC_LONG)+") NOT NULL")
     @Getter @Setter private Long total = 0L;
@@ -80,6 +89,16 @@ public class Bill extends IdentifiableBase implements HasAccountNoName {
     @Type(type=ENCRYPTED_LONG) @Column(columnDefinition="varchar("+(ENC_LONG)+")")
     @Getter @Setter private Long refundedAmount = 0L;
     public boolean hasRefundedAmount () { return refundedAmount != null && refundedAmount > 0L; }
+
+    @ECSearchable @ECField(index=110)
+    @Column(nullable=false)
+    @Getter @Setter private Boolean notified;
+    public boolean notified () { return bool(notified); }
+
+    public boolean shouldNotify (BubblePlan plan) {
+        final long now = now();
+        return !isDue(plan, now) && isDue(plan, now+ADVANCE_BILLING);
+    }
 
     @Transient @Getter @Setter private transient BubblePlan planObject;
     @Transient @Getter @Setter private transient List<AccountPayment> payments;

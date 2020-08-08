@@ -24,6 +24,8 @@ import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.NetworkService;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
+import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.daemon.SimpleDaemon;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
@@ -35,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
@@ -46,6 +49,7 @@ public class BillingService extends SimpleDaemon {
 
     private static final long BILLING_CHECK_INTERVAL = HOURS.toMillis(6);
     private static final int MAX_UNPAID_DAYS_BEFORE_STOP = 7;
+    public static final long ADVANCE_BILLING = DAYS.toMillis(3);
 
     @Autowired private AccountDAO accountDAO;
     @Autowired private AccountPlanDAO accountPlanDAO;
@@ -64,23 +68,18 @@ public class BillingService extends SimpleDaemon {
 
     @Override protected boolean canInterruptSleep() { return true; }
 
+    private final Map<String, BubblePlan> planCache = new ExpirationMap<>(ExpirationEvictionPolicy.atime);
+    private BubblePlan findPlan(String planUuid) { return planCache.computeIfAbsent(planUuid, k -> planDAO.findByUuid(k)); }
+
     @Override protected void process() {
         // sort plans by Account ctime, newer Accounts are billed before older Accounts
-        final List<AccountPlan> plansToBill = accountPlanDAO.findBillableAccountPlans(now());
-        final Map<Account, List<AccountPlan>> plansByAccount = new TreeMap<>(CTIME_DESC);
-        for (AccountPlan accountPlan : plansToBill) {
-            final Account account = accountDAO.findByUuid(accountPlan.getAccount());
-            if (account == null) {
-                reportError("process: account "+accountPlan.getAccount()+" not found for AccountPlan="+accountPlan.getUuid());
-            } else {
-                plansByAccount.computeIfAbsent(account, a -> new ArrayList<>()).add(accountPlan);
-            }
-        }
+        final List<AccountPlan> plansToBill = accountPlanDAO.findBillableAccountPlans(now()+ADVANCE_BILLING);
+        final Map<Account, List<AccountPlan>> plansByAccount = plansByAccount(plansToBill, accountDAO);
 
         for (Account account : plansByAccount.keySet()) {
             for (AccountPlan accountPlan : plansByAccount.get(account)) {
 
-                final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
+                final BubblePlan plan = findPlan(accountPlan.getPlan());
                 if (plan == null) {
                     final String msg = "process: plan not found (" + accountPlan.getPlan() + ") for accountPlan: " + accountPlan.getUuid();
                     log.error(msg);
@@ -151,6 +150,19 @@ public class BillingService extends SimpleDaemon {
         }
     }
 
+    public static Map<Account, List<AccountPlan>> plansByAccount(List<AccountPlan> plansToBill, AccountDAO accountDAO) {
+        final Map<Account, List<AccountPlan>> plansByAccount = new TreeMap<>(CTIME_DESC);
+        for (AccountPlan accountPlan : plansToBill) {
+            final Account account = accountDAO.findByUuid(accountPlan.getAccount());
+            if (account == null) {
+                reportError("process: account "+accountPlan.getAccount()+" not found for AccountPlan="+accountPlan.getUuid());
+            } else {
+                plansByAccount.computeIfAbsent(account, a -> new ArrayList<>()).add(accountPlan);
+            }
+        }
+        return plansByAccount;
+    }
+
     private List<Bill> billPlan(BubblePlan plan, AccountPlan accountPlan) {
         final Bill recentBill = billDAO.findMostRecentBillForAccountPlan(accountPlan.getUuid());
         if (recentBill == null) return die("billPlan: no recent bill found for accountPlan: "+accountPlan.getUuid());
@@ -159,24 +171,18 @@ public class BillingService extends SimpleDaemon {
         final List<Bill> bills = billDAO.findUnpaidByAccountPlan(accountPlan.getUuid());
         final BillPeriod period = plan.getPeriod();
 
-        // create bills for the past, until a bill has a periodEnd beyond the AccountPlan.nextBill date
+        // create bills for the past, until a bill has a periodStart in the future
         Bill bill = recentBill;
-        while (true) {
-            final long nextBillMillis = period.periodMillis(bill.getPeriodEnd());
+        while (period.periodMillis(bill.getPeriodStart()) < now()) {
+            long nextBillMillis = period.periodMillis(bill.getPeriodEnd());
             final Bill nextBill = billDAO.newBill(plan, accountPlan, nextBillMillis);
-            if (nextBillMillis <= now()) {
-                bill = billDAO.create(nextBill);
-                bills.add(bill);
-            } else {
+            bill = billDAO.create(nextBill);
+            bills.add(bill);
+            if (nextBillMillis > now()) {
                 accountPlan.setNextBill(nextBillMillis);
                 accountPlan.setNextBillDate();
                 accountPlanDAO.update(accountPlan);
-                break;
             }
-        }
-
-        if (bills.size() > 1) {
-            log.warn("billPlan: "+bills.size()+" bills found for accountPlan: "+accountPlan.getUuid());
         }
         return bills;
     }
@@ -190,9 +196,37 @@ public class BillingService extends SimpleDaemon {
 
         final PaymentServiceDriver paymentDriver = paymentService.getPaymentDriver(configuration);
         for (Bill bill : bills) {
+            final long billStart = plan.getPeriod().periodMillis(bill.getPeriodStart());
+            if (billStart > now()) {
+                // bill is in the future -- send a first_payment notice if all these conditions are met
+                // - the bill date is near (shouldNotify)
+                // - no notification has been sent for any bill
+                // - there is an amount due that won't be covered by promotional credits
+                if (bill.shouldNotify(plan)
+                        && billDAO.findNotifiedByAccountAndAccountPlan(accountPlan.getAccount(), accountPlan.getUuid()).isEmpty()
+                        && paymentDriver.anyAmountDue(accountPlan.getUuid(), bill.getUuid(), paymentMethod.getUuid())) {
+                    // send notification
+                    messageDAO.create(new AccountMessage()
+                            .setAccount(accountPlan.getAccount())
+                            .setNetwork(accountPlan.getNetwork())
+                            .setMessageType(AccountMessageType.notice)
+                            .setTarget(ActionTarget.network)
+                            .setAction(AccountAction.first_payment)
+                            .setName(accountPlan.getUuid())
+                            .setData(accountPlan.getNetwork()));
+                    billDAO.update(bill.setNotified(true));
+                }
+                log.info("payBills: skipping bill not yet due: "+bill.getUuid());
+                continue;
+            }
+
             if (paymentDriver.getPaymentMethodType().requiresAuth()) {
-                if (!paymentDriver.authorize(plan, accountPlan.getUuid(), bill.getUuid(), paymentMethod)) {
-                    return die("payBills: paymentDriver.authorized returned false for accountPlan="+accountPlan.getUuid()+", paymentMethod="+paymentMethod.getUuid()+", bill="+bill.getUuid());
+                if (!paymentDriver.anyAmountDue(accountPlan.getUuid(), bill.getUuid(), paymentMethod.getUuid())) {
+                    log.info("payBills: No amount due, skipping authorization step for accountPlan="+accountPlan.getUuid()+", paymentMethod="+paymentMethod.getUuid()+", bill="+bill.getUuid());
+                } else {
+                    if (!paymentDriver.authorize(plan, accountPlan.getUuid(), bill.getUuid(), paymentMethod)) {
+                        return die("payBills: paymentDriver.authorized returned false for accountPlan=" + accountPlan.getUuid() + ", paymentMethod=" + paymentMethod.getUuid() + ", bill=" + bill.getUuid());
+                    }
                 }
             }
             if (!paymentDriver.purchase(accountPlan.getUuid(), paymentMethod.getUuid(), bill.getUuid())) {
