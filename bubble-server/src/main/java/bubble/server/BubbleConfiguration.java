@@ -140,6 +140,11 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         return isSelfSage() || !hasSageNode();
     }
 
+    @JsonIgnore @Transient public boolean isSage() {
+        final BubbleNetwork thisNetwork = getThisNetwork();
+        return thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.sage;
+    }
+
     @JsonIgnore @Transient public synchronized BubbleNetwork getThisNetwork () {
         return getBean(StandardSelfNodeService.class).getThisNetwork();
     }

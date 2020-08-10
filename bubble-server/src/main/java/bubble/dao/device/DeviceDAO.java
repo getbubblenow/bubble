@@ -67,7 +67,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
     @Transactional
     @Override public Device create(@NonNull final Device device) {
-        if (isRawMode() || device.uninitialized() || device.getDeviceType().isNonVpnDevice()) {
+        if (isRawMode() || device.uninitialized() || device.getDeviceType().isNonVpnDevice() || configuration.isSage()) {
             return super.create(device);
         }
 
