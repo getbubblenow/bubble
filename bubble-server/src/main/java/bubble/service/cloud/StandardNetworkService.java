@@ -817,7 +817,7 @@ public class StandardNetworkService implements NetworkService {
 
     public void backgroundNewNode(NewNodeNotification newNodeRequest, final String existingLock) {
         final AtomicReference<String> lock = new AtomicReference<>(existingLock);
-        daemon(new NodeLauncher(newNodeRequest, lock, this, launchMonitor));
+        daemon(new NodeLauncher(newNodeRequest, lock, this, launchMonitor, configuration));
     }
 
     public boolean stopNetwork(final BubbleNetwork network) {

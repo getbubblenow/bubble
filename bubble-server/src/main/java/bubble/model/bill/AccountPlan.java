@@ -163,16 +163,16 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
     public boolean hasForkHost () { return !empty(forkHost); }
 
     @Transient @Getter @Setter private transient Boolean syncPassword = null;
-    public boolean syncPassword () { return bool(syncPassword); }
+    public boolean syncPassword () { return syncPassword == null || syncPassword; }
 
     @Transient @Getter @Setter private Boolean launchLock;
     public boolean launchLock() { return bool(launchLock); }
 
     @Transient @Getter @Setter private transient Boolean sendErrors = null;
-    public boolean sendErrors () { return bool(sendErrors); }
+    public boolean sendErrors () { return sendErrors == null || sendErrors; }
 
     @Transient @Getter @Setter private transient Boolean sendMetrics = null;
-    public boolean sendMetrics () { return bool(sendMetrics); }
+    public boolean sendMetrics () { return sendMetrics == null || sendMetrics; }
 
     public BubbleNetwork bubbleNetwork(Account account,
                                        BubbleDomain domain,

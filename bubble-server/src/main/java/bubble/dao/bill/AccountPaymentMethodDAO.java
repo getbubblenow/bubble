@@ -21,6 +21,7 @@ import java.util.List;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static org.hibernate.criterion.Restrictions.*;
 
 @Repository @Slf4j
 public class AccountPaymentMethodDAO extends AccountOwnedEntityDAO<AccountPaymentMethod> {
@@ -40,6 +41,14 @@ public class AccountPaymentMethodDAO extends AccountOwnedEntityDAO<AccountPaymen
 
     public List<AccountPaymentMethod> findByAccountAndPromoAndNotDeleted(String account) {
         return findByFields("account", account, "paymentMethodType", PaymentMethodType.promotional_credit, "deleted", null);
+    }
+
+    public List<AccountPaymentMethod> findByAccountAndNotPromoAndNotDeleted(String account) {
+        return list(criteria().add(and(
+                eq("account", account),
+                ne("paymentMethodType", PaymentMethodType.promotional_credit),
+                isNull("deleted")
+        )));
     }
 
     public List<AccountPaymentMethod> findByAccountAndCloud(String accountUuid, String cloud) {

@@ -15,9 +15,7 @@ public class PaymentTestBase extends ActivatedBubbleModelTestBase {
     @Override protected String getManifest() { return "manifest-test"; }
 
     @Override public void beforeStart(RestServer<BubbleConfiguration> server) {
-        final BubbleConfiguration configuration = server.getConfiguration();
-        configuration.setSpringContextPath("classpath:/spring-mock-network.xml");
-        configuration.getStaticAssets().setLocalOverride(null);
+        mockNetwork(server);
         super.beforeStart(server);
     }
 

@@ -1,0 +1,69 @@
+[
+  {
+    "comment": "create another account and login",
+    "include": "new_account",
+    "params": {
+      "email": "min_launch@example.com",
+      "verifyEmail": true
+    }
+  },
+
+  {
+    "comment": "list plans",
+    "request": { "uri": "plans" },
+    "response": {
+      "store": "plans",
+      "check": [
+        {"condition": "json.length > 0"}
+      ]
+    }
+  },
+
+  {
+    "comment": "add a payment method and preferred plan",
+    "before": "stripe_tokenize_card",
+    "request": {
+      "uri": "me/paymentMethods",
+      "method": "put",
+      "entity": {
+        "paymentMethodType": "credit",
+        "paymentInfo": "{{stripeToken}}",
+        "preferredPlan": "{{plans.[0].name}}"
+      }
+    }
+  },
+
+  {
+    "comment": "add account plan",
+    "request": {
+      "uri": "me/plans",
+      "method": "put",
+      "entity": {}
+    },
+    "response": { "store": "plan" }
+  },
+
+  {
+    "comment": "start the network. sets up the first node, which does the rest",
+    "request": {
+      "uri": "me/networks/{{ plan.name }}/actions/start",
+      "method": "post"
+    },
+    "response": {
+      "store": "<<networkVar>>"
+    }
+  },
+
+  {
+    "comment": "list networks, verify new network is starting",
+    "before": "sleep 10s",
+    "request": { "uri": "me/networks" },
+    "response": {
+      "check": [
+        {"condition": "json.length === 1"},
+        {"condition": "json[0].getName() === '{{plan.name}}'"},
+        {"condition": "json[0].getState().name() === 'starting'"}
+      ]
+    }
+  }
+]

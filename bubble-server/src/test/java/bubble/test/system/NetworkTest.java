@@ -12,5 +12,6 @@ public class NetworkTest extends NetworkTestBase {
 
     @Test public void testRegions        () throws Exception { modelTest("network/network_regions"); }
     @Test public void testGetNetworkKeys () throws Exception { modelTest("network/network_keys"); }
+    @Test public void testMinimalLaunch () throws Exception { modelTest("network/minimal_launch"); }
 
 }

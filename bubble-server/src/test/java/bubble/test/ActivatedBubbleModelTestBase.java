@@ -67,6 +67,12 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
         super.beforeStart(server);
     }
 
+    public void mockNetwork(RestServer<BubbleConfiguration> server) {
+        final BubbleConfiguration configuration = server.getConfiguration();
+        configuration.setSpringContextPath("classpath:/spring-mock-network.xml");
+        configuration.getStaticAssets().setLocalOverride(null);
+    }
+
     public String getDefaultDomain() { return "example.com"; }
 
     @Override protected String[] getSqlPostScripts() { return hasExistingDb ? null : super.getSqlPostScripts(); }

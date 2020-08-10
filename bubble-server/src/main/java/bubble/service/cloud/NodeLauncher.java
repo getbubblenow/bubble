@@ -7,6 +7,7 @@ package bubble.service.cloud;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.notify.NewNodeNotification;
+import bubble.server.BubbleConfiguration;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,6 +26,7 @@ public class NodeLauncher implements Runnable {
     private final AtomicReference<String> lock;
     private final StandardNetworkService networkService;
     private final NodeLaunchMonitor launchMonitor;
+    private final BubbleConfiguration configuration;
 
     @Override public void run() {
         final String networkUuid = newNodeRequest.getNetwork();
@@ -98,7 +100,7 @@ public class NodeLauncher implements Runnable {
                                 die("NodeLauncher.run: unknown launch exception (type="+launchException.getType()+"): "+shortError(launchException), launchException);
                         }
                     } else {
-                        die("NodeLauncher.run: fatal launch exception: " + shortError(exception), exception);
+                        if (!configuration.testMode()) die("NodeLauncher.run: fatal launch exception: " + shortError(exception), exception);
                     }
                 }
                 if (node != null && node.isRunning()) {

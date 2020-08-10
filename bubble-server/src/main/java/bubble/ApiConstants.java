@@ -278,6 +278,7 @@ public class ApiConstants {
     public static String getReferer(ContainerRequest ctx) { return ctx.getHeaderString(REFERER); }
 
     public static final String DETECT_LOCALE = "detect";
+    public static final String DETECT_TIMEZONE = "detect";
 
     public static List<String> getLocales(ContainerRequest ctx, String defaultLocale) {
         final List<String> locales = new ArrayList<>();

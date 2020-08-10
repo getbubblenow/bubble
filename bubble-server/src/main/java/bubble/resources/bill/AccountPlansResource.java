@@ -101,11 +101,18 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         return super.canDelete(ctx, caller, found);
     }
 
-    @Override protected AccountPlan setReferences(ContainerRequest ctx, Account caller, AccountPlan request) {
+    @Override protected AccountPlan setReferences(ContainerRequest ctx, Request req, Account caller, AccountPlan request) {
+
+        // ensure we have latest account settings (preferredPlan/etc)
+        caller = accountDAO.findByUuid(caller.getUuid());
 
         final ValidationResult errors = new ValidationResult();
-        if (!request.hasTimezone()) errors.addViolation("err.timezone.required");
-        if (!request.hasLocale()) errors.addViolation("err.locale.required");
+        if (!request.hasTimezone() || request.getTimezone().equals(DETECT_TIMEZONE)) {
+            request.setTimezone(geoService.getTimeZone(caller, getRemoteHost(req)).getStandardName());
+        }
+        if (!request.hasLocale() || request.getLocale().equals(DETECT_LOCALE)) {
+            request.setLocale(geoService.getFirstLocale(account, getRemoteHost(req), normalizeLangHeader(req)));
+        }
         request.setAccount(caller.getUuid());
 
         if (request.hasSshKey()) {
@@ -115,17 +122,25 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             } else {
                 request.setSshKey(sshKey.getUuid());
             }
+        } else if (configuration.isSageLauncher()) {
+            final List<AccountSshKey> sshKeys = sshKeyDAO.findByAccount(caller.getUuid());
+            if (empty(sshKeys)) {
+                request.setSshKey(null);
+            } else {
+                request.setSshKey(sshKeys.get(0).getUuid());
+            }
         } else {
             request.setSshKey(null); // if it's an empty string, make it null (see simple_network test)
         }
 
-        final BubbleDomain domain = domainDAO.findByAccountAndId(caller.getUuid(), request.getDomain());
+        BubbleDomain domain = domainDAO.findByAccountAndId(caller.getUuid(), request.getDomain());
         if (domain == null) {
-            log.info("setReferences: domain not found: "+request.getDomain()+" for caller: "+caller.getUuid());
-            errors.addViolation("err.domain.required");
+            final List<BubbleDomain> domains = domainDAO.findByAccount(caller.getUuid());
+            if (empty(domains)) return die("setReferences: no domains found for account: "+caller.getUuid());
+            domain = domains.get(0);
+            request.setDomain(domain.getUuid());
         } else {
             request.setDomain(domain.getUuid());
-
             final BubbleNetwork existingNetwork = networkDAO.findByNameAndDomainName(request.getName(), domain.getName());
             if (existingNetwork != null) errors.addViolation("err.name.networkNameAlreadyExists");
         }
@@ -138,7 +153,15 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                 if (!validateRegexMatches(HOST_PATTERN, forkHost)) {
                     errors.addViolation("err.forkHost.invalid");
                 } else if (domain != null && !forkHost.endsWith("."+domain.getName())) {
-                    errors.addViolation("err.forkHost.domainMismatch");
+                    final BubbleDomain foundDomain = domainDAO.findByAccount(caller.getUuid()).stream()
+                            .filter(d -> forkHost.equals("." + d.getName()))
+                            .findFirst().orElse(null);
+                    if (foundDomain == null) {
+                        errors.addViolation("err.forkHost.domain.notFound");
+                    } else {
+                        request.setDomain(foundDomain.getUuid());
+                    }
+
                 } else if (domain != null) {
                     request.setName(domain.networkFromFqdn(forkHost, errors));
                     validateName(request, errors);
@@ -146,11 +169,8 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             }
         } else {
             if (!request.hasNickname()) {
-                if (request.hasName()) {
-                    request.setNickname(request.getName());
-                } else {
-                    errors.addViolation("err.name.required");
-                }
+                if (!request.hasName()) request.setName(newNetworkName());
+                request.setNickname(request.getName());
             }
             if (request.hasNickname() && request.getNickname().length() > NAME_MAXLEN) {
                 errors.addViolation("err.name.tooLong");
@@ -160,9 +180,14 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         }
         log.info("setReferences: after calling validateName, request.name="+request.getName());
 
-        final BubblePlan plan = planDAO.findByAccountOrParentAndId(caller, request.getPlan());
+        BubblePlan plan = planDAO.findByAccountOrParentAndId(caller, request.getPlan());
         if (plan == null) {
-            errors.addViolation("err.plan.required");
+            plan = planDAO.findByUuid(caller.getPreferredPlan());
+            if (plan == null) {
+                errors.addViolation("err.plan.required");
+            } else {
+                request.setPlan(plan.getUuid());
+            }
         } else {
             request.setPlan(plan.getUuid());
         }
@@ -189,22 +214,26 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         AccountPaymentMethod paymentMethod = null;
         if (configuration.paymentsEnabled()) {
             if (!request.hasPaymentMethodObject()) {
-                errors.addViolation("err.paymentMethod.required");
-            } else {
-                if (request.getPaymentMethodObject().hasUuid()) {
-                    paymentMethod = paymentMethodDAO.findByUuid(request.getPaymentMethodObject().getUuid());
-                    if (paymentMethod == null) errors.addViolation("err.purchase.paymentMethodNotFound");
+                final List<AccountPaymentMethod> paymentMethods = paymentMethodDAO.findByAccountAndNotPromoAndNotDeleted(caller.getUuid());
+                if (empty(paymentMethods)) {
+                    errors.addViolation("err.paymentMethod.required");
                 } else {
-                    paymentMethod = request.getPaymentMethodObject();
+                    request.setPaymentMethodObject(paymentMethods.get(0));
                 }
-                if (paymentMethod != null && plan != null) {
-                    if (paymentMethod.hasPromotion() || paymentMethod.getPaymentMethodType() == PaymentMethodType.promotional_credit) {
-                        // cannot pay with a promo credit, must supply another payment method.
-                        // promos will be applied at purchase, and may result in no charge to this payment method
-                        errors.addViolation("err.purchase.paymentMethodNotFound");
-                    } else {
-                        paymentMethod.setAccount(caller.getUuid()).validate(errors, configuration);
-                    }
+            }
+            if (request.getPaymentMethodObject().hasUuid()) {
+                paymentMethod = paymentMethodDAO.findByUuid(request.getPaymentMethodObject().getUuid());
+                if (paymentMethod == null) errors.addViolation("err.purchase.paymentMethodNotFound");
+            } else {
+                paymentMethod = request.getPaymentMethodObject();
+            }
+            if (paymentMethod != null && plan != null) {
+                if (paymentMethod.hasPromotion() || paymentMethod.getPaymentMethodType() == PaymentMethodType.promotional_credit) {
+                    // cannot pay with a promo credit, must supply another payment method.
+                    // promos will be applied at purchase, and may result in no charge to this payment method
+                    errors.addViolation("err.purchase.paymentMethodNotFound");
+                } else {
+                    paymentMethod.setAccount(caller.getUuid()).validate(errors, configuration);
                 }
             }
         }

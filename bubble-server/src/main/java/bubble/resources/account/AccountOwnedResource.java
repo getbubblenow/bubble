@@ -151,13 +151,14 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
 
         if (!canCreate(req, ctx, caller, request)) return invalid("err.cannotCreate", "Create entity not allowed", request.getName());
 
-        final E toCreate = setReferences(ctx, caller, instantiate(getEntityClass(), request).setAccount(getAccountUuid(ctx)));
+        final E toCreate = setReferences(ctx, req, caller, instantiate(getEntityClass(), request).setAccount(getAccountUuid(ctx)));
         return ok(daoCreate(toCreate));
     }
 
     protected Object daoCreate(E toCreate) { return getDao().create(toCreate); }
 
     protected E setReferences(ContainerRequest ctx, Account caller, E e) { return e; }
+    protected E setReferences(ContainerRequest ctx, Request req, Account caller, E e) { return setReferences(ctx, caller, e); }
 
     @POST @Path("/{id}")
     public Response update(@Context ContainerRequest ctx,

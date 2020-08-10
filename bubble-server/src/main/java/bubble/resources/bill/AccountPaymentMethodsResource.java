@@ -6,9 +6,11 @@ package bubble.resources.bill;
 
 import bubble.dao.bill.AccountPaymentMethodDAO;
 import bubble.dao.bill.AccountPlanDAO;
+import bubble.dao.bill.BubblePlanDAO;
 import bubble.model.account.Account;
 import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.AccountPlan;
+import bubble.model.bill.BubblePlan;
 import bubble.resources.account.AccountOwnedResource;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ public class AccountPaymentMethodsResource extends AccountOwnedResource<AccountP
 
     public static final String PARAM_ALL = "all";
 
+    @Autowired private BubblePlanDAO planDAO;
     @Autowired private AccountPlanDAO accountPlanDAO;
     @Autowired private BubbleConfiguration configuration;
 
@@ -78,7 +81,9 @@ public class AccountPaymentMethodsResource extends AccountOwnedResource<AccountP
     @Override protected Object daoCreate(AccountPaymentMethod apm) {
         if (apm.hasPreferredPlan()) {
             final Account account = accountDAO.findByUuid(apm.getAccount());
-            accountDAO.update(account.setPreferredPlan(apm.getPreferredPlan()));
+            final BubblePlan plan = planDAO.findById(apm.getPreferredPlan());
+            if (plan == null) throw invalidEx("err.plan.notFound", "plan not found: "+apm.getPreferredPlan());
+            accountDAO.update(account.setPreferredPlan(plan.getUuid()));
         }
         return super.daoCreate(apm);
     }
