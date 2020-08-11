@@ -220,9 +220,9 @@
   },
 
   {
-    "comment": "remove trust for this device, succeeds",
+    "comment": "remove device, also removes trust, succeeds",
     "request": {
-      "uri": "auth/trust/delete/{{device.uuid}}",
+      "uri": "me/devices/{{device.uuid}}",
       "method": "delete"
     }
   },

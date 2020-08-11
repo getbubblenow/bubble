@@ -5,11 +5,12 @@
 package bubble.dao.account;
 
 import bubble.model.account.TrustedClient;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
 import static java.util.UUID.randomUUID;
 
-@Repository
+@Repository @Slf4j
 public class TrustedClientDAO extends AccountOwnedEntityDAO<TrustedClient> {
 
     @Override public Object preCreate(TrustedClient trusted) {
@@ -18,6 +19,15 @@ public class TrustedClientDAO extends AccountOwnedEntityDAO<TrustedClient> {
 
     public TrustedClient findByAccountAndDevice(String accountUuid, String deviceUuid) {
         return findByUniqueFields("account", accountUuid, "device", deviceUuid);
+    }
+
+    public void deleteDevice(String uuid) {
+        final int count = bulkDelete("device", uuid);
+        if (count <= 1) {
+            log.info("deleteDevice: deleted "+count+" TrustedClient records for device "+uuid);
+        } else {
+            log.warn("deleteDevice: deleted "+count+" TrustedClient records (expected only 1) for device "+uuid);
+        }
     }
 
 }

@@ -6,6 +6,7 @@ package bubble.dao.device;
 
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountOwnedEntityDAO;
+import bubble.dao.account.TrustedClientDAO;
 import bubble.dao.app.AppDataDAO;
 import bubble.model.device.BubbleDeviceType;
 import bubble.model.device.Device;
@@ -44,6 +45,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AppDataDAO dataDAO;
+    @Autowired private TrustedClientDAO trustDAO;
     @Autowired private DeviceIdService deviceIdService;
 
     @Override public Order getDefaultSortOrder() { return ORDER_CTIME_ASC; }
@@ -134,6 +136,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
             if (device.uninitialized()) die("Cannot delete special device: " + device.getName());
 
             dataDAO.deleteDevice(uuid);
+            trustDAO.deleteDevice(uuid);
             super.delete(uuid);
             refreshVpnUsers();
         }
@@ -141,6 +144,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
     @Override public void forceDelete(String uuid) {
         dataDAO.deleteDevice(uuid);
+        trustDAO.deleteDevice(uuid);
         super.delete(uuid);
         refreshVpnUsers();
     }
