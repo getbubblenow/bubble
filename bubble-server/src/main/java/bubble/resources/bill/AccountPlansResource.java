@@ -221,7 +221,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                     request.setPaymentMethodObject(paymentMethods.get(0));
                 }
             }
-            if (request.getPaymentMethodObject().hasUuid()) {
+            if (request.hasPaymentMethodObject() && request.getPaymentMethodObject().hasUuid()) {
                 paymentMethod = paymentMethodDAO.findByUuid(request.getPaymentMethodObject().getUuid());
                 if (paymentMethod == null) errors.addViolation("err.purchase.paymentMethodNotFound");
             } else {
