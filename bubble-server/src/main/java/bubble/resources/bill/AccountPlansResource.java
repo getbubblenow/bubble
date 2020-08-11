@@ -108,7 +108,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
 
         final ValidationResult errors = new ValidationResult();
         if (!request.hasTimezone() || request.getTimezone().equals(DETECT_TIMEZONE)) {
-            request.setTimezone(geoService.getTimeZone(caller, getRemoteHost(req)).getStandardName());
+            request.setTimezone(geoService.getTimeZone(caller, getRemoteHost(req)).getTimeZoneId());
         }
         if (!request.hasLocale() || request.getLocale().equals(DETECT_LOCALE)) {
             request.setLocale(geoService.getFirstLocale(account, getRemoteHost(req), normalizeLangHeader(req)));
