@@ -3,20 +3,32 @@
     "comment": "create another account and login",
     "include": "new_account",
     "params": {
-      "email": "min_launch@example.com",
+      "email": "pref_plan_launch@example.com",
       "verifyEmail": true
     }
   },
 
   {
-    "comment": "add a payment method",
+    "comment": "list plans",
+    "request": { "uri": "plans" },
+    "response": {
+      "store": "plans",
+      "check": [
+        {"condition": "json.length > 0"}
+      ]
+    }
+  },
+
+  {
+    "comment": "add a payment method and preferred plan",
     "before": "stripe_tokenize_card",
     "request": {
       "uri": "me/paymentMethods",
       "method": "put",
       "entity": {
         "paymentMethodType": "credit",
-        "paymentInfo": "{{stripeToken}}"
+        "paymentInfo": "{{stripeToken}}",
+        "preferredPlan": "{{plans.[0].name}}"
       }
     }
   },

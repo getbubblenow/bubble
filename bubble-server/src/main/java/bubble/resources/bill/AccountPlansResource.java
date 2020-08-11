@@ -184,7 +184,13 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         if (plan == null) {
             plan = planDAO.findByUuid(caller.getPreferredPlan());
             if (plan == null) {
-                errors.addViolation("err.plan.required");
+                final List<BubblePlan> bubblePlans = planDAO.findAll();
+                if (empty(bubblePlans)) {
+                    errors.addViolation("err.plan.required");
+                } else {
+                    plan = bubblePlans.get(0);
+                    request.setPlan(plan.getUuid());
+                }
             } else {
                 request.setPlan(plan.getUuid());
             }
