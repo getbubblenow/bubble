@@ -151,6 +151,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
     @Transactional
     public synchronized boolean ensureAllSpareDevices(@NonNull final String account, @NonNull final String network) {
+        if (configuration.isSage()) return true;
         final var currentSpareDevices = findByAccountAndUninitialized(account);
         boolean newDevicesCreated = false;
         for (var i = currentSpareDevices.size(); i < SPARE_DEVICES_PER_ACCOUNT_MAX; i++) {
@@ -165,6 +166,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
      * uses only devices' UUIDs, so this should be called . No need to call this method in any other case.
      */
     public void refreshVpnUsers() {
+        if (configuration.isSage()) return;
         log.info("ensureSpareDevice: refreshing VPN users by touching: "+abs(VPN_REFRESH_USERS_FILE));
         touch(VPN_REFRESH_USERS_FILE);
     }

@@ -147,7 +147,7 @@ public class StandardSelfNodeService implements SelfNodeService {
         }
 
         // start hello sage and spare devices services, if we have a sage that is not ourselves
-        if (c.hasSageNode() && !c.isSelfSage()) {
+        if (!c.isSage()) {
             log.info("onStart: starting SageHelloService");
             c.getBean(SageHelloService.class).start();
 
