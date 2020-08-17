@@ -44,10 +44,11 @@
     - init_dhparams.sh
     - init_certbot.sh
 
+# File in cron.weekly must NOT have a .sh extension, or crond will not run it
 - name: Install certbot_renew.sh weekly cron job
   copy:
     src: "certbot_renew.sh"
-    dest: /etc/cron.weekly/certbot_renew.sh
+    dest: /etc/cron.weekly/certbot_renew
     owner: root
     group: root
     mode: 0755

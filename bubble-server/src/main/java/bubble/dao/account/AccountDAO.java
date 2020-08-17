@@ -23,6 +23,8 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.SearchService;
 import bubble.service.account.SyncPasswordService;
 import bubble.service.boot.SelfNodeService;
+import bubble.service.cloud.DeviceIdService;
+import bubble.service.stream.RuleEngineService;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -76,6 +78,8 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private SearchService searchService;
     @Autowired private SyncPasswordService syncPasswordService;
     @Autowired private ReferralCodeDAO referralCodeDAO;
+    @Autowired private DeviceIdService deviceService;
+    @Autowired private RuleEngineService ruleEngineService;
 
     public Account newAccount(Request req, Account caller, AccountRegistration request, Account parent) {
         final AccountContact contact = new AccountContact()
@@ -174,6 +178,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         final Account current = findByUuid(account.getUuid());
         if (current == null) throw notFoundEx(account.getUuid());
         account.setPreviousPasswordHash(current.getHashedPassword().getHashedPassword());
+        account.setRefreshShowBlockStats(current.showBlockStats() != account.showBlockStats());
         return super.preUpdate(account);
     }
 
@@ -188,6 +193,10 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
             final Account previousState = (Account) context;
             if (account.syncPassword() && previousState.isHashedPasswordChanged() && !previousState.skipSyncPassword()) {
                 syncPasswordService.syncPassword(account);
+            }
+            if (previousState.isRefreshShowBlockStats()) {
+                deviceService.initBlockStats(account);
+                ruleEngineService.flushCaches();
             }
         }
         return super.postUpdate(account, context);

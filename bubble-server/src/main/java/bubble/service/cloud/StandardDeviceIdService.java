@@ -7,6 +7,7 @@ package bubble.service.cloud;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.app.AppSiteDAO;
 import bubble.dao.device.DeviceDAO;
+import bubble.model.account.Account;
 import bubble.model.app.AppSite;
 import bubble.model.device.Device;
 import bubble.model.device.DeviceStatus;
@@ -16,6 +17,8 @@ import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.collection.SingletonList;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.FilenamePrefixFilter;
+import org.cobbzilla.util.network.NetworkUtil;
+import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,7 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static bubble.model.device.DeviceStatus.NO_DEVICE_STATUS;
@@ -47,6 +51,17 @@ public class StandardDeviceIdService implements DeviceIdService {
     // used in dnscrypt-proxy and mitmproxy to check device security level
     public static final String REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX = "bubble_device_security_level_";
     public static final String REDIS_KEY_DEVICE_SITE_MAX_SECURITY_LEVEL_PREFIX = "bubble_device_site_max_security_level_";
+    public static final String REDIS_KEY_ACCOUNT_SHOW_BLOCK_STATS = "bubble_account_showBlockStats_";
+
+    // used in dnscrypt-proxy to determine how to respond to blocked requests
+    public static final String REDIS_KEY_DEVICE_REJECT_WITH = "bubble_device_reject_with_";
+
+    // used in mitmproxy to determine how to respond to blocked requests
+    public static final String REDIS_KEY_DEVICE_SHOW_BLOCK_STATS = "bubble_device_showBlockStats_";
+
+    // used in mitmproxy to optimize passthru requests
+    // we flush keys with this prefix when changing showBlockStats flag
+    public static final String REDIS_KEY_CHUNK_FILTER_PASS = "__chunk_filter_pass__";
 
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private AccountDAO accountDAO;
@@ -141,6 +156,45 @@ public class StandardDeviceIdService implements DeviceIdService {
                     }
                 }
             }
+        }
+    }
+
+    public void initBlockStats (Account account) {
+        redis.set_plaintext(REDIS_KEY_ACCOUNT_SHOW_BLOCK_STATS+account.getUuid(), Boolean.toString(account.showBlockStats()));
+        redis.del_matching_withPrefix(REDIS_KEY_CHUNK_FILTER_PASS+"*");
+        for (Device device : deviceDAO.findByAccount(account.getUuid())) {
+            if (account.showBlockStats()) {
+                showBlockStats(device);
+            } else {
+                hideBlockStats(device);
+            }
+        }
+    }
+
+    public boolean doShowBlockStats(String accountUuid) {
+        return Boolean.parseBoolean(redis.get_plaintext(REDIS_KEY_ACCOUNT_SHOW_BLOCK_STATS + accountUuid));
+    }
+
+    public void showBlockStats (Device device) {
+        final Set<String> configuredIps = NetworkUtil.configuredIps();
+        final String privateIp = configuredIps.stream()
+                .filter(addr -> addr.startsWith("10."))
+                .findFirst()
+                .orElse(null);
+        if (privateIp == null) {
+            log.error("showBlockStats: no system private IP found, configuredIps="+StringUtil.toString(configuredIps));
+            return;
+        }
+        for (String ip : findIpsByDevice(device.getUuid())) {
+            redis.set_plaintext(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS + ip, Boolean.toString(true));
+            redis.set_plaintext(REDIS_KEY_DEVICE_REJECT_WITH + ip, privateIp);
+        }
+    }
+
+    public void hideBlockStats (Device device) {
+        for (String ip : findIpsByDevice(device.getUuid())) {
+            redis.del_withPrefix(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS + ip);
+            redis.del_withPrefix(REDIS_KEY_DEVICE_REJECT_WITH + ip);
         }
     }
 

@@ -6,6 +6,7 @@
       "site": "Twitter",
       "template": true,
       "requestCheck": true,
+      "requestModifier": true,
       "fqdn": "twitter.com",
       "urlRegex": ".*",
       "rule": "twitter_user_blocker"
@@ -14,6 +15,7 @@
       "site": "Twitter",
       "template": true,
       "requestCheck": true,
+      "requestModifier": true,
       "fqdn": "mobile.twitter.com",
       "urlRegex": ".*",
       "rule": "twitter_user_blocker"

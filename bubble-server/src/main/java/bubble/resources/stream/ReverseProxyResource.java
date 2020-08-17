@@ -90,7 +90,7 @@ public class ReverseProxyResource {
                                     .setUri(ub.getFullPath())
                                     .setUserAgent(getUserAgent(request))
                                     .setReferer(getReferer(request))
-                                    .setRemoteAddr(remoteHost)
+                                    .setClientAddr(remoteHost)
                                     .setDevice(device.getUuid()))
                             .setRequestId(id)
                             .setDecision(FilterMatchDecision.match)

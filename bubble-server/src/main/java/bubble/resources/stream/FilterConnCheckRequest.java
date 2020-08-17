@@ -6,6 +6,7 @@ package bubble.resources.stream;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang.ArrayUtils;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
@@ -16,6 +17,7 @@ public class FilterConnCheckRequest {
 
     @Getter @Setter private String[] fqdns;
     public boolean hasFqdns() { return !empty(fqdns); }
+    public boolean hasFqdn(String f) { return hasFqdns() && ArrayUtils.contains(fqdns, f); }
 
     @Getter @Setter private String remoteAddr;
     public boolean hasRemoteAddr() { return !empty(remoteAddr); }

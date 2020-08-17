@@ -54,6 +54,7 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
     @Override public Object preCreate(AppMatcher matcher) {
         if (matcher.getConnCheck() == null) matcher.setConnCheck(false);
         if (matcher.getRequestCheck() == null) matcher.setRequestCheck(false);
+        if (matcher.getRequestModifier() == null) matcher.setRequestModifier(false);
         return super.preCreate(matcher);
     }
 

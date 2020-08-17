@@ -75,6 +75,7 @@
                         <include>bubble.test.system.DriverTest</include>
                         <include>bubble.test.filter.ProxyTest</include>
                         <include>bubble.test.filter.TrafficAnalyticsTest</include>
+                        <include>bubble.test.filter.BlockSummaryTest</include>
                         <include>bubble.test.system.BackupTest</include>
                         <include>bubble.test.system.NetworkTest</include>
                         <include>bubble.abp.spec.BlockListTest</include>

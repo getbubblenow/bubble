@@ -6,6 +6,7 @@
       "site": "Reason",
       "template": true,
       "requestCheck": true,
+      "requestModifier": true,
       "fqdn": "reason.com",
       "urlRegex": "/20\\d{2}/\\d{2}/\\d{2}/[-\\w]+/",
       "rule": "reason_user_blocker"

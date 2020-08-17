@@ -16,7 +16,7 @@ import static org.cobbzilla.util.http.HttpStatusCodes.OK;
 public enum FilterMatchDecision {
 
     no_match (OK),                // associated matcher should not be included in request processing
-    match (OK),                   // associated should be included in request processing
+    match (OK),                   // associated matcher should be included in request processing
     abort_ok (OK),                // abort request processing, return empty 200 OK response to client
     abort_not_found (NOT_FOUND),  // abort request processing, return empty 404 Not Found response to client
     pass_thru (OK);               // pass-through TLS request, do not intercept
@@ -25,5 +25,7 @@ public enum FilterMatchDecision {
 
     @Getter private final int httpStatusCode;
     public int httpStatus() { return getHttpStatusCode(); }
+
+    public boolean isAbort () { return this.name().startsWith("abort"); }
 
 }

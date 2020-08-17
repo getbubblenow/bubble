@@ -4,6 +4,7 @@
  */
 package bubble.rule.bblock;
 
+import bubble.rule.RequestModifierConfig;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,13 +15,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
 @NoArgsConstructor @Slf4j
-public class BubbleBlockConfig {
+public class BubbleBlockConfig extends RequestModifierConfig {
 
     @Getter @Setter private Boolean inPageBlocks;
-    public boolean inPageBlocks() { return inPageBlocks != null && inPageBlocks; }
+    public boolean inPageBlocks() { return bool(inPageBlocks); }
 
     @Getter @Setter private BubbleUserAgentBlock[] userAgentBlocks;
     public boolean hasUserAgentBlocks () { return !empty(userAgentBlocks); }

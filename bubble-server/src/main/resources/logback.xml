@@ -40,6 +40,7 @@
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
     <logger name="bubble.service.notify.NotificationService" level="WARN" />
     <logger name="bubble.rule.bblock.BubbleBlockRuleDriver" level="WARN" />
+    <logger name="bubble.service.block" level="DEBUG" />
     <logger name="bubble.abp" level="WARN" />
 <!--    <logger name="bubble.abp.BubbleBlockCondition" level="DEBUG" />-->
 <!--    <logger name="bubble.abp.BubbleBlockConditionOperation" level="DEBUG" />-->
@@ -53,8 +54,8 @@
 <!--    <logger name="bubble.service.stream.StandardRuleEngineService" level="DEBUG" />-->
     <logger name="bubble.service.stream.ActiveStreamState" level="WARN" />
     <logger name="bubble.resources.stream" level="WARN" />
+<!--    <logger name="bubble.resources.stream.FilterHttpResource" level="DEBUG" />-->
     <logger name="bubble.resources.stream.FilterHttpResource" level="WARN" />
-<!--    <logger name="bubble.resources.stream.FilterHttpResource" level="INFO" />-->
     <logger name="bubble.service.stream" level="INFO" />
 <!--    <logger name="bubble.service.account.StandardAccountMessageService" level="DEBUG" />-->
 <!--    <logger name="bubble.dao.account.message.AccountMessageDAO" level="DEBUG" />-->

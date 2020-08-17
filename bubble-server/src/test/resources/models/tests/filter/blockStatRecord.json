@@ -1,0 +1,475 @@
+{
+  "requestId" : "reason.com.8646e759-a47c-4730-9ed6-e6dafe2515c4.1597679821.173839",
+  "referer" : "NONE",
+  "url" : "reason.com/latest/",
+  "decision" : "match",
+  "childRecords" : [ {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.cf3baab3-b5aa-4da2-a005-c17a97c8efa7.1597679823.885781",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-includes/css/dist/block-library/style.min.css?ver=5.5",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.31769c6c-6a5e-4153-ae55-3251c61f6af3.1597679824.2184844",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-includes/js/mediaelement/wp-mediaelement.min.css?ver=5.5",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "static-na.payments-amazon.com.c5555cef-5279-4551-9aad-240bda9b91dc.1597679824.4544876",
+    "referer" : "https://reason.com/latest/",
+    "url" : "static-na.payments-amazon.com/OffAmazonPayments/us/js/Widgets.js",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "cdnjs.cloudflare.com.048ba40f-2537-4fea-8e65-3835e85464da.1597679824.7191582",
+    "referer" : "https://reason.com/latest/",
+    "url" : "cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.css",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "pro.fontawesome.com.a9c3331d-9b2d-4e38-b197-c18c579fd976.1597679824.9207523",
+    "referer" : "https://reason.com/latest/",
+    "url" : "pro.fontawesome.com/releases/v5.11.2/css/all.css",
+    "decision" : "match",
+    "childRecords" : [ {
+      "requestId" : "pro.fontawesome.com.2f42f6bc-c5ba-41d9-8e28-144e2a192ac2.1597679829.1615913",
+      "referer" : "https://pro.fontawesome.com/releases/v5.11.2/css/all.css",
+      "url" : "pro.fontawesome.com/releases/v5.11.2/webfonts/fa-regular-400.woff2",
+      "decision" : "match",
+      "childRecords" : [ ]
+    }, {
+      "requestId" : "pro.fontawesome.com.dc4a6d29-cec5-439b-9f84-35e8097dfa54.1597679830.4538877",
+      "referer" : "https://pro.fontawesome.com/releases/v5.11.2/css/all.css",
+      "url" : "pro.fontawesome.com/releases/v5.11.2/webfonts/fa-brands-400.woff2",
+      "decision" : "match",
+      "childRecords" : [ ]
+    }, {
+      "requestId" : "pro.fontawesome.com.623715e7-a65c-4594-99e2-3e15bfa942d1.1597679830.9182365",
+      "referer" : "https://pro.fontawesome.com/releases/v5.11.2/css/all.css",
+      "url" : "pro.fontawesome.com/releases/v5.11.2/webfonts/fa-solid-900.woff2",
+      "decision" : "match",
+      "childRecords" : [ ]
+    } ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.91bf780c-fee2-4a46-bdbd-a0b2ea1e3f70.1597679825.1448257",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-includes/js/mediaelement/mediaelementplayer-legacy.min.css?ver=4.2.13-9993131",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.dc562fb9-f51f-4de1-a223-7dff12bec4cc.1597679825.493105",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-content/cache/min/1/wp-content/plugins/reason-forms/dist/assets/css/main_c3624a79-9de4930dc47c8f4f8e9e4028055d480a.css",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.293cd277-c502-494d-a570-4ed79044c693.1597679825.712245",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-content/cache/min/1/wp-content/themes/reason-com/dist/styles/main_e5f1bcd1-e3191af6573740dd1fdf95872242d36b.css",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "www.google.com.415d150f-21a0-4c46-9542-6878bd35c07f.1597679825.922725",
+    "referer" : "https://reason.com/latest/",
+    "url" : "www.google.com/recaptcha/api.js?onload=CaptchaCallback&render=explicit",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.bbe6be52-963e-46e9-83ad-861ca40a3698.1597679826.1044118",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-includes/js/jquery/jquery.js?ver=1.12.4-wp",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "js.authorize.net.4312e7cf-ba51-43dc-8051-70ce8e31bc30.1597679826.277205",
+    "referer" : "https://reason.com/latest/",
+    "url" : "js.authorize.net/v1/Accept.js",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "cdnjs.cloudflare.com.75257aad-5093-4ddf-86ae-253cb9874d32.1597679826.4367824",
+    "referer" : "https://reason.com/latest/",
+    "url" : "cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.d203ac89-c825-432e-85dd-eb2c12af8e63.1597679826.7678998",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-content/plugins/postup-for-reason/js/puprf-main.min.js?ver=200522-04435",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.56e4265a-f19b-49d0-b8c0-f1bd086a49f4.1597679826.9670165",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-content/plugins/reason-parsely/public/js/reason-parsely-public.js?ver=1.0.2",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.9fc693c9-9725-4436-a558-7d5b6d66e782.1597679827.2029767",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-content/plugins/reason-forms/dist/assets/js/main_c3624a79.js?ver=200724-230715",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.1637858c-e646-481f-8ffd-c10771fb42f6.1597679827.3765674",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-includes/js/mediaelement/mediaelement-and-player.min.js?ver=4.2.13-9993131",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.a77de1e4-4d5a-46a9-a14f-a4070073fe14.1597679827.5914438",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-includes/js/mediaelement/mediaelement-migrate.min.js?ver=5.5",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.01312be9-66e8-444a-8145-bc4845005856.1597679827.8578155",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-includes/js/mediaelement/wp-mediaelement.min.js?ver=5.5",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "js.authorize.net.add32bb0-e5b6-4195-961b-fa0403202745.1597679828.2090032",
+    "referer" : "https://reason.com/latest/",
+    "url" : "js.authorize.net/v1/AcceptCore.js",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "static-na.payments-amazon.com.a45c1387-c730-449d-942b-01013bac3ae8.1597679828.4071748",
+    "referer" : "https://reason.com/latest/",
+    "url" : "static-na.payments-amazon.com/v2/login.js",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.27b92488-cc66-4d88-aa37-bbadd4f8221c.1597679828.8175836",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-content/themes/reason-com/dist/scripts/main_e5f1bcd1.js",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.42a9b56f-423b-44f7-bfc7-5824d0dfa4ab.1597679828.9988275",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-includes/js/wp-embed.min.js?ver=5.5",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.7401fb69-4379-4c01-8d06-48b42b2aa446.1597679829.3114657",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-content/cache/busting/facebook-tracking/fbpix-events-en_US-2.9.23.js",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.b6397573-66bf-493f-8328-4a5ad87f8b3f.1597679829.5069733",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-content/plugins/wp-rocket/assets/js/lazyload/16.1/lazyload.min.js",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "www.googletagmanager.com.2c9668e0-224b-454d-96f8-db86b40ad5c1.1597679830.173324",
+    "referer" : "https://reason.com/latest/",
+    "url" : "www.googletagmanager.com/gtm.js?id=GTM-5GHNJLW&gtm_auth=QxpctdM_XW9LaL_mGzTZ1Q&gtm_preview=env-1&gtm_cookies_win=x",
+    "decision" : "abort_not_found",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "www.youtube.com.80133077-30ea-4084-ba30-dd812dc6b2c1.1597679830.2052279",
+    "referer" : "https://reason.com/latest/",
+    "url" : "www.youtube.com/embed/lzka8m2PiW8?enablejsapi=1",
+    "decision" : "match",
+    "childRecords" : [ {
+      "requestId" : "www.youtube.com.5a939f2c-5a76-4813-9aa0-97a6b5ef882e.1597679837.8075325",
+      "referer" : "https://www.youtube.com/embed/lzka8m2PiW8?enablejsapi=1",
+      "url" : "www.youtube.com/yts/jsbin/fetch-polyfill-vfl6MZH8P/fetch-polyfill.js",
+      "decision" : "match",
+      "childRecords" : [ ]
+    }, {
+      "requestId" : "www.youtube.com.3f3b2269-4c25-4c59-b1a5-d86fe5562290.1597679838.3835044",
+      "referer" : "https://www.youtube.com/embed/lzka8m2PiW8?enablejsapi=1",
+      "url" : "www.youtube.com/s/player/0c815aae/player_ias.vflset/en_US/base.js",
+      "decision" : "match",
+      "childRecords" : [ ]
+    }, {
+      "requestId" : "www.youtube.com.80888248-4632-4a4b-b50e-21253f1eced8.1597679838.575206",
+      "referer" : "https://www.youtube.com/embed/lzka8m2PiW8?enablejsapi=1",
+      "url" : "www.youtube.com/s/player/0c815aae/www-embed-player.vflset/www-embed-player.js",
+      "decision" : "match",
+      "childRecords" : [ ]
+    }, {
+      "requestId" : "www.youtube.com.a68083db-9d8d-4153-8b58-bebff0c1b036.1597679839.5476015",
+      "referer" : "https://www.youtube.com/embed/lzka8m2PiW8?enablejsapi=1",
+      "url" : "www.youtube.com/s/player/0c815aae/player_ias.vflset/en_US/remote.js",
+      "decision" : "match",
+      "childRecords" : [ ]
+    }, {
+      "requestId" : "www.youtube.com.30d0e594-5525-4a41-b903-e38eb9f2c671.1597679840.5820675",
+      "referer" : "https://www.youtube.com/embed/lzka8m2PiW8?enablejsapi=1",
+      "url" : "www.youtube.com/s/player/0c815aae/player_ias.vflset/en_US/embed.js",
+      "decision" : "match",
+      "childRecords" : [ ]
+    }, {
+      "requestId" : "www.youtube.com.5b826f52-c23a-43e3-ac0c-639f4e59b5d5.1597679850.1831374",
+      "referer" : "https://www.youtube.com/embed/lzka8m2PiW8?enablejsapi=1",
+      "url" : "www.youtube.com/youtubei/v1/log_event?alt=json&key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
+      "decision" : "abort_not_found",
+      "childRecords" : [ ]
+    } ]
+  }, {
+    "requestId" : "www.youtube.com.0bf4e9e9-d756-49d9-9cf6-386e068efea0.1597679830.3525195",
+    "referer" : "https://reason.com/latest/",
+    "url" : "www.youtube.com/embed/D8v_sBHo86A?enablejsapi=1",
+    "decision" : "match",
+    "childRecords" : [ {
+      "requestId" : "www.youtube.com.8a492452-b408-46d0-9391-463bf28cecb6.1597679835.165069",
+      "referer" : "https://www.youtube.com/embed/D8v_sBHo86A?enablejsapi=1",
+      "url" : "www.youtube.com/s/player/0c815aae/www-player-webp.css",
+      "decision" : "match",
+      "childRecords" : [ ]
+    }, {
+      "requestId" : "www.youtube.com.88aee176-1c16-44ec-b29c-2f2d85bf9a0e.1597679835.3735561",
+      "referer" : "https://www.youtube.com/embed/D8v_sBHo86A?enablejsapi=1",
+      "url" : "www.youtube.com/s/player/0c815aae/www-embed-player.vflset/www-embed-player.js",
+      "decision" : "match",
+      "childRecords" : [ ]
+    }, {
+      "requestId" : "www.youtube.com.eaf62562-2d9a-4e48-8d30-4c24a87edfe1.1597679835.58542",
+      "referer" : "https://www.youtube.com/embed/D8v_sBHo86A?enablejsapi=1",
+      "url" : "www.youtube.com/s/player/0c815aae/player_ias.vflset/en_US/base.js",
+      "decision" : "match",
+      "childRecords" : [ ]
+    }, {
+      "requestId" : "www.youtube.com.d0112cfc-40ce-481f-8f80-482e99aca087.1597679838.176098",
+      "referer" : "https://www.youtube.com/embed/D8v_sBHo86A?enablejsapi=1",
+      "url" : "www.youtube.com/yts/jsbin/fetch-polyfill-vfl6MZH8P/fetch-polyfill.js",
+      "decision" : "match",
+      "childRecords" : [ ]
+    }, {
+      "requestId" : "www.youtube.com.55803729-aa17-43d8-8e5e-7fd5bed566a0.1597679840.8800178",
+      "referer" : "https://www.youtube.com/embed/D8v_sBHo86A?enablejsapi=1",
+      "url" : "www.youtube.com/s/player/0c815aae/player_ias.vflset/en_US/embed.js",
+      "decision" : "match",
+      "childRecords" : [ ]
+    }, {
+      "requestId" : "www.youtube.com.c3d7a820-0b74-452b-8766-067e9c558dac.1597679841.025146",
+      "referer" : "https://www.youtube.com/embed/D8v_sBHo86A?enablejsapi=1",
+      "url" : "www.youtube.com/s/player/0c815aae/player_ias.vflset/en_US/remote.js",
+      "decision" : "match",
+      "childRecords" : [ {
+        "requestId" : "googleads.g.doubleclick.net.553d006a-0315-4241-98d5-ef56d289c85f.1597679841.1790926",
+        "referer" : "https://www.youtube.com/",
+        "url" : "googleads.g.doubleclick.net/pagead/id",
+        "decision" : "abort_not_found",
+        "childRecords" : [ ]
+      }, {
+        "requestId" : "googleads.g.doubleclick.net.6da7c10d-10ab-4bec-bd5a-96b85631372a.1597679841.3626337",
+        "referer" : "https://www.youtube.com/",
+        "url" : "googleads.g.doubleclick.net/pagead/id",
+        "decision" : "abort_not_found",
+        "childRecords" : [ ]
+      }, {
+        "requestId" : "static.doubleclick.net.20fd3c88-ac6a-4e8a-890a-07a86a38e223.1597679841.3844354",
+        "referer" : "https://www.youtube.com/",
+        "url" : "static.doubleclick.net/instream/ad_status.js",
+        "decision" : "abort_not_found",
+        "childRecords" : [ ]
+      }, {
+        "requestId" : "static.doubleclick.net.ace62722-e234-4b24-b643-4a3bff7462b4.1597679841.4170556",
+        "referer" : "https://www.youtube.com/",
+        "url" : "static.doubleclick.net/instream/ad_status.js",
+        "decision" : "abort_not_found",
+        "childRecords" : [ ]
+      } ]
+    }, {
+      "requestId" : "www.youtube.com.cd92ec11-970a-40eb-928d-105022c5f738.1597679850.3985817",
+      "referer" : "https://www.youtube.com/embed/D8v_sBHo86A?enablejsapi=1",
+      "url" : "www.youtube.com/youtubei/v1/log_event?alt=json&key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
+      "decision" : "abort_not_found",
+      "childRecords" : [ {
+        "requestId" : "googleads.g.doubleclick.net.beb56c87-4031-4125-bf44-b4a9f3b6fee5.1597680087.0667331",
+        "referer" : "https://www.youtube.com/",
+        "url" : "googleads.g.doubleclick.net/pagead/id",
+        "decision" : "abort_not_found",
+        "childRecords" : [ ]
+      }, {
+        "requestId" : "googleads.g.doubleclick.net.856bd969-2e9d-4ef4-8644-4690d1908ebc.1597680087.376699",
+        "referer" : "https://www.youtube.com/",
+        "url" : "googleads.g.doubleclick.net/pagead/id",
+        "decision" : "abort_not_found",
+        "childRecords" : [ ]
+      } ]
+    } ]
+  }, {
+    "requestId" : "d1z2jf7jlzjs58.cloudfront.net.085e457a-5e1d-40f8-94e0-7499a18b45d1.1597679830.6171253",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d1z2jf7jlzjs58.cloudfront.net/p.js",
+    "decision" : "abort_not_found",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "js.authorize.net.983ff3cd-be50-4cdc-bae0-22ae4aef8baf.1597679830.766471",
+    "referer" : "https://reason.com/latest/",
+    "url" : "js.authorize.net/v1/AcceptCore.js",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "a.pub.network.faf1cc52-7b30-46a7-afba-4f12868a0657.1597679831.1014266",
+    "referer" : "https://reason.com/latest/",
+    "url" : "a.pub.network/reason-com/pubfig.min.js",
+    "decision" : "abort_not_found",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.90aeebd4-c34b-4765-8eb8-96c4782bb45a.1597679831.1315837",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/kdp6eed.js",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.ea99f088-a4d5-45ee-8a3f-630dc136d991.1597679831.2945082",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/wp-content/cache/busting/facebook-tracking/fbpix-config-807449156089636-2.9.23.js",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "www.gstatic.com.d5aa6a6b-e214-42d9-a6cd-e72f3cd57c96.1597679831.5280895",
+    "referer" : "https://reason.com/latest/",
+    "url" : "www.gstatic.com/recaptcha/releases/TPiWapjoyMdQOtxLT9_b4n2W/recaptcha__en.js",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "reason.com.e7d306e8-f57d-4198-b318-b6c5abaab4e7.1597679831.7378786",
+    "referer" : "https://reason.com/latest/",
+    "url" : "reason.com/wp-content/themes/reason-com/dist/images/logo-inverted-without-tag_de403409.svg",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.47ff30db-f56a-4c06-99a4-53604e2aaefa.1597679831.9612765",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/img/c331x186-w331-q60/uploads/2020/08/Portland-protest-1-331x186.jpg",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.6b697059-4adb-4a81-be2a-1eb667bafcdd.1597679832.108128",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/img/c331x186-w331-q60/uploads/2020/08/sfphotosfour685030-331x186.jpg",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.67992054-a8f1-4c97-9c36-dce63b1663fa.1597679832.2529516",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/img/c331x186-w331-q60/uploads/2020/08/zumaamericastwentyseven151318-331x186.jpg",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "d2eehagpk5cl65.cloudfront.net.c69d62b4-32d7-44a7-8e21-a6352b255159.1597679832.4042878",
+    "referer" : "https://reason.com/latest/",
+    "url" : "d2eehagpk5cl65.cloudfront.net/img/c331x186-w331-q60/uploads/2020/08/dreamstime_xxl_176349629-331x186.jpg",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "payments.amazon.com.ffa5fb67-024c-46b8-992f-dbbe5c0b0f73.1597679832.6064692",
+    "referer" : "https://reason.com/latest/",
+    "url" : "payments.amazon.com/gp/widgets/sessionstabilizer?countryOfEstablishment=US&ledgerCurrency=USD&isSandbox=false",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "www.youtube.com.b3060764-c2a9-49a3-bd01-1196ea5f9bf9.1597679833.0756593",
+    "referer" : "https://reason.com/latest/",
+    "url" : "www.youtube.com/iframe_api",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "payments.amazon.com.46bd16a3-be9d-4dfb-b0b9-e77831e58752.1597679834.7099426",
+    "referer" : "https://reason.com/latest/",
+    "url" : "payments.amazon.com/cs/uedata",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.e0c0be7e-eda1-4c98-b0a4-e4657f528dfb.1597679836.4843092",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/af/a30f3c/00000000000000003b9b2245/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n5&v=3",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.1c0199db-277d-4508-9856-ff1de20170e5.1597679836.6690555",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/af/b825af/0000000000000000000118b1/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.63f7d0f3-3232-4509-b67b-4bc1e9548c9d.1597679836.8534153",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/af/a2031c/0000000000000000000118b9/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.def67027-319d-4073-9b7d-c938f1cca716.1597679837.0606365",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/af/bb00d4/00000000000000003b9b2244/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.c82e0501-2d57-4a9a-afbe-f553020f28bd.1597679837.2397454",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/af/2e6f07/000000000000000000011ce6/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n5&v=3",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.ed1d9670-9861-4b6f-85cb-6589f50cbb83.1597679837.4038742",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/af/9cb78a/0000000000000000000118ad/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "payments.amazon.com.d84a30c0-9d39-49f2-a6f9-f54955b9f816.1597679837.5427072",
+    "referer" : "https://reason.com/latest/",
+    "url" : "payments.amazon.com/abTestV2?countryOfEstablishment=US&ledgerCurrency=USD&isSandbox=false&encryptedSessionId=PAVJ4RnToMUH3Zqe3LMC8ysq6k7xqsxapizvmPm7oPyIJofTdsOsrapDnPFhx7I%253D",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "s.ytimg.com.88fa7148-9b54-4848-a2c7-6e3e2f48ffcb.1597679837.977823",
+    "referer" : "https://reason.com/latest/",
+    "url" : "s.ytimg.com/yts/jsbin/www-widgetapi-vfldn1jRM/www-widgetapi.js",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.0888d426-057d-411b-98e3-32d73fb345a1.1597679839.70849",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/af/2d0302/0000000000000000000118b6/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i4&v=3",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.afd8f7e0-3ae9-4e9c-9453-41132a664a4e.1597679839.854518",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/af/726c0c/00000000000000003b9b2300/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i7&v=3",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.6d25670f-17b2-4c8d-8bb1-78d4d9eeba00.1597679839.9960175",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/af/d4ccc3/00000000000000003b9b22ff/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.50f2448b-0d06-46e9-acfd-36b2cd5f798b.1597679840.1333256",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/af/f7c92b/00000000000000003b9b22f3/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.346e1557-ee14-4b89-9f93-6bc52d6824db.1597679840.2907472",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/af/00041c/0000000000000000000118b8/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i5&v=3",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.31f2611b-46bb-43e2-8767-cad2103c1297.1597679840.4165006",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/af/ce6b1d/0000000000000000000118ba/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i7&v=3",
+    "decision" : "match",
+    "childRecords" : [ ]
+  }, {
+    "requestId" : "use.typekit.net.bfe0e19b-4c77-4213-9b8c-679c626ece40.1597679841.21301",
+    "referer" : "https://reason.com/latest/",
+    "url" : "use.typekit.net/af/494bab/00000000000000003b9b22f4/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=i4&v=3",
+    "decision" : "match",
+    "childRecords" : [ ]
+  } ]
+}

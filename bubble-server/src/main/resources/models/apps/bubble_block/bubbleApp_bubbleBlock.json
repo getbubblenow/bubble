@@ -126,6 +126,7 @@
       "driver": "BubbleBlockRuleDriver",
       "priority": -1000,
       "config": {
+        "showStats": true,
         "blockLists": [
           {
             "name": "EasyList",
@@ -170,6 +171,10 @@
       "messages": [
         {"name": "name", "value": "Block Party!"},
         {"name": "icon", "value": "classpath:models/apps/bubble_block/blockparty-icon.svg"},
+        {"name": "icon-gray", "value": "classpath:models/apps/bubble_block/blockparty-icon-gray.svg"},
+        {"name": "icon-red", "value": "classpath:models/apps/bubble_block/blockparty-icon-red.svg"},
+        {"name": "icon-yellow", "value": "classpath:models/apps/bubble_block/blockparty-icon-yellow.svg"},
+        {"name": "icon-green", "value": "classpath:models/apps/bubble_block/blockparty-icon-green.svg"},
         {"name": "summary", "value": "Network Filter"},
         {"name": "description", "value": "Block adware, malware, phishing/scam sites, and much more"},
         {"name": "field.ctime", "value": "When"},

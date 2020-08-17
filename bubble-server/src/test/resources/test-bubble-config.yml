@@ -56,6 +56,7 @@ jersey:
    - org.cobbzilla.wizard.filters
   providerPackages:
    - org.cobbzilla.wizard.exceptionmappers
+   - bubble.exceptionmappers
   requestFilters: [ bubble.auth.BubbleAuthFilter ]
   responseFilters:
    - org.cobbzilla.wizard.filters.ScrubbableScrubber

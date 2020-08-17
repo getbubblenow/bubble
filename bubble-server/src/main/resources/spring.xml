@@ -28,5 +28,6 @@
     <context:component-scan base-package="bubble.auth"/>
     <context:component-scan base-package="bubble.service"/>
     <context:component-scan base-package="bubble.resources"/>
+    <context:component-scan base-package="bubble.exceptionmappers"/>
 
 </beans>

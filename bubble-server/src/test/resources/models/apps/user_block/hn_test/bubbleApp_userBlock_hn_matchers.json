@@ -6,6 +6,7 @@
       "site": "HackerNews",
       "template": true,
       "requestCheck": true,
+      "requestModifier": true,
       "fqdn": "news.ycombinator.com",
       "urlRegex": "/item\\?id=\\d+",
       "rule": "hn_user_blocker"

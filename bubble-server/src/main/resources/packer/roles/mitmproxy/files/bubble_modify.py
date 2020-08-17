@@ -9,7 +9,7 @@ from mitmproxy.net.http import Headers
 from bubble_config import bubble_port, bubble_host_alias, debug_capture_fqdn
 from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, BUBBLE_URI_PREFIX, \
     CTX_BUBBLE_REQUEST_ID, CTX_CONTENT_LENGTH, CTX_CONTENT_LENGTH_SENT, bubble_log, get_flow_ctx, add_flow_ctx, \
-    HEADER_FILTER_PASSTHRU, HEADER_CONTENT_SECURITY_POLICY, REDIS, redis_set, parse_host_header
+    HEADER_USER_AGENT, HEADER_FILTER_PASSTHRU, HEADER_CONTENT_SECURITY_POLICY, REDIS, redis_set, parse_host_header
 
 BUFFER_SIZE = 4096
 HEADER_CONTENT_TYPE = 'Content-Type'
@@ -22,7 +22,7 @@ STANDARD_FILTER_HEADERS = {HEADER_CONTENT_TYPE: CONTENT_TYPE_BINARY}
 REDIS_FILTER_PASSTHRU_PREFIX = '__chunk_filter_pass__'
 REDIS_FILTER_PASSTHRU_DURATION = 600
 
-def filter_chunk(flow, chunk, req_id, last, content_encoding=None, content_type=None, content_length=None, csp=None):
+def filter_chunk(flow, chunk, req_id, user_agent, last, content_encoding=None, content_type=None, content_length=None, csp=None):
     if debug_capture_fqdn:
         host = None
         if flow.client_conn.tls_established:
@@ -46,10 +46,10 @@ def filter_chunk(flow, chunk, req_id, last, content_encoding=None, content_type=
                 return chunk
 
     # should we just passthru?
-    redis_passthru_key = REDIS_FILTER_PASSTHRU_PREFIX + flow.request.method + ':' + flow.request.url
+    redis_passthru_key = REDIS_FILTER_PASSTHRU_PREFIX + flow.request.method + '~~~' + user_agent + ':' + flow.request.url
     do_pass = REDIS.get(redis_passthru_key)
     if do_pass:
-        # bubble_log('filter_chunk: req_id='+req_id+': passthru found in redis, returning chunk')
+        bubble_log('filter_chunk: req_id='+req_id+': passthru found in redis, returning chunk')
         REDIS.touch(redis_passthru_key)
         return chunk
 
@@ -94,7 +94,7 @@ def filter_chunk(flow, chunk, req_id, last, content_encoding=None, content_type=
     return response.content
 
 
-def bubble_filter_chunks(flow, chunks, req_id, content_encoding, content_type, csp):
+def bubble_filter_chunks(flow, chunks, req_id, user_agent, content_encoding, content_type, csp):
     """
     chunks is a generator that can be used to iterate over all chunks.
     """
@@ -111,20 +111,20 @@ def bubble_filter_chunks(flow, chunks, req_id, content_encoding, content_type, c
             else:
                 last = False
             if first:
-                yield filter_chunk(flow, chunk, req_id, last, content_encoding, content_type, content_length, csp)
+                yield filter_chunk(flow, chunk, req_id, user_agent, last, content_encoding, content_type, content_length, csp)
                 first = False
             else:
-                yield filter_chunk(flow, chunk, req_id, last)
+                yield filter_chunk(flow, chunk, req_id, user_agent, last)
         if not content_length:
-            yield filter_chunk(flow, None, req_id, True)  # get the last bits of data
+            yield filter_chunk(flow, None, req_id, user_agent, True)  # get the last bits of data
     except Exception as e:
         bubble_log('bubble_filter_chunks: exception='+repr(e))
         traceback.print_exc()
         yield None
 
 
-def bubble_modify(flow, req_id, content_encoding, content_type, csp):
-    return lambda chunks: bubble_filter_chunks(flow, chunks, req_id, content_encoding, content_type, csp)
+def bubble_modify(flow, req_id, user_agent, content_encoding, content_type, csp):
+    return lambda chunks: bubble_filter_chunks(flow, chunks, req_id, user_agent, content_encoding, content_type, csp)
 
 
 def send_bubble_response(response):
@@ -172,6 +172,10 @@ def responseheaders(flow):
             prefix = 'responseheaders(req_id='+str(req_id)+'): '
             if req_id is not None and matchers is not None:
                 bubble_log(prefix+' matchers: '+repr(matchers))
+                if HEADER_USER_AGENT in flow.request.headers:
+                    user_agent = flow.request.headers[HEADER_USER_AGENT]
+                else:
+                    user_agent = ''
                 if HEADER_CONTENT_TYPE in flow.response.headers:
                     content_type = flow.response.headers[HEADER_CONTENT_TYPE]
                     if matchers:
@@ -201,7 +205,7 @@ def responseheaders(flow):
 
                         content_length_value = flow.response.headers.pop(HEADER_CONTENT_LENGTH, None)
                         bubble_log(prefix+'content_encoding='+repr(content_encoding) + ', content_type='+repr(content_type))
-                        flow.response.stream = bubble_modify(flow, req_id, content_encoding, content_type, csp)
+                        flow.response.stream = bubble_modify(flow, req_id, user_agent, content_encoding, content_type, csp)
                         if content_length_value:
                             flow.response.headers['transfer-encoding'] = 'chunked'
                             # find server_conn to set fake_chunks on

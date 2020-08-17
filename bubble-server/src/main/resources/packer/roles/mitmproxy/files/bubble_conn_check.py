@@ -28,7 +28,7 @@ from mitmproxy.exceptions import TlsProtocolException
 from mitmproxy.net import tls as net_tls
 
 from bubble_api import bubble_log, bubble_conn_check, bubble_activity_log, REDIS, redis_set
-from bubble_config import bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6, cert_validation_host
+from bubble_config import bubble_host, bubble_host_alias, bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6, cert_validation_host
 from bubble_vpn4 import wireguard_network_ipv4
 from bubble_vpn6 import wireguard_network_ipv6
 from netaddr import IPAddress, IPNetwork
@@ -41,6 +41,7 @@ REDIS_CONN_CHECK_PREFIX = 'bubble_conn_check_'
 REDIS_CHECK_DURATION = 60 * 60  # 1 hour timeout
 REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX = 'bubble_device_security_level_'  # defined in StandardDeviceIdService
 REDIS_KEY_DEVICE_SITE_MAX_SECURITY_LEVEL_PREFIX = 'bubble_device_site_max_security_level_'  # defined in StandardDeviceIdService
+REDIS_KEY_DEVICE_SHOW_BLOCK_STATS = 'bubble_device_showBlockStats_'
 
 FORCE_PASSTHRU = {'passthru': True}
 FORCE_BLOCK = {'block': True}
@@ -77,6 +78,12 @@ def get_device_security_level(client_addr, fqdns):
     return {'level': level}
 
 
+def show_block_stats(client_addr):
+    show = REDIS.get(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS+client_addr)
+    if show is None:
+        return False
+    return show.decode() == 'true'
+
 def get_local_ips():
     global local_ips
     if local_ips is None:
@@ -86,8 +93,13 @@ def get_local_ips():
     return local_ips
 
 
+def is_bubble_request(ip, fqdns):
+    # return ip in get_local_ips()
+    return ip in get_local_ips() and (bubble_host in fqdns or bubble_host_alias in fqdns)
+
+
 def is_sage_request(ip, fqdns):
-    return ip == bubble_sage_ip4 or ip == bubble_sage_ip6 or bubble_sage_host in fqdns
+    return (ip == bubble_sage_ip4 or ip == bubble_sage_ip6) and bubble_sage_host in fqdns
 
 
 def is_not_from_vpn(client_addr):
@@ -134,9 +146,17 @@ class TlsFeedback(TlsLayer):
             super(TlsFeedback, self)._establish_tls_with_client()
 
         except TlsProtocolException as e:
+            if self.do_block:
+                bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+'/fqdns='+str(self.fqdns)+' and do_block==True, raising error for client '+client_address)
+                raise e
+
             tb = traceback.format_exc()
             if 'OpenSSL.SSL.ZeroReturnError' in tb:
                 bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+'/fqdns='+str(self.fqdns)+', raising SSL zero return error for client '+client_address)
+                raise e
+
+            elif 'SysCallError' in tb:
+                bubble_log('_establish_tls_with_client: TLS error for '+str(server_address)+'/fqdns='+str(self.fqdns)+', raising SysCallError for client '+client_address)
                 raise e
 
             elif self.fqdns is not None and len(self.fqdns) > 0:
@@ -213,7 +233,7 @@ def next_layer(next_layer):
         client_hello = net_tls.ClientHello.from_file(next_layer.client_conn.rfile)
         client_addr = next_layer.client_conn.address[0]
         server_addr = next_layer.server_conn.address[0]
-
+        bubble_log('next_layer: STARTING: client='+ client_addr+' server='+server_addr)
         if client_hello.sni:
             fqdn = client_hello.sni.decode()
             bubble_log('next_layer: using fqdn in SNI: '+ fqdn)
@@ -225,19 +245,20 @@ def next_layer(next_layer):
         no_fqdns = fqdns is None or len(fqdns) == 0
         security_level = get_device_security_level(client_addr, fqdns)
         next_layer.security_level = security_level
-        check = None
-        if server_addr in get_local_ips():
-            bubble_log('next_layer: enabling passthru for LOCAL server='+server_addr+' regardless of security_level='+repr(security_level)+' for client='+client_addr)
+        next_layer.do_block = False
+        if is_bubble_request(server_addr, fqdns):
+            bubble_log('next_layer: enabling passthru for LOCAL bubble='+server_addr+' (bubble_host ('+bubble_host+') in fqdns or bubble_host_alias ('+bubble_host_alias+') in fqdns) regardless of security_level='+repr(security_level)+' for client='+client_addr+', fqdns='+repr(fqdns))
+            check = FORCE_PASSTHRU
+
+        elif is_sage_request(server_addr, fqdns):
+            bubble_log('next_layer: enabling passthru for SAGE server='+server_addr+' regardless of security_level='+repr(security_level)+' for client='+client_addr)
             check = FORCE_PASSTHRU
 
         elif is_not_from_vpn(client_addr):
             bubble_log('next_layer: enabling block for non-VPN client='+client_addr+', fqdns='+str(fqdns))
             bubble_activity_log(client_addr, server_addr, 'conn_block_non_vpn', fqdns)
             next_layer.__class__ = TlsBlock
-
-        elif is_sage_request(server_addr, fqdns):
-            bubble_log('next_layer: enabling passthru for SAGE server='+server_addr+' regardless of security_level='+repr(security_level)+' for client='+client_addr)
-            check = FORCE_PASSTHRU
+            return
 
         elif security_level['level'] == SEC_OFF or security_level['level'] == SEC_BASIC:
             bubble_log('next_layer: enabling passthru for server='+server_addr+' because security_level='+repr(security_level)+' for client='+client_addr)
@@ -268,7 +289,11 @@ def next_layer(next_layer):
         elif 'block' in check and check['block']:
             bubble_log('next_layer: enabling block for server=' + server_addr+', fqdns='+str(fqdns))
             bubble_activity_log(client_addr, server_addr, 'conn_block', fqdns)
-            next_layer.__class__ = TlsBlock
+            if show_block_stats(client_addr):
+                next_layer.do_block = True
+                next_layer.__class__ = TlsFeedback
+            else:
+                next_layer.__class__ = TlsBlock
 
         else:
             bubble_log('next_layer: disabling passthru (with TlsFeedback) for client_addr='+client_addr+', server_addr='+server_addr+', fqdns='+str(fqdns))

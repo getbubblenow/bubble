@@ -8,28 +8,26 @@ import bubble.abp.*;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
+import bubble.model.app.BubbleApp;
 import bubble.model.device.Device;
 import bubble.resources.stream.FilterHttpRequest;
 import bubble.resources.stream.FilterMatchersRequest;
-import bubble.rule.AppRuleDriver;
 import bubble.rule.FilterMatchDecision;
+import bubble.rule.RequestModifierConfig;
+import bubble.rule.RequestModifierRule;
 import bubble.rule.analytics.TrafficAnalyticsRuleDriver;
 import bubble.service.stream.AppRuleHarness;
 import bubble.service.stream.ConnectionCheckResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.input.ReaderInputStream;
-import org.cobbzilla.util.handlebars.HandlebarsUtil;
+import org.apache.commons.collections4.map.SingletonMap;
 import org.cobbzilla.util.http.URIUtil;
-import org.cobbzilla.util.io.regex.RegexFilterReader;
-import org.cobbzilla.util.io.regex.RegexReplacementFilter;
 import org.cobbzilla.util.string.StringUtil;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,15 +37,14 @@ import static bubble.service.stream.HttpStreamDebug.getLogFqdn;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
-import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.string.StringUtil.UTF8cs;
+import static org.cobbzilla.util.string.StringUtil.EMPTY;
 import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 
 @Slf4j
-public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
+public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements RequestModifierRule {
 
     private final AtomicReference<BlockList> blockList = new AtomicReference<>(new BlockList());
     private BlockList getBlockList() { return blockList.get(); }
@@ -60,16 +57,36 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
 
     private final static Map<String, BlockListSource> blockListCache = new ConcurrentHashMap<>();
 
+    public boolean showStats() { return deviceService.doShowBlockStats(account.getUuid()); }
+
     @Override public <C> Class<C> getConfigClass() { return (Class<C>) BubbleBlockConfig.class; }
+
+    @Override public RequestModifierConfig getRequestModifierConfig() { return getRuleConfig(); }
+
+    @Override public boolean couldModify(FilterHttpRequest request) {
+        final BubbleBlockConfig config = getRuleConfig();
+        return request.isHtml() && request.isBrowser() && (config.inPageBlocks() || showStats());
+    }
 
     @Override public void init(JsonNode config,
                                JsonNode userConfig,
+                               BubbleApp app,
                                AppRule rule,
                                AppMatcher matcher,
                                Account account,
                                Device device) {
-        super.init(config, userConfig, rule, matcher, account, device);
+        initQuick(config, userConfig, app, rule, matcher, account, device);
         refreshBlockLists();
+    }
+
+    @Override public void initQuick(JsonNode config,
+                                    JsonNode userConfig,
+                                    BubbleApp app,
+                                    AppRule rule,
+                                    AppMatcher matcher,
+                                    Account account,
+                                    Device device) {
+        super.init(config, userConfig, app, rule, matcher, account, device);
     }
 
     @Override public JsonNode upgradeRuleConfig(JsonNode sageRuleConfig,
@@ -170,6 +187,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
         final BlockDecision decision = getPreprocessDecision(filter.getFqdn(), filter.getUri(), filter.getUserAgent(), filter.getReferer());
         final BlockDecisionType decisionType = decision.getDecisionType();
+        final FilterMatchDecision subDecision;
         switch (decisionType) {
             case block:
                 if (log.isInfoEnabled()) log.info(prefix+"decision is BLOCK");
@@ -178,19 +196,15 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                 return FilterMatchDecision.abort_not_found;  // block this request
 
             case allow: default:
-                if (filter.hasReferer()) {
-                    final FilterMatchDecision refererDecision = checkRefererDecision(filter, account, device, app, site, prefix);
-                    if (refererDecision != null) return refererDecision;
-                }
+                subDecision = checkRefererAndShowStats(decisionType, filter, account, device, extraLog, app, site, prefix, bubbleBlockConfig);
+                if (subDecision != null) return subDecision;
                 if (log.isInfoEnabled()) log.info(prefix+"decision is ALLOW");
                 else if (extraLog) log.error(prefix+"decision is ALLOW");
                 return FilterMatchDecision.no_match;
 
             case filter:
-                if (filter.hasReferer()) {
-                    final FilterMatchDecision refererDecision = checkRefererDecision(filter, account, device, app, site, prefix);
-                    if (refererDecision != null) return refererDecision;
-                }
+                subDecision = checkRefererAndShowStats(decisionType, filter, account, device, extraLog, app, site, prefix, bubbleBlockConfig);
+                if (subDecision != null) return subDecision;
                 final List<BlockSpec> specs = decision.getSpecs();
                 if (empty(specs)) {
                     if (log.isWarnEnabled()) log.warn(prefix+"decision was 'filter' but no specs were found, returning no_match");
@@ -214,6 +228,23 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                     return FilterMatchDecision.match;
                 }
         }
+    }
+
+    public FilterMatchDecision checkRefererAndShowStats(BlockDecisionType decisionType, FilterMatchersRequest filter, Account account, Device device, boolean extraLog, String app, String site, String prefix, BubbleBlockConfig bubbleBlockConfig) {
+        if (filter.hasReferer()) {
+            final FilterMatchDecision refererDecision = checkRefererDecision(filter, account, device, app, site, prefix);
+            if (refererDecision != null && refererDecision.isAbort()) {
+                if (log.isInfoEnabled()) log.info(prefix+"decision was "+decisionType+" but refererDecision was "+refererDecision+", returning "+refererDecision);
+                else if (extraLog) log.error(prefix+"decision was "+decisionType+" but refererDecision was "+refererDecision+", returning "+refererDecision);
+                return refererDecision;
+            }
+        }
+        if (showStats()) {
+            if (log.isInfoEnabled()) log.info(prefix+"decision was "+decisionType+" but showStats=true, returning match");
+            else if (extraLog) log.error(prefix+"decision was "+decisionType+" but showStats=true, returning match");
+            return FilterMatchDecision.match;
+        }
+        return null;
     }
 
     public FilterMatchDecision checkRefererDecision(FilterMatchersRequest filter, Account account, Device device, String app, String site, String prefix) {
@@ -268,10 +299,14 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         return false;
     }
 
+    public static final String FILTER_CTX_DECISION = "decision";
+    public static final String BLOCK_STATS_JS = "BLOCK_STATS_JS";
+
     @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
 
         final FilterMatchersRequest request = filterRequest.getMatchersResponse().getRequest();
         final String prefix = "doFilterResponse("+filterRequest.getId()+"): ";
+        final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
 
         // todo: add support for stream blockers: we may allow the request but wrap the returned InputStream
         // if the wrapper detects it should be blocked, then the connection cut short
@@ -281,6 +316,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
         // Now that we know the content type, re-check the BlockList
         final String contentType = filterRequest.getContentType();
         final BlockDecision decision = getBlockList().getDecision(request.getFqdn(), request.getUri(), contentType, request.getReferer(), true);
+        final Map<String, Object> filterCtx = new SingletonMap<>(FILTER_CTX_DECISION, decision);
         if (log.isDebugEnabled()) log.debug(prefix+"preprocess decision was "+decision+", but now we know contentType="+contentType);
         switch (decision.getDecisionType()) {
             case block:
@@ -306,39 +342,51 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver {
                 return EMPTY_STREAM;
         }
 
-        if (!isHtml(contentType)) {
+        if (!filterRequest.isHtml()) {
             log.warn(prefix+"cannot request non-html response ("+request.getUrl()+"), returning as-is: "+contentType);
             if (log.isInfoEnabled()) log.info(prefix+"SEND: unfiltered response (non-html content-type) for "+request.getUrl());
             return in;
         }
 
-        final String replacement = "<head><script>" + getBubbleJs(filterRequest.getId(), decision) + "</script>";
-        final RegexReplacementFilter filter = new RegexReplacementFilter("<head>", replacement);
-        final RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in, UTF8cs), filter).setMaxMatches(1);
-        if (log.isDebugEnabled()) {
-            log.debug(prefix+"filtering response for "+request.getUrl()+" - replacement.length = "+replacement.length());
-        } else if (log.isInfoEnabled()) {
-            log.info(prefix+"SEND: filtering response for "+request.getUrl());
+        final boolean showStats = showStats();
+        if (!bubbleBlockConfig.inPageBlocks() && !showStats) {
+            if (log.isInfoEnabled()) log.info(prefix + "SEND: both inPageBlocks and showStats are false, returning as-is");
+            return in;
         }
-        return new ReaderInputStream(reader, UTF8cs);
+        if (bubbleBlockConfig.inPageBlocks() && showStats) {
+            return filterInsertJs(in, filterRequest, filterCtx, BUBBLE_JS_TEMPLATE, getBubbleJsStatsTemplate(), BLOCK_STATS_JS, showStats);
+        }
+        if (bubbleBlockConfig.inPageBlocks()) {
+            return filterInsertJs(in, filterRequest, filterCtx, BUBBLE_JS_TEMPLATE, EMPTY, BLOCK_STATS_JS, showStats);
+        }
+        log.warn(prefix+"inserting JS for stats...");
+        return filterInsertJs(in, filterRequest, filterCtx, getBubbleJsStatsTemplate(), null, null, showStats);
+    }
+
+    protected String getBubbleJsStatsTemplate () {
+        return loadTemplate(BUBBLE_JS_STATS_TEMPLATE, BUBBLE_STATS_TEMPLATE_NAME);
     }
 
     public static final Class<BubbleBlockRuleDriver> BB = BubbleBlockRuleDriver.class;
     public static final String BUBBLE_JS_TEMPLATE = stream2string(getPackagePath(BB)+"/"+ BB.getSimpleName()+".js.hbs");
+
+    public static final String BUBBLE_STATS_TEMPLATE_NAME = BB.getSimpleName() + "_stats.js.hbs";
+    public static final String BUBBLE_JS_STATS_TEMPLATE = stream2string(getPackagePath(BB) + "/" + BUBBLE_STATS_TEMPLATE_NAME);
+
     private static final String CTX_BUBBLE_SELECTORS = "BUBBLE_SELECTORS_JSON";
     private static final String CTX_BUBBLE_BLACKLIST = "BUBBLE_BLACKLIST_JSON";
     private static final String CTX_BUBBLE_WHITELIST = "BUBBLE_WHITELIST_JSON";
 
-    private String getBubbleJs(String requestId, BlockDecision decision) {
-        final Map<String, Object> ctx = new HashMap<>();
-        ctx.put(CTX_JS_PREFIX, AppRuleDriver.getJsPrefix(requestId));
-        ctx.put(CTX_BUBBLE_REQUEST_ID, requestId);
-        ctx.put(CTX_BUBBLE_HOME, configuration.getPublicUriBase());
-        ctx.put(CTX_BUBBLE_DATA_ID, getDataId(requestId));
-        ctx.put(CTX_BUBBLE_SELECTORS, json(decision.getSelectors(), COMPACT_MAPPER));
-        ctx.put(CTX_BUBBLE_WHITELIST, json(getBlockList().getWhitelistDomains(), COMPACT_MAPPER));
-        ctx.put(CTX_BUBBLE_BLACKLIST, json(getBlockList().getBlacklistDomains(), COMPACT_MAPPER));
-        return HandlebarsUtil.apply(getHandlebars(), BUBBLE_JS_TEMPLATE, ctx);
+    @Override protected Map<String, Object> getBubbleJsContext(String requestId, Map<String, Object> filterCtx) {
+        final Map<String, Object> ctx = super.getBubbleJsContext(requestId, filterCtx);
+        final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
+        if (bubbleBlockConfig.inPageBlocks()) {
+            final BlockDecision decision = (BlockDecision) filterCtx.get(FILTER_CTX_DECISION);
+            ctx.put(CTX_BUBBLE_SELECTORS, json(decision.getSelectors(), COMPACT_MAPPER));
+            ctx.put(CTX_BUBBLE_WHITELIST, json(getBlockList().getWhitelistDomains(), COMPACT_MAPPER));
+            ctx.put(CTX_BUBBLE_BLACKLIST, json(getBlockList().getBlacklistDomains(), COMPACT_MAPPER));
+        }
+        return ctx;
     }
 
 }

@@ -36,7 +36,7 @@ public class TrafficRecord {
         setAccountUuid(account == null ? null : account.getUuid());
         setDeviceName(device == null ? null : device.getName());
         setDeviceUuid(device == null ? null : device.getUuid());
-        setIp(filter.getRemoteAddr());
+        setIp(filter.getServerAddr());
         setFqdn(filter.getFqdn());
         setUri(filter.getUri());
         setUserAgent(filter.getUserAgent());

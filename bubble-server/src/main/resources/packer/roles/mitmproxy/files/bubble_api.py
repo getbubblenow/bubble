@@ -100,14 +100,24 @@ DEBUG_MATCHER = {
         'rule': DEBUG_MATCHER_NAME
     }]
 }
+BLOCK_MATCHER = {
+    'decision': 'abort_not_found',
+    'matchers': [{
+        'name': 'BLOCK_MATCHER',
+        'contentTypeRegex': '.*',
+        "urlRegex": ".*",
+        'rule': 'BLOCK_MATCHER'
+    }]
+}
 
-def bubble_matchers(req_id, remote_addr, flow, host):
+
+def bubble_matchers(req_id, client_addr, server_addr, flow, host):
     if debug_capture_fqdn and host and host in debug_capture_fqdn:
         bubble_log('bubble_matchers: debug_capture_fqdn detected, returning DEBUG_MATCHER: '+host)
         return DEBUG_MATCHER
 
     headers = {
-        'X-Forwarded-For': remote_addr,
+        'X-Forwarded-For': client_addr,
         'Accept' : 'application/json',
         'Content-Type': 'application/json'
     }
@@ -134,11 +144,15 @@ def bubble_matchers(req_id, remote_addr, flow, host):
             'uri': flow.request.path,
             'userAgent': user_agent,
             'referer': referer,
-            'remoteAddr': remote_addr
+            'clientAddr': client_addr,
+            'serverAddr': server_addr
         }
         response = requests.post('http://127.0.0.1:'+bubble_port+'/api/filter/matchers/'+req_id, headers=headers, json=data)
         if response.ok:
             return response.json()
+        elif response.status_code == 403:
+            bubble_log('bubble_matchers response was FORBIDDEN, returning block: '+str(response.status_code)+' / '+repr(response.text))
+            return BLOCK_MATCHER
         bubble_log('bubble_matchers response not OK, returning empty matchers array: '+str(response.status_code)+' / '+repr(response.text))
     except Exception as e:
         bubble_log('bubble_matchers API call failed: '+repr(e))

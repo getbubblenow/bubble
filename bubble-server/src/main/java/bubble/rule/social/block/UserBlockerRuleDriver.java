@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.http.HttpContentTypes.isHtml;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.UTF8cs;
 
@@ -62,7 +61,7 @@ public class UserBlockerRuleDriver extends AbstractAppRuleDriver {
     protected UserBlockerConfig configObject() { return json(getFullConfig(), UserBlockerConfig.class); }
 
     @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
-        if (!isHtml(filterRequest.getContentType())) return in;
+        if (!filterRequest.isHtml()) return in;
 
         final String requestId = filterRequest.getId();
         final UserBlockerStreamFilter filter = new UserBlockerStreamFilter(requestId, matcher, rule, configuration.getHttp().getBaseUri());

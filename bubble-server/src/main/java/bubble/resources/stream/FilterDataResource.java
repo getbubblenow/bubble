@@ -5,11 +5,14 @@
 package bubble.resources.stream;
 
 import bubble.dao.app.AppDataDAO;
+import bubble.dao.app.AppRuleDAO;
+import bubble.dao.app.BubbleAppDAO;
+import bubble.dao.app.RuleDriverDAO;
 import bubble.model.account.Account;
-import bubble.model.app.AppData;
-import bubble.model.app.AppDataFormat;
-import bubble.model.app.AppMatcher;
+import bubble.model.app.*;
 import bubble.model.device.Device;
+import bubble.rule.AppRuleDriver;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -29,12 +32,28 @@ import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
+@Consumes(APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 @Slf4j
 public class FilterDataResource {
 
-    private Account account;
-    private Device device;
-    private AppMatcher matcher;
+    @Autowired private AppDataDAO dataDAO;
+    @Autowired private AppRuleDAO ruleDAO;
+    @Autowired private RuleDriverDAO driverDAO;
+    @Autowired private BubbleAppDAO appDAO;
+
+    private final Account account;
+    private final Device device;
+    private final AppMatcher matcher;
+    @Getter(lazy=true) private final AppRule rule = ruleDAO.findByUuid(matcher.getRule());
+    @Getter(lazy=true) private final RuleDriver driver = driverDAO.findByUuid(getRule().getDriver());
+    @Getter(lazy=true) private final BubbleApp app = appDAO.findByUuid(matcher.getApp());
+    @Getter(lazy=true) private final AppRuleDriver ruleDriver = initAppRuleDriver();
+
+    private AppRuleDriver initAppRuleDriver() {
+        log.warn("initAppRuleDriver: initializing driver....");
+        return getRule().initQuickDriver(getApp(), getDriver(), matcher, account, device);
+    }
 
     public FilterDataResource (Account account, Device device, AppMatcher matcher) {
         this.account = account;
@@ -42,10 +61,7 @@ public class FilterDataResource {
         this.matcher = matcher;
     }
 
-    @Autowired private AppDataDAO dataDAO;
-
     @GET @Path(EP_READ)
-    @Produces(APPLICATION_JSON)
     public Response readData(@Context Request req,
                              @Context ContainerRequest ctx,
                              @QueryParam("format") AppDataFormat format) {
@@ -70,8 +86,6 @@ public class FilterDataResource {
     }
 
     @POST @Path(EP_WRITE)
-    @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
     public Response writeData(@Context Request req,
                               @Context ContainerRequest ctx,
                               AppData data) {
@@ -80,7 +94,6 @@ public class FilterDataResource {
     }
 
     @GET @Path(EP_WRITE)
-    @Produces(APPLICATION_JSON)
     public Response writeData(@Context Request req,
                               @Context ContainerRequest ctx,
                               @QueryParam(Q_DATA) String dataJson,
@@ -121,6 +134,14 @@ public class FilterDataResource {
 
         if (log.isDebugEnabled()) log.debug("writeData: recording data=" + json(data, COMPACT_MAPPER));
         return dataDAO.set(data);
+    }
+
+    @GET @Path(EP_READ+"/rule/{id}")
+    public Response readRuleData(@Context Request req,
+                                 @Context ContainerRequest ctx,
+                                 @PathParam("id") String id) {
+        final Object data = getRuleDriver().readData(id);
+        return data == null ? notFound(id) : ok(data);
     }
 
 }

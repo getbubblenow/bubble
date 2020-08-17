@@ -80,7 +80,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 public class Account extends IdentifiableBaseParentEntity implements TokenPrincipal, SqlViewSearchResult {
 
     public static final String[] UPDATE_FIELDS = {
-            "url", "description", "autoUpdatePolicy", "syncPassword", "preferredPlan"
+            "url", "description", "autoUpdatePolicy", "syncPassword", "preferredPlan", "showBlockStats"
     };
     public static final String[] ADMIN_UPDATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "suspended", "admin");
     public static final String[] CREATE_FIELDS = ArrayUtil.append(ADMIN_UPDATE_FIELDS,
@@ -172,6 +172,12 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     @ECField(index=130)
     @Getter @Setter private Boolean syncPassword;
     public boolean syncPassword() { return syncPassword == null ? true : syncPassword; }
+
+    @ECField(index=140)
+    @Getter @Setter private Boolean showBlockStats;
+    public boolean showBlockStats() { return showBlockStats == null ? true : showBlockStats; }
+
+    @JsonIgnore @Transient @Getter @Setter private boolean refreshShowBlockStats;
 
     @JsonIgnore @Embedded @Getter private HashedPassword hashedPassword;
     public Account setHashedPassword (HashedPassword newPass) {

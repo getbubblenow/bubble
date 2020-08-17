@@ -5,10 +5,12 @@
 package bubble.service.stream;
 
 import bubble.dao.app.AppRuleDAO;
+import bubble.dao.app.BubbleAppDAO;
 import bubble.dao.app.RuleDriverDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
+import bubble.model.app.BubbleApp;
 import bubble.model.app.RuleDriver;
 import bubble.model.device.Device;
 import bubble.resources.stream.FilterHttpRequest;
@@ -75,6 +77,7 @@ public class StandardRuleEngineService implements RuleEngineService {
 
     public static final String HEADER_PASSTHRU = "X-Bubble-Passthru";
 
+    @Autowired private BubbleAppDAO appDAO;
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private BubbleConfiguration configuration;
@@ -122,7 +125,7 @@ public class StandardRuleEngineService implements RuleEngineService {
                                               FilterHttpRequest filterRequest) throws IOException {
 
         // sanity check
-        if (empty(filterRequest.getMatchers())) return passthru(request.getEntityStream());
+        if (empty(filterRequest.getMatchers())) return passthru(request);
 
         final List<AppRuleHarness> rules = initRules(filterRequest);
         final AppRuleHarness firstRule = rules.get(0);
@@ -159,8 +162,8 @@ public class StandardRuleEngineService implements RuleEngineService {
                                                      Integer chunkLength,
                                                      boolean last) throws IOException {
         final String prefix = "applyRulesToChunkAndSendResponse("+filterRequest.getId()+"): ";
-        if (!filterRequest.hasMatchers()) {
-            if (log.isDebugEnabled()) log.debug(prefix+"adding no matchers, returning passthru");
+        if (!filterRequest.hasRequestModifiers()) {
+            if (log.isDebugEnabled()) log.debug(prefix+"no request modifiers, returning passthru");
             return passthru(request);
         } else {
             log.info(prefix+" applying matchers: "+filterRequest.getMatcherNames());
@@ -243,10 +246,15 @@ public class StandardRuleEngineService implements RuleEngineService {
         for (AppRuleHarness h : rules) {
             final RuleDriver ruleDriver = driverDAO.findByUuid(h.getRule().getDriver());
             if (ruleDriver == null) {
-                log.warn("initRules: driver not found: "+h.getRule().getDriver());
+                log.warn("initRuleHarnesses: driver not found: "+h.getRule().getDriver());
                 continue;
             }
-            final AppRuleDriver unwiredDriver = h.getRule().initDriver(ruleDriver, h.getMatcher(), account, device);
+            final BubbleApp app = appDAO.findByAccountAndId(account.getUuid(), h.getRule().getApp());
+            if (app == null) {
+                log.warn("initRuleHarnesses: app not found: "+h.getRule().getApp());
+                continue;
+            }
+            final AppRuleDriver unwiredDriver = h.getRule().initDriver(app, ruleDriver, h.getMatcher(), account, device);
             final AppRuleDriver driver = configuration.autowire(unwiredDriver);
             h.setRuleDriver(ruleDriver);
             h.setDriver(driver);

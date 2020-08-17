@@ -37,6 +37,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.IPv4_LOCALHOST;
+import static org.cobbzilla.util.system.OutOfMemoryErrorUncaughtExceptionHandler.EXIT_ON_OOME;
 
 @NoArgsConstructor @Slf4j
 public class BubbleServer extends RestServerBase<BubbleConfiguration> {
@@ -78,6 +79,7 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
     public static void main(String[] args) throws Exception {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
+        Thread.setDefaultUncaughtExceptionHandler(EXIT_ON_OOME);
 
         final Map<String, String> env = loadEnvironment(args);
         final ConfigurationSource configSource = getConfigurationSource();
@@ -142,4 +144,5 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
     public static ConfigurationSource getConfigurationSource() {
         return getStreamConfigurationSource(BubbleServer.class, API_CONFIG_YML);
     }
+
 }

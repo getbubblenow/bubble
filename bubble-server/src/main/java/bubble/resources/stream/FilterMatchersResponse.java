@@ -6,6 +6,7 @@ package bubble.resources.stream;
 
 import bubble.model.app.AppMatcher;
 import bubble.rule.FilterMatchDecision;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -37,6 +38,10 @@ public class FilterMatchersResponse {
         return hasMatchers() && getMatchers().stream().anyMatch(AppMatcher::requestCheck);
     }
 
+    public boolean hasRequestModifiers() {
+        return hasMatchers() && getMatchers().stream().anyMatch(AppMatcher::requestModifier);
+    }
+
     public FilterMatchersResponse setRequestId(String requestId) {
         if (request == null) {
             if (log.isInfoEnabled()) log.info("setRequestId("+requestId+"): request is null, cannot set");
@@ -55,5 +60,7 @@ public class FilterMatchersResponse {
     @Override public String toString () {
         return "FilterMatchersResponse{"+decision+(hasMatchers() ? ", matchers="+names(matchers) : "")+"}";
     }
+
+    @JsonIgnore public String getAccount() { return hasMatchers() ? getMatchers().get(0).getAccount() : null; }
 
 }

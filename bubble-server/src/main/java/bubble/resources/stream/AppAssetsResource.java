@@ -38,8 +38,8 @@ import static org.cobbzilla.wizard.stream.DataUrlStreamingOutput.dataUrlBytes;
 @Slf4j
 public class AppAssetsResource {
 
-    private String locale;
-    private BubbleApp app;
+    private final String locale;
+    private final BubbleApp app;
 
     public AppAssetsResource(String locale, BubbleApp app) {
         this.locale = locale;

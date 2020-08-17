@@ -6,7 +6,7 @@
       "fqdn": "_required",
       "uri": "/",
       "userAgent": "Test-User-Agent 1.0.0",
-      "remoteAddr": "127.0.0.1",
+      "clientAddr": "127.0.0.1",
       "jsCheck": "true",
       "requestSuffix": "<<rand 10>>"
     }
@@ -21,7 +21,7 @@
         "fqdn": "<<fqdn>>",
         "uri": "<<uri>>",
         "userAgent": "<<userAgent>>",
-        "remoteAddr": "<<remoteAddr>>"
+        "clientAddr": "<<clientAddr>>"
       }
     },
     "response": {

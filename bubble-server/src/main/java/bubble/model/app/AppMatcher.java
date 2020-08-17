@@ -26,7 +26,6 @@ import javax.validation.constraints.Size;
 import java.util.regex.Pattern;
 
 import static bubble.ApiConstants.EP_MATCHERS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
@@ -91,7 +90,7 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
     @Getter @Setter private String urlRegex;
     public boolean hasUrlRegex() { return !empty(urlRegex) && !urlRegex.equals(WILDCARD_URL); }
 
-    @Transient @JsonIgnore public Pattern getUrlPattern() { return Pattern.compile(getUrlRegex()); }
+    @Transient @JsonIgnore @Getter(lazy=true) private final Pattern urlPattern = Pattern.compile(getUrlRegex());
     public boolean matchesUrl (String value) { return getUrlPattern().matcher(value).find(); }
 
     @ECSearchable(filter=true) @ECField(index=70)
@@ -100,9 +99,8 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
     @Getter @Setter private String contentTypeRegex;
     public boolean hasContentTypeRegex() { return !empty(contentTypeRegex); }
 
-    @Transient @JsonIgnore public Pattern getContentTypePattern () {
-        return hasContentTypeRegex() ? Pattern.compile(getContentTypeRegex()) : DEFAULT_CONTENT_TYPE_PATTERN;
-    }
+    @Transient @JsonIgnore @Getter(lazy=true) private final Pattern contentTypePattern
+            = hasContentTypeRegex() ? Pattern.compile(getContentTypeRegex()) : DEFAULT_CONTENT_TYPE_PATTERN;
     public boolean matchesContentType (String value) { return getContentTypePattern().matcher(value).find(); }
 
     @ECSearchable(filter=true) @ECField(index=80)
@@ -111,10 +109,9 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
     @Getter @Setter private String userAgentRegex;
     public boolean hasUserAgentRegex() { return !empty(userAgentRegex); }
 
-    @Transient @JsonIgnore public Pattern getUserAgentPattern () {
-        return hasUserAgentRegex() ? Pattern.compile(getUserAgentRegex()) : DEFAULT_CONTENT_TYPE_PATTERN;
-    }
-    public boolean matchesUserAgent (String value) { return getUserAgentPattern().matcher(value).find(); }
+    @Transient @JsonIgnore @Getter(lazy=true) private final Pattern userAgentPattern
+            = hasUserAgentRegex() ? Pattern.compile(getUserAgentRegex()) : null;
+    public boolean matchesUserAgent (String value) { return !hasUserAgentRegex() || getUserAgentPattern().matcher(value).find(); }
 
     @ECSearchable @ECField(index=90)
     @ECForeignKey(entity=AppRule.class)
@@ -132,14 +129,19 @@ public class AppMatcher extends IdentifiableBase implements AppTemplateEntity, H
     @ECSearchable @ECField(index=120, required=EntityFieldRequired.optional)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean connCheck;
-    public boolean connCheck () { return bool(connCheck); }
+    public boolean connCheck () { return connCheck != null && connCheck; }
 
     @ECSearchable @ECField(index=130, required=EntityFieldRequired.optional)
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean requestCheck;
-    public boolean requestCheck () { return bool(requestCheck); }
+    public boolean requestCheck () { return requestCheck != null && requestCheck; }
 
-    @ECSearchable @ECField(index=140)
+    @ECSearchable @ECField(index=140, required=EntityFieldRequired.optional)
+    @ECIndex @Column(nullable=false)
+    @Getter @Setter private Boolean requestModifier;
+    public boolean requestModifier () { return requestModifier != null && requestModifier; }
+
+    @ECSearchable @ECField(index=150)
     @Column(nullable=false)
     @Getter @Setter private Integer priority = 0;
 

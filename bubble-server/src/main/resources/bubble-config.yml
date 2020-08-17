@@ -55,6 +55,7 @@ jersey:
    - org.cobbzilla.wizard.filters
   providerPackages:
    - org.cobbzilla.wizard.exceptionmappers
+   - bubble.exceptionmappers
   requestFilters:
    - bubble.auth.BubbleAuthFilter
    - bubble.filters.BubbleRateLimitFilter

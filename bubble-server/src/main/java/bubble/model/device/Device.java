@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
@@ -36,7 +37,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
 @Entity @ECType(root=true) @ToString(of={"name"})
 @ECTypeURIs(baseURI=EP_DEVICES, listFields={"name", "enabled"})
-@NoArgsConstructor @Accessors(chain=true)
+@NoArgsConstructor @Accessors(chain=true) @Slf4j
 @ECIndexes({
         @ECIndex(unique=true, of={"account", "network", "name"}),
         @ECIndex(unique=true, of={"account", "name"}),

@@ -80,7 +80,10 @@ public class StandardAppPrimerService implements AppPrimerService {
         }
     }
 
-    public void prime(Account account) { prime(account, (BubbleApp) null); }
+    public void prime(Account account) {
+        deviceIdService.initBlockStats(account);
+        prime(account, (BubbleApp) null);
+    }
 
     public void prime(BubbleApp app) {
         final Account account = accountDAO.findByUuid(app.getAccount());
@@ -137,7 +140,7 @@ public class StandardAppPrimerService implements AppPrimerService {
                         final Set<String> blockDomains = new HashSet<>();
                         final Set<String> filterDomains = new HashSet<>();
                         for (AppMatcher matcher : matchers) {
-                            final AppRuleDriver appRuleDriver = rule.initDriver(driver, matcher, account, device);
+                            final AppRuleDriver appRuleDriver = rule.initDriver(app, driver, matcher, account, device);
                             final Set<String> blocks = appRuleDriver.getPrimedBlockDomains();
                             if (empty(blocks)) {
                                 log.debug("_prime: no blockDomains for device/app/rule/matcher: " + device.getName() + "/" + app.getName() + "/" + rule.getName() + "/" + matcher.getName());

@@ -14,6 +14,8 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.http.HttpContentEncodingType;
+import org.cobbzilla.util.http.HttpContentTypes;
+import org.cobbzilla.util.http.HttpUtil;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -32,6 +34,8 @@ public class FilterHttpRequest {
     @Getter @Setter private HttpContentEncodingType encoding;
     @Getter @Setter private Account account;
     @Getter @Setter private String contentType;
+
+    @JsonIgnore public boolean isHtml () { return HttpContentTypes.isHtml(getContentType()); }
 
     @Getter @Setter private Long contentLength;
     public boolean hasContentLength () { return contentLength != null; }
@@ -61,12 +65,20 @@ public class FilterHttpRequest {
     }
 
     public boolean hasMatchers() { return matchersResponse != null && matchersResponse.hasMatchers(); }
+    public boolean hasRequestMatchers() { return hasMatchers() && matchersResponse.hasRequestCheckMatchers(); }
+    public boolean hasRequestModifiers() { return hasMatchers() && matchersResponse.hasRequestModifiers(); }
 
     @JsonIgnore public List<AppMatcher> getMatchers() { return !hasMatchers() ? null : matchersResponse.getMatchers(); }
 
     @JsonIgnore public String getUrl() {
         return !hasMatchers() || !matchersResponse.hasRequest() ? null : matchersResponse.getRequest().getUrl();
     }
+
+    @JsonIgnore public String getUserAgent() {
+        return !hasMatchers() || !matchersResponse.hasRequest() ? null : matchersResponse.getRequest().getUserAgent();
+    }
+
+    @JsonIgnore public boolean isBrowser () { return HttpUtil.isBrowser(getUserAgent()); }
 
     public boolean hasApp(String appId) {
         if (!hasMatchers()) return false;

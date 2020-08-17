@@ -4,6 +4,7 @@
  */
 package bubble.service.cloud;
 
+import bubble.model.account.Account;
 import bubble.model.device.Device;
 import bubble.model.device.DeviceStatus;
 
@@ -16,8 +17,10 @@ public interface DeviceIdService {
     List<String> findIpsByDevice(String deviceUuid);
 
     void initDeviceSecurityLevels();
-
     void setDeviceSecurityLevel(Device device);
+
+    void initBlockStats (Account account);
+    default boolean doShowBlockStats(String accountUuid) { return false; }
 
     DeviceStatus getDeviceStatus(String deviceUuid);
     DeviceStatus getLiveDeviceStatus(String deviceUuid);

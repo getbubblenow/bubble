@@ -190,7 +190,7 @@ public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
         try {
             final AppRule rule = loadRule(account, app);
             final RuleDriver ruleDriver = loadDriver(account, rule, BubbleBlockRuleDriver.class);
-            final BubbleBlockRuleDriver unwiredDriver = (BubbleBlockRuleDriver) rule.initDriver(ruleDriver, TEST_MATCHER, account, TEST_DEVICE);
+            final BubbleBlockRuleDriver unwiredDriver = (BubbleBlockRuleDriver) rule.initDriver(app, ruleDriver, TEST_MATCHER, account, TEST_DEVICE);
             final BubbleBlockRuleDriver driver = configuration.autowire(unwiredDriver);
             final BlockDecision decision = driver.getDecision(host, path, userAgent, primary);
             return getBuiltinList(account, app).setResponse(decision);

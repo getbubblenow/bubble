@@ -19,7 +19,8 @@ class Rerouter:
             bubble_log("get_matchers: not filtering special bubble path: "+flow.request.path)
             return None
 
-        remote_addr = str(flow.client_conn.address[0])
+        client_addr = str(flow.client_conn.address[0])
+        server_addr = str(flow.server_conn.address[0])
         try:
             host = host.decode()
         except (UnicodeDecodeError, AttributeError):
@@ -35,10 +36,10 @@ class Rerouter:
 
         req_id = str(host) + '.' + str(uuid.uuid4()) + '.' + str(time.time())
         bubble_log("get_matchers: requesting match decision for req_id="+req_id)
-        resp = bubble_matchers(req_id, remote_addr, flow, host)
+        resp = bubble_matchers(req_id, client_addr, server_addr, flow, host)
 
         if not resp:
-            bubble_log('get_matchers: no response for remote_addr/host: '+remote_addr+'/'+str(host))
+            bubble_log('get_matchers: no response for client_addr/host: '+client_addr+'/'+str(host))
             return None
 
         matchers = []

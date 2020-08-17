@@ -4,6 +4,7 @@
  */
 package bubble.service_dbfilter;
 
+import bubble.model.account.Account;
 import bubble.model.device.Device;
 import bubble.model.device.DeviceStatus;
 import bubble.service.cloud.DeviceIdService;
@@ -21,8 +22,9 @@ public class DbFilterDeviceIdService implements DeviceIdService {
     @Override public List<String> findIpsByDevice(String deviceUuid) { return notSupported("findIpsByDevice"); }
 
     @Override public void initDeviceSecurityLevels() { notSupported("initDeviceSecurityLevels"); }
-
     @Override public void setDeviceSecurityLevel(Device device) { notSupported("setDeviceSecurityLevel"); }
+
+    @Override public void initBlockStats(Account account) { notSupported("initBlockStats"); }
 
     @Override public DeviceStatus getDeviceStatus(String deviceUuid) { return notSupported("getDeviceStats"); }
     @Override public DeviceStatus getLiveDeviceStatus(String deviceUuid) { return notSupported("getLiveDeviceStatus"); }

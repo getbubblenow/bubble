@@ -15,18 +15,23 @@ import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.app.AppSite;
 import bubble.model.app.BubbleApp;
+import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.device.Device;
 import bubble.rule.FilterMatchDecision;
+import bubble.service.block.BlockStatsService;
 import bubble.server.BubbleConfiguration;
+import bubble.service.block.BlockStatsSummary;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.DeviceIdService;
 import bubble.service.stream.ConnectionCheckResponse;
 import bubble.service.stream.StandardRuleEngineService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.http.HttpContentEncodingType;
+import org.cobbzilla.util.network.NetworkUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -50,6 +55,7 @@ import static java.util.Collections.emptyMap;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static org.cobbzilla.util.collection.ArrayUtil.arrayToString;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
@@ -75,6 +81,7 @@ public class FilterHttpResource {
     @Autowired private RedisService redis;
     @Autowired private BubbleConfiguration configuration;
     @Autowired private SelfNodeService selfNodeService;
+    @Autowired private BlockStatsService blockStats;
 
     private static final long ACTIVE_REQUEST_TIMEOUT = HOURS.toSeconds(12);
 
@@ -143,8 +150,15 @@ public class FilterHttpResource {
         }
         validateMitmCall(req);
 
-        // if the requested IP is the same as our IP, then always passthru
-        if (isForUs(connCheckRequest)) return ok();
+        // is the requested IP is the same as our IP?
+        final boolean isLocalIp = isForLocalIp(connCheckRequest);
+        if (isLocalIp) {
+            // if it is for our host or net name, passthru
+            if (connCheckRequest.hasFqdns() && (connCheckRequest.hasFqdn(getThisNode().getFqdn()) || connCheckRequest.hasFqdn(getThisNetwork().getNetworkDomain()))) {
+                if (log.isDebugEnabled()) log.debug(prefix + "returning passthru for LOCAL fqdn/addr=" + arrayToString(connCheckRequest.getFqdns()) + "/" + connCheckRequest.getAddr());
+                return ok(ConnectionCheckResponse.passthru);
+            }
+        }
 
         final String vpnAddr = connCheckRequest.getRemoteAddr();
         final Device device = deviceIdService.findDeviceByIp(vpnAddr);
@@ -154,13 +168,25 @@ public class FilterHttpResource {
         } else if (log.isTraceEnabled()) {
             log.trace(prefix+"found device "+device.id()+" for IP "+vpnAddr);
         }
-        final Account account = findCaller(device.getAccount());
+        final String accountUuid = device.getAccount();
+        final Account account = findCaller(accountUuid);
         if (account == null) {
-            if (log.isDebugEnabled()) log.debug(prefix+"account not found for uuid "+device.getAccount()+", returning not found");
+            if (log.isDebugEnabled()) log.debug(prefix+"account not found for uuid "+ accountUuid +", returning not found");
             return notFound();
         }
 
-        final List<AppMatcher> matchers = matcherDAO.findByAccountAndEnabledAndConnCheck(device.getAccount());
+        if (isLocalIp) {
+            if (showStats(accountUuid)) {
+                // allow it for now
+                if (log.isDebugEnabled()) log.debug(prefix + "returning noop (showBlockStats==true) for LOCAL fqdn/addr=" + arrayToString(connCheckRequest.getFqdns()) + "/" + connCheckRequest.getAddr());
+                return ok(ConnectionCheckResponse.noop);
+            } else {
+                if (log.isDebugEnabled()) log.debug(prefix + "returning block (showBlockStats==false) for LOCAL fqdn/addr=" + arrayToString(connCheckRequest.getFqdns()) + "/" + connCheckRequest.getAddr());
+                return ok(ConnectionCheckResponse.block);
+            }
+        }
+
+        final List<AppMatcher> matchers = getConnCheckMatchers(accountUuid);
         final List<AppMatcher> retained = new ArrayList<>();
         for (AppMatcher matcher : matchers) {
             final BubbleApp app = appDAO.findByUuid(matcher.getApp());
@@ -170,24 +196,43 @@ public class FilterHttpResource {
             retained.add(matcher);
         }
 
-        final String[] fqdns = connCheckRequest.getFqdns();
-        for (String fqdn : fqdns) {
-            final ConnectionCheckResponse checkResponse = ruleEngine.checkConnection(account, device, retained, connCheckRequest.getAddr(), fqdn);
-            if (checkResponse != ConnectionCheckResponse.noop) {
-                if (log.isDebugEnabled()) log.debug(prefix + "returning "+checkResponse+" for fqdn/addr=" + fqdn + "/" + connCheckRequest.getAddr());
-                return ok(checkResponse);
+        ConnectionCheckResponse checkResponse = ConnectionCheckResponse.noop;
+        if (connCheckRequest.hasFqdns()) {
+            final String[] fqdns = connCheckRequest.getFqdns();
+            for (String fqdn : fqdns) {
+                checkResponse = ruleEngine.checkConnection(account, device, retained, connCheckRequest.getAddr(), fqdn);
+                if (checkResponse != ConnectionCheckResponse.noop) {
+                    if (log.isDebugEnabled()) log.debug(prefix + "found " + checkResponse + " (breaking) for fqdn/addr=" + fqdn + "/" + connCheckRequest.getAddr());
+                    break;
+                }
             }
+            if (log.isDebugEnabled()) log.debug(prefix+"returning "+checkResponse+" for fqdns/addr="+Arrays.toString(fqdns)+"/"+ connCheckRequest.getAddr());
+            return ok(checkResponse);
+
+        } else {
+            if (log.isDebugEnabled()) log.debug(prefix+"returning noop for NO fqdns,  addr="+connCheckRequest.getAddr());
+            return ok(ConnectionCheckResponse.noop);
         }
-        if (log.isDebugEnabled()) log.debug(prefix+"returning noop for fqdns/addr="+Arrays.toString(fqdns)+"/"+ connCheckRequest.getAddr());
-        return ok(ConnectionCheckResponse.noop);
     }
 
-    private boolean isForUs(FilterConnCheckRequest connCheckRequest) {
-        final BubbleNode thisNode = selfNodeService.getThisNode();
-        return connCheckRequest.hasAddr()
-                && (thisNode.hasIp4() && thisNode.getIp4().equals(connCheckRequest.getAddr())
-                || thisNode.hasIp6() && thisNode.getIp6().equals(connCheckRequest.getAddr()));
+    private final Map<String, List<AppMatcher>> connCheckMatcherCache = new ExpirationMap<>(10, HOURS.toMillis(1), ExpirationEvictionPolicy.atime);
+    public List<AppMatcher> getConnCheckMatchers(String accountUuid) {
+        return connCheckMatcherCache.computeIfAbsent(accountUuid, k -> matcherDAO.findByAccountAndEnabledAndConnCheck(k));
     }
+
+    private boolean isForLocalIp(FilterConnCheckRequest connCheckRequest) {
+        return connCheckRequest.hasAddr() && getConfiguredIps().contains(connCheckRequest.getAddr());
+    }
+
+    private boolean isForLocalIp(FilterMatchersRequest matchersRequest) {
+        return matchersRequest.hasServerAddr() && getConfiguredIps().contains(matchersRequest.getServerAddr());
+    }
+
+    @Getter(lazy=true) private final Set<String> configuredIps = NetworkUtil.configuredIps();
+    @Getter(lazy=true) private final BubbleNode thisNode = selfNodeService.getThisNode();
+    @Getter(lazy=true) private final BubbleNetwork thisNetwork = selfNodeService.getThisNetwork();
+
+    public boolean showStats(String accountUuid) { return deviceIdService.doShowBlockStats(accountUuid); }
 
     @POST @Path(EP_MATCHERS+"/{requestId}")
     @Consumes(APPLICATION_JSON)
@@ -208,13 +253,13 @@ public class FilterHttpResource {
         if (log.isDebugEnabled()) log.debug(prefix+"starting for filterRequest="+json(filterRequest, COMPACT_MAPPER));
         else if (extraLog) log.error(prefix+"starting for filterRequest="+json(filterRequest, COMPACT_MAPPER));
 
-        if (!filterRequest.hasRemoteAddr()) {
+        if (!filterRequest.hasClientAddr()) {
             if (log.isDebugEnabled()) log.debug(prefix+"no VPN address provided, returning no matchers");
             else if (extraLog) log.error(prefix+"no VPN address provided, returning no matchers");
             return ok(NO_MATCHERS);
         }
 
-        final String vpnAddr = filterRequest.getRemoteAddr();
+        final String vpnAddr = filterRequest.getClientAddr();
         final Device device = deviceIdService.findDeviceByIp(vpnAddr);
         if (device == null) {
             if (log.isDebugEnabled()) log.debug(prefix+"device not found for IP "+vpnAddr+", returning no matchers");
@@ -225,9 +270,26 @@ public class FilterHttpResource {
         }
         filterRequest.setDevice(device.getUuid());
 
+        // if this is for a local ip, it's an automatic block
+        // legitimate local requests would have been passthru and never reached here
+        final boolean isLocalIp = isForLocalIp(filterRequest);
+        final boolean showStats = showStats(device.getAccount());
+        if (isLocalIp) {
+            if (filterRequest.isBrowser() && showStats) {
+                blockStats.record(filterRequest, FilterMatchDecision.abort_not_found);
+            }
+            if (log.isDebugEnabled()) log.debug(prefix + "returning FORBIDDEN (showBlockStats=="+ showStats +")");
+            return forbidden();
+        }
+
         final FilterMatchersResponse response = getMatchersResponse(filterRequest, req, request);
         if (log.isDebugEnabled()) log.debug(prefix+"returning response: "+json(response, COMPACT_MAPPER));
         else if (extraLog) log.error(prefix+"returning response: "+json(response, COMPACT_MAPPER));
+
+        if (filterRequest.isBrowser() && showStats) {
+            blockStats.record(filterRequest, response.getDecision());
+        }
+
         return ok(response);
     }
 
@@ -346,6 +408,7 @@ public class FilterHttpResource {
     public Response flushCaches(@Context ContainerRequest request) {
         final Account caller = userPrincipal(request);
         if (!caller.admin()) return forbidden();
+        connCheckMatcherCache.clear();
         return ok(ruleEngine.flushCaches());
     }
 
@@ -520,10 +583,24 @@ public class FilterHttpResource {
         final FilterSubContext filterCtx = new FilterSubContext(req, requestId);
         if (!filterCtx.request.hasMatcher(matcherId)) throw notFoundEx(matcherId);
 
-        final AppMatcher matcher = matcherDAO.findByAccountAndId(filterCtx.request.getAccount().getUuid(), matcherId);
+        final Account account = filterCtx.request.getAccount();
+        account.setMtime(0);  // only create one FilterDataResource
+        final AppMatcher matcher = matcherDAO.findByAccountAndId(account.getUuid(), matcherId);
         if (matcher == null) throw notFoundEx(matcherId);
 
-        return configuration.subResource(FilterDataResource.class, filterCtx.request.getAccount(), filterCtx.request.getDevice(), matcher);
+        final Device device = filterCtx.request.getDevice();
+        device.setMtime(0);  // only create one FilterDataResource
+        return configuration.subResource(FilterDataResource.class, account, device, matcher);
+    }
+
+    @GET @Path(EP_STATUS+"/{requestId}")
+    public Response getRequestStatus(@Context Request req,
+                                     @Context ContainerRequest ctx,
+                                     @PathParam("requestId") String requestId) {
+        final FilterSubContext filterCtx = new FilterSubContext(req, requestId);
+        final BlockStatsSummary summary = blockStats.getSummary(requestId);
+        if (summary == null) return notFound(requestId);
+        return ok(summary);
     }
 
     @Path(EP_ASSETS+"/{requestId}/{appId}")

@@ -7,6 +7,7 @@ package bubble.rule;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
+import bubble.model.app.BubbleApp;
 import bubble.model.device.Device;
 import bubble.resources.stream.FilterHttpRequest;
 import bubble.resources.stream.FilterMatchersRequest;
@@ -30,7 +31,6 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.io.StreamUtil.stream2bytes;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
-import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 
 public interface AppRuleDriver {
@@ -73,10 +73,21 @@ public interface AppRuleDriver {
 
     default void init(JsonNode config,
                       JsonNode userConfig,
+                      BubbleApp app,
                       AppRule rule,
                       AppMatcher matcher,
                       Account account,
                       Device device) {}
+
+    default void initQuick(JsonNode config,
+                           JsonNode userConfig,
+                           BubbleApp app,
+                           AppRule rule,
+                           AppMatcher matcher,
+                           Account account,
+                           Device device) {
+        init(config, userConfig, app, rule, matcher, account, device);
+    }
 
     default FilterMatchDecision preprocess(AppRuleHarness ruleHarness,
                                            FilterMatchersRequest filter,
@@ -113,8 +124,6 @@ public interface AppRuleDriver {
     }
 
     default Handlebars getHandlebars() { return null; }
-
-    static String getJsPrefix(String requestId) { return "__bubble_"+sha256_hex(requestId)+"_"; }
 
     default String locateResource(String res) {
         if (!res.startsWith("@")) return res;
@@ -160,5 +169,7 @@ public interface AppRuleDriver {
                                        JsonNode localRuleConfig) {
         return sageRuleConfig;
     }
+
+    default Object readData(String id) { return null; }
 
 }
