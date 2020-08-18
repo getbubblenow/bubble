@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.InputStream;
 
+import static org.cobbzilla.util.io.FileUtil.basename;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 
@@ -32,9 +33,13 @@ public class JsUserBlockerRuleDriver extends AbstractAppRuleDriver implements Re
 
     @Getter(lazy=true) private final String defaultSiteJsTemplate = stream2string(getRequestModifierConfig().getSiteJsTemplate());
 
+    protected String getSiteJsTemplate() {
+        return loadTemplate(getDefaultSiteJsTemplate(), basename(getRequestModifierConfig().getSiteJsTemplate()));
+    }
+
     @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
         if (!filterRequest.isHtml()) return in;
         log.warn("doFilterResponse("+filterRequest.getId()+"): inserting JS");
-        return filterInsertJs(in, filterRequest, null, BUBBLE_JS_TEMPLATE, getDefaultSiteJsTemplate(), CTX_APPLY_BLOCKS_JS, true);
+        return filterInsertJs(in, filterRequest, null, BUBBLE_JS_TEMPLATE, getSiteJsTemplate(), CTX_APPLY_BLOCKS_JS, true);
     }
 }
