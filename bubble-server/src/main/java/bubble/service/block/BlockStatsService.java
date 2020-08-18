@@ -36,13 +36,10 @@ public class BlockStatsService {
             return;
         }
         if (log.isDebugEnabled()) log.debug("record: >>>>> processing URL="+filter.getUrl()+" REFERER="+filter.getReferer());
+        addTopLevelRecord(filter, decision);
         if (!filter.hasReferer()) {
             // this must be a top-level request
-            final BlockStatRecord newRec = new BlockStatRecord(filter, decision);
-            records.put(getUrlCacheKey(filter), newRec);
-            records.put(getFqdnKey(filter.getFqdn(), filter.getUserAgent()), newRec);
-            records.put(filter.getRequestId(), newRec);
-            if (log.isDebugEnabled()) log.debug("record: added top-level record for device="+filter.getDevice()+"/userAgent="+filter.getUserAgent()+"/url="+filter.getUrl());
+            if (log.isDebugEnabled()) log.debug("record: (no referer) added top-level record for device="+filter.getDevice()+"/userAgent="+filter.getUserAgent()+"/url="+filter.getUrl());
 
         } else {
             // find match based on device + user-agent + referer
@@ -62,6 +59,13 @@ public class BlockStatsService {
             records.put(getFqdnKey(filter.getFqdn(), filter.getUserAgent()), childRec);
             if (log.isDebugEnabled()) log.debug("record: child("+getUrlCacheKey(filter)+", "+filter.getRequestId()+")= newRec="+json(childRec)+",\nparent="+json(rec));
         }
+    }
+
+    public void addTopLevelRecord(FilterMatchersRequest filter, FilterMatchDecision decision) {
+        final BlockStatRecord newRec = new BlockStatRecord(filter, decision);
+        records.put(getUrlCacheKey(filter), newRec);
+        records.put(getFqdnKey(filter.getFqdn(), filter.getUserAgent()), newRec);
+        records.put(filter.getRequestId(), newRec);
     }
 
     private boolean excludeFqdn(String fqdn) { return ArrayUtils.contains(EXCLUDE_FQDNS, fqdn); }
