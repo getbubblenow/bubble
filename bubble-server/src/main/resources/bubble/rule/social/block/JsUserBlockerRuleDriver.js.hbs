@@ -1,8 +1,7 @@
 let {{JS_PREFIX}}_blocked_users = null;
 const {{JS_PREFIX}}_request_id = '{{BUBBLE_REQUEST_ID}}';
 
-let {{JS_PREFIX}}_doc_ready = false;
-const {{JS_PREFIX}}_interval = 50;
+let {{JS_PREFIX}}_interval = null;
 const {{JS_PREFIX}}_idle_interval = 1000;
 
 function {{JS_PREFIX}}_fetch_blocks (do_apply) {
@@ -15,28 +14,15 @@ function {{JS_PREFIX}}_fetch_blocks (do_apply) {
             for (let i=0; i<data.length; i++) {
                 blocked_users.push(data[i]);
             }
-            if ({{JS_PREFIX}}_doc_ready) {
-                {{JS_PREFIX}}_blocked_users = blocked_users;
-                {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
-                window.setInterval(function () {
-                    {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users)
+            {{JS_PREFIX}}_blocked_users = blocked_users;
+            {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
+            if ({{JS_PREFIX}}_interval === null) {
+                {{JS_PREFIX}}_interval = window.setInterval(function () {
+                        {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users)
                 }, {{JS_PREFIX}}_idle_interval);
-            } else {
-                const intervalId = window.setInterval(function() {
-                    if ({{JS_PREFIX}}_doc_ready) {
-                        window.clearInterval(intervalId);
-                        {{JS_PREFIX}}_blocked_users = blocked_users;
-                        {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
-                        window.setInterval(function () {
-                            {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users)
-                        }, {{JS_PREFIX}}_idle_interval);
-                    }
-                }, {{JS_PREFIX}}_interval);
             }
         });
 }
-
-{{JS_PREFIX}}_fetch_blocks();
 
 function {{JS_PREFIX}}_block_user (author) {
     {{JS_PREFIX}}_blocked_users.push(author);
@@ -57,5 +43,6 @@ function {{JS_PREFIX}}_block_user (author) {
     jsPrefix: '{{JS_PREFIX}}',
     app: '{{BUBBLE_APP_NAME}}',
     link: 'site/{{BUBBLE_SITE_NAME}}/view/blocked_users',
-    icon: 'icon'
+    icon: 'icon',
+    onReady: function () { {{JS_PREFIX}}_fetch_blocks(); }
 });

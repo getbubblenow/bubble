@@ -12,14 +12,12 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.json.JsonUtil.json;
 
 @Slf4j
 public class BlockStatsSummary {
 
     private final Map<String, AtomicInteger> blocks = new HashMap<>();
-    @Getter private final long ctime = now();
 
     public void addBlock(BlockStatRecord rec) {
         final AtomicInteger ct = blocks.computeIfAbsent(rec.getFqdn(), k -> new AtomicInteger(0));
