@@ -9363,7 +9363,6 @@ shelf
 shell
 shend
 shent
-sheol
 sherd
 shere
 shets
@@ -9376,7 +9375,6 @@ shiel
 shier
 shies
 shift
-shill
 shily
 shims
 shine
@@ -9456,8 +9454,6 @@ sibbs
 sibyl
 sices
 sicht
-sicko
-sicks
 sidas
 sided
 sider
@@ -9493,7 +9489,6 @@ silex
 silks
 silky
 sills
-silly
 silos
 silts
 silty
@@ -9529,7 +9524,6 @@ sirra
 sirup
 sisal
 sises
-sissy
 sists
 sitar
 sited
@@ -9555,8 +9549,6 @@ skail
 skald
 skart
 skate
-skats
-skatt
 skaws
 skean
 skear
@@ -9591,7 +9583,6 @@ skimo
 skimp
 skims
 skink
-skins
 skint
 skios
 skips
@@ -9629,7 +9620,6 @@ slade
 slaes
 slags
 slaid
-slain
 slake
 slams
 slane
@@ -9642,7 +9632,6 @@ slash
 slate
 slats
 slaty
-slave
 slaws
 slays
 slebs
@@ -9784,7 +9773,6 @@ snips
 snipy
 snirt
 snits
-snobs
 snods
 snoek
 snoep
@@ -9795,16 +9783,12 @@ snook
 snool
 snoop
 snoot
-snore
-snort
-snots
 snout
 snowk
 snows
 snowy
 snubs
 snuck
-snuff
 snugs
 snush
 snyes
@@ -10077,7 +10061,6 @@ spyre
 squab
 squad
 squat
-squaw
 squeg
 squib
 squid
@@ -10101,7 +10084,6 @@ stamp
 stand
 stane
 stang
-stank
 staph
 staps
 stare
@@ -10236,7 +10218,6 @@ stroy
 strum
 strut
 stubs
-stuck
 stude
 studs
 study
@@ -10247,7 +10228,6 @@ stumm
 stump
 stums
 stung
-stunk
 stuns
 stunt
 stupa
