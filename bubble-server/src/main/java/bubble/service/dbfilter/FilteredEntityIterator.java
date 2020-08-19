@@ -77,7 +77,7 @@ public class FilteredEntityIterator extends EntityIterator {
             if (sageAccount == null) die(getClass().getName()+": iterate: parent "+account.getParent()+" not found for account: "+account.getUuid());
             add(Account.sageMask(sageAccount));
         }
-        add(account.setAdmin(true));
+        add(account.setAdmin(true).setPreferredPlan(null));
 
         configuration.getEntityClasses().forEach(c -> {
             final DAO dao = configuration.getDaoForEntityClass(c);
