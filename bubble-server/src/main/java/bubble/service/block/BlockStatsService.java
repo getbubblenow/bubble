@@ -89,12 +89,14 @@ public class BlockStatsService {
     }
 
     @Autowired private RedisService redis;
-    @Getter(lazy=true) private final RedisService summaryCache = redis.prefixNamespace(getClass().getSimpleName()+"_summaryCache");
+    @Getter(lazy=true) private final RedisService summaryCache =
+            redis == null ? null : redis.prefixNamespace(getClass().getSimpleName()+"_summaryCache");
 
     public BlockStatsSummary getSummary(String requestId) {
         final BlockStatRecord stat = records.get(requestId);
+        final RedisService cache = getSummaryCache();
         if (stat == null) {
-            final String summaryJson = getSummaryCache().get(requestId);
+            final String summaryJson = cache == null ? null : cache.get(requestId);
             if (summaryJson == null) {
                 log.info("getSummary("+requestId+") no summary found");
                 return null;
@@ -105,7 +107,7 @@ public class BlockStatsService {
         }
         final BlockStatsSummary summary = stat.summarize();
         if (log.isDebugEnabled()) log.debug("getSummary("+requestId+") returning (and caching) live summary="+json(summary)+" for record="+json(stat));
-        getSummaryCache().set(requestId, json(summary, COMPACT_MAPPER), EX, HOURS.toSeconds(24));
+        if (cache != null) cache.set(requestId, json(summary, COMPACT_MAPPER), EX, HOURS.toSeconds(24));
         return summary;
     }
 
