@@ -6,10 +6,13 @@ package bubble.service.block;
 
 import bubble.resources.stream.FilterMatchersRequest;
 import bubble.rule.FilterMatchDecision;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
+import org.cobbzilla.wizard.cache.redis.RedisService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -17,7 +20,9 @@ import java.util.Map;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.http.HttpSchemes.stripScheme;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @Service @Slf4j
 public class BlockStatsService {
@@ -83,18 +88,24 @@ public class BlockStatsService {
         return filter.getDevice()+"\t"+filter.getUserAgent()+"\t"+stripScheme(filter.getUrl());
     }
 
-    private final Map<String, BlockStatsSummary> summaryCache
-            = new ExpirationMap<>(100, HOURS.toMillis(12), ExpirationEvictionPolicy.atime);
+    @Autowired private RedisService redis;
+    @Getter(lazy=true) private final RedisService summaryCache = redis.prefixNamespace(getClass().getSimpleName()+"_summaryCache");
 
     public BlockStatsSummary getSummary(String requestId) {
         final BlockStatRecord stat = records.get(requestId);
         if (stat == null) {
-            log.info("getSummary("+requestId+") no summary found, trying cache");
-            return summaryCache.get(requestId);
+            final String summaryJson = getSummaryCache().get(requestId);
+            if (summaryJson == null) {
+                log.info("getSummary("+requestId+") no summary found");
+                return null;
+            } else {
+                log.info("getSummary("+requestId+") returning cached summary: "+summaryJson);
+                return json(summaryJson, BlockStatsSummary.class);
+            }
         }
         final BlockStatsSummary summary = stat.summarize();
-        if (log.isDebugEnabled()) log.debug("getSummary("+requestId+") returning summary="+json(summary)+" for record="+json(stat));
-        summaryCache.put(requestId, summary);
+        if (log.isDebugEnabled()) log.debug("getSummary("+requestId+") returning (and caching) live summary="+json(summary)+" for record="+json(stat));
+        getSummaryCache().set(requestId, json(summary, COMPACT_MAPPER), EX, HOURS.toSeconds(24));
         return summary;
     }
 
