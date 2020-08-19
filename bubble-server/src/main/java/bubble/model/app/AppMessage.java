@@ -5,6 +5,7 @@
 package bubble.model.app;
 
 import bubble.model.account.Account;
+import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 import javax.validation.constraints.Size;
+
+import java.util.Map;
 
 import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static bubble.ApiConstants.EP_MESSAGES;
@@ -44,6 +47,12 @@ public class AppMessage extends IdentifiableBase implements AppTemplateEntity, H
     public AppMessage (AppMessage other) { copy(this, other, CREATE_FIELDS); }
 
     @Override public Identifiable update(Identifiable other) { copy(this, other, UPDATE_FIELDS); return this; }
+
+    @Override public <T extends AppTemplateEntity> void upgrade(T sageObject, BubbleConfiguration configuration) {
+        final Map<String, String> map = NameAndValue.toMap(getMessages());
+        map.putAll(NameAndValue.toMap(((AppMessage) sageObject).getMessages()));
+        setMessagesJson(json(NameAndValue.map2list(map)));
+    }
 
     @ECField(index=10)
     @ECForeignKey(entity=Account.class)
