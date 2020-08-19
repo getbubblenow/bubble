@@ -38,7 +38,7 @@ public class BlockStatsService {
             if (log.isDebugEnabled()) log.debug("record: excluding fqdn="+filter.getFqdn());
             return;
         }
-        if (log.isDebugEnabled()) log.debug("record: >>>>> processing URL="+filter.getUrl()+" REFERER="+filter.getReferer());
+        if (log.isInfoEnabled()) log.info("record: >>>>> processing URL="+filter.getUrl()+" REFERER="+filter.getReferer());
         addTopLevelRecord(filter, decision);
         if (!filter.hasReferer()) {
             // this must be a top-level request

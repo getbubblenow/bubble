@@ -30,7 +30,7 @@ public class BlockStatsSummary {
             final int count = entry.getValue().get();
             if (count > 0) fqdnBlockCounts.add(new FqdnBlockCount(entry.getKey(), count));
         }
-        log.info("getBlocks returning counts="+json(fqdnBlockCounts)+" for blocks="+json(blocks));
+        if (log.isDebugEnabled()) log.debug("getBlocks returning counts="+json(fqdnBlockCounts)+" for blocks="+json(blocks));
         Collections.sort(fqdnBlockCounts);
         return fqdnBlockCounts;
     }
@@ -40,7 +40,6 @@ public class BlockStatsSummary {
         for (Map.Entry<String, AtomicInteger> entry : blocks.entrySet()) {
             final String fqdn = entry.getKey();
             final int ct = entry.getValue().get();
-            log.debug("getTotal: adding "+ct+" from fqdn="+fqdn);
             total += ct;
         }
         return total;
