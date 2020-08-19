@@ -12,6 +12,9 @@ import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
+import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.http.HttpSchemes.stripScheme;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -19,7 +22,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 @Service @Slf4j
 public class BlockStatsService {
 
-    private final ExpirationMap<String, BlockStatRecord> records
+    private final Map<String, BlockStatRecord> records
             = new ExpirationMap<>(200, MINUTES.toMillis(10), ExpirationEvictionPolicy.atime);
 
     private final String[] EXCLUDE_FQDNS = {
@@ -80,14 +83,18 @@ public class BlockStatsService {
         return filter.getDevice()+"\t"+filter.getUserAgent()+"\t"+stripScheme(filter.getUrl());
     }
 
+    private final Map<String, BlockStatsSummary> summaryCache
+            = new ExpirationMap<>(100, HOURS.toMillis(12), ExpirationEvictionPolicy.atime);
+
     public BlockStatsSummary getSummary(String requestId) {
         final BlockStatRecord stat = records.get(requestId);
         if (stat == null) {
-            log.info("getSummary("+requestId+") no summary found");
-            return null;
+            log.info("getSummary("+requestId+") no summary found, trying cache");
+            return summaryCache.get(requestId);
         }
         final BlockStatsSummary summary = stat.summarize();
         if (log.isDebugEnabled()) log.debug("getSummary("+requestId+") returning summary="+json(summary)+" for record="+json(stat));
+        summaryCache.put(requestId, summary);
         return summary;
     }
 

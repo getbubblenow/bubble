@@ -46,7 +46,7 @@
 <!--    <logger name="bubble.abp.BubbleBlockConditionOperation" level="DEBUG" />-->
 <!--    <logger name="bubble.abp.BlockSpec" level="DEBUG" />-->
     <logger name="bubble.rule.analytics.TrafficAnalyticsRuleDriver" level="ERROR" />
-    <logger name="bubble.rule.social.block" level="DEBUG" />
+<!--    <logger name="bubble.rule.social.block" level="DEBUG" />-->
     <logger name="bubble.rule.passthru" level="WARN" />
 <!--    <logger name="org.cobbzilla.util.io.multi.MultiStream" level="TRACE" />-->
 <!--    <logger name="bubble.filters.BubbleRateLimitFilter" level="TRACE" />-->
