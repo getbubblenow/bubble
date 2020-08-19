@@ -4,6 +4,7 @@
 import re
 import requests
 import urllib
+import uuid
 import traceback
 from mitmproxy.net.http import Headers
 from bubble_config import bubble_port, bubble_host_alias, debug_capture_fqdn
@@ -21,6 +22,44 @@ STANDARD_FILTER_HEADERS = {HEADER_CONTENT_TYPE: CONTENT_TYPE_BINARY}
 
 REDIS_FILTER_PASSTHRU_PREFIX = '__chunk_filter_pass__'
 REDIS_FILTER_PASSTHRU_DURATION = 600
+
+
+def add_csp_part(new_csp, part):
+    if len(new_csp) > 0:
+        new_csp = new_csp + ';'
+    return new_csp + part
+
+
+def ensure_bubble_script_csp(csp):
+    new_csp = ''
+    parts = csp.split(';')
+    for part in parts:
+        if part.startswith(' script-src'):
+            new_ss = ' '
+            tokens = part.split()
+            has_nonce = False
+            for tok in tokens:
+                if "'nonce-" in tok:
+                    has_nonce = True
+                    break
+                new_ss = new_ss + tok + ' '
+            if not has_nonce:
+                new_ss = new_ss + "'nonce-" + str(uuid.uuid4()) + "'"
+                new_csp = add_csp_part(new_csp, new_ss)
+            else:
+                new_csp = add_csp_part(new_csp, part)
+
+        elif part.startswith(' img-src'):
+            tokens = part.split()
+            if "'self'" in tokens:
+                new_csp = add_csp_part(new_csp, part)
+                continue
+            new_csp = add_csp_part(new_csp, tokens[0] + " 'self' " + " ".join(tokens[1:]))
+
+        else:
+            new_csp = add_csp_part(new_csp, part)
+    return new_csp
+
 
 def filter_chunk(flow, chunk, req_id, user_agent, last, content_encoding=None, content_type=None, content_length=None, csp=None):
     if debug_capture_fqdn:
@@ -199,7 +238,8 @@ def responseheaders(flow):
                             content_encoding = None
 
                         if HEADER_CONTENT_SECURITY_POLICY in flow.response.headers:
-                            csp = flow.response.headers[HEADER_CONTENT_SECURITY_POLICY]
+                            csp = ensure_bubble_script_csp(flow.response.headers[HEADER_CONTENT_SECURITY_POLICY])
+                            flow.response.headers[HEADER_CONTENT_SECURITY_POLICY] = csp
                         else:
                             csp = None
 
