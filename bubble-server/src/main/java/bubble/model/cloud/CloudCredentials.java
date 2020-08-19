@@ -6,10 +6,7 @@ package bubble.model.cloud;
 
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
@@ -22,7 +19,8 @@ import static bubble.cloud.storage.StorageCryptStream.MIN_KEY_LENGTH;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.security.CryptoUtil.generatePassword;
 
-@NoArgsConstructor @AllArgsConstructor @Accessors(chain=true) @Slf4j
+@NoArgsConstructor @AllArgsConstructor @Accessors(chain=true)
+@EqualsAndHashCode(of={"params"}) @Slf4j
 public class CloudCredentials implements Serializable {
 
     public static final String PARAM_DELEGATE_NODE = "delegate_node";

@@ -9,6 +9,7 @@ import bubble.cloud.CloudServiceDriverBase;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.CloudCredentials;
 import bubble.service.packer.PackerService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -32,18 +35,27 @@ public abstract class ComputeServiceDriverBase
 
     public static final long PACKER_TIMEOUT = MINUTES.toMillis(60);
 
-    private final AtomicReference<NodeReaper> reaper = new AtomicReference<>();
+    private static final Map<CloudCredentials, NodeReaper> reapers = new HashMap<>();
 
     @Override public void postSetup() {
+        final String prefix = "postSetup("+getClass().getSimpleName()+"/"+cloud.getUuid()+"): ";
         if (configuration.isSelfSage()) {
-            synchronized (reaper) {
-                if (reaper.get() == null) {
-                    reaper.set(new NodeReaper(this));
-                    configuration.autowire(reaper.get()).start();
+            if (cloud.delegated()) {
+                log.info(prefix+"NOT starting NodeReaper for delegated driver");
+            } else {
+                synchronized (reapers) {
+                    if (reapers.get(getCredentials()) == null) {
+                        log.info(prefix+"starting NodeReaper");
+                        final NodeReaper reaper = new NodeReaper(this);
+                        reapers.put(getCredentials(), reaper);
+                        configuration.autowire(reaper).start();
+                    } else {
+                        log.info(prefix+"NodeReaper already running with same credentials, not starting another");
+                    }
                 }
             }
         } else {
-            log.info("startDriver("+getClass().getSimpleName()+"): not self-sage, not starting NodeReaper");
+            log.info(prefix+"not self-sage, not starting NodeReaper");
         }
     }
 

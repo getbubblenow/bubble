@@ -19,6 +19,7 @@ import org.cobbzilla.util.time.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static java.util.concurrent.TimeUnit.DAYS;
@@ -53,7 +54,10 @@ public class NodeReaper extends SimpleDaemon {
 
     @Override protected void process() {
         try {
-            compute.listNodes().forEach(this::processNode);
+            log.info(prefix()+"process: starting for cloud: "+compute.getClass().getSimpleName());
+            final List<BubbleNode> nodes = compute.listNodes();
+            log.info(prefix()+"process: processing "+nodes.size()+" nodes for cloud: "+compute.getClass().getSimpleName());
+            nodes.forEach(this::processNode);
         } catch (Exception e) {
             log.warn(prefix()+"process: "+e);
             sleep(getSleepTime(), "waiting to process after exception: "+e);
