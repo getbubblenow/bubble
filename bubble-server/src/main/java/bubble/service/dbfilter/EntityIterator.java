@@ -7,6 +7,7 @@ package bubble.service.dbfilter;
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.storage.local.LocalStorageConfig;
 import bubble.cloud.storage.local.LocalStorageDriver;
+import bubble.model.account.Account;
 import bubble.model.account.AccountSshKey;
 import bubble.model.account.AccountTemplate;
 import bubble.model.app.AppTemplateEntity;
@@ -44,7 +45,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
     @Getter private final Thread thread;
     @Getter private final AtomicReference<Exception> error;
     private List<BubbleApp> userApps;
-    private Map<CloudServiceType, CloudService> noopClouds = new HashMap<>();
+    private final Map<CloudServiceType, CloudService> noopClouds = new HashMap<>();
 
     public EntityIterator(AtomicReference<Exception> error) {
         this.error = error;
@@ -112,6 +113,9 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
                         }
                         add(setLocalStoragePath(cs));
                     });
+
+        } else if (Account.class.isAssignableFrom(c)) {
+            entities.forEach(e -> add(((Account) e).setPreferredPlan(null)));
 
         } else if (AccountSshKey.class.isAssignableFrom(c)) {
             entities.forEach(e -> add(setInstallKey((AccountSshKey) e, network)));
