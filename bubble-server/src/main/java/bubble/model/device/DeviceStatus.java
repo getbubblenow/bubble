@@ -13,8 +13,7 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 
@@ -34,6 +33,7 @@ public class DeviceStatus {
     @Getter @Setter private String bytesReceived;
     @Getter @Setter private String receivedUnits;
 
+    @Getter @Setter private Integer lastHandshakeHours;
     @Getter @Setter private Integer lastHandshakeMinutes;
     @Getter @Setter private Integer lastHandshakeSeconds;
     @Getter @Setter private Long lastHandshakeTime;
@@ -95,31 +95,17 @@ public class DeviceStatus {
                 if (!parts[parts.length-1].equals("ago")) {
                     log.error("DeviceStatus: error parsing handshake, expected 'ago' as last token");
                 } else {
-                    if (parts.length == 3) {
-                        if (parts[1].startsWith("minute")) {
-                            setLastHandshakeMinutes(Integer.parseInt(parts[0]));
-                            setLastHandshakeSeconds(0);
-                            initLastHandshakeTime();
-                        } else if (parts[1].startsWith("second")) {
-                            setLastHandshakeSeconds(Integer.parseInt(parts[0]));
-                            setLastHandshakeMinutes(0);
-                            initLastHandshakeTime();
-                        } else {
-                            log.error("DeviceStatus: error parsing handshake, expected 'minutes' or 'seconds' in parts[1]: "+handshake);
+                    for (int i=0; i<parts.length-1; i+=2) {
+                        final int count = Integer.parseInt(parts[i]);
+                        final String unit = parts[i+1];
+                        switch (unit) {
+                            case "hour": case "hours": setLastHandshakeHours(count); break;
+                            case "minute": case "minutes": setLastHandshakeMinutes(count); break;
+                            case "second": case "seconds": setLastHandshakeSeconds(count); break;
+                            default: throw new IllegalArgumentException("DeviceStatus: error parsing handshake, invalid unit: "+unit);
                         }
-                    } else if (parts.length == 5) {
-                        if (!parts[1].startsWith("minute")) {
-                            log.error("DeviceStatus: error parsing handshake, expected 'minute' or 'minutes' in parts[1]: "+handshake);
-                        } else if (!parts[3].startsWith("second")) {
-                            log.error("DeviceStatus: error parsing handshake, expected 'second' or 'seconds' in parts[3]: "+handshake);
-                        } else {
-                            setLastHandshakeMinutes(Integer.valueOf(parts[0]));
-                            setLastHandshakeSeconds(Integer.valueOf(parts[2]));
-                            initLastHandshakeTime();
-                        }
-                    } else {
-                        log.error("DeviceStatus: error parsing handshake: "+handshake+": expected 3 or 5 parts, found "+parts.length);
                     }
+                    initLastHandshakeTime();
                 }
             } catch (Exception e) {
                 log.error("DeviceStatus: error parsing handshake: "+handshake+": "+shortError(e));
@@ -133,6 +119,9 @@ public class DeviceStatus {
     }
 
     private void initLastHandshakeTime() {
-        setLastHandshakeTime(now() - MINUTES.toMillis(getLastHandshakeMinutes()) - SECONDS.toMillis(getLastHandshakeSeconds()));
+        setLastHandshakeTime(now()
+                - (getLastHandshakeHours() == null ? 0 : HOURS.toMillis(getLastHandshakeHours()))
+                - (getLastHandshakeMinutes() == null ? 0 : MINUTES.toMillis(getLastHandshakeMinutes()))
+                - (getLastHandshakeSeconds() == null ? 0 : SECONDS.toMillis(getLastHandshakeSeconds())));
     }
 }
