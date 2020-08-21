@@ -155,7 +155,6 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements
             partiallyBlockedDomains.set(newBlockList.getPartiallyBlockedDomains());
         }
 
-        log.warn("refreshBlockLists: rejectDomains="+StringUtil.toString(rejectDomains.get()));
         log.debug("refreshBlockLists: rejectDomains="+rejectDomains.get().size());
         log.debug("refreshBlockLists: fullyBlockedDomains="+fullyBlockedDomains.get().size());
         log.debug("refreshBlockLists: partiallyBlockedDomains="+partiallyBlockedDomains.get().size());

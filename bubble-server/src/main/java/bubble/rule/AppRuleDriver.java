@@ -40,8 +40,8 @@ public interface AppRuleDriver {
     InputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[0]);
 
     // also used in dnscrypt-proxy/plugin_reverse_resolve_cache.go
-    String REDIS_BLOCK_LISTS = "rejectLists";
-    String REDIS_REJECT_LISTS = "blockLists";
+    String REDIS_REJECT_LISTS = "rejectLists";
+    String REDIS_BLOCK_LISTS = "blockLists";
     String REDIS_FILTER_LISTS = "filterLists";
     String REDIS_LIST_SUFFIX = "~UNION";
 

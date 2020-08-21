@@ -33,7 +33,7 @@ public class BlockStatsService {
     private final String[] EXCLUDE_FQDNS = {
             "detectportal.firefox.com", "push.services.mozilla.com",
             "spocs.getpocket.com", "img-getpocket.cdn.mozilla.net",
-            "incoming.telemetry.mozilla.org"
+            "incoming.telemetry.mozilla.org", "safebrowsing.googleapis.com"
     };
 
     public void flush () { records.clear(); }
