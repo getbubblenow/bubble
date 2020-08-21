@@ -49,7 +49,9 @@ public class BillingService extends SimpleDaemon {
 
     private static final long BILLING_CHECK_INTERVAL = HOURS.toMillis(6);
     private static final int MAX_UNPAID_DAYS_BEFORE_STOP = 7;
-    public static final long ADVANCE_BILLING = DAYS.toMillis(3);
+
+    // todo add verbage about notification on cc screen
+    public static final long ADVANCE_BILLING = DAYS.toMillis(7);
 
     @Autowired private AccountDAO accountDAO;
     @Autowired private AccountPlanDAO accountPlanDAO;
