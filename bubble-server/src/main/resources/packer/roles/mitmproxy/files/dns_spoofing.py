@@ -5,8 +5,8 @@ import re
 import time
 import uuid
 from bubble_api import bubble_matchers, bubble_log, bubble_activity_log, \
-    CTX_BUBBLE_MATCHERS, BUBBLE_URI_PREFIX, CTX_BUBBLE_ABORT, CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_REQUEST_ID, \
-    add_flow_ctx, parse_host_header
+    CTX_BUBBLE_MATCHERS, BUBBLE_URI_PREFIX, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_REQUEST_ID, \
+    add_flow_ctx, parse_host_header, is_bubble_request, is_sage_request, is_not_from_vpn
 from bubble_config import bubble_host, bubble_host_alias
 
 class Rerouter:
@@ -67,8 +67,9 @@ class Rerouter:
         return matcher_response
 
     def request(self, flow):
-        client_address = flow.client_conn.address[0]
-        server_address = flow.server_conn.address[0]
+        client_addr = flow.client_conn.address[0]
+        server_addr = flow.server_conn.address[0]
+        is_http = False
         if flow.client_conn.tls_established:
             flow.request.scheme = "https"
             sni = flow.client_conn.connection.get_servername()
@@ -77,6 +78,7 @@ class Rerouter:
             flow.request.scheme = "http"
             sni = None
             port = 80
+            is_http = True
 
         host_header = flow.request.host_header
         # bubble_log("dns_spoofing.request: host_header is "+repr(host_header))
@@ -93,12 +95,36 @@ class Rerouter:
             if host.startswith("b'"):
                 host = host[2:-1]
             log_url = flow.request.scheme + '://' + host + flow.request.path
+
+            # If https, we have already checked that the client/server are legal in bubble_conn_check.py
+            # If http, we validate client/server here
+            if is_http:
+                fqdns = [host]
+                if is_bubble_request(server_addr, fqdns):
+                    bubble_log('dns_spoofing.request: redirecting to https for LOCAL bubble='+server_addr+' (bubble_host ('+bubble_host+') in fqdns or bubble_host_alias ('+bubble_host_alias+') in fqdns) for client='+client_addr+', fqdns='+repr(fqdns))
+                    add_flow_ctx(flow, CTX_BUBBLE_ABORT, 301)
+                    add_flow_ctx(flow, CTX_BUBBLE_LOCATION, 'https://'+host+flow.request.path)
+                    return
+
+                elif is_sage_request(server_addr, fqdns):
+                    bubble_log('dns_spoofing.request: redirecting to https for SAGE server='+server_addr+' for client='+client_addr)
+                    add_flow_ctx(flow, CTX_BUBBLE_ABORT, 301)
+                    add_flow_ctx(flow, CTX_BUBBLE_LOCATION, 'https://'+host+flow.request.path)
+                    return
+
+                elif is_not_from_vpn(client_addr):
+                    # todo: add to fail2ban
+                    bubble_log('dns_spoofing.request: returning 404 for non-VPN client='+client_addr+', fqdns='+str(fqdns))
+                    bubble_activity_log(client_addr, server_addr, 'http_abort_non_vpn', fqdns)
+                    add_flow_ctx(flow, CTX_BUBBLE_ABORT, 404)
+                    return
+
             matcher_response = self.get_matchers(flow, sni or host_header)
             if matcher_response:
                 if 'decision' in matcher_response and matcher_response['decision'] is not None and matcher_response['decision'] == 'passthru':
                     bubble_log('dns_spoofing.request: passthru response returned, passing thru and NOT performing TLS interception...')
                     add_flow_ctx(flow, CTX_BUBBLE_PASSTHRU, True)
-                    bubble_activity_log(client_address, server_address, 'http_passthru', log_url)
+                    bubble_activity_log(client_addr, server_addr, 'http_passthru', log_url)
                     return
 
                 elif 'decision' in matcher_response and matcher_response['decision'] is not None and matcher_response['decision'].startswith('abort_'):
@@ -111,12 +137,12 @@ class Rerouter:
                         bubble_log('dns_spoofing.request: unknown abort code: ' + str(matcher_response['decision']) + ', aborting with 404 Not Found')
                         abort_code = 404
                     add_flow_ctx(flow, CTX_BUBBLE_ABORT, abort_code)
-                    bubble_activity_log(client_address, server_address, 'http_abort' + str(abort_code), log_url)
+                    bubble_activity_log(client_addr, server_addr, 'http_abort' + str(abort_code), log_url)
                     return
 
                 elif 'decision' in matcher_response and matcher_response['decision'] is not None and matcher_response['decision'] == 'no_match':
                     bubble_log('dns_spoofing.request: decision was no_match, passing thru...')
-                    bubble_activity_log(client_address, server_address, 'http_no_match', log_url)
+                    bubble_activity_log(client_addr, server_addr, 'http_no_match', log_url)
                     return
 
                 elif ('matchers' in matcher_response
@@ -126,16 +152,24 @@ class Rerouter:
                     bubble_log("dns_spoofing.request: found request_id: " + req_id + ' with matchers: ' + repr(matcher_response['matchers']))
                     add_flow_ctx(flow, CTX_BUBBLE_MATCHERS, matcher_response['matchers'])
                     add_flow_ctx(flow, CTX_BUBBLE_REQUEST_ID, req_id)
-                    bubble_activity_log(client_address, server_address, 'http_match', log_url)
+                    bubble_activity_log(client_addr, server_addr, 'http_match', log_url)
                 else:
                     bubble_log('dns_spoofing.request: no rules returned, passing thru...')
-                    bubble_activity_log(client_address, server_address, 'http_no_rules', log_url)
+                    bubble_activity_log(client_addr, server_addr, 'http_no_rules', log_url)
             else:
                 bubble_log('dns_spoofing.request: no matcher_response returned, passing thru...')
-                # bubble_activity_log(client_address, server_address, 'http_no_matcher_response', log_url)
+                # bubble_activity_log(client_addr, server_addr, 'http_no_matcher_response', log_url)
+
+        elif is_http and is_not_from_vpn(client_addr):
+            # todo: add to fail2ban
+            bubble_log('dns_spoofing.request: returning 404 for non-VPN client='+client_addr+', server_addr='+server_addr)
+            bubble_activity_log(client_addr, server_addr, 'http_abort_non_vpn', [server_addr])
+            add_flow_ctx(flow, CTX_BUBBLE_ABORT, 404)
+            return
+
         else:
             bubble_log('dns_spoofing.request: no sni/host found, not applying rules to path: ' + flow.request.path)
-            bubble_activity_log(client_address, server_address, 'http_no_sni_or_host', 'n/a')
+            bubble_activity_log(client_addr, server_addr, 'http_no_sni_or_host', [server_addr])
 
         flow.request.host_header = host_header
         flow.request.host = sni or host_header

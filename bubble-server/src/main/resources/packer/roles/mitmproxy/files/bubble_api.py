@@ -1,16 +1,21 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-import requests
-import traceback
+import datetime
+import json
 import re
+import requests
+import redis
+import subprocess
 import sys
 import time
+import traceback
 import uuid
-import datetime
-import redis
-import json
-from bubble_config import bubble_network, bubble_port, debug_capture_fqdn
+from netaddr import IPAddress, IPNetwork
+from bubble_vpn4 import wireguard_network_ipv4
+from bubble_vpn6 import wireguard_network_ipv6
+from bubble_config import bubble_network, bubble_port, debug_capture_fqdn, \
+    bubble_host, bubble_host_alias, bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6, cert_validation_host
 
 HEADER_USER_AGENT = 'User-Agent'
 HEADER_CONTENT_SECURITY_POLICY = 'Content-Security-Policy'
@@ -19,6 +24,7 @@ HEADER_FILTER_PASSTHRU = 'X-Bubble-Passthru'
 
 CTX_BUBBLE_MATCHERS='X-Bubble-Matchers'
 CTX_BUBBLE_ABORT='X-Bubble-Abort'
+CTX_BUBBLE_LOCATION='X-Bubble-Location'
 CTX_BUBBLE_PASSTHRU='X-Bubble-Passthru'
 CTX_BUBBLE_REQUEST_ID='X-Bubble-RequestId'
 CTX_CONTENT_LENGTH='X-Bubble-Content-Length'
@@ -28,6 +34,14 @@ BUBBLE_URI_PREFIX='/__bubble/'
 REDIS = redis.Redis(host='127.0.0.1', port=6379, db=0)
 BUBBLE_ACTIVITY_LOG_PREFIX = 'bubble_activity_log_'
 BUBBLE_ACTIVITY_LOG_EXPIRATION = 600
+
+LOCAL_IPS = []
+for ip in subprocess.check_output(['hostname', '-I']).split():
+    LOCAL_IPS.append(ip.decode())
+
+
+VPN_IP4_CIDR = IPNetwork(wireguard_network_ipv4)
+VPN_IP6_CIDR = IPNetwork(wireguard_network_ipv6)
 
 # This regex extracts splits the host header into host and port.
 # Handles the edge case of IPv6 addresses containing colons.
@@ -170,3 +184,17 @@ def get_flow_ctx(flow, name):
     if not name in flow.bubble_ctx:
         return None
     return flow.bubble_ctx[name]
+
+
+def is_bubble_request(ip, fqdns):
+    # return ip in LOCAL_IPS
+    return ip in LOCAL_IPS and (bubble_host in fqdns or bubble_host_alias in fqdns)
+
+
+def is_sage_request(ip, fqdns):
+    return (ip == bubble_sage_ip4 or ip == bubble_sage_ip6) and bubble_sage_host in fqdns
+
+
+def is_not_from_vpn(client_addr):
+    ip = IPAddress(client_addr)
+    return ip not in VPN_IP4_CIDR and ip not in VPN_IP6_CIDR

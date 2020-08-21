@@ -8,7 +8,7 @@ import uuid
 import traceback
 from mitmproxy.net.http import Headers
 from bubble_config import bubble_port, bubble_host_alias, debug_capture_fqdn
-from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, BUBBLE_URI_PREFIX, \
+from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, BUBBLE_URI_PREFIX, \
     CTX_BUBBLE_REQUEST_ID, CTX_CONTENT_LENGTH, CTX_CONTENT_LENGTH_SENT, bubble_log, get_flow_ctx, add_flow_ctx, \
     HEADER_USER_AGENT, HEADER_FILTER_PASSTHRU, HEADER_CONTENT_SECURITY_POLICY, REDIS, redis_set, parse_host_header
 
@@ -17,6 +17,7 @@ HEADER_CONTENT_TYPE = 'Content-Type'
 HEADER_CONTENT_LENGTH = 'Content-Length'
 HEADER_CONTENT_ENCODING = 'Content-Encoding'
 HEADER_TRANSFER_ENCODING = 'Transfer-Encoding'
+HEADER_LOCATION = 'Location'
 CONTENT_TYPE_BINARY = 'application/octet-stream'
 STANDARD_FILTER_HEADERS = {HEADER_CONTENT_TYPE: CONTENT_TYPE_BINARY}
 
@@ -200,10 +201,18 @@ def responseheaders(flow):
     else:
         abort_code = get_flow_ctx(flow, CTX_BUBBLE_ABORT)
         if abort_code is not None:
-            bubble_log('responseheaders: aborting request with HTTP status '+str(abort_code))
-            flow.response.headers = Headers()
-            flow.response.status_code = abort_code
-            flow.response.stream = lambda chunks: []
+            abort_location = get_flow_ctx(flow, CTX_BUBBLE_LOCATION)
+            if abort_location is not None:
+                bubble_log('responseheaders: redirecting request with HTTP status '+str(abort_code)+' to: '+abort_location)
+                flow.response.headers = Headers()
+                flow.response.headers[HEADER_LOCATION] = abort_location
+                flow.response.status_code = abort_code
+                flow.response.stream = lambda chunks: []
+            else:
+                bubble_log('responseheaders: aborting request with HTTP status '+str(abort_code))
+                flow.response.headers = Headers()
+                flow.response.status_code = abort_code
+                flow.response.stream = lambda chunks: []
 
         else:
             req_id = get_flow_ctx(flow, CTX_BUBBLE_REQUEST_ID)

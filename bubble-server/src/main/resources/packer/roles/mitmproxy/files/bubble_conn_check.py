@@ -27,14 +27,11 @@ from mitmproxy.proxy.protocol import TlsLayer, RawTCPLayer
 from mitmproxy.exceptions import TlsProtocolException
 from mitmproxy.net import tls as net_tls
 
-from bubble_api import bubble_log, bubble_conn_check, bubble_activity_log, REDIS, redis_set
-from bubble_config import bubble_host, bubble_host_alias, bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6, cert_validation_host
-from bubble_vpn4 import wireguard_network_ipv4
-from bubble_vpn6 import wireguard_network_ipv6
-from netaddr import IPAddress, IPNetwork
 import json
-import subprocess
 import traceback
+from bubble_api import bubble_log, bubble_conn_check, bubble_activity_log, REDIS, redis_set, \
+    is_bubble_request, is_sage_request, is_not_from_vpn
+from bubble_config import bubble_host, bubble_host_alias, bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6, cert_validation_host
 
 REDIS_DNS_PREFIX = 'bubble_dns_'
 REDIS_CONN_CHECK_PREFIX = 'bubble_conn_check_'
@@ -51,12 +48,6 @@ SEC_MAX = 'maximum'
 SEC_STD = 'standard'
 SEC_BASIC = 'basic'
 SEC_OFF = 'disabled'
-
-local_ips = None
-
-VPN_IP4_CIDR = IPNetwork(wireguard_network_ipv4)
-VPN_IP6_CIDR = IPNetwork(wireguard_network_ipv6)
-
 
 def get_device_security_level(client_addr, fqdns):
     level = REDIS.get(REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX+client_addr)
@@ -83,28 +74,6 @@ def show_block_stats(client_addr):
     if show is None:
         return False
     return show.decode() == 'true'
-
-def get_local_ips():
-    global local_ips
-    if local_ips is None:
-        local_ips = []
-        for ip in subprocess.check_output(['hostname', '-I']).split():
-            local_ips.append(ip.decode())
-    return local_ips
-
-
-def is_bubble_request(ip, fqdns):
-    # return ip in get_local_ips()
-    return ip in get_local_ips() and (bubble_host in fqdns or bubble_host_alias in fqdns)
-
-
-def is_sage_request(ip, fqdns):
-    return (ip == bubble_sage_ip4 or ip == bubble_sage_ip6) and bubble_sage_host in fqdns
-
-
-def is_not_from_vpn(client_addr):
-    ip = IPAddress(client_addr)
-    return ip not in VPN_IP4_CIDR and ip not in VPN_IP6_CIDR
 
 
 def conn_check_cache_prefix(client_addr, server_addr):
@@ -255,6 +224,7 @@ def next_layer(next_layer):
             check = FORCE_PASSTHRU
 
         elif is_not_from_vpn(client_addr):
+            # todo: add to fail2ban
             bubble_log('next_layer: enabling block for non-VPN client='+client_addr+', fqdns='+str(fqdns))
             bubble_activity_log(client_addr, server_addr, 'conn_block_non_vpn', fqdns)
             next_layer.__class__ = TlsBlock
