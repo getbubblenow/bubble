@@ -5,7 +5,7 @@
     {"name": "server_alias", "value": "[[network.networkDomain]]"},
     {"name": "restore_key", "value": "[[restoreKey]]"},
     {"name": "install_type", "value": "[[installType]]"},
-    {"name": "bubble_java_opts", "value": "-XX:MaxRAM=[[expr nodeSize.memoryMB '//' jvmMaxRamDivisor]]m"},
+    {"name": "bubble_java_opts", "value": "-XX:MaxRAM=[[jvmMaxRamMB]]m"},
     {"name": "cert_name", "value": "bubble-[[network.shortId]]"}
   ],
   "optionalConfigNames": ["restore_key"]

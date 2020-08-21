@@ -6,6 +6,7 @@ package bubble.service.cloud;
 
 import bubble.ApiConstants;
 import bubble.cloud.compute.AnsibleRole;
+import bubble.cloud.compute.ComputeNodeSize;
 import bubble.cloud.compute.ComputeServiceDriver;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.bill.BubblePlanAppDAO;
@@ -76,8 +77,10 @@ public class AnsiblePrepService {
         ctx.put("installType", installType.name());
         ctx.put("isNode", installType == AnsibleInstallType.node);
         ctx.put("isSage", installType == AnsibleInstallType.sage);
-        ctx.put("nodeSize", computeDriver.getSize(node.getSizeType()));
-        ctx.put("jvmMaxRamDivisor", installType == AnsibleInstallType.sage ? "1.7" : "4");
+
+        final ComputeNodeSize nodeSize = computeDriver.getSize(node.getSizeType());
+        ctx.put("nodeSize", nodeSize);
+        ctx.put("jvmMaxRam", jvmMaxRam(nodeSize, installType));
         if (restoreKey != null) {
             ctx.put("restoreKey", restoreKey);
             ctx.put("restoreTimeoutSeconds", RESTORE_MONITOR_SCRIPT_TIMEOUT_SECONDS);
@@ -151,6 +154,16 @@ public class AnsiblePrepService {
             }
         }
         return ctx;
+    }
+
+    private int jvmMaxRam(ComputeNodeSize nodeSize, AnsibleInstallType installType) {
+        final int memoryMB = nodeSize.getMemoryMB();
+        if (installType == AnsibleInstallType.sage) return (int) (((double) memoryMB) * 0.6d);
+        if (memoryMB >= 4096) return (int) (((double) memoryMB) * 0.6d);
+        if (memoryMB >= 2048) return (int) (((double) memoryMB) * 0.5d);
+        if (memoryMB >= 1024) return (int) (((double) memoryMB) * 0.23d);
+        // no nodes are this small, API probably would not start, not enough memory
+        return (int) (((double) memoryMB) * 0.22d);
     }
 
 }
