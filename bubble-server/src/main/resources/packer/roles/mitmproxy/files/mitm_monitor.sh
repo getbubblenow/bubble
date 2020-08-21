@@ -39,12 +39,22 @@ fi
 
 function ensureMitmOn {
   PORT=${1}
-  log "Flushing PREROUTING before enabling MITM services"
-  iptables -F PREROUTING  -t nat || log "Error flushing port forwarding when enabling MITM services"
-  log "Enabling MITM port forwarding on TCP port 80 -> ${PORT}"
-  iptables -I PREROUTING 1 -t nat -p tcp --dport 80 -j REDIRECT --to-ports ${PORT} || log "Error enabling MITM port forwarding 80 -> 8888"
-  log "Enabling MITM port forwarding on TCP port 443 -> ${PORT}"
-  iptables -I PREROUTING 1 -t nat -p tcp --dport 443 -j REDIRECT --to-ports ${PORT} || log "Error enabling MITM port forwarding 443 -> 8888"
+
+  log "Flushing ipv4 PREROUTING before enabling MITM services"
+  iptables -F PREROUTING  -t nat || log "Error flushing ip4v port forwarding when enabling MITM services"
+  log "Flushing ipv4 PREROUTING before enabling MITM services"
+  ip6tables -F PREROUTING  -t nat || log "Error flushing ipv6 port forwarding when enabling MITM services"
+
+  log "Enabling MITM ipv4 port forwarding on TCP port 80 -> ${PORT}"
+  iptables -I PREROUTING 1 -t nat -p tcp --dport 80 -j REDIRECT --to-ports ${PORT} || log "Error enabling MITM ipv4 port forwarding 80 -> 8888"
+  log "Enabling MITM ipv4 port forwarding on TCP port 443 -> ${PORT}"
+  iptables -I PREROUTING 1 -t nat -p tcp --dport 443 -j REDIRECT --to-ports ${PORT} || log "Error enabling MITM ipv4 port forwarding 443 -> 8888"
+
+  log "Enabling MITM ipv6 port forwarding on TCP port 80 -> ${PORT}"
+  ip6tables -I PREROUTING 1 -t nat -p tcp --dport 80 -j REDIRECT --to-ports ${PORT} || log "Error enabling MITM ipv6 port forwarding 80 -> 8888"
+  log "Enabling MITM ipv6 port forwarding on TCP port 443 -> ${PORT}"
+  ip6tables -I PREROUTING 1 -t nat -p tcp --dport 443 -j REDIRECT --to-ports ${PORT} || log "Error enabling MITM ipv6 port forwarding 443 -> 8888"
+
   echo -n on > ${ROOT_KEY_MARKER}
 }
 

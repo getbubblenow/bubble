@@ -59,7 +59,7 @@
     ctstate: NEW
     syn: match
     jump: ACCEPT
-    comment: Accept new local connections on mitm port
+    comment: Accept new connections on mitm port
   become: yes
   tags: algo_related
   with_items:
