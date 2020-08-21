@@ -29,7 +29,6 @@ import javax.validation.constraints.Size;
 import java.util.Map;
 
 import static bubble.ApiConstants.*;
-import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -91,7 +90,7 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @ECSearchable @ECField(index=50)
     @Column(nullable=false, updatable=false)
     @Getter @Setter private Boolean canPrime;
-    public boolean canPrime () { return bool(canPrime); }
+    public boolean canPrime () { return canPrime != null && canPrime; }
 
     @Column(length=100000, nullable=false) @ECField(index=60)
     @JsonIgnore @Getter @Setter private String dataConfigJson;

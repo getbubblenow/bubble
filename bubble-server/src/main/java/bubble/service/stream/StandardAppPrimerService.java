@@ -137,10 +137,17 @@ public class StandardAppPrimerService implements AppPrimerService {
                         continue;
                     }
                     for (Device device : devices) {
+                        final Set<String> rejectDomains = new HashSet<>();
                         final Set<String> blockDomains = new HashSet<>();
                         final Set<String> filterDomains = new HashSet<>();
                         for (AppMatcher matcher : matchers) {
                             final AppRuleDriver appRuleDriver = rule.initDriver(app, driver, matcher, account, device);
+                            final Set<String> rejects = appRuleDriver.getPrimedRejectDomains();
+                            if (empty(rejects)) {
+                                log.debug("_prime: no rejectDomains for device/app/rule/matcher: " + device.getName() + "/" + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
+                            } else {
+                                rejectDomains.addAll(rejects);
+                            }
                             final Set<String> blocks = appRuleDriver.getPrimedBlockDomains();
                             if (empty(blocks)) {
                                 log.debug("_prime: no blockDomains for device/app/rule/matcher: " + device.getName() + "/" + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
@@ -154,8 +161,11 @@ public class StandardAppPrimerService implements AppPrimerService {
                                 filterDomains.addAll(filters);
                             }
                         }
-                        if (!empty(blockDomains) || !empty(filterDomains)) {
+                        if (!empty(rejectDomains) || !empty(blockDomains) || !empty(filterDomains)) {
                             for (String ip : accountDeviceIps.get(device.getUuid())) {
+                                if (!empty(rejectDomains)) {
+                                    AppRuleDriver.defineRedisRejectSet(redis, ip, app.getName() + ":" + app.getUuid(), rejectDomains.toArray(String[]::new));
+                                }
                                 if (!empty(blockDomains)) {
                                     AppRuleDriver.defineRedisBlockSet(redis, ip, app.getName() + ":" + app.getUuid(), blockDomains.toArray(String[]::new));
                                 }

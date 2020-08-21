@@ -52,6 +52,9 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements
     private final AtomicReference<Set<String>> fullyBlockedDomains = new AtomicReference<>(Collections.emptySet());
     @Override public Set<String> getPrimedBlockDomains() { return fullyBlockedDomains.get(); }
 
+    private final AtomicReference<Set<String>> rejectDomains = new AtomicReference<>(Collections.emptySet());
+    @Override public Set<String> getPrimedRejectDomains() { return rejectDomains.get(); }
+
     private final AtomicReference<Set<String>> partiallyBlockedDomains = new AtomicReference<>(Collections.emptySet());
     @Override public Set<String> getPrimedFilterDomains() { return partiallyBlockedDomains.get(); }
 
@@ -123,7 +126,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements
                         blockListSource = newList;
                         refreshed.add(newList.getUrl());
                     } catch (Exception e) {
-                        log.error("init: error downloading blocklist " + listUrl + ": " + shortError(e));
+                        log.error("init: error downloading blockList " + listUrl + ": " + shortError(e));
                         continue;
                     }
                 }
@@ -142,6 +145,9 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements
         }
         blockList.set(newBlockList);
 
+        if (!newBlockList.getRejectList().equals(rejectDomains.get())) {
+            rejectDomains.set(newBlockList.getRejectList());
+        }
         if (!newBlockList.getFullyBlockedDomains().equals(fullyBlockedDomains.get())) {
             fullyBlockedDomains.set(newBlockList.getFullyBlockedDomains());
         }
@@ -149,6 +155,8 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements
             partiallyBlockedDomains.set(newBlockList.getPartiallyBlockedDomains());
         }
 
+        log.warn("refreshBlockLists: rejectDomains="+StringUtil.toString(rejectDomains.get()));
+        log.debug("refreshBlockLists: rejectDomains="+rejectDomains.get().size());
         log.debug("refreshBlockLists: fullyBlockedDomains="+fullyBlockedDomains.get().size());
         log.debug("refreshBlockLists: partiallyBlockedDomains="+partiallyBlockedDomains.get().size());
         log.debug("refreshBlockLists: refreshed "+refreshed.size()+" block lists: "+StringUtil.toString(refreshed));

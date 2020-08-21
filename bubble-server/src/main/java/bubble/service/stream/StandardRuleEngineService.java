@@ -81,6 +81,7 @@ public class StandardRuleEngineService implements RuleEngineService {
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private AppPrimerService appPrimerService;
     @Autowired private RedisService redis;
 
     public static final long MATCHERS_CACHE_TIMEOUT = MINUTES.toSeconds(15);
@@ -217,6 +218,7 @@ public class StandardRuleEngineService implements RuleEngineService {
                     {"ruleEngineCache", ruleEngineCacheSize}
             });
             if (log.isInfoEnabled()) log.info("flushCaches: flushed: "+json(flushStatus, COMPACT_MAPPER));
+            appPrimerService.primeApps();
             return flushStatus;
         }
     }
