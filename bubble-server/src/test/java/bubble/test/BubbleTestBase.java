@@ -13,15 +13,18 @@ import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.server.config.factory.StreamConfigurationSource;
 import org.cobbzilla.wizardtest.resources.AbstractResourceIT;
 
+import java.io.File;
 import java.util.Map;
 
+import static bubble.ApiConstants.HOME_DIR;
 import static org.cobbzilla.util.system.CommandShell.loadShellExportsOrDie;
 
 public abstract class BubbleTestBase extends AbstractResourceIT<BubbleConfiguration, BubbleServer> {
 
-    public static final String ENV_EXPORT_FILE = ".bubble-test.env";
+    public static final String ENV_EXPORT_FILENAME = ".bubble-test.env";
+    public static final File ENV_EXPORT_FILE = new File(HOME_DIR, ENV_EXPORT_FILENAME);
 
-    @Getter private StreamConfigurationSource configurationSource
+    @Getter private final StreamConfigurationSource configurationSource
             = new StreamConfigurationSource("test-bubble-config.yml");
 
     @Override protected Map<String, String> getServerEnvironment() {
