@@ -31,12 +31,10 @@ function start_redis() {
 
   echo "Starting redis..."
   redis-server ${REDIS_CONF} || die "Error starting redis"
-  echo "Redis successfully started on port ${port}"
 }
 
-function stop_redis() {
-  port=$(redis_port)
-  REDIS_DIR=/tmp/redis-${port}
+function stop_redis_by_dir() {
+  REDIS_DIR=${1}
   PID_FILE=${REDIS_DIR}/redis.pid
   if [[ ! -f ${PID_FILE} ]] ; then
     echo "Redis pid file not found: ${PID_FILE}"
@@ -45,25 +43,42 @@ function stop_redis() {
     kill $(cat ${PID_FILE}) || die "Error killing redis using pid file: ${PID_FILE}"
   fi
 
-  echo "Removing redis dir: ${REDIS_DIR}"
-  rm -rf ${REDIS_DIR} || die "Error removing redis dir: ${REDIS_DIR}"
+  if [[ -d ${REDIS_DIR} ]] ; then
+    echo "Removing redis dir: ${REDIS_DIR}"
+    rm -rf ${REDIS_DIR} || die "Error removing redis dir: ${REDIS_DIR}"
+  fi
+}
 
-  echo "Redis stopped and cleaned up"
+function stop_redis() {
+  port=$(redis_port)
+  REDIS_DIR=/tmp/redis-${port}
+  stop_redis_by_dir ${REDIS_DIR}
+}
+
+function redis_clean() {
+  for REDIS_DIR in $(find /tmp -maxdepth 1 -type d -name "redis-*") ; do
+    stop_redis_by_dir ${REDIS_DIR}
+  done
 }
 
 if [[ -z ${1} ]] ; then
-  die "expected one of: start stop port"
+  die "expected one of: start stop clean port"
 fi
 
 case ${1} in
   "start")
     start_redis
+    echo "Redis successfully started"
     ;;
   "stop")
     stop_redis
+    echo "Redis stopped and cleaned up"
     ;;
   "port")
     redis_port
+    ;;
+  "clean")
+    redis_clean
     ;;
   *)
     die "invalid argument: ${1}"
