@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static bubble.ApiConstants.HOME_DIR;
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.*;
@@ -53,7 +54,7 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
         if (!empty(config.getBaseDir())) {
             final File base = new File(config.getBaseDir());
             if (base.isAbsolute()) return base.getAbsolutePath();
-            return new File(System.getProperty("user.home")+"/"+config.getBaseDir()).getAbsolutePath();
+            return new File(HOME_DIR+"/"+config.getBaseDir()).getAbsolutePath();
         }
 
         final File standardBaseDir = new File(LOCAL_STORAGE_STANDARD_BASE_DIR);
@@ -61,7 +62,7 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
             return abs(standardBaseDir);
         }
 
-        final File userBaseDir = new File(System.getProperty("user.home")+"/"+BUBBLE_LOCAL_STORAGE_DIR);
+        final File userBaseDir = new File(HOME_DIR+"/"+BUBBLE_LOCAL_STORAGE_DIR);
         if ((userBaseDir.exists() || userBaseDir.mkdirs()) && userBaseDir.canRead() && userBaseDir.canWrite()) {
             return abs(userBaseDir);
         }

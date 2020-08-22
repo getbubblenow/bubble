@@ -65,7 +65,7 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
             System.getProperty("user.dir") + "/bubble.env"
     };
 
-    private static AtomicReference<String> restoreKey = new AtomicReference<>();
+    private static final AtomicReference<String> restoreKey = new AtomicReference<>();
     public static boolean isRestoreMode () { return restoreKey.get() != null; }
     public static void disableRestoreMode () {
         final BubbleNode selfNode = nodeFromFile(THIS_NODE_FILE);
