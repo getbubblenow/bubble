@@ -1,0 +1,23 @@
+bind 127.0.0.1 ::1
+protected-mode yes
+
+port {{BUBBLE_REDIS_PORT}}
+
+tcp-backlog 511
+timeout 0
+tcp-keepalive 300
+daemonize yes
+supervised no
+pidfile /tmp/redis-{{BUBBLE_REDIS_PORT}}/redis.pid
+loglevel notice
+logfile /tmp/redis-{{BUBBLE_REDIS_PORT}}/redis.log
+databases 1
+always-show-logo yes
+dir /tmp/redis-{{BUBBLE_REDIS_PORT}}
+
+lazyfree-lazy-eviction no
+lazyfree-lazy-expire no
+lazyfree-lazy-server-del no
+replica-lazy-flush no
+appendonly no
+appendfilename "appendonly-{{BUBBLE_REDIS_PORT}}.aof"

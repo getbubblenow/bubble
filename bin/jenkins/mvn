@@ -1,2 +1,6 @@
 #!/bin/bash
-/usr/bin/mvn -Dstyle.color=never -Dmaven.repo.local=/var/lib/jenkins/.m2_$(basename $(cd ../.. && pwd))/repository "${@}"
+THISDIR=$(cd $(dirname ${0}) && pwd)
+WORKSPACE_DIR=$(cd ${THISDIR}/../.. && pwd)
+WORKSPACE_NAME=$(basename ${WORKSPACE_DIR})
+
+/usr/bin/mvn -Dstyle.color=never -Dmaven.repo.local=/var/lib/jenkins/.m2_${WORKSPACE_NAME}/repository "${@}"

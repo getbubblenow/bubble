@@ -1,0 +1,68 @@
+#!/bin/bash
+
+THISDIR=$(cd $(dirname ${0}) && pwd)
+WORKSPACE_DIR=$(cd ${THISDIR}/../.. && pwd)
+WORKSPACE_NAME=$(basename ${WORKSPACE_DIR})
+
+function die {
+  echo 1>&2 "$0: ${1}"
+  exit 1
+}
+
+function redis_port() {
+  if [[ -z "${BUBBLE_REDIS_PORT}" ]] ; then
+    # pick port based on hash of workspace name; there is a 1-in-4096 chance of collision
+    # if you get a collision, just define BUBBLE_REDIS_PORT in jenkins to be < 6800 or > 10895 in the job's build config
+    BUBBLE_REDIS_PORT=$(expr 6800 + $(echo $((16#$(echo -n ${WORKSPACE_NAME} | sha256sum | awk '{print $1}' | tail -c 4)))))
+  fi
+  echo ${BUBBLE_REDIS_PORT}
+}
+
+function start_redis() {
+  port=$(redis_port)
+  REDIS_DIR=/tmp/redis-${port}
+  REDIS_CONF=${REDIS_DIR}/redis.conf
+
+  echo "Creating redis dir: ${REDIS_DIR}"
+  mkdir -p ${REDIS_DIR} || die "Error creating redis dir: ${REDIS_DIR}"
+
+  echo "Writing redis config: ${REDIS_CONF}"
+  cat ${THISDIR}/redis.conf.hbs | sed -e "s/{{BUBBLE_REDIS_PORT}}/${port}/g" > ${REDIS_CONF} || die "Error writing redis configuration to ${REDIS_CONF}"
+
+  echo "Starting redis..."
+  redis-server ${REDIS_CONF}
+  echo "Redis successfully started on port ${port}"
+}
+
+function stop_redis() {
+  port=$(redis_port)
+  REDIS_DIR=/tmp/redis-${port}
+  PID_FILE=${REDIS_DIR}/redis.pid
+  if [[ ! -f ${PID_FILE} ]] ; then
+    echo "Redis pid file not found: ${PID_FILE}"
+  else
+    echo "Stopping redis on port ${port}"
+    kill $(cat ${PID_FILE}) || die "Error killing redis using pid file: ${PID_FILE}"
+  fi
+
+  echo "Removing redis dir: ${REDIS_DIR}"
+  rm -rf ${REDIS_DIR} || die "Error removing redis dir: ${REDIS_DIR}"
+
+  echo "Redis stopped and cleaned up"
+}
+
+if [[ -z ${1} ]] ; then
+  die "expected start or stop"
+fi
+
+case ${1} in
+  "start")
+    start_redis
+    ;;
+  "stop")
+    stop_redis
+    ;;
+  *)
+    die "invalid argument: ${1}"
+    ;;
+esac

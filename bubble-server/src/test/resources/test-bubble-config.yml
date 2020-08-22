@@ -64,6 +64,7 @@ jersey:
 
 redis:
   key: '{{#exists BUBBLE_REDIS_ENCRYPTION_KEY}}{{BUBBLE_REDIS_ENCRYPTION_KEY}}{{else}}{{key_file '.BUBBLE_REDIS_ENCRYPTION_KEY'}}{{/exists}}'
+  port: '{{#exists BUBBLE_REDIS_PORT}}{{BUBBLE_REDIS_PORT}}{{else}}6379{{/exists}}'
   prefix: bubble
 
 errorApi:
