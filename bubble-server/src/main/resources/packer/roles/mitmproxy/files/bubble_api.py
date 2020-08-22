@@ -55,7 +55,7 @@ def redis_set(name, value, ex):
 
 
 def bubble_log(message):
-    print(str(datetime.datetime.time(datetime.datetime.now()))+': ' + message, file=sys.stderr)
+    print(str(datetime.datetime.time(datetime.datetime.now()))+': ' + message, file=sys.stderr, flush=True)
 
 
 def bubble_activity_log(client_addr, server_addr, event, data):
