@@ -1,2 +1,2 @@
 #!/bin/bash
-/usr/bin/mvn -Dstyle.color=never -Dmaven.repo.local=$(cd ../.. && pwd)/.m2/repository "${@}"
+/usr/bin/mvn -Dstyle.color=never -Dmaven.repo.local=/var/lib/jenkins/.m2_$(basename $(cd ../.. && pwd))/repository "${@}"
