@@ -37,7 +37,7 @@ import java.util.Map;
 
 import static bubble.service.boot.StandardSelfNodeService.SELF_NODE_JSON;
 import static bubble.service.boot.StandardSelfNodeService.THIS_NODE_FILE;
-import static bubble.test.BubbleTestBase.ENV_EXPORT_FILENAME;
+import static bubble.test.BubbleTestBase.ENV_EXPORT_FILE;
 import static bubble.test.HandlebarsTestHelpers.registerTestHelpers;
 import static java.util.Arrays.asList;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
@@ -126,7 +126,7 @@ public abstract class BubbleModelTestBase extends ApiModelTestBase<BubbleConfigu
             = new StreamConfigurationSource("test-bubble-config.yml");
 
     @Override protected Map<String, String> getServerEnvironment() {
-        final Map<String, String> env = loadShellExportsOrDie(ENV_EXPORT_FILENAME);
+        final Map<String, String> env = loadShellExportsOrDie(ENV_EXPORT_FILE);
         if (!env.containsKey("BUBBLE_HBM2DDL_AUTO")) {
             env.put("BUBBLE_HBM2DDL_AUTO", "create");
         }
