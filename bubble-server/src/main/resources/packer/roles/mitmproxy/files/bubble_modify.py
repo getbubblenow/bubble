@@ -214,6 +214,10 @@ def responseheaders(flow):
                 flow.response.status_code = abort_code
                 flow.response.stream = lambda chunks: []
 
+        elif flow.response.status_code // 100 != 2:
+            bubble_log('responseheaders: response had HTTP status '+str(flow.response.status_code)+', returning as-is')
+            pass
+
         else:
             req_id = get_flow_ctx(flow, CTX_BUBBLE_REQUEST_ID)
             matchers = get_flow_ctx(flow, CTX_BUBBLE_MATCHERS)
