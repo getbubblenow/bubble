@@ -30,7 +30,7 @@ function start_redis() {
   cat ${THISDIR}/redis.conf.hbs | sed -e "s/{{BUBBLE_REDIS_PORT}}/${port}/g" > ${REDIS_CONF} || die "Error writing redis configuration to ${REDIS_CONF}"
 
   echo "Starting redis..."
-  redis-server ${REDIS_CONF}
+  redis-server ${REDIS_CONF} || die "Error starting redis"
   echo "Redis successfully started on port ${port}"
 }
 
