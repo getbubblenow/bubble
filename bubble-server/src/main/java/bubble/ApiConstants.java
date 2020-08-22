@@ -76,7 +76,17 @@ public class ApiConstants {
     public static final GoogleAuthenticator G_AUTH = new GoogleAuthenticator();
 
     public static final Predicate ALWAYS_TRUE = m -> true;
-    public static final String HOME_DIR = System.getProperty("user.home");
+    public static final String HOME_DIR;
+    static {
+        final String userHome = System.getProperty("user.home");
+        final String envHome = System.getenv("HOME");
+        if (!userHome.equals(envHome)) {
+            log.warn("System.getProperty(\"user.home\") == "+userHome+" differs from System.getenv(\"HOME\") == "+envHome+", using HOME from environment: "+envHome);
+            HOME_DIR = envHome;
+        } else {
+            HOME_DIR = userHome;
+        }
+    }
 
     public static final File CACERTS_DIR = new File(HOME_DIR, "cacerts");
     public static final File MITMPROXY_CERT_DIR = new File(HOME_DIR, "mitm_certs");

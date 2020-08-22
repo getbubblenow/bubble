@@ -67,6 +67,7 @@ fi
 
 case ${1} in
   "start")
+    stop_redis
     start_redis
     echo "Redis successfully started"
     ;;
