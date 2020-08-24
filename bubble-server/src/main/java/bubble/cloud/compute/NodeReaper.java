@@ -12,13 +12,13 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.NetworkService;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.daemon.SimpleDaemon;
 import org.cobbzilla.util.network.NetworkUtil;
 import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.util.time.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +33,7 @@ public class NodeReaper extends SimpleDaemon {
 
     private static final long STARTUP_DELAY = MINUTES.toMillis(30);
     private static final long KILL_CHECK_INTERVAL = MINUTES.toMillis(30);
+    private static final long MAX_TIME_NOT_IN_DB_BEFORE_DELETION = MINUTES.toMillis(45);
     private static final long MAX_DOWNTIME_BEFORE_DELETION = DAYS.toMillis(2);
 
     private final ComputeServiceDriverBase compute;
@@ -48,7 +49,8 @@ public class NodeReaper extends SimpleDaemon {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private NetworkService networkService;
 
-    private final Map<String, Long> unreachableSince = new HashMap<>(100);
+    private final Map<String, Long> noNodeInDb = new ExpirationMap<>(100, MAX_TIME_NOT_IN_DB_BEFORE_DELETION*2);
+    private final Map<String, Long> unreachableSince = new ExpirationMap<>(100, MAX_DOWNTIME_BEFORE_DELETION*2);
 
     private String prefix() { return compute.getClass().getSimpleName()+": "; }
 
@@ -68,20 +70,27 @@ public class NodeReaper extends SimpleDaemon {
         if (wouldKillSelf(node)) return;
         final var nodeFromDB = nodeDAO.findByIp4(node.getIp4());
         if (nodeFromDB == null) {
-            final String message = prefix() + "processNode: no node exists with ip4=" + node.getIp4() + ", killing it";
-            log.warn(message);
-            reportError(message);
-            final var domain = domainDAO.findByUuid(node.getDomain());
-            final var dns = domain != null ? cloudDAO.findByUuid(domain.getPublicDns()) : null;
-            try {
-                if (dns != null) dns.getDnsDriver(configuration).deleteNode(node);
-                compute.stop(node);
-            } catch (Exception e) {
-                final String errMessage = prefix() + "processNode: error stopping node " + node.getIp4();
-                reportError(errMessage, e);
-                log.error(errMessage, e);
+            final Long notInDbSince = noNodeInDb.get(node.getIp4());
+            if (notInDbSince == null) {
+                noNodeInDb.put(node.getIp4(), now());
+
+            } else if (now() - notInDbSince > MAX_TIME_NOT_IN_DB_BEFORE_DELETION) {
+                final String message = prefix() + "processNode: no node exists with ip4=" + node.getIp4() + ", killing it";
+                log.warn(message);
+                reportError(message);
+                final var domain = domainDAO.findByUuid(node.getDomain());
+                final var dns = domain != null ? cloudDAO.findByUuid(domain.getPublicDns()) : null;
+                try {
+                    if (dns != null) dns.getDnsDriver(configuration).deleteNode(node);
+                    compute.stop(node);
+                } catch (Exception e) {
+                    final String errMessage = prefix() + "processNode: error stopping node " + node.getIp4();
+                    reportError(errMessage, e);
+                    log.error(errMessage, e);
+                }
             }
         } else {
+            noNodeInDb.remove(nodeFromDB.getIp4());
             if (networkService.isReachable(nodeFromDB)) {
                 unreachableSince.remove(nodeFromDB.getUuid());
             } else {
