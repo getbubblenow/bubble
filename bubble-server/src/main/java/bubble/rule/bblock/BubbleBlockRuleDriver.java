@@ -366,7 +366,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements
         if (bubbleBlockConfig.inPageBlocks()) {
             return filterInsertJs(in, filterRequest, filterCtx, BUBBLE_JS_TEMPLATE, EMPTY, BLOCK_STATS_JS, showStats);
         }
-        log.warn(prefix+"inserting JS for stats...");
+        log.warn(prefix+"inserting JS for stats into: "+request.getUrl()+" with Content-Type: "+filterRequest.getContentType());
         return filterInsertJs(in, filterRequest, filterCtx, getBubbleJsStatsTemplate(), null, null, showStats);
     }
 

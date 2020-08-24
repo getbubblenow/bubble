@@ -12,6 +12,7 @@ public interface RequestModifierRule {
     RequestModifierConfig getRequestModifierConfig ();
 
     Class<RequestModifierRule> RMR = RequestModifierRule.class;
-    String ICON_JS_TEMPLATE = stream2string(getPackagePath(RMR)+"/"+ RMR.getSimpleName()+"_icon.js.hbs");
+    String ICON_JS_TEMPLATE_NAME = RMR.getSimpleName() + "_icon.js.hbs";
+    String ICON_JS_TEMPLATE = stream2string(getPackagePath(RMR) + "/" + ICON_JS_TEMPLATE_NAME);
 
 }

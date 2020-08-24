@@ -78,6 +78,7 @@ public class StandardAppPrimerService implements AppPrimerService {
                 log.error("primeApps("+account.getName()+"): "+shortError(e), e);
             }
         }
+        log.info("primeApps: completed");
     }
 
     public void prime(Account account) {

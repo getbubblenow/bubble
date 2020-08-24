@@ -4,9 +4,30 @@ if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
 
     let {{PAGE_PREFIX}}_icon_status = [];
 
+    {{PAGE_PREFIX}}_log = function (data) {
+        const logData = JSON.stringify(data);
+        const requestOptions = {
+            method: 'POST',
+            body: logData
+        };
+        console.log('Logging to server: '+logData);
+        fetch('/__bubble/api/filter/logs/{{BUBBLE_REQUEST_ID}}', requestOptions)
+            .then(() => {
+                console.log('Logged to server: '+logData);
+            })
+            .catch((error) => {
+                console.error('Error logging "'+logData+'" to server: '+error);
+            });
+    }
+
     {{PAGE_PREFIX}}_addBubbleApp = function (app) {
         if (window.self === window.top) {
-            {{PAGE_PREFIX}}_icon_status.push(app);
+            if ({{PAGE_PREFIX}}_icon_status.find(a => a.app === app.app)) {
+                {{PAGE_PREFIX}}_log('addBubbleApp: NOT adding app (already added): '+app.app);
+            } else {
+                {{PAGE_PREFIX}}_log('addBubbleApp: adding app: '+app.app);
+                {{PAGE_PREFIX}}_icon_status.push(app);
+            }
         }
     }
 

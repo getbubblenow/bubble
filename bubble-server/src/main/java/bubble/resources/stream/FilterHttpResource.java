@@ -26,6 +26,7 @@ import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.DeviceIdService;
 import bubble.service.stream.ConnectionCheckResponse;
 import bubble.service.stream.StandardRuleEngineService;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
@@ -601,6 +602,16 @@ public class FilterHttpResource {
         final BlockStatsSummary summary = blockStats.getSummary(requestId);
         if (summary == null) return notFound(requestId);
         return ok(summary);
+    }
+
+    @POST @Path(EP_LOGS+"/{requestId}")
+    public Response requestLog(@Context Request req,
+                               @Context ContainerRequest ctx,
+                               @PathParam("requestId") String requestId,
+                               JsonNode logData) {
+        final FilterSubContext filterCtx = new FilterSubContext(req, requestId);
+        log.error(" >>>>> REQUEST-LOG("+requestId+"): "+json(logData, COMPACT_MAPPER));
+        return ok_empty();
     }
 
     @Path(EP_ASSETS+"/{requestId}/{appId}")

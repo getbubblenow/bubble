@@ -20,10 +20,10 @@ MITM_PORT_FILE=/home/mitmproxy/mitmproxy_port
 
 TOTAL_MEM=$(free | grep -m 1 Mem: | awk '{print $2}')
 
-# For 1GB system, MIN_PCT_FREE is 2%
-# For 2GB system, MIN_PCT_FREE is 5%
-# For 4GB system, MIN_PCT_FREE is 11%
-MIN_PCT_FREE=$(expr $(expr $(expr ${TOTAL_MEM} / 500) \* 14) / 10000)
+# For 1GB system, MIN_PCT_FREE is 1%
+# For 2GB system, MIN_PCT_FREE is 3%
+# For 4GB system, MIN_PCT_FREE is 7%
+MIN_PCT_FREE=$(expr $(expr $(expr ${TOTAL_MEM} / 500) \* 99) / 100000)
 
 # Start with MITM proxy turned on, or refresh value
 if [[ ! -f ${BUBBLE_MITM_MARKER} ]] ; then

@@ -24,7 +24,7 @@ import static org.cobbzilla.util.collection.ArrayUtil.shift;
 
 public class BubbleMain {
 
-    private static Map<String, Class<? extends MainBase>> mainClasses = MapBuilder.build(new Object[][]{
+    private static final Map<String, Class<? extends MainBase>> mainClasses = MapBuilder.build(new Object[][]{
             {"server", BubbleServer.class},
             {"model", BubbleModelMain.class},
             {"script", BubbleScriptMain.class},

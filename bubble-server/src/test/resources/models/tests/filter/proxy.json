@@ -2,7 +2,7 @@
   {
     "comment": "try to proxy a website, no rules should be applied",
     "request": {
-      "uri": "p/kyuss.org"
+      "uri": "p/git.bubblev.org"
     },
     "response": {
       "raw": true,

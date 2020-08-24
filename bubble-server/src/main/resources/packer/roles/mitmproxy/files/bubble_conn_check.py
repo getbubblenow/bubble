@@ -28,28 +28,10 @@ from mitmproxy.exceptions import TlsProtocolException
 from mitmproxy.net import tls as net_tls
 
 import json
-import threading
 import traceback
-import signal
-import sys
 from bubble_api import bubble_log, bubble_conn_check, bubble_activity_log, REDIS, redis_set, \
     is_bubble_request, is_sage_request, is_not_from_vpn
 from bubble_config import bubble_host, bubble_host_alias, bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6, cert_validation_host
-
-# Allow SIGQUIT to print stack traces to stderr
-def dumpstacks(signal, frame):
-    id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
-    code = []
-    for threadId, stack in sys._current_frames().items():
-        code.append("\n# Thread: %s(%d)" % (id2name.get(threadId,""), threadId))
-        for filename, lineno, name, line in traceback.extract_stack(stack):
-            code.append('File: "%s", line %d, in %s' % (filename, lineno, name))
-            if line:
-                code.append("  %s" % (line.strip()))
-    print("\n------------------------------------- stack traces ------------------------------"+"\n".join(code), file=sys.stderr, flush=True)
-
-signal.signal(signal.SIGQUIT, dumpstacks)
-
 
 REDIS_DNS_PREFIX = 'bubble_dns_'
 REDIS_CONN_CHECK_PREFIX = 'bubble_conn_check_'

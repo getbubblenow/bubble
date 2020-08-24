@@ -13,7 +13,7 @@ testMode: {{#exists BUBBLE_TEST_MODE}}{{BUBBLE_TEST_MODE}}{{else}}false{{/exists
 
 database:
   driver: org.postgresql.Driver
-  url: jdbc:postgresql://127.0.0.1:5432/bubble
+  url: jdbc:postgresql://127.0.0.1:5432/{{#exists BUBBLE_DB_NAME}}{{BUBBLE_DB_NAME}}{{else}}bubble{{/exists}}
   user: bubble
   password: '{{#exists BUBBLE_PG_PASSWORD}}{{BUBBLE_PG_PASSWORD}}{{else}}{{key_file '.BUBBLE_PG_PASSWORD'}}{{/exists}}'
 

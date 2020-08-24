@@ -58,6 +58,7 @@
     mode: 0500
   with_items:
     - bubble_api.py
+    - bubble_debug.py
     - dns_spoofing.py
     - bubble_conn_check.py
     - bubble_modify.py

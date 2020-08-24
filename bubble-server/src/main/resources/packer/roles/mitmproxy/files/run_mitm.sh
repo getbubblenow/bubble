@@ -17,6 +17,7 @@ mitmdump \
   --set flow_detail=0 \
   --set stream_large_bodies=5m \
   --set keep_host_header \
+  -s ./bubble_debug.py \
   -s ./dns_spoofing.py \
   -s ./bubble_conn_check.py \
   -s ./bubble_modify.py \

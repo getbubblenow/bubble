@@ -39,9 +39,10 @@ import java.util.Map;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static bubble.rule.RequestModifierRule.ICON_JS_TEMPLATE;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static bubble.rule.RequestModifierRule.ICON_JS_TEMPLATE_NAME;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.abs;
+import static org.cobbzilla.util.io.FileUtil.basename;
 import static org.cobbzilla.util.io.regex.RegexReplacementFilter.DEFAULT_PREFIX_REPLACEMENT_WITH_MATCH;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
@@ -122,14 +123,16 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
         return loadTemplate(defaultSiteTemplate, requestModConfig().getSiteJsTemplate());
     }
 
+    @Getter(lazy=true) private final long jarTime = configuration.getBubbleJar().lastModified();
+
     protected String loadTemplate(String defaultTemplate, String templatePath) {
         if (configuration.getEnvironment().containsKey("DEBUG_RULE_TEMPLATES")) {
-            final File templateFile = new File(HOME_DIR + "/debugTemplates/" + templatePath);
-            if (templateFile.exists()) {
-                log.error("loadTemplate: debug file found (using it): "+abs(templateFile));
+            final File templateFile = new File(HOME_DIR + "/debugTemplates/" + basename(templatePath));
+            if (templateFile.exists() && templateFile.lastModified() > getJarTime()) {
+                if (log.isDebugEnabled()) log.debug("loadTemplate: debug file found and newer than bubble jar, using it: "+abs(templateFile));
                 return FileUtil.toStringOrDie(templateFile);
             } else {
-                log.error("loadTemplate: debug file not found (using default): "+abs(templateFile));
+                if (log.isDebugEnabled()) log.debug("loadTemplate: debug file not found or older than bubble jar, using default: "+abs(templateFile));
             }
         }
         return defaultTemplate;
@@ -161,7 +164,10 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
         RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter).setMaxMatches(1);
         if (modConfig.hasAdditionalRegexReplacements()) {
             for (BubbleRegexReplacement re : modConfig.getAdditionalRegexReplacements()) {
-                final RegexReplacementFilter f = new RegexReplacementFilter(re.getInsertionRegex(), re.getReplacement());
+                final RegexReplacementFilter f = new RegexReplacementFilter(
+                        re.getInsertionRegex(),
+                        re.getReplacement().replace(NONCE_VAR, filterRequest.getScriptNonce())
+                );
                 reader = new RegexFilterReader(reader, f);
             }
         }
@@ -182,7 +188,8 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
             ctx.put(siteJsInsertionVar, siteJs);
         }
         if (showIcon) {
-            ctx.put(CTX_ICON_JS, HandlebarsUtil.apply(getHandlebars(), ICON_JS_TEMPLATE, ctx));
+            final String iconJs = loadTemplate(ICON_JS_TEMPLATE, ICON_JS_TEMPLATE_NAME);
+            ctx.put(CTX_ICON_JS, HandlebarsUtil.apply(getHandlebars(), iconJs, ctx));
         }
         return HandlebarsUtil.apply(getHandlebars(), bubbleJsTemplate, ctx);
     }

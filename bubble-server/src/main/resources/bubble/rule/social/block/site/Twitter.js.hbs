@@ -16,14 +16,14 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
   for (let i=0; i<authors.length; i++) {
       let author = authors[i];
       if (author.href && author.href.startsWith(sitePrefix)
-          && author.href.indexOf('?', sitePrefix.length) == -1
-          && author.href.indexOf('/', sitePrefix.length) == -1
-          && author.className.indexOf('_bubble_blocked') == -1) {
+          && author.href.indexOf('?', sitePrefix.length) === -1
+          && author.href.indexOf('/', sitePrefix.length) === -1
+          && author.className.indexOf('_bubble_blocked') === -1) {
           let authorName = author.href.substring(sitePrefix.length);
           if (blocked_users !== null && blocked_users.includes(authorName)) {
               // walk parents until we find the article, then go up 3 more divs
               let node = author;
-              while (node.tagName.toUpperCase() != 'ARTICLE') {
+              while (node.tagName.toUpperCase() !== 'ARTICLE') {
                   node = node.parentNode;
                   if (node === null) break;
               }
@@ -62,21 +62,21 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
               }
 
               // have we visited this tweet before?
-              if (tweet.className.indexOf('{{JS_PREFIX}}_bubble_block') == -1) {
+              if (tweet.className.indexOf('{{JS_PREFIX}}_bubble_block') === -1) {
                   // console.log('VISITING tweet node for author: '+authorName);
-                  let authorWrapper = author.parentNode.parentNode;
-                  let authorDiv = authorWrapper.firstChild;
+                  const authorWrapper = author.parentNode.parentNode;
+                  const authorDiv = authorWrapper.firstChild;
                   if (typeof authorDiv.tagName !== 'undefined' && authorDiv.tagName.toUpperCase() === 'DIV') {
-                      let blockControl = document.createElement('div');
+                      const blockControl = document.createElement('div');
                       blockControl.style.textAlign = 'center';
                       tweet.className = tweet.className += ' {{JS_PREFIX}}_bubble_block';
 
-                      let line = document.createElement('hr');
-                      let imgHolder = document.createElement('img');
+                      const line = document.createElement('hr');
+                      const imgHolder = document.createElement('img');
                       imgHolder.src = '/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true';
                       imgHolder.width = 32;
 
-                      let blockLink = document.createElement('a');
+                      const blockLink = document.createElement('a');
                       blockLink.addEventListener("click", function (event) { {{JS_PREFIX}}_block_user(authorName); return false; });
                       blockLink.appendChild(line);
                       blockLink.appendChild(imgHolder);

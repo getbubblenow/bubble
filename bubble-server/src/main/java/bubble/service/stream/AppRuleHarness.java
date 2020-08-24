@@ -5,8 +5,8 @@
 package bubble.service.stream;
 
 import bubble.model.app.AppMatcher;
-import bubble.model.app.RuleDriver;
 import bubble.model.app.AppRule;
+import bubble.model.app.RuleDriver;
 import bubble.rule.AppRuleDriver;
 import lombok.Getter;
 import lombok.Setter;

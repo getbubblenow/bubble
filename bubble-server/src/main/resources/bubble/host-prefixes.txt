@@ -11657,7 +11657,6 @@ warby
 wards
 wared
 wares
-warez
 warks
 warms
 warns
@@ -11824,8 +11823,6 @@ widow
 width
 wield
 wiels
-wifed
-wifey
 wifie
 wifty
 wigan
@@ -11931,7 +11928,6 @@ wrate
 wrath
 wrawl
 wreak
-wreck
 wrens
 wrest
 wrick
@@ -11943,7 +11939,6 @@ wrist
 write
 writs
 wroke
-wrong
 wroot
 wrote
 wroth

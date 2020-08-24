@@ -32,7 +32,7 @@ import static org.cobbzilla.util.io.NullInputStream.NULL_STREAM;
 @Slf4j
 class ActiveStreamState {
 
-    public static final long DEFAULT_BYTE_BUFFER_SIZE = (8 * Bytes.KB);
+    public static final int DEFAULT_BYTE_BUFFER_SIZE = (int) (8 * Bytes.KB);
     public static final long MAX_BYTE_BUFFER_SIZE = (64 * Bytes.KB);
 
     // do not wrap input with encoding stream until we have received at least this many bytes
@@ -194,7 +194,7 @@ class ActiveStreamState {
             return baseStream;
         }
         try {
-            final InputStream wrapped = encoding.wrapInput(baseStream);
+            final InputStream wrapped = encoding.wrapInput(baseStream, DEFAULT_BYTE_BUFFER_SIZE);
             if (log.isDebugEnabled()) log.debug(prefix+"returning baseStream wrapped in " + wrapped.getClass().getSimpleName());
             return wrapped;
         } catch (IOException e) {

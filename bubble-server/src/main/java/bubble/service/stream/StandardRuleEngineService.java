@@ -85,6 +85,7 @@ public class StandardRuleEngineService implements RuleEngineService {
     @Autowired private RedisService redis;
 
     public static final long MATCHERS_CACHE_TIMEOUT = MINUTES.toSeconds(15);
+    // public static final long MATCHERS_CACHE_TIMEOUT = HOURS.toSeconds(15);  // extend timeout when debugging replayed streams
     @Getter(lazy=true) private final RedisService matchersCache = redis.prefixNamespace(getClass().getSimpleName()+".matchers");
 
     public FilterMatchDecision preprocess(FilterMatchersRequest filter,
@@ -167,7 +168,7 @@ public class StandardRuleEngineService implements RuleEngineService {
             if (log.isDebugEnabled()) log.debug(prefix+"no request modifiers, returning passthru");
             return passthru(request);
         } else {
-            log.info(prefix+" applying matchers: "+filterRequest.getMatcherNames());
+            if (log.isDebugEnabled()) log.debug(prefix+" applying matchers: "+filterRequest.getMatcherNames()+" to uri: "+filterRequest.getMatchersResponse().getRequest().getUri());
         }
 
         // have we seen this request before?

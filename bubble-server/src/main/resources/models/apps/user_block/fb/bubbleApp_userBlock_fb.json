@@ -1,0 +1,31 @@
+[{
+  "name": "UserBlocker",
+  "children": {
+    "AppSite": [{
+      "name": "Facebook",
+      "url": "https://facebook.com",
+      "description": "what’s happening in the world and what people are talking about right now.",
+      "template": true,
+      "maxSecurityHosts": [
+        "addtoany.com", "*.addtoany.com", "appspot.com", "*.appspot.com", "cdninstagram.com", "*.cdninstagram.com",
+        "energized.pro", "*.energized.pro",
+        "facebook.com", "*.facebook.com", "facebook.com", "*.facebook.com", "facebook.de", "*.facebook.de",
+        "facebook.fr", "*.facebook.fr", "facebook.net", "*.facebook.net", "fb.co", "*.fb.co",
+        "fbcdn.com", "*.fbcdn.com", "fbcdn.net", "*.fbcdn.net", "fb.com", "*.fb.com",
+        "fb.me", "*.fb.me", "fbsbx.com", "*.fbsbx.com", "fburl.com", "*.fburl.com", "foursquare.com", "*.foursquare.com", "freebasics.com", "*.freebasics.com",
+        "hootsuite.com", "*.hootsuite.com", "instagram.com", "*.instagram.com", "internet.org", "*.internet.org", "messenger.com", "*.messenger.com",
+        "metrix.net", "*.metrix.net", "m.me", "*.m.me", "tfbnw.net", "*.tfbnw.net", "thefacebook.com", "*.thefacebook.com",
+        "wechat.com", "*.wechat.com", "whatsapp.com", "*.whatsapp.com", "whatsapp.net", "*.whatsapp.net"
+      ],
+      "enableMaxSecurityHosts": true
+    }],
+    "AppRule": [{
+      "name": "fb_user_blocker",
+      "template": true,
+      "driver": "JsUserBlockerRuleDriver",
+      "config": {
+        "siteJsTemplate": "bubble/rule/social/block/site/FB.js.hbs"
+      }
+    }]
+  }
+}]
