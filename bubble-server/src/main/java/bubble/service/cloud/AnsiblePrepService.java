@@ -80,7 +80,7 @@ public class AnsiblePrepService {
 
         final ComputeNodeSize nodeSize = computeDriver.getSize(node.getSizeType());
         ctx.put("nodeSize", nodeSize);
-        ctx.put("jvmMaxRam", jvmMaxRam(nodeSize, installType));
+        ctx.put("jvmMaxRamMB", jvmMaxRam(nodeSize, installType));
         if (restoreKey != null) {
             ctx.put("restoreKey", restoreKey);
             ctx.put("restoreTimeoutSeconds", RESTORE_MONITOR_SCRIPT_TIMEOUT_SECONDS);
