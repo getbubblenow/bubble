@@ -114,7 +114,6 @@ public class DebugResource {
             Arrays.sort(names);
             return ok(names);
         }
-        final Collection<String> beansWithAnnotation;
         switch (type.toLowerCase()) {
             case "dao":      return ok(new TreeSet<>(spring.getBeansWithAnnotation(Repository.class).keySet()));
             case "service":  return ok(new TreeSet<>(spring.getBeansWithAnnotation(Service.class).keySet().stream().filter(n -> !n.endsWith("Resource")).collect(Collectors.toSet())));
