@@ -124,7 +124,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
         } else if (!fullCopy && AccountPlan.class.isAssignableFrom(c)) {
             // only add the plan for the node we are starting
             entities.stream()
-                    .filter(e -> ((AccountPlan) e).getNetwork().equals(network.getUuid()))
+                    .filter(e -> network.getUuid().equals(((AccountPlan) e).getNetwork()))
                     .forEach(this::add);
 
         } else if (Account.class.isAssignableFrom(c)) {
