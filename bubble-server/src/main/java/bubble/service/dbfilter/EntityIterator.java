@@ -114,6 +114,12 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
                         add(setLocalStoragePath(cs));
                     });
 
+        } else if (!fullCopy && BubbleNetwork.class.isAssignableFrom(c)) {
+            // only add the network for the node we are starting
+            entities.stream()
+                    .filter(e -> e.getUuid().equals(network.getUuid()))
+                    .forEach(this::add);
+
         } else if (Account.class.isAssignableFrom(c)) {
             entities.forEach(e -> add(((Account) e).setPreferredPlan(null)));
 
