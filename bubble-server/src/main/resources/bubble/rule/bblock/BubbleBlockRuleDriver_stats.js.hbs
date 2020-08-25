@@ -63,7 +63,7 @@ const {{JS_PREFIX}}_app_refresh = function (displayFunc) {
             }
         })
         .then(data => {
-            console.log('stats = '+JSON.stringify(data));
+            // console.log('stats = '+JSON.stringify(data));
             let icon = null;
             if (typeof data.total !== 'undefined') {
                 if (JSON.stringify(data) !== JSON.stringify({{JS_PREFIX}}_last_stats)) {

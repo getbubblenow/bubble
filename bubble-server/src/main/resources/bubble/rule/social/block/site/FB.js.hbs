@@ -9,79 +9,165 @@ function {{JS_PREFIX}}_getElementsByXPath(xpath, parent) {
 
 const {{JS_PREFIX}}_site_host = location.protocol + '//' + window.location.hostname + '/';
 
+const log = {{PAGE_PREFIX}}_log;
+
+function {{JS_PREFIX}}_is_ad(article) {
+    return typeof Array.from(article.getElementsByTagName('a')).find(a => a.href && a.href.indexOf('/ads/about') !== -1) !== 'undefined';
+}
+function {{JS_PREFIX}}_author_display_name(link) {
+    let strongs = Array.from(link.getElementsByTagName('strong'));
+    if (strongs.length === 0) return 'null (no <strong> element found)';
+    let spans = Array.from(strongs[0].getElementsByTagName('span'));
+    if (spans.length === 0) return 'null (no <span> element found within <strong>)';
+    return spans[spans.length-1];
+}
+
+function {{JS_PREFIX}}_remove_article(article, authorName) {
+    if (article.className.indexOf('{{JS_PREFIX}}_bub_blocked') === -1) {
+        log('removing post by author: ' + authorName);
+        article.className = article.className += ' {{JS_PREFIX}}_bub_blocked';
+        try {
+            const feedItem = article.parentElement.parentElement.parentElement.parentElement.parentElement;
+            feedItem.parentElement.removeChild(feedItem);
+        } catch (e) {
+            log('error removing post by author: ' + authorName + ': ' + e);
+        }
+    } else {
+        log('found post marked removed but still present (??) by author: ' + authorName);
+    }
+}
+
+function {{JS_PREFIX}}_uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+function {{JS_PREFIX}}_create_block_control(article, authorName) {
+    const imgHolder = document.createElement('img');
+    imgHolder.src = '/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true';
+    imgHolder.width = 16;
+
+    const blockSpan = document.createElement('span');
+    const blockLink = document.createElement('a');
+    blockLink.addEventListener("click", function (event) {
+            {{JS_PREFIX}}_block_user(authorName);
+        try {
+            const feedItem = article.parentElement.parentElement.parentElement.parentElement.parentElement;
+            feedItem.parentElement.removeChild(feedItem);
+        } catch (e) {
+            log('click error removing post by author: ' + authorName + ': ' + e);
+        }
+        return false;
+    });
+    blockLink.appendChild(imgHolder);
+    blockSpan.appendChild(blockLink)
+
+    blockSpan.id = 'blockSpan_'+{{JS_PREFIX}}_uuidv4();
+    log('create block icon for ' + authorName + ' with id='+blockSpan.id);
+    return blockSpan;
+}
+
+function {{JS_PREFIX}}_find_parent_element(e, parentName) {
+    let node = e;
+    while (node.parentNode && node.parentNode !== document && node.parentNode.tagName) {
+        if (node.parentNode.tagName.toUpperCase() === parentName.toUpperCase()) return node.parentNode;
+        node = node.parentNode;
+    }
+    return null;
+}
+
+const {{JS_PREFIX}}_non_authors = ['friends', 'photo'];
+
+function {{JS_PREFIX}}_is_author_link(href) {
+    let h = href.startsWith({{JS_PREFIX}}_site_host) ? href.substring({{JS_PREFIX}}_site_host.length) : href;
+    const qPos = h.indexOf('?');
+    if (qPos !== -1) {
+        h = h.substring(0, qPos);
+    }
+    if (h.endsWith('/')) h = h.substring(0, h.length - 1);
+    if ({{JS_PREFIX}}_non_authors.indexOf(h) !== -1) return false;
+    const matches = h.match(/\//g);
+    if (matches !== null) {
+        // log('>>>>>> not a top-level link: h='+h+', href='+href);
+    }
+    return matches === null;
+}
+
+function {{JS_PREFIX}}_find_near_element(e, name, func, stop) {
+    let node = e;
+    while (node.parentNode && node.parentNode !== document && node.parentNode) {
+        const tags = node.parentNode.getElementsByTagName(name);
+        if (tags.length > 0) {
+            const found = Array.from(tags).find(t => func(t));
+            if (found) return found;
+        }
+        node = node.parentNode;
+        if (stop(node)) {
+            log('hit article, stopping');
+            return null;
+        }
+    }
+    return null;
+}
+
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
     let articles = {{JS_PREFIX}}_getElementsByXPath('//div[@role="article" and @aria-posinset]');
     let sitePrefix = {{JS_PREFIX}}_site_host;
     const log = {{PAGE_PREFIX}}_log;
     for (let i=0; i<articles.length; i++) {
-        let article = articles[i];
-        let authorLink = article.getElementsByTagName('a')[0];
-        if (typeof authorLink.href === 'undefined') {
+        const article = articles[i];
+        if (article.className.indexOf('_bubble_no_ins') !== -1) {
             continue;
         }
-        let authorHref = authorLink.href;
-        if (!authorHref.startsWith(sitePrefix)) continue;
-        let authorName = authorHref.substring(sitePrefix.length);
-        let qPos = authorName.indexOf('?');
-        if (qPos !== -1) {
-            authorName = authorName.substring(0, qPos);
-            authorLink.href = sitePrefix + authorName;
-        }
-        if (blocked_users !== null && blocked_users.includes(authorName)) {
-            if (article.className.indexOf('{{JS_PREFIX}}_bub_blocked') === -1) {
-                log('removing post by author: ' + authorName);
-                article.className = article.className += ' {{JS_PREFIX}}_bub_blocked';
-                try {
-                    const feedItem = article.parentElement.parentElement.parentElement.parentElement.parentElement;
-                    log('nuking: '+feedItem.outerHTML.substring(0, 40))
-                    feedItem.parentElement.removeChild(feedItem);
-                } catch (e) {
-                    log('error removing post by author: ' + authorName + ': ' + e);
-                }
-            } else {
-                log('found post marked removed but still present (??) by author: ' + authorName);
+
+        const authorLinks = Array.from(article.getElementsByTagName('a'))
+            .filter(a => {{JS_PREFIX}}_is_author_link(a.href))
+            .filter(a => a.getElementsByTagName('span').length === 1 && a.getElementsByTagName('svg').length === 0);
+
+        for (let authIndex=0; authIndex<authorLinks.length; authIndex++) {
+            const authorLink = authorLinks[authIndex];
+            let authorHref = authorLink.href;
+            let authorName = authorHref.startsWith(sitePrefix) ? authorHref.substring(sitePrefix.length) : authorHref;
+            const qPos = authorName.indexOf('?');
+            if (qPos !== -1) {
+                authorName = authorName.substring(0, qPos);
+                authorLink.href = sitePrefix + authorName;
             }
+            if (authorName.endsWith('/')) authorName = authorName.substring(0, authorName.length-1);
+            if (authorName === 'profile.php') {
+                continue;
+            }
+            const authorDisplay = authorLink.getElementsByTagName('span')[0];
+            const authorDisplayName = authorDisplay.innerHTML;
+            if ({{JS_PREFIX}}_is_ad(article)) {
+                log('removing ad ('+authorDisplay+')');
+                {{JS_PREFIX}}_remove_article(article, authorName);
+                break;
 
-        } else {
-            // have we visited this article before?
-            if (article.innerHTML.indexOf('_bubble') === -1) {
-                log('VISITING article node for author: '+authorName);
+            } else if (blocked_users !== null && blocked_users.includes(authorName)) {
+                {{JS_PREFIX}}_remove_article(article, authorName);
+                break;
+
+            } else {
+                // have we visited this authorLink before?
                 try {
-                    article.className = article.className += ' {{JS_PREFIX}}_bubble_block';
-                    if (typeof authorLink.parentNode.parentNode.nextSibling === 'undefined' || authorLink.parentNode.parentNode.nextSibling === null) {
-                        console.log('authorLink.parentNode.parentNode.nextSibling was undefined or null, skipping; outerHTML='+authorLink.parentNode.parentNode.outerHTML);
-                        continue;
-                    }
-                    const spans = authorLink.parentNode.parentNode.nextSibling.getElementsByTagName('span');
-                    const sepSpans = Array.from(spans).filter(s => s.innerHTML === ' · ');
-                    if (sepSpans.length === 0) {
-                        log('no insertion point found for author: ' + authorName);
-                        continue;
-                    }
-                    sepSpans.map(sepSpan => {
-                        const imgHolder = document.createElement('img');
-                        imgHolder.src = '/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true';
-                        imgHolder.width = 16;
+                    if (authorLink.id === "") {
+                        log('VISITING author: ' + authorName + ' (' + authorDisplayName + ')');
+                        authorLink.id = 'bubble_author_' + {{JS_PREFIX}}_uuidv4();
+                        log('assigned id='+authorLink.id+' for authorLink by '+authorName);
 
-                        const blockLink = document.createElement('a');
-                        blockLink.addEventListener("click", function (event) {
-                            {{JS_PREFIX}}_block_user(authorName);
-                            try {
-                                const feedItem = article.parentElement.parentElement.parentElement.parentElement.parentElement;
-                                log('click nuking: '+feedItem.outerHTML.substring(0, 40))
-                                feedItem.parentElement.removeChild(feedItem);
-                            } catch (e) {
-                                log('click error removing post by author: ' + authorName + ': ' + e);
-                            }
-                            return false;
-                        });
-                        // blockLink.appendChild(line);
-                        blockLink.appendChild(imgHolder);
+                    } else if (authorDisplay.parentNode.innerHTML.indexOf('__bubble') !== -1) {
+                        // log('NOT RE-VISITING article node for author: ' + authorName + ' (' + authorDisplayName + '), display.inner='+authorDisplay.parentNode.innerHTML);
+                        continue;
 
-                        // log('inserting block icon for ' + authorName + '...');
-                        sepSpan.parentNode.appendChild(blockLink);
-                        sepSpan.parentNode.appendChild(document.createTextNode(' · '));
-                    });
+                    } else {
+                        // log('RE-VISITING article node for author: ' + authorName + ' (' + authorDisplayName + '), display.inner='+authorDisplay.parentNode.innerHTML);
+                    }
+                    let b = {{JS_PREFIX}}_create_block_control(article, authorName);
+                    log('inserting span='+b.id+' for article by '+authorName);
+                    authorDisplay.parentNode.appendChild(b);
 
                 } catch (e) {
                     log('badness: '+e);

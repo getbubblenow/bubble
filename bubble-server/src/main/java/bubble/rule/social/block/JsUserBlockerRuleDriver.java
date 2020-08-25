@@ -21,7 +21,8 @@ import static org.cobbzilla.util.string.StringUtil.getPackagePath;
 public class JsUserBlockerRuleDriver extends AbstractAppRuleDriver implements RequestModifierRule {
 
     public static final Class<JsUserBlockerRuleDriver> JSB = JsUserBlockerRuleDriver.class;
-    public static final String BUBBLE_JS_TEMPLATE = stream2string(getPackagePath(JSB)+"/"+ JSB.getSimpleName()+".js.hbs");
+    public static final String BUBBLE_JS_TEMPLATE_NAME = JSB.getSimpleName() + ".js.hbs";
+    public static final String BUBBLE_JS_TEMPLATE = stream2string(getPackagePath(JSB) + "/" + BUBBLE_JS_TEMPLATE_NAME);
 
     public static final String CTX_APPLY_BLOCKS_JS = "APPLY_BLOCKS_JS";
 
@@ -39,7 +40,8 @@ public class JsUserBlockerRuleDriver extends AbstractAppRuleDriver implements Re
 
     @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
         if (!filterRequest.isHtml()) return in;
-        log.warn("doFilterResponse("+filterRequest.getId()+"): inserting JS");
-        return filterInsertJs(in, filterRequest, null, BUBBLE_JS_TEMPLATE, getSiteJsTemplate(), CTX_APPLY_BLOCKS_JS, true);
+        final String bubbleJsTemplate = loadTemplate(BUBBLE_JS_TEMPLATE, BUBBLE_JS_TEMPLATE_NAME);
+        final String siteJsTemplate = getSiteJsTemplate();
+        return filterInsertJs(in, filterRequest, null, bubbleJsTemplate, siteJsTemplate, CTX_APPLY_BLOCKS_JS, true);
     }
 }

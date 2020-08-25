@@ -10,10 +10,10 @@ if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
             method: 'POST',
             body: logData
         };
-        console.log('Logging to server: '+logData);
+        // console.log('Logging to server: '+logData);
         fetch('/__bubble/api/filter/logs/{{BUBBLE_REQUEST_ID}}', requestOptions)
             .then(() => {
-                console.log('Logged to server: '+logData);
+                // console.log('Logged to server: '+logData);
             })
             .catch((error) => {
                 console.error('Error logging "'+logData+'" to server: '+error);
