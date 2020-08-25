@@ -177,6 +177,21 @@ def send_bubble_response(response):
         yield chunk
 
 
+EMPTY_XML = [b'<?xml version="1.0" encoding="UTF-8"?><html></html>']
+EMPTY_JSON = [b'null']
+EMPTY_DEFAULT = []
+
+
+def abort_data(content_type):
+    if content_type is None:
+        return EMPTY_DEFAULT
+    if 'text/html' in content_type or 'application/xml' in content_type:
+        return EMPTY_XML
+    if 'application/json' in content_type:
+        return EMPTY_JSON
+    return EMPTY_DEFAULT
+
+
 def responseheaders(flow):
 
     path = flow.request.path
@@ -215,10 +230,14 @@ def responseheaders(flow):
                 flow.response.status_code = abort_code
                 flow.response.stream = lambda chunks: []
             else:
+                if HEADER_CONTENT_TYPE in flow.response.headers:
+                    content_type = flow.response.headers[HEADER_CONTENT_TYPE]
+                else:
+                    content_type = None
                 bubble_log('responseheaders: aborting request with HTTP status '+str(abort_code)+', path was: '+path)
                 flow.response.headers = Headers()
                 flow.response.status_code = abort_code
-                flow.response.stream = lambda chunks: []
+                flow.response.stream = lambda chunks: abort_data(content_type)
 
         elif flow.response.status_code // 100 != 2:
             bubble_log('responseheaders: response had HTTP status '+str(flow.response.status_code)+', returning as-is: '+path)
