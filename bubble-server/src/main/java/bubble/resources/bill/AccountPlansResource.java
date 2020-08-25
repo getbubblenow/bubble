@@ -214,7 +214,12 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             }
         } else {
             log.warn("setReferences: footprint not set, using default");
-            request.setFootprint(configuration.getThisNetwork().getFootprint());
+            final BubbleFootprint footprint = footprintDAO.findByAccountAndNameAndParentId(caller, configuration.getThisNetwork().getFootprint());
+            if (footprint == null) {
+                errors.addViolation("err.footprint.defaultNotFound");
+            } else {
+                request.setFootprint(footprint.getUuid());
+            }
         }
 
         AccountPaymentMethod paymentMethod = null;

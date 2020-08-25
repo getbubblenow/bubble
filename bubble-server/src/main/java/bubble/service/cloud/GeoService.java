@@ -245,7 +245,6 @@ public class GeoService {
         final double latitude = geo.getLatitude();
         final double longitude = geo.getLongitude();
         return getCloudRegionRelatives(network, latitude, longitude, exclude);
-
     }
 
     public List<CloudRegionRelative> getCloudRegionRelatives(BubbleNetwork network,

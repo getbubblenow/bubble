@@ -6,12 +6,15 @@ package bubble.dao.account;
 
 import bubble.model.account.TrustedClient;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.wizard.model.Identifiable;
 import org.springframework.stereotype.Repository;
 
 import static java.util.UUID.randomUUID;
 
 @Repository @Slf4j
 public class TrustedClientDAO extends AccountOwnedEntityDAO<TrustedClient> {
+
+    @Override protected String getNameField() { return Identifiable.UUID; }
 
     @Override public Object preCreate(TrustedClient trusted) {
         return super.preCreate(trusted.setTrustId(randomUUID().toString()));

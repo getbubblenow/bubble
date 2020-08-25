@@ -64,6 +64,11 @@ public abstract class AccountOwnedEntityDAO<E extends HasAccount>
         return found != null ? found : findByAccountAndId(account.getParent(), id);
     }
 
+    public E findByAccountAndNameAndParentId(Account account, String id) {
+        final E found = findByAccountAndId(account.getParent(), id);
+        return found == null ? null : findByAccountAndId(account.getUuid(), found.getName());
+    }
+
     public File getFile(String cloudServiceUuid, String key) {
         final String sha = sha256_hex(key);
         final String pathMiddle;
