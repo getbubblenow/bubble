@@ -13,6 +13,7 @@ import bubble.model.account.AccountTemplate;
 import bubble.model.app.AppTemplateEntity;
 import bubble.model.app.BubbleApp;
 import bubble.model.bill.AccountPaymentMethod;
+import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlanApp;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
@@ -118,6 +119,12 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
             // only add the network for the node we are starting
             entities.stream()
                     .filter(e -> e.getUuid().equals(network.getUuid()))
+                    .forEach(this::add);
+
+        } else if (!fullCopy && AccountPlan.class.isAssignableFrom(c)) {
+            // only add the plan for the node we are starting
+            entities.stream()
+                    .filter(e -> ((AccountPlan) e).getNetwork().equals(network.getUuid()))
                     .forEach(this::add);
 
         } else if (Account.class.isAssignableFrom(c)) {
