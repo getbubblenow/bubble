@@ -15,6 +15,7 @@ import bubble.model.app.BubbleApp;
 import bubble.model.bill.AccountPaymentMethod;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlanApp;
+import bubble.model.cloud.BubbleBackup;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
@@ -125,6 +126,12 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
             // only add the plan for the node we are starting
             entities.stream()
                     .filter(e -> network.getUuid().equals(((AccountPlan) e).getNetwork()))
+                    .forEach(this::add);
+
+        } else if (!fullCopy && BubbleBackup.class.isAssignableFrom(c)) {
+            // only add backups for the node we are starting
+            entities.stream()
+                    .filter(e -> network.getUuid().equals(((BubbleBackup) e).getNetwork()))
                     .forEach(this::add);
 
         } else if (Account.class.isAssignableFrom(c)) {
