@@ -51,31 +51,24 @@ function {{JS_PREFIX}}_create_block_control(article, authorName) {
 
     const blockSpan = document.createElement('span');
     const blockLink = document.createElement('a');
-    blockLink.addEventListener("click", function (event) {
-            {{JS_PREFIX}}_block_user(authorName);
+    blockLink.style.zIndex = '{{APP_CONTROLS_Z_INDEX}}'
+    blockLink.addEventListener("click", function (e) {
+        {{JS_PREFIX}}_block_user(authorName);
         try {
             const feedItem = article.parentElement.parentElement.parentElement.parentElement.parentElement;
             feedItem.parentElement.removeChild(feedItem);
         } catch (e) {
             log('click error removing post by author: ' + authorName + ': ' + e);
         }
+        e.stopPropagation();
+        e.preventDefault();
         return false;
     });
     blockLink.appendChild(imgHolder);
     blockSpan.appendChild(blockLink)
 
     blockSpan.id = 'blockSpan_'+{{JS_PREFIX}}_uuidv4();
-    log('create block icon for ' + authorName + ' with id='+blockSpan.id);
     return blockSpan;
-}
-
-function {{JS_PREFIX}}_find_parent_element(e, parentName) {
-    let node = e;
-    while (node.parentNode && node.parentNode !== document && node.parentNode.tagName) {
-        if (node.parentNode.tagName.toUpperCase() === parentName.toUpperCase()) return node.parentNode;
-        node = node.parentNode;
-    }
-    return null;
 }
 
 const {{JS_PREFIX}}_non_authors = ['friends', 'photo'];
@@ -93,23 +86,6 @@ function {{JS_PREFIX}}_is_author_link(href) {
         // log('>>>>>> not a top-level link: h='+h+', href='+href);
     }
     return matches === null;
-}
-
-function {{JS_PREFIX}}_find_near_element(e, name, func, stop) {
-    let node = e;
-    while (node.parentNode && node.parentNode !== document && node.parentNode) {
-        const tags = node.parentNode.getElementsByTagName(name);
-        if (tags.length > 0) {
-            const found = Array.from(tags).find(t => func(t));
-            if (found) return found;
-        }
-        node = node.parentNode;
-        if (stop(node)) {
-            log('hit article, stopping');
-            return null;
-        }
-    }
-    return null;
 }
 
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
@@ -137,7 +113,8 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
             }
             if (authorName.endsWith('/')) authorName = authorName.substring(0, authorName.length-1);
             if (authorName === 'profile.php') {
-                continue;
+                {{JS_PREFIX}}_remove_article(article, null);
+                break;
             }
             const authorDisplay = authorLink.getElementsByTagName('span')[0];
             const authorDisplayName = authorDisplay.innerHTML;
@@ -154,9 +131,9 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
                 // have we visited this authorLink before?
                 try {
                     if (authorLink.id === "") {
-                        log('VISITING author: ' + authorName + ' (' + authorDisplayName + ')');
+                        // log('VISITING author: ' + authorName + ' (' + authorDisplayName + ')');
                         authorLink.id = 'bubble_author_' + {{JS_PREFIX}}_uuidv4();
-                        log('assigned id='+authorLink.id+' for authorLink by '+authorName);
+                        // log('assigned id='+authorLink.id+' for authorLink by '+authorName);
 
                     } else if (authorDisplay.parentNode.innerHTML.indexOf('__bubble') !== -1) {
                         // log('NOT RE-VISITING article node for author: ' + authorName + ' (' + authorDisplayName + '), display.inner='+authorDisplay.parentNode.innerHTML);
@@ -166,7 +143,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
                         // log('RE-VISITING article node for author: ' + authorName + ' (' + authorDisplayName + '), display.inner='+authorDisplay.parentNode.innerHTML);
                     }
                     let b = {{JS_PREFIX}}_create_block_control(article, authorName);
-                    log('inserting span='+b.id+' for article by '+authorName);
+                    // log('inserting span='+b.id+' for article by '+authorName);
                     authorDisplay.parentNode.appendChild(b);
 
                 } catch (e) {
