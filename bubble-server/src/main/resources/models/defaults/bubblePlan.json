@@ -13,9 +13,7 @@
     "additionalBandwidthPerGbPrice": 0,
     "children": {
       "BubblePlanApp": [
-        {"app": "TrafficAnalytics"},
         {"app": "BubbleBlock"},
-        {"app": "UserBlocker"},
         {"app": "TlsPassthru"}
       ]
     }
