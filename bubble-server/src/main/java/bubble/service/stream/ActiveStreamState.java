@@ -56,7 +56,7 @@ class ActiveStreamState {
         this.encoding = request.getEncoding();
         this.firstRule = rules.get(0);
 
-        final String prefix = "ActiveStreamState("+requestId+"): ";
+        final String prefix = "ActiveStreamState("+reqId()+"): ";
         if (empty(rules)) {
             if (log.isDebugEnabled()) log.debug(prefix+"no rules, returning passthru");
             passthru = true;
@@ -69,6 +69,8 @@ class ActiveStreamState {
             passthru = false;
         }
     }
+
+    private String reqId() { return requestId+":"+request.getUrl(); }
 
     public boolean noApplicableRules(List<AppRuleHarness> rules) {
         for (AppRuleHarness appRule : rules) {
@@ -101,7 +103,7 @@ class ActiveStreamState {
             totalBytesWritten += chunk.length;
             final ByteArrayInputStream chunkStream = new ByteArrayInputStream(chunk);
             if (multiStream == null) {
-                multiStream = new MultiStream(chunkStream);
+                multiStream = new MultiStream(chunkStream, reqId());
             } else {
                 multiStream.addStream(chunkStream);
             }
@@ -119,7 +121,7 @@ class ActiveStreamState {
         totalBytesWritten += chunk.length;
         final ByteArrayInputStream chunkStream = new ByteArrayInputStream(chunk);
         if (multiStream == null) {
-            multiStream = new MultiStream(chunkStream, true);
+            multiStream = new MultiStream(chunkStream, true, reqId());
         } else {
             multiStream.addLastStream(chunkStream);
         }

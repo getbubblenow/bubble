@@ -161,14 +161,18 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
                 + getScriptClose();
 
         final RegexReplacementFilter filter = new RegexReplacementFilter(getInsertionRegex(), replacement);
-        RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter).setMaxMatches(1);
+        final String filterNamePrefix = getClass().getSimpleName()+".filterInsertJs(" + filterRequest.getUrl() + "): ";
+        RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter)
+                .setName(filterNamePrefix + getInsertionRegex())
+                .setMaxMatches(1);
         if (modConfig.hasAdditionalRegexReplacements()) {
             for (BubbleRegexReplacement re : modConfig.getAdditionalRegexReplacements()) {
                 final RegexReplacementFilter f = new RegexReplacementFilter(
                         re.getInsertionRegex(),
                         re.getReplacement().replace(NONCE_VAR, filterRequest.getScriptNonce())
                 );
-                reader = new RegexFilterReader(reader, f);
+                reader = new RegexFilterReader(reader, f)
+                        .setName(filterNamePrefix+" additional: "+re.getInsertionRegex());
             }
         }
 
