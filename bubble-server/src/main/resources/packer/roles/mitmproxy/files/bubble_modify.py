@@ -27,6 +27,7 @@ REDIS_FILTER_PASSTHRU_DURATION = 600
 
 DEBUG_STREAM_COUNTERS = {}
 
+
 def add_csp_part(new_csp, part):
     if len(new_csp) > 0:
         new_csp = new_csp + ';'
@@ -37,22 +38,7 @@ def ensure_bubble_script_csp(csp):
     new_csp = ''
     parts = csp.split(';')
     for part in parts:
-        if part.startswith(' script-src'):
-            new_ss = ' '
-            tokens = part.split()
-            has_nonce = False
-            for tok in tokens:
-                if "'nonce-" in tok:
-                    has_nonce = True
-                    break
-                new_ss = new_ss + tok + ' '
-            if not has_nonce:
-                new_ss = new_ss + "'nonce-" + str(uuid.uuid4()) + "'"
-                new_csp = add_csp_part(new_csp, new_ss)
-            else:
-                new_csp = add_csp_part(new_csp, part)
-
-        elif part.startswith(' img-src'):
+        if part.startswith(' img-src ') or part.startswith('img-src '):
             tokens = part.split()
             if "'self'" in tokens:
                 new_csp = add_csp_part(new_csp, part)
