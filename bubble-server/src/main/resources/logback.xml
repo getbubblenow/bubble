@@ -24,8 +24,6 @@
     <logger name="org.cobbzilla.util.security.bcrypt" level="ERROR" />
     <logger name="org.cobbzilla.util.javascript" level="INFO" />
     <logger name="org.cobbzilla.util.handlebars" level="INFO" />
-    <logger name="org.cobbzilla.util.io.multi.MultiUnderflowHandler" level="DEBUG" />
-    <logger name="org.cobbzilla.util.io.multi.MultiUnderflowHandlerMonitor" level="DEBUG" />
     <logger name="org.cobbzilla.util.yml" level="ERROR" />
     <logger name="org.cobbzilla.util.daemon.ZillaRuntime" level="WARN" />
     <logger name="org.cobbzilla.wizard.server" level="WARN" />
