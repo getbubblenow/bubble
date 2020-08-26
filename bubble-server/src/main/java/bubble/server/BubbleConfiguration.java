@@ -37,6 +37,7 @@ import org.cobbzilla.util.http.ApiConnectionInfo;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.FilenameRegexFilter;
 import org.cobbzilla.util.io.JarLister;
+import org.cobbzilla.util.system.Bytes;
 import org.cobbzilla.wizard.cache.redis.HasRedisConfiguration;
 import org.cobbzilla.wizard.cache.redis.RedisConfiguration;
 import org.cobbzilla.wizard.client.ApiClientBase;
@@ -67,6 +68,7 @@ import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.security.ShaUtil.sha256_file;
+import static org.cobbzilla.util.system.CommandShell.totalSystemMemory;
 import static org.cobbzilla.wizard.model.SemanticVersion.isNewerVersion;
 
 @Configuration @NoArgsConstructor @Slf4j
@@ -97,6 +99,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_JAR_VERSION = "jarVersion";
     public static final String TAG_JAR_UPGRADE_AVAILABLE = "jarUpgradeAvailable";
     public static final String TAG_MAX_USERS = "maxUsers";
+    public static final String TAG_SHOW_BLOCK_STATS_SUPPORTED = "showBlockStatsSupported";
 
     public static final String DEFAULT_LOCAL_STORAGE_DIR = HOME_DIR + "/.bubble_local_storage";
 
@@ -326,7 +329,10 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public boolean promoCodesDisabled () { return !isSageLauncher() || promoCodePolicy.disabled(); }
     public boolean promoCodeRequired () { return isSageLauncher() && promoCodePolicy.required(); }
 
+    public boolean showBlockStatsSupported() { return !isSage() && totalSystemMemory() / Bytes.MB > 1536; }
+
     private final AtomicReference<Map<String, Object>> publicSystemConfigs = new AtomicReference<>();
+
     public Map<String, Object> getPublicSystemConfigs () {
         final var thisNetwork = getThisNetwork();
         final var awaitingRestore = thisNetwork != null && thisNetwork.getState() == BubbleNetworkState.restoring;
@@ -360,7 +366,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_SECURITY_LEVELS, DeviceSecurityLevel.values()},
                         {TAG_JAR_VERSION, getVersion()},
                         {TAG_JAR_UPGRADE_AVAILABLE, getJarUpgradeAvailable() ? getSageVersion() : null},
-                        {TAG_MAX_USERS, plan == null ? null : plan.getMaxAccounts()}
+                        {TAG_MAX_USERS, plan == null ? null : plan.getMaxAccounts()},
+                        {TAG_SHOW_BLOCK_STATS_SUPPORTED, showBlockStatsSupported()}
                 }));
             } else {
                 // some things has to be refreshed all the time in some cases:

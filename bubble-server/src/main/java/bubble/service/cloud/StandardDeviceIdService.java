@@ -160,10 +160,11 @@ public class StandardDeviceIdService implements DeviceIdService {
     }
 
     public void initBlockStats (Account account) {
-        redis.set_plaintext(REDIS_KEY_ACCOUNT_SHOW_BLOCK_STATS+account.getUuid(), Boolean.toString(account.showBlockStats()));
+        final boolean showBlockStats = configuration.showBlockStatsSupported() && account.showBlockStats();
+        redis.set_plaintext(REDIS_KEY_ACCOUNT_SHOW_BLOCK_STATS+account.getUuid(), Boolean.toString(showBlockStats));
         redis.del_matching_withPrefix(REDIS_KEY_CHUNK_FILTER_PASS+"*");
         for (Device device : deviceDAO.findByAccount(account.getUuid())) {
-            if (account.showBlockStats()) {
+            if (showBlockStats) {
                 showBlockStats(device);
             } else {
                 hideBlockStats(device);
