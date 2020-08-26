@@ -74,7 +74,7 @@ function {{JS_PREFIX}}_create_block_control(article, authorName) {
     return blockSpan;
 }
 
-const {{JS_PREFIX}}_non_authors = ['friends', 'photo'];
+const {{JS_PREFIX}}_non_authors = ['friends', 'photo', 'memories'];
 
 function {{JS_PREFIX}}_is_author_link(href) {
     let h = href.startsWith({{JS_PREFIX}}_site_host) ? href.substring({{JS_PREFIX}}_site_host.length) : href;
