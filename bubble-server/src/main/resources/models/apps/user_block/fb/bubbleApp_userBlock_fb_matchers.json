@@ -10,6 +10,15 @@
       "fqdn": "www.facebook.com",
       "urlRegex": ".*",
       "rule": "fb_user_blocker"
+    }, {
+      "name": "FBMobileMatcher",
+      "site": "Facebook",
+      "template": true,
+      "requestCheck": true,
+      "requestModifier": true,
+      "fqdn": "m.facebook.com",
+      "urlRegex": ".*",
+      "rule": "fb_user_blocker"
     }]
   }
 }]
