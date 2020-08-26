@@ -14,6 +14,7 @@ import org.cobbzilla.util.http.HttpContentEncodingType;
 import org.cobbzilla.util.io.FilterInputStreamViaOutputStream;
 import org.cobbzilla.util.io.FixedByteArrayInputStream;
 import org.cobbzilla.util.io.multi.MultiStream;
+import org.cobbzilla.util.io.multi.MultiUnderflowHandlerMonitor;
 import org.cobbzilla.util.system.Bytes;
 
 import java.io.ByteArrayInputStream;
@@ -38,6 +39,22 @@ class ActiveStreamState {
     // do not wrap input with encoding stream until we have received at least this many bytes
     // this avoids errors when creating a GZIPInputStream when only one or a few bytes are available
     public static final long MIN_BYTES_BEFORE_WRAP = Bytes.KB;
+
+    static {
+        // do not terminate threads that are idling just fine
+        // only terminate threads with abnormally long or short stacks
+        MultiUnderflowHandlerMonitor.DEFAULT_UNDERFLOW_MONITOR.setTerminateThreadFunc(t -> {
+            final StackTraceElement[] stack = t.getStackTrace();
+            if (stack.length < 5) return false;
+            if (stack.length > 15) return true;
+            for (int i=0; i<5; i++) {
+                if (stack[i].toString().contains("org.glassfish.grizzly.threadpool.AbstractThreadPool$Worker.run")) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
 
     private final FilterHttpRequest request;
     private final String requestId;
