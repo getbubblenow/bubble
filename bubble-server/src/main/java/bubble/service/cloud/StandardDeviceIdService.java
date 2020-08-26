@@ -173,7 +173,8 @@ public class StandardDeviceIdService implements DeviceIdService {
     }
 
     public boolean doShowBlockStats(String accountUuid) {
-        return Boolean.parseBoolean(redis.get_plaintext(REDIS_KEY_ACCOUNT_SHOW_BLOCK_STATS + accountUuid));
+        return configuration.showBlockStatsSupported()
+                && Boolean.parseBoolean(redis.get_plaintext(REDIS_KEY_ACCOUNT_SHOW_BLOCK_STATS + accountUuid));
     }
 
     public void showBlockStats (Device device) {
