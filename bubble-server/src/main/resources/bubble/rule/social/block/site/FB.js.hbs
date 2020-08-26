@@ -8,6 +8,7 @@ function {{JS_PREFIX}}_getElementsByXPath(xpath, parent) {
 }
 
 const {{JS_PREFIX}}_site_host = location.protocol + '//' + window.location.hostname + '/';
+const {{JS_PREFIX}}_mobile = window.location.hostname === "m.facebook.com";
 
 const log = {{PAGE_PREFIX}}_log;
 
@@ -27,7 +28,9 @@ function {{JS_PREFIX}}_remove_article(article, authorName) {
         log('removing post by author: ' + authorName);
         article.className = article.className += ' {{JS_PREFIX}}_bub_blocked';
         try {
-            const feedItem = article.parentElement.parentElement.parentElement.parentElement.parentElement;
+            const feedItem = {{JS_PREFIX}}_mobile
+                ? article
+                : article.parentElement.parentElement.parentElement.parentElement.parentElement;  // todo: safer to walk upwards until we find FeedItem
             feedItem.parentElement.removeChild(feedItem);
         } catch (e) {
             log('error removing post by author: ' + authorName + ': ' + e);
@@ -47,7 +50,7 @@ function {{JS_PREFIX}}_uuidv4() {
 function {{JS_PREFIX}}_create_block_control(article, authorName) {
     const imgHolder = document.createElement('img');
     imgHolder.src = '/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true';
-    imgHolder.width = 16;
+    imgHolder.width = 24;
 
     const blockSpan = document.createElement('span');
     const blockLink = document.createElement('a');
@@ -89,18 +92,21 @@ function {{JS_PREFIX}}_is_author_link(href) {
 }
 
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
-    let articles = {{JS_PREFIX}}_getElementsByXPath('//div[@role="article" and @aria-posinset]');
-    let sitePrefix = {{JS_PREFIX}}_site_host;
+
+    const sitePrefix = {{JS_PREFIX}}_site_host;
+    const mobile = {{JS_PREFIX}}_mobile;
     const log = {{PAGE_PREFIX}}_log;
+
+    const articles = mobile
+        ? {{JS_PREFIX}}_getElementsByXPath('//article')
+        : {{JS_PREFIX}}_getElementsByXPath('//div[@role="article" and @aria-posinset]');
+
     for (let i=0; i<articles.length; i++) {
         const article = articles[i];
-        if (article.className.indexOf('_bubble_no_ins') !== -1) {
-            continue;
-        }
-
         const authorLinks = Array.from(article.getElementsByTagName('a'))
             .filter(a => {{JS_PREFIX}}_is_author_link(a.href))
-            .filter(a => a.getElementsByTagName('span').length === 1 && a.getElementsByTagName('svg').length === 0);
+            .filter(a => a.getElementsByTagName('svg').length === 0)
+            .filter(a => mobile ? a.parentElement.tagName.toUpperCase() === 'STRONG' : a.getElementsByTagName('span').length === 1);
 
         for (let authIndex=0; authIndex<authorLinks.length; authIndex++) {
             const authorLink = authorLinks[authIndex];
@@ -116,10 +122,12 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
                 {{JS_PREFIX}}_remove_article(article, null);
                 break;
             }
-            const authorDisplay = authorLink.getElementsByTagName('span')[0];
+            const authorDisplay = mobile
+                ? authorLink
+                : authorLink.getElementsByTagName('span')[0];
             const authorDisplayName = authorDisplay.innerHTML;
             if ({{JS_PREFIX}}_is_ad(article)) {
-                log('removing ad ('+authorDisplay+')');
+                log('removing ad ('+authorDisplayName+')');
                 {{JS_PREFIX}}_remove_article(article, authorName);
                 break;
 

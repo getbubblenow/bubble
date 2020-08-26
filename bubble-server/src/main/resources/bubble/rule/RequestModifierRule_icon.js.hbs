@@ -52,7 +52,7 @@ if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
     function {{PAGE_PREFIX}}_onReady(callback) {
         const intervalId = window.setInterval(function() {
             if (document.getElementsByTagName('body')[0] !== undefined) {
-                    {{PAGE_PREFIX}}_doc_ready = true;
+                {{PAGE_PREFIX}}_doc_ready = true;
                 window.clearInterval(intervalId);
                 callback.call(this);
             }
