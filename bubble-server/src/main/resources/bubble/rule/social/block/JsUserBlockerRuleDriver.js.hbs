@@ -80,8 +80,10 @@ function {{JS_PREFIX}}_update_user (author, do_block) {
 
 function {{JS_PREFIX}}_block_user (author) {
     const index = {{JS_PREFIX}}_blocked_users.indexOf(author);
-    if (index !== -1) {{JS_PREFIX}}_blocked_users.push(author);
-    {{JS_PREFIX}}_update_user(author, true);
+    if (index === -1) {
+        {{JS_PREFIX}}_blocked_users.push(author);
+        {{JS_PREFIX}}_update_user(author, true);
+    }
 }
 
 function {{JS_PREFIX}}_unblock_user (author) {
