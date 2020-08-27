@@ -23,14 +23,18 @@ function {{JS_PREFIX}}_author_display_name(link) {
     return spans[spans.length-1];
 }
 
+function {{JS_PREFIX}}_find_feed_item(article) {
+    return {{JS_PREFIX}}_mobile
+        ? article
+        : article.parentElement.parentElement.parentElement.parentElement.parentElement;  // todo: safer to walk upwards until we find FeedItem
+}
+
 function {{JS_PREFIX}}_remove_article(article, authorName) {
     if (article.className.indexOf('{{JS_PREFIX}}_bub_blocked') === -1) {
         log('removing post by author: ' + authorName);
         article.className = article.className += ' {{JS_PREFIX}}_bub_blocked';
         try {
-            const feedItem = {{JS_PREFIX}}_mobile
-                ? article
-                : article.parentElement.parentElement.parentElement.parentElement.parentElement;  // todo: safer to walk upwards until we find FeedItem
+            const feedItem = {{JS_PREFIX}}_find_feed_item(article);
             feedItem.parentElement.removeChild(feedItem);
         } catch (e) {
             log('error removing post by author: ' + authorName + ': ' + e);
@@ -56,13 +60,13 @@ function {{JS_PREFIX}}_create_block_control(article, authorName) {
     const blockLink = document.createElement('a');
     blockLink.style.zIndex = '{{APP_CONTROLS_Z_INDEX}}'
     blockLink.addEventListener("click", function (e) {
-        {{JS_PREFIX}}_block_user(authorName);
         try {
-            const feedItem = article.parentElement.parentElement.parentElement.parentElement.parentElement;
+            const feedItem = {{JS_PREFIX}}_find_feed_item(article);
             feedItem.parentElement.removeChild(feedItem);
         } catch (e) {
             log('click error removing post by author: ' + authorName + ': ' + e);
         }
+        {{JS_PREFIX}}_block_user(authorName);
         e.stopPropagation();
         e.preventDefault();
         return false;
