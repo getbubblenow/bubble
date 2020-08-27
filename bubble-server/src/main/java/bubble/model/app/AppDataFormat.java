@@ -8,21 +8,22 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.AllArgsConstructor;
 
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static bubble.ApiConstants.enumFromString;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 @AllArgsConstructor
 public enum AppDataFormat {
 
-    key        (s -> s.map(AppData::getKey).collect(Collectors.toList())),
+    key        (s -> s.map(AppData::getKey).collect(toList())),
 
-    value      (s -> s.map(AppData::getData).collect(Collectors.toList())),
+    value      (s -> s.map(AppData::getData).collect(toList())),
 
-    key_value  (s -> s.collect(Collectors.toMap(AppData::getKey, AppData::getData))),
+    key_value  (s -> s.collect(toMap(AppData::getKey, AppData::getData))),
 
-    full       (s -> s.collect(Collectors.toList()));
+    full       (s -> s.collect(toList()));
 
     @JsonCreator public static AppDataFormat fromString (String v) { return enumFromString(AppDataFormat.class, v); }
 
