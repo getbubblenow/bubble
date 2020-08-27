@@ -29,43 +29,32 @@ function {{JS_PREFIX}}_find_feed_item(article) {
         : article.parentElement.parentElement.parentElement.parentElement.parentElement;  // todo: safer to walk upwards until we find FeedItem
 }
 
+function {{JS_PREFIX}}_remove_article_from_dom(article, authorName) {
+    try {
+        const feedItem = {{JS_PREFIX}}_find_feed_item(article);
+        feedItem.parentElement.removeChild(feedItem);
+    } catch (e) {
+        log('error removing post by author: ' + authorName + ': ' + e);
+    }
+}
+
 function {{JS_PREFIX}}_remove_article(article, authorName) {
     if (article.className.indexOf('{{JS_PREFIX}}_bub_blocked') === -1) {
         log('removing post by author: ' + authorName);
         article.className = article.className += ' {{JS_PREFIX}}_bub_blocked';
-        try {
-            const feedItem = {{JS_PREFIX}}_find_feed_item(article);
-            feedItem.parentElement.removeChild(feedItem);
-        } catch (e) {
-            log('error removing post by author: ' + authorName + ': ' + e);
-        }
+        {{JS_PREFIX}}_remove_article_from_dom(article, authorName);
     } else {
         log('found post marked removed but still present (??) by author: ' + authorName);
     }
 }
 
-function {{JS_PREFIX}}_uuidv4() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
-
 function {{JS_PREFIX}}_create_block_control(article, authorName) {
-    const imgHolder = document.createElement('img');
-    imgHolder.src = '/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true';
-    imgHolder.width = 24;
-
+    const imgHolder = {{JS_PREFIX}}_create_block_img();
     const blockSpan = document.createElement('span');
     const blockLink = document.createElement('a');
     blockLink.style.zIndex = '{{APP_CONTROLS_Z_INDEX}}'
     blockLink.addEventListener("click", function (e) {
-        try {
-            const feedItem = {{JS_PREFIX}}_find_feed_item(article);
-            feedItem.parentElement.removeChild(feedItem);
-        } catch (e) {
-            log('click error removing post by author: ' + authorName + ': ' + e);
-        }
+        {{JS_PREFIX}}_remove_article_from_dom(article, authorName);
         {{JS_PREFIX}}_block_user(authorName);
         e.stopPropagation();
         e.preventDefault();

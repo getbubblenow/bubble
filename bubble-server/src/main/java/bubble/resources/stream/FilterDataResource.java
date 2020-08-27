@@ -22,7 +22,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
@@ -64,25 +64,20 @@ public class FilterDataResource {
     @GET @Path(EP_READ)
     public Response readData(@Context Request req,
                              @Context ContainerRequest ctx,
-                             @QueryParam("format") AppDataFormat format) {
+                             @QueryParam("format") AppDataFormat format,
+                             @QueryParam("value") String value) {
 
         final List<AppData> data = dataDAO.findEnabledByAccountAndAppAndSite(account.getUuid(), matcher.getApp(), matcher.getSite());
 
         if (log.isDebugEnabled()) log.debug("readData: found "+data.size()+" AppData records");
 
         if (format == null) format = AppDataFormat.key;
-        switch (format) {
-            case key:
-                return ok(data.stream().map(AppData::getKey).collect(Collectors.toList()));
-            case value:
-                return ok(data.stream().map(AppData::getData).collect(Collectors.toList()));
-            case key_value:
-                return ok(data.stream().collect(Collectors.toMap(AppData::getKey, AppData::getData)));
-            case full:
-                return ok(data);
-            default:
-                throw notFoundEx(format.name());
-        }
+
+        final Stream<AppData> stream = empty(value)
+                ? data.stream()
+                : data.stream().filter(d -> value.equals(d.getData()));
+
+        return ok(format.filter(stream));
     }
 
     @POST @Path(EP_WRITE)

@@ -1,9 +1,25 @@
 let {{JS_PREFIX}}_blocked_users = null;
 const {{JS_PREFIX}}_request_id = '{{BUBBLE_REQUEST_ID}}';
 
+let {{JS_PREFIX}}_unblocked_users_needs_refresh = false;
+
 let {{JS_PREFIX}}_interval = null;
 let {{JS_PREFIX}}_last_applied = null;
 const {{JS_PREFIX}}_idle_interval = 2500;
+
+function {{JS_PREFIX}}_uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+const {{JS_PREFIX}}_create_block_img = function(size) {
+    const img = document.createElement('img');
+    img.src = '/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true';
+    img.width = typeof size !== 'undefined' ? size : 24;
+    return img;
+}
 
 const {{JS_PREFIX}}_stop_refreshing_blocks = function(e) {
     if ({{JS_PREFIX}}_interval !== null) {
@@ -21,7 +37,7 @@ const {{JS_PREFIX}}_refresh_blocks = function(e) {
 
 function {{JS_PREFIX}}_fetch_blocks (do_apply) {
     const requestOptions = { method: 'GET' };
-    const blocked_users_url = '/__bubble/api/filter/data/{{BUBBLE_DATA_ID}}/read';
+    const blocked_users_url = '/__bubble/api/filter/data/{{BUBBLE_DATA_ID}}/read?value=true';
     fetch(blocked_users_url, requestOptions)
         .then(resp => resp.json())
         .then(data => {
@@ -52,15 +68,119 @@ function {{JS_PREFIX}}_handleVisibilityChange() {
 
 document.addEventListener("visibilitychange", {{JS_PREFIX}}_handleVisibilityChange, false);
 
-function {{JS_PREFIX}}_block_user (author) {
-    {{JS_PREFIX}}_blocked_users.push(author);
+function {{JS_PREFIX}}_update_user (author, do_block) {
     {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
     const block_user_url = '/__bubble/api/filter/data/{{BUBBLE_DATA_ID}}/write';
     const requestOptions = {
         method: 'POST',
-        body: JSON.stringify({key: author, data: true})
+        body: JSON.stringify({key: author, data: do_block})
     };
     fetch(block_user_url, requestOptions);
+}
+
+function {{JS_PREFIX}}_block_user (author) {
+    const index = {{JS_PREFIX}}_blocked_users.indexOf(author);
+    if (index !== -1) {{JS_PREFIX}}_blocked_users.push(author);
+    {{JS_PREFIX}}_update_user(author, true);
+}
+
+function {{JS_PREFIX}}_unblock_user (author) {
+    const index = {{JS_PREFIX}}_blocked_users.indexOf(author);
+    if (index === -1) return false;
+    {{JS_PREFIX}}_blocked_users.splice(index, 1);
+    {{JS_PREFIX}}_update_user(author, false);
+    return true;
+}
+
+let {{JS_PREFIX}}_app_details = false;
+
+function {{JS_PREFIX}}_create_unblock_control(authorName) {
+    const imgHolder = {{JS_PREFIX}}_create_block_img();
+    const blockSpan = document.createElement('span');
+    const unblockLink = document.createElement('a');
+    unblockLink.style.zIndex = '{{APP_CONTROLS_Z_INDEX}}'
+    unblockLink.addEventListener("click", function (e) {
+        if ({{JS_PREFIX}}_unblock_user(authorName)) {
+            {{JS_PREFIX}}_unblocked_users_needs_refresh = true;
+            {{JS_PREFIX}}_hide_app_details();
+            {{JS_PREFIX}}_show_app_details();
+        }
+        e.stopPropagation();
+        e.preventDefault();
+        return false;
+    });
+    unblockLink.appendChild(imgHolder);
+    blockSpan.appendChild(unblockLink)
+    blockSpan.id = 'blockSpan_'+{{JS_PREFIX}}_uuidv4();
+    return blockSpan;
+}
+
+function {{JS_PREFIX}}_hide_app_details() {
+    const detailsDivId = '{{JS_PREFIX}}_detailsDiv';
+    let detailsDiv = document.getElementById(detailsDivId);
+    {{JS_PREFIX}}_app_details = false;
+    if (detailsDiv != null) {
+        detailsDiv.style.display = 'none';
+        while (detailsDiv.firstChild) {
+            detailsDiv.removeChild(detailsDiv.lastChild);
+        }
+    }
+}
+
+function {{JS_PREFIX}}_show_app_details() {
+    const detailsDivId = '{{JS_PREFIX}}_detailsDiv';
+    let detailsDiv = document.getElementById(detailsDivId);
+    let blocks = {{JS_PREFIX}}_blocked_users;
+    if (blocks === null) return;
+    {{JS_PREFIX}}_app_details = true;
+    if (detailsDiv === null) {
+        detailsDiv = document.createElement('div');
+        detailsDiv.id = detailsDivId;
+        detailsDiv.style.backgroundColor = '#ffffff';
+        detailsDiv.style.position = 'fixed';
+        detailsDiv.style.bottom = '0';
+        detailsDiv.style.right = '0';
+        detailsDiv.style.zIndex = '{{expr APP_CONTROLS_Z_INDEX '+' 1}}';
+        document.getElementsByTagName('body')[0].appendChild(detailsDiv);
+        detailsDiv.onclick = function (ev) {
+                {{JS_PREFIX}}_toggle_app_details();
+        }
+    }
+    while (detailsDiv.firstChild) {
+        detailsDiv.removeChild(detailsDiv.lastChild);
+    }
+    detailsDiv.style.display = 'block';
+    // add rows for blocked users...
+    blocks = blocks.slice(); // copy first, then sort
+    blocks.sort();
+    if ({{JS_PREFIX}}_unblocked_users_needs_refresh) {
+        const refreshControl = document.createElement('a');
+        refreshControl.addEventListener("click", function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            window.location.reload();
+            return false;
+        });
+        refreshControl.appendChild(document.createTextNode('[refresh]'));
+        detailsDiv.appendChild(refreshControl);
+        detailsDiv.appendChild(document.createElement('hr'));
+    }
+    for (let i=0; i<blocks.length; i++) {
+        const entry = blocks[i];
+        const entryDiv = document.createElement('div');
+        const entryText = document.createTextNode(entry);
+        entryDiv.appendChild(entryText);
+        entryDiv.appendChild({{JS_PREFIX}}_create_unblock_control(entry));
+        detailsDiv.appendChild(entryDiv);
+    }
+}
+
+function {{JS_PREFIX}}_toggle_app_details(ev) {
+    if ({{JS_PREFIX}}_app_details) {
+        {{JS_PREFIX}}_hide_app_details();
+    } else {
+        {{JS_PREFIX}}_show_app_details();
+    }
 }
 
 {{{APPLY_BLOCKS_JS}}}
@@ -70,7 +190,7 @@ function {{JS_PREFIX}}_block_user (author) {
 {{PAGE_PREFIX}}_addBubbleApp({
     jsPrefix: '{{JS_PREFIX}}',
     app: '{{BUBBLE_APP_NAME}}',
-    link: 'site/{{BUBBLE_SITE_NAME}}/view/blocked_users',
+    link: {{JS_PREFIX}}_toggle_app_details,
     icon: 'icon',
     onReady: function () { {{JS_PREFIX}}_fetch_blocks(); }
 });
