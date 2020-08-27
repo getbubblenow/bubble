@@ -136,13 +136,7 @@ function {{JS_PREFIX}}_show_app_details() {
     if (blocks === null) return;
     {{JS_PREFIX}}_app_details = true;
     if (detailsDiv === null) {
-        detailsDiv = document.createElement('div');
-        detailsDiv.id = detailsDivId;
-        detailsDiv.style.backgroundColor = '#ffffff';
-        detailsDiv.style.position = 'fixed';
-        detailsDiv.style.bottom = '0';
-        detailsDiv.style.right = '0';
-        detailsDiv.style.zIndex = '{{expr APP_CONTROLS_Z_INDEX '+' 1}}';
+        detailsDiv = {{PAGE_PREFIX}}_createDetailsDiv(detailsDivId);
         document.getElementsByTagName('body')[0].appendChild(detailsDiv);
         detailsDiv.onclick = function (ev) {
                 {{JS_PREFIX}}_toggle_app_details();
@@ -152,6 +146,7 @@ function {{JS_PREFIX}}_show_app_details() {
         detailsDiv.removeChild(detailsDiv.lastChild);
     }
     detailsDiv.style.display = 'block';
+
     // add rows for blocked users...
     blocks = blocks.slice(); // copy first, then sort case insensitive using user's locale
     blocks.sort(function (a, b) {

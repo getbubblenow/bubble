@@ -20,6 +20,21 @@ if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
             });
     }
 
+    {{PAGE_PREFIX}}_createDetailsDiv = function (id) {
+        const detailsDiv = document.createElement('div');
+        detailsDiv.id = id;
+        detailsDiv.style.backgroundColor = '#ffffff';
+        detailsDiv.style.position = 'fixed';
+        detailsDiv.style.bottom = '0';
+        detailsDiv.style.right = '0';
+        detailsDiv.style.maxHeight = '80%'
+        detailsDiv.style.maxWidth = '80%'
+        detailsDiv.style.overflowX = 'scroll'
+        detailsDiv.style.overflowY = 'scroll'
+        detailsDiv.style.zIndex = '{{expr APP_CONTROLS_Z_INDEX '+' 1}}';
+        return detailsDiv;
+    }
+
     {{PAGE_PREFIX}}_addBubbleApp = function (app) {
         if (window.self === window.top) {
             if ({{PAGE_PREFIX}}_icon_status.find(a => a.app === app.app)) {
