@@ -384,8 +384,8 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements
     private static final String CTX_BUBBLE_BLACKLIST = "BUBBLE_BLACKLIST_JSON";
     private static final String CTX_BUBBLE_WHITELIST = "BUBBLE_WHITELIST_JSON";
 
-    @Override protected Map<String, Object> getBubbleJsContext(String requestId, Map<String, Object> filterCtx) {
-        final Map<String, Object> ctx = super.getBubbleJsContext(requestId, filterCtx);
+    @Override protected Map<String, Object> getBubbleJsContext(FilterHttpRequest filterRequest, Map<String, Object> filterCtx) {
+        final Map<String, Object> ctx = super.getBubbleJsContext(filterRequest, filterCtx);
         final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
         if (bubbleBlockConfig.inPageBlocks()) {
             final BlockDecision decision = (BlockDecision) filterCtx.get(FILTER_CTX_DECISION);

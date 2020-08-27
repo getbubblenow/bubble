@@ -27,6 +27,7 @@ import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.regex.RegexFilterReader;
 import org.cobbzilla.util.io.regex.RegexReplacementFilter;
+import org.cobbzilla.util.string.LocaleUtil;
 import org.cobbzilla.util.system.Bytes;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,8 @@ import java.util.Map;
 import static bubble.ApiConstants.HOME_DIR;
 import static bubble.rule.RequestModifierRule.ICON_JS_TEMPLATE;
 import static bubble.rule.RequestModifierRule.ICON_JS_TEMPLATE_NAME;
-import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.basename;
 import static org.cobbzilla.util.io.regex.RegexReplacementFilter.DEFAULT_PREFIX_REPLACEMENT_WITH_MATCH;
@@ -157,7 +159,7 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
         final RequestModifierConfig modConfig = requestModConfig();
         final String replacement = DEFAULT_PREFIX_REPLACEMENT_WITH_MATCH
                 + scriptOpen(filterRequest, modConfig.getScriptOpenNonce(), modConfig.getScriptOpenNoNonce())
-                + getBubbleJs(filterRequest.getId(), filterCtx, bubbleJsTemplate, defaultSiteTemplate, siteJsInsertionVar, showIcon)
+                + getBubbleJs(filterRequest, filterCtx, bubbleJsTemplate, defaultSiteTemplate, siteJsInsertionVar, showIcon)
                 + getScriptClose();
 
         final RegexReplacementFilter filter = new RegexReplacementFilter(getInsertionRegex(), replacement);
@@ -179,13 +181,13 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
         return new ReaderInputStream(reader, UTF8cs);
     }
 
-    protected String getBubbleJs(String requestId,
+    protected String getBubbleJs(FilterHttpRequest filterRequest,
                                  Map<String, Object> filterCtx,
                                  String bubbleJsTemplate,
                                  String defaultSiteTemplate,
                                  String siteJsInsertionVar,
                                  boolean showIcon) {
-        final Map<String, Object> ctx = getBubbleJsContext(requestId, filterCtx);
+        final Map<String, Object> ctx = getBubbleJsContext(filterRequest, filterCtx);
 
         if (!empty(siteJsInsertionVar) && !empty(defaultSiteTemplate)) {
             final String siteJs = HandlebarsUtil.apply(getHandlebars(), getSiteJsTemplate(defaultSiteTemplate), ctx);
@@ -208,6 +210,8 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
     public static final String CTX_BUBBLE_APP_NAME = "BUBBLE_APP_NAME";
     public static final String CTX_ICON_JS = "ICON_JS";
     public static final String CTX_APP_CONTROLS_Z_INDEX = "APP_CONTROLS_Z_INDEX";
+    public static final String CTX_ACCOUNT_LOCALE = "ACCOUNT_LOCALE";
+    public static final String CTX_ACCOUNT_LANG = "ACCOUNT_LANG";
 
     public static final int PAGE_ONREADY_INTERVAL = 50;
     public static final int APP_CONTROLS_Z_INDEX = 2147483640;
@@ -215,7 +219,8 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
     private String getPagePrefix(String requestId) { return "__bubble_page_"+sha256_hex(requestId); }
     private String getJsPrefix(String requestId) { return "__bubble_js_"+sha256_hex(requestId+"_"+getClass().getName()); }
 
-    protected Map<String, Object> getBubbleJsContext(String requestId, Map<String, Object> filterCtx) {
+    protected Map<String, Object> getBubbleJsContext(FilterHttpRequest filterRequest, Map<String, Object> filterCtx) {
+        final String requestId = filterRequest.getId();
         final Map<String, Object> ctx = new HashMap<>();
         ctx.put(CTX_PAGE_PREFIX, getPagePrefix(requestId));
         ctx.put(CTX_JS_PREFIX, getJsPrefix(requestId));
@@ -226,6 +231,11 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
         ctx.put(CTX_BUBBLE_SITE_NAME, getSiteName(matcher));
         ctx.put(CTX_BUBBLE_APP_NAME, app.getName());
         ctx.put(CTX_BUBBLE_DATA_ID, getDataId(requestId));
+
+        String locale = filterRequest.getAccount().getLocale();
+        if (empty(locale)) locale = configuration.getDefaultLocale();
+        ctx.put(CTX_ACCOUNT_LOCALE, locale);
+        ctx.put(CTX_ACCOUNT_LANG, LocaleUtil.getLang(locale));
         return ctx;
     }
 

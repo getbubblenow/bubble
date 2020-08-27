@@ -153,8 +153,10 @@ function {{JS_PREFIX}}_show_app_details() {
     }
     detailsDiv.style.display = 'block';
     // add rows for blocked users...
-    blocks = blocks.slice(); // copy first, then sort
-    blocks.sort();
+    blocks = blocks.slice(); // copy first, then sort case insensitive using user's locale
+    blocks.sort(function (a, b) {
+        return a.localeCompare(b, '{{ACCOUNT_LANG}}', {'sensitivity': 'base'});
+    });
     if ({{JS_PREFIX}}_unblocked_users_needs_refresh) {
         const refreshControl = document.createElement('a');
         refreshControl.addEventListener("click", function (e) {
