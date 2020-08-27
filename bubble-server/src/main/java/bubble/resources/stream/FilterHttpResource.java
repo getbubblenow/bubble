@@ -19,8 +19,8 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.device.Device;
 import bubble.rule.FilterMatchDecision;
-import bubble.service.block.BlockStatsService;
 import bubble.server.BubbleConfiguration;
+import bubble.service.block.BlockStatsService;
 import bubble.service.block.BlockStatsSummary;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.DeviceIdService;
@@ -627,6 +627,21 @@ public class FilterHttpResource {
         if (!filterCtx.request.hasApp(app.getUuid())) throw notFoundEx(appId);
 
         return configuration.subResource(AppAssetsResource.class, filterCtx.request.getAccount().getLocale(), app);
+    }
+
+    @Path(EP_MESSAGES+"/{requestId}/{appId}")
+    public FilterAppMessagesResource getAppMessagesResource(@Context Request req,
+                                                            @Context ContainerRequest ctx,
+                                                            @PathParam("requestId") String requestId,
+                                                            @PathParam("appId") String appId) {
+
+        final FilterSubContext filterCtx = new FilterSubContext(req, requestId);
+        final BubbleApp app = appDAO.findByAccountAndId(filterCtx.request.getAccount().getUuid(), appId);
+        if (app == null) throw notFoundEx(appId);
+
+        if (!filterCtx.request.hasApp(app.getUuid())) throw notFoundEx(appId);
+
+        return configuration.subResource(FilterAppMessagesResource.class, filterCtx.request.getAccount(), app);
     }
 
     private class FilterSubContext {

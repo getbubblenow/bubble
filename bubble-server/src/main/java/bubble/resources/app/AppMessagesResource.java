@@ -15,7 +15,7 @@ import java.util.List;
 
 public class AppMessagesResource extends AccountOwnedResource<AppMessage, AppMessageDAO> {
 
-    private BubbleApp app;
+    private final BubbleApp app;
 
     public AppMessagesResource(Account account, BubbleApp app) {
         super(account);

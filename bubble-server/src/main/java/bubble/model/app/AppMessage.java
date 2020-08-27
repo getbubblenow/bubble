@@ -23,6 +23,8 @@ import javax.persistence.Entity;
 import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 
 import static bubble.ApiConstants.DB_JSON_MAPPER;
@@ -78,6 +80,12 @@ public class AppMessage extends IdentifiableBase implements AppTemplateEntity, H
     public AppMessage setMessages(NameAndValue[] messages) { return setMessagesJson(messages == null ? null : json(messages, DB_JSON_MAPPER));}
 
     public String getMessage(String name) { return NameAndValue.find(getMessages(), name); }
+
+    public NameAndValue[] getMessages (Collection<String> find) {
+        return Arrays.stream(getMessages())
+                .filter(m -> find.contains(m.getName()))
+                .toArray(NameAndValue[]::new);
+    }
 
     public boolean hasMessage(String name) { return !empty(getMessage(name)); }
 

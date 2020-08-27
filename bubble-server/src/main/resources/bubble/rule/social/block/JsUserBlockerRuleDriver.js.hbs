@@ -7,6 +7,8 @@ let {{JS_PREFIX}}_interval = null;
 let {{JS_PREFIX}}_last_applied = null;
 const {{JS_PREFIX}}_idle_interval = 2500;
 
+let {{JS_PREFIX}}_messages = null;
+
 function {{JS_PREFIX}}_uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -133,13 +135,12 @@ function {{JS_PREFIX}}_show_app_details() {
     const detailsDivId = '{{JS_PREFIX}}_detailsDiv';
     let detailsDiv = document.getElementById(detailsDivId);
     let blocks = {{JS_PREFIX}}_blocked_users;
-    if (blocks === null) return;
     {{JS_PREFIX}}_app_details = true;
     if (detailsDiv === null) {
         detailsDiv = {{PAGE_PREFIX}}_createDetailsDiv(detailsDivId);
         document.getElementsByTagName('body')[0].appendChild(detailsDiv);
         detailsDiv.onclick = function (ev) {
-                {{JS_PREFIX}}_toggle_app_details();
+            {{JS_PREFIX}}_toggle_app_details();
         }
     }
     while (detailsDiv.firstChild) {
@@ -147,11 +148,13 @@ function {{JS_PREFIX}}_show_app_details() {
     }
     detailsDiv.style.display = 'block';
 
-    // add rows for blocked users...
-    blocks = blocks.slice(); // copy first, then sort case insensitive using user's locale
-    blocks.sort(function (a, b) {
-        return a.localeCompare(b, '{{ACCOUNT_LANG}}', {'sensitivity': 'base'});
-    });
+    if (blocks !== null && blocks.length > 0) {
+        // add rows for blocked users...
+        blocks = blocks.slice(); // copy first, then sort case insensitive using user's locale
+        blocks.sort(function (a, b) {
+            return a.localeCompare(b, '{{ACCOUNT_LANG}}', {'sensitivity': 'base'});
+        });
+    }
     if ({{JS_PREFIX}}_unblocked_users_needs_refresh) {
         const refreshControl = document.createElement('a');
         refreshControl.addEventListener("click", function (e) {
@@ -164,13 +167,23 @@ function {{JS_PREFIX}}_show_app_details() {
         detailsDiv.appendChild(refreshControl);
         detailsDiv.appendChild(document.createElement('hr'));
     }
-    for (let i=0; i<blocks.length; i++) {
-        const entry = blocks[i];
+    if (blocks === null || blocks.length === 0) {
+        const emptyMessage = 'noUsersBlocked' in {{JS_PREFIX}}_messages
+            ? {{JS_PREFIX}}_messages['noUsersBlocked']
+            : '(---)'
         const entryDiv = document.createElement('div');
-        const entryText = document.createTextNode(entry);
+        const entryText = document.createTextNode(emptyMessage);
         entryDiv.appendChild(entryText);
-        entryDiv.appendChild({{JS_PREFIX}}_create_unblock_control(entry));
         detailsDiv.appendChild(entryDiv);
+    } else {
+        for (let i = 0; i < blocks.length; i++) {
+            const entry = blocks[i];
+            const entryDiv = document.createElement('div');
+            const entryText = document.createTextNode(entry);
+            entryDiv.appendChild(entryText);
+            entryDiv.appendChild({{JS_PREFIX}}_create_unblock_control(entry));
+            detailsDiv.appendChild(entryDiv);
+        }
     }
 }
 
@@ -191,5 +204,10 @@ function {{JS_PREFIX}}_toggle_app_details(ev) {
     app: '{{BUBBLE_APP_NAME}}',
     link: {{JS_PREFIX}}_toggle_app_details,
     icon: 'icon',
-    onReady: function () { {{JS_PREFIX}}_fetch_blocks(); }
+    onReady: function () {
+        {{JS_PREFIX}}_load_messages(['noUsersBlocked'], function (messages) {
+            {{JS_PREFIX}}_messages = messages;
+        })
+        {{JS_PREFIX}}_fetch_blocks();
+    }
 });

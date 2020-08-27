@@ -1,3 +1,19 @@
+{{JS_PREFIX}}_load_messages = function (messages, set_func) {
+    const requestOptions = { method: 'GET' };
+    fetch('/__bubble/api/filter/messages/{{BUBBLE_REQUEST_ID}}/{{BUBBLE_APP_NAME}}/{{ACCOUNT_LOCALE}}?find='+messages.join(","), requestOptions)
+        .then(response => response.json())
+        .then(appMessages => {
+            const map = {};
+            for (let i=0; i<appMessages.messages.length; i++) {
+                const m = appMessages.messages[i];
+                map[m.name] = m.value;
+            }
+            set_func(map);
+        })
+        .catch((error) => {
+            console.error('Error getting messages ('+messages+'): '+error);
+        });
+}
 
 if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
     let {{PAGE_PREFIX}}_doc_ready = false;
@@ -25,12 +41,14 @@ if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
         detailsDiv.id = id;
         detailsDiv.style.backgroundColor = '#ffffff';
         detailsDiv.style.position = 'fixed';
-        detailsDiv.style.bottom = '0';
-        detailsDiv.style.right = '0';
+        detailsDiv.style.bottom = '10';
+        detailsDiv.style.right = '5';
         detailsDiv.style.maxHeight = '80%'
         detailsDiv.style.maxWidth = '80%'
         detailsDiv.style.overflowX = 'scroll'
         detailsDiv.style.overflowY = 'scroll'
+        detailsDiv.style.border = '1px solid black'
+        detailsDiv.style.padding = '6px'
         detailsDiv.style.zIndex = '{{expr APP_CONTROLS_Z_INDEX '+' 1}}';
         return detailsDiv;
     }
