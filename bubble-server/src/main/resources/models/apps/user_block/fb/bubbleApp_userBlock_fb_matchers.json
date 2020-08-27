@@ -8,7 +8,7 @@
       "requestCheck": true,
       "requestModifier": true,
       "fqdn": "www.facebook.com",
-      "urlRegex": ".*",
+      "urlRegex": "/",
       "rule": "fb_user_blocker"
     }, {
       "name": "FBMobileMatcher",
@@ -17,7 +17,7 @@
       "requestCheck": true,
       "requestModifier": true,
       "fqdn": "m.facebook.com",
-      "urlRegex": ".*",
+      "urlRegex": "/home.php",
       "rule": "fb_user_blocker"
     }]
   }
