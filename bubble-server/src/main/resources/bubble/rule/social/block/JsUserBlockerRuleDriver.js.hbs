@@ -26,14 +26,16 @@ const {{JS_PREFIX}}_create_block_img = function(size) {
 const {{JS_PREFIX}}_stop_refreshing_blocks = function(e) {
     if ({{JS_PREFIX}}_interval !== null) {
         window.clearInterval({{JS_PREFIX}}_interval);
+        {{JS_PREFIX}}_interval = null;
     }
 }
 const {{JS_PREFIX}}_refresh_blocks = function(e) {
+    {{PAGE_PREFIX}}_log('_refresh_blocks!');
     {{JS_PREFIX}}_stop_refreshing_blocks();
     {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
-        {{JS_PREFIX}}_interval = window.setInterval(function () {
-            {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
-            {{JS_PREFIX}}_last_applied = Date.now();
+    {{JS_PREFIX}}_interval = window.setInterval(function () {
+        {{JS_PREFIX}}_last_applied = Date.now();
+        {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
     }, {{JS_PREFIX}}_idle_interval);
 }
 
@@ -48,13 +50,7 @@ function {{JS_PREFIX}}_fetch_blocks (do_apply) {
                 blocked_users.push(data[i]);
             }
             {{JS_PREFIX}}_blocked_users = blocked_users;
-            {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
-            if ({{JS_PREFIX}}_interval === null) {
-                {{JS_PREFIX}}_interval = window.setInterval(function () {
-                    {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
-                    {{JS_PREFIX}}_last_applied = Date.now();
-                }, {{JS_PREFIX}}_idle_interval);
-            }
+            {{JS_PREFIX}}_refresh_blocks();
         });
 }
 
@@ -69,6 +65,12 @@ function {{JS_PREFIX}}_handleVisibilityChange() {
 }
 
 document.addEventListener("visibilitychange", {{JS_PREFIX}}_handleVisibilityChange, false);
+document.addEventListener("click", function (ev) {
+    if ({{JS_PREFIX}}_last_applied === null || Date.now() - {{JS_PREFIX}}_last_applied > 2*{{JS_PREFIX}}_idle_interval) {
+        {{PAGE_PREFIX}}_log('document.click forcing refresh');
+        {{JS_PREFIX}}_refresh_blocks();
+    }
+}, false);
 
 function {{JS_PREFIX}}_update_user (author, do_block) {
     {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);

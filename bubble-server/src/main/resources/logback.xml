@@ -41,7 +41,8 @@
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
     <logger name="bubble.service.notify.NotificationService" level="WARN" />
     <logger name="bubble.rule.bblock.BubbleBlockRuleDriver" level="WARN" />
-<!--    <logger name="bubble.service.block" level="DEBUG" />-->
+    <logger name="bubble.service.block.BlockStatsService" level="WARN" />
+    <!--    <logger name="bubble.service.block" level="DEBUG" />-->
     <logger name="bubble.abp" level="WARN" />
 <!--    <logger name="bubble.abp.BubbleBlockCondition" level="DEBUG" />-->
 <!--    <logger name="bubble.abp.BubbleBlockConditionOperation" level="DEBUG" />-->
