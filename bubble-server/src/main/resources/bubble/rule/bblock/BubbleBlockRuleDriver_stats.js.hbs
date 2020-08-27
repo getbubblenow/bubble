@@ -17,6 +17,7 @@ function {{JS_PREFIX}}_toggle_app_details(ev) {
             }
         }
     } else {
+        if ({{JS_PREFIX}}_last_stats === null || {{JS_PREFIX}}_last_stats.blocks.length === 0) return;
         {{JS_PREFIX}}_app_details = true;
         {{JS_PREFIX}}_app_refresh(function () {
             if ({{JS_PREFIX}}_last_stats != null) {

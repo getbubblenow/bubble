@@ -15,6 +15,7 @@ import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import java.util.Map;
 
 import static java.util.concurrent.TimeUnit.HOURS;
@@ -43,7 +44,7 @@ public class FilterAppMessagesResource {
             = new ExpirationMap<>(10, HOURS.toMillis(1), ExpirationEvictionPolicy.atime);
 
     @GET @Path("/{locale}")
-    public AppMessage find(ContainerRequest ctx,
+    public AppMessage find(@Context ContainerRequest ctx,
                            @PathParam("locale") String locale) {
         final Map<String, String> params = queryParams(ctx.getRequestUri().getQuery());
         final String filter = params.get(PARAM_FILTER_MESSAGE);

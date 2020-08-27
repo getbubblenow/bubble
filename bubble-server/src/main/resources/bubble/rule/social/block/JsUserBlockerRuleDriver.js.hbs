@@ -159,6 +159,8 @@ function {{JS_PREFIX}}_show_app_details() {
     }
     if ({{JS_PREFIX}}_unblocked_users_needs_refresh) {
         const refreshControl = document.createElement('a');
+        refreshControl.style.textDecoration = 'underline';
+        refreshControl.style.color = 'blue';
         refreshControl.addEventListener("click", function (e) {
             e.stopPropagation();
             e.preventDefault();
