@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
@@ -39,6 +40,9 @@ class ActiveStreamState {
     // do not wrap input with encoding stream until we have received at least this many bytes
     // this avoids errors when creating a GZIPInputStream when only one or a few bytes are available
     public static final long MIN_BYTES_BEFORE_WRAP = Bytes.KB;
+
+    // If no data is readable for this long, shut down the underlying MultiStream
+    public static final long UNDERFLOW_TIMEOUT = SECONDS.toMillis(60);
 
     static {
         // do not terminate threads that are idling just fine
@@ -120,7 +124,7 @@ class ActiveStreamState {
             totalBytesWritten += chunk.length;
             final ByteArrayInputStream chunkStream = new ByteArrayInputStream(chunk);
             if (multiStream == null) {
-                multiStream = new MultiStream(chunkStream, reqId());
+                multiStream = new MultiStream(chunkStream, reqId()).setUnderflowTimeout(UNDERFLOW_TIMEOUT);
             } else {
                 multiStream.addStream(chunkStream);
             }
@@ -138,7 +142,7 @@ class ActiveStreamState {
         totalBytesWritten += chunk.length;
         final ByteArrayInputStream chunkStream = new ByteArrayInputStream(chunk);
         if (multiStream == null) {
-            multiStream = new MultiStream(chunkStream, true, reqId());
+            multiStream = new MultiStream(chunkStream, true, reqId()).setUnderflowTimeout(UNDERFLOW_TIMEOUT);;
         } else {
             multiStream.addLastStream(chunkStream);
         }

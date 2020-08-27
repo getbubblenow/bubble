@@ -16,6 +16,7 @@ import bubble.server.BubbleConfiguration;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.CommandLine;
+import org.cobbzilla.util.daemon.TerminationRequestResult;
 import org.cobbzilla.util.io.TempDir;
 import org.cobbzilla.util.jdbc.DbDumpMode;
 import org.cobbzilla.util.network.PortPicker;
@@ -206,7 +207,7 @@ public class DatabaseFilterService {
     }
 
     private boolean stopThread(Thread t, BubbleNode node, String name) {
-        if (terminate(t, THREAD_KILL_TIMEOUT)) {
+        if (terminate(t, THREAD_KILL_TIMEOUT) != TerminationRequestResult.alive) {
             log.info("copyDatabase: "+name+" thread finished! we are OK.");
             return true;
         } else {
