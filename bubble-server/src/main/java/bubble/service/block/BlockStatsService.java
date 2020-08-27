@@ -43,7 +43,7 @@ public class BlockStatsService {
             if (log.isDebugEnabled()) log.debug("record: excluding fqdn="+filter.getFqdn());
             return;
         }
-        if (log.isDebugEnabled()) log.debug(    "record: >>>>> processing URL="+filter.getUrl()+" REFERER="+filter.getReferer()+" DECISION="+decision);
+        if (log.isDebugEnabled()) log.debug("record: >>>>> processing URL="+filter.getUrl()+" REFERER="+filter.getReferer()+" DECISION="+decision);
         addTopLevelRecord(filter, decision);
         if (!filter.hasReferer()) {
             // this must be a top-level request
@@ -57,7 +57,7 @@ public class BlockStatsService {
                 // try fqdn
                 rec = records.get(getFqdnKey(filter.getRefererFqdn(), filter.getUserAgent()));
                 if (rec == null) {
-                    log.warn("record: parent not found for device=" + filter.getDevice() + "/userAgent=" + filter.getUserAgent() + "/referer=" + filter.getReferer());
+                    if (log.isWarnEnabled()) log.warn("record: parent not found for device=" + filter.getDevice() + "/userAgent=" + filter.getUserAgent() + "/referer=" + filter.getReferer());
                     return;
                 }
             }
@@ -98,10 +98,10 @@ public class BlockStatsService {
         if (stat == null) {
             final String summaryJson = cache == null ? null : cache.get(requestId);
             if (summaryJson == null) {
-                log.info("getSummary("+requestId+") no summary found");
+                if (log.isInfoEnabled()) log.info("getSummary("+requestId+") no summary found");
                 return null;
             } else {
-                log.info("getSummary("+requestId+") returning cached summary: "+summaryJson);
+                if (log.isDebugEnabled()) log.debug("getSummary("+requestId+") returning cached summary: "+summaryJson);
                 return json(summaryJson, BlockStatsSummary.class);
             }
         }
