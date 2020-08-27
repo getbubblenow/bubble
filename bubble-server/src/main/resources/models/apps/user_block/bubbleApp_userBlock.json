@@ -29,6 +29,7 @@
         {"name": "icon", "value": "classpath:models/apps/user_block/shadowban-icon.svg"},
         {"name": "summary", "value": "User Blocker"},
         {"name": "noUsersBlocked", "value": "(empty)"},
+        {"name": "refreshPage", "value": "refresh"},
         {"name": "description", "value": "Throw the garbage to the curb!"},
         {"name": "view.blocked_users", "value": "Manage Blocked Users"},
         {"name": "field.key", "value": "Username"},

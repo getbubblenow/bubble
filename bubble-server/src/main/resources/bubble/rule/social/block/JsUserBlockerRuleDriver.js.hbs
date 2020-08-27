@@ -102,7 +102,6 @@ function {{JS_PREFIX}}_create_unblock_control(authorName) {
     const imgHolder = {{JS_PREFIX}}_create_block_img();
     const blockSpan = document.createElement('span');
     const unblockLink = document.createElement('a');
-    unblockLink.style.zIndex = '{{APP_CONTROLS_Z_INDEX}}'
     unblockLink.addEventListener("click", function (e) {
         if ({{JS_PREFIX}}_unblock_user(authorName)) {
             {{JS_PREFIX}}_unblocked_users_needs_refresh = true;
@@ -120,6 +119,7 @@ function {{JS_PREFIX}}_create_unblock_control(authorName) {
 }
 
 function {{JS_PREFIX}}_hide_app_details() {
+    {{PAGE_PREFIX}}_log('hide_app_details called');
     const detailsDivId = '{{JS_PREFIX}}_detailsDiv';
     let detailsDiv = document.getElementById(detailsDivId);
     {{JS_PREFIX}}_app_details = false;
@@ -132,6 +132,7 @@ function {{JS_PREFIX}}_hide_app_details() {
 }
 
 function {{JS_PREFIX}}_show_app_details() {
+    {{PAGE_PREFIX}}_log('show_app_details called');
     const detailsDivId = '{{JS_PREFIX}}_detailsDiv';
     let detailsDiv = document.getElementById(detailsDivId);
     let blocks = {{JS_PREFIX}}_blocked_users;
@@ -147,6 +148,7 @@ function {{JS_PREFIX}}_show_app_details() {
         detailsDiv.removeChild(detailsDiv.lastChild);
     }
     detailsDiv.style.display = 'block';
+    detailsDiv.style.visibility = 'visible';
 
     if (blocks !== null && blocks.length > 0) {
         // add rows for blocked users...
@@ -163,14 +165,17 @@ function {{JS_PREFIX}}_show_app_details() {
             window.location.reload();
             return false;
         });
-        refreshControl.appendChild(document.createTextNode('[refresh]'));
+        const refreshMessage = 'refreshPage' in {{JS_PREFIX}}_messages
+            ? {{JS_PREFIX}}_messages['refreshPage']
+            : 'refresh'
+        refreshControl.appendChild(document.createTextNode(refreshMessage));
         detailsDiv.appendChild(refreshControl);
         detailsDiv.appendChild(document.createElement('hr'));
     }
     if (blocks === null || blocks.length === 0) {
         const emptyMessage = 'noUsersBlocked' in {{JS_PREFIX}}_messages
             ? {{JS_PREFIX}}_messages['noUsersBlocked']
-            : '(---)'
+            : '(empty)'
         const entryDiv = document.createElement('div');
         const entryText = document.createTextNode(emptyMessage);
         entryDiv.appendChild(entryText);

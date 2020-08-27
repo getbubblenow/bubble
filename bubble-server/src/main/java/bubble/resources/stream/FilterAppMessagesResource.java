@@ -20,7 +20,6 @@ import java.util.Map;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.URIUtil.queryParams;
-import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 
 @Consumes(APPLICATION_JSON)
@@ -51,7 +50,6 @@ public class FilterAppMessagesResource {
         final String cacheKey = app.getUuid() + ":" + locale + ":" + filter;
         return singleMessageCache.computeIfAbsent(cacheKey, k -> {
             final AppMessage messages = appMessageDAO.findByAccountAndAppAndLocale(account.getUuid(), app.getUuid(), locale);
-            log.error("find("+filter+") - checking AppMessage="+json(messages));
             return new AppMessage().setMessages(messages.getMessages(splitAndTrim(filter, ",")));
         });
     }
