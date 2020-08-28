@@ -22,9 +22,8 @@ Element.prototype.appendChild = function() {
                 || (!{{JS_PREFIX}}_mobile && node.tagName.toUpperCase() === 'DIV' && node.role && node.role === 'article') ) {
                 const block = {{JS_PREFIX}}_should_block({{JS_PREFIX}}_blocked_users, node)
                 if (block) {
-                    console.log('>>> BLOCKING via appendChild: '+block);
+                    // console.log('>>> BLOCKING via appendChild: '+block);
                     return;
-                    <!--window.setTimeout(function () { if (node.parentNode) node.parentNode.removeChild(node); node.parentNode = null; }, 3000);-->
                 }
             }
         }
@@ -185,7 +184,7 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
                     // log('RE-VISITING article node for author: ' + authorName + ' (' + authorDisplayName + '), display.inner='+authorDisplay.parentNode.innerHTML);
                 }
                 let b = {{JS_PREFIX}}_create_block_control(article, authorName);
-                console.log('inserting span='+b.id+' for article by '+authorName);
+                // console.log('inserting span='+b.id+' for article by '+authorName);
                 authorDisplay.parentNode.appendChild(b);
 
             } catch (e) {
@@ -193,7 +192,10 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
             }
         }
     }
-    if (firstEval) {{JS_PREFIX}}_tally_allow(firstAuthor);
+    if (firstEval) {
+        // console.log('>>> allowing post with firstAuthor = '+firstAuthor);
+        {{JS_PREFIX}}_tally_allow(firstAuthor);
+    }
     return false;
 }
 
