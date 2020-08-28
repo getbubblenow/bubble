@@ -6,25 +6,25 @@
       "template": true,
       "matcher": "FBMatcher",
       "key": "kw:See All",
-      "value": "true"
+      "data": "true"
     }, {
       "site": "Facebook",
       "template": true,
       "matcher": "FBMatcher",
       "key": "kw:Suggested Groups",
-      "value": "true"
+      "data": "true"
     }, {
       "site": "Facebook",
       "template": true,
       "matcher": "FBMatcher",
       "key": "kw:Suggested for You",
-      "value": "true"
+      "data": "true"
     }, {
       "site": "Facebook",
       "template": true,
       "matcher": "FBMatcher",
       "key": "kw:Start Here",
-      "value": "true"
+      "data": "true"
     }]
   }
 }]
