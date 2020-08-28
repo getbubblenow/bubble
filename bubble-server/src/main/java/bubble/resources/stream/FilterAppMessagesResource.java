@@ -28,7 +28,8 @@ import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 @Slf4j
 public class FilterAppMessagesResource {
 
-    public static final String PARAM_FILTER_MESSAGE = "find";
+    public static final String PARAM_FILTER = "find";
+    public static final String FILTER_PREFIX = "prefix:";
 
     private final Account account;
     private final BubbleApp app;
@@ -47,11 +48,13 @@ public class FilterAppMessagesResource {
     public AppMessage find(@Context ContainerRequest ctx,
                            @PathParam("locale") String locale) {
         final Map<String, String> params = queryParams(ctx.getRequestUri().getQuery());
-        final String filter = params.get(PARAM_FILTER_MESSAGE);
+        final String filter = params.get(PARAM_FILTER);
         final String cacheKey = app.getUuid() + ":" + locale + ":" + filter;
         return singleMessageCache.computeIfAbsent(cacheKey, k -> {
             final AppMessage messages = appMessageDAO.findByAccountAndAppAndLocale(account.getUuid(), app.getUuid(), locale);
-            return new AppMessage().setMessages(messages.getMessages(splitAndTrim(filter, ",")));
+            return filter.startsWith(FILTER_PREFIX)
+                    ? new AppMessage().setMessages(messages.getMessagesWithPrefix(filter.substring(FILTER_PREFIX.length())))
+                    : new AppMessage().setMessages(messages.getMessages(splitAndTrim(filter, ",")));
         });
     }
 

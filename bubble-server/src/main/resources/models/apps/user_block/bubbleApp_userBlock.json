@@ -27,9 +27,8 @@
       "messages": [
         {"name": "name", "value": "Shadow Ban"},
         {"name": "icon", "value": "classpath:models/apps/user_block/shadowban-icon.svg"},
+        {"name": "unblock-icon", "value": "classpath:models/apps/user_block/shadowban-unblock-icon.svg"},
         {"name": "summary", "value": "User Blocker"},
-        {"name": "noUsersBlocked", "value": "(empty)"},
-        {"name": "refreshPage", "value": "refresh"},
         {"name": "description", "value": "Throw the garbage to the curb!"},
         {"name": "view.blocked_users", "value": "Manage Blocked Users"},
         {"name": "field.key", "value": "Username"},
@@ -37,7 +36,17 @@
         {"name": "field.ctime", "value": "Created"},
         {"name": "action.enable", "value": "Enforce Block"},
         {"name": "action.disable", "value": "Disable Block"},
-        {"name": "action.delete", "value": "Delete Block"}
+        {"name": "action.delete", "value": "Delete Block"},
+
+        {"name": "web_blockedUsers", "value": "Users"},
+        {"name": "web_noUsersBlocked", "value": "(empty)"},
+        {"name": "web_blockedKeywords", "value": "Keywords"},
+        {"name": "web_noKeywordsBlocked", "value": "(empty)"},
+        {"name": "web_addKeyword", "value": "Add"},
+        {"name": "web_blockedCategories", "value": "Categories"},
+        {"name": "web_cat_us_news", "value": "US News Media"},
+        {"name": "web_cat_us_politics", "value": "US Politics"},
+        {"name": "web_refreshPage", "value": "refresh"}
       ]
     }]
   }

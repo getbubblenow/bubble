@@ -1,4 +1,6 @@
 let {{JS_PREFIX}}_blocked_users = null;
+let {{JS_PREFIX}}_blocked_keywords = null;
+let {{JS_PREFIX}}_blocked_links = null;
 const {{JS_PREFIX}}_request_id = '{{BUBBLE_REQUEST_ID}}';
 
 let {{JS_PREFIX}}_unblocked_users_needs_refresh = false;
@@ -23,6 +25,13 @@ const {{JS_PREFIX}}_create_block_img = function(size) {
     return img;
 }
 
+const {{JS_PREFIX}}_create_unblock_img = function(size) {
+    const img = document.createElement('img');
+    img.src = '/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/unblock-icon?raw=true';
+    img.width = typeof size !== 'undefined' ? size : 16;
+    return img;
+}
+
 const {{JS_PREFIX}}_stop_refreshing_blocks = function(e) {
     if ({{JS_PREFIX}}_interval !== null) {
         window.clearInterval({{JS_PREFIX}}_interval);
@@ -31,6 +40,7 @@ const {{JS_PREFIX}}_stop_refreshing_blocks = function(e) {
 }
 const {{JS_PREFIX}}_refresh_blocks = function(e) {
     {{PAGE_PREFIX}}_log('_refresh_blocks!');
+    {{JS_PREFIX}}_last_applied = Date.now();
     {{JS_PREFIX}}_stop_refreshing_blocks();
     {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
     {{JS_PREFIX}}_interval = window.setInterval(function () {
@@ -46,10 +56,21 @@ function {{JS_PREFIX}}_fetch_blocks (do_apply) {
         .then(resp => resp.json())
         .then(data => {
             const blocked_users = [];
+            const blocked_keywords = [];
+            const blocked_links = [];
             for (let i=0; i<data.length; i++) {
-                blocked_users.push(data[i]);
+                let token = data[i];
+                if (token.startsWith('kw:')) {
+                    blocked_keywords.push(token);
+                } else if (token.startsWith('link:')) {
+                    blocked_links.push(token);
+                } else {
+                    blocked_users.push(token);
+                }
             }
             {{JS_PREFIX}}_blocked_users = blocked_users;
+            {{JS_PREFIX}}_blocked_keywords = blocked_keywords;
+            {{JS_PREFIX}}_blocked_links = blocked_links;
             {{JS_PREFIX}}_refresh_blocks();
         });
 }
@@ -64,13 +85,16 @@ function {{JS_PREFIX}}_handleVisibilityChange() {
     }
 }
 
-document.addEventListener("visibilitychange", {{JS_PREFIX}}_handleVisibilityChange, false);
-document.addEventListener("click", function (ev) {
+function {{JS_PREFIX}}_check_stale_refresher(ev) {
     if ({{JS_PREFIX}}_last_applied === null || Date.now() - {{JS_PREFIX}}_last_applied > 2*{{JS_PREFIX}}_idle_interval) {
-        {{PAGE_PREFIX}}_log('document.click forcing refresh');
+        {{PAGE_PREFIX}}_log('check_stale_refresher forcing refresh upon document event.type='+ev.type);
         {{JS_PREFIX}}_refresh_blocks();
     }
-}, false);
+}
+
+document.addEventListener("visibilitychange", {{JS_PREFIX}}_handleVisibilityChange, false);
+document.addEventListener("click", {{JS_PREFIX}}_check_stale_refresher, false);
+document.addEventListener("scroll", {{JS_PREFIX}}_check_stale_refresher, false);
 
 function {{JS_PREFIX}}_update_user (author, do_block) {
     {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
@@ -101,7 +125,7 @@ function {{JS_PREFIX}}_unblock_user (author) {
 let {{JS_PREFIX}}_app_details = false;
 
 function {{JS_PREFIX}}_create_unblock_control(authorName) {
-    const imgHolder = {{JS_PREFIX}}_create_block_img();
+    const imgHolder = {{JS_PREFIX}}_create_unblock_img();
     const blockSpan = document.createElement('span');
     const unblockLink = document.createElement('a');
     unblockLink.addEventListener("click", function (e) {
@@ -135,6 +159,7 @@ function {{JS_PREFIX}}_hide_app_details() {
 
 function {{JS_PREFIX}}_show_app_details() {
     {{PAGE_PREFIX}}_log('show_app_details called');
+    {{JS_PREFIX}}_refresh_blocks();
     const detailsDivId = '{{JS_PREFIX}}_detailsDiv';
     let detailsDiv = document.getElementById(detailsDivId);
     let blocks = {{JS_PREFIX}}_blocked_users;
@@ -169,17 +194,19 @@ function {{JS_PREFIX}}_show_app_details() {
             window.location.reload();
             return false;
         });
-        const refreshMessage = 'refreshPage' in {{JS_PREFIX}}_messages
-            ? {{JS_PREFIX}}_messages['refreshPage']
-            : 'refresh'
+        const refreshMessage = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_refreshPage', 'refresh');
         refreshControl.appendChild(document.createTextNode(refreshMessage));
         detailsDiv.appendChild(refreshControl);
         detailsDiv.appendChild(document.createElement('hr'));
     }
+    const usersHeaderText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_blockedUsers', 'Users');
+    const usersHeader = document.createElement('strong');
+    usersHeader.appendChild(document.createTextNode(usersHeaderText));
+    detailsDiv.appendChild(usersHeader);
+    detailsDiv.appendChild(document.createElement('hr'));
+
     if (blocks === null || blocks.length === 0) {
-        const emptyMessage = 'noUsersBlocked' in {{JS_PREFIX}}_messages
-            ? {{JS_PREFIX}}_messages['noUsersBlocked']
-            : '(empty)'
+        const emptyMessage = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_noUsersBlocked', '(empty)');
         const entryDiv = document.createElement('div');
         const entryText = document.createTextNode(emptyMessage);
         entryDiv.appendChild(entryText);
@@ -214,7 +241,7 @@ function {{JS_PREFIX}}_toggle_app_details(ev) {
     link: {{JS_PREFIX}}_toggle_app_details,
     icon: 'icon',
     onReady: function () {
-        {{JS_PREFIX}}_load_messages(['noUsersBlocked'], function (messages) {
+        {{JS_PREFIX}}_load_messages('web_', function (messages) {
             {{JS_PREFIX}}_messages = messages;
         })
         {{JS_PREFIX}}_fetch_blocks();

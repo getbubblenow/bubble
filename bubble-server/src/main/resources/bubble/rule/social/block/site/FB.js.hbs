@@ -10,6 +10,27 @@ function {{JS_PREFIX}}_getElementsByXPath(xpath, parent) {
 const {{JS_PREFIX}}_site_host = location.protocol + '//' + window.location.hostname + '/';
 const {{JS_PREFIX}}_mobile = window.location.hostname === "m.facebook.com";
 
+const {{JS_PREFIX}}_appendChild = Element.prototype.appendChild;
+Element.prototype.appendChild = function() {
+
+    try {
+    if (arguments[0].tagName) {
+        if ({{JS_PREFIX}}_mobile && arguments[0].tagName.toUpperCase() === 'SECTION') {
+            console.log('>>> intercepted appendChild for mobile article');
+        } else if ({{JS_PREFIX}}_mobile && arguments[0].tagName.toUpperCase() === 'DIV' && arguments[0].role && arguments[0].role === 'article') {
+            console.log('>>> intercepted appendChild for desktop article');
+        }
+    }
+    } catch (e) {
+        console.log('>>> error inspecting: e='+e);
+    }
+    try {
+        {{JS_PREFIX}}_appendChild.apply(this, arguments);
+    } catch (e) {
+        console.log('>>> error calling document.appendChild: arg[0].tagName = '+arguments[0].tagName+' e='+e);
+    }
+};
+
 const log = {{PAGE_PREFIX}}_log;
 
 function {{JS_PREFIX}}_is_ad(article) {
@@ -61,7 +82,8 @@ function {{JS_PREFIX}}_create_block_control(article, authorName) {
         return false;
     });
     blockLink.appendChild(imgHolder);
-    blockSpan.appendChild(blockLink)
+    blockSpan.appendChild(document.createTextNode('\u00A0\u00A0'));
+    blockSpan.appendChild(blockLink);
 
     blockSpan.id = 'blockSpan_'+{{JS_PREFIX}}_uuidv4();
     return blockSpan;
@@ -84,9 +106,68 @@ function {{JS_PREFIX}}_is_author_link(href) {
     return matches === null;
 }
 
+function {{JS_PREFIX}}_should_block(blocked_users, article) {
+    const sitePrefix = {{JS_PREFIX}}_site_host;
+    const mobile = {{JS_PREFIX}}_mobile;
+    const log = {{PAGE_PREFIX}}_log;
+
+    const authorLinks = Array.from(article.getElementsByTagName('a'))
+        .filter(a => {{JS_PREFIX}}_is_author_link(a.href))
+        .filter(a => a.getElementsByTagName('svg').length === 0)
+        .filter(a => mobile ? a.parentElement.tagName.toUpperCase() === 'STRONG' : a.getElementsByTagName('span').length === 1);
+
+    for (let authIndex=0; authIndex<authorLinks.length; authIndex++) {
+        const authorLink = authorLinks[authIndex];
+        let authorHref = authorLink.href;
+        let authorName = authorHref.startsWith(sitePrefix) ? authorHref.substring(sitePrefix.length) : authorHref;
+        const qPos = authorName.indexOf('?');
+        if (qPos !== -1) {
+            authorName = authorName.substring(0, qPos);
+            authorLink.href = sitePrefix + authorName;
+        }
+        if (authorName.endsWith('/')) authorName = authorName.substring(0, authorName.length-1);
+        if (authorName === 'profile.php') {
+            return true;
+        }
+        const authorDisplay = mobile
+            ? authorLink
+            : authorLink.getElementsByTagName('span')[0];
+        const authorDisplayName = authorDisplay.innerHTML;
+        if ({{JS_PREFIX}}_is_ad(article)) {
+            log('removing ad ('+authorDisplayName+')');
+            return authorName == null ? true : authorName;
+
+        } else if (blocked_users !== null && blocked_users.includes(authorName)) {
+            return authorName == null ? true : authorName;
+
+        } else {
+            // have we visited this authorLink before?
+            try {
+                if (authorLink.id === "") {
+                    // log('VISITING author: ' + authorName + ' (' + authorDisplayName + ')');
+                    authorLink.id = 'bubble_author_' + {{JS_PREFIX}}_uuidv4();
+                    // log('assigned id='+authorLink.id+' for authorLink by '+authorName);
+
+                } else if (authorDisplay.parentNode.innerHTML.indexOf('__bubble') !== -1) {
+                    // log('NOT RE-VISITING article node for author: ' + authorName + ' (' + authorDisplayName + '), display.inner='+authorDisplay.parentNode.innerHTML);
+                    continue;
+
+                } else {
+                    // log('RE-VISITING article node for author: ' + authorName + ' (' + authorDisplayName + '), display.inner='+authorDisplay.parentNode.innerHTML);
+                }
+                let b = {{JS_PREFIX}}_create_block_control(article, authorName);
+                // log('inserting span='+b.id+' for article by '+authorName);
+                authorDisplay.parentNode.appendChild(b);
+
+            } catch (e) {
+                log('badness: '+e);
+            }
+        }
+    }
+}
+
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
 
-    const sitePrefix = {{JS_PREFIX}}_site_host;
     const mobile = {{JS_PREFIX}}_mobile;
     const log = {{PAGE_PREFIX}}_log;
 
@@ -96,61 +177,9 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
 
     for (let i=0; i<articles.length; i++) {
         const article = articles[i];
-        const authorLinks = Array.from(article.getElementsByTagName('a'))
-            .filter(a => {{JS_PREFIX}}_is_author_link(a.href))
-            .filter(a => a.getElementsByTagName('svg').length === 0)
-            .filter(a => mobile ? a.parentElement.tagName.toUpperCase() === 'STRONG' : a.getElementsByTagName('span').length === 1);
-
-        for (let authIndex=0; authIndex<authorLinks.length; authIndex++) {
-            const authorLink = authorLinks[authIndex];
-            let authorHref = authorLink.href;
-            let authorName = authorHref.startsWith(sitePrefix) ? authorHref.substring(sitePrefix.length) : authorHref;
-            const qPos = authorName.indexOf('?');
-            if (qPos !== -1) {
-                authorName = authorName.substring(0, qPos);
-                authorLink.href = sitePrefix + authorName;
-            }
-            if (authorName.endsWith('/')) authorName = authorName.substring(0, authorName.length-1);
-            if (authorName === 'profile.php') {
-                {{JS_PREFIX}}_remove_article(article, null);
-                break;
-            }
-            const authorDisplay = mobile
-                ? authorLink
-                : authorLink.getElementsByTagName('span')[0];
-            const authorDisplayName = authorDisplay.innerHTML;
-            if ({{JS_PREFIX}}_is_ad(article)) {
-                log('removing ad ('+authorDisplayName+')');
-                {{JS_PREFIX}}_remove_article(article, authorName);
-                break;
-
-            } else if (blocked_users !== null && blocked_users.includes(authorName)) {
-                {{JS_PREFIX}}_remove_article(article, authorName);
-                break;
-
-            } else {
-                // have we visited this authorLink before?
-                try {
-                    if (authorLink.id === "") {
-                        // log('VISITING author: ' + authorName + ' (' + authorDisplayName + ')');
-                        authorLink.id = 'bubble_author_' + {{JS_PREFIX}}_uuidv4();
-                        // log('assigned id='+authorLink.id+' for authorLink by '+authorName);
-
-                    } else if (authorDisplay.parentNode.innerHTML.indexOf('__bubble') !== -1) {
-                        // log('NOT RE-VISITING article node for author: ' + authorName + ' (' + authorDisplayName + '), display.inner='+authorDisplay.parentNode.innerHTML);
-                        continue;
-
-                    } else {
-                        // log('RE-VISITING article node for author: ' + authorName + ' (' + authorDisplayName + '), display.inner='+authorDisplay.parentNode.innerHTML);
-                    }
-                    let b = {{JS_PREFIX}}_create_block_control(article, authorName);
-                    // log('inserting span='+b.id+' for article by '+authorName);
-                    authorDisplay.parentNode.appendChild(b);
-
-                } catch (e) {
-                    log('badness: '+e);
-                }
-            }
+        const authorName = {{JS_PREFIX}}_should_block(blocked_users, article);
+        if (authorName) {
+            {{JS_PREFIX}}_remove_article(article, authorName === true ? null : authorName);
         }
     }
 }

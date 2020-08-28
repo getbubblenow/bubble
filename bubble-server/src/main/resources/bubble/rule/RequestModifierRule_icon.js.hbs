@@ -1,6 +1,7 @@
 {{JS_PREFIX}}_load_messages = function (messages, set_func) {
     const requestOptions = { method: 'GET' };
-    fetch('/__bubble/api/filter/messages/{{BUBBLE_REQUEST_ID}}/{{BUBBLE_APP_NAME}}/{{ACCOUNT_LOCALE}}?find='+messages.join(","), requestOptions)
+    const find = Array.isArray(messages) ? messages.join(",") : 'prefix:' + messages;
+    fetch('/__bubble/api/filter/messages/{{BUBBLE_REQUEST_ID}}/{{BUBBLE_APP_NAME}}/{{ACCOUNT_LOCALE}}?find='+find, requestOptions)
         .then(response => response.json())
         .then(appMessages => {
             const map = {};
@@ -19,6 +20,10 @@ if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
     let {{PAGE_PREFIX}}_doc_ready = false;
 
     let {{PAGE_PREFIX}}_icon_status = [];
+
+    {{PAGE_PREFIX}}_msg_or_default = function (messages, msg, def) {
+        return msg in messages ? messages[msg] : def;
+    }
 
     {{PAGE_PREFIX}}_log = function (data) {
         const logData = JSON.stringify(data);

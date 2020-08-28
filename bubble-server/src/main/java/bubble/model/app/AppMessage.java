@@ -87,6 +87,12 @@ public class AppMessage extends IdentifiableBase implements AppTemplateEntity, H
                 .toArray(NameAndValue[]::new);
     }
 
+    public NameAndValue[] getMessagesWithPrefix (String prefix) {
+        return Arrays.stream(getMessages())
+                .filter(m -> m.getName().startsWith(prefix))
+                .toArray(NameAndValue[]::new);
+    }
+
     public boolean hasMessage(String name) { return !empty(getMessage(name)); }
 
     @ECSearchable @ECField(index=50) @Column(nullable=false)
