@@ -43,6 +43,7 @@
         {"name": "web_blockedKeywords", "value": "Keywords"},
         {"name": "web_noKeywordsBlocked", "value": "(empty)"},
         {"name": "web_addKeyword", "value": "Add"},
+        {"name": "web_close", "value": "Close"},
         {"name": "web_blockedCategories", "value": "Categories"},
         {"name": "web_cat_us_news", "value": "US News Media"},
         {"name": "web_cat_us_politics", "value": "US Politics"},

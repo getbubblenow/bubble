@@ -74,6 +74,7 @@ function {{JS_PREFIX}}_create_block_control(article, authorName) {
     const blockSpan = document.createElement('span');
     const blockLink = document.createElement('a');
     blockLink.style.zIndex = '{{APP_CONTROLS_Z_INDEX}}'
+    blockLink.style.cursor = 'pointer';
     blockLink.addEventListener("click", function (e) {
         {{JS_PREFIX}}_remove_article_from_dom(article, authorName);
         {{JS_PREFIX}}_block_user(authorName);
