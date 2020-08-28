@@ -1,3 +1,5 @@
+{{JS_PREFIX}}_supports_keywords = true;
+
 function {{JS_PREFIX}}_getElementsByXPath(xpath, parent) {
   let results = [];
   let query = document.evaluate(xpath, parent || document,
@@ -20,27 +22,25 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
           && author.href.indexOf('/', sitePrefix.length) === -1
           && author.className.indexOf('_bubble_blocked') === -1) {
           let authorName = author.href.substring(sitePrefix.length);
-          if (blocked_users !== null && blocked_users.includes(authorName)) {
-              // walk parents until we find the article, then go up 3 more divs
-              let node = author;
-              while (node.tagName.toUpperCase() !== 'ARTICLE') {
-                  node = node.parentNode;
-                  if (node === null) break;
-              }
-              if (node !== null) {
-                  for (let p = 0; p < 3; p++) {
-                      node = node.parentNode;
-                      if (node === null) break;
-                  }
-                  if (node !== null && node.parentNode != null) {
-                      console.log('removing post by author: ' + authorName);
-                      try {
-                          author.className = author.className + ' _bubble_blocked';
-                          node.style = 'display: none';
-                      } catch (e) {
-                          console.log('error removing post by author: ' + authorName+': '+e);
-                      }
-                  }
+          let node = author;
+          // walk parents until we find the article, then go up 3 more divs
+          while (node.tagName.toUpperCase() !== 'ARTICLE') {
+              node = node.parentNode;
+              if (node === null) break;
+          }
+          if (node === null) continue;
+          for (let p = 0; p < 3; p++) {
+              node = node.parentNode;
+              if (node === null) break;
+          }
+          if (node === null || node.parentNode === null) continue''
+          if (blocked_users !== null && blocked_users.includes(authorName) || {{JS_PREFIX}}_includes_block_keyword(node)) {
+              console.log('removing post by author: ' + authorName);
+              try {
+                  author.className = author.className + ' _bubble_blocked';
+                  node.style = 'display: none';
+              } catch (e) {
+                  console.log('error removing post by author: ' + authorName+': '+e);
               }
 
           } else {

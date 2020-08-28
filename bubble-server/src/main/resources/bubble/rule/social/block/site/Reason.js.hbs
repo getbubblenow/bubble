@@ -1,3 +1,5 @@
+{{JS_PREFIX}}_supports_keywords = true;
+
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
     const comments = document.querySelector('.comment-list');
     if (comments === null || comments.length === 0) {
@@ -11,6 +13,10 @@ function {{JS_PREFIX}}_consider_block(comments, blocked_users) {
     if (comments && comments.length && comments.length > 0) {
         for (let i=0; i<comments.length; i++) {
             const comment = comments[i];
+            if ({{JS_PREFIX}}_includes_block_keyword(comment)) {
+                comment.parentNode.removeChild(comment);
+                continue;
+            }
             const userElement = comment.querySelector('cite.fn strong');
             if (userElement !== null) {
                 const author = userElement.innerText;

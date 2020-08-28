@@ -1,3 +1,5 @@
+{{JS_PREFIX}}_supports_keywords = true;
+
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
     const currentUser = document.getElementById('me');
     const currentUserName = (currentUser !== null) ? currentUser.innerText : null;
@@ -34,7 +36,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
                     blocking_indent = null;
                 }
             } else {
-                if (blocked_users !== null && blocked_users.includes(author)) {
+                if (blocked_users !== null && blocked_users.includes(author) || {{JS_PREFIX}}_includes_block_keyword(comment)) {
                     blocking = true;
                     blocking_indent = indent;
                     comment.parentNode.removeChild(comment);

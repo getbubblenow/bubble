@@ -1,3 +1,5 @@
+{{JS_PREFIX}}_supports_keywords = true;
+
 function {{JS_PREFIX}}_getElementsByXPath(xpath, parent) {
     let results = [];
     let query = document.evaluate(xpath, parent || document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -12,15 +14,17 @@ const {{JS_PREFIX}}_mobile = window.location.hostname === "m.facebook.com";
 
 const {{JS_PREFIX}}_appendChild = Element.prototype.appendChild;
 Element.prototype.appendChild = function() {
-
     try {
-    if (arguments[0].tagName) {
-        if ({{JS_PREFIX}}_mobile && arguments[0].tagName.toUpperCase() === 'SECTION') {
-            console.log('>>> intercepted appendChild for mobile article');
-        } else if ({{JS_PREFIX}}_mobile && arguments[0].tagName.toUpperCase() === 'DIV' && arguments[0].role && arguments[0].role === 'article') {
-            console.log('>>> intercepted appendChild for desktop article');
+        if (arguments[0].tagName) {
+            if ( ({{JS_PREFIX}}_mobile && arguments[0].tagName.toUpperCase() === 'SECTION')
+                || ({{JS_PREFIX}}_mobile && arguments[0].tagName.toUpperCase() === 'DIV' && arguments[0].role && arguments[0].role === 'article') ) {
+                const block = {{JS_PREFIX}}_should_block({{JS_PREFIX}}_blocked_users, arguments[0])
+                if (block) {
+                    log('>>> BLOCKING via appendChild: '+block);
+                    return;
+                }
+            }
         }
-    }
     } catch (e) {
         console.log('>>> error inspecting: e='+e);
     }
@@ -112,6 +116,11 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
     const mobile = {{JS_PREFIX}}_mobile;
     const log = {{PAGE_PREFIX}}_log;
 
+    if ({{JS_PREFIX}}_includes_block_keyword(article)) {
+        log('should_block returning true for keyword block');
+        return true;
+    }
+
     const authorLinks = Array.from(article.getElementsByTagName('a'))
         .filter(a => {{JS_PREFIX}}_is_author_link(a.href))
         .filter(a => a.getElementsByTagName('svg').length === 0)
@@ -128,6 +137,7 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
         }
         if (authorName.endsWith('/')) authorName = authorName.substring(0, authorName.length-1);
         if (authorName === 'profile.php') {
+            log('should_block returning true for '+authorName);
             return true;
         }
         const authorDisplay = mobile
@@ -139,6 +149,7 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
             return authorName == null ? true : authorName;
 
         } else if (blocked_users !== null && blocked_users.includes(authorName)) {
+            log('should_block returning '+authorName);
             return authorName == null ? true : authorName;
 
         } else {
@@ -165,6 +176,7 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
             }
         }
     }
+    return false;
 }
 
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
