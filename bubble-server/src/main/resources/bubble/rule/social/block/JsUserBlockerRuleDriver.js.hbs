@@ -43,7 +43,7 @@ const {{JS_PREFIX}}_stop_refreshing_blocks = function(e) {
 }
 
 const {{JS_PREFIX}}_refresh_blocks = function(e) {
-    {{PAGE_PREFIX}}_log('_refresh_blocks!');
+    // {{PAGE_PREFIX}}_log('refresh_blocks starting');
     {{JS_PREFIX}}_last_applied = Date.now();
     {{JS_PREFIX}}_stop_refreshing_blocks();
     {{JS_PREFIX}}_apply_blocks({{JS_PREFIX}}_blocked_users);
@@ -155,6 +155,12 @@ function {{JS_PREFIX}}_block_list (list) {
     }
 }
 
+function {{JS_PREFIX}}_tally_block(name) {
+   if (typeof {{PAGE_PREFIX}}_add_extra_block === 'function') {
+       {{PAGE_PREFIX}}_add_extra_block(name);
+   }
+}
+
 function {{JS_PREFIX}}_includes_block_keyword (element) {
     const keywords = Object.keys(Object.assign({}, {{JS_PREFIX}}_blocked_keywords, {{JS_PREFIX}}_blocked_list_keywords));
     if (keywords.length > 0) {
@@ -164,12 +170,14 @@ function {{JS_PREFIX}}_includes_block_keyword (element) {
             if (kw.startsWith('_')) {
                 let cskw = kw.substring(1);
                 if (html.indexOf(cskw) !== -1) {
-                    {{PAGE_PREFIX}}_log('>>> includes_block_keyword: blocking based on case-sensitive keyword: ' + cskw);
+                    // {{PAGE_PREFIX}}_log('>>> includes_block_keyword: blocking based on case-sensitive keyword: ' + cskw);
+                    {{JS_PREFIX}}_tally_block('*'+cskw);
                     return true;
                 }
             } else {
                 if (html.toLowerCase().indexOf(kw.toLowerCase()) !== -1) {
-                    {{PAGE_PREFIX}}_log('>>> includes_block_keyword: blocking based on case-insensitive keyword: ' + kw);
+                    // {{PAGE_PREFIX}}_log('>>> includes_block_keyword: blocking based on case-insensitive keyword: ' + kw);
+                    {{JS_PREFIX}}_tally_block('*'+kw);
                     return true;
                 }
             }
@@ -240,7 +248,7 @@ function {{JS_PREFIX}}_create_unblock_control(name, unblock_func) {
 }
 
 function {{JS_PREFIX}}_hide_app_details() {
-    {{PAGE_PREFIX}}_log('hide_app_details called');
+    // {{PAGE_PREFIX}}_log('hide_app_details called');
     const detailsDivId = '{{JS_PREFIX}}_detailsDiv';
     let detailsDiv = document.getElementById(detailsDivId);
     {{JS_PREFIX}}_app_details = false;
@@ -253,7 +261,7 @@ function {{JS_PREFIX}}_hide_app_details() {
 }
 
 function {{JS_PREFIX}}_show_app_details() {
-    {{PAGE_PREFIX}}_log('show_app_details called');
+    // {{PAGE_PREFIX}}_log('show_app_details called');
     {{JS_PREFIX}}_refresh_blocks();
     const detailsDivId = '{{JS_PREFIX}}_detailsDiv';
     let detailsDiv = document.getElementById(detailsDivId);

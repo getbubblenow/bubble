@@ -36,7 +36,9 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
                     blocking_indent = null;
                 }
             } else {
-                if (author in blocked_users || {{JS_PREFIX}}_includes_block_keyword(comment)) {
+                const authorBlocked = author in blocked_users;
+                if (authorBlocked || {{JS_PREFIX}}_includes_block_keyword(comment)) {
+                    if (authorBlocked) {{JS_PREFIX}}_tally_block(author);
                     blocking = true;
                     blocking_indent = indent;
                     comment.parentNode.removeChild(comment);

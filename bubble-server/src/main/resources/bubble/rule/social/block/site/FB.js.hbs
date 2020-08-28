@@ -20,7 +20,7 @@ Element.prototype.appendChild = function() {
                 || ({{JS_PREFIX}}_mobile && arguments[0].tagName.toUpperCase() === 'DIV' && arguments[0].role && arguments[0].role === 'article') ) {
                 const block = {{JS_PREFIX}}_should_block({{JS_PREFIX}}_blocked_users, arguments[0])
                 if (block) {
-                    log('>>> BLOCKING via appendChild: '+block);
+                    // log('>>> BLOCKING via appendChild: '+block);
                     return;
                 }
             }
@@ -65,7 +65,7 @@ function {{JS_PREFIX}}_remove_article_from_dom(article, authorName) {
 
 function {{JS_PREFIX}}_remove_article(article, authorName) {
     if (article.className.indexOf('{{JS_PREFIX}}_bub_blocked') === -1) {
-        log('removing post by author: ' + authorName);
+        // log('removing post by author: ' + authorName);
         article.className = article.className += ' {{JS_PREFIX}}_bub_blocked';
         {{JS_PREFIX}}_remove_article_from_dom(article, authorName);
     } else {
@@ -117,7 +117,7 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
     const log = {{PAGE_PREFIX}}_log;
 
     if ({{JS_PREFIX}}_includes_block_keyword(article)) {
-        log('should_block returning true for keyword block');
+        // log('should_block returning true for keyword block');
         return true;
     }
 
@@ -137,7 +137,8 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
         }
         if (authorName.endsWith('/')) authorName = authorName.substring(0, authorName.length-1);
         if (authorName === 'profile.php') {
-            log('should_block returning true for '+authorName);
+            // log('should_block returning true for '+authorName);
+            {{JS_PREFIX}}_tally_block({{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other'));
             return true;
         }
         const authorDisplay = mobile
@@ -145,11 +146,13 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
             : authorLink.getElementsByTagName('span')[0];
         const authorDisplayName = authorDisplay.innerHTML;
         if ({{JS_PREFIX}}_is_ad(article)) {
-            log('removing ad ('+authorDisplayName+')');
+            // log('removing ad ('+authorDisplayName+')');
+            {{JS_PREFIX}}_tally_block(authorName == null ? {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other') : authorName);
             return authorName == null ? true : authorName;
 
         } else if (authorName in blocked_users) {
-            log('should_block returning '+authorName);
+            // log('should_block returning '+authorName);
+            {{JS_PREFIX}}_tally_block(authorName == null ? {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other') : authorName);
             return authorName == null ? true : authorName;
 
         } else {

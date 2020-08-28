@@ -33,8 +33,10 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
               node = node.parentNode;
               if (node === null) break;
           }
-          if (node === null || node.parentNode === null) continue''
-          if (author in blocked_users || {{JS_PREFIX}}_includes_block_keyword(node)) {
+          if (node === null || node.parentNode === null) continue;
+          let authorBlocked = author in blocked_users;
+          if (authorBlocked || {{JS_PREFIX}}_includes_block_keyword(node)) {
+              if (authorBlocked) {{JS_PREFIX}}_tally_block(author);
               console.log('removing post by author: ' + authorName);
               try {
                   author.className = author.className + ' _bubble_blocked';

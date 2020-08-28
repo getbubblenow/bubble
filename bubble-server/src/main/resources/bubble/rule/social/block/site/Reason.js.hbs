@@ -21,6 +21,7 @@ function {{JS_PREFIX}}_consider_block(comments, blocked_users) {
             if (userElement !== null) {
                 const author = userElement.innerText;
                 if (author in blocked_users) {
+                    {{JS_PREFIX}}_tally_block(author);
                     comment.parentNode.removeChild(comment);
                     continue;
                 }
