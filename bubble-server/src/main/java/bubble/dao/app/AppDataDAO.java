@@ -78,7 +78,7 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
         }
         if (found == null) return create(data);
 
-        if (!found.getMatcher().equals(data.getMatcher())) return die("set: matcher mismatch");
+        if (!found.getSite().equals(data.getSite())) return die("set: matcher mismatch: found ("+found.getUuid()+"/"+found.getKey()+") with site "+found.getSite()+", update has site: "+data.getSite());
         found.update(data);
         return update(found);
     }
