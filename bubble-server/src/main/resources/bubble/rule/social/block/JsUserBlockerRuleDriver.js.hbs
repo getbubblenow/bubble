@@ -23,14 +23,14 @@ function {{JS_PREFIX}}_uuidv4() {
 
 const {{JS_PREFIX}}_create_block_img = function(size) {
     const img = document.createElement('img');
-    img.src = '/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true';
+    img.src = {{JS_PREFIX}}_asset_img_url('icon');
     img.width = typeof size !== 'undefined' ? size : 24;
     return img;
 }
 
 const {{JS_PREFIX}}_create_unblock_img = function(size) {
     const img = document.createElement('img');
-    img.src = '/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/unblock-icon?raw=true';
+    img.src = {{JS_PREFIX}}_asset_img_url('unblock-icon');
     img.width = typeof size !== 'undefined' ? size : 16;
     return img;
 }
@@ -160,9 +160,18 @@ function {{JS_PREFIX}}_includes_block_keyword (element) {
     if (keywords.length > 0) {
         const html = element.innerHTML;
         for (let i = 0; i < keywords.length; i++) {
-            if (html.indexOf(keywords[i]) !== -1) {
-                {{PAGE_PREFIX}}_log('>>> includes_block_keyword: blocking based on keyword: '+keywords[i]);
-                return true;
+            let kw = keywords[i];
+            if (kw.startsWith('_')) {
+                let cskw = kw.substring(1);
+                if (html.indexOf(cskw) !== -1) {
+                    {{PAGE_PREFIX}}_log('>>> includes_block_keyword: blocking based on case-sensitive keyword: ' + cskw);
+                    return true;
+                }
+            } else {
+                if (html.toLowerCase().indexOf(kw.toLowerCase()) !== -1) {
+                    {{PAGE_PREFIX}}_log('>>> includes_block_keyword: blocking based on case-insensitive keyword: ' + kw);
+                    return true;
+                }
             }
         }
     }
@@ -375,14 +384,29 @@ function {{JS_PREFIX}}_show_app_details() {
                 entryLink.style.textDecoration = 'underline';
                 entryLink.style.color = 'blue';
                 entryLink.style.cursor = 'pointer';
-                entryLink.appendChild(document.createTextNode(listName));
+                const entryExtLink = document.createElement('img');
+                entryExtLink.src = {{JS_PREFIX}}_asset_img_url('list-link-icon');
+                entryExtLink.height = 12;
+                entryExtLink.style.color = 'blue';
+                entryExtLink.style.cursor = 'pointer';
+                entryLink.appendChild(entryExtLink);
 
+                const listNameNode = document.createElement('span');
+                listNameNode.style.cursor = 'pointer';
+                listNameNode.appendChild(document.createTextNode(listName));
                 const entryCheckbox = document.createElement('input');
                 entryCheckbox.type = 'checkbox'
                 entryCheckbox.checked = listKey in {{JS_PREFIX}}_blocked_lists;
-                entryCheckbox.addEventListener('click', function (e) {
+
+                function toggle_list(e) {
                     e.stopPropagation();
-                    if (entryCheckbox.checked) {
+                    const isCheckbox = e.target === entryCheckbox;
+                    let checked = entryCheckbox.checked;
+                    if (!isCheckbox) {
+                        checked = !checked;
+                        entryCheckbox.checked = checked;
+                    }
+                    if (checked) {
                         console.log('checked ' + listName + ': ' + listUrl);
                         {{JS_PREFIX}}_block_list(listKey);
                     } else {
@@ -392,10 +416,15 @@ function {{JS_PREFIX}}_show_app_details() {
                         {{JS_PREFIX}}_show_app_details();
                         console.log('unchecked ' + listName + ': ' + listUrl);
                     }
-                })
-                entryDiv.appendChild(entryCheckbox);
-                entryDiv.appendChild(entryLink);
+                }
 
+                entryCheckbox.addEventListener('click', toggle_list);
+                listNameNode.addEventListener('click', toggle_list);
+
+                entryDiv.appendChild(entryCheckbox);
+                entryDiv.appendChild(listNameNode);
+                entryDiv.appendChild(document.createTextNode('\u00A0\u00A0'));
+                entryDiv.appendChild(entryLink);
                 detailsDiv.appendChild(entryDiv);
             });
 

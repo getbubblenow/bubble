@@ -73,7 +73,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
 
                       const line = document.createElement('hr');
                       const imgHolder = document.createElement('img');
-                      imgHolder.src = '/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/UserBlocker/icon?raw=true';
+                      imgHolder.src = {{JS_PREFIX}}_asset_img_url('icon');
                       imgHolder.width = 32;
 
                       const blockLink = document.createElement('a');

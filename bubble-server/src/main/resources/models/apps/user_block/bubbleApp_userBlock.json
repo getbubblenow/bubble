@@ -28,6 +28,7 @@
         {"name": "name", "value": "Shadow Ban"},
         {"name": "icon", "value": "classpath:models/apps/user_block/shadowban-icon.svg"},
         {"name": "unblock-icon", "value": "classpath:models/apps/user_block/shadowban-unblock-icon.svg"},
+        {"name": "list-link-icon", "value": "classpath:models/apps/user_block/shadowban-list-link-icon.svg"},
         {"name": "summary", "value": "User Blocker"},
         {"name": "description", "value": "Throw the garbage to the curb!"},
         {"name": "view.blocked_users", "value": "Manage Blocked Users"},

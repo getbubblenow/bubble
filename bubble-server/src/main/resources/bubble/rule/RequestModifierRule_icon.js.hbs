@@ -20,6 +20,10 @@
     return '/__bubble/api/filter/messages/{{BUBBLE_REQUEST_ID}}/{{BUBBLE_APP_NAME}}/{{ACCOUNT_LOCALE}}/link/'+link+'_url';
 }
 
+{{JS_PREFIX}}_asset_img_url = function (icon) {
+    return '/__bubble/api/filter/assets/{{BUBBLE_REQUEST_ID}}/{{BUBBLE_APP_NAME}}/'+icon+'?raw=true';
+}
+
 {{JS_PREFIX}}_load_link_message = function (link, set_func) {
     const requestOptions = { method: 'GET' };
     fetch({{JS_PREFIX}}_link_message_url(link), requestOptions)
