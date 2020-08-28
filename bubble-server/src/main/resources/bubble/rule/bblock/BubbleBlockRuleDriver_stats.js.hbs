@@ -92,7 +92,7 @@ function {{JS_PREFIX}}_toggle_app_details(ev) {
                     const summaryLabel = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_signalNoiseRatio', 'signal/noise');
                     const fullTotal = totalAllowed + totalBlocks;
                     const ratio = 100.0 * (totalAllowed / fullTotal);
-                    extraSummary.appendChild(document.createTextNode(summaryLabel + ': ' + totalAllowed + '/' + fullTotal + ' ≈ ' + ratio.toLocaleString('{{ACCOUNT_LOCALE_HYPHEN}}', { maximumSignificantDigits: 3 }) + '%'));
+                    extraSummary.appendChild(document.createTextNode(summaryLabel + ': ' + totalAllowed + '/' + totalBlocks + ' ≈ ' + ratio.toLocaleString('{{ACCOUNT_LOCALE_HYPHEN}}', { maximumSignificantDigits: 3 }) + '%'));
                     detailsDiv.appendChild(extraSummary);
                     detailsDiv.appendChild(document.createElement('hr'));
                 }
