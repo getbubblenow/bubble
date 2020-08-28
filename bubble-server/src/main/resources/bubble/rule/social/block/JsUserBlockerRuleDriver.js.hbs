@@ -10,7 +10,7 @@ let {{JS_PREFIX}}_unblocked_needs_refresh = false;
 
 let {{JS_PREFIX}}_interval = null;
 let {{JS_PREFIX}}_last_applied = null;
-const {{JS_PREFIX}}_idle_interval = 2500;
+let {{JS_PREFIX}}_idle_interval = 2500;
 
 let {{JS_PREFIX}}_messages = null;
 
@@ -260,6 +260,15 @@ function {{JS_PREFIX}}_hide_app_details() {
     }
 }
 
+function {{JS_PREFIX}}_create_button(labelKey, labelDefault, onclick) {
+    const label = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, labelKey, labelDefault);
+    const btn = document.createElement('button');
+    btn.style.fontSize = 'x-small';
+    btn.addEventListener('click', onclick);
+    btn.appendChild(document.createTextNode(label));
+    return btn;
+}
+
 function {{JS_PREFIX}}_show_app_details() {
     // {{PAGE_PREFIX}}_log('show_app_details called');
     {{JS_PREFIX}}_refresh_blocks();
@@ -268,6 +277,11 @@ function {{JS_PREFIX}}_show_app_details() {
     {{JS_PREFIX}}_app_details = true;
     if (detailsDiv === null) {
         detailsDiv = {{PAGE_PREFIX}}_createDetailsDiv(detailsDivId);
+        detailsDiv.onclick = function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            return false;
+        }
         document.getElementsByTagName('body')[0].appendChild(detailsDiv);
     }
     while (detailsDiv.firstChild) {
@@ -281,6 +295,7 @@ function {{JS_PREFIX}}_show_app_details() {
         blocks = blocks.slice(); // copy first, then sort case insensitive using user's locale
         blocks.sort(function (a, b) {
             return a.localeCompare(b, '{{ACCOUNT_LANG}}', {'sensitivity': 'base'});
+            return a.localeCompare(b, '{{ACCOUNT_LANG}}', {'sensitivity': 'base'});
         });
     }
     let keywords = Object.keys({{JS_PREFIX}}_blocked_keywords);
@@ -291,19 +306,13 @@ function {{JS_PREFIX}}_show_app_details() {
         });
     }
     if ({{JS_PREFIX}}_unblocked_needs_refresh) {
-        const refreshControl = document.createElement('a');
-        refreshControl.style.textDecoration = 'underline';
-        refreshControl.style.color = 'blue';
-        refreshControl.style.cursor = 'pointer';
-        refreshControl.addEventListener("click", function (e) {
+        const refreshButton = {{JS_PREFIX}}_create_button('web_refreshPage', 'refresh', function (e) {
             e.stopPropagation();
             e.preventDefault();
             window.location.reload();
             return false;
         });
-        const refreshMessage = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_refreshPage', 'refresh');
-        refreshControl.appendChild(document.createTextNode(refreshMessage));
-        detailsDiv.appendChild(refreshControl);
+        detailsDiv.appendChild(refreshButton);
         detailsDiv.appendChild(document.createElement('hr'));
     }
     const usersHeaderText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_blockedUsers', 'Users');
@@ -360,11 +369,8 @@ function {{JS_PREFIX}}_show_app_details() {
         keywordInput.size = 14;
         keywordInput.style.fontSize = 'small';
         keywordInput.addEventListener('keypress', function (e) { if (e.key === 'Enter') { add_keyword(keywordInput.value); } });
-        const addMessage = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_addKeyword', 'Add');
-        const keywordAdd = document.createElement('button');
-        keywordAdd.style.fontSize = 'x-small';
-        keywordAdd.addEventListener('click', function (e) { add_keyword(keywordInput.value); });
-        keywordAdd.appendChild(document.createTextNode(addMessage));
+
+        const keywordAdd = {{JS_PREFIX}}_create_button('web_addKeyword', 'add', function (e) { add_keyword(keywordInput.value); });
         const kwForm = document.createElement('span');
         kwForm.style.fontSize = 'small';
         kwForm.appendChild(keywordInput);
@@ -439,19 +445,13 @@ function {{JS_PREFIX}}_show_app_details() {
             detailsDiv.appendChild(document.createElement('hr'));
         }
     }
-    const closeControl = document.createElement('a');
-    closeControl.style.textDecoration = 'underline';
-    closeControl.style.color = 'blue';
-    closeControl.style.cursor = 'pointer';
-    closeControl.addEventListener("click", function (e) {
+    const closeButton = {{JS_PREFIX}}_create_button('web_close', 'refresh', function (e) {
         e.stopPropagation();
         e.preventDefault();
         {{JS_PREFIX}}_hide_app_details();
         return false;
     });
-    const closeMessage = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_close', 'close');
-    closeControl.appendChild(document.createTextNode(closeMessage));
-    detailsDiv.appendChild(closeControl);
+    detailsDiv.appendChild(closeButton);
 
 }
 

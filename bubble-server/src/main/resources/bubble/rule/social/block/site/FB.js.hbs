@@ -1,4 +1,5 @@
 {{JS_PREFIX}}_supports_keywords = true;
+{{JS_PREFIX}}_idle_interval = 4000;
 
 function {{JS_PREFIX}}_getElementsByXPath(xpath, parent) {
     let results = [];
@@ -14,14 +15,17 @@ const {{JS_PREFIX}}_mobile = window.location.hostname === "m.facebook.com";
 
 const {{JS_PREFIX}}_appendChild = Element.prototype.appendChild;
 Element.prototype.appendChild = function() {
+    const node = arguments[0];
     try {
-        if (arguments[0].tagName) {
-            if ( ({{JS_PREFIX}}_mobile && arguments[0].tagName.toUpperCase() === 'SECTION')
-                || ({{JS_PREFIX}}_mobile && arguments[0].tagName.toUpperCase() === 'DIV' && arguments[0].role && arguments[0].role === 'article') ) {
-                const block = {{JS_PREFIX}}_should_block({{JS_PREFIX}}_blocked_users, arguments[0])
+        if (node.tagName) {
+            if ( ({{JS_PREFIX}}_mobile && node.tagName.toUpperCase() === 'SECTION')
+                || (!{{JS_PREFIX}}_mobile && node.tagName.toUpperCase() === 'DIV' && node.role && node.role === 'article') ) {
+                const block = {{JS_PREFIX}}_should_block({{JS_PREFIX}}_blocked_users, node)
                 if (block) {
                     // log('>>> BLOCKING via appendChild: '+block);
-                    return;
+                    // return;
+                    node.style.display = 'none';
+                    window.setTimeout(function () { if (node.parentNode) node.parentNode.removeChild(node); node.parentNode = null; }, 3000);
                 }
             }
         }
@@ -31,7 +35,7 @@ Element.prototype.appendChild = function() {
     try {
         {{JS_PREFIX}}_appendChild.apply(this, arguments);
     } catch (e) {
-        console.log('>>> error calling document.appendChild: arg[0].tagName = '+arguments[0].tagName+' e='+e);
+        console.log('>>> error calling document.appendChild: arg[0].tagName = '+node.tagName+' e='+e);
     }
 };
 
@@ -57,7 +61,10 @@ function {{JS_PREFIX}}_find_feed_item(article) {
 function {{JS_PREFIX}}_remove_article_from_dom(article, authorName) {
     try {
         const feedItem = {{JS_PREFIX}}_find_feed_item(article);
-        feedItem.parentElement.removeChild(feedItem);
+        if (feedItem.parentElement) {
+            feedItem.parentElement.removeChild(feedItem);
+            feedItem.parentElement = null;
+        }
     } catch (e) {
         log('error removing post by author: ' + authorName + ': ' + e);
     }
