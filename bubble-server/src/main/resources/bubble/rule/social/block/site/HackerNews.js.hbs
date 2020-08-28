@@ -23,6 +23,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
     let blocking_indent = null;
     for (let i=0; i<comments.length; i++) {
         const comment = comments[i];
+        const firstEval = {{JS_PREFIX}}_mark_evaluated(comment);
         const userElement = comment.querySelector('.hnuser');
         if (userElement !== null) {
             const author = userElement.href.split('=')[1];
@@ -37,20 +38,23 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
                 }
             } else {
                 const authorBlocked = author in blocked_users;
-                if (authorBlocked || {{JS_PREFIX}}_includes_block_keyword(comment)) {
-                    if (authorBlocked) {{JS_PREFIX}}_tally_block(author);
+                if (authorBlocked || {{JS_PREFIX}}_includes_block_keyword(comment, firstEval)) {
+                    if (authorBlocked) {
+                        {{JS_PREFIX}}_tally_block(author);
+                        if (!firstEval) {{JS_PREFIX}}_untally_allow();
+                    }
                     blocking = true;
                     blocking_indent = indent;
                     comment.parentNode.removeChild(comment);
                     i++;
                 } else {
-                    const existingBlock = comment.querySelector('.bubble_block');
-                    if (existingBlock === null && (currentUserName === null || currentUserName !== author)) {
+                    if (firstEval && (currentUserName === null || currentUserName !== author)) {
                         const ageElement = comment.querySelector('.age');
                         const blockNode = document.createElement('span');
                         blockNode.className = "bubble_block";
                         blockNode.innerHTML = ' [<b><a href="#" onclick="{{JS_PREFIX}}_block_user(\''+author+'\'); return false;">X</a></b>]';
                         ageElement.parentNode.insertBefore(blockNode, ageElement.nextSibling);
+                        {{JS_PREFIX}}_tally_allow(author);
                     }
                 }
             }

@@ -155,13 +155,35 @@ function {{JS_PREFIX}}_block_list (list) {
     }
 }
 
-function {{JS_PREFIX}}_tally_block(name) {
-   if (typeof {{PAGE_PREFIX}}_add_extra_block === 'function') {
-       {{PAGE_PREFIX}}_add_extra_block(name);
-   }
+function {{JS_PREFIX}}_mark_evaluated(node) {
+    const firstEval = node.className.indexOf('{{JS_PREFIX}}_bub_evaluated') === -1;
+    if (firstEval) {
+        node.className = node.className += ' {{JS_PREFIX}}_bub_evaluated';
+    }
+    return firstEval;
 }
 
-function {{JS_PREFIX}}_includes_block_keyword (element) {
+function {{JS_PREFIX}}_tally_block(name) {
+    console.log('tally_block: '+name);
+    if (typeof {{PAGE_PREFIX}}_add_extra_block === 'function') {
+        {{PAGE_PREFIX}}_add_extra_block(name);
+    }
+}
+
+function {{JS_PREFIX}}_tally_allow(name) {
+    console.log('tally_allow: '+name);
+    if (typeof {{PAGE_PREFIX}}_add_extra_block === 'function') {
+       {{PAGE_PREFIX}}_add_extra_allow();
+    }
+}
+function {{JS_PREFIX}}_untally_allow(name) {
+    console.log('untally_allow: '+name);
+    if (typeof {{PAGE_PREFIX}}_add_extra_block === 'function') {
+       {{PAGE_PREFIX}}_remove_extra_allow();
+    }
+}
+
+function {{JS_PREFIX}}_includes_block_keyword (element, firstEval) {
     const keywords = Object.keys(Object.assign({}, {{JS_PREFIX}}_blocked_keywords, {{JS_PREFIX}}_blocked_list_keywords));
     if (keywords.length > 0) {
         const html = element.innerHTML;
@@ -172,12 +194,14 @@ function {{JS_PREFIX}}_includes_block_keyword (element) {
                 if (html.indexOf(cskw) !== -1) {
                     // {{PAGE_PREFIX}}_log('>>> includes_block_keyword: blocking based on case-sensitive keyword: ' + cskw);
                     {{JS_PREFIX}}_tally_block('*'+cskw);
+                    if (!firstEval) {{JS_PREFIX}}_untally_allow();
                     return true;
                 }
             } else {
                 if (html.toLowerCase().indexOf(kw.toLowerCase()) !== -1) {
                     // {{PAGE_PREFIX}}_log('>>> includes_block_keyword: blocking based on case-insensitive keyword: ' + kw);
                     {{JS_PREFIX}}_tally_block('*'+kw);
+                    if (!firstEval) {{JS_PREFIX}}_untally_allow();
                     return true;
                 }
             }

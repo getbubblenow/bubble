@@ -22,10 +22,9 @@ Element.prototype.appendChild = function() {
                 || (!{{JS_PREFIX}}_mobile && node.tagName.toUpperCase() === 'DIV' && node.role && node.role === 'article') ) {
                 const block = {{JS_PREFIX}}_should_block({{JS_PREFIX}}_blocked_users, node)
                 if (block) {
-                    // log('>>> BLOCKING via appendChild: '+block);
-                    // return;
-                    node.style.display = 'none';
-                    window.setTimeout(function () { if (node.parentNode) node.parentNode.removeChild(node); node.parentNode = null; }, 3000);
+                    console.log('>>> BLOCKING via appendChild: '+block);
+                    return;
+                    <!--window.setTimeout(function () { if (node.parentNode) node.parentNode.removeChild(node); node.parentNode = null; }, 3000);-->
                 }
             }
         }
@@ -38,6 +37,19 @@ Element.prototype.appendChild = function() {
         console.log('>>> error calling document.appendChild: arg[0].tagName = '+node.tagName+' e='+e);
     }
 };
+
+function {{JS_PREFIX}}_remove_article_from_dom(article, authorName) {
+    try {
+        const feedItem = {{JS_PREFIX}}_find_feed_item(article);
+        if (feedItem.parentElement) {
+            feedItem.innerHTML = '';
+            // feedItem.parentElement.removeChild(feedItem);
+            // feedItem.parentElement = null;
+        }
+    } catch (e) {
+        log('error removing post by author: ' + authorName + ': ' + e);
+    }
+}
 
 const log = {{PAGE_PREFIX}}_log;
 
@@ -56,18 +68,6 @@ function {{JS_PREFIX}}_find_feed_item(article) {
     return {{JS_PREFIX}}_mobile
         ? article
         : article.parentElement.parentElement.parentElement.parentElement.parentElement;  // todo: safer to walk upwards until we find FeedItem
-}
-
-function {{JS_PREFIX}}_remove_article_from_dom(article, authorName) {
-    try {
-        const feedItem = {{JS_PREFIX}}_find_feed_item(article);
-        if (feedItem.parentElement) {
-            feedItem.parentElement.removeChild(feedItem);
-            feedItem.parentElement = null;
-        }
-    } catch (e) {
-        log('error removing post by author: ' + authorName + ': ' + e);
-    }
 }
 
 function {{JS_PREFIX}}_remove_article(article, authorName) {
@@ -96,8 +96,8 @@ function {{JS_PREFIX}}_create_block_control(article, authorName) {
     blockLink.appendChild(imgHolder);
     blockSpan.appendChild(document.createTextNode('\u00A0\u00A0'));
     blockSpan.appendChild(blockLink);
-
     blockSpan.id = 'blockSpan_'+{{JS_PREFIX}}_uuidv4();
+    // console.log('adding block control on '+authorName);
     return blockSpan;
 }
 
@@ -123,7 +123,9 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
     const mobile = {{JS_PREFIX}}_mobile;
     const log = {{PAGE_PREFIX}}_log;
 
-    if ({{JS_PREFIX}}_includes_block_keyword(article)) {
+    const firstEval = {{JS_PREFIX}}_mark_evaluated(article);
+
+    if ({{JS_PREFIX}}_includes_block_keyword(article, firstEval)) {
         // log('should_block returning true for keyword block');
         return true;
     }
@@ -133,6 +135,7 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
         .filter(a => a.getElementsByTagName('svg').length === 0)
         .filter(a => mobile ? a.parentElement.tagName.toUpperCase() === 'STRONG' : a.getElementsByTagName('span').length === 1);
 
+    let firstAuthor = null;
     for (let authIndex=0; authIndex<authorLinks.length; authIndex++) {
         const authorLink = authorLinks[authIndex];
         let authorHref = authorLink.href;
@@ -146,8 +149,10 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
         if (authorName === 'profile.php') {
             // log('should_block returning true for '+authorName);
             {{JS_PREFIX}}_tally_block({{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other'));
+            if (!firstEval) {{JS_PREFIX}}_untally_allow(authorName);
             return true;
         }
+        if (firstAuthor === null) firstAuthor = authorName;
         const authorDisplay = mobile
             ? authorLink
             : authorLink.getElementsByTagName('span')[0];
@@ -155,11 +160,13 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
         if ({{JS_PREFIX}}_is_ad(article)) {
             // log('removing ad ('+authorDisplayName+')');
             {{JS_PREFIX}}_tally_block(authorName == null ? {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other') : authorName);
+            if (!firstEval) {{JS_PREFIX}}_untally_allow(authorName);
             return authorName == null ? true : authorName;
 
         } else if (authorName in blocked_users) {
             // log('should_block returning '+authorName);
             {{JS_PREFIX}}_tally_block(authorName == null ? {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other') : authorName);
+            if (!firstEval) {{JS_PREFIX}}_untally_allow(authorName);
             return authorName == null ? true : authorName;
 
         } else {
@@ -178,7 +185,7 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
                     // log('RE-VISITING article node for author: ' + authorName + ' (' + authorDisplayName + '), display.inner='+authorDisplay.parentNode.innerHTML);
                 }
                 let b = {{JS_PREFIX}}_create_block_control(article, authorName);
-                // log('inserting span='+b.id+' for article by '+authorName);
+                console.log('inserting span='+b.id+' for article by '+authorName);
                 authorDisplay.parentNode.appendChild(b);
 
             } catch (e) {
@@ -186,6 +193,7 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
             }
         }
     }
+    if (firstEval) {{JS_PREFIX}}_tally_allow(firstAuthor);
     return false;
 }
 

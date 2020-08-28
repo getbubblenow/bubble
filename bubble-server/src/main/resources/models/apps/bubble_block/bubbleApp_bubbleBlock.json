@@ -239,7 +239,8 @@
         {"name": "config.response.allow", "value": "Allow"},
         {"name": "config.response.allow.description", "value": "Requests to this URL would be allowed by your Bubble, and would not be filtered"},
         {"name": "config.response.filter", "value": "Filter"},
-        {"name": "config.response.filter.description", "value": "Requests to this URL would be allowed by your Bubble, but would be filtered"}
+        {"name": "config.response.filter.description", "value": "Requests to this URL would be allowed by your Bubble, but would be filtered"},
+        {"name": "web_signalNoiseRatio", "value": "signal/noise"}
       ]
     }]
   }

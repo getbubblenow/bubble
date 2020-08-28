@@ -13,7 +13,8 @@ function {{JS_PREFIX}}_consider_block(comments, blocked_users) {
     if (comments && comments.length && comments.length > 0) {
         for (let i=0; i<comments.length; i++) {
             const comment = comments[i];
-            if ({{JS_PREFIX}}_includes_block_keyword(comment)) {
+            const firstEval = {{JS_PREFIX}}_mark_evaluated(comment);
+            if ({{JS_PREFIX}}_includes_block_keyword(comment, firstEval)) {
                 comment.parentNode.removeChild(comment);
                 continue;
             }
@@ -22,16 +23,18 @@ function {{JS_PREFIX}}_consider_block(comments, blocked_users) {
                 const author = userElement.innerText;
                 if (author in blocked_users) {
                     {{JS_PREFIX}}_tally_block(author);
+                    if (!firstEval) {{JS_PREFIX}}_untally_allow();
                     comment.parentNode.removeChild(comment);
                     continue;
                 }
 
-                if (userElement.parentNode.querySelector('.bubble_block') === null) {
+                if (firstEval) {
                     const blockNode = document.createElement('span');
                     blockNode.className = "bubble_block";
                     blockNode.style['white-space'] = 'nowrap';
                     blockNode.innerHTML = '[<b><a href="#" onclick="{{JS_PREFIX}}_block_user(\'' + author.replace("'", "\\\'") + '\'); return false;">X</a></b>]&nbsp;&nbsp;';
                     userElement.parentNode.insertBefore(blockNode, userElement);
+                    {{JS_PREFIX}}_tally_allow(author);
                 }
             }
         }

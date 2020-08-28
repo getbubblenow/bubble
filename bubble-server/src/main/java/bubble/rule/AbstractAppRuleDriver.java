@@ -211,6 +211,7 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
     public static final String CTX_ICON_JS = "ICON_JS";
     public static final String CTX_APP_CONTROLS_Z_INDEX = "APP_CONTROLS_Z_INDEX";
     public static final String CTX_ACCOUNT_LOCALE = "ACCOUNT_LOCALE";
+    public static final String CTX_ACCOUNT_LOCALE_HYPHEN = "ACCOUNT_LOCALE_HYPHEN";
     public static final String CTX_ACCOUNT_LANG = "ACCOUNT_LANG";
 
     public static final int PAGE_ONREADY_INTERVAL = 50;
@@ -235,6 +236,7 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
         String locale = filterRequest.getAccount().getLocale();
         if (empty(locale)) locale = configuration.getDefaultLocale();
         ctx.put(CTX_ACCOUNT_LOCALE, locale);
+        ctx.put(CTX_ACCOUNT_LOCALE_HYPHEN, locale.replace('_', '-'));
         ctx.put(CTX_ACCOUNT_LANG, LocaleUtil.getLang(locale));
         return ctx;
     }

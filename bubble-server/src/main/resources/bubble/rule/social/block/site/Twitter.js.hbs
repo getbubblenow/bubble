@@ -17,10 +17,14 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
   let sitePrefix = {{JS_PREFIX}}_site_host;
   for (let i=0; i<authors.length; i++) {
       let author = authors[i];
+
       if (author.href && author.href.startsWith(sitePrefix)
           && author.href.indexOf('?', sitePrefix.length) === -1
           && author.href.indexOf('/', sitePrefix.length) === -1
           && author.className.indexOf('_bubble_blocked') === -1) {
+
+          const firstEval = {{JS_PREFIX}}_mark_evaluated(author);
+
           let authorName = author.href.substring(sitePrefix.length);
           let node = author;
           // walk parents until we find the article, then go up 3 more divs
@@ -36,7 +40,10 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
           if (node === null || node.parentNode === null) continue;
           let authorBlocked = author in blocked_users;
           if (authorBlocked || {{JS_PREFIX}}_includes_block_keyword(node)) {
-              if (authorBlocked) {{JS_PREFIX}}_tally_block(author);
+              if (authorBlocked) {
+                  {{JS_PREFIX}}_tally_block(author);
+                  if (!firstEval) {{JS_PREFIX}}_untally_allow();
+              }
               console.log('removing post by author: ' + authorName);
               try {
                   author.className = author.className + ' _bubble_blocked';
@@ -86,6 +93,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
 
                       authorDiv.setAttribute('white-space', 'no-wrap');
                       authorDiv.parentNode.appendChild(blockControl);
+                      {{JS_PREFIX}}_tally_allow(author);
                   }
               }
           }
