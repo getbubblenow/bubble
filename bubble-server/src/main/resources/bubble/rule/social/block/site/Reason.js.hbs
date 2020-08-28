@@ -20,7 +20,7 @@ function {{JS_PREFIX}}_consider_block(comments, blocked_users) {
             const userElement = comment.querySelector('cite.fn strong');
             if (userElement !== null) {
                 const author = userElement.innerText;
-                if (blocked_users !== null && blocked_users.includes(author)) {
+                if (author in blocked_users) {
                     comment.parentNode.removeChild(comment);
                     continue;
                 }

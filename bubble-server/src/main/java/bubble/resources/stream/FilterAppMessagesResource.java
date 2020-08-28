@@ -11,24 +11,27 @@ import bubble.model.app.BubbleApp;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
+import org.cobbzilla.wizard.stream.UrlSendableResource;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
-import java.util.Map;
+import javax.ws.rs.core.Response;
 
 import static java.util.concurrent.TimeUnit.HOURS;
-import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
-import static org.cobbzilla.util.http.URIUtil.queryParams;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.cobbzilla.util.http.HttpContentTypes.*;
+import static org.cobbzilla.util.http.HttpSchemes.isHttpOrHttps;
 import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
+import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
-@Consumes(APPLICATION_JSON)
-@Produces(APPLICATION_JSON)
 @Slf4j
 public class FilterAppMessagesResource {
 
-    public static final String PARAM_FILTER = "find";
     public static final String FILTER_PREFIX = "prefix:";
 
     private final Account account;
@@ -44,11 +47,11 @@ public class FilterAppMessagesResource {
     private final ExpirationMap<String, AppMessage> singleMessageCache
             = new ExpirationMap<>(10, HOURS.toMillis(1), ExpirationEvictionPolicy.atime);
 
-    @GET @Path("/{locale}")
+    @GET @Path("/{locale}/find/{filter}")
+    @Produces(APPLICATION_JSON)
     public AppMessage find(@Context ContainerRequest ctx,
-                           @PathParam("locale") String locale) {
-        final Map<String, String> params = queryParams(ctx.getRequestUri().getQuery());
-        final String filter = params.get(PARAM_FILTER);
+                           @PathParam("locale") String locale,
+                           @PathParam("filter") String filter) {
         final String cacheKey = app.getUuid() + ":" + locale + ":" + filter;
         return singleMessageCache.computeIfAbsent(cacheKey, k -> {
             final AppMessage messages = appMessageDAO.findByAccountAndAppAndLocale(account.getUuid(), app.getUuid(), locale);
@@ -56,6 +59,24 @@ public class FilterAppMessagesResource {
                     ? new AppMessage().setMessages(messages.getMessagesWithPrefix(filter.substring(FILTER_PREFIX.length())))
                     : new AppMessage().setMessages(messages.getMessages(splitAndTrim(filter, ",")));
         });
+    }
+
+    private final ExpirationMap<String, String> linkMessageCache
+            = new ExpirationMap<>(10, MINUTES.toMillis(5), ExpirationEvictionPolicy.atime);
+
+    @GET @Path("/{locale}/link/{link}")
+    @Produces(CONTENT_TYPE_ANY)
+    public Response loadLink(@Context ContainerRequest ctx,
+                             @PathParam("locale") String locale,
+                             @PathParam("link") String link) {
+        final String cacheKey = app.getUuid() + ":" + locale + ":" + link;
+        return send(new UrlSendableResource(linkMessageCache.computeIfAbsent(cacheKey, k -> {
+            final AppMessage messages = appMessageDAO.findByAccountAndAppAndLocale(account.getUuid(), app.getUuid(), locale);
+            final String url = messages.getMessage(link);
+            if (url == null) throw notFoundEx(link);
+            if (!isHttpOrHttps(url)) throw invalidEx("err.url.invalid", "not a valid URL: "+url, url);
+            return url;
+        })));
     }
 
 }

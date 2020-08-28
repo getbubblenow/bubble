@@ -1,6 +1,8 @@
-let {{JS_PREFIX}}_blocked_users = [];
-let {{JS_PREFIX}}_blocked_keywords = [];
-let {{JS_PREFIX}}_blocked_links = [];
+let {{JS_PREFIX}}_blocked_users = {};
+let {{JS_PREFIX}}_blocked_keywords = {};
+let {{JS_PREFIX}}_blocked_lists = {};
+let {{JS_PREFIX}}_all_lists = {};
+let {{JS_PREFIX}}_blocked_list_keywords = [];
 let {{JS_PREFIX}}_supports_keywords = false;
 const {{JS_PREFIX}}_request_id = '{{BUBBLE_REQUEST_ID}}';
 
@@ -39,6 +41,7 @@ const {{JS_PREFIX}}_stop_refreshing_blocks = function(e) {
         {{JS_PREFIX}}_interval = null;
     }
 }
+
 const {{JS_PREFIX}}_refresh_blocks = function(e) {
     {{PAGE_PREFIX}}_log('_refresh_blocks!');
     {{JS_PREFIX}}_last_applied = Date.now();
@@ -52,28 +55,26 @@ const {{JS_PREFIX}}_refresh_blocks = function(e) {
 
 function {{JS_PREFIX}}_fetch_blocks (do_apply) {
     const requestOptions = { method: 'GET' };
-    const blocked_users_url = '/__bubble/api/filter/data/{{BUBBLE_DATA_ID}}/read?value=true';
-    fetch(blocked_users_url, requestOptions)
+    const blocks_url = '/__bubble/api/filter/data/{{BUBBLE_DATA_ID}}/read?value=true';
+    fetch(blocks_url, requestOptions)
         .then(resp => resp.json())
         .then(data => {
-            const blocked_users = [];
-            const blocked_keywords = [];
-            const blocked_links = [];
+            const blocked_users = {};
+            const blocked_keywords = {};
             for (let i=0; i<data.length; i++) {
                 let token = data[i];
                 if (token.startsWith('kw:')) {
-                    blocked_keywords.push(token.substring('kw:'.length));
-                } else if (token.startsWith('link:')) {
-                    blocked_links.push(token.substring('link:'.length));
-                } else if (token.startsWith('author:')) {
-                    blocked_users.push(token.substring('author:'.length));
+                    blocked_keywords[token.substring('kw:'.length)] = true;
+                } else if (token.startsWith('list:')) {
+                    let list = token.substring('list:'.length);
+                    console.log('adding list: '+list);
+                    {{JS_PREFIX}}_block_list(list);
                 } else {
-                    blocked_users.push(token);
+                    blocked_users[token] = true;
                 }
             }
             {{JS_PREFIX}}_blocked_users = blocked_users;
             {{JS_PREFIX}}_blocked_keywords = blocked_keywords;
-            {{JS_PREFIX}}_blocked_links = blocked_links;
             {{JS_PREFIX}}_refresh_blocks();
         });
 }
@@ -110,9 +111,8 @@ function {{JS_PREFIX}}_update_block (name, do_block) {
 }
 
 function {{JS_PREFIX}}_block_user (author) {
-    const index = {{JS_PREFIX}}_blocked_users.indexOf(author);
-    if (index === -1) {
-        {{JS_PREFIX}}_blocked_users.push(author);
+    if (!(author in {{JS_PREFIX}}_blocked_users)) {
+        {{JS_PREFIX}}_blocked_users[author] = true;
         {{JS_PREFIX}}_update_block(author, true);
     }
 }
@@ -120,16 +120,43 @@ function {{JS_PREFIX}}_block_user (author) {
 function {{JS_PREFIX}}_block_keyword (keyword) {
     keyword = keyword.replace(/\s+/g, ' ').trim();
     if (keyword.length === 0) return false;
-    const index = {{JS_PREFIX}}_blocked_keywords.indexOf(keyword);
-    if (index === -1) {
-            {{JS_PREFIX}}_blocked_keywords.push(keyword);
-            {{JS_PREFIX}}_update_block('kw:' + keyword, true);
+    if (!(keyword in {{JS_PREFIX}}_blocked_keywords)) {
+        {{JS_PREFIX}}_blocked_keywords[keyword] = true;
+        {{JS_PREFIX}}_update_block('kw:' + keyword, true);
+        return true;
     }
-    return true;
+    return false;
+}
+
+function {{JS_PREFIX}}_block_list (list) {
+    if (!(list in {{JS_PREFIX}}_blocked_lists)) {
+        const all_lists = {{JS_PREFIX}}_all_lists;
+        if (list in all_lists) {
+            {{JS_PREFIX}}_blocked_lists[list] = true;
+            {{JS_PREFIX}}_update_block('list:'+list, true);
+            all_lists[list].forEach(kw => {{JS_PREFIX}}_blocked_list_keywords[kw] = true);
+        } else {
+            {{JS_PREFIX}}_load_link_message(list, function (data) {
+                const words = [];
+                data.split('\n').forEach(kw => {
+                    kw = kw.trim();
+                    if (kw.length === 0 || kw.startsWith('#')) return;
+                    words.push(kw);
+                    if (!(kw in {{JS_PREFIX}}_blocked_list_keywords)) {
+                        {{JS_PREFIX}}_blocked_list_keywords[kw] = {};
+                    }
+                    {{JS_PREFIX}}_blocked_list_keywords[kw][list] = true;
+                });
+                all_lists[list] = words;
+                {{JS_PREFIX}}_blocked_lists[list] = true;
+                {{JS_PREFIX}}_update_block('list:' + list, true);
+            });
+        }
+    }
 }
 
 function {{JS_PREFIX}}_includes_block_keyword (element) {
-    const keywords = {{JS_PREFIX}}_blocked_keywords;
+    const keywords = Object.keys(Object.assign({}, {{JS_PREFIX}}_blocked_keywords, {{JS_PREFIX}}_blocked_list_keywords));
     if (keywords.length > 0) {
         const html = element.innerHTML;
         for (let i = 0; i < keywords.length; i++) {
@@ -143,18 +170,32 @@ function {{JS_PREFIX}}_includes_block_keyword (element) {
 }
 
 function {{JS_PREFIX}}_unblock_user (author) {
-    const index = {{JS_PREFIX}}_blocked_users.indexOf(author);
-    if (index === -1) return false;
-    {{JS_PREFIX}}_blocked_users.splice(index, 1);
+    if (!(author in {{JS_PREFIX}}_blocked_users)) return false;
+    delete {{JS_PREFIX}}_blocked_users[author];
     {{JS_PREFIX}}_update_block(author, false);
     return true;
 }
 
 function {{JS_PREFIX}}_unblock_keyword (keyword) {
-    const index = {{JS_PREFIX}}_blocked_keywords.indexOf(keyword.substring('kw:'.length));
-    if (index === -1) return false;
-    {{JS_PREFIX}}_blocked_keywords.splice(index, 1);
+    let kw = keyword.substring('kw:'.length);
+    if (!(kw in {{JS_PREFIX}}_blocked_keywords)) return false;
+    delete {{JS_PREFIX}}_blocked_keywords[kw];
     {{JS_PREFIX}}_update_block(keyword, false);
+    return true;
+}
+
+function {{JS_PREFIX}}_unblock_list (listKey) {
+    if (!(listKey in {{JS_PREFIX}}_blocked_lists)) return false;
+    const listEntries = {{JS_PREFIX}}_blocked_lists[listKey];
+    const listKeywords = {{JS_PREFIX}}_blocked_list_keywords;
+    Object.keys(listEntries).forEach(kw => {
+        delete listKeywords[kw][listKey];
+        if (Object.keys(listKeywords[kw]).length === 0) {
+            delete listKeywords[kw];
+        }
+    });
+    delete {{JS_PREFIX}}_blocked_lists[listKey];
+    {{JS_PREFIX}}_update_block('list:'+listKey, false);
     return true;
 }
 
@@ -218,14 +259,14 @@ function {{JS_PREFIX}}_show_app_details() {
     detailsDiv.style.display = 'block';
     detailsDiv.style.visibility = 'visible';
 
-    let blocks = {{JS_PREFIX}}_blocked_users;
+    let blocks = Object.keys({{JS_PREFIX}}_blocked_users);
     if (blocks !== null && blocks.length > 0) {
         blocks = blocks.slice(); // copy first, then sort case insensitive using user's locale
         blocks.sort(function (a, b) {
             return a.localeCompare(b, '{{ACCOUNT_LANG}}', {'sensitivity': 'base'});
         });
     }
-    let keywords = {{JS_PREFIX}}_blocked_keywords;
+    let keywords = Object.keys({{JS_PREFIX}}_blocked_keywords);
     if (keywords !== null && keywords.length > 0) {
         keywords = keywords.slice(); // copy first, then sort case insensitive using user's locale
         keywords.sort(function (a, b) {
@@ -321,16 +362,16 @@ function {{JS_PREFIX}}_show_app_details() {
             listsHeader.appendChild(document.createTextNode(listsHeaderText));
             detailsDiv.appendChild(listsHeader);
 
-            listKeys.forEach(k => {
-                const listName = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, k, null);
-                const listUrl = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, k+'_url', null);
+            listKeys.forEach(listKey => {
+                const listName = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, listKey, null);
+                const listUrl = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, listKey+'_url', null);
                 if (listUrl === null) {
-                    console.log('URL not defined for list: '+k);
+                    console.log('URL not defined for list: '+listKey);
                     return;
                 }
                 const entryDiv = document.createElement('div');
                 const entryLink = document.createElement('a');
-                entryLink.href = listUrl;
+                entryLink.href = {{JS_PREFIX}}_link_message_url(listKey);
                 entryLink.style.textDecoration = 'underline';
                 entryLink.style.color = 'blue';
                 entryLink.style.cursor = 'pointer';
@@ -338,11 +379,14 @@ function {{JS_PREFIX}}_show_app_details() {
 
                 const entryCheckbox = document.createElement('input');
                 entryCheckbox.type = 'checkbox'
+                entryCheckbox.checked = listKey in {{JS_PREFIX}}_blocked_lists;
                 entryCheckbox.addEventListener('click', function (e) {
                     e.stopPropagation();
                     if (entryCheckbox.checked) {
                         console.log('checked ' + listName + ': ' + listUrl);
+                        {{JS_PREFIX}}_block_list(listKey);
                     } else {
+                        {{JS_PREFIX}}_unblock_list(listKey);
                         {{JS_PREFIX}}_unblocked_needs_refresh = true;
                         {{JS_PREFIX}}_hide_app_details();
                         {{JS_PREFIX}}_show_app_details();

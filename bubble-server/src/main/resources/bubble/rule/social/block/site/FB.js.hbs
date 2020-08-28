@@ -148,7 +148,7 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
             log('removing ad ('+authorDisplayName+')');
             return authorName == null ? true : authorName;
 
-        } else if (blocked_users !== null && blocked_users.includes(authorName)) {
+        } else if (authorName in blocked_users) {
             log('should_block returning '+authorName);
             return authorName == null ? true : authorName;
 

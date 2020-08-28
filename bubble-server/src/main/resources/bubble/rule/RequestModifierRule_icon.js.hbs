@@ -1,7 +1,7 @@
 {{JS_PREFIX}}_load_messages = function (messages, set_func) {
     const requestOptions = { method: 'GET' };
     const find = Array.isArray(messages) ? messages.join(",") : 'prefix:' + messages;
-    fetch('/__bubble/api/filter/messages/{{BUBBLE_REQUEST_ID}}/{{BUBBLE_APP_NAME}}/{{ACCOUNT_LOCALE}}?find='+find, requestOptions)
+    fetch('/__bubble/api/filter/messages/{{BUBBLE_REQUEST_ID}}/{{BUBBLE_APP_NAME}}/{{ACCOUNT_LOCALE}}/find/'+find, requestOptions)
         .then(response => response.json())
         .then(appMessages => {
             const map = {};
@@ -13,6 +13,20 @@
         })
         .catch((error) => {
             console.error('Error getting messages ('+messages+'): '+error);
+        });
+}
+
+{{JS_PREFIX}}_link_message_url = function (link) {
+    return '/__bubble/api/filter/messages/{{BUBBLE_REQUEST_ID}}/{{BUBBLE_APP_NAME}}/{{ACCOUNT_LOCALE}}/link/'+link+'_url';
+}
+
+{{JS_PREFIX}}_load_link_message = function (link, set_func) {
+    const requestOptions = { method: 'GET' };
+    fetch({{JS_PREFIX}}_link_message_url(link), requestOptions)
+        .then(response => response.text())
+        .then(data => set_func(data))
+        .catch((error) => {
+            console.error('Error getting link message ('+messages+'): '+error);
         });
 }
 
