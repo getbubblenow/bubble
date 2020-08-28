@@ -44,9 +44,11 @@
         {"name": "web_noKeywordsBlocked", "value": "(empty)"},
         {"name": "web_addKeyword", "value": "Add"},
         {"name": "web_close", "value": "Close"},
-        {"name": "web_blockedCategories", "value": "Categories"},
-        {"name": "web_cat_us_news", "value": "US News Media"},
-        {"name": "web_cat_us_politics", "value": "US Politics"},
+        {"name": "web_blockedKeywordLists", "value": "Keyword Lists"},
+        {"name": "web_kwlist_us_news", "value": "US News Media"},
+        {"name": "web_kwlist_us_news_url", "value": "https://raw.githubusercontent.com/getbubblenow/bubble-filter-lists/master/sites_us_news.txt"},
+        {"name": "web_kwlist_us_politics", "value": "US Politics"},
+        {"name": "web_kwlist_us_politics_url", "value": "https://raw.githubusercontent.com/getbubblenow/bubble-filter-lists/master/us_politics.txt"},
         {"name": "web_refreshPage", "value": "refresh"}
       ]
     }]

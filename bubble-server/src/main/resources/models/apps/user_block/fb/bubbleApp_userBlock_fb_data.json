@@ -5,14 +5,20 @@
       "site": "Facebook",
       "template": true,
       "matcher": "FBMatcher",
-      "key": "cat~us_news",
-      "value": "https://raw.githubusercontent.com/getbubblenow/bubble-filter-lists/master/sites_us_news.txt"
+      "key": "kw:See All",
+      "value": "true"
     }, {
       "site": "Facebook",
       "template": true,
       "matcher": "FBMatcher",
-      "key": "cat~us_politics",
-      "value": "https://raw.githubusercontent.com/getbubblenow/bubble-filter-lists/master/us_politics.txt"
+      "key": "kw:Suggested for You",
+      "value": "true"
+    }, {
+      "site": "Facebook",
+      "template": true,
+      "matcher": "FBMatcher",
+      "key": "kw:Start Here",
+      "value": "true"
     }]
   }
 }]

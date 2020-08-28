@@ -271,7 +271,6 @@ function {{JS_PREFIX}}_show_app_details() {
     detailsDiv.appendChild(document.createElement('hr'));
 
     if ({{JS_PREFIX}}_supports_keywords) {
-
         const keywordsHeaderText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_blockedKeywords', 'Keywords');
         const keywordsHeader = document.createElement('strong');
         keywordsHeader.appendChild(document.createTextNode(keywordsHeaderText));
@@ -314,6 +313,50 @@ function {{JS_PREFIX}}_show_app_details() {
         kwForm.appendChild(keywordAdd);
         detailsDiv.appendChild(kwForm);
         detailsDiv.appendChild(document.createElement('hr'));
+
+        const listKeys = Object.keys({{JS_PREFIX}}_messages).filter(k => k.startsWith('web_kwlist_') && !k.endsWith('_url'));
+        if (listKeys.length > 0) {
+            const listsHeaderText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_blockedKeywordLists', 'Keyword Lists');
+            const listsHeader = document.createElement('strong');
+            listsHeader.appendChild(document.createTextNode(listsHeaderText));
+            detailsDiv.appendChild(listsHeader);
+
+            listKeys.forEach(k => {
+                const listName = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, k, null);
+                const listUrl = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, k+'_url', null);
+                if (listUrl === null) {
+                    console.log('URL not defined for list: '+k);
+                    return;
+                }
+                const entryDiv = document.createElement('div');
+                const entryLink = document.createElement('a');
+                entryLink.href = listUrl;
+                entryLink.style.textDecoration = 'underline';
+                entryLink.style.color = 'blue';
+                entryLink.style.cursor = 'pointer';
+                entryLink.appendChild(document.createTextNode(listName));
+
+                const entryCheckbox = document.createElement('input');
+                entryCheckbox.type = 'checkbox'
+                entryCheckbox.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    if (entryCheckbox.checked) {
+                        console.log('checked ' + listName + ': ' + listUrl);
+                    } else {
+                        {{JS_PREFIX}}_unblocked_needs_refresh = true;
+                        {{JS_PREFIX}}_hide_app_details();
+                        {{JS_PREFIX}}_show_app_details();
+                        console.log('unchecked ' + listName + ': ' + listUrl);
+                    }
+                })
+                entryDiv.appendChild(entryCheckbox);
+                entryDiv.appendChild(entryLink);
+
+                detailsDiv.appendChild(entryDiv);
+            });
+
+            detailsDiv.appendChild(document.createElement('hr'));
+        }
     }
     const closeControl = document.createElement('a');
     closeControl.style.textDecoration = 'underline';
