@@ -5,16 +5,21 @@
 package bubble.model.device;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import lombok.AllArgsConstructor;
 
 import static bubble.ApiConstants.enumFromString;
 
+@AllArgsConstructor
 public enum DeviceSecurityLevel {
 
-    maximum,
-    standard,
-    basic,
-    disabled;
+    maximum  (true),
+    standard (true),
+    basic    (false),
+    disabled (false);
 
     @JsonCreator public static DeviceSecurityLevel fromString (String v) { return enumFromString(DeviceSecurityLevel.class, v); }
+
+    private final boolean supportsRequestModification;
+    public boolean supportsRequestModification() { return supportsRequestModification; }
 
 }

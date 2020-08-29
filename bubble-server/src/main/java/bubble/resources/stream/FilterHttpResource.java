@@ -18,6 +18,7 @@ import bubble.model.app.BubbleApp;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.device.Device;
+import bubble.model.device.DeviceSecurityLevel;
 import bubble.rule.FilterMatchDecision;
 import bubble.server.BubbleConfiguration;
 import bubble.service.block.BlockStatsService;
@@ -177,12 +178,14 @@ public class FilterHttpResource {
         }
 
         if (isLocalIp) {
-            if (showStats(accountUuid)) {
+            final boolean showStats = showStats(accountUuid);
+            final DeviceSecurityLevel secLevel = device.getSecurityLevel();
+            if (showStats && secLevel.supportsRequestModification()) {
                 // allow it for now
-                if (log.isDebugEnabled()) log.debug(prefix + "returning noop (showBlockStats==true) for LOCAL fqdn/addr=" + arrayToString(connCheckRequest.getFqdns()) + "/" + connCheckRequest.getAddr());
+                if (log.isDebugEnabled()) log.debug(prefix + "returning noop (showStats=true, secLevel="+secLevel+") for LOCAL fqdn/addr=" + arrayToString(connCheckRequest.getFqdns()) + "/" + connCheckRequest.getAddr());
                 return ok(ConnectionCheckResponse.noop);
             } else {
-                if (log.isDebugEnabled()) log.debug(prefix + "returning block (showBlockStats==false) for LOCAL fqdn/addr=" + arrayToString(connCheckRequest.getFqdns()) + "/" + connCheckRequest.getAddr());
+                if (log.isDebugEnabled()) log.debug(prefix + "returning block (showStats="+showStats+", secLevel="+secLevel+") for LOCAL fqdn/addr=" + arrayToString(connCheckRequest.getFqdns()) + "/" + connCheckRequest.getAddr());
                 return ok(ConnectionCheckResponse.block);
             }
         }
