@@ -230,15 +230,15 @@ def next_layer(next_layer):
             next_layer.__class__ = TlsBlock
             return
 
-        elif security_level['level'] == SEC_OFF or security_level['level'] == SEC_BASIC:
+        elif security_level['level'] == SEC_OFF:
             bubble_log('next_layer: enabling passthru for server='+server_addr+' because security_level='+repr(security_level)+' for client='+client_addr)
             check = FORCE_PASSTHRU
 
-        elif fqdns is not None and len(fqdns) == 1 and cert_validation_host == fqdns[0]:
+        elif fqdns is not None and len(fqdns) == 1 and cert_validation_host == fqdns[0] and security_level['level'] != SEC_BASIC:
             bubble_log('next_layer: NOT enabling passthru for server='+server_addr+' because fqdn is cert_validation_host ('+cert_validation_host+') for client='+client_addr)
             return
 
-        elif security_level['level'] == SEC_STD and no_fqdns:
+        elif (security_level['level'] == SEC_STD or security_level['level'] == SEC_BASIC) and no_fqdns:
             bubble_log('next_layer: enabling passthru for server='+server_addr+' because no FQDN found and security_level='+repr(security_level)+' for client='+client_addr)
             check = FORCE_PASSTHRU
 
@@ -259,7 +259,7 @@ def next_layer(next_layer):
         elif 'block' in check and check['block']:
             bubble_log('next_layer: enabling block for server=' + server_addr+', fqdns='+str(fqdns))
             bubble_activity_log(client_addr, server_addr, 'conn_block', fqdns)
-            if show_block_stats(client_addr):
+            if show_block_stats(client_addr) and security_level['level'] != SEC_BASIC:
                 next_layer.do_block = True
                 next_layer.__class__ = TlsFeedback
             else:
