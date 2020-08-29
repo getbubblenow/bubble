@@ -361,12 +361,14 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements
             return in;
         }
         if (bubbleBlockConfig.inPageBlocks() && showStats) {
+            if (log.isInfoEnabled()) log.info(prefix + "SEND: both inPageBlocks and showStats are true, filtering");
             return filterInsertJs(in, filterRequest, filterCtx, BUBBLE_JS_TEMPLATE, getBubbleJsStatsTemplate(), BLOCK_STATS_JS, showStats);
         }
         if (bubbleBlockConfig.inPageBlocks()) {
+            if (log.isInfoEnabled()) log.info(prefix + "SEND: both inPageBlocks is true, filtering");
             return filterInsertJs(in, filterRequest, filterCtx, BUBBLE_JS_TEMPLATE, EMPTY, BLOCK_STATS_JS, showStats);
         }
-        log.warn(prefix+"inserting JS for stats into: "+request.getUrl()+" with Content-Type: "+filterRequest.getContentType());
+        if (log.isInfoEnabled()) log.info(prefix+"inserting JS for stats into: "+request.getUrl()+" with Content-Type: "+filterRequest.getContentType());
         return filterInsertJs(in, filterRequest, filterCtx, getBubbleJsStatsTemplate(), null, null, showStats);
     }
 
