@@ -265,6 +265,12 @@ def next_layer(next_layer):
             else:
                 next_layer.__class__ = TlsBlock
 
+        elif security_level['level'] == SEC_BASIC:
+            bubble_log('next_layer: check='+repr(check)+' but security_level='+repr(security_level)+', enabling passthru for server=' + server_addr+', fqdns='+str(fqdns))
+            bubble_activity_log(client_addr, server_addr, 'tls_passthru', fqdns)
+            next_layer_replacement = RawTCPLayer(next_layer.ctx, ignore=True)
+            next_layer.reply.send(next_layer_replacement)
+
         else:
             bubble_log('next_layer: disabling passthru (with TlsFeedback) for client_addr='+client_addr+', server_addr='+server_addr+', fqdns='+str(fqdns))
             bubble_activity_log(client_addr, server_addr, 'tls_intercept', fqdns)
