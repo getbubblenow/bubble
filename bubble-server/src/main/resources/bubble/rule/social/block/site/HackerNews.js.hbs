@@ -27,7 +27,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
         const userElement = comment.querySelector('.hnuser');
         if (userElement !== null) {
             const author = userElement.href.split('=')[1];
-            const indent = parseInt(comment.querySelector('.ind').querySelector('img').width);
+            const indent = parseInt(''+comment.querySelector('.ind').querySelector('img').width);
             if (blocking) {
                 if (indent > blocking_indent) {
                     comment.parentNode.removeChild(comment);
@@ -48,7 +48,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
                     comment.parentNode.removeChild(comment);
                     i++;
                 } else {
-                    if (firstEval && (currentUserName === null || currentUserName !== author)) {
+                    if (firstEval && (currentUserName === null || currentUserName !== author) && comment.innerHTML.indexOf('bubble_block') === -1) {
                         const ageElement = comment.querySelector('.age');
                         const blockNode = document.createElement('span');
                         blockNode.className = "bubble_block";
