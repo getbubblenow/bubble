@@ -51,6 +51,15 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
         return findByFields("account", account, "enabled", true, "connCheck", true);
     }
 
+    public List<AppMatcher> findByAccountAndAppAndSite(String accountUuid, String appUuid, String siteUuid) {
+        return findByFields("account", accountUuid, "app", appUuid, "site", siteUuid);
+    }
+
+    public AppMatcher findByAccountAndAppAndSiteAndId(String accountUuid, String appUuid, String siteUuid, String id) {
+        final AppMatcher found = findByUniqueFields("account", accountUuid, "app", appUuid, "site", siteUuid, "name", id);
+        return found != null ? found : findByUniqueFields("account", accountUuid, "app", appUuid, "site", siteUuid, "uuid", id);
+    }
+
     @Override public Object preCreate(AppMatcher matcher) {
         if (matcher.getConnCheck() == null) matcher.setConnCheck(false);
         if (matcher.getRequestCheck() == null) matcher.setRequestCheck(false);

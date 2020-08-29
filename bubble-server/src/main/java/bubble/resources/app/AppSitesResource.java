@@ -70,6 +70,14 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
         return ok(getDao().update(found.setEnabled(false)));
     }
 
+    @Path("/{id}"+EP_MATCHERS)
+    public AppMatchersResource getSiteMatchers(@Context ContainerRequest ctx,
+                                               @PathParam("id") String id) {
+        final AppSite site = find(ctx, id);
+        if (site == null) throw notFoundEx(id);
+        return configuration.subResource(AppMatchersResource.class, getAccount(account, ctx), app, site);
+    }
+
     @Path("/{id}"+EP_DATA)
     public AppSiteDataResource getSiteData(@Context ContainerRequest ctx,
                                            @PathParam("id") String id) {
