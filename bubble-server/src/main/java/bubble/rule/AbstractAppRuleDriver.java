@@ -171,8 +171,11 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
             final FilterMatchersRequest request = filterRequest.getMatchersResponse().getRequest();
             for (BubbleAlternateRegexReplacement alt : modConfig.getAlternateRegexReplacements()) {
                 if (alt.matches(request.getFqdn())) {
+                    if (log.isDebugEnabled()) log.debug("filterInsertJs: including alternate filter: "+alt);
                     if (alternates == null) alternates = new ArrayList<>();
                     alternates.add(alt);
+                } else {
+                    if (log.isDebugEnabled()) log.debug("filterInsertJs: NOT including alternate filter: "+alt);
                 }
             }
         }
