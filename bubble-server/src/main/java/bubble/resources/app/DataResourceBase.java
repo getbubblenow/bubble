@@ -108,9 +108,11 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
         if (app == null) throw notFoundEx(request.getApp());
         request.setApp(app.getUuid());
 
-        final Device device = deviceDAO.findByAccountAndId(caller.getUuid(), request.getDevice());
-        if (device == null) throw notFoundEx(request.getDevice());
-        request.setDevice(device.getUuid());
+        if (request.hasDevice()) {
+            final Device device = deviceDAO.findByAccountAndId(caller.getUuid(), request.getDevice());
+            if (device == null) throw notFoundEx(request.getDevice());
+            request.setDevice(device.getUuid());
+        }
 
         final AppSite site = siteDAO.findByAccountAndId(caller.getUuid(), request.getSite());
         if (site == null) throw notFoundEx(request.getSite());
