@@ -128,7 +128,7 @@
       "config": {
         "showStats": true,
         "alternateRegexReplacements": [{
-          "fqdnMatch": "((mobile|www)\\.)?twitter.com",
+          "fqdnMatch": "((mobile|www)\\.)?twitter\\.com",
           "insertionRegex": "<\\s*html[^>]*>"
         }],
         "blockLists": [
