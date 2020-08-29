@@ -11,19 +11,19 @@
       "site": "Facebook",
       "template": true,
       "matcher": "FBMatcher",
-      "key": "kw:Suggested Groups",
+      "key": "kw:_Suggested Groups",
       "data": "true"
     }, {
       "site": "Facebook",
       "template": true,
       "matcher": "FBMatcher",
-      "key": "kw:Suggested for You",
+      "key": "kw:_Suggested for You",
       "data": "true"
     }, {
       "site": "Facebook",
       "template": true,
       "matcher": "FBMatcher",
-      "key": "kw:Start Here",
+      "key": "kw:_Start Here",
       "data": "true"
     }]
   }
