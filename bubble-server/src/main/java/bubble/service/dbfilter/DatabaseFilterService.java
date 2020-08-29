@@ -207,11 +207,12 @@ public class DatabaseFilterService {
     }
 
     private boolean stopThread(Thread t, BubbleNode node, String name) {
-        if (terminate(t, THREAD_KILL_TIMEOUT) != TerminationRequestResult.alive) {
+        final TerminationRequestResult result = terminate(t, THREAD_KILL_TIMEOUT);
+        if (result.cleanlyDead()) {
             log.info("copyDatabase: "+name+" thread finished! we are OK.");
             return true;
         } else {
-            return die("copyDatabase: "+name+" error copying database for node: "+node.getUuid());
+            return die("copyDatabase: "+name+" error copying database (thread termination result: "+result+") for node: "+node.getUuid());
         }
     }
 }
