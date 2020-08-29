@@ -4,6 +4,8 @@
 import re
 import time
 import uuid
+from mitmproxy.net.http import headers as nheaders
+
 from bubble_api import bubble_matchers, bubble_log, bubble_activity_log, \
     CTX_BUBBLE_MATCHERS, BUBBLE_URI_PREFIX, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_REQUEST_ID, \
     add_flow_ctx, parse_host_header, is_bubble_request, is_sage_request, is_not_from_vpn
@@ -62,7 +64,7 @@ class Rerouter:
         if 'decision' in resp:
             decision = resp['decision']
 
-        matcher_response = { 'decision': decision, 'matchers': matchers, 'request_id': req_id }
+        matcher_response = {'decision': decision, 'matchers': matchers, 'request_id': req_id}
         bubble_log("get_matchers: returning "+repr(matcher_response))
         return matcher_response
 
@@ -136,6 +138,8 @@ class Rerouter:
                     else:
                         bubble_log('dns_spoofing.request: unknown abort code: ' + str(matcher_response['decision']) + ', aborting with 404 Not Found')
                         abort_code = 404
+                    flow.request.headers = nheaders.Headers([])
+                    flow.request.content = b''
                     add_flow_ctx(flow, CTX_BUBBLE_ABORT, abort_code)
                     bubble_activity_log(client_addr, server_addr, 'http_abort' + str(abort_code), log_url)
                     return
