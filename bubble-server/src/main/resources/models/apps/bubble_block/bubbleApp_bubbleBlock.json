@@ -126,7 +126,6 @@
       "driver": "BubbleBlockRuleDriver",
       "priority": -1000,
       "config": {
-        "showStats": true,
         "alternateRegexReplacements": [{
           "fqdnMatch": "((mobile|www)\\.)?twitter\\.com",
           "insertionRegex": "<\\s*html[^>]*>"
