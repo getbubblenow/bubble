@@ -104,7 +104,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
                             if (cs.getDriverClass().equals(NOOP_CLOUD)) {
                                 final CloudServiceType type = cs.getType();
                                 if (noopClouds.containsKey(type)) {
-                                    log.warn("addEntities: multiple " + NOOP_CLOUD + " drivers found for type=" + type);
+                                    if (log.isWarnEnabled()) log.warn("addEntities: multiple " + NOOP_CLOUD + " drivers found for type=" + type);
                                 } else {
                                     noopClouds.put(type, cs);
                                 }
@@ -159,12 +159,15 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
 
         } else if (!fullCopy && planApps != null && BubbleApp.class.isAssignableFrom(c)) {
             // only copy enabled apps, make them templates
+            if (log.isDebugEnabled()) log.debug("addEntities: starting with planApps="+json(planApps.stream().map(BubblePlanApp::getApp).collect(Collectors.toList())));
+            userApps = new ArrayList<>();
             entities.stream().filter(app -> planAppEnabled(((BubbleApp) app).getTemplateApp(), planApps))
                     .map(app -> ((BubbleApp) app).setTemplate(true))
-                    .forEach(this::add);
-
-            // save these for later, we will need them when copying BubblePlanApps below
-            userApps = (List<BubbleApp>) entities;
+                    .forEach(app -> {
+                        userApps.add(app);  // save these for later, we will need them when copying BubblePlanApps below
+                        add(app);
+                    });
+            if (log.isDebugEnabled()) log.debug("addEntities: set userApps="+json(userApps.stream().map(BubbleApp::getName).collect(Collectors.toList())));
 
         } else if (!fullCopy && planApps != null && BubblePlanApp.class.isAssignableFrom(c)) {
             // the only BubblePlanApps we will see here are the ones associated with the system BubblePlans
@@ -175,7 +178,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
 
             // Unless for some odd reason we are deploying a node with NO apps, in which case we can skip this section entirely
             if (planApps.isEmpty()) {
-                log.warn("addEntities: no BubblePlanApps enabled, none will be copied to new node");
+                if (log.isWarnEnabled()) log.warn("addEntities: no BubblePlanApps enabled, none will be copied to new node");
 
             } else {
                 for (Identifiable e : entities) {
@@ -184,10 +187,10 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
                             .filter(app -> app.getTemplateApp().equals(systemPlanApp.getApp()))
                             .findFirst().orElse(null);
                     if (userApp == null) {
-                        log.info("addEntities: system BubblePlanApp " + systemPlanApp.getUuid() + ": no matching BubbleApp not found in userApps (not adding): " + names(userApps));
+                        if (log.isInfoEnabled()) log.info("addEntities: system BubblePlanApp " + systemPlanApp.getUuid() + ": no matching BubbleApp not found in userApps (not adding): " + names(userApps));
                     } else {
                         // systemPlanApp will now be associated with "root"'s BubblePlan, but user's BubbleApp
-                        log.info("addEntities: rewrote app for " + systemPlanApp.getUuid() + " -> " + userApp.getName() + "/" + userApp.getUuid());
+                        if (log.isInfoEnabled()) log.info("addEntities: rewrote app for " + systemPlanApp.getUuid() + " -> " + userApp.getName() + "/" + userApp.getUuid());
                         add(systemPlanApp.setApp(userApp.getUuid()));
                     }
                 }
@@ -198,7 +201,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
             // Make copied objects templates
             for (AppTemplateEntity e : (List<? extends AppTemplateEntity>) entities) {
                 if (userAppEnabled(e.getApp(), userApps)) {
-                    log.debug("addEntities: adding " + c.getSimpleName() + "/" + e.getUuid() + " (app="+e.getApp()+") as template");
+                    if (log.isDebugEnabled()) log.debug("addEntities: adding " + c.getSimpleName() + "/" + e.getUuid() + " (app="+e.getApp()+") as template");
                     add(e.setTemplate(true));
                 } else {
                     log.debug("addEntities: NOT adding " + c.getSimpleName() + "/" + e.getUuid() + " (app="+e.getApp()+"), app not enabled (planApps="+planApps.stream().map(IdentifiableBase::getUuid).collect(Collectors.joining(", "))+")");
@@ -229,10 +232,10 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
     private AccountSshKey setInstallKey(AccountSshKey sshKey, BubbleNetwork network) {
         if (network == null) return sshKey;
         if (network.hasSshKey() && network.getSshKey().equals(sshKey.getUuid())) {
-            log.info("setInstallKey: setting install=true for key="+sshKey.getName()+"/"+sshKey.getUuid());
+            if (log.isInfoEnabled()) log.info("setInstallKey: setting install=true for key="+sshKey.getName()+"/"+sshKey.getUuid());
             sshKey.setInstallSshKey(true);
         } else {
-            log.info("setInstallKey: NOT setting install=true for key="+sshKey.getName()+"/"+sshKey.getUuid());
+            if (log.isInfoEnabled()) log.info("setInstallKey: NOT setting install=true for key="+sshKey.getName()+"/"+sshKey.getUuid());
         }
         return sshKey;
     }
