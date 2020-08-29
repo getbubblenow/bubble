@@ -5,7 +5,7 @@
       "site": "Facebook",
       "template": true,
       "matcher": "FBMatcher",
-      "key": "kw:See All",
+      "key": "kw:_See All",
       "data": "true"
     }, {
       "site": "Facebook",
