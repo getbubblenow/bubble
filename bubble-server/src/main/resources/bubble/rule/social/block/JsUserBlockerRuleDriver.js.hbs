@@ -62,11 +62,11 @@ function {{JS_PREFIX}}_fetch_blocks (do_apply) {
             const blocked_users = {};
             const blocked_keywords = {};
             for (let i=0; i<data.length; i++) {
-                let token = data[i];
+                const token = data[i];
                 if (token.startsWith('kw:')) {
                     blocked_keywords[token.substring('kw:'.length)] = true;
                 } else if (token.startsWith('list:')) {
-                    let list = token.substring('list:'.length);
+                    const list = token.substring('list:'.length);
                     // console.log('adding list: '+list);
                     {{JS_PREFIX}}_block_list(list);
                 } else {
