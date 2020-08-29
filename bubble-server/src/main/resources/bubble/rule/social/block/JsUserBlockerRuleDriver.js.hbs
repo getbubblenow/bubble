@@ -417,8 +417,10 @@ function {{JS_PREFIX}}_show_app_details() {
                     return;
                 }
                 const entryDiv = document.createElement('div');
-                const entryLink = document.createElement('a');
-                entryLink.href = {{JS_PREFIX}}_link_message_url(listKey);
+                const entryLink = document.createElement('span');
+                entryLink.onclick = function () {
+                    window.open({{JS_PREFIX}}_link_message_url(listKey), '_blank').opener = null;
+                };
                 entryLink.style.textDecoration = 'underline';
                 entryLink.style.color = 'blue';
                 entryLink.style.cursor = 'pointer';
