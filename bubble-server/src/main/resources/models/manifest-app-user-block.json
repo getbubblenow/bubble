@@ -9,5 +9,6 @@
   "apps/user_block/twitter/bubbleApp_userBlock_twitter",
   "apps/user_block/twitter/bubbleApp_userBlock_twitter_matchers",
   "apps/user_block/fb/bubbleApp_userBlock_fb",
-  "apps/user_block/fb/bubbleApp_userBlock_fb_matchers"
+  "apps/user_block/fb/bubbleApp_userBlock_fb_matchers",
+  "apps/user_block/fb/bubbleApp_userBlock_fb_data"
 ]
