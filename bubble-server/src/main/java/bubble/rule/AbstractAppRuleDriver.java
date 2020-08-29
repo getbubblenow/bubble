@@ -14,6 +14,7 @@ import bubble.model.app.AppRule;
 import bubble.model.app.BubbleApp;
 import bubble.model.device.Device;
 import bubble.resources.stream.FilterHttpRequest;
+import bubble.resources.stream.FilterMatchersRequest;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.StandardDeviceIdService;
 import bubble.service.stream.AppPrimerService;
@@ -35,7 +36,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static bubble.ApiConstants.HOME_DIR;
@@ -162,19 +165,46 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
                 + getBubbleJs(filterRequest, filterCtx, bubbleJsTemplate, defaultSiteTemplate, siteJsInsertionVar, showIcon)
                 + getScriptClose();
 
-        final RegexReplacementFilter filter = new RegexReplacementFilter(getInsertionRegex(), replacement);
+        // Do any alternates apply?
+        List<BubbleAlternateRegexReplacement> alternates = null;
+        if (modConfig.hasAlternateRegexReplacements()) {
+            final FilterMatchersRequest request = filterRequest.getMatchersResponse().getRequest();
+            for (BubbleAlternateRegexReplacement alt : modConfig.getAlternateRegexReplacements()) {
+                if (alt.matches(request.getFqdn())) {
+                    if (alternates == null) alternates = new ArrayList<>();
+                    alternates.add(alt);
+                }
+            }
+        }
+
         final String filterNamePrefix = getClass().getSimpleName()+".filterInsertJs(" + filterRequest.getUrl() + "): ";
-        RegexFilterReader reader = new RegexFilterReader(new InputStreamReader(in), filter)
-                .setName(filterNamePrefix + getInsertionRegex())
-                .setMaxMatches(1);
+        RegexFilterReader reader;
+        if (alternates != null) {
+            final BubbleAlternateRegexReplacement firstAlt = alternates.get(0);
+            if (log.isInfoEnabled()) log.info("filterInsertJs: using alternate filter (0): "+firstAlt);
+            reader = new RegexFilterReader(new InputStreamReader(in), firstAlt.regexFilter(filterRequest, replacement))
+                    .setName(filterNamePrefix + "(alt0: "+firstAlt.getFqdnMatch()+") " + firstAlt.getInsertionRegex())
+                    .setMaxMatches(1);
+            for (int i=1; i<alternates.size(); i++) {
+                final BubbleAlternateRegexReplacement alt = alternates.get(i);
+                if (log.isInfoEnabled()) log.info("filterInsertJs: using alternate filter ("+i+"): "+alt);
+                reader = new RegexFilterReader(reader, alt.regexFilter(filterRequest, replacement))
+                        .setName(filterNamePrefix + "(alt"+i+": "+alt.getFqdnMatch()+") " + alt.getInsertionRegex())
+                        .setMaxMatches(1);
+            }
+
+        } else {
+            if (log.isInfoEnabled()) log.info("filterInsertJs: using default filter: "+getInsertionRegex());
+            reader = new RegexFilterReader(new InputStreamReader(in), new RegexReplacementFilter(getInsertionRegex(), replacement))
+                    .setName(filterNamePrefix + getInsertionRegex())
+                    .setMaxMatches(1);
+        }
+
         if (modConfig.hasAdditionalRegexReplacements()) {
             for (BubbleRegexReplacement re : modConfig.getAdditionalRegexReplacements()) {
-                final RegexReplacementFilter f = new RegexReplacementFilter(
-                        re.getInsertionRegex(),
-                        re.getReplacement().replace(NONCE_VAR, filterRequest.getScriptNonce())
-                );
-                reader = new RegexFilterReader(reader, f)
-                        .setName(filterNamePrefix+" additional: "+re.getInsertionRegex());
+                if (log.isInfoEnabled()) log.info("filterInsertJs: using additional filter: "+re.getInsertionRegex());
+                reader = new RegexFilterReader(reader, re.regexFilter(filterRequest, replacement))
+                        .setName(filterNamePrefix+" (additional) "+re.getInsertionRegex());
             }
         }
 

@@ -23,4 +23,7 @@ public class RequestModifierConfig {
     @Getter @Setter private BubbleRegexReplacement[] additionalRegexReplacements;
     public boolean hasAdditionalRegexReplacements () { return !empty(additionalRegexReplacements); }
 
+    @Getter @Setter private BubbleAlternateRegexReplacement[] alternateRegexReplacements;
+    public boolean hasAlternateRegexReplacements () { return !empty(alternateRegexReplacements); }
+
 }
