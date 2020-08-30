@@ -100,16 +100,16 @@ function {{JS_PREFIX}}_create_block_control(article, authorName) {
     return blockSpan;
 }
 
-const {{JS_PREFIX}}_non_authors = ['friends', 'photo', 'memories'];
-
 function {{JS_PREFIX}}_is_author_link(href) {
+    const non_authors = ['friends', 'photo', 'memories'];
+
     let h = href.startsWith({{JS_PREFIX}}_site_host) ? href.substring({{JS_PREFIX}}_site_host.length) : href;
     const qPos = h.indexOf('?');
     if (qPos !== -1) {
         h = h.substring(0, qPos);
     }
     if (h.endsWith('/')) h = h.substring(0, h.length - 1);
-    if ({{JS_PREFIX}}_non_authors.indexOf(h) !== -1) return false;
+    if (non_authors.indexOf(h) !== -1) return false;
     const matches = h.match(/\//g);
     if (matches !== null) {
         // log('>>>>>> not a top-level link: h='+h+', href='+href);

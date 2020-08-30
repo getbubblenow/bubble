@@ -1,3 +1,5 @@
+{{{ICON_JS}}}
+
 let {{JS_PREFIX}}_blocked_users = {};
 let {{JS_PREFIX}}_blocked_keywords = {};
 let {{JS_PREFIX}}_blocked_lists = {};
@@ -127,7 +129,7 @@ function {{JS_PREFIX}}_handleVisibilityChange() {
 
 function {{JS_PREFIX}}_check_stale_refresher(ev) {
     if ({{JS_PREFIX}}_last_applied === null || Date.now() - {{JS_PREFIX}}_last_applied > 2*{{JS_PREFIX}}_idle_interval) {
-        {{PAGE_PREFIX}}_log('check_stale_refresher forcing refresh upon document event.type='+ev.type);
+        // {{PAGE_PREFIX}}_log('check_stale_refresher forcing refresh upon document event.type='+ev.type);
         {{JS_PREFIX}}_refresh_blocks();
     }
 }
@@ -554,8 +556,8 @@ function {{JS_PREFIX}}_toggle_app_details(ev) {
 
 {{{APPLY_BLOCKS_JS}}}
 
-{{{ICON_JS}}}
-
+console.log('adding shadowban app...');
+{{PAGE_PREFIX}}_log('adding shadowban app...');
 {{PAGE_PREFIX}}_addBubbleApp({
     jsPrefix: '{{JS_PREFIX}}',
     app: '{{BUBBLE_APP_NAME}}',

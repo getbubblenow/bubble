@@ -136,12 +136,10 @@ public class StandardAppPrimerService implements AppPrimerService {
                     // handle AppData callback registration with a basic driver
                     final AppRuleDriver cbDriver = driver.getDriver();
                     if (cbDriver instanceof HasAppDataCallback) {
-                        log.info("_prime: AppRuleDriver ("+cbDriver.getClass().getSimpleName()+") implements HasAppDataCallback, registering: "+app.getUuid()+"/"+app.getName());
+                        log.debug("_prime: AppRuleDriver ("+cbDriver.getClass().getSimpleName()+") implements HasAppDataCallback, registering: "+app.getUuid()+"/"+app.getName());
                         final HasAppDataCallback dataCallback = (HasAppDataCallback) cbDriver;
                         dataCallback.prime(account, app, configuration);
                         dataDAO.registerCallback(app.getUuid(), dataCallback.createCallback(account, app, configuration));
-                    } else {
-                        log.info("_prime: AppRuleDriver ("+cbDriver.getClass().getSimpleName()+") does NOT implement HasAppDataCallback, NOT registering: "+app.getUuid()+"/"+app.getName());
                     }
                     for (Device device : devices) {
                         final Set<String> rejectDomains = new HashSet<>();

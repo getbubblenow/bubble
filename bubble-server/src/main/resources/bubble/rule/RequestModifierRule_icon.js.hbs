@@ -162,7 +162,6 @@ if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
             const img = document.createElement('img');
             img.id = {{PAGE_PREFIX}}_getAppIconImgId(iconSpecs);
             img.src = {{PAGE_PREFIX}}_getAppIconImgSrc(iconSpecs);
-            {{PAGE_PREFIX}}_log('screenWidth='+screenWidth);
             img.width = Math.min(128, screenWidth/8);
             link.appendChild(img);
             bubbleControlDiv.appendChild(br);
