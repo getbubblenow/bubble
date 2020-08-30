@@ -1,0 +1,18 @@
+[{
+  "name": "BubbleBlock",
+  "children": {
+    "AppData": [{
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_amazon.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_walmart.com",
+      "data": "true"
+    }]
+  }
+}]

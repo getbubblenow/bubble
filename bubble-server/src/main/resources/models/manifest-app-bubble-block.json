@@ -1,4 +1,5 @@
 [
   "apps/bubble_block/bubbleApp_bubbleBlock",
-  "apps/bubble_block/bubbleApp_bubbleBlock_matchers"
+  "apps/bubble_block/bubbleApp_bubbleBlock_matchers",
+  "apps/bubble_block/bubbleApp_bubbleBlock_data"
 ]

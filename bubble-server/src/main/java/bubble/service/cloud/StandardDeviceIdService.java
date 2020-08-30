@@ -181,8 +181,14 @@ public class StandardDeviceIdService implements DeviceIdService {
 
     @Override public Boolean doShowBlockStatsForIpAndFqdn(String ip, String fqdn) {
         if (!configuration.showBlockStatsSupported()) return false;
-        final String val = redis.get_plaintext(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS + ip + ":" + fqdn);
-        return val == null ? null : Boolean.parseBoolean(val);
+        while (true) {
+            final String val = redis.get_plaintext(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS + ip + ":" + fqdn);
+            if (val != null) return Boolean.parseBoolean(val);
+            final int dotPos = fqdn.indexOf('.');
+            if (dotPos == -1) return null;
+            fqdn = fqdn.substring(dotPos + 1);
+            if (fqdn.indexOf('.') == -1) return null;
+        }
     }
 
     public void showBlockStats (Device device) {
