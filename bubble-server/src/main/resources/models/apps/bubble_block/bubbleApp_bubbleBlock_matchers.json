@@ -6,6 +6,7 @@
       "template": true,
       "connCheck": true,
       "requestCheck": true,
+      "requestModifier": true,
       "site": "All_Sites",
       "fqdn": "*",
       "urlRegex": ".*",
