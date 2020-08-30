@@ -114,11 +114,11 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
             request.setDevice(device.getUuid());
         }
 
-        final AppSite site = siteDAO.findByAccountAndId(caller.getUuid(), request.getSite());
+        final AppSite site = siteDAO.findByAccountAndAppAndId(caller.getUuid(), app.getUuid(), request.getSite());
         if (site == null) throw notFoundEx(request.getSite());
         request.setSite(site.getUuid());
 
-        final AppMatcher matcher = matcherDAO.findByAccountAndId(caller.getUuid(), request.getMatcher());
+        final AppMatcher matcher = matcherDAO.findByAccountAndAppAndId(caller.getUuid(), app.getUuid(), request.getMatcher());
         if (matcher == null) throw notFoundEx(request.getMatcher());
         request.setMatcher(matcher.getUuid());
 
