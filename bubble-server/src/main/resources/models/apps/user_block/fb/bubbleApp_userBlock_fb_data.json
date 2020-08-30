@@ -5,6 +5,12 @@
       "site": "Facebook",
       "template": true,
       "matcher": "FBMatcher",
+      "key": "kw:_Sponsored",
+      "data": "true"
+    }, {
+      "site": "Facebook",
+      "template": true,
+      "matcher": "FBMatcher",
       "key": "kw:_See All",
       "data": "true"
     }, {
