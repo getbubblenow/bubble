@@ -89,7 +89,19 @@
       "site": "All_Sites",
       "template": true,
       "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_duckduckgo.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
       "key": "hideStats_ebay.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_etrade.com",
       "data": "true"
     }, {
       "site": "All_Sites",
@@ -102,6 +114,12 @@
       "template": true,
       "matcher": "BubbleBlockMatcher",
       "key": "hideStats_expensify.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_fidelity.com",
       "data": "true"
     }, {
       "site": "All_Sites",
@@ -215,6 +233,18 @@
       "site": "All_Sites",
       "template": true,
       "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_schwab.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_securecontactpage.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
       "key": "hideStats_servicenow.com",
       "data": "true"
     }, {
@@ -222,6 +252,12 @@
       "template": true,
       "matcher": "BubbleBlockMatcher",
       "key": "hideStats_slack.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_startpage.com",
       "data": "true"
     }, {
       "site": "All_Sites",
@@ -240,6 +276,12 @@
       "template": true,
       "matcher": "BubbleBlockMatcher",
       "key": "hideStats_target.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_tdameritrade.com",
       "data": "true"
     }, {
       "site": "All_Sites",
