@@ -21,6 +21,8 @@ const {{PAGE_PREFIX}}_block_author_tally = {};
 let {{PAGE_PREFIX}}_allow_tally = 0;
 
 function {{JS_PREFIX}}_tally_keyword_block(name) {
+    //console.log('blocking keyword: '+name);
+    //{{PAGE_PREFIX}}_log('blocking keyword: '+name);
     {{JS_PREFIX}}_incr_tally(name, {{PAGE_PREFIX}}_block_keyword_tally);
 }
 
@@ -41,6 +43,8 @@ function {{JS_PREFIX}}_decr_tally(name, tally) {
 }
 
 function {{JS_PREFIX}}_tally_author_block(name) {
+    //console.log('blocking author: '+name);
+    //{{PAGE_PREFIX}}_log('blocking author: '+name);
     {{JS_PREFIX}}_incr_tally(name, {{PAGE_PREFIX}}_block_author_tally);
 }
 
@@ -556,8 +560,6 @@ function {{JS_PREFIX}}_toggle_app_details(ev) {
 
 {{{APPLY_BLOCKS_JS}}}
 
-console.log('adding shadowban app...');
-{{PAGE_PREFIX}}_log('adding shadowban app...');
 {{PAGE_PREFIX}}_addBubbleApp({
     jsPrefix: '{{JS_PREFIX}}',
     app: '{{BUBBLE_APP_NAME}}',
