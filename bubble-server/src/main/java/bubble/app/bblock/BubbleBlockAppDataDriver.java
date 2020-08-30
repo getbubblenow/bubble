@@ -5,5 +5,7 @@
 package bubble.app.bblock;
 
 import bubble.app.analytics.TrafficAnalyticsAppDataDriver;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class BubbleBlockAppDataDriver extends TrafficAnalyticsAppDataDriver {}

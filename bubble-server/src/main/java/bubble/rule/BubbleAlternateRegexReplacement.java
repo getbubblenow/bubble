@@ -1,5 +1,6 @@
 package bubble.rule;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -13,7 +14,7 @@ public class BubbleAlternateRegexReplacement extends BubbleRegexReplacement {
 
     @Getter @Setter private String fqdnMatch;
 
-    @Getter(lazy=true) private final Pattern pattern = Pattern.compile(fqdnMatch, CASE_INSENSITIVE);
+    @JsonIgnore @Getter(lazy=true) private final Pattern pattern = Pattern.compile(fqdnMatch, CASE_INSENSITIVE);
 
     public boolean matches (String fqdn) { return getPattern().matcher(fqdn).matches(); }
 

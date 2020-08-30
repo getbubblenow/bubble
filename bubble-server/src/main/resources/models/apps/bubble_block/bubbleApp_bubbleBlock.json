@@ -38,7 +38,8 @@
       {"name": "testUserAgent", "required": false},
       {"name": "testUrlPrimary", "type": "flag"},
       {"name": "urlRegex", "required": false},
-      {"name": "userAgentRegex"}
+      {"name": "userAgentRegex"},
+      {"name": "fqdn", "type": "fqdn"}
     ],
     "configViews": [{
       "name": "manageLists",
@@ -109,6 +110,20 @@
           "params": ["testUrl", "testUserAgent", "testUrlPrimary"],
           "button": "testUrl",
           "successMessage": "decisionType"
+        }
+      ]
+    }, {
+      "name": "manageHideStats",
+      "scope": "app",
+      "root": "true",
+      "fields": ["fqdn"],
+      "when": "configs.showBlockStatsSupported",
+      "actions": [
+        {"name": "removeHideStats", "index": 10},
+        {
+          "name": "createHideStats", "scope": "app", "index": 10,
+          "params": ["fqdn"],
+          "button": "createHideStats"
         }
       ]
     }]
@@ -196,6 +211,7 @@
         {"name": "config.view.manageList", "value": "Manage Filter List"},
         {"name": "config.view.manageRules", "value": "Manage Filter Rules"},
         {"name": "config.view.manageUserAgents", "value": "Manage User-Agents"},
+        {"name": "config.view.manageHideStats", "value": "Disable In-Page Block Stats"},
 
         {"name": "config.field.name", "value": "Name"},
         {"name": "config.field.description", "value": "Description"},
@@ -218,6 +234,8 @@
         {"name": "config.field.urlRegex.description", "value": "A regular expression to match against the URL"},
         {"name": "config.field.userAgentRegex", "value": "User-Agent"},
         {"name": "config.field.userAgentRegex.description", "value": "A regular expression to match against the User-Agent"},
+        {"name": "config.field.fqdn", "value": "Domain Name"},
+        {"name": "config.field.fqdn.description", "value": "In-page block stats will be disabled for this domain"},
 
         {"name": "config.action.enableList", "value": "Enable"},
         {"name": "config.action.disableList", "value": "Disable"},
@@ -235,6 +253,10 @@
         {"name": "config.button.createUserAgentBlock", "value": "Add"},
         {"name": "config.action.removeUserAgentBlock", "value": "Remove Rule"},
         {"name": "config.button.removeUserAgentBlock", "value": "Remove"},
+        {"name": "config.action.createHideStats", "value": "Disable Block Stats"},
+        {"name": "config.button.createHideStats", "value": "Add"},
+        {"name": "config.action.removeHideStats", "value": "Remove"},
+        {"name": "config.button.removeHideStats", "value": "Remove"},
         {"name": "config.action.testUrl", "value": "Test URL"},
         {"name": "config.button.testUrl", "value": "Test"},
         {"name": "config.response.block", "value": "Block"},
@@ -243,7 +265,12 @@
         {"name": "config.response.allow.description", "value": "Requests to this URL would be allowed by your Bubble, and would not be filtered"},
         {"name": "config.response.filter", "value": "Filter"},
         {"name": "config.response.filter.description", "value": "Requests to this URL would be allowed by your Bubble, but would be filtered"},
-        {"name": "web_signalNoiseRatio", "value": "signal/noise"}
+
+        {"name": "web_appName", "value": "BlockParty!"},
+        {"name": "web_adsAndTrackers", "value": "Blocked Ads/Trackers"},
+        {"name": "web_hideStats", "value": "Hide BlockParty for "},
+        {"name": "web_noAdsOrTrackers", "value": "(no blocks)"},
+        {"name": "web_close", "value": "close"}
       ]
     }]
   }

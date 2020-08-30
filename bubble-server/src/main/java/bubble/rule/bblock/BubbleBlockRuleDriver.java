@@ -5,10 +5,9 @@
 package bubble.rule.bblock;
 
 import bubble.abp.*;
+import bubble.dao.app.AppDataDAO;
 import bubble.model.account.Account;
-import bubble.model.app.AppMatcher;
-import bubble.model.app.AppRule;
-import bubble.model.app.BubbleApp;
+import bubble.model.app.*;
 import bubble.model.device.Device;
 import bubble.resources.stream.FilterHttpRequest;
 import bubble.resources.stream.FilterMatchersRequest;
@@ -16,6 +15,8 @@ import bubble.rule.FilterMatchDecision;
 import bubble.rule.RequestModifierConfig;
 import bubble.rule.RequestModifierRule;
 import bubble.rule.analytics.TrafficAnalyticsRuleDriver;
+import bubble.server.BubbleConfiguration;
+import bubble.service.cloud.DeviceIdService;
 import bubble.service.stream.AppRuleHarness;
 import bubble.service.stream.ConnectionCheckResponse;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,19 +33,24 @@ import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
+import static bubble.app.bblock.BubbleBlockAppConfigDriver.PREFIX_APPDATA_HIDE_STATS;
 import static bubble.service.stream.HttpStreamDebug.getLogFqdn;
 import static java.util.concurrent.TimeUnit.DAYS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
-import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.EMPTY;
 import static org.cobbzilla.util.string.StringUtil.getPackagePath;
+import static org.cobbzilla.util.string.ValidationRegexes.HOST_PATTERN;
+import static org.cobbzilla.util.string.ValidationRegexes.validateRegexMatches;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
-public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements RequestModifierRule {
+public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
+        implements RequestModifierRule, HasAppDataCallback {
 
     private final AtomicReference<BlockList> blockList = new AtomicReference<>(new BlockList());
     private BlockList getBlockList() { return blockList.get(); }
@@ -60,7 +66,11 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements
 
     private final static Map<String, BlockListSource> blockListCache = new ConcurrentHashMap<>();
 
-    public boolean showStats() { return deviceService.doShowBlockStats(account.getUuid()); }
+    public boolean showStats(String ip, String fqdn) {
+        if (!deviceService.doShowBlockStats(account.getUuid())) return false;
+        final Boolean show = deviceService.doShowBlockStatsForIpAndFqdn(ip, fqdn);
+        return show == null || show;
+    }
 
     @Override public <C> Class<C> getConfigClass() { return (Class<C>) BubbleBlockConfig.class; }
 
@@ -68,7 +78,8 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements
 
     @Override public boolean couldModify(FilterHttpRequest request) {
         final BubbleBlockConfig config = getRuleConfig();
-        return request.isHtml() && request.isBrowser() && (config.inPageBlocks() || showStats());
+        final FilterMatchersRequest req = request.getMatchersResponse().getRequest();
+        return request.isHtml() && request.isBrowser() && (config.inPageBlocks() || showStats(req.getClientAddr(), req.getFqdn()));
     }
 
     @Override public void init(JsonNode config,
@@ -246,7 +257,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements
                 return refererDecision;
             }
         }
-        if (showStats()) {
+        if (showStats(filter.getClientAddr(), filter.getFqdn())) {
             if (log.isInfoEnabled()) log.info(prefix+"decision was "+decisionType+" but showStats=true, returning match");
             else if (extraLog) log.error(prefix+"decision was "+decisionType+" but showStats=true, returning match");
             return FilterMatchDecision.match;
@@ -355,7 +366,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements
             return in;
         }
 
-        final boolean showStats = showStats();
+        final boolean showStats = showStats(request.getClientAddr(), request.getFqdn());
         if (!bubbleBlockConfig.inPageBlocks() && !showStats) {
             if (log.isInfoEnabled()) log.info(prefix + "SEND: both inPageBlocks and showStats are false, returning as-is");
             return in;
@@ -396,6 +407,44 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver implements
             ctx.put(CTX_BUBBLE_BLACKLIST, json(getBlockList().getBlacklistDomains(), COMPACT_MAPPER));
         }
         return ctx;
+    }
+
+    public static String fqdnFromKey(String key) {
+        if (!key.startsWith(PREFIX_APPDATA_HIDE_STATS)) die("expected key to start with '"+ PREFIX_APPDATA_HIDE_STATS +"', was: "+ key);
+        return key.substring(PREFIX_APPDATA_HIDE_STATS.length());
+    }
+
+    @Override public void prime(Account account, BubbleApp app, BubbleConfiguration configuration) {
+        final DeviceIdService deviceIdService = configuration.getBean(DeviceIdService.class);
+        final AppDataDAO dataDAO = configuration.getBean(AppDataDAO.class);
+        log.info("priming app="+app.getName());
+        dataDAO.findByAccountAndAppAndAndKeyPrefix(account.getUuid(), app.getUuid(), PREFIX_APPDATA_HIDE_STATS)
+                .forEach(data -> deviceIdService.setBlockStatsForFqdn(account, fqdnFromKey(data.getKey()), false));
+    }
+
+    @Override public Function<AppData, AppData> createCallback(Account account,
+                                                               BubbleApp app,
+                                                               BubbleConfiguration configuration) {
+        return data -> {
+            final String prefix = "createCallbackB("+data.getKey()+"="+data.getData()+"): ";
+            log.info(prefix+"starting");
+            if (data.getKey().startsWith(PREFIX_APPDATA_HIDE_STATS)) {
+                final DeviceIdService deviceIdService = configuration.getBean(DeviceIdService.class);
+                final String fqdn = fqdnFromKey(data.getKey());
+                if (validateRegexMatches(HOST_PATTERN, fqdn)) {
+                    if (data.deleting()) {
+                        log.info(prefix+"unsetting fqdn: "+fqdn);
+                        deviceIdService.unsetBlockStatsForFqdn(account, fqdn);
+                    } else {
+                        log.info(prefix+"setting fqdn: "+fqdn);
+                        deviceIdService.setBlockStatsForFqdn(account, fqdn, false);
+                    }
+                } else {
+                    throw invalidEx("err.fqdn.invalid", "not a valid FQDN: "+fqdn, fqdn);
+                }
+            }
+            return data;
+        };
     }
 
 }

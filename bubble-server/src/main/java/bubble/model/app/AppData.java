@@ -7,6 +7,7 @@ package bubble.model.app;
 import bubble.model.account.Account;
 import bubble.model.device.Device;
 import bubble.rule.RuleConfig;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,6 +28,7 @@ import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
 import static bubble.ApiConstants.EP_DATA;
+import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
@@ -155,5 +157,11 @@ public class AppData extends IdentifiableBase implements AppTemplateEntity {
 
     @JsonProperty @Override public long getCtime () { return super.getCtime(); }
     @JsonProperty @Override public long getMtime () { return super.getMtime(); }
+
+    @Transient @JsonIgnore @Getter @Setter private Boolean creating;
+    public boolean creating () { return bool(creating); }
+
+    @Transient @JsonIgnore @Getter @Setter private Boolean deleting;
+    public boolean deleting () { return bool(deleting); }
 
 }

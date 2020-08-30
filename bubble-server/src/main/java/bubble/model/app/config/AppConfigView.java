@@ -13,6 +13,7 @@ public class AppConfigView {
 
     @Getter @Setter private String name;
     @Getter @Setter private AppConfigScope scope;
+    @Getter @Setter private String when;
 
     @Getter @Setter private Boolean root = false;
     public boolean root() { return root != null && root; }

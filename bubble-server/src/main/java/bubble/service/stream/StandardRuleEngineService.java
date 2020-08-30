@@ -64,8 +64,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpHeaders.TRANSFER_ENCODING;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
-import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpStatusCodes.OK;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -197,7 +196,9 @@ public class StandardRuleEngineService implements RuleEngineService {
     public void enableCacheFlushing () { cachedFlushingEnabled.set(true); }
     public void disableCacheFlushing () { cachedFlushingEnabled.set(false); }
 
-    public Map<Object, Object> flushCaches() {
+    public Map<Object, Object> flushCaches() { return flushCaches(true); }
+
+    public Map<Object, Object> flushCaches(boolean prime) {
         if (!cachedFlushingEnabled.get()) {
             if (log.isDebugEnabled()) log.debug("flushCaches: flushing disabled");
             return Collections.emptyMap();
@@ -206,9 +207,7 @@ public class StandardRuleEngineService implements RuleEngineService {
             ruleCache.clear();
             if (log.isDebugEnabled()) log.debug("flushCaches: flushed "+ruleEngineCacheSize+" ruleCache entries");
 
-            final RedisService matchersCache = getMatchersCache();
-            final Long matcherCount = matchersCache.del_matching(ALL_KEYS);
-            if (log.isDebugEnabled()) log.debug("flushCaches: flushed "+matcherCount+" matchersCache entries");
+            final Long matcherCount = flushMatchers();
 
             final Long connCheckDeletions = redis.del_matching("bubble_conn_check_*");
             if (log.isDebugEnabled()) log.debug("flushCaches: removed "+connCheckDeletions+" conn_check cache entries");
@@ -219,9 +218,16 @@ public class StandardRuleEngineService implements RuleEngineService {
                     {"ruleEngineCache", ruleEngineCacheSize}
             });
             if (log.isInfoEnabled()) log.info("flushCaches: flushed: "+json(flushStatus, COMPACT_MAPPER));
-            appPrimerService.primeApps();
+            if (prime) appPrimerService.primeApps();
             return flushStatus;
         }
+    }
+
+    public Long flushMatchers() {
+        final RedisService matchersCache = getMatchersCache();
+        final Long matcherCount = matchersCache.del_matching(ALL_KEYS);
+        if (log.isDebugEnabled()) log.debug("flushCaches: flushed "+matcherCount+" matchersCache entries");
+        return matcherCount;
     }
 
     private List<AppRuleHarness> initRules(FilterHttpRequest filterRequest) {

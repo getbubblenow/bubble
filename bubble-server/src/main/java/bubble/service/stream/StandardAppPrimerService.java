@@ -5,16 +5,10 @@
 package bubble.service.stream;
 
 import bubble.dao.account.AccountDAO;
-import bubble.dao.app.AppMatcherDAO;
-import bubble.dao.app.AppRuleDAO;
-import bubble.dao.app.BubbleAppDAO;
-import bubble.dao.app.RuleDriverDAO;
+import bubble.dao.app.*;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
-import bubble.model.app.AppMatcher;
-import bubble.model.app.AppRule;
-import bubble.model.app.BubbleApp;
-import bubble.model.app.RuleDriver;
+import bubble.model.app.*;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.device.Device;
@@ -45,6 +39,7 @@ public class StandardAppPrimerService implements AppPrimerService {
     @Autowired private AppMatcherDAO matcherDAO;
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private RuleDriverDAO driverDAO;
+    @Autowired private AppDataDAO dataDAO;
     @Autowired private RedisService redis;
     @Autowired private BubbleConfiguration configuration;
 
@@ -129,6 +124,7 @@ public class StandardAppPrimerService implements AppPrimerService {
                     .collect(Collectors.toList())
                     : new SingletonList<>(singleApp);
             for (BubbleApp app : appsToPrime) {
+                log.info("_prime: priming app: "+app.getUuid()+"/"+app.getName());
                 final List<AppRule> rules = ruleDAO.findByAccountAndApp(account.getUuid(), app.getUuid());
                 final List<AppMatcher> matchers = matcherDAO.findByAccountAndApp(account.getUuid(), app.getUuid());
                 for (AppRule rule : rules) {
@@ -136,6 +132,16 @@ public class StandardAppPrimerService implements AppPrimerService {
                     if (driver == null) {
                         log.warn("_prime: driver not found for app/rule " + app.getName() + "/" + rule.getName() + ": " + rule.getDriver());
                         continue;
+                    }
+                    // handle AppData callback registration with a basic driver
+                    final AppRuleDriver cbDriver = driver.getDriver();
+                    if (cbDriver instanceof HasAppDataCallback) {
+                        log.info("_prime: AppRuleDriver ("+cbDriver.getClass().getSimpleName()+") implements HasAppDataCallback, registering: "+app.getUuid()+"/"+app.getName());
+                        final HasAppDataCallback dataCallback = (HasAppDataCallback) cbDriver;
+                        dataCallback.prime(account, app, configuration);
+                        dataDAO.registerCallback(app.getUuid(), dataCallback.createCallback(account, app, configuration));
+                    } else {
+                        log.info("_prime: AppRuleDriver ("+cbDriver.getClass().getSimpleName()+") does NOT implement HasAppDataCallback, NOT registering: "+app.getUuid()+"/"+app.getName());
                     }
                     for (Device device : devices) {
                         final Set<String> rejectDomains = new HashSet<>();

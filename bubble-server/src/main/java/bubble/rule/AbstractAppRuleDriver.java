@@ -165,17 +165,19 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
                 + getBubbleJs(filterRequest, filterCtx, bubbleJsTemplate, defaultSiteTemplate, siteJsInsertionVar, showIcon)
                 + getScriptClose();
 
+        final String prefix = getClass().getSimpleName()+".filterInsertJs("+filterRequest.getUrl()+"): ";
+
         // Do any alternates apply?
         List<BubbleAlternateRegexReplacement> alternates = null;
         if (modConfig.hasAlternateRegexReplacements()) {
             final FilterMatchersRequest request = filterRequest.getMatchersResponse().getRequest();
             for (BubbleAlternateRegexReplacement alt : modConfig.getAlternateRegexReplacements()) {
                 if (alt.matches(request.getFqdn())) {
-                    if (log.isDebugEnabled()) log.debug("filterInsertJs: including alternate filter: "+alt);
+                    if (log.isDebugEnabled()) log.debug(prefix + "including alternate filter: " +alt);
                     if (alternates == null) alternates = new ArrayList<>();
                     alternates.add(alt);
                 } else {
-                    if (log.isDebugEnabled()) log.debug("filterInsertJs: NOT including alternate filter: "+alt);
+                    if (log.isDebugEnabled()) log.debug(prefix + "NOT including alternate filter: " +alt);
                 }
             }
         }
@@ -184,20 +186,20 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
         RegexFilterReader reader;
         if (alternates != null) {
             final BubbleAlternateRegexReplacement firstAlt = alternates.get(0);
-            if (log.isInfoEnabled()) log.info("filterInsertJs: using alternate filter (0): "+firstAlt);
+            if (log.isInfoEnabled()) log.info(prefix + "using alternate filter (0): " +firstAlt);
             reader = new RegexFilterReader(new InputStreamReader(in), firstAlt.regexFilter(filterRequest, replacement))
                     .setName(filterNamePrefix + "(alt0: "+firstAlt.getFqdnMatch()+") " + firstAlt.getInsertionRegex())
                     .setMaxMatches(1);
             for (int i=1; i<alternates.size(); i++) {
                 final BubbleAlternateRegexReplacement alt = alternates.get(i);
-                if (log.isInfoEnabled()) log.info("filterInsertJs: using alternate filter ("+i+"): "+alt);
+                if (log.isInfoEnabled()) log.info(prefix + "using alternate filter (" +i+"): "+alt);
                 reader = new RegexFilterReader(reader, alt.regexFilter(filterRequest, replacement))
                         .setName(filterNamePrefix + "(alt"+i+": "+alt.getFqdnMatch()+") " + alt.getInsertionRegex())
                         .setMaxMatches(1);
             }
 
         } else {
-            if (log.isInfoEnabled()) log.info("filterInsertJs: using default filter: "+getInsertionRegex());
+            if (log.isInfoEnabled()) log.info(prefix + "using default filter: " +getInsertionRegex());
             reader = new RegexFilterReader(new InputStreamReader(in), new RegexReplacementFilter(getInsertionRegex(), replacement))
                     .setName(filterNamePrefix + getInsertionRegex())
                     .setMaxMatches(1);
@@ -205,7 +207,7 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
 
         if (modConfig.hasAdditionalRegexReplacements()) {
             for (BubbleRegexReplacement re : modConfig.getAdditionalRegexReplacements()) {
-                if (log.isInfoEnabled()) log.info("filterInsertJs: using additional filter: "+re.getInsertionRegex());
+                if (log.isInfoEnabled()) log.info(prefix + "using additional filter: " +re.getInsertionRegex());
                 reader = new RegexFilterReader(reader, re.regexFilter(filterRequest, replacement))
                         .setName(filterNamePrefix+" (additional) "+re.getInsertionRegex());
             }

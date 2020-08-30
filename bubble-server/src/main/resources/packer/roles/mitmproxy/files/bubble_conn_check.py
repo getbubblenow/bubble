@@ -69,7 +69,12 @@ def get_device_security_level(client_addr, fqdns):
     return {'level': level}
 
 
-def show_block_stats(client_addr):
+def show_block_stats(client_addr, fqdns):
+    if fqdns is not None:
+        for fqdn in fqdns:
+            show = REDIS.get(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS+client_addr+':'+fqdn)
+            if show is not None:
+                return show.decode() == 'true'
     show = REDIS.get(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS+client_addr)
     if show is None:
         return False
@@ -259,7 +264,7 @@ def next_layer(next_layer):
         elif 'block' in check and check['block']:
             bubble_log('next_layer: enabling block for server=' + server_addr+', fqdns='+str(fqdns))
             bubble_activity_log(client_addr, server_addr, 'conn_block', fqdns)
-            if show_block_stats(client_addr) and security_level['level'] != SEC_BASIC:
+            if show_block_stats(client_addr, fqdns) and security_level['level'] != SEC_BASIC:
                 next_layer.do_block = True
                 next_layer.__class__ = TlsFeedback
             else:

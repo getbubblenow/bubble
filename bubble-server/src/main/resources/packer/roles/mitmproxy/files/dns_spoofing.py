@@ -82,6 +82,8 @@ class Rerouter:
             port = 80
             is_http = True
 
+        # check if https and sni is missing but we have a host header, fill in the sni
+        
         host_header = flow.request.host_header
         # bubble_log("dns_spoofing.request: host_header is "+repr(host_header))
         if host_header:

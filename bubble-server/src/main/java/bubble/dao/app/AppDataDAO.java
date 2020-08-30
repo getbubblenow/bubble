@@ -15,7 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.hibernate.criterion.Restrictions.and;
@@ -50,6 +53,10 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
         return filterExpired(findByFields("account", account, "app", app, "key", key));
     }
 
+    public List<AppData> findByAccountAndAppAndAndKeyPrefix(String account, String app, String keyPrefix) {
+        return filterExpired(findByFieldsEqualAndFieldLike("account", account, "app", app, "key", keyPrefix+"%"));
+    }
+
     public List<AppData> findEnabledByAccountAndAppAndSite(String account, String app, String site) {
         return filterExpired(findByFields("account", account, "app", app, "site", site, "enabled", true));
     }
@@ -68,6 +75,9 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
         return data;
     }
 
+    private final Map<String, Function<AppData, AppData>> dataSetCallbacks = new HashMap<>();
+    public void registerCallback(String appUuid, Function<AppData, AppData> callback) { dataSetCallbacks.put(appUuid, callback); }
+
     public AppData set(AppData data) {
         final AppData found = findByAppAndSiteAndKey(data.getApp(), data.getSite(), data.getKey());
         if (data.getAccount() == null) {
@@ -76,11 +86,16 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
             if (app == null) return die("set: App not found: "+data.getApp());
             data.setAccount(app.getAccount());
         }
-        if (found == null) return create(data);
+
+        final Function<AppData, AppData> callback = dataSetCallbacks.get(data.getApp());
+        log.info("set: found callback="+callback+" for app: "+data.getApp());
+
+        if (found == null) return callback == null ? create(data) : callback.apply(create(data).setCreating(true));
 
         if (!found.getSite().equals(data.getSite())) return die("set: matcher mismatch: found ("+found.getUuid()+"/"+found.getKey()+") with site "+found.getSite()+", update has site: "+data.getSite());
         found.update(data);
-        return update(found);
+        final AppData updated = update(found);
+        return callback != null ? callback.apply(updated) : updated;
     }
 
     public List<AppData> findByExample(Account account, AppData basis) {
@@ -111,4 +126,16 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
         log.info("deleteApp: deleted "+count+" AppData records for app "+uuid);
     }
 
+    @Override public void delete(String uuid) {
+        final AppData data = findByUuid(uuid);
+        if (data == null) return;
+        final BubbleApp app = appDAO.findByUuid(data.getApp());
+        if (app != null) {
+            final Function<AppData, AppData> callback = dataSetCallbacks.get(app.getUuid());
+            if (callback != null) {
+                callback.apply(data.setDeleting(true));
+            }
+        }
+        super.delete(uuid);
+    }
 }

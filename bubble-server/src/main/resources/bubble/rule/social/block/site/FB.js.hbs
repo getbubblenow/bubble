@@ -147,7 +147,7 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
         if (authorName.endsWith('/')) authorName = authorName.substring(0, authorName.length-1);
         if (authorName === 'profile.php') {
             // log('should_block returning true for '+authorName);
-            {{JS_PREFIX}}_tally_block({{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other'));
+            {{JS_PREFIX}}_tally_author_block({{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other'));
             if (!firstEval) {{JS_PREFIX}}_untally_allow(authorName);
             return true;
         }
@@ -158,14 +158,14 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
         const authorDisplayName = authorDisplay.innerHTML;
         if ({{JS_PREFIX}}_is_ad(article)) {
             // log('removing ad ('+authorDisplayName+')');
-            {{JS_PREFIX}}_tally_block(authorName == null ? {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other') : authorName);
-            if (!firstEval) {{JS_PREFIX}}_untally_allow(authorName);
+            {{JS_PREFIX}}_tally_author_block(authorName == null ? {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other') : authorName);
+            if (!firstEval) {{JS_PREFIX}}_untally_allow();
             return authorName == null ? true : authorName;
 
         } else if (authorName in blocked_users) {
             // log('should_block returning '+authorName);
-            {{JS_PREFIX}}_tally_block(authorName == null ? {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other') : authorName);
-            if (!firstEval) {{JS_PREFIX}}_untally_allow(authorName);
+            {{JS_PREFIX}}_tally_author_block(authorName == null ? {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other') : authorName);
+            if (!firstEval) {{JS_PREFIX}}_untally_allow();
             return authorName == null ? true : authorName;
 
         } else {
@@ -194,7 +194,7 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
     }
     if (firstEval) {
         // console.log('>>> allowing post with firstAuthor = '+firstAuthor);
-        {{JS_PREFIX}}_tally_allow(firstAuthor);
+        {{JS_PREFIX}}_tally_allow();
     }
     return false;
 }

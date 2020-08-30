@@ -5,6 +5,7 @@
 package bubble.rule;
 
 import bubble.model.account.Account;
+import bubble.model.app.AppData;
 import bubble.model.app.AppMatcher;
 import bubble.model.app.AppRule;
 import bubble.model.app.BubbleApp;
@@ -26,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;

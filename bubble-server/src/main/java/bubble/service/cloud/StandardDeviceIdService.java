@@ -12,6 +12,7 @@ import bubble.model.app.AppSite;
 import bubble.model.device.Device;
 import bubble.model.device.DeviceStatus;
 import bubble.server.BubbleConfiguration;
+import bubble.service.stream.StandardRuleEngineService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.collection.SingletonList;
@@ -68,6 +69,7 @@ public class StandardDeviceIdService implements DeviceIdService {
     @Autowired private RedisService redis;
     @Autowired private GeoService geoService;
     @Autowired private AppSiteDAO siteDAO;
+    @Autowired private StandardRuleEngineService ruleEngine;
     @Autowired private BubbleConfiguration configuration;
 
     private final Map<String, Device> deviceCache = new ExpirationMap<>(MINUTES.toMillis(10));
@@ -159,7 +161,7 @@ public class StandardDeviceIdService implements DeviceIdService {
         }
     }
 
-    public void initBlockStats (Account account) {
+    @Override public void initBlockStats (Account account) {
         final boolean showBlockStats = configuration.showBlockStatsSupported() && account.showBlockStats();
         redis.set_plaintext(REDIS_KEY_ACCOUNT_SHOW_BLOCK_STATS+account.getUuid(), Boolean.toString(showBlockStats));
         redis.del_matching_withPrefix(REDIS_KEY_CHUNK_FILTER_PASS+"*");
@@ -172,9 +174,15 @@ public class StandardDeviceIdService implements DeviceIdService {
         }
     }
 
-    public boolean doShowBlockStats(String accountUuid) {
+    @Override public boolean doShowBlockStats(String accountUuid) {
         return configuration.showBlockStatsSupported()
                 && Boolean.parseBoolean(redis.get_plaintext(REDIS_KEY_ACCOUNT_SHOW_BLOCK_STATS + accountUuid));
+    }
+
+    @Override public Boolean doShowBlockStatsForIpAndFqdn(String ip, String fqdn) {
+        if (!configuration.showBlockStatsSupported()) return false;
+        final String val = redis.get_plaintext(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS + ip + ":" + fqdn);
+        return val == null ? null : Boolean.parseBoolean(val);
     }
 
     public void showBlockStats (Device device) {
@@ -198,6 +206,24 @@ public class StandardDeviceIdService implements DeviceIdService {
             redis.del_withPrefix(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS + ip);
             redis.del_withPrefix(REDIS_KEY_DEVICE_REJECT_WITH + ip);
         }
+    }
+
+    @Override public void setBlockStatsForFqdn(Account account, String fqdn, boolean value) {
+        for (Device device : deviceDAO.findByAccount(account.getUuid())) {
+            for (String ip : findIpsByDevice(device.getUuid())) {
+                redis.set_plaintext(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS + ip + ":" + fqdn, String.valueOf(value));
+            }
+        }
+        ruleEngine.flushMatchers();
+    }
+
+    @Override public void unsetBlockStatsForFqdn(Account account, String fqdn) {
+        for (Device device : deviceDAO.findByAccount(account.getUuid())) {
+            for (String ip : findIpsByDevice(device.getUuid())) {
+                redis.del_withPrefix(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS + ip + ":" + fqdn);
+            }
+        }
+        ruleEngine.flushMatchers();
     }
 
     private final ExpirationMap<String, DeviceStatus> deviceStatusCache = new ExpirationMap<>(MINUTES.toMillis(2));

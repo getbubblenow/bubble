@@ -14,6 +14,42 @@ let {{JS_PREFIX}}_idle_interval = 2500;
 
 let {{JS_PREFIX}}_messages = null;
 
+const {{PAGE_PREFIX}}_block_keyword_tally = {};
+const {{PAGE_PREFIX}}_block_author_tally = {};
+let {{PAGE_PREFIX}}_allow_tally = 0;
+
+function {{JS_PREFIX}}_tally_keyword_block(name) {
+    {{JS_PREFIX}}_incr_tally(name, {{PAGE_PREFIX}}_block_keyword_tally);
+}
+
+function {{JS_PREFIX}}_incr_tally(name, tally) {
+    if (!(name in tally)) {
+        tally[name] = 1;
+    } else {
+        tally[name] = tally[name] + 1;
+    }
+}
+
+function {{JS_PREFIX}}_decr_tally(name, tally) {
+    if (!(name in tally)) {
+        tally[name] = 0;
+    } else {
+        tally[name] = tally[name] - 1;
+    }
+}
+
+function {{JS_PREFIX}}_tally_author_block(name) {
+    {{JS_PREFIX}}_incr_tally(name, {{PAGE_PREFIX}}_block_author_tally);
+}
+
+function {{JS_PREFIX}}_tally_allow() {
+    {{PAGE_PREFIX}}_allow_tally++;
+}
+
+function {{JS_PREFIX}}_untally_allow() {
+    {{PAGE_PREFIX}}_allow_tally--;
+}
+
 function {{JS_PREFIX}}_uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -163,26 +199,6 @@ function {{JS_PREFIX}}_mark_evaluated(node) {
     return firstEval;
 }
 
-function {{JS_PREFIX}}_tally_block(name) {
-    // console.log('tally_block: '+name);
-    if (typeof {{PAGE_PREFIX}}_add_extra_block === 'function') {
-        {{PAGE_PREFIX}}_add_extra_block(name);
-    }
-}
-
-function {{JS_PREFIX}}_tally_allow(name) {
-    // console.log('tally_allow: '+name);
-    if (typeof {{PAGE_PREFIX}}_add_extra_block === 'function') {
-       {{PAGE_PREFIX}}_add_extra_allow();
-    }
-}
-function {{JS_PREFIX}}_untally_allow(name) {
-    // console.log('untally_allow: '+name);
-    if (typeof {{PAGE_PREFIX}}_add_extra_block === 'function') {
-       {{PAGE_PREFIX}}_remove_extra_allow();
-    }
-}
-
 function {{JS_PREFIX}}_includes_block_keyword (element, firstEval) {
     const keywords = Object.keys(Object.assign({}, {{JS_PREFIX}}_blocked_keywords, {{JS_PREFIX}}_blocked_list_keywords));
     if (keywords.length > 0) {
@@ -193,14 +209,14 @@ function {{JS_PREFIX}}_includes_block_keyword (element, firstEval) {
                 let cskw = kw.substring(1);
                 if (html.indexOf(cskw) !== -1) {
                     // {{PAGE_PREFIX}}_log('>>> includes_block_keyword: blocking based on case-sensitive keyword: ' + cskw);
-                    {{JS_PREFIX}}_tally_block('*'+cskw);
+                    {{JS_PREFIX}}_tally_keyword_block(cskw);
                     if (!firstEval) {{JS_PREFIX}}_untally_allow();
                     return true;
                 }
             } else {
                 if (html.toLowerCase().indexOf(kw.toLowerCase()) !== -1) {
                     // {{PAGE_PREFIX}}_log('>>> includes_block_keyword: blocking based on case-insensitive keyword: ' + kw);
-                    {{JS_PREFIX}}_tally_block('*'+kw);
+                    {{JS_PREFIX}}_tally_keyword_block(kw);
                     if (!firstEval) {{JS_PREFIX}}_untally_allow();
                     return true;
                 }
@@ -284,15 +300,6 @@ function {{JS_PREFIX}}_hide_app_details() {
     }
 }
 
-function {{JS_PREFIX}}_create_button(labelKey, labelDefault, onclick) {
-    const label = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, labelKey, labelDefault);
-    const btn = document.createElement('button');
-    btn.style.fontSize = 'x-small';
-    btn.addEventListener('click', onclick);
-    btn.appendChild(document.createTextNode(label));
-    return btn;
-}
-
 function {{JS_PREFIX}}_show_app_details() {
     // {{PAGE_PREFIX}}_log('show_app_details called');
     {{JS_PREFIX}}_refresh_blocks();
@@ -313,12 +320,70 @@ function {{JS_PREFIX}}_show_app_details() {
     }
     detailsDiv.style.display = 'block';
     detailsDiv.style.visibility = 'visible';
+    detailsDiv.appendChild({{JS_PREFIX}}_app_title_span('ShadowBan'));
+    detailsDiv.appendChild(document.createElement('hr'));
+
+    const recentBlocksText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_recentBlocks', 'Recent Blocks');
+    const recentBlocksHeader = document.createElement('strong')
+    recentBlocksHeader.appendChild(document.createTextNode(recentBlocksText));
+    detailsDiv.appendChild(recentBlocksHeader);
+
+    const keywordTally = {{PAGE_PREFIX}}_block_keyword_tally;
+    let keywordTallyKeys = Object.keys({{PAGE_PREFIX}}_block_keyword_tally);
+    const authorTally = {{PAGE_PREFIX}}_block_author_tally;
+    let authorTallyKeys = Object.keys({{PAGE_PREFIX}}_block_author_tally);
+    if (keywordTallyKeys.length === 0 && authorTallyKeys.length === 0) {
+        const noRecentBlocksText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_noRecentBlocks', '(empty)');
+        detailsDiv.appendChild(document.createElement('br'));
+        detailsDiv.appendChild(document.createTextNode(noRecentBlocksText));
+    } else {
+        let totalBlocks = 0;
+        if (keywordTallyKeys.length > 0) {
+            keywordTallyKeys = keywordTallyKeys.slice();
+            keywordTallyKeys.sort(function (a, b) {
+                return a.localeCompare(b, '{{ACCOUNT_LANG}}', {'sensitivity': 'base'});
+            });
+            const openQuote = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_openQuote', '“');
+            const closeQuote = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_closeQuote', '”');
+            keywordTallyKeys.forEach(keyword => {
+                const count = keywordTally[keyword];
+                totalBlocks += count;
+                const entryDiv = document.createElement('div');
+                const em = document.createElement('em');
+                em.appendChild(document.createTextNode(openQuote + keyword + closeQuote + ': ' + count));
+                entryDiv.appendChild(em);
+                detailsDiv.appendChild(entryDiv);
+            });
+        }
+        if (authorTallyKeys.length > 0) {
+            authorTallyKeys = authorTallyKeys.slice();
+            authorTallyKeys.sort(function (a, b) {
+                return a.localeCompare(b, '{{ACCOUNT_LANG}}', {'sensitivity': 'base'});
+            });
+            authorTallyKeys.forEach(author => {
+                const count = authorTally[author];
+                totalBlocks += count;
+                const entryDiv = document.createElement('div');
+                entryDiv.appendChild(document.createTextNode(author + ': ' + count));
+                detailsDiv.appendChild(entryDiv);
+            });
+        }
+        const summaryDiv = document.createElement('div');
+        const summaryHeader = document.createElement('strong');
+        const summaryLabel = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_signalNoiseRatio', 'signal/noise');
+        const totalAllowed = {{PAGE_PREFIX}}_allow_tally;
+        const fullTotal = totalAllowed + totalBlocks;
+        const ratio = 100.0 * (totalAllowed / fullTotal);
+        summaryHeader.appendChild(document.createTextNode(summaryLabel + ': ' + totalAllowed + '/' + totalBlocks + ' ≈ ' + ratio.toLocaleString('{{ACCOUNT_LOCALE_HYPHEN}}', { maximumSignificantDigits: 3 }) + '%'));
+        summaryDiv.appendChild(summaryHeader);
+        detailsDiv.appendChild(summaryDiv);
+    }
+    detailsDiv.appendChild(document.createElement('hr'));
 
     let blocks = Object.keys({{JS_PREFIX}}_blocked_users);
     if (blocks !== null && blocks.length > 0) {
         blocks = blocks.slice(); // copy first, then sort case insensitive using user's locale
         blocks.sort(function (a, b) {
-            return a.localeCompare(b, '{{ACCOUNT_LANG}}', {'sensitivity': 'base'});
             return a.localeCompare(b, '{{ACCOUNT_LANG}}', {'sensitivity': 'base'});
         });
     }
@@ -469,7 +534,7 @@ function {{JS_PREFIX}}_show_app_details() {
             detailsDiv.appendChild(document.createElement('hr'));
         }
     }
-    const closeButton = {{JS_PREFIX}}_create_button('web_close', 'refresh', function (e) {
+    const closeButton = {{JS_PREFIX}}_create_button('web_close', 'close', function (e) {
         e.stopPropagation();
         e.preventDefault();
         {{JS_PREFIX}}_hide_app_details();
@@ -499,7 +564,17 @@ function {{JS_PREFIX}}_toggle_app_details(ev) {
     onReady: function () {
         {{JS_PREFIX}}_load_messages('web_', function (messages) {
             {{JS_PREFIX}}_messages = messages;
-        })
+        });
+        document.onkeydown = function(e) {
+            e = e || window.event;
+            let isEscape = false;
+            if ("key" in e) {
+                isEscape = (e.key === "Escape" || e.key === "Esc");
+            } else {
+                isEscape = (e.keyCode === 27);
+            }
+            if (isEscape) {{JS_PREFIX}}_hide_app_details();
+        };
         {{JS_PREFIX}}_fetch_blocks();
     }
 });

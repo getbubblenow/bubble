@@ -4,98 +4,46 @@ let {{JS_PREFIX}}_app_details = false;
 let {{JS_PREFIX}}_last_stats = null;
 let {{JS_PREFIX}}_app_stats_last_change = 0;
 const {{JS_PREFIX}}_app_stats_timeout = 35000;
-const {{PAGE_PREFIX}}_extra_blocks = {};
 
-const {{PAGE_PREFIX}}_add_extra_block = function(name) {
-    if (!(name in {{PAGE_PREFIX}}_extra_blocks)) {
-        {{PAGE_PREFIX}}_extra_blocks[name] = 1;
-    } else {
-        {{PAGE_PREFIX}}_extra_blocks[name] = {{PAGE_PREFIX}}_extra_blocks[name] + 1;
+function {{JS_PREFIX}}_hide_app_details() {
+    const detailsDivId = '{{JS_PREFIX}}_detailsDiv';
+    const detailsDiv = document.getElementById(detailsDivId);
+    {{JS_PREFIX}}_app_details = false;
+    if (detailsDiv != null) {
+        detailsDiv.style.display = 'none';
+        while (detailsDiv.firstChild) {
+            detailsDiv.removeChild(detailsDiv.lastChild);
+        }
     }
 }
 
-const {{PAGE_PREFIX}}_add_extra_allow = function() {
-    if (!('_' in {{PAGE_PREFIX}}_extra_blocks)) {
-        {{PAGE_PREFIX}}_extra_blocks['_'] = 1;
-    } else {
-        {{PAGE_PREFIX}}_extra_blocks['_'] = {{PAGE_PREFIX}}_extra_blocks['_'] + 1;
-    }
-}
-
-const {{PAGE_PREFIX}}_remove_extra_allow = function() {
-    if (!('_' in {{PAGE_PREFIX}}_extra_blocks)) {
-        {{PAGE_PREFIX}}_extra_blocks['_'] = 0;
-    } else {
-        {{PAGE_PREFIX}}_extra_blocks['_'] = {{PAGE_PREFIX}}_extra_blocks['_'] - 1;
-    }
-}
-
-function {{JS_PREFIX}}_toggle_app_details(ev) {
+function {{JS_PREFIX}}_show_app_details(ev) {
     const detailsDivId = '{{JS_PREFIX}}_detailsDiv';
     let detailsDiv = document.getElementById(detailsDivId);
-    if ({{JS_PREFIX}}_app_details) {
-        {{JS_PREFIX}}_app_details = false;
-        if (detailsDiv != null) {
-            detailsDiv.style.display = 'none';
+    {{JS_PREFIX}}_app_details = true;
+    {{JS_PREFIX}}_app_refresh(function () {
+        if ({{JS_PREFIX}}_last_stats != null) {
+            if (detailsDiv === null) {
+                detailsDiv = {{PAGE_PREFIX}}_createDetailsDiv(detailsDivId);
+                document.getElementsByTagName('body')[0].appendChild(detailsDiv);
+            }
             while (detailsDiv.firstChild) {
                 detailsDiv.removeChild(detailsDiv.lastChild);
             }
-        }
-    } else {
-        const extraKeys = Object.keys({{PAGE_PREFIX}}_extra_blocks);
-        if (extraKeys.length === 0
-            && ({{JS_PREFIX}}_last_stats === null || {{JS_PREFIX}}_last_stats.blocks.length === 0)) {
-            return;
-        }
-        {{JS_PREFIX}}_app_details = true;
-        {{JS_PREFIX}}_app_refresh(function () {
-            if ({{JS_PREFIX}}_last_stats != null) {
-                if (detailsDiv === null) {
-                    detailsDiv = {{PAGE_PREFIX}}_createDetailsDiv(detailsDivId);
-                    document.getElementsByTagName('body')[0].appendChild(detailsDiv);
-                    detailsDiv.onclick = function (ev) {
-                        {{JS_PREFIX}}_toggle_app_details();
-                    }
-                }
-                while (detailsDiv.firstChild) {
-                    detailsDiv.removeChild(detailsDiv.lastChild);
-                }
-                detailsDiv.style.display = 'block';
-                // add rows for blocked stuff...
-                if (extraKeys.length > 0) {
-                    extraKeys.sort(function (a, b) {
-                        return a.localeCompare(b, '{{ACCOUNT_LANG}}', {'sensitivity': 'base'});
-                    });
-                    let totalBlocks = 0;
-                    let totalAllowed = 0;
-                    extraKeys.forEach(k => {
-                        const blockCount = {{PAGE_PREFIX}}_extra_blocks[k];
-                        if (k === '_') {
-                            totalAllowed = blockCount;
-                            return;
-                        }
-                        totalBlocks += blockCount;
-                        const useEm = k.startsWith('*');
-                        const token = useEm ? k.substring(1) : k;
-                        const entryDiv = document.createElement('div');
-                        if (useEm) {
-                            const em = document.createElement('em');
-                            em.appendChild(document.createTextNode(token + ': ' + blockCount));
-                            entryDiv.appendChild(em);
-                        } else {
-                            const entryText = document.createTextNode(token + ': ' + blockCount);
-                            entryDiv.appendChild(entryText);
-                        }
-                        detailsDiv.appendChild(entryDiv);
-                    });
-                    const extraSummary = document.createElement('strong');
-                    const summaryLabel = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_signalNoiseRatio', 'signal/noise');
-                    const fullTotal = totalAllowed + totalBlocks;
-                    const ratio = 100.0 * (totalAllowed / fullTotal);
-                    extraSummary.appendChild(document.createTextNode(summaryLabel + ': ' + totalAllowed + '/' + totalBlocks + ' ≈ ' + ratio.toLocaleString('{{ACCOUNT_LOCALE_HYPHEN}}', { maximumSignificantDigits: 3 }) + '%'));
-                    detailsDiv.appendChild(extraSummary);
-                    detailsDiv.appendChild(document.createElement('hr'));
-                }
+            detailsDiv.style.display = 'block';
+            detailsDiv.appendChild({{JS_PREFIX}}_app_title_span('BlockParty!'));
+            detailsDiv.appendChild(document.createElement('hr'));
+
+            // add rows for blocked stuff...
+            const adsAndTrackersLabel = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_adsAndTrackers', 'Blocked Ads/Trackers');
+            const adsAndTrackersHeader = document.createElement('strong');
+            adsAndTrackersHeader.appendChild(document.createTextNode(adsAndTrackersLabel));
+            detailsDiv.appendChild(adsAndTrackersHeader);
+            if ({{JS_PREFIX}}_last_stats.blocks.length === 0) {
+                const emptyLabel = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_noAdsOrTrackers', '(no blocks)');
+                detailsDiv.appendChild(document.createElement('br'));
+                detailsDiv.appendChild(document.createTextNode(emptyLabel));
+            } else {
                 for (let i = 0; i < {{JS_PREFIX}}_last_stats.blocks.length; i++) {
                     const entry = {{JS_PREFIX}}_last_stats.blocks[i];
                     const entryDiv = document.createElement('div');
@@ -104,8 +52,32 @@ function {{JS_PREFIX}}_toggle_app_details(ev) {
                     detailsDiv.appendChild(entryDiv);
                 }
             }
-        })
-    }
+            detailsDiv.appendChild(document.createElement('hr'));
+            const fqdn = window.location.hostname;
+            const hideStatsButton = {{JS_PREFIX}}_create_button('web_hideStats', 'Hide BlockParty for '+fqdn, function (e) {
+                // write appdata
+                const hide_show_stats_url = '/__bubble/api/filter/data/{{BUBBLE_DATA_ID}}/write';
+                const requestOptions = {
+                    method: 'POST',
+                    body: JSON.stringify({key: 'hideStats_'+fqdn, data: 'false'})
+                };
+                fetch(hide_show_stats_url, requestOptions)
+                    .then(() => window.location.reload());
+                    //.then(() => window.location.reload());
+                return false;
+            }, label => label + fqdn);
+
+            detailsDiv.appendChild(hideStatsButton);
+            detailsDiv.appendChild(document.createElement('hr'));
+            const closeButton = {{JS_PREFIX}}_create_button('web_close', 'close', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                {{JS_PREFIX}}_hide_app_details();
+                return false;
+            });
+            detailsDiv.appendChild(closeButton);
+        }
+    });
 }
 
 const {{JS_PREFIX}}_app_refresh = function (displayFunc) {
@@ -166,12 +138,22 @@ let {{JS_PREFIX}}_app_refresh_interval = null;
 const {{JS_PREFIX}}_app = {
     jsPrefix: '{{JS_PREFIX}}',
     app: '{{BUBBLE_APP_NAME}}',
-    link: {{JS_PREFIX}}_toggle_app_details,
+    link: {{JS_PREFIX}}_show_app_details,
     icon: 'icon-gray',
     onReady: function () {
         {{JS_PREFIX}}_load_messages('web_', function (messages) {
                 {{JS_PREFIX}}_messages = messages;
-        })
+        });
+        document.onkeydown = function(e) {
+            e = e || window.event;
+            let isEscape = false;
+            if ("key" in e) {
+                isEscape = (e.key === "Escape" || e.key === "Esc");
+            } else {
+                isEscape = (e.keyCode === 27);
+            }
+            if (isEscape) {{JS_PREFIX}}_hide_app_details();
+        };
         {{JS_PREFIX}}_app_refresh_interval = window.setInterval({{JS_PREFIX}}_app_refresh, 5000);
     }
 };

@@ -41,7 +41,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
             const authorBlocked = authorName in blocked_users;
             if (authorBlocked || {{JS_PREFIX}}_includes_block_keyword(node)) {
                 if (authorBlocked) {
-                    {{JS_PREFIX}}_tally_block(authorName);
+                    {{JS_PREFIX}}_tally_author_block(authorName);
                     if (!firstEval) {{JS_PREFIX}}_untally_allow();
                 }
                 console.log('removing post by author: ' + authorName);
@@ -96,7 +96,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
 
                         authorDiv.setAttribute('white-space', 'no-wrap');
                         authorDiv.parentNode.appendChild(blockControl);
-                        {{JS_PREFIX}}_tally_allow(authorName);
+                        {{JS_PREFIX}}_tally_allow();
                     }
                 }
             }

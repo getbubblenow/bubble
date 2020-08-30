@@ -34,6 +34,28 @@
         });
 }
 
+{{JS_PREFIX}}_app_title_span = function (defaultName) {
+    const appTitleSpan = document.createElement('span');
+    const appImage = document.createElement('img');
+    appImage.src = {{JS_PREFIX}}_asset_img_url('icon');
+    appImage.width = 16;
+    const appTitle = document.createElement('strong');
+    const appName = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_appName', defaultName);
+    appTitle.appendChild(document.createTextNode(appName));
+    appTitleSpan.appendChild(appImage);
+    appTitleSpan.appendChild(appTitle);
+    return appTitleSpan;
+}
+
+function {{JS_PREFIX}}_create_button(labelKey, labelDefault, onclick, labelFormat) {
+    const label = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, labelKey, labelDefault);
+    const btn = document.createElement('button');
+    btn.style.fontSize = 'x-small';
+    btn.addEventListener('click', onclick);
+    btn.appendChild(document.createTextNode(labelFormat ? labelFormat(label) : label));
+    return btn;
+}
+
 if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
     let {{PAGE_PREFIX}}_doc_ready = false;
 
@@ -129,17 +151,19 @@ if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
         }
         for (let i=0; i<{{PAGE_PREFIX}}_icon_status.length; i++) {
             const iconSpecs = {{PAGE_PREFIX}}_icon_status[i];
-            let br = document.createElement('br');
-            let link = document.createElement('a');
+            const br = document.createElement('br');
+            const link = document.createElement('a');
             if (typeof iconSpecs.link === 'function') {
                 link.onclick = function (ev) { iconSpecs.link(ev); return false; }
             } else {
                 link.href = '{{{BUBBLE_HOME}}}/app/' + iconSpecs.app + '/' + iconSpecs.link;
             }
-            let img = document.createElement('img');
+            const screenWidth  = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+            const img = document.createElement('img');
             img.id = {{PAGE_PREFIX}}_getAppIconImgId(iconSpecs);
             img.src = {{PAGE_PREFIX}}_getAppIconImgSrc(iconSpecs);
-            img.width = 48;
+            {{PAGE_PREFIX}}_log('screenWidth='+screenWidth);
+            img.width = Math.min(128, screenWidth/8);
             link.appendChild(img);
             bubbleControlDiv.appendChild(br);
             bubbleControlDiv.appendChild(link);

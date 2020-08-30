@@ -21,6 +21,9 @@ public interface DeviceIdService {
 
     void initBlockStats (Account account);
     default boolean doShowBlockStats(String accountUuid) { return false; }
+    default Boolean doShowBlockStatsForIpAndFqdn(String ip, String fqdn) { return false; }
+    default void setBlockStatsForFqdn (Account account, String fqdn, boolean value) {}
+    default void unsetBlockStatsForFqdn (Account account, String fqdn) {}
 
     DeviceStatus getDeviceStatus(String deviceUuid);
     DeviceStatus getLiveDeviceStatus(String deviceUuid);

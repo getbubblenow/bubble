@@ -23,7 +23,7 @@ function {{JS_PREFIX}}_consider_block(comments, blocked_users) {
             if (userElement !== null) {
                 const author = userElement.innerText;
                 if (author in blocked_users) {
-                    {{JS_PREFIX}}_tally_block(author);
+                    {{JS_PREFIX}}_tally_author_block(author);
                     if (!firstEval) {{JS_PREFIX}}_untally_allow();
                     comment.parentNode.removeChild(comment);
                     continue;
@@ -39,7 +39,7 @@ function {{JS_PREFIX}}_consider_block(comments, blocked_users) {
                     if (replies !== null) {
                         {{JS_PREFIX}}_consider_block(replies.querySelector('li.comment'));
                     }
-                    {{JS_PREFIX}}_tally_allow(author);
+                    {{JS_PREFIX}}_tally_allow();
                 }
             }
         }

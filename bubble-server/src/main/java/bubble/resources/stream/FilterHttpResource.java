@@ -178,7 +178,7 @@ public class FilterHttpResource {
         }
 
         if (isLocalIp) {
-            final boolean showStats = showStats(accountUuid);
+            final boolean showStats = showStats(accountUuid, connCheckRequest.getAddr(), connCheckRequest.getFqdns());
             final DeviceSecurityLevel secLevel = device.getSecurityLevel();
             if (showStats && secLevel.supportsRequestModification()) {
                 // allow it for now
@@ -236,7 +236,20 @@ public class FilterHttpResource {
     @Getter(lazy=true) private final BubbleNode thisNode = selfNodeService.getThisNode();
     @Getter(lazy=true) private final BubbleNetwork thisNetwork = selfNodeService.getThisNetwork();
 
-    public boolean showStats(String accountUuid) { return deviceIdService.doShowBlockStats(accountUuid); }
+    public boolean showStats(String accountUuid, String ip, String[] fqdns) {
+        if (!deviceIdService.doShowBlockStats(accountUuid)) return false;
+        for (String fqdn : fqdns) {
+            final Boolean show = deviceIdService.doShowBlockStatsForIpAndFqdn(ip, fqdn);
+            if (show != null) return show;
+        }
+        return true;
+    }
+
+    public boolean showStats(String accountUuid, String ip, String fqdn) {
+        if (!deviceIdService.doShowBlockStats(accountUuid)) return false;
+        final Boolean show = deviceIdService.doShowBlockStatsForIpAndFqdn(ip, fqdn);
+        return show == null || show;
+    }
 
     @POST @Path(EP_MATCHERS+"/{requestId}")
     @Consumes(APPLICATION_JSON)
@@ -277,7 +290,7 @@ public class FilterHttpResource {
         // if this is for a local ip, it's an automatic block
         // legitimate local requests would have been passthru and never reached here
         final boolean isLocalIp = isForLocalIp(filterRequest);
-        final boolean showStats = showStats(device.getAccount());
+        final boolean showStats = showStats(device.getAccount(), filterRequest.getClientAddr(), filterRequest.getFqdn());
         if (isLocalIp) {
             if (filterRequest.isBrowser() && showStats) {
                 blockStats.record(filterRequest, FilterMatchDecision.abort_not_found);
