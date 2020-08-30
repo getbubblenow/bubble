@@ -329,14 +329,29 @@ function {{JS_PREFIX}}_show_app_details() {
     detailsDiv.style.scrollTop = 0;
 
     const titleSpan = {{JS_PREFIX}}_app_title_span('ShadowBan');
+
+    const topButtons = document.createElement('span');
+
+    if ({{JS_PREFIX}}_unblocked_needs_refresh) {
+        const refreshButton = {{JS_PREFIX}}_create_button('web_refreshPage', 'refresh', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            window.location.reload();
+            return false;
+        });
+        topButtons.appendChild(refreshButton);
+        topButtons.appendChild(document.createTextNode('\u00A0'));
+    }
+
     const topCloseButton = {{JS_PREFIX}}_create_button('web_close', 'close', function (e) {
         e.stopPropagation();
         e.preventDefault();
         {{JS_PREFIX}}_hide_app_details();
         return false;
     });
-    topCloseButton.style.float = 'right';
-    titleSpan.appendChild(topCloseButton);
+    topButtons.style.float = 'right';
+    topButtons.appendChild(topCloseButton);
+    titleSpan.appendChild(topButtons);
     detailsDiv.appendChild(titleSpan);
 
     detailsDiv.appendChild(document.createElement('hr'));
@@ -412,16 +427,6 @@ function {{JS_PREFIX}}_show_app_details() {
         keywords.sort(function (a, b) {
             return a.localeCompare(b, '{{ACCOUNT_LANG}}', {'sensitivity': 'base'});
         });
-    }
-    if ({{JS_PREFIX}}_unblocked_needs_refresh) {
-        const refreshButton = {{JS_PREFIX}}_create_button('web_refreshPage', 'refresh', function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-            window.location.reload();
-            return false;
-        });
-        detailsDiv.appendChild(refreshButton);
-        detailsDiv.appendChild(document.createElement('hr'));
     }
     const usersHeaderText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_blockedUsers', 'Users');
     const usersHeader = document.createElement('strong');
@@ -545,7 +550,7 @@ function {{JS_PREFIX}}_show_app_details() {
 
                 entryDiv.appendChild(entryCheckbox);
                 entryDiv.appendChild(listNameNode);
-                entryDiv.appendChild(document.createTextNode('\u00A0\u00A0'));
+                entryDiv.appendChild(document.createTextNode('\u00A0'));
                 entryDiv.appendChild(entryLink);
                 detailsDiv.appendChild(entryDiv);
             });
@@ -553,13 +558,25 @@ function {{JS_PREFIX}}_show_app_details() {
             detailsDiv.appendChild(document.createElement('hr'));
         }
     }
+    const bottomButtons = document.createElement('span');
     const closeButton = {{JS_PREFIX}}_create_button('web_close', 'close', function (e) {
         e.stopPropagation();
         e.preventDefault();
         {{JS_PREFIX}}_hide_app_details();
         return false;
     });
-    detailsDiv.appendChild(closeButton);
+    if ({{JS_PREFIX}}_unblocked_needs_refresh) {
+        const refreshButton = {{JS_PREFIX}}_create_button('web_refreshPage', 'refresh', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            window.location.reload();
+            return false;
+        });
+        bottomButtons.appendChild(refreshButton);
+        bottomButtons.appendChild(document.createTextNode('\u00A0\u00A0'));
+    }
+    bottomButtons.appendChild(closeButton);
+    detailsDiv.appendChild(bottomButtons);
 
 }
 
