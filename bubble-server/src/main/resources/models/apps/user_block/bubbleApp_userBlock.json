@@ -40,9 +40,9 @@
         {"name": "action.delete", "value": "Delete Block"},
 
         {"name": "web_appName", "value": "ShadowBan"},
-        {"name": "web_blockedUsers", "value": "Users"},
+        {"name": "web_blockedUsers", "value": "Blocked Users"},
         {"name": "web_noUsersBlocked", "value": "(empty)"},
-        {"name": "web_blockedKeywords", "value": "Keywords"},
+        {"name": "web_blockedKeywords", "value": "Blocked Keywords"},
         {"name": "web_noKeywordsBlocked", "value": "(empty)"},
         {"name": "web_addKeyword", "value": "add"},
         {"name": "web_advertOrOtherBlock", "value": "advert/other"},

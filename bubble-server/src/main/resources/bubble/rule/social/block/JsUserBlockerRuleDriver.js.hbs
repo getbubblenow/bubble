@@ -326,13 +326,27 @@ function {{JS_PREFIX}}_show_app_details() {
     }
     detailsDiv.style.display = 'block';
     detailsDiv.style.visibility = 'visible';
-    detailsDiv.appendChild({{JS_PREFIX}}_app_title_span('ShadowBan'));
+    detailsDiv.style.scrollTop = 0;
+
+    const titleSpan = {{JS_PREFIX}}_app_title_span('ShadowBan');
+    const topCloseButton = {{JS_PREFIX}}_create_button('web_close', 'close', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        {{JS_PREFIX}}_hide_app_details();
+        return false;
+    });
+    topCloseButton.style.float = 'right';
+    titleSpan.appendChild(topCloseButton);
+    detailsDiv.appendChild(titleSpan);
+
     detailsDiv.appendChild(document.createElement('hr'));
 
+    const recentBlocksDiv = document.createElement('div');
     const recentBlocksText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_recentBlocks', 'Recent Blocks');
     const recentBlocksHeader = document.createElement('strong')
     recentBlocksHeader.appendChild(document.createTextNode(recentBlocksText));
-    detailsDiv.appendChild(recentBlocksHeader);
+    recentBlocksDiv.appendChild(recentBlocksHeader);
+    detailsDiv.appendChild(recentBlocksDiv);
 
     const keywordTally = {{PAGE_PREFIX}}_block_keyword_tally;
     let keywordTallyKeys = Object.keys({{PAGE_PREFIX}}_block_keyword_tally);
@@ -374,15 +388,14 @@ function {{JS_PREFIX}}_show_app_details() {
                 detailsDiv.appendChild(entryDiv);
             });
         }
-        const summaryDiv = document.createElement('div');
         const summaryHeader = document.createElement('strong');
+        summaryHeader.appendChild(document.createElement('br'));
         const summaryLabel = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_signalNoiseRatio', 'signal/noise');
         const totalAllowed = {{PAGE_PREFIX}}_allow_tally;
         const fullTotal = totalAllowed + totalBlocks;
         const ratio = 100.0 * (totalAllowed / fullTotal);
         summaryHeader.appendChild(document.createTextNode(summaryLabel + ': ' + totalAllowed + '/' + totalBlocks + ' ≈ ' + ratio.toLocaleString('{{ACCOUNT_LOCALE_HYPHEN}}', { maximumSignificantDigits: 3 }) + '%'));
-        summaryDiv.appendChild(summaryHeader);
-        detailsDiv.appendChild(summaryDiv);
+        recentBlocksDiv.appendChild(summaryHeader);
     }
     detailsDiv.appendChild(document.createElement('hr'));
 
@@ -580,5 +593,6 @@ function {{JS_PREFIX}}_toggle_app_details(ev) {
             if (isEscape) {{JS_PREFIX}}_hide_app_details();
         };
         {{JS_PREFIX}}_fetch_blocks();
+        if (typeof {{JS_PREFIX}}_site_onload === 'function') {{JS_PREFIX}}_site_onload();
     }
 });

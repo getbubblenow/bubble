@@ -1,6 +1,8 @@
 {{JS_PREFIX}}_supports_keywords = true;
 {{JS_PREFIX}}_idle_interval = 4000;
 
+const log = {{PAGE_PREFIX}}_log;
+
 function {{JS_PREFIX}}_getElementsByXPath(xpath, parent) {
     let results = [];
     let query = document.evaluate(xpath, parent || document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -13,6 +15,13 @@ function {{JS_PREFIX}}_getElementsByXPath(xpath, parent) {
 const {{JS_PREFIX}}_site_host = location.protocol + '//' + window.location.hostname + '/';
 const {{JS_PREFIX}}_mobile = window.location.hostname === "m.facebook.com";
 
+const {{JS_PREFIX}}_jail = document.createElement('div');
+{{JS_PREFIX}}_jail.style.display = 'none';
+
+const {{JS_PREFIX}}_site_onload = function () {
+    document.getElementsByTagName('body')[0].appendChild({{JS_PREFIX}}_jail);
+}
+
 const {{JS_PREFIX}}_appendChild = Element.prototype.appendChild;
 Element.prototype.appendChild = function() {
     const node = arguments[0];
@@ -22,8 +31,8 @@ Element.prototype.appendChild = function() {
                 || (!{{JS_PREFIX}}_mobile && node.tagName.toUpperCase() === 'DIV' && node.role && node.role === 'article') ) {
                 const block = {{JS_PREFIX}}_should_block({{JS_PREFIX}}_blocked_users, node)
                 if (block) {
-                    // console.log('>>> BLOCKING via appendChild: '+block);
-                    return;
+                    // log('>>> BLOCKING via appendChild: '+block);
+                    {{JS_PREFIX}}_appendChild.apply({{JS_PREFIX}}_jail, arguments);
                 }
             }
         }
@@ -49,8 +58,6 @@ function {{JS_PREFIX}}_remove_article_from_dom(article, authorName) {
         log('error removing post by author: ' + authorName + ': ' + e);
     }
 }
-
-const log = {{PAGE_PREFIX}}_log;
 
 function {{JS_PREFIX}}_is_ad(article) {
     return typeof Array.from(article.getElementsByTagName('a')).find(a => a.href && a.href.indexOf('/ads/about') !== -1) !== 'undefined';
