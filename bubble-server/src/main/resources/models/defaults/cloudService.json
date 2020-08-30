@@ -199,9 +199,9 @@
         "location": {"city": "Amsterdam", "country": "NL", "region": "North Holland", "lat": "52.366667", "lon": "4.9"}
       }],
       "sizes": [
-        {"name": "small", "type": "small", "internalName": "1024 MB RAM,32 GB SSD,1.00 TB BW", "vcpu": 1, "memoryMB": 1024, "diskGB": 32},
-        {"name": "medium", "type": "medium", "internalName": "2048 MB RAM,64 GB SSD,2.00 TB BW", "vcpu": 1, "memoryMB": 2048, "diskGB": 64},
-        {"name": "large", "type": "large", "internalName": "4096 MB RAM,128 GB SSD,3.00 TB BW", "vcpu": 2, "memoryMB": 4096, "diskGB": 128}
+        {"name": "small", "type": "small", "internalName": "1024 MB RAM,25 GB SSD,1.00 TB BW", "vcpu": 1, "memoryMB": 1024, "diskGB": 25},
+        {"name": "medium", "type": "medium", "internalName": "2048 MB RAM,55 GB SSD,2.00 TB BW", "vcpu": 1, "memoryMB": 2048, "diskGB": 55},
+        {"name": "large", "type": "large", "internalName": "4096 MB RAM,80 GB SSD,3.00 TB BW", "vcpu": 2, "memoryMB": 4096, "diskGB": 80}
       ],
       "os": "Ubuntu 20.04 x64",
       "packer": {
