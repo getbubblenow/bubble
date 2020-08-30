@@ -17,6 +17,12 @@
       "site": "All_Sites",
       "template": true,
       "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_aha.io",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
       "key": "hideStats_apple.com",
       "data": "true"
     }, {
@@ -35,7 +41,7 @@
       "site": "All_Sites",
       "template": true,
       "matcher": "BubbleBlockMatcher",
-      "key": "hideStats_atlassian.com",
+      "key": "hideStats_atlassian.net",
       "data": "true"
     }, {
       "site": "All_Sites",
@@ -53,7 +59,31 @@
       "site": "All_Sites",
       "template": true,
       "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_carta.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
       "key": "hideStats_clickup.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_chase.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_concur.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_datadog.com",
       "data": "true"
     }, {
       "site": "All_Sites",
@@ -66,6 +96,12 @@
       "template": true,
       "matcher": "BubbleBlockMatcher",
       "key": "hideStats_etsy.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_expensify.com",
       "data": "true"
     }, {
       "site": "All_Sites",
@@ -95,7 +131,19 @@
       "site": "All_Sites",
       "template": true,
       "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_latticehq.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
       "key": "hideStats_live.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_looker.com",
       "data": "true"
     }, {
       "site": "All_Sites",
@@ -131,7 +179,31 @@
       "site": "All_Sites",
       "template": true,
       "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_newegg.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_o.co",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_overstock.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
       "key": "hideStats_paypal.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_plex.tv",
       "data": "true"
     }, {
       "site": "All_Sites",
@@ -161,6 +233,12 @@
       "site": "All_Sites",
       "template": true,
       "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_sumologic.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
       "key": "hideStats_target.com",
       "data": "true"
     }, {
@@ -173,7 +251,19 @@
       "site": "All_Sites",
       "template": true,
       "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_tripactions.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
       "key": "hideStats_upwork.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_usaa.com",
       "data": "true"
     }, {
       "site": "All_Sites",
@@ -191,7 +281,19 @@
       "site": "All_Sites",
       "template": true,
       "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_wellsfargo.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
       "key": "hideStats_workday.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_zappos.com",
       "data": "true"
     }, {
       "site": "All_Sites",
@@ -204,6 +306,12 @@
       "template": true,
       "matcher": "BubbleBlockMatcher",
       "key": "hideStats_zoom.us",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_zuman.com",
       "data": "true"
     }]
   }
