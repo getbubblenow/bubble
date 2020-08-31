@@ -4,7 +4,7 @@
     "AppSite": [{
       "name": "Twitter",
       "url": "https://twitter.com",
-      "description": "what’s happening in the world and what people are talking about right now.",
+      "description": "what’s happening in the world and what people are talking about right now",
       "template": true,
       "maxSecurityHosts": ["twitter.com", "*.twitter.com", "*.twimg.com", "t.co"],
       "enableMaxSecurityHosts": true

@@ -79,7 +79,7 @@ function {{JS_PREFIX}}_find_feed_item(article) {
 function {{JS_PREFIX}}_remove_article(article, authorName) {
     if (article.className.indexOf('{{JS_PREFIX}}_bub_blocked') === -1) {
         // log('removing post by author: ' + authorName);
-        article.className = article.className += ' {{JS_PREFIX}}_bub_blocked';
+        article.className = article.className + ' {{JS_PREFIX}}_bub_blocked';
         {{JS_PREFIX}}_remove_article_from_dom(article, authorName);
     } else {
         log('found post marked removed but still present (??) by author: ' + authorName);

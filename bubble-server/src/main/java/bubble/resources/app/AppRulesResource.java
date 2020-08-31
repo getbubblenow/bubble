@@ -28,7 +28,7 @@ public class AppRulesResource extends AccountOwnedTemplateResource<AppRule, AppR
 
     @Autowired private RuleDriverDAO driverDAO;
 
-    @Getter private BubbleApp app;
+    @Getter private final BubbleApp app;
 
     public AppRulesResource(Account account, BubbleApp app) {
         super(account);

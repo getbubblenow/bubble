@@ -30,7 +30,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppSiteDAO> {
 
-    private BubbleApp app;
+    private final BubbleApp app;
 
     @Autowired private DeviceIdService deviceIdService;
 

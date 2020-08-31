@@ -1,0 +1,15 @@
+[{
+  "name": "UserBlocker",
+  "children": {
+    "AppMatcher": [{
+      "name": "InstaMatcher",
+      "site": "Instagram",
+      "template": true,
+      "requestCheck": true,
+      "requestModifier": true,
+      "fqdn": "www.instagram.com",
+      "urlRegex": "/",
+      "rule": "insta_user_blocker"
+    }]
+  }
+}]

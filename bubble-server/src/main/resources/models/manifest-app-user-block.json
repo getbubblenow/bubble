@@ -11,5 +11,8 @@
   "apps/user_block/twitter/bubbleApp_userBlock_twitter_data",
   "apps/user_block/fb/bubbleApp_userBlock_fb",
   "apps/user_block/fb/bubbleApp_userBlock_fb_matchers",
-  "apps/user_block/fb/bubbleApp_userBlock_fb_data"
+  "apps/user_block/fb/bubbleApp_userBlock_fb_data",
+  "apps/user_block/insta/bubbleApp_userBlock_insta",
+  "apps/user_block/insta/bubbleApp_userBlock_insta_matchers",
+  "apps/user_block/insta/bubbleApp_userBlock_insta_data"
 ]

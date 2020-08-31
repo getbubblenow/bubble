@@ -56,8 +56,8 @@ public class AppMatcherDAO extends AppTemplateEntityDAO<AppMatcher> {
     }
 
     public AppMatcher findByAccountAndAppAndSiteAndId(String accountUuid, String appUuid, String siteUuid, String id) {
-        final AppMatcher found = findByUniqueFields("account", accountUuid, "app", appUuid, "site", siteUuid, "name", id);
-        return found != null ? found : findByUniqueFields("account", accountUuid, "app", appUuid, "site", siteUuid, "uuid", id);
+        final AppMatcher found = findByUniqueFields("account", accountUuid, "app", appUuid, "site", siteUuid, "uuid", id);
+        return found != null ? found : findByUniqueFields("account", accountUuid, "app", appUuid, "site", siteUuid, "name", id);
     }
 
     @Override public Object preCreate(AppMatcher matcher) {

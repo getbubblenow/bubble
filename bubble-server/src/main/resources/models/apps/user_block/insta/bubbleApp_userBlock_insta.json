@@ -2,9 +2,9 @@
   "name": "UserBlocker",
   "children": {
     "AppSite": [{
-      "name": "Facebook",
-      "url": "https://facebook.com",
-      "description": "Connect with friends and family, find communities, and grow businesses",
+      "name": "Instagram",
+      "url": "https://instagram.com",
+      "description": "Bringing you closer to the people and things you love",
       "template": true,
       "maxSecurityHosts": [
         "addtoany.com", "*.addtoany.com", "appspot.com", "*.appspot.com", "cdninstagram.com", "*.cdninstagram.com",
@@ -20,11 +20,11 @@
       "enableMaxSecurityHosts": true
     }],
     "AppRule": [{
-      "name": "fb_user_blocker",
+      "name": "insta_user_blocker",
       "template": true,
       "driver": "JsUserBlockerRuleDriver",
       "config": {
-        "siteJsTemplate": "bubble/rule/social/block/site/FB.js.hbs"
+        "siteJsTemplate": "bubble/rule/social/block/site/Insta.js.hbs"
       }
     }]
   }
