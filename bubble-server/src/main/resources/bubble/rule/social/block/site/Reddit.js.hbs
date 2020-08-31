@@ -117,9 +117,11 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
         }
 
         if (author.className.indexOf('{{JS_PREFIX}}_bubble_has_icon') === -1) {
-            let b = {{JS_PREFIX}}_create_block_control(comment, authorName);
+            if (authorName !== currentUser) {
+                let b = {{JS_PREFIX}}_create_block_control(comment, authorName);
+                author.parentNode.insertBefore(b, author);
+            }
             author.className = author.className + ' {{JS_PREFIX}}_bubble_has_icon';
-            author.parentNode.insertBefore(b, author);
             {{JS_PREFIX}}_tally_allow();
         }
     });
