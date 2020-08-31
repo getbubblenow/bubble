@@ -119,6 +119,12 @@
       "site": "All_Sites",
       "template": true,
       "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_facebook.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
       "key": "hideStats_fidelity.com",
       "data": "true"
     }, {
@@ -144,6 +150,12 @@
       "template": true,
       "matcher": "BubbleBlockMatcher",
       "key": "hideStats_homedepot.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_instagram.com",
       "data": "true"
     }, {
       "site": "All_Sites",
@@ -227,6 +239,12 @@
       "site": "All_Sites",
       "template": true,
       "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_reddit.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
       "key": "hideStats_salesforce.com",
       "data": "true"
     }, {
@@ -294,6 +312,12 @@
       "template": true,
       "matcher": "BubbleBlockMatcher",
       "key": "hideStats_tripactions.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_twitter.com",
       "data": "true"
     }, {
       "site": "All_Sites",
