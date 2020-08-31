@@ -57,7 +57,7 @@ function {{JS_PREFIX}}_create_button(labelKey, labelDefault, onclick, labelForma
     return btn;
 }
 
-function {{JS_PREFIX}}_chase_redirects (a) {
+function {{JS_PREFIX}}_chase_redirects (a, removeParams) {
     if (a.className && a.className.indexOf('{{JS_PREFIX}}_followed') !== -1) return;
     if (a.className) {
         a.className = a.className + ' {{JS_PREFIX}}_followed';
@@ -70,7 +70,12 @@ function {{JS_PREFIX}}_chase_redirects (a) {
         .then(response => response.text())
         .then(data => {
             if (data && (data.startsWith('http://') || data.startsWith('https://'))) {
-                a.href = data;
+                if (typeof removeParams === 'undefined' || removeParams === null || removeParams) {
+                    const qPos = data.indexOf('?');
+                    a.href = qPos === -1 ? data : data.substring(0, qPos);
+                } else {
+                    a.href = data;
+                }
             } else {
                 console.warn('chase_redirects: '+a.href+' returned non-URL response: '+data);
             }

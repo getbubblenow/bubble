@@ -255,7 +255,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
             a.href = href;
             a.removeAttribute('data-gt');
             a.removeAttribute('data-sigil');
-            {{JS_PREFIX}}_chase_redirects(a);
+            {{JS_PREFIX}}_chase_redirects(a, href.indexOf('facebook.com/') === -1);
         });
     }
 }
