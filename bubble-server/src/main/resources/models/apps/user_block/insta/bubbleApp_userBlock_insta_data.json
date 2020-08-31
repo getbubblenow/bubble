@@ -4,49 +4,13 @@
     "AppData": [{
       "site": "Instagram",
       "template": true,
-      "matcher": "FBMatcher",
-      "key": "kw:_Sponsored",
-      "data": "true"
-    }, {
-      "site": "Instagram",
-      "template": true,
-      "matcher": "FBMatcher",
-      "key": "kw:_See All",
-      "data": "true"
-    }, {
-      "site": "Instagram",
-      "template": true,
-      "matcher": "FBMatcher",
-      "key": "kw:_See More",
-      "data": "true"
-    }, {
-      "site": "Instagram",
-      "template": true,
-      "matcher": "FBMatcher",
-      "key": "kw:_Suggested Groups",
-      "data": "true"
-    }, {
-      "site": "Instagram",
-      "template": true,
-      "matcher": "FBMatcher",
-      "key": "kw:_Suggested for You",
-      "data": "true"
-    }, {
-      "site": "Instagram",
-      "template": true,
-      "matcher": "FBMatcher",
-      "key": "kw:_Start Here",
-      "data": "true"
-    }, {
-      "site": "Instagram",
-      "template": true,
-      "matcher": "FBMatcher",
+      "matcher": "InstaMatcher",
       "key": "list:web_kwlist_us_news",
       "data": "true"
     }, {
       "site": "Instagram",
       "template": true,
-      "matcher": "FBMatcher",
+      "matcher": "InstaMatcher",
       "key": "list:web_kwlist_us_politics",
       "data": "true"
     }]
