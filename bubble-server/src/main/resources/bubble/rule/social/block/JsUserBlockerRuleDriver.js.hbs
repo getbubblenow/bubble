@@ -327,14 +327,12 @@ function {{JS_PREFIX}}_create_expandable_header(listsHeaderText, entryClassName,
         const entries = detailsDiv.getElementsByClassName(entryClassName);
         if (listsHeader.innerHTML.indexOf('+') !== -1) {
             // expand
-            {{PAGE_PREFIX}}_log('expanding...');
             listsHeader.removeChild(listsExpandControl);
             listsHeader.insertBefore(listsCollapseControl, listsHeaderTextNode);
             for (let i=0; i<entries.length; i++) {
                 entries[i].style.display = 'block';
             }
         } else {
-            {{PAGE_PREFIX}}_log('collapsing...');
             listsHeader.removeChild(listsCollapseControl);
             listsHeader.insertBefore(listsExpandControl, listsHeaderTextNode);
             for (let i=0; i<entries.length; i++) {
@@ -369,7 +367,6 @@ function {{JS_PREFIX}}_show_app_details() {
     detailsDiv.style.display = 'block';
     detailsDiv.style.visibility = 'visible';
     detailsDiv.style.width = Math.max(320, Math.floor(0.6*screenWidth) + 'px');
-    {{PAGE_PREFIX}}_log('set width:'+detailsDiv.style.width);
     detailsDiv.style.scrollTop = 0;
 
     const titleSpan = {{JS_PREFIX}}_app_title_span('ShadowBan');
