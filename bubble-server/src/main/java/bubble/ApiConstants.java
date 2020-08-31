@@ -212,6 +212,7 @@ public class ApiConstants {
     public static final String EP_NODE_MANAGER = "/nodeman";
     public static final String EP_UPGRADE = "/upgrade";
     public static final String EP_LOGS = "/logs";
+    public static final String EP_FOLLOW = "/follow";
 
     public static final String DETECT_ENDPOINT = "/detect";
     public static final String EP_LOCALE = "/locale";

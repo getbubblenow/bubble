@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.http.HttpContentEncodingType;
+import org.cobbzilla.util.http.HttpUtil;
 import org.cobbzilla.util.network.NetworkUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
@@ -54,8 +55,7 @@ import static bubble.service.stream.HttpStreamDebug.getLogFqdn;
 import static bubble.service.stream.StandardRuleEngineService.MATCHERS_CACHE_TIMEOUT;
 import static com.google.common.net.HttpHeaders.CONTENT_SECURITY_POLICY;
 import static java.util.Collections.emptyMap;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.*;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static org.cobbzilla.util.collection.ArrayUtil.arrayToString;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -628,6 +628,18 @@ public class FilterHttpResource {
         final FilterSubContext filterCtx = new FilterSubContext(req, requestId);
         log.error(" >>>>> REQUEST-LOG("+requestId+"): "+json(logData, COMPACT_MAPPER));
         return ok_empty();
+    }
+
+    private final Map<String, String> redirectCache
+            = new ExpirationMap<>(1000, DAYS.toMillis(3), ExpirationEvictionPolicy.atime);
+
+    @POST @Path(EP_FOLLOW+"/{requestId}")
+    public Response followLink(@Context Request req,
+                               @Context ContainerRequest ctx,
+                               @PathParam("requestId") String requestId,
+                               JsonNode urlNode) {
+        final FilterSubContext filterCtx = new FilterSubContext(req, requestId);
+        return ok(redirectCache.computeIfAbsent(urlNode.textValue(), HttpUtil::chaseRedirects));
     }
 
     @Path(EP_ASSETS+"/{requestId}/{appId}")

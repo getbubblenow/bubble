@@ -68,6 +68,11 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
                     continue;
                 } else {
                     // console.log('FOUND tweet node for author: '+authorName);
+                    Array.from(tweet.getElementsByTagName('a')).forEach(a => {
+                        if (a.href && a.href.indexOf('https://t.co/') !== -1) {
+                            {{JS_PREFIX}}_chase_redirects(a);
+                        }
+                    });
                 }
 
                 // have we visited this tweet before?

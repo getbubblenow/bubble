@@ -57,6 +57,29 @@ function {{JS_PREFIX}}_create_button(labelKey, labelDefault, onclick, labelForma
     return btn;
 }
 
+function {{JS_PREFIX}}_chase_redirects (a) {
+    if (a.className && a.className.indexOf('{{JS_PREFIX}}_followed') !== -1) return;
+    if (a.className) {
+        a.className = a.className + ' {{JS_PREFIX}}_followed';
+    } else {
+        a.className = '{{JS_PREFIX}}_followed';
+    }
+
+    a.rel = 'noopener noreferrer nofollow';
+    fetch('/__bubble/api/filter/follow/{{BUBBLE_REQUEST_ID}}', {method: 'POST', body: JSON.stringify(a.href)})
+        .then(response => response.text())
+        .then(data => {
+            if (data && (data.startsWith('http://') || data.startsWith('https://'))) {
+                a.href = data;
+            } else {
+                console.warn('chase_redirects: '+a.href+' returned non-URL response: '+data);
+            }
+        })
+        .catch((error) => {
+            console.error('chase_redirects: error following: '+a.href+': '+error);
+        });
+}
+
 if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
 
     {{PAGE_PREFIX}}_screenWidth = function () { return window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth };
