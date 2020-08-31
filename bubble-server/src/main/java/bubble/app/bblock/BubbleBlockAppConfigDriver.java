@@ -142,6 +142,7 @@ public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
     private List<BubbleHideStats> loadHideStats(Account account, BubbleApp app) {
         return dataDAO.findByAccountAndAppAndAndKeyPrefix(account.getUuid(), app.getUuid(), PREFIX_APPDATA_HIDE_STATS)
                 .stream()
+                .filter(d -> Boolean.parseBoolean(d.getData()))
                 .map(BubbleHideStats::new)
                 .collect(Collectors.toList());
     }
@@ -322,17 +323,17 @@ public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
         final JsonNode fqdnNode = data.get(PARAM_FQDN);
         if (fqdnNode == null) throw invalidEx("err.fqdn.required");
         final String fqdn = fqdnNode.textValue();
-        final BubbleHideStats showStats = new BubbleHideStats(fqdn);
-        final AppData appData = dataDAO.set(showStats.toAppData(account, app, getDefaultMatcher(account, app), getDefaultSite(account, app)));
-        showStats.setId(appData.getUuid());
-        return showStats;
+        final BubbleHideStats hideStats = new BubbleHideStats(fqdn);
+        final AppData appData = dataDAO.set(hideStats.toAppData(account, app, getDefaultMatcher(account, app), getDefaultSite(account, app)));
+        hideStats.setId(appData.getUuid());
+        return hideStats;
     }
 
     private List<BubbleHideStats> removeHideStats(Account account, BubbleApp app, String uuid) {
         final AppData appData = dataDAO.findByAccountAndId(account.getUuid(), uuid);
         if (appData != null) {
             final String fqdn = fqdnFromKey(appData.getKey());  // sanity check that key is in the right format
-            dataDAO.delete(appData.getUuid());
+            dataDAO.set(appData.setData("false"));
         }
         return loadHideStats(account, app);
     }
