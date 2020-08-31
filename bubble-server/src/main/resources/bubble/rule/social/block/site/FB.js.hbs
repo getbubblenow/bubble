@@ -253,6 +253,9 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
             href = {{JS_PREFIX}}_remove_param(href, '__tn__');
             href = {{JS_PREFIX}}_remove_param(href, 'refid');
             a.href = href;
+            a.rel = 'noopener noreferrer nofollow';
+            a.removeAttribute('data-gt');
+            a.removeAttribute('data-sigil');
         });
     }
 }
