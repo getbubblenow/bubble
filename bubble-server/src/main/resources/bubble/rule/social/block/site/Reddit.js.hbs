@@ -1,12 +1,20 @@
 {{JS_PREFIX}}_supports_keywords = true;
-    {{JS_PREFIX}}_idle_interval = 10000;
 
 const {{JS_PREFIX}}_site_host = location.protocol + '//' + window.location.hostname + '/';
+const {{JS_PREFIX}}_old = window.location.hostname === 'old.reddit.com';
 
-let {{JS_PREFIX}}_first = true;
+{{JS_PREFIX}}_idle_interval = {{JS_PREFIX}}_old ? 5000 : 8000;
 
 function {{JS_PREFIX}}_create_block_control(comment, authorName) {
-    const imgHolder = {{JS_PREFIX}}_create_block_img();
+    let blockTarget = null;
+    if ({{JS_PREFIX}}_old) {
+        blockTarget = document.createElement('strong');
+        blockTarget.style.fontWeight = 'bolder';
+        blockTarget.style.color = 'red';
+        blockTarget.appendChild(document.createTextNode(' [X] '));
+    } else {
+        blockTarget = {{JS_PREFIX}}_create_block_img();
+    }
     const blockSpan = document.createElement('span');
     const blockLink = document.createElement('a');
     blockLink.style.zIndex = '{{APP_CONTROLS_Z_INDEX}}'
@@ -18,15 +26,22 @@ function {{JS_PREFIX}}_create_block_control(comment, authorName) {
         e.preventDefault();
         return false;
     });
-    blockLink.appendChild(imgHolder);
+    blockLink.appendChild(blockTarget);
     blockSpan.appendChild(document.createTextNode('\u00A0\u00A0'));
     blockSpan.appendChild(blockLink);
+    if ({{JS_PREFIX}}_old) {
+        blockSpan.appendChild(document.createTextNode('\u00A0\u00A0'));
+    }
     blockSpan.id = 'blockSpan_'+{{JS_PREFIX}}_uuidv4();
     // console.log('adding block control on '+authorName);
     return blockSpan;
 }
 
 function {{JS_PREFIX}}_remove_comment(comment) {
+    if ({{JS_PREFIX}}_old) {
+        comment.parentNode.removeChild(comment);
+        return;
+    }
     let paddingLeft = comment.parentNode && comment.parentNode.style ? comment.parentNode.style.paddingLeft : null;
     if (paddingLeft && paddingLeft.endsWith('px')) {
         paddingLeft = paddingLeft.substring(0, paddingLeft.length-2);
@@ -58,10 +73,11 @@ function {{JS_PREFIX}}_remove_comment(comment) {
 }
 
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
-    const first = {{JS_PREFIX}}_first;
     let currentUser = null;
     try {
-        currentUser = Array.from(document.getElementsByClassName('header-user-dropdown')[0].getElementsByTagName('span'))[3].innerText;
+        currentUser = {{JS_PREFIX}}_old
+            ? document.getElementsByClassName('user')[0].getElementsByTagName('a')[0].innerText
+            : Array.from(document.getElementsByClassName('header-user-dropdown')[0].getElementsByTagName('span'))[3].innerText;
     } catch (e) {
         // console.log('no current user');
     }
@@ -76,10 +92,11 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
 
         let node = author.parentNode;
         let comment = null;
+        const commentClass = {{JS_PREFIX}}_old ? ' comment' : ' Comment ';
         for (let i=0; i<4; i++) {
             if (node.parentNode === null) break;
             node = node.parentNode;
-            if (node.className.indexOf(' Comment ') !== -1) {
+            if (node.className && node.className.indexOf(commentClass) !== -1) {
                 comment = node;
                 break;
             }
@@ -106,5 +123,4 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
             {{JS_PREFIX}}_tally_allow();
         }
     });
-    if (authors.length > 0) {{JS_PREFIX}}_first = false;
 }

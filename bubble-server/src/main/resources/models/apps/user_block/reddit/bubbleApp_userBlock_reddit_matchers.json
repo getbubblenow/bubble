@@ -10,6 +10,15 @@
       "fqdn": "www.reddit.com",
       "urlRegex": "/r/.+",
       "rule": "reddit_user_blocker"
+    }, {
+      "name": "RedditOldMatcher",
+      "site": "Reddit",
+      "template": true,
+      "requestCheck": true,
+      "requestModifier": true,
+      "fqdn": "old.reddit.com",
+      "urlRegex": "/r/.+",
+      "rule": "reddit_user_blocker"
     }]
   }
 }]
