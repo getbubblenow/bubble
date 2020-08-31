@@ -10,22 +10,23 @@ import bubble.model.cloud.CloudService;
 import bubble.model.cloud.StorageMetadata;
 import bubble.notify.storage.StorageListing;
 import lombok.Cleanup;
+import lombok.NonNull;
 import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.error.ExceptionHandler;
 import org.cobbzilla.util.string.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.util.Arrays;
 
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static java.util.UUID.randomUUID;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.io.FileUtil.mkdirOrDie;
 import static org.cobbzilla.util.io.StreamUtil.toStringOrDie;
+import static org.cobbzilla.util.security.CryptStream.BUFFER_SIZE;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
 public interface StorageServiceDriver extends CloudServiceDriver {
@@ -195,5 +196,38 @@ public interface StorageServiceDriver extends CloudServiceDriver {
 
     StorageListing list(String fromNode, String prefix) throws IOException;
     StorageListing listNext(String fromNode, String listingId) throws IOException;
+
+    @NonNull default void fetchFiles(@NonNull final String fromNodeUuid,
+                                     @NonNull final String fromPath,
+                                     @NonNull final String toDir)
+            throws IOException {
+        final var path = getPath(fromPath);
+        log.info("fetchFiles: downloading from path=" + path);
+
+        var listing = list(fromNodeUuid, path);
+        while (true) {
+            Arrays.stream(listing.getKeys())
+                  .parallel()
+                  .forEach(k -> {
+                      final var logMsgPrefix = "fetchFiles [" + k + "]: ";
+                      log.info(logMsgPrefix + "downloading file");
+                      final var file = new File(toDir, k);
+                      mkdirOrDie(file.getParentFile());
+                      try {
+                          @Cleanup final var in = read(fromNodeUuid, k);
+                          try (var out = new BufferedOutputStream(new FileOutputStream(file), BUFFER_SIZE)) {
+                              IOUtils.copyLarge(in, out);
+                          }
+                          log.info(logMsgPrefix + "successfully downloaded file");
+                      } catch (Exception e) {
+                          die(logMsgPrefix + "error downloading file", e);
+                      }
+                  });
+
+            if (!listing.isTruncated()) break;
+            listing = listNext(fromNodeUuid, listing.getListingId());
+        }
+        log.info("fetchFiles: full download successful");
+    }
 
 }

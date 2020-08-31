@@ -4,36 +4,31 @@
  */
 package bubble.service.backup;
 
-import bubble.cloud.storage.StorageServiceDriver;
+import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.cloud.BubbleBackup;
 import bubble.model.cloud.CloudCredentials;
 import bubble.model.cloud.CloudService;
 import bubble.model.cloud.NetworkKeys;
-import bubble.notify.storage.StorageListing;
 import bubble.server.BubbleConfiguration;
-import lombok.Cleanup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.collection.NameAndValue;
-import org.cobbzilla.util.io.TempDir;
+import org.cobbzilla.util.system.Bytes;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
-import java.util.Arrays;
+import java.io.File;
+import java.io.IOException;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static bubble.model.cloud.NetworkKeys.PARAM_STORAGE;
 import static bubble.model.cloud.NetworkKeys.PARAM_STORAGE_CREDENTIALS;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.apache.commons.io.FileUtils.copyDirectory;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.io.FileUtil.*;
+import static org.cobbzilla.util.io.FileUtil.abs;
+import static org.cobbzilla.util.io.FileUtil.touch;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.security.CryptStream.BUFFER_SIZE;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @Service @Slf4j
@@ -53,6 +48,10 @@ public class RestoreService {
     private static final long RESTORE_LOCK_TIMEOUT = MINUTES.toMillis(31);
     private static final long RESTORE_DEADLOCK_TIMEOUT = MINUTES.toMillis(30);
     private static final File RESTORE_MARKER_FILE = new File(HOME_DIR, ".restore");
+
+    private static final int BACKUP_ARCHIVE_MANAGEMENT_BUFFER_SIZE = (int) (8 * Bytes.KB);
+
+    @Autowired private CloudServiceDAO cloudDAO;
 
     @Autowired private RedisService redis;
     @Getter(lazy=true) private final RedisService restoreKeys = redis.prefixNamespace(getClass().getSimpleName());
@@ -89,49 +88,24 @@ public class RestoreService {
                 log.error("restore: storage/credentials not found in NetworkKeys");
                 return false;
             }
-            final CloudService storageService = json(storageJson, CloudService.class)
-                    .setCredentials(json(credentialsJson, CloudCredentials.class));
-
-            final StorageServiceDriver storageDriver = storageService.getStorageDriver(configuration);
-            final String path = StorageServiceDriver.getPath(backup.getPath());
 
             final String[] existingFiles = RESTORE_DIR.list();
+            final var restoreDirAbs = abs(RESTORE_DIR);
             if (existingFiles != null && existingFiles.length > 0) {
-                log.error("restore: files already exist in " + abs(RESTORE_DIR) + ", cannot restore");
+                log.error("restore: files already exist in " + restoreDirAbs + ", cannot restore");
                 return false;
             }
 
-            log.info("restore: downloading backup from path=" + path);
+            final var storageDriver = json(storageJson, CloudService.class)
+                    .setCredentials(json(credentialsJson, CloudCredentials.class))
+                    .getStorageDriver(configuration);
             try {
-                @Cleanup TempDir temp = new TempDir();
-                StorageListing listing = storageDriver.list(thisNodeUuid, path);
-                while (true) {
-                    Arrays.stream(listing.getKeys()).forEach(k -> {
-                        log.info("restore: downloading file: " + k);
-                        final File file = new File(abs(temp) + "/" + k);
-                        mkdirOrDie(file.getParentFile());
-                        try {
-                            @Cleanup final InputStream in = storageDriver.read(thisNodeUuid, k);
-                            try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file), BUFFER_SIZE)) {
-                                IOUtils.copyLarge(in, out);
-                            }
-                            log.info("restore: successfully downloaded file: " + k);
-                        } catch (Exception e) {
-                            die("restore: error downloading file: " + k + ": " + e);
-                        }
-                    });
-                    if (!listing.isTruncated()) break;
-                    listing = storageDriver.listNext(thisNodeUuid, listing.getListingId());
-                }
-
-                // all successful, copy directory to a safe place
-                copyDirectory(temp, RESTORE_DIR);
-                log.info("restore: full download successful, notifying system to restore from backup at: "+abs(RESTORE_DIR));
+                storageDriver.fetchFiles(thisNodeUuid, backup.getPath(), restoreDirAbs);
+                log.info("restore: notifying system to restore from backup at: " + restoreDirAbs);
                 touch(RESTORE_MARKER_FILE);
                 return true;
-
             } catch (IOException e) {
-                log.error("restore: error downloading backup: " + e);
+                log.error("restore: error downloading backup ", e);
                 return false;
             }
         } finally {

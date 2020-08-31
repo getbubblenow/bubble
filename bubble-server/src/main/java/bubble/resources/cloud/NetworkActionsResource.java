@@ -5,28 +5,25 @@
 package bubble.resources.cloud;
 
 import bubble.dao.account.AccountPolicyDAO;
-import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.bill.AccountPlanDAO;
 import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.model.account.Account;
 import bubble.model.account.AccountPolicy;
-import bubble.model.account.message.AccountAction;
-import bubble.model.account.message.AccountMessage;
-import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
 import bubble.model.bill.AccountPlan;
-import bubble.model.cloud.*;
+import bubble.model.cloud.BubbleDomain;
+import bubble.model.cloud.BubbleNetwork;
+import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.NetLocation;
 import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAuthenticatorService;
-import bubble.service.backup.NetworkKeysService;
 import bubble.service.cloud.NodeLaunchMonitor;
 import bubble.service.cloud.NodeProgressMeterTick;
 import bubble.service.cloud.StandardNetworkService;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.collection.NameAndValue;
-import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -38,7 +35,6 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 import static bubble.ApiConstants.*;
-import static bubble.model.account.Account.validatePassword;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -51,9 +47,7 @@ public class NetworkActionsResource {
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private StandardNetworkService networkService;
     @Autowired private NodeLaunchMonitor launchMonitor;
-    @Autowired private AccountMessageDAO messageDAO;
     @Autowired private AccountPolicyDAO policyDAO;
-    @Autowired private NetworkKeysService keysService;
     @Autowired private BubbleDomainDAO domainDAO;
     @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private AccountPlanDAO accountPlanDAO;
@@ -110,50 +104,24 @@ public class NetworkActionsResource {
         return tick == null ? notFound(uuid) : ok(tick);
     }
 
-    @GET @Path(EP_KEYS)
-    public Response requestNetworkKeys(@Context Request req,
-                                       @Context ContainerRequest ctx) {
+    @Path(EP_KEYS)
+    @NonNull public NetworkBackupKeysResource getBackupKeys(@NonNull @Context final ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
-        if (!caller.admin()) return forbidden();
+        if (!caller.admin()) throw forbiddenEx();
 
         // must request from the network you are on
         if (!network.getUuid().equals(configuration.getThisNetwork().getUuid())) {
-            return invalid("err.networkKeys.mustRequestFromSameNetwork");
+            throw invalidEx("err.networkKeys.mustRequestFromSameNetwork");
         }
 
         final AccountPolicy policy = policyDAO.findSingleByAccount(caller.getUuid());
         if (policy == null || !policy.hasVerifiedAccountContacts()) {
-            return invalid("err.networkKeys.noVerifiedContacts");
+            throw invalidEx("err.networkKeys.noVerifiedContacts");
         }
-        messageDAO.create(new AccountMessage()
-                .setMessageType(AccountMessageType.request)
-                .setAction(AccountAction.password)
-                .setTarget(ActionTarget.network)
-                .setAccount(caller.getUuid())
-                .setNetwork(configuration.getThisNetwork().getUuid())
-                .setName(network.getUuid())
-                .setRemoteHost(getRemoteHost(req)));
-        return ok();
-    }
-
-    @POST @Path(EP_KEYS+"/{uuid}")
-    public Response retrieveNetworkKeys(@Context Request req,
-                                        @Context ContainerRequest ctx,
-                                        @PathParam("uuid") String uuid,
-                                        NameAndValue enc) {
-        final Account caller = userPrincipal(ctx);
-        if (!caller.admin()) return forbidden();
 
         authenticatorService.ensureAuthenticated(ctx, ActionTarget.network);
 
-        final String encryptionKey = enc == null ? null : enc.getValue();
-        final ConstraintViolationBean error = validatePassword(encryptionKey);
-        if (error != null) return invalid(error);
-
-        final NetworkKeys keys = keysService.retrieveKeys(uuid);
-        return keys == null
-                ? invalid("err.retrieveNetworkKeys.notFound")
-                : ok(keys.encrypt(encryptionKey));
+        return configuration.subResource(NetworkBackupKeysResource.class, caller, network);
     }
 
     @POST @Path(EP_STOP)
