@@ -272,6 +272,14 @@ function {{JS_PREFIX}}_create_unblock_keyword_control(keyword) {
     return {{JS_PREFIX}}_create_unblock_control('kw:'+keyword, {{JS_PREFIX}}_unblock_keyword);
 }
 
+function {{JS_PREFIX}}_noop(e) {
+    if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
+    return false;
+}
+
 function {{JS_PREFIX}}_create_unblock_control(name, unblock_func) {
     const imgHolder = {{JS_PREFIX}}_create_unblock_img();
     const blockSpan = document.createElement('span');
@@ -282,10 +290,8 @@ function {{JS_PREFIX}}_create_unblock_control(name, unblock_func) {
             {{JS_PREFIX}}_unblocked_needs_refresh = true;
             {{JS_PREFIX}}_hide_app_details();
             {{JS_PREFIX}}_show_app_details();
+            return {{JS_PREFIX}}_noop(e);
         }
-        e.stopPropagation();
-        e.preventDefault();
-        return false;
     });
     unblockLink.appendChild(imgHolder);
     blockSpan.appendChild(unblockLink)
@@ -306,6 +312,41 @@ function {{JS_PREFIX}}_hide_app_details() {
     }
 }
 
+function {{JS_PREFIX}}_create_expandable_header(listsHeaderText, entryClassName, detailsDiv) {
+    const listsHeaderLink = document.createElement('a');
+    const listsHeader = document.createElement('strong');
+    const listsExpandControl = document.createElement('span');
+    listsExpandControl.appendChild(document.createTextNode('[+] '));
+    const listsCollapseControl = document.createElement('span');
+    listsCollapseControl.appendChild(document.createTextNode('[-] '));
+    listsHeader.appendChild(listsExpandControl);
+    const listsHeaderTextNode = document.createTextNode(listsHeaderText);
+    listsHeader.appendChild(listsHeaderTextNode);
+
+    listsHeaderLink.onclick = function (e) {
+        const entries = detailsDiv.getElementsByClassName(entryClassName);
+        if (listsHeader.innerHTML.indexOf('+') !== -1) {
+            // expand
+            {{PAGE_PREFIX}}_log('expanding...');
+            listsHeader.removeChild(listsExpandControl);
+            listsHeader.insertBefore(listsCollapseControl, listsHeaderTextNode);
+            for (let i=0; i<entries.length; i++) {
+                entries[i].style.display = 'block';
+            }
+        } else {
+            {{PAGE_PREFIX}}_log('collapsing...');
+            listsHeader.removeChild(listsCollapseControl);
+            listsHeader.insertBefore(listsExpandControl, listsHeaderTextNode);
+            for (let i=0; i<entries.length; i++) {
+                entries[i].style.display = 'none';
+            }
+        }
+        return {{JS_PREFIX}}_noop(e);
+    }
+    listsHeaderLink.appendChild(listsHeader);
+    return listsHeaderLink;
+}
+
 function {{JS_PREFIX}}_show_app_details() {
     // {{PAGE_PREFIX}}_log('show_app_details called');
     {{JS_PREFIX}}_refresh_blocks();
@@ -324,8 +365,11 @@ function {{JS_PREFIX}}_show_app_details() {
     while (detailsDiv.firstChild) {
         detailsDiv.removeChild(detailsDiv.lastChild);
     }
+    const screenWidth = {{PAGE_PREFIX}}_screenWidth();
     detailsDiv.style.display = 'block';
     detailsDiv.style.visibility = 'visible';
+    detailsDiv.style.width = Math.max(320, Math.floor(0.6*screenWidth) + 'px');
+    {{PAGE_PREFIX}}_log('set width:'+detailsDiv.style.width);
     detailsDiv.style.scrollTop = 0;
 
     const titleSpan = {{JS_PREFIX}}_app_title_span('ShadowBan');
@@ -358,8 +402,7 @@ function {{JS_PREFIX}}_show_app_details() {
 
     const recentBlocksDiv = document.createElement('div');
     const recentBlocksText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_recentBlocks', 'Recent Blocks');
-    const recentBlocksHeader = document.createElement('strong')
-    recentBlocksHeader.appendChild(document.createTextNode(recentBlocksText));
+    const recentBlocksHeader = {{JS_PREFIX}}_create_expandable_header(recentBlocksText, '{{JS_PREFIX}}_recent_entry', detailsDiv);
     recentBlocksDiv.appendChild(recentBlocksHeader);
     detailsDiv.appendChild(recentBlocksDiv);
 
@@ -367,12 +410,15 @@ function {{JS_PREFIX}}_show_app_details() {
     let keywordTallyKeys = Object.keys({{PAGE_PREFIX}}_block_keyword_tally);
     const authorTally = {{PAGE_PREFIX}}_block_author_tally;
     let authorTallyKeys = Object.keys({{PAGE_PREFIX}}_block_author_tally);
+    let totalBlocks = 0;
     if (keywordTallyKeys.length === 0 && authorTallyKeys.length === 0) {
         const noRecentBlocksText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_noRecentBlocks', '(empty)');
-        detailsDiv.appendChild(document.createElement('br'));
-        detailsDiv.appendChild(document.createTextNode(noRecentBlocksText));
+        const entryDiv = document.createElement('div');
+        entryDiv.className = '{{JS_PREFIX}}_recent_entry';
+        entryDiv.style.display = 'none';
+        entryDiv.appendChild(document.createTextNode(noRecentBlocksText));
+        detailsDiv.appendChild(entryDiv);
     } else {
-        let totalBlocks = 0;
         if (keywordTallyKeys.length > 0) {
             keywordTallyKeys = keywordTallyKeys.slice();
             keywordTallyKeys.sort(function (a, b) {
@@ -384,6 +430,8 @@ function {{JS_PREFIX}}_show_app_details() {
                 const count = keywordTally[keyword];
                 totalBlocks += count;
                 const entryDiv = document.createElement('div');
+                entryDiv.className = '{{JS_PREFIX}}_recent_entry';
+                entryDiv.style.display = 'none';
                 const em = document.createElement('em');
                 em.appendChild(document.createTextNode(openQuote + keyword + closeQuote + ': ' + count));
                 entryDiv.appendChild(em);
@@ -399,19 +447,22 @@ function {{JS_PREFIX}}_show_app_details() {
                 const count = authorTally[author];
                 totalBlocks += count;
                 const entryDiv = document.createElement('div');
+                entryDiv.className = '{{JS_PREFIX}}_recent_entry';
+                entryDiv.style.display = 'none';
                 entryDiv.appendChild(document.createTextNode(author + ': ' + count));
                 detailsDiv.appendChild(entryDiv);
             });
         }
-        const summaryHeader = document.createElement('strong');
-        summaryHeader.appendChild(document.createElement('br'));
-        const summaryLabel = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_signalNoiseRatio', 'signal/noise');
-        const totalAllowed = {{PAGE_PREFIX}}_allow_tally;
-        const fullTotal = totalAllowed + totalBlocks;
-        const ratio = 100.0 * (totalAllowed / fullTotal);
-        summaryHeader.appendChild(document.createTextNode(summaryLabel + ': ' + totalAllowed + '/' + totalBlocks + ' ≈ ' + ratio.toLocaleString('{{ACCOUNT_LOCALE_HYPHEN}}', { maximumSignificantDigits: 3 }) + '%'));
-        recentBlocksDiv.appendChild(summaryHeader);
     }
+    const summaryHeader = document.createElement('strong');
+    summaryHeader.appendChild(document.createElement('br'));
+    const summaryLabel = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_signalNoiseRatio', 'signal/noise');
+    const totalAllowed = {{PAGE_PREFIX}}_allow_tally;
+    const fullTotal = totalAllowed + totalBlocks;
+    const ratio = 100.0 * (totalAllowed / fullTotal);
+    const eqSign = totalBlocks === 0 ? '=' : '≈';
+    summaryHeader.appendChild(document.createTextNode(summaryLabel + ': ' + totalAllowed + '/' + totalBlocks + ' '+eqSign+' ' + ratio.toLocaleString('{{ACCOUNT_LOCALE_HYPHEN}}', { maximumSignificantDigits: 3 }) + '%'));
+    recentBlocksDiv.appendChild(summaryHeader);
     detailsDiv.appendChild(document.createElement('hr'));
 
     let blocks = Object.keys({{JS_PREFIX}}_blocked_users);
@@ -428,13 +479,14 @@ function {{JS_PREFIX}}_show_app_details() {
             return a.localeCompare(b, '{{ACCOUNT_LANG}}', {'sensitivity': 'base'});
         });
     }
-    const usersHeaderText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_blockedUsers', 'Users');
-    const usersHeader = document.createElement('strong');
-    usersHeader.appendChild(document.createTextNode(usersHeaderText));
+    const usersHeaderText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_blockedUsers', 'Block Users');
+    const usersHeader = {{JS_PREFIX}}_create_expandable_header(usersHeaderText, '{{JS_PREFIX}}_user_entry', detailsDiv);
     detailsDiv.appendChild(usersHeader);
     if (blocks === null || blocks.length === 0) {
         const emptyMessage = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_noUsersBlocked', '(empty)');
         const entryDiv = document.createElement('div');
+        entryDiv.className = '{{JS_PREFIX}}_user_entry';
+        entryDiv.style.display = 'none';
         const entryText = document.createTextNode(emptyMessage);
         entryDiv.appendChild(entryText);
         detailsDiv.appendChild(entryDiv);
@@ -442,6 +494,8 @@ function {{JS_PREFIX}}_show_app_details() {
         for (let i = 0; i < blocks.length; i++) {
             const entry = blocks[i];
             const entryDiv = document.createElement('div');
+            entryDiv.className = '{{JS_PREFIX}}_user_entry';
+            entryDiv.style.display = 'none';
             const entryText = document.createTextNode(entry);
             entryDiv.appendChild(entryText);
             entryDiv.appendChild({{JS_PREFIX}}_create_unblock_author_control(entry));
@@ -451,13 +505,14 @@ function {{JS_PREFIX}}_show_app_details() {
     detailsDiv.appendChild(document.createElement('hr'));
 
     if ({{JS_PREFIX}}_supports_keywords) {
-        const keywordsHeaderText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_blockedKeywords', 'Keywords');
-        const keywordsHeader = document.createElement('strong');
-        keywordsHeader.appendChild(document.createTextNode(keywordsHeaderText));
+        const keywordsHeaderText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_blockedKeywords', 'Block Keywords');
+        const keywordsHeader = {{JS_PREFIX}}_create_expandable_header(keywordsHeaderText, '{{JS_PREFIX}}_keyword_entry', detailsDiv);
         detailsDiv.appendChild(keywordsHeader);
         if (keywords === null || keywords.length === 0) {
             const emptyMessage = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_noKeywordsBlocked', '(empty)');
             const entryDiv = document.createElement('div');
+            entryDiv.className = '{{JS_PREFIX}}_keyword_entry';
+            entryDiv.style.display = 'none';
             const entryText = document.createTextNode(emptyMessage);
             entryDiv.appendChild(entryText);
             detailsDiv.appendChild(entryDiv);
@@ -465,6 +520,8 @@ function {{JS_PREFIX}}_show_app_details() {
             for (let i = 0; i < keywords.length; i++) {
                 const entry = keywords[i];
                 const entryDiv = document.createElement('div');
+                entryDiv.className = '{{JS_PREFIX}}_keyword_entry';
+                entryDiv.style.display = 'none';
                 const entryText = document.createTextNode(entry);
                 entryDiv.appendChild(entryText);
                 entryDiv.appendChild({{JS_PREFIX}}_create_unblock_keyword_control(entry));
@@ -480,13 +537,16 @@ function {{JS_PREFIX}}_show_app_details() {
         const keywordInput = document.createElement('input');
         keywordInput.type = 'text';
         keywordInput.size = 14;
+        keywordInput.style.width = '70%';
         keywordInput.style.fontSize = 'small';
         keywordInput.addEventListener('keypress', function (e) { if (e.key === 'Enter') { add_keyword(keywordInput.value); } });
 
         const keywordAdd = {{JS_PREFIX}}_create_button('web_addKeyword', 'add', function (e) { add_keyword(keywordInput.value); });
+        keywordAdd.style.width = '20%';
         const kwForm = document.createElement('span');
         kwForm.style.fontSize = 'small';
         kwForm.appendChild(keywordInput);
+        kwForm.appendChild(document.createTextNode('\u00A0'));
         kwForm.appendChild(keywordAdd);
         detailsDiv.appendChild(kwForm);
         detailsDiv.appendChild(document.createElement('hr'));
@@ -494,8 +554,7 @@ function {{JS_PREFIX}}_show_app_details() {
         const listKeys = Object.keys({{JS_PREFIX}}_messages).filter(k => k.startsWith('web_kwlist_') && !k.endsWith('_url'));
         if (listKeys.length > 0) {
             const listsHeaderText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_blockedKeywordLists', 'Keyword Lists');
-            const listsHeader = document.createElement('strong');
-            listsHeader.appendChild(document.createTextNode(listsHeaderText));
+            const listsHeader = {{JS_PREFIX}}_create_expandable_header(listsHeaderText, '{{JS_PREFIX}}_keylist_entry', detailsDiv);
             detailsDiv.appendChild(listsHeader);
 
             listKeys.forEach(listKey => {
@@ -506,6 +565,7 @@ function {{JS_PREFIX}}_show_app_details() {
                     return;
                 }
                 const entryDiv = document.createElement('div');
+                entryDiv.className = '{{JS_PREFIX}}_keylist_entry';
                 const entryLink = document.createElement('span');
                 entryLink.onclick = function () {
                     window.open({{JS_PREFIX}}_link_message_url(listKey), '_blank').opener = null;
@@ -552,6 +612,7 @@ function {{JS_PREFIX}}_show_app_details() {
                 entryDiv.appendChild(listNameNode);
                 entryDiv.appendChild(document.createTextNode('\u00A0'));
                 entryDiv.appendChild(entryLink);
+                entryDiv.style.display = 'none';
                 detailsDiv.appendChild(entryDiv);
             });
 

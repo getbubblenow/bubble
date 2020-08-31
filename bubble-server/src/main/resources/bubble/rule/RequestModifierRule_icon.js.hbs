@@ -36,6 +36,7 @@
 
 {{JS_PREFIX}}_app_title_span = function (defaultName) {
     const appTitleSpan = document.createElement('span');
+    appTitleSpan.style.fontSize = 'medium';
     const appImage = document.createElement('img');
     appImage.src = {{JS_PREFIX}}_asset_img_url('icon');
     appImage.width = 16;
@@ -57,12 +58,15 @@ function {{JS_PREFIX}}_create_button(labelKey, labelDefault, onclick, labelForma
 }
 
 if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
+
+    {{PAGE_PREFIX}}_screenWidth = function () { return window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth };
+
     let {{PAGE_PREFIX}}_doc_ready = false;
 
     let {{PAGE_PREFIX}}_icon_status = [];
 
     {{PAGE_PREFIX}}_msg_or_default = function (messages, msg, def) {
-        return msg in messages ? messages[msg] : def;
+        return msg && msg in messages ? messages[msg] : def;
     }
 
     {{PAGE_PREFIX}}_log = function (data) {
@@ -158,7 +162,7 @@ if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
             } else {
                 link.href = '{{{BUBBLE_HOME}}}/app/' + iconSpecs.app + '/' + iconSpecs.link;
             }
-            const screenWidth  = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+            const screenWidth  = {{PAGE_PREFIX}}_screenWidth();
             const img = document.createElement('img');
             img.id = {{PAGE_PREFIX}}_getAppIconImgId(iconSpecs);
             img.src = {{PAGE_PREFIX}}_getAppIconImgSrc(iconSpecs);
