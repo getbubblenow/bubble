@@ -238,6 +238,14 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
         }
         Array.from(article.getElementsByTagName('a')).forEach(a => {
             let href =  a.href;
+            if (typeof href !== 'string' || href.length === 0) return;
+            if (a.className && a.className.indexOf('{{JS_PREFIX}}_fb_scrubbed') !== -1) return;
+            if (a.className) {
+                a.className = a.className + ' {{JS_PREFIX}}_fb_scrubbed';
+            } else {
+                a.className = '{{JS_PREFIX}}_fb_scrubbed';
+            }
+
             if (href.indexOf('facebook.com') !== -1 && href.indexOf('u=http') !== -1) {
                 const uPos = href.indexOf('u=http');
                 const andPos = href.indexOf('&');
@@ -248,14 +256,20 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
                 }
                 href = decodeURIComponent(href);
             }
-            href = {{JS_PREFIX}}_remove_param(href, 'fbclid');
+            href = {{JS_PREFIX}}_remove_param(href, 'refid');
             href = {{JS_PREFIX}}_remove_param(href, '_ft_');
             href = {{JS_PREFIX}}_remove_param(href, '__tn__');
-            href = {{JS_PREFIX}}_remove_param(href, 'refid');
-            a.href = href;
-            a.removeAttribute('data-gt');
-            a.removeAttribute('data-sigil');
-            {{JS_PREFIX}}_chase_redirects(a, href.indexOf('facebook.com/') === -1);
+
+            let offSite = href.indexOf('facebook.com/') === -1;
+            if (offSite) {
+                href = {{JS_PREFIX}}_remove_param(href, 'fbclid');
+                a.removeAttribute('data-gt');
+                a.removeAttribute('data-sigil');
+                a.href = href;
+                {{JS_PREFIX}}_chase_redirects(a);
+            } else {
+                a.href = href;
+            }
         });
     }
 }
