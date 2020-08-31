@@ -1,0 +1,110 @@
+{{JS_PREFIX}}_supports_keywords = true;
+    {{JS_PREFIX}}_idle_interval = 10000;
+
+const {{JS_PREFIX}}_site_host = location.protocol + '//' + window.location.hostname + '/';
+
+let {{JS_PREFIX}}_first = true;
+
+function {{JS_PREFIX}}_create_block_control(comment, authorName) {
+    const imgHolder = {{JS_PREFIX}}_create_block_img();
+    const blockSpan = document.createElement('span');
+    const blockLink = document.createElement('a');
+    blockLink.style.zIndex = '{{APP_CONTROLS_Z_INDEX}}'
+    blockLink.style.cursor = 'pointer';
+    blockLink.addEventListener("click", function (e) {
+        {{JS_PREFIX}}_remove_comment(comment);
+        {{JS_PREFIX}}_block_user(authorName);
+        e.stopPropagation();
+        e.preventDefault();
+        return false;
+    });
+    blockLink.appendChild(imgHolder);
+    blockSpan.appendChild(document.createTextNode('\u00A0\u00A0'));
+    blockSpan.appendChild(blockLink);
+    blockSpan.id = 'blockSpan_'+{{JS_PREFIX}}_uuidv4();
+    // console.log('adding block control on '+authorName);
+    return blockSpan;
+}
+
+function {{JS_PREFIX}}_remove_comment(comment) {
+    let paddingLeft = comment.parentNode && comment.parentNode.style ? comment.parentNode.style.paddingLeft : null;
+    if (paddingLeft && paddingLeft.endsWith('px')) {
+        paddingLeft = paddingLeft.substring(0, paddingLeft.length-2);
+    } else {
+        return;
+    }
+    let commentWrapper = comment.parentNode.parentNode.parentNode;
+    let wrappersToRemove = [commentWrapper];
+    let nextCommentWrapper = commentWrapper.nextElementSibling ? commentWrapper.nextElementSibling : null;
+    while (nextCommentWrapper !== null) {
+        const nextPadding = Array.from(nextCommentWrapper.getElementsByTagName('div'))
+            .find(w => w.style && w.style.paddingLeft && w.style.paddingLeft.length && w.style.paddingLeft.length > 0 && w.style.paddingLeft.endsWith('px'));
+        if (nextPadding) {
+            console.log('nextPadding.style.paddingLeft='+nextPadding.style.paddingLeft+', nextPadding.style.paddingLeft.substring(nextPadding.style.paddingLeft.length-2) ='+nextPadding.style.paddingLeft.substring(0, nextPadding.style.paddingLeft.length-2));
+            const nextPadAmount = parseInt(nextPadding.style.paddingLeft.substring(0, nextPadding.style.paddingLeft.length-2));
+            if (nextPadAmount > paddingLeft) {
+                console.log('startPad='+paddingLeft+', nextPadAmount='+nextPadAmount+', adding wrapper to remove');
+                wrappersToRemove.push(nextCommentWrapper);
+                nextCommentWrapper = nextCommentWrapper.nextElementSibling ? nextCommentWrapper.nextElementSibling : null;
+            } else {
+                console.log('startPad='+paddingLeft+', nextPadAmount='+nextPadAmount+', stopping removals');
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+    wrappersToRemove.forEach(w => w.parentNode.removeChild(w));
+}
+
+function {{JS_PREFIX}}_apply_blocks(blocked_users) {
+    const first = {{JS_PREFIX}}_first;
+    let currentUser = null;
+    try {
+        currentUser = Array.from(document.getElementsByClassName('header-user-dropdown')[0].getElementsByTagName('span'))[3].innerText;
+    } catch (e) {
+        // console.log('no current user');
+    }
+
+    const userPrefix = {{JS_PREFIX}}_site_host + 'user/';
+    const authors = Array.from(document.getElementsByTagName('a')).filter(a => a.href.indexOf('/user/') !== -1);
+    authors.forEach(author => {
+        let authorName = author.href;
+        if (!authorName.startsWith(userPrefix)) return;
+        authorName = authorName.substring(userPrefix.length);
+        if (authorName.endsWith('/')) authorName = authorName.substring(0, authorName.length-1);
+
+        let node = author.parentNode;
+        let comment = null;
+        for (let i=0; i<4; i++) {
+            if (node.parentNode === null) break;
+            node = node.parentNode;
+            if (node.className.indexOf(' Comment ') !== -1) {
+                comment = node;
+                break;
+            }
+        }
+        if (comment === null || comment.parentNode === null) return;
+        const firstEval = comment.className.indexOf('{{JS_PREFIX}}_bubble_evaluated') === -1;
+        if (firstEval) {
+            comment.className = comment.className + ' {{JS_PREFIX}}_bubble_evaluated';
+        }
+        const authorBlocked = authorName in blocked_users;
+        if (authorBlocked || {{JS_PREFIX}}_includes_block_keyword(comment, firstEval)) {
+            if (authorBlocked) {
+                {{JS_PREFIX}}_tally_author_block(authorName);
+                if (!firstEval) {{JS_PREFIX}}_untally_allow();
+            }
+            {{JS_PREFIX}}_remove_comment(comment);
+            return;
+        }
+
+        if (author.className.indexOf('{{JS_PREFIX}}_bubble_has_icon') === -1) {
+            let b = {{JS_PREFIX}}_create_block_control(comment, authorName);
+            author.className = author.className + ' {{JS_PREFIX}}_bubble_has_icon';
+            author.parentNode.insertBefore(b, author);
+            {{JS_PREFIX}}_tally_allow();
+        }
+    });
+    if (authors.length > 0) {{JS_PREFIX}}_first = false;
+}

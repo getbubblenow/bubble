@@ -1,0 +1,15 @@
+[{
+  "name": "UserBlocker",
+  "children": {
+    "AppMatcher": [{
+      "name": "RedditMatcher",
+      "site": "Reddit",
+      "template": true,
+      "requestCheck": true,
+      "requestModifier": true,
+      "fqdn": "www.reddit.com",
+      "urlRegex": "/r/.+",
+      "rule": "reddit_user_blocker"
+    }]
+  }
+}]
