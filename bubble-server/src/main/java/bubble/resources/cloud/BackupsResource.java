@@ -9,6 +9,7 @@ import bubble.model.account.Account;
 import bubble.model.cloud.BackupStatus;
 import bubble.model.cloud.BubbleBackup;
 import bubble.model.cloud.BubbleNetwork;
+import bubble.server.BubbleConfiguration;
 import bubble.service.backup.BackupCleanerService;
 import bubble.service.backup.BackupService;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -36,6 +37,7 @@ public class BackupsResource {
         this.network = network;
     }
 
+    @Autowired private BubbleConfiguration configuration;
     @Autowired private BubbleBackupDAO backupDAO;
     @Autowired private BackupService backupService;
     @Autowired private BackupCleanerService backupCleanerService;

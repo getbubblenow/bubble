@@ -15,6 +15,7 @@ import bubble.model.cloud.StorageMetadata;
 import bubble.notify.storage.StorageListing;
 import lombok.Cleanup;
 import lombok.Getter;
+import lombok.NonNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.io.FileUtil;
@@ -22,9 +23,7 @@ import org.cobbzilla.util.system.OneWayFlag;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
@@ -200,16 +199,17 @@ public class LocalStorageDriver extends CloudServiceDriverBase<LocalStorageConfi
 
     @Override public boolean rekey(String fromNode, CloudService newCloud) throws IOException { return notSupported("rekey"); }
 
-    @Override public StorageListing list(String fromNode, String prefix) throws IOException {
-        final BubbleNode from = getFromNode(fromNode);
-        final File file = keyFile(from, prefix);
-        final File rootFile = keyFile(from, "");
-        final List<String> keys = new ArrayList<>();
-        listFilesRecursively(file).forEach(f -> keys.add(abs(f).substring((int) rootFile.length())));
-        return new StorageListing()
-                .setListingId(null)
-                .setTruncated(false)
-                .setKeys(keys.toArray(new String[0]));
+    @Override @NonNull public StorageListing list(@NonNull final String fromNodeUuid, @NonNull final String prefix) {
+        final var from = getFromNode(fromNodeUuid);
+        final var rootPathLength = abs(keyFile(from, "")).length();
+        final var keys = listFilesRecursively(keyFile(from, prefix)).stream()
+                                                                    .filter(File::isFile)
+                                                                    .map(FileUtil::abs)
+                                                                    .map(path -> path.substring(rootPathLength))
+                                                                    .toArray(String[]::new);
+        return new StorageListing().setListingId(null)
+                                   .setTruncated(false)
+                                   .setKeys(keys);
     }
 
     @Override public StorageListing listNext(String fromNode, String listingId) throws IOException {
