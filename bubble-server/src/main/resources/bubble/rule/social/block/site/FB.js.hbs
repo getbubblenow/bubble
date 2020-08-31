@@ -27,7 +27,7 @@ Element.prototype.appendChild = function() {
     const node = arguments[0];
     try {
         if (node.tagName) {
-            if ( ({{JS_PREFIX}}_mobile && node.tagName.toUpperCase() === 'SECTION')
+            if ( ({{JS_PREFIX}}_mobile && node.tagName.toUpperCase() === 'ARTICLE')
                 || (!{{JS_PREFIX}}_mobile && node.tagName.toUpperCase() === 'DIV' && node.role && node.role === 'article') ) {
                 const block = {{JS_PREFIX}}_should_block({{JS_PREFIX}}_blocked_users, node)
                 if (block) {
@@ -51,8 +51,6 @@ function {{JS_PREFIX}}_remove_article_from_dom(article, authorName) {
         const feedItem = {{JS_PREFIX}}_find_feed_item(article);
         if (feedItem.parentElement) {
             feedItem.innerHTML = '';
-            // feedItem.parentElement.removeChild(feedItem);
-            // feedItem.parentElement = null;
         }
     } catch (e) {
         log('error removing post by author: ' + authorName + ': ' + e);
@@ -82,7 +80,7 @@ function {{JS_PREFIX}}_remove_article(article, authorName) {
         article.className = article.className + ' {{JS_PREFIX}}_bub_blocked';
         {{JS_PREFIX}}_remove_article_from_dom(article, authorName);
     } else {
-        log('found post marked removed but still present (??) by author: ' + authorName);
+        console.log('found post marked removed but still present (??) by author: ' + authorName);
     }
 }
 
@@ -147,16 +145,18 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
         let authorHref = authorLink.href;
         let authorName = authorHref.startsWith(sitePrefix) ? authorHref.substring(sitePrefix.length) : authorHref;
         const qPos = authorName.indexOf('?');
-        if (qPos !== -1) {
-            authorName = authorName.substring(0, qPos);
-            authorLink.href = sitePrefix + authorName;
-        }
-        if (authorName.endsWith('/')) authorName = authorName.substring(0, authorName.length-1);
-        if (authorName === 'profile.php') {
-            // log('should_block returning true for '+authorName);
-            {{JS_PREFIX}}_tally_author_block({{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other'));
-            if (!firstEval) {{JS_PREFIX}}_untally_allow(authorName);
-            return true;
+        if (authorName.startsWith('profile.php?')) {
+            const andPos = authorName.indexOf('&');
+            if (andPos !== -1) {
+                authorName = authorName.substring(0, andPos);
+                authorLink.href = sitePrefix + authorName;
+            }
+        } else {
+            if (qPos !== -1) {
+                authorName = authorName.substring(0, qPos);
+                authorLink.href = sitePrefix + authorName;
+            }
+            if (authorName.endsWith('/')) authorName = authorName.substring(0, authorName.length - 1);
         }
         if (firstAuthor === null) firstAuthor = authorName;
         const authorDisplay = mobile
@@ -170,7 +170,7 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
             return authorName == null ? true : authorName;
 
         } else if (authorName in blocked_users) {
-            // log('should_block returning '+authorName);
+            // log('should_block returning blocked user: '+authorName);
             {{JS_PREFIX}}_tally_author_block(authorName == null ? {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other') : authorName);
             if (!firstEval) {{JS_PREFIX}}_untally_allow();
             return authorName == null ? true : authorName;
@@ -213,7 +213,9 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
 
     const articles = mobile
         ? {{JS_PREFIX}}_getElementsByXPath('//article')
-        : {{JS_PREFIX}}_getElementsByXPath('//div[@role="article" and @aria-posinset]');
+        : Array.from({{JS_PREFIX}}_getElementsByXPath('//div[@role="article" and @aria-posinset]'))
+            .filter(a => a.firstChild && a.firstChild.tagName.toUpperCase() === 'DIV'
+                      && a.firstChild.className && a.firstChild.className === 'story_body_container');
 
     for (let i=0; i<articles.length; i++) {
         const article = articles[i];
