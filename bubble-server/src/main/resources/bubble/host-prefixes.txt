@@ -736,8 +736,6 @@ bails
 bairn
 baith
 baits
-baiza
-baize
 bajan
 bajra
 bajri
@@ -753,9 +751,6 @@ baldy
 baled
 baler
 bales
-balks
-balky
-bally
 balms
 balmy
 baloo
@@ -1199,7 +1194,6 @@ boeps
 boets
 boeuf
 boffo
-boffs
 bogan
 bogey
 boggy
@@ -1207,9 +1201,7 @@ bogie
 bogle
 bohea
 bohos
-boils
 boing
-boink
 boite
 boked
 bokeh
@@ -1227,17 +1219,14 @@ bolus
 bomas
 bombe
 bombo
-bombs
 bonce
 bonds
 boned
-boner
 bones
 boney
 bongo
 bongs
 bonie
-bonks
 bonne
 bonny
 bonus
@@ -1245,7 +1234,6 @@ bonza
 bonze
 booai
 booay
-boody
 booed
 boofy
 boogy
@@ -7180,7 +7168,6 @@ oaves
 obang
 obeah
 obeli
-obese
 obeys
 obias
 obied
@@ -10853,10 +10840,7 @@ toing
 toise
 toits
 tokay
-toked
 token
-toker
-tokes
 tokos
 tolan
 tolar
