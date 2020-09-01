@@ -309,8 +309,8 @@ def responseheaders(flow):
                         bubble_log(prefix+'no matchers, passing thru: '+path)
                         pass
                 else:
-                    bubble_log(prefix+'no '+HEADER_CONTENT_TYPE +' header, passing thru: '+path)
+                    bubble_log(prefix+'no '+HEADER_CONTENT_TYPE+' header, passing thru: '+path)
                     pass
             else:
-                bubble_log(prefix+'no '+CTX_BUBBLE_MATCHERS +' in ctx, passing thru: '+path)
+                bubble_log(prefix+'no '+CTX_BUBBLE_MATCHERS+' in ctx, passing thru: '+path)
                 pass

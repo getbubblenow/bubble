@@ -17,8 +17,10 @@ class Rerouter:
         if host is None:
             return None
 
+        is_health_check = flow.request.path.startswith(HEALTH_CHECK_URI)
         if flow.request.path and flow.request.path.startswith(BUBBLE_URI_PREFIX):
-            bubble_log("get_matchers: not filtering special bubble path: "+flow.request.path)
+            if not is_health_check:
+                bubble_log("get_matchers: not filtering special bubble path: "+flow.request.path)
             return None
 
         client_addr = str(flow.client_conn.address[0])
@@ -94,6 +96,7 @@ class Rerouter:
                     port = int(m.group("port"))
 
         # Determine if this request should be filtered
+        is_health_check = False
         if sni or host_header:
             host = str(sni or host_header)
             if host.startswith("b'"):
@@ -105,9 +108,8 @@ class Rerouter:
             if is_http:
                 fqdns = [host]
                 if is_bubble_request(server_addr, fqdns):
-                    if flow.request.path.startswith(HEALTH_CHECK_URI):
-                        pass
-                    else:
+                    is_health_check = flow.request.path.startswith(HEALTH_CHECK_URI)
+                    if not is_health_check:
                         bubble_log('dns_spoofing.request: redirecting to https for LOCAL bubble='+server_addr+' (bubble_host ('+bubble_host+') in fqdns or bubble_host_alias ('+bubble_host_alias+') in fqdns) for client='+client_addr+', fqdns='+repr(fqdns)+', path='+flow.request.path)
                         add_flow_ctx(flow, CTX_BUBBLE_ABORT, 301)
                         add_flow_ctx(flow, CTX_BUBBLE_LOCATION, 'https://'+host+flow.request.path)
@@ -166,8 +168,9 @@ class Rerouter:
                     bubble_log('dns_spoofing.request: no rules returned, passing thru...')
                     bubble_activity_log(client_addr, server_addr, 'http_no_rules', log_url)
             else:
-                bubble_log('dns_spoofing.request: no matcher_response returned, passing thru...')
-                # bubble_activity_log(client_addr, server_addr, 'http_no_matcher_response', log_url)
+                if not is_health_check:
+                    bubble_log('dns_spoofing.request: no matcher_response returned, passing thru...')
+                    # bubble_activity_log(client_addr, server_addr, 'http_no_matcher_response', log_url)
 
         elif is_http and is_not_from_vpn(client_addr):
             # todo: add to fail2ban
