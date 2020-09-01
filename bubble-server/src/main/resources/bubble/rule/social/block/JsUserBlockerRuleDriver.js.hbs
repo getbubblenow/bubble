@@ -217,7 +217,7 @@ function {{JS_PREFIX}}_mark_removed(node) {
     if (notRemoved) {
         node.className = node.className += ' {{JS_PREFIX}}_bub_removed_for_keyword';
     }
-    return notRemoved === false;
+    return notRemoved;
 }
 
 function {{JS_PREFIX}}_includes_block_keyword (element, firstEval) {
@@ -230,13 +230,16 @@ function {{JS_PREFIX}}_includes_block_keyword (element, firstEval) {
                 let cskw = kw.substring(1);
                 if (html.indexOf(cskw) !== -1) {
                     // {{PAGE_PREFIX}}_log('>>> includes_block_keyword: blocking based on case-sensitive keyword: ' + cskw);
-                    if ({{JS_PREFIX}}_mark_removed(element)) {{JS_PREFIX}}_tally_keyword_block(cskw);
+                    if ({{JS_PREFIX}}_mark_removed(element)) {
+                        {{JS_PREFIX}}_tally_keyword_block(cskw);
+                    }
                     if (!firstEval) {{JS_PREFIX}}_untally_allow();
                     return true;
                 }
             } else {
                 if (html.toLowerCase().indexOf(kw.toLowerCase()) !== -1) {
                     // {{PAGE_PREFIX}}_log('>>> includes_block_keyword: blocking based on case-insensitive keyword: ' + kw);
+                    console.log('>>> includes_block_keyword: blocking based on case-insensitive keyword: ' + kw);
                     if ({{JS_PREFIX}}_mark_removed(element)) {{JS_PREFIX}}_tally_keyword_block(kw);
                     if (!firstEval) {{JS_PREFIX}}_untally_allow();
                     return true;

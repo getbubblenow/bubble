@@ -170,7 +170,7 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
             return authorName == null ? true : authorName;
 
         } else if (authorName in blocked_users) {
-            // log('should_block returning blocked user: '+authorName);
+            // log('found blocked user: '+authorName);
             {{JS_PREFIX}}_tally_author_block(authorName == null ? {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other') : authorName);
             if (!firstEval) {{JS_PREFIX}}_untally_allow();
             return authorName == null ? true : authorName;
