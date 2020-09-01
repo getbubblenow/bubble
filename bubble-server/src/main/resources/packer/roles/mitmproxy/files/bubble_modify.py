@@ -183,7 +183,7 @@ def responseheaders(flow):
     path = flow.request.path
     if path and path.startswith(BUBBLE_URI_PREFIX):
         if path.startswith(HEALTH_CHECK_URI):
-            bubble_log('responseheaders: special bubble health check request, responding with OK')
+            # bubble_log('responseheaders: special bubble health check request, responding with OK')
             flow.response.headers = Headers()
             flow.response.headers[HEADER_HEALTH_CHECK] = 'OK'
             flow.response.headers[HEADER_CONTENT_LENGTH] = '3'
