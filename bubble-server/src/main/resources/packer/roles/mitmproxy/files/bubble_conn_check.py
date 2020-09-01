@@ -49,6 +49,7 @@ SEC_STD = 'standard'
 SEC_BASIC = 'basic'
 SEC_OFF = 'disabled'
 
+
 def get_device_security_level(client_addr, fqdns):
     level = REDIS.get(REDIS_KEY_DEVICE_SECURITY_LEVEL_PREFIX+client_addr)
     if level is None:

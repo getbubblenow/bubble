@@ -73,8 +73,45 @@ function fullMitmReset {
   log "Full mitm reset completed"
 }
 
+function healthCheck {
+  MITM_PORT=${1}
+  START=$(date +%s)
+  HEALTH_CHECK_TIMEOUT=20
+  HEALTH_OK="NOT_RUN"
+  while [[ $(expr $(date +%s) - ${START}) -le ${HEALTH_CHECK_TIMEOUT} ]] ; do
+    log "Performing health check on mitm${MITM_PORT}..."
+    CURL_OUT="$(curl --silent --connect-timeout 2 --max-time 2 http://$(hostname):${MITM_PORT}/__bubble/__mitm_health 2>> ${LOG})"
+    if [[ ! -z ${CURL_OUT} && ${CURL_OUT} == "OK" ]] ; then
+      log "Health check on mitm${MITM_PORT}: OK"
+      echo -n "OK"
+      return
+    else
+      log "Health check on mitm${MITM_PORT}: failed"
+      HEALTH_OK="CURL_FAIL"
+    fi
+    sleep 1s
+  done
+  log "Health check: final failure for mitm${MITM_PORT}, returning ${HEALTH_OK}"
+  echo -n "${HEALTH_OK}"
+}
+
+function switchPorts {
+  MITM_PORT=${1}
+  if [[ "${MITM_PORT}" == "8888" ]] ; then
+    ensureMitmOn 9999
+    echo 9999 > ${MITM_PORT_FILE}
+    supervisorctl restart mitm8888
+  else
+    ensureMitmOn 8888
+    echo 8888 > ${MITM_PORT_FILE}
+    supervisorctl restart mitm9999
+  fi
+}
+
 log "Watching marker file ${BUBBLE_MITM_MARKER} MIN_PCT_FREE=${MIN_PCT_FREE}%"
 sleep 2s && touch ${BUBBLE_MITM_MARKER} || log "Error touching ${BUBBLE_MITM_MARKER}" # first time through, always check and set on/off state
+LAST_SEEN_LISTENING=$(date +%s)
+STARTUP_TIMEOUT=60
 while : ; do
   if [[ $(stat -c %Y ${BUBBLE_MITM_MARKER}) -gt $(stat -c %Y ${ROOT_KEY_MARKER}) ]] ; then
     if [[ "$(cat ${BUBBLE_MITM_MARKER} | tr -d [[:space:]])" == "on" ]] ; then
@@ -108,7 +145,21 @@ while : ; do
       MITM_PID=$(netstat -nlpt4 | grep :${MITM_PORT} | awk '{print $7}' | cut -d/ -f1)
       if [[ -z "${MITM_PID}" ]] ; then
         log "Warn: No mitm PID found listening on ${MITM_PORT} via netstat, may be starting up"
+        if [[ $(expr $(date +%s) - ${LAST_SEEN_LISTENING}) -gt ${STARTUP_TIMEOUT} ]] ; then
+          log "Error: No mitm PID found listening on ${MITM_PORT} via netstat, startup timeout (exceeded ${STARTUP_TIMEOUT} seconds), switching ports"
+          switchPorts ${MITM_PORT}
+          LAST_SEEN_LISTENING=$(date +%s)
+          continue
+        fi
       else
+        LAST_SEEN_LISTENING=$(date +%s)
+        # perform health check
+        HEALTH_CHECK_RESULT="$(healthCheck ${MITM_PORT})"
+        if [[ -z "${HEALTH_CHECK_RESULT}" || "${HEALTH_CHECK_RESULT}" != "OK" ]] ; then
+            log "Warn: health check failed, switching mitm port: ${HEALTH_CHECK_RESULT}"
+            switchPorts ${MITM_PORT}
+            continue
+        fi
         PCT_FREE=$(expr $(free | grep -m 1 Mem: | awk '{print $7"00 / "$2}'))
         PCT_MEM="$(ps q ${MITM_PID} -o %mem --no-headers | tr -d [[:space:]] | cut -f1 -d. | sed 's/[^0-9]*//g')"
         # log "Info: mitm pid ${MITM_PID} using ${PCT_MEM}% of memory"
@@ -117,15 +168,7 @@ while : ; do
         else
           if [[ ${PCT_FREE} -lt ${MIN_PCT_FREE} ]] ; then
             log "Warn: switching mitm port: ${PCT_FREE}% free < ${MIN_PCT_FREE}% min. mitm${MITM_PORT} using ${PCT_MEM}%"
-            if [[ "${MITM_PORT}" == "8888" ]] ; then
-              ensureMitmOn 9999
-              echo 9999 > ${MITM_PORT_FILE}
-              supervisorctl restart mitm8888
-            else
-              ensureMitmOn 8888
-              echo 8888 > ${MITM_PORT_FILE}
-              supervisorctl restart mitm9999
-            fi
+            switchPorts ${MITM_PORT}
           fi
         fi
       fi

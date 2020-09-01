@@ -4,8 +4,16 @@
 #
 PORT=${1:-8888}
 echo "Starting mitmproxy on port ${PORT} ..."
+
+VENV_DIR="/home/mitmproxy/mitmproxy/venv"
+SETUP_VENV=1
+if [[ -d ${VENV_DIR} && $(find ${VENV_DIR} -type f -name "redis*" | wc -c | tr -d ' ') -gt 0 ]] ; then
+  echo "venv dir looks OK, skipping venv setup"
+  SETUP_VENV=0
+fi
+
 cd /home/mitmproxy/mitmproxy && \
-./dev.sh && . ./venv/bin/activate && \
+./dev.sh ${SETUP_VENV} && . ./venv/bin/activate && \
 mitmdump \
   --listen-host 0.0.0.0 \
   --listen-port ${PORT} \

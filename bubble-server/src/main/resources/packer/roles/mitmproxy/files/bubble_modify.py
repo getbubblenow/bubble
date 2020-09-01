@@ -5,11 +5,11 @@ import json
 import re
 import requests
 import urllib
-import uuid
 import traceback
 from mitmproxy.net.http import Headers
 from bubble_config import bubble_port, bubble_host_alias, debug_capture_fqdn, debug_stream_fqdn, debug_stream_uri
 from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, BUBBLE_URI_PREFIX, \
+    HEADER_HEALTH_CHECK, HEALTH_CHECK_URI, \
     CTX_BUBBLE_REQUEST_ID, CTX_CONTENT_LENGTH, CTX_CONTENT_LENGTH_SENT, bubble_log, get_flow_ctx, add_flow_ctx, \
     HEADER_USER_AGENT, HEADER_FILTER_PASSTHRU, HEADER_CONTENT_SECURITY_POLICY, REDIS, redis_set, parse_host_header
 
@@ -182,28 +182,36 @@ def responseheaders(flow):
 
     path = flow.request.path
     if path and path.startswith(BUBBLE_URI_PREFIX):
-        uri = 'http://127.0.0.1:' + bubble_port + '/' + path[len(BUBBLE_URI_PREFIX):]
-        bubble_log('responseheaders: sending special bubble request to '+uri)
-        headers = {
-            'Accept' : 'application/json',
-            'Content-Type': 'application/json'
-        }
-        response = None
-        if flow.request.method == 'GET':
-            response = requests.get(uri, headers=headers, stream=True)
-        elif flow.request.method == 'POST':
-            bubble_log('responseheaders: special bubble request: POST content is '+str(flow.request.content))
-            headers['Content-Length'] = str(len(flow.request.content))
-            response = requests.post(uri, data=flow.request.content, headers=headers)
-        else:
-            bubble_log('responseheaders: special bubble request: method '+flow.request.method+' not supported')
-        if response is not None:
-            bubble_log('responseheaders: special bubble request: response status = '+str(response.status_code))
+        if path.startswith(HEALTH_CHECK_URI):
+            bubble_log('responseheaders: special bubble health check request, responding with OK')
             flow.response.headers = Headers()
-            for key, value in response.headers.items():
-                flow.response.headers[key] = value
-            flow.response.status_code = response.status_code
-            flow.response.stream = lambda chunks: send_bubble_response(response)
+            flow.response.headers[HEADER_HEALTH_CHECK] = 'OK'
+            flow.response.headers[HEADER_CONTENT_LENGTH] = '3'
+            flow.response.status_code = 200
+            flow.response.stream = lambda chunks: [b'OK\n']
+        else:
+            uri = 'http://127.0.0.1:' + bubble_port + '/' + path[len(BUBBLE_URI_PREFIX):]
+            bubble_log('responseheaders: sending special bubble request to '+uri)
+            headers = {
+                'Accept' : 'application/json',
+                'Content-Type': 'application/json'
+            }
+            response = None
+            if flow.request.method == 'GET':
+                response = requests.get(uri, headers=headers, stream=True)
+            elif flow.request.method == 'POST':
+                bubble_log('responseheaders: special bubble request: POST content is '+str(flow.request.content))
+                headers['Content-Length'] = str(len(flow.request.content))
+                response = requests.post(uri, data=flow.request.content, headers=headers)
+            else:
+                bubble_log('responseheaders: special bubble request: method '+flow.request.method+' not supported')
+            if response is not None:
+                bubble_log('responseheaders: special bubble request: response status = '+str(response.status_code))
+                flow.response.headers = Headers()
+                for key, value in response.headers.items():
+                    flow.response.headers[key] = value
+                flow.response.status_code = response.status_code
+                flow.response.stream = lambda chunks: send_bubble_response(response)
 
     else:
         abort_code = get_flow_ctx(flow, CTX_BUBBLE_ABORT)

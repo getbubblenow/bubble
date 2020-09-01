@@ -22,14 +22,17 @@ HEADER_CONTENT_SECURITY_POLICY = 'Content-Security-Policy'
 HEADER_REFERER = 'Referer'
 HEADER_FILTER_PASSTHRU = 'X-Bubble-Passthru'
 
-CTX_BUBBLE_MATCHERS='X-Bubble-Matchers'
-CTX_BUBBLE_ABORT='X-Bubble-Abort'
-CTX_BUBBLE_LOCATION='X-Bubble-Location'
-CTX_BUBBLE_PASSTHRU='X-Bubble-Passthru'
-CTX_BUBBLE_REQUEST_ID='X-Bubble-RequestId'
-CTX_CONTENT_LENGTH='X-Bubble-Content-Length'
-CTX_CONTENT_LENGTH_SENT='X-Bubble-Content-Length-Sent'
-BUBBLE_URI_PREFIX='/__bubble/'
+CTX_BUBBLE_MATCHERS = 'X-Bubble-Matchers'
+CTX_BUBBLE_ABORT = 'X-Bubble-Abort'
+CTX_BUBBLE_LOCATION = 'X-Bubble-Location'
+CTX_BUBBLE_PASSTHRU = 'X-Bubble-Passthru'
+CTX_BUBBLE_REQUEST_ID = 'X-Bubble-RequestId'
+CTX_CONTENT_LENGTH = 'X-Bubble-Content-Length'
+CTX_CONTENT_LENGTH_SENT = 'X-Bubble-Content-Length-Sent'
+BUBBLE_URI_PREFIX = '/__bubble/'
+
+HEADER_HEALTH_CHECK = 'X-Mitm-Health'
+HEALTH_CHECK_URI = BUBBLE_URI_PREFIX + '__mitm_health'
 
 REDIS = redis.Redis(host='127.0.0.1', port=6379, db=0)
 BUBBLE_ACTIVITY_LOG_PREFIX = 'bubble_activity_log_'
@@ -173,10 +176,12 @@ def bubble_matchers(req_id, client_addr, server_addr, flow, host):
         traceback.print_exc()
     return None
 
+
 def add_flow_ctx(flow, name, value):
     if not hasattr(flow, 'bubble_ctx'):
         flow.bubble_ctx = {}
     flow.bubble_ctx[name] = value
+
 
 def get_flow_ctx(flow, name):
     if not hasattr(flow, 'bubble_ctx'):

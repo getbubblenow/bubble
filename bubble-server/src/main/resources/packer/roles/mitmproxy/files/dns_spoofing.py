@@ -6,7 +6,7 @@ import time
 import uuid
 from mitmproxy.net.http import headers as nheaders
 
-from bubble_api import bubble_matchers, bubble_log, bubble_activity_log, \
+from bubble_api import bubble_matchers, bubble_log, bubble_activity_log, HEALTH_CHECK_URI, \
     CTX_BUBBLE_MATCHERS, BUBBLE_URI_PREFIX, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_REQUEST_ID, \
     add_flow_ctx, parse_host_header, is_bubble_request, is_sage_request, is_not_from_vpn
 from bubble_config import bubble_host, bubble_host_alias
@@ -105,10 +105,13 @@ class Rerouter:
             if is_http:
                 fqdns = [host]
                 if is_bubble_request(server_addr, fqdns):
-                    bubble_log('dns_spoofing.request: redirecting to https for LOCAL bubble='+server_addr+' (bubble_host ('+bubble_host+') in fqdns or bubble_host_alias ('+bubble_host_alias+') in fqdns) for client='+client_addr+', fqdns='+repr(fqdns))
-                    add_flow_ctx(flow, CTX_BUBBLE_ABORT, 301)
-                    add_flow_ctx(flow, CTX_BUBBLE_LOCATION, 'https://'+host+flow.request.path)
-                    return
+                    if flow.request.path.startswith(HEALTH_CHECK_URI):
+                        pass
+                    else:
+                        bubble_log('dns_spoofing.request: redirecting to https for LOCAL bubble='+server_addr+' (bubble_host ('+bubble_host+') in fqdns or bubble_host_alias ('+bubble_host_alias+') in fqdns) for client='+client_addr+', fqdns='+repr(fqdns)+', path='+flow.request.path)
+                        add_flow_ctx(flow, CTX_BUBBLE_ABORT, 301)
+                        add_flow_ctx(flow, CTX_BUBBLE_LOCATION, 'https://'+host+flow.request.path)
+                        return
 
                 elif is_sage_request(server_addr, fqdns):
                     bubble_log('dns_spoofing.request: redirecting to https for SAGE server='+server_addr+' for client='+client_addr)
