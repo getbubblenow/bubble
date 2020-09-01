@@ -55,14 +55,14 @@ function {{JS_PREFIX}}_remove_comment(comment) {
         const nextPadding = Array.from(nextCommentWrapper.getElementsByTagName('div'))
             .find(w => w.style && w.style.paddingLeft && w.style.paddingLeft.length && w.style.paddingLeft.length > 0 && w.style.paddingLeft.endsWith('px'));
         if (nextPadding) {
-            console.log('nextPadding.style.paddingLeft='+nextPadding.style.paddingLeft+', nextPadding.style.paddingLeft.substring(nextPadding.style.paddingLeft.length-2) ='+nextPadding.style.paddingLeft.substring(0, nextPadding.style.paddingLeft.length-2));
+            // console.log('nextPadding.style.paddingLeft='+nextPadding.style.paddingLeft+', nextPadding.style.paddingLeft.substring(nextPadding.style.paddingLeft.length-2) ='+nextPadding.style.paddingLeft.substring(0, nextPadding.style.paddingLeft.length-2));
             const nextPadAmount = parseInt(nextPadding.style.paddingLeft.substring(0, nextPadding.style.paddingLeft.length-2));
             if (nextPadAmount > paddingLeft) {
-                console.log('startPad='+paddingLeft+', nextPadAmount='+nextPadAmount+', adding wrapper to remove');
+                // console.log('startPad='+paddingLeft+', nextPadAmount='+nextPadAmount+', adding wrapper to remove');
                 wrappersToRemove.push(nextCommentWrapper);
                 nextCommentWrapper = nextCommentWrapper.nextElementSibling ? nextCommentWrapper.nextElementSibling : null;
             } else {
-                console.log('startPad='+paddingLeft+', nextPadAmount='+nextPadAmount+', stopping removals');
+                // console.log('startPad='+paddingLeft+', nextPadAmount='+nextPadAmount+', stopping removals');
                 break;
             }
         } else {
@@ -92,15 +92,16 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
 
         let node = author.parentNode;
         let comment = null;
-        const commentClass = {{JS_PREFIX}}_old ? ' comment' : ' Comment ';
-        for (let i=0; i<4; i++) {
-            if (node.parentNode === null) break;
+        const commentClass = {{JS_PREFIX}}_old ? ' comment' : 'Comment ';
+        for (let i=0; i<10; i++) {
+            if (node.parentNode === null || node.parentNode === document) break;
             node = node.parentNode;
             if (node.className && node.className.indexOf(commentClass) !== -1) {
                 comment = node;
                 break;
             }
         }
+
         if (comment === null || comment.parentNode === null) return;
         const firstEval = comment.className.indexOf('{{JS_PREFIX}}_bubble_evaluated') === -1;
         if (firstEval) {
@@ -119,7 +120,11 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
         if (author.className.indexOf('{{JS_PREFIX}}_bubble_has_icon') === -1) {
             if (authorName !== currentUser) {
                 let b = {{JS_PREFIX}}_create_block_control(comment, authorName);
-                author.parentNode.insertBefore(b, author);
+                if ({{JS_PREFIX}}_old) {
+                    author.parentNode.insertBefore(b, author);
+                } else {
+                    author.appendChild(b);
+                }
             }
             author.className = author.className + ' {{JS_PREFIX}}_bubble_has_icon';
             {{JS_PREFIX}}_tally_allow();
