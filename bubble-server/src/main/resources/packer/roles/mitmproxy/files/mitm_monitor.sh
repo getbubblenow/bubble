@@ -79,14 +79,14 @@ function healthCheck {
   HEALTH_CHECK_TIMEOUT=20
   HEALTH_OK="NOT_RUN"
   while [[ $(expr $(date +%s) - ${START}) -le ${HEALTH_CHECK_TIMEOUT} ]] ; do
-    log "Performing health check on mitm${MITM_PORT}..."
+    # log "Performing health check on mitm${MITM_PORT}..."
     CURL_OUT="$(curl --silent --connect-timeout 2 --max-time 2 http://$(hostname):${MITM_PORT}/__bubble/__mitm_health 2>> ${LOG})"
     if [[ ! -z ${CURL_OUT} && ${CURL_OUT} == "OK" ]] ; then
-      log "Health check on mitm${MITM_PORT}: OK"
+      # log "Health check on mitm${MITM_PORT}: OK"
       echo -n "OK"
       return
     else
-      log "Health check on mitm${MITM_PORT}: failed"
+      log "Health check on mitm${MITM_PORT}: failed: ${CURL_OUT}"
       HEALTH_OK="CURL_FAIL"
     fi
     sleep 1s
