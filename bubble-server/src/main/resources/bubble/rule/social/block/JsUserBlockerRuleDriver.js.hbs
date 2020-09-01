@@ -474,7 +474,7 @@ function {{JS_PREFIX}}_show_app_details() {
     const summaryLabel = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_signalNoiseRatio', 'signal/noise');
     const totalAllowed = {{PAGE_PREFIX}}_allow_tally;
     const fullTotal = totalAllowed + totalBlocks;
-    const ratio = 100.0 * (totalAllowed / fullTotal);
+    const ratio = fullTotal === 0 ? 0 : 100.0 * (totalAllowed / fullTotal);
     const eqSign = totalBlocks === 0 ? '=' : '≈';
     summaryHeader.appendChild(document.createTextNode(summaryLabel + ': ' + totalAllowed + '/' + totalBlocks + ' '+eqSign+' ' + ratio.toLocaleString('{{ACCOUNT_LOCALE_HYPHEN}}', { maximumSignificantDigits: 3 }) + '%'));
     recentBlocksDiv.appendChild(summaryHeader);
