@@ -97,6 +97,7 @@ function {{JS_PREFIX}}_chase_redirects (a, removeParams) {
     }
 
     a.rel = 'noopener noreferrer nofollow';
+
     fetch('/__bubble/api/filter/follow/{{BUBBLE_REQUEST_ID}}', {method: 'POST', body: JSON.stringify(a.href)})
         .then(response => response.text())
         .then(data => {
@@ -136,6 +137,19 @@ if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
             case 1: return host;
             default: return fqdnParts[fqdnParts.length-2] + '.' + fqdnParts[fqdnParts.length-1];
         }
+    }
+
+    function {{PAGE_PREFIX}}_remove_param(href, param) {
+        const cid = href.indexOf(param+'=');
+        if (cid !== -1) {
+            const regex = new RegExp('&?'+param+'=[^?&]+', 'g');
+            href = href.replace(regex, '');
+            const qPos = href.indexOf('?');
+            if (href[qPos+1] === '&') {
+                href = href.substring(0, qPos) + href.substring(qPos+2);
+            }
+        }
+        return href;
     }
 
     {{PAGE_PREFIX}}_log = function (data) {
