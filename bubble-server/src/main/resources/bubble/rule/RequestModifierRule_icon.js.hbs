@@ -30,15 +30,38 @@
         .then(response => response.text())
         .then(data => set_func(data))
         .catch((error) => {
-            console.error('Error getting link message ('+messages+'): '+error);
+            console.error('Error getting link message ('+link+'): '+error);
         });
+}
+
+{{JS_PREFIX}}_app_entry_div = function () {
+    const entry = document.createElement('div');
+    entry.style.all = 'revert';
+    entry.style.fontSize = 'small';
+    return entry;
+}
+
+{{JS_PREFIX}}_app_header_element = function () {
+    const header = document.createElement('strong');
+    header.style.all = 'revert';
+    header.style.fontSize = 'medium';
+    return header;
+}
+
+{{JS_PREFIX}}_app_header = function (title, defaultTitle, formatFunc) {
+    const labelText = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, title, defaultTitle);
+    const label = {{JS_PREFIX}}_app_header_element();
+    label.appendChild(document.createTextNode(formatFunc ? formatFunc(labelText) : labelText));
+    return label;
 }
 
 {{JS_PREFIX}}_app_title_span = function (defaultName) {
     const appTitleSpan = document.createElement('span');
-    appTitleSpan.style.fontSize = 'medium';
+    appTitleSpan.style.fontSize = 'large';
     const appImage = document.createElement('img');
     appImage.src = {{JS_PREFIX}}_asset_img_url('icon');
+    appImage.style.all = 'revert';
+    appImage.style.width = '16px';
     appImage.width = 16;
     const appTitle = document.createElement('strong');
     const appName = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_appName', defaultName);
@@ -48,10 +71,18 @@
     return appTitleSpan;
 }
 
+function {{JS_PREFIX}}_create_button_element() {
+    const btn = document.createElement('button');
+    btn.style.color = 'black';
+    btn.style.fontSize = 'x-small';
+    btn.style.border = 'revert';
+    btn.style.background = 'revert';
+    return btn;
+}
+
 function {{JS_PREFIX}}_create_button(labelKey, labelDefault, onclick, labelFormat) {
     const label = {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, labelKey, labelDefault);
-    const btn = document.createElement('button');
-    btn.style.fontSize = 'x-small';
+    const btn = {{JS_PREFIX}}_create_button_element();
     btn.addEventListener('click', onclick);
     btn.appendChild(document.createTextNode(labelFormat ? labelFormat(label) : label));
     return btn;
@@ -95,6 +126,16 @@ if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
 
     {{PAGE_PREFIX}}_msg_or_default = function (messages, msg, def) {
         return msg && msg in messages ? messages[msg] : def;
+    }
+
+    {{PAGE_PREFIX}}_get_fqdn_tld = function () {
+        const host = window.location.hostname;
+        const fqdnParts = host.split('.');
+        switch (fqdnParts.length) {
+            case 0: return host;
+            case 1: return host;
+            default: return fqdnParts[fqdnParts.length-2] + '.' + fqdnParts[fqdnParts.length-1];
+        }
     }
 
     {{PAGE_PREFIX}}_log = function (data) {

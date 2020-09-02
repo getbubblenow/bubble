@@ -429,6 +429,14 @@ public class FilterHttpResource {
         return ok(ruleEngine.flushCaches());
     }
 
+    @DELETE @Path(EP_MATCHERS)
+    @Produces(APPLICATION_JSON)
+    public Response flushMatchers(@Context ContainerRequest request) {
+        final Account caller = userPrincipal(request);
+        if (!caller.admin()) return forbidden();
+        return ok(ruleEngine.flushMatchers());
+    }
+
     @POST @Path(EP_APPLY+"/{requestId}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.WILDCARD)

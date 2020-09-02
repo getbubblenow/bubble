@@ -214,14 +214,14 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
                 return FilterMatchDecision.abort_not_found;  // block this request
 
             case allow: default:
-                subDecision = checkRefererAndShowStats(decisionType, filter, account, device, extraLog, app, site, prefix, bubbleBlockConfig);
+                subDecision = checkRefererAndShowStats(decisionType, filter, account, device, extraLog, app, site, prefix);
                 if (subDecision != null) return subDecision;
                 if (log.isInfoEnabled()) log.info(prefix+"decision is ALLOW");
                 else if (extraLog) log.error(prefix+"decision is ALLOW");
                 return FilterMatchDecision.no_match;
 
             case filter:
-                subDecision = checkRefererAndShowStats(decisionType, filter, account, device, extraLog, app, site, prefix, bubbleBlockConfig);
+                subDecision = checkRefererAndShowStats(decisionType, filter, account, device, extraLog, app, site, prefix);
                 if (subDecision != null) return subDecision;
                 final List<BlockSpec> specs = decision.getSpecs();
                 if (empty(specs)) {
@@ -237,8 +237,8 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
                                 return FilterMatchDecision.abort_not_found;
                             }
                         }
-                        if (log.isInfoEnabled()) log.info(prefix+"decision was FILTER but no URL-blocks and inPageBlocks are disabled (returning no_match)");
-                        else if (extraLog) log.error(prefix+"decision was FILTER but no URL-blocks and inPageBlocks are disabled (returning no_match)");
+                        if (log.isInfoEnabled()) log.info(prefix+"decision was FILTER but no URL-blocks and both inPageBlocks and showStats are disabled (returning no_match)");
+                        else if (extraLog) log.error(prefix+"decision was FILTER but no URL-blocks and both inPageBlocks and showStats are disabled (returning no_match)");
                         return FilterMatchDecision.no_match;
                     }
                     if (log.isInfoEnabled()) log.info(prefix+"decision is FILTER (returning match)");
@@ -248,7 +248,8 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
         }
     }
 
-    public FilterMatchDecision checkRefererAndShowStats(BlockDecisionType decisionType, FilterMatchersRequest filter, Account account, Device device, boolean extraLog, String app, String site, String prefix, BubbleBlockConfig bubbleBlockConfig) {
+    public FilterMatchDecision checkRefererAndShowStats(BlockDecisionType decisionType, FilterMatchersRequest filter, Account account, Device device, boolean extraLog, String app, String site, String prefix) {
+        prefix += "(checkRefererAndShowStats): ";
         if (filter.hasReferer()) {
             final FilterMatchDecision refererDecision = checkRefererDecision(filter, account, device, app, site, prefix);
             if (refererDecision != null && refererDecision.isAbort()) {
@@ -261,6 +262,9 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
             if (log.isInfoEnabled()) log.info(prefix+"decision was "+decisionType+" but showStats=true, returning match");
             else if (extraLog) log.error(prefix+"decision was "+decisionType+" but showStats=true, returning match");
             return FilterMatchDecision.match;
+        } else {
+            if (log.isInfoEnabled()) log.info(prefix+"decision was "+decisionType+" but showStats=false, returning null");
+            else if (extraLog) log.error(prefix+"decision was "+decisionType+" but showStats=false, returning null");
         }
         return null;
     }
@@ -419,7 +423,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
         final AppDataDAO dataDAO = configuration.getBean(AppDataDAO.class);
         log.info("priming app="+app.getName());
         dataDAO.findByAccountAndAppAndAndKeyPrefix(account.getUuid(), app.getUuid(), PREFIX_APPDATA_HIDE_STATS)
-                .forEach(data -> deviceIdService.setBlockStatsForFqdn(account, fqdnFromKey(data.getKey()), false));
+                .forEach(data -> deviceIdService.setBlockStatsForFqdn(account, fqdnFromKey(data.getKey()), !Boolean.parseBoolean(data.getData())));
     }
 
     @Override public Function<AppData, AppData> createCallback(Account account,
@@ -437,7 +441,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
                         deviceIdService.unsetBlockStatsForFqdn(account, fqdn);
                     } else {
                         log.info(prefix+"setting fqdn: "+fqdn);
-                        deviceIdService.setBlockStatsForFqdn(account, fqdn, false);
+                        deviceIdService.setBlockStatsForFqdn(account, fqdn, !Boolean.parseBoolean(data.getData()));
                     }
                 } else {
                     throw invalidEx("err.fqdn.invalid", "not a valid FQDN: "+fqdn, fqdn);
