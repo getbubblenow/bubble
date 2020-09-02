@@ -88,34 +88,7 @@ function {{JS_PREFIX}}_create_button(labelKey, labelDefault, onclick, labelForma
     return btn;
 }
 
-function {{JS_PREFIX}}_chase_redirects (a, removeParams) {
-    if (a.className && a.className.indexOf('{{JS_PREFIX}}_followed') !== -1) return;
-    if (a.className) {
-        a.className = a.className + ' {{JS_PREFIX}}_followed';
-    } else {
-        a.className = '{{JS_PREFIX}}_followed';
-    }
-
-    a.rel = 'noopener noreferrer nofollow';
-
-    fetch('/__bubble/api/filter/follow/{{BUBBLE_REQUEST_ID}}', {method: 'POST', body: JSON.stringify(a.href)})
-        .then(response => response.text())
-        .then(data => {
-            if (data && (data.startsWith('http://') || data.startsWith('https://'))) {
-                if (typeof removeParams === 'undefined' || removeParams === null || removeParams) {
-                    const qPos = data.indexOf('?');
-                    a.href = qPos === -1 ? data : data.substring(0, qPos);
-                } else {
-                    a.href = data;
-                }
-            } else {
-                console.warn('chase_redirects: '+a.href+' returned non-URL response: '+data);
-            }
-        })
-        .catch((error) => {
-            console.error('chase_redirects: error following: '+a.href+': '+error);
-        });
-}
+let {{PAGE_PREFIX}}_url_chasers = {};
 
 if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
 
@@ -258,4 +231,40 @@ if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
             }
         }
     });
+}
+
+function {{JS_PREFIX}}_chase_redirects (a, removeParams) {
+    const initial_href = a.href;
+    if (initial_href in {{PAGE_PREFIX}}_url_chasers) {
+        a.href = {{PAGE_PREFIX}}_url_chasers[initial_href];
+        return;
+    }
+    if (a.className && a.className.indexOf('{{JS_PREFIX}}_followed') !== -1) return;
+    if (a.className) {
+        a.className = a.className + ' {{JS_PREFIX}}_followed';
+    } else {
+        a.className = '{{JS_PREFIX}}_followed';
+    }
+
+    a.rel = 'noopener noreferrer nofollow';
+
+    fetch('/__bubble/api/filter/follow/{{BUBBLE_REQUEST_ID}}', {method: 'POST', body: JSON.stringify(initial_href)})
+        .then(response => response.text())
+        .then(data => {
+            if (data && (data.startsWith('http://') || data.startsWith('https://'))) {
+                if (typeof removeParams === 'undefined' || removeParams === null || removeParams) {
+                    const qPos = data.indexOf('?');
+                    a.href = qPos === -1 ? data : data.substring(0, qPos);
+                } else {
+                    a.href = data;
+                }
+                {{PAGE_PREFIX}}_url_chasers[initial_href] = a.href;
+                console.log('chase_redirect: rewrote '+initial_href+' -> '+a.href);
+            } else {
+                console.warn('chase_redirects: '+a.href+' returned non-URL response: '+data);
+            }
+        })
+        .catch((error) => {
+            console.error('chase_redirects: error following: '+a.href+': '+error);
+        });
 }

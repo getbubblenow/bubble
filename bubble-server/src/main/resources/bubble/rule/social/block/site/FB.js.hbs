@@ -357,7 +357,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
                     a.removeAttribute('data-gt');
                     a.removeAttribute('data-sigil');
                     a.href = href;
-                    {{JS_PREFIX}}_chase_redirects(a);
+                    {{JS_PREFIX}}_chase_redirects(a, false);
                 } else {
                     a.href = href;
                 }
