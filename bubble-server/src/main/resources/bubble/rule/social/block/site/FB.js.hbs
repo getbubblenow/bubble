@@ -28,7 +28,7 @@ Element.prototype.appendChild = function() {
     try {
         if (node.tagName) {
             if ( ({{JS_PREFIX}}_mobile && node.tagName.toUpperCase() === 'ARTICLE')
-                || (!{{JS_PREFIX}}_mobile && node.tagName.toUpperCase() === 'DIV' && node.role && node.role === 'article') ) {
+                || (!{{JS_PREFIX}}_mobile && node.tagName.toUpperCase() === 'DIV' && node.getAttribute('role') && node.getAttribute('role') === 'article') ) {
                 const block = {{JS_PREFIX}}_should_block({{JS_PREFIX}}_blocked_users, node)
                 if (block) {
                     // log('>>> BLOCKING via appendChild: '+block);
@@ -232,26 +232,63 @@ function {{JS_PREFIX}}_should_block(blocked_users, article) {
     const authorLinks = Array.from(article.getElementsByTagName('a'))
         .filter(a => {{JS_PREFIX}}_is_author_link(a.href))
         .filter(a => a.getElementsByTagName('svg').length === 0)
-        .filter(a => mobile ? a.parentElement.tagName.toUpperCase() === 'STRONG' : a.getElementsByTagName('span').length === 1);
+        .filter(a => mobile ? a.parentElement.tagName.toUpperCase() === 'STRONG' : true);
 
     let firstAuthor = null;
     for (let authIndex=0; authIndex<authorLinks.length; authIndex++) {
         const authorLink = authorLinks[authIndex];
         const authorName = {{JS_PREFIX}}_clean_author_link(authorLink);
         if (firstAuthor === null) firstAuthor = authorName;
+
         const authorDisplay = mobile
             ? authorLink
             : authorLink.getElementsByTagName('span')[0];
         const authorDisplayName = authorDisplay.innerHTML;
-        if ({{JS_PREFIX}}_is_ad(article)) {
+
+        // walk up until we find the article or comment
+        let node = authorLink.parentElement;
+        let foundItem = null;
+        for (let i=0; i<20; i++) {
+            if (node === article) {
+                foundItem = node;
+                break;
+            } else if (node.tagName.toUpperCase() === 'DIV'
+                && ( (!mobile && node.getAttribute('role') && node.getAttribute('role') === 'article')
+                    || (mobile && node.getAttribute('data-sigil') && node.getAttribute('data-sigil') === 'comments-preview') ) ) {
+                foundItem = node;
+                break;
+            }
+            if (node.parentElement) {
+                node = node.parentElement;
+            } else {
+                console.log('no parent comment or reply could be found for author '+authorName);
+                break;
+            }
+        }
+        if (foundItem === null) {
+            console.log('no parent comment or reply could be found for author '+authorName);
+            continue;
+        }
+        let firstItemEval = firstEval;
+        if (node !== article) {
+            firstItemEval = {{JS_PREFIX}}_mark_evaluated(foundItem);
+        }
+        if ({{JS_PREFIX}}_is_ad(foundItem)) {
             // log('removing ad ('+authorDisplayName+')');
             {{JS_PREFIX}}_tally_author_block(authorName == null ? {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other') : authorName);
-            if (!firstEval) {{JS_PREFIX}}_untally_allow();
-            return {item: article, author: authorName};
+            if (!firstItemEval) {{JS_PREFIX}}_untally_allow();
+            return {item: foundItem, author: authorName};
 
         } else {
-            const blocked = {{JS_PREFIX}}_block_or_decorate(firstEval, article, authorLink, authorName, authorDisplay, blocked_users, 16);
-            if (blocked) return blocked;
+            const blocked = {{JS_PREFIX}}_block_or_decorate(firstEval, foundItem, authorLink, authorName, authorDisplay, blocked_users, 16);
+            if (blocked) {
+                if (node === article) return blocked;
+                {{JS_PREFIX}}_tally_author_block(authorName == null ? {{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other') : authorName);
+                if (!firstItemEval) {{JS_PREFIX}}_untally_allow();
+
+            } else if (node !== article && firstItemEval) {
+                {{JS_PREFIX}}_tally_allow();
+            }
         }
     }
     if (firstEval) {
@@ -312,9 +349,7 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
     } else {
         const articles = mobile
             ? {{JS_PREFIX}}_getElementsByXPath('//article')
-            : Array.from({{JS_PREFIX}}_getElementsByXPath('//div[@role="article" and @aria-posinset]'))
-                .filter(a => a.firstChild && a.firstChild.tagName.toUpperCase() === 'DIV'
-                          && a.firstChild.className && a.firstChild.className === 'story_body_container');
+            : Array.from({{JS_PREFIX}}_getElementsByXPath('//div[@role="article" and @aria-posinset]'));
 
         for (let i=0; i<articles.length; i++) {
             const article = articles[i];
@@ -364,4 +399,15 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
             });
         }
     }
+    if (!mobile) {
+        const sponsored = {{JS_PREFIX}}_getElementsByXPath('//h3/span[text()="Sponsored"]');
+        if (sponsored && sponsored.length > 0) {
+            try {
+                sponsored[0].parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.innerHTML = '';
+            } catch (e) {
+                console.log('error clearing sponsored content');
+            }
+        }
+    }
+    // localStorage.clear();
 }

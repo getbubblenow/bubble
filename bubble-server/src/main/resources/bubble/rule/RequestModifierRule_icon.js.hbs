@@ -259,7 +259,7 @@ function {{JS_PREFIX}}_chase_redirects (a, removeParams) {
                     a.href = data;
                 }
                 {{PAGE_PREFIX}}_url_chasers[initial_href] = a.href;
-                console.log('chase_redirect: rewrote '+initial_href+' -> '+a.href);
+                // console.log('chase_redirect: rewrote '+initial_href+' -> '+a.href);
             } else {
                 console.warn('chase_redirects: '+a.href+' returned non-URL response: '+data);
             }
