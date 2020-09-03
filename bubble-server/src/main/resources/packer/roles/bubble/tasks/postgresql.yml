@@ -7,6 +7,12 @@
     state: present
     update_cache: yes
 
+- name: Add postgres user to bubble-log group
+  user:
+    name: postgres
+    groups: bubble-log
+    append: yes
+
 - name: Install PostgreSQL pg_bubble.conf
   copy:
     src: pg_bubble.conf
