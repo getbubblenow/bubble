@@ -73,10 +73,9 @@
 
 function {{JS_PREFIX}}_create_button_element() {
     const btn = document.createElement('button');
+    btn.style.all = 'revert';
     btn.style.color = 'black';
     btn.style.fontSize = 'x-small';
-    btn.style.border = 'revert';
-    btn.style.background = 'revert';
     return btn;
 }
 
