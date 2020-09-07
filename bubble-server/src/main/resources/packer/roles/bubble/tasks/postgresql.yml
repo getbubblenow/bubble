@@ -29,3 +29,10 @@
     group: postgres
     mode: 0400
   when: install_type == 'sage'
+
+- name: Install notifications tables' cleaner cron
+  cron:
+    name: "Cleaning notifications tables"
+    special_time: "hourly"
+    user: "postgres"
+    job: "HOUR_AGO=$(date -d '1 month ago' +\"%s000\") && psql -d bubble -c \"DELETE FROM sent_notification WHERE mtime < ${HOUR_AGO}\" -c \"DELETE FROM received_notification WHERE mtime < ${HOUR_AGO}\""
