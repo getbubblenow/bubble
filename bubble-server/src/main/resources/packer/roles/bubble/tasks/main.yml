@@ -119,3 +119,10 @@
 - name: Install packer for sage node
   shell: su - bubble bash -c install_packer.sh
   when: install_type == 'sage'
+
+- name: Install tmp folders' cleaner cron
+  cron:
+    name: "Cleaning tmp folders"
+    special_time: "hourly"
+    user: "root"
+    job: "find /tmp ~bubble/tmp -mtime +1 -type f -delete && find /tmp ~bubble/tmp -mtime +1 -type d -empty -delete"
