@@ -49,4 +49,7 @@ server {
     if ($scheme != "https") {
         return 301 https://$host$request_uri;
     }
+
+    error_log /var/log/bubble/nginx-error.log;
+    access_log /var/log/bubble/nginx-access.log;
 }
