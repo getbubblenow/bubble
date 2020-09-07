@@ -10,25 +10,32 @@ import bubble.model.cloud.CloudCredentials;
 import bubble.model.cloud.CloudService;
 import bubble.model.cloud.NetworkKeys;
 import bubble.server.BubbleConfiguration;
+import lombok.Cleanup;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
+import org.cobbzilla.util.io.FileUtil;
+import org.cobbzilla.util.io.TempDir;
 import org.cobbzilla.util.system.Bytes;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static bubble.model.cloud.NetworkKeys.PARAM_STORAGE;
 import static bubble.model.cloud.NetworkKeys.PARAM_STORAGE_CREDENTIALS;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.cobbzilla.util.io.FileUtil.abs;
-import static org.cobbzilla.util.io.FileUtil.touch;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.system.CommandShell.execScript;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 
 @Service @Slf4j
@@ -69,18 +76,19 @@ public class RestoreService {
         return getRestoreKeys().keys("*").size() > 0 || RESTORE_MARKER_FILE.exists();
     }
 
-    public boolean restore(String restoreKey, BubbleBackup backup) {
+    public boolean restore(@NonNull final String restoreKey, @NonNull final BubbleBackup backup) {
         final String thisNodeUuid = configuration.getThisNode().getUuid();
         final String thisNetworkUuid = configuration.getThisNode().getNetwork();
         String lock = null;
         try {
             lock = getRestoreKeys().lock(thisNetworkUuid, RESTORE_LOCK_TIMEOUT, RESTORE_DEADLOCK_TIMEOUT);
 
-            final String keyJson = getRestoreKeys().get(restoreKey);
-            if (keyJson == null) {
-                log.error("restore: restoreKey not found: " + restoreKey);
-                return false;
-            }
+            final var restoreDirAbs = checkAndGetRestoreDirPath();
+            if (restoreDirAbs == null) return false;
+
+            final var keyJson = checkAndGetKeyJson(restoreKey);
+            if (keyJson == null) return false;
+
             final NetworkKeys networkKeys = json(keyJson, NetworkKeys.class);
             final String storageJson = NameAndValue.find(networkKeys.getKeys(), PARAM_STORAGE);
             final String credentialsJson = NameAndValue.find(networkKeys.getKeys(), PARAM_STORAGE_CREDENTIALS);
@@ -89,25 +97,73 @@ public class RestoreService {
                 return false;
             }
 
-            final String[] existingFiles = RESTORE_DIR.list();
-            final var restoreDirAbs = abs(RESTORE_DIR);
-            if (existingFiles != null && existingFiles.length > 0) {
-                log.error("restore: files already exist in " + restoreDirAbs + ", cannot restore");
-                return false;
-            }
-
             final var storageDriver = json(storageJson, CloudService.class)
                     .setCredentials(json(credentialsJson, CloudCredentials.class))
                     .getStorageDriver(configuration);
             try {
                 storageDriver.fetchFiles(thisNodeUuid, backup.getPath(), restoreDirAbs);
-                log.info("restore: notifying system to restore from backup at: " + restoreDirAbs);
-                touch(RESTORE_MARKER_FILE);
-                return true;
             } catch (IOException e) {
                 log.error("restore: error downloading backup ", e);
                 return false;
             }
+
+            log.info("restore: notifying system to restore from backup at: " + restoreDirAbs);
+            touch(RESTORE_MARKER_FILE);
+            return true;
+        } finally {
+            if (lock != null) {
+                getRestoreKeys().unlock(thisNetworkUuid, lock);
+            }
+        }
+    }
+
+    @Nullable private String checkAndGetKeyJson(@NonNull final String restoreKey) {
+        final String keyJson = getRestoreKeys().get(restoreKey);
+        if (keyJson == null) {
+            log.error("restore: restoreKey not found: " + restoreKey);
+            return null;
+        }
+        return keyJson;
+    }
+
+    @Nullable private String checkAndGetRestoreDirPath() {
+        final var existingFiles = RESTORE_DIR.list();
+        final var restoreDirAbs = abs(RESTORE_DIR);
+
+        if (!empty(existingFiles)) {
+            log.error("restore: files already exist in " + restoreDirAbs + ", cannot restore");
+            return null;
+        }
+
+        mkdirOrDie(RESTORE_DIR);
+
+        return restoreDirAbs;
+    }
+
+    public boolean restoreFromPackage(@NonNull final String restoreKey,
+                                      @NonNull final InputStream backupPackageIS,
+                                      @NonNull final String passphrase)  throws IOException {
+        final var thisNetworkUuid = configuration.getThisNode().getNetwork();
+        String lock = null;
+        try {
+            lock = getRestoreKeys().lock(thisNetworkUuid, RESTORE_LOCK_TIMEOUT, RESTORE_DEADLOCK_TIMEOUT);
+
+            final var restoreDirAbs = checkAndGetRestoreDirPath();
+            if (restoreDirAbs == null) return false;
+
+            if (checkAndGetKeyJson(restoreKey) == null) return false;
+
+            @Cleanup final var tempDir = new TempDir();
+            final var uploadedFile = new File(tempDir, "uploaded.tgz.enc");
+            FileUtil.toFileOrDie(uploadedFile, backupPackageIS);
+
+            execScript("cd " + abs(restoreDirAbs)
+                       + " && " + configuration.opensslCmd(false, passphrase) + " < " + abs(uploadedFile)
+                       + " | tar xzv");
+
+            log.info("restore: notifying system to restore from backup at: " + restoreDirAbs);
+            touch(RESTORE_MARKER_FILE);
+            return true;
         } finally {
             if (lock != null) {
                 getRestoreKeys().unlock(thisNetworkUuid, lock);

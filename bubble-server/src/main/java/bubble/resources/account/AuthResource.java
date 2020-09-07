@@ -37,6 +37,7 @@ import bubble.service.cloud.GeoService;
 import bubble.service.notify.NotificationService;
 import bubble.service.upgrade.BubbleJarUpgradeService;
 import lombok.Cleanup;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.security.RsaMessage;
@@ -45,16 +46,20 @@ import org.cobbzilla.wizard.validation.ConstraintViolationBean;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -177,29 +182,34 @@ public class AuthResource {
     @Autowired private SageHelloService sageHelloService;
     @Autowired private RestoreService restoreService;
 
-    @PUT @Path(EP_RESTORE+"/{restoreKey}")
-    public Response restore(@Context Request req,
-                            @Context ContainerRequest ctx,
-                            @PathParam("restoreKey") String restoreKey,
-                            @Valid NetworkKeys.EncryptedNetworkKeys encryptedKeys) {
+    @NonNull private BubbleNode checkRestoreRequest(@Nullable final String restoreKey) {
+        if (restoreKey == null) throw invalidEx("err.restoreKey.required");
 
         // ensure we have been initialized
         long start = now();
         while (!sageHelloService.sageHelloSuccessful() && (now() - start < NODE_INIT_TIMEOUT)) {
             sleep(SECONDS.toMillis(1), "restore: waiting for node initialization");
         }
-        if (!sageHelloService.sageHelloSuccessful()) {
-            return invalid("err.node.notInitialized");
-        }
+        if (!sageHelloService.sageHelloSuccessful()) throw invalidEx("err.node.notInitialized");
 
-        if (restoreKey == null) return invalid("err.restoreKey.required");
-        if (!restoreKey.equalsIgnoreCase(getRestoreKey())) return invalid("err.restoreKey.invalid");
+        if (!restoreKey.equalsIgnoreCase(getRestoreKey())) throw invalidEx("err.restoreKey.invalid");
 
         final BubbleNode thisNode = configuration.getThisNode();
-        if (!thisNode.hasSageNode()) return invalid("err.sageNode.required");
+        if (!thisNode.hasSageNode()) throw invalidEx("err.sageNode.required");
 
         final BubbleNode sageNode = nodeDAO.findByUuid(thisNode.getSageNode());
-        if (sageNode == null) return invalid("err.sageNode.notFound");
+        if (sageNode == null) throw invalidEx("err.sageNode.notFound");
+
+        return sageNode;
+    }
+
+    @POST @Path(EP_RESTORE+"/{restoreKey}")
+    public Response restore(@NonNull @Context final Request req,
+                            @NonNull @Context final ContainerRequest ctx,
+                            @Nullable @PathParam("restoreKey") final String restoreKey,
+                            @NonNull @Valid final NetworkKeys.EncryptedNetworkKeys encryptedKeys) {
+
+        final var sageNode = checkRestoreRequest(restoreKey);
 
         final NetworkKeys keys;
         try {
@@ -210,9 +220,31 @@ public class AuthResource {
         }
 
         restoreService.registerRestore(restoreKey, keys);
-        final NotificationReceipt receipt = notificationService.notify(sageNode, retrieve_backup, thisNode.setRestoreKey(getRestoreKey()));
+        final var receipt = notificationService.notify(sageNode, retrieve_backup,
+                                                       configuration.getThisNode().setRestoreKey(getRestoreKey()));
 
         return ok(receipt);
+    }
+
+    @POST @Path(EP_RESTORE + EP_APPLY + "/{restoreKey}")
+    @Consumes(MULTIPART_FORM_DATA)
+    @NonNull public Response restoreFromPackage(@NonNull @Context final Request req,
+                                                @NonNull @Context final ContainerRequest ctx,
+                                                @NonNull @PathParam("restoreKey") final String restoreKey,
+                                                @NonNull @FormDataParam("file") final InputStream in,
+                                                @NonNull @FormDataParam("password") final String password) {
+        if (empty(password)) return invalid("err.password.required");
+
+        checkRestoreRequest(restoreKey);
+
+        restoreService.registerRestore(restoreKey, new NetworkKeys());
+
+        try {
+            if (restoreService.restoreFromPackage(restoreKey, in, password)) return ok();
+        } catch (IOException e) {
+            log.error("Exception while restoring from package", e);
+        }
+        return invalid("err.restore.failed", "Restore failed");
     }
 
     @POST @Path(EP_REGISTER)

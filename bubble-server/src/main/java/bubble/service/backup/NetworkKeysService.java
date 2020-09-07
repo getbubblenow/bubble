@@ -32,7 +32,6 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.createTempDir;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.util.system.CommandShell.execScript;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -92,8 +91,7 @@ public class NetworkKeysService {
                 final var backupPackageAbs = abs(createTempFile("backup-", ".tgz.enc"));
                 execScript("cd " + backupDirAbs
                            + " && tar -cz *"
-                           + " | openssl enc -aes-256-cbc -pbkdf2 -iter 10000 -pass pass:" + sha256_hex(passphrase)
-                           + " > " + backupPackageAbs);
+                           + " | " + configuration.opensslCmd(true, passphrase) + " > " + backupPackageAbs);
                 status.ok(backupPackageAbs);
             } catch (Exception e) {
                 status.fail(e.getMessage());

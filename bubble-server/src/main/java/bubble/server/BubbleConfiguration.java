@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.jknack.handlebars.Handlebars;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.map.DefaultedMap;
@@ -68,6 +69,7 @@ import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.security.ShaUtil.sha256_file;
+import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.util.system.CommandShell.totalSystemMemory;
 import static org.cobbzilla.wizard.model.SemanticVersion.isNewerVersion;
 
@@ -419,4 +421,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     @JsonIgnore @Getter @Setter private List<String> testCloudModels = Collections.emptyList();
 
+    public String opensslCmd(boolean encrypt, @NonNull final String passphrase) {
+        return "openssl enc " + (encrypt ? "" : "-d")
+               + " -aes-256-cbc -pbkdf2 -iter 10000 -pass pass:" + sha256_hex(passphrase);
+    }
 }
