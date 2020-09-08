@@ -173,7 +173,7 @@ public class ActivationService {
                 .setTag(TAG_PARENT_ACCOUNT, account.getUuid())
                 .setStorage(networkStorage != null ? networkStorage.getUuid() : localStorage.getUuid())
                 .setState(BubbleNetworkState.running)
-                .setSyncPassword(false)
+                .setSyncAccount(false)
                 .setLaunchLock(false)
                 .setSendErrors(false)
                 .setSendMetrics(false));

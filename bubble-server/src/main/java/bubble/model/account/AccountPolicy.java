@@ -33,8 +33,7 @@ import static bubble.ApiConstants.DB_JSON_MAPPER;
 import static bubble.model.account.AccountContact.contactMatch;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.*;
@@ -93,6 +92,9 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String accountContactsJson;
     public boolean hasAccountContacts() { return accountContactsJson != null; }
+
+    @JsonIgnore @Transient @Getter @Setter private Boolean skipSync;
+    public boolean skipSync() { return bool(skipSync); }
 
     @JsonIgnore @Transient public List<AccountContact> getVerifiedContacts () {
         return hasVerifiedAccountContacts()

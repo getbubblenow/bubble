@@ -47,7 +47,7 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
 
     public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS,
             "name", "forkHost", "locale", "timezone", "domain", "network",
-            "sshKey", "syncPassword", "launchLock", "sendErrors", "sendMetrics", "plan", "footprint");
+            "sshKey", "syncAccount", "launchLock", "sendErrors", "sendMetrics", "plan", "footprint");
 
     @SuppressWarnings("unused")
     public AccountPlan (AccountPlan other) { copy(this, other, CREATE_FIELDS); }
@@ -162,8 +162,8 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
     @Transient @Getter @Setter private transient String forkHost = null;
     public boolean hasForkHost () { return !empty(forkHost); }
 
-    @Transient @Getter @Setter private transient Boolean syncPassword = null;
-    public boolean syncPassword () { return syncPassword == null || syncPassword; }
+    @Transient @Getter @Setter private transient Boolean syncAccount = null;
+    public boolean syncAccount() { return syncAccount == null || syncAccount; }
 
     @Transient @Getter @Setter private Boolean launchLock;
     public boolean launchLock() { return bool(launchLock); }
@@ -186,7 +186,7 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
                 .setTimezone(getTimezone())
                 .setAccount(account.getUuid())
                 .setSshKey(getSshKey())
-                .setSyncPassword(syncPassword())
+                .setSyncAccount(syncAccount())
                 .setLaunchLock(launchLock())
                 .setSendErrors(sendErrors())
                 .setSendMetrics(sendMetrics())

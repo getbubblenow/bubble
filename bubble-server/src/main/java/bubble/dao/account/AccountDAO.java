@@ -21,7 +21,7 @@ import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import bubble.service.SearchService;
-import bubble.service.account.SyncPasswordService;
+import bubble.service.account.SyncAccountService;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.DeviceIdService;
 import bubble.service.stream.RuleEngineService;
@@ -76,7 +76,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private SelfNodeService selfNodeService;
     @Autowired private SearchService searchService;
-    @Autowired private SyncPasswordService syncPasswordService;
+    @Autowired private SyncAccountService syncAccountService;
     @Autowired private ReferralCodeDAO referralCodeDAO;
     @Autowired private DeviceIdService deviceService;
     @Autowired private RuleEngineService ruleEngineService;
@@ -192,8 +192,8 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         }
         if (context instanceof Account) {
             final Account previousState = (Account) context;
-            if (account.syncPassword() && previousState.isHashedPasswordChanged() && !previousState.skipSyncPassword()) {
-                syncPasswordService.syncPassword(account);
+            if (account.sync() && previousState.isHashedPasswordChanged() && !previousState.skipSync()) {
+                syncAccountService.syncAccount(account);
             }
             if (previousState.isRefreshShowBlockStats()) {
                 deviceService.initBlockStats(account);

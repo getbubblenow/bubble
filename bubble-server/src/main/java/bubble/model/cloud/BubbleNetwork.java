@@ -61,7 +61,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBubbleTags<BubbleNetwork> {
 
     public static final String[] UPDATE_FIELDS = {
-            "nickname", "footprint", "description", "locale", "timezone", "state", "syncPassword", "launchLock"
+            "nickname", "footprint", "description", "locale", "timezone", "state", "syncAccount", "launchLock"
     };
     public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS,
             "name", "domain", "sendErrors", "sendMetrics");
@@ -178,8 +178,8 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
 
     @ECSearchable @ECField(index=150)
     @Column(nullable=false)
-    @ECIndex @Getter @Setter private Boolean syncPassword;
-    public boolean syncPassword() { return bool(syncPassword); }
+    @ECIndex @Getter @Setter private Boolean syncAccount;
+    public boolean syncAccount() { return bool(syncAccount); }
 
     @ECSearchable @ECField(index=160)
     @Column(nullable=false)

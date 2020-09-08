@@ -22,7 +22,7 @@
       "bubbleConnectionVar": "bubbleConnection",
       "bubbleUserSessionVar": "bubbleUserSession",
       "bubbleUserVar": "bubbleUserAccount",
-      "syncPassword": null,
+      "syncAccount": null,
       "sendErrors": null,
       "sendMetrics": null
     }
@@ -146,7 +146,7 @@
         "timezone": "<<timezone>>",
         "plan": "<<plan>>",
         "footprint": "<<footprint>>",
-        "syncPassword": <<syncPassword>>,
+        "syncAccount": <<syncAccount>>,
         "sendErrors": <<sendErrors>>,
         "sendMetrics": <<sendMetrics>>,
         "paymentMethodObject": {

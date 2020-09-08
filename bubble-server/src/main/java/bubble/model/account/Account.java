@@ -80,7 +80,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 public class Account extends IdentifiableBaseParentEntity implements TokenPrincipal, SqlViewSearchResult {
 
     public static final String[] UPDATE_FIELDS = {
-            "url", "description", "autoUpdatePolicy", "syncPassword", "preferredPlan", "showBlockStats"
+            "url", "description", "autoUpdatePolicy", "sync", "preferredPlan", "showBlockStats"
     };
     public static final String[] ADMIN_UPDATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS, "suspended", "admin");
     public static final String[] CREATE_FIELDS = ArrayUtil.append(ADMIN_UPDATE_FIELDS,
@@ -170,8 +170,8 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     public Account setTermsAgreed() { return setTermsAgreed(now()); }
 
     @ECField(index=130)
-    @Getter @Setter private Boolean syncPassword;
-    public boolean syncPassword() { return syncPassword == null ? true : syncPassword; }
+    @Getter @Setter private Boolean sync;
+    public boolean sync() { return sync == null ? true : sync; }
 
     @ECField(index=140)
     @Getter @Setter private Boolean showBlockStats;
@@ -187,8 +187,8 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     }
     @JsonIgnore @Transient @Getter @Setter private boolean hashedPasswordChanged = false;
     @JsonIgnore @Transient @Getter @Setter private String previousPasswordHash;
-    @JsonIgnore @Transient @Getter @Setter private Boolean skipSyncPassword;
-    public boolean skipSyncPassword() { return bool(skipSyncPassword); }
+    @JsonIgnore @Transient @Getter @Setter private Boolean skipSync;
+    public boolean skipSync() { return bool(skipSync); }
 
     public static final int MIN_PASSWORD_LENGTH = 8;
     public static ConstraintViolationBean validatePassword(String password) {

@@ -431,7 +431,7 @@ public class AuthResource {
         if (sessionAccount == null) {
             final BubbleNetwork thisNetwork = configuration.getThisNetwork();
             if (thisNetwork != null
-                    && thisNetwork.syncPassword()
+                    && thisNetwork.syncAccount()
                     && thisNetwork.getInstallType() == AnsibleInstallType.node
                     && configuration.hasSageNode()) {
                 // check if session is valid on sage

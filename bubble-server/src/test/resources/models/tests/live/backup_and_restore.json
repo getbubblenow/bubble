@@ -49,7 +49,7 @@
       "plan": "bubble",
       "networkVar": "bubbleNetwork",
       "bubbleConnectionVar": "bubbleConnection",
-      "syncPassword": true,
+      "syncAccount": true,
       "sendErrors": true,
       "sendMetrics": true
     }

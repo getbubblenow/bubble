@@ -5,6 +5,8 @@
 package bubble.dao.account;
 
 import bubble.model.account.AccountPolicy;
+import bubble.service.account.SyncAccountService;
+import lombok.NonNull;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.stereotype.Repository;
 
@@ -28,6 +30,20 @@ public class AccountPolicyDAO extends AccountOwnedEntityDAO<AccountPolicy> {
         final ValidationResult result = policy.validate();
         if (result.isInvalid()) throw invalidEx(result);
         return super.preUpdate(policy);
+    }
+
+    @Override public AccountPolicy postUpdate(@NonNull final AccountPolicy policy, @NonNull final Object context) {
+        if (context instanceof AccountPolicy) {
+            final var previousPolicy = (AccountPolicy) context;
+            if (!previousPolicy.skipSync()) {
+                final var account = getConfiguration().getBean(AccountDAO.class).findByUuid(policy.getAccount());
+                if (account.sync()) {
+                    getConfiguration().getBean(SyncAccountService.class).syncPolicy(account, policy);
+                }
+            }
+        }
+
+        return super.postUpdate(policy, context);
     }
 
     public AccountPolicy findSingleByAccount(String accountUuid) {
