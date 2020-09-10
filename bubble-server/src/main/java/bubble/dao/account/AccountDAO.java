@@ -37,7 +37,9 @@ import org.glassfish.grizzly.http.server.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import javax.annotation.Nullable;
 import javax.transaction.Transactional;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -344,6 +346,26 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         });
 
         log.info("copyTemplates completed: "+acct);
+    }
+
+    private final String NETWORK_OWNER_ACCOUNT_UUID_PARAM = "__thisNetworkOwnerAccountUuid__";
+
+    @Override public int bulkDeleteWhere(@NonNull final String whereClause,
+                                         @Nullable final Map<String, Object> parameters) {
+        final Map<String, Object> enhancedParams = parameters != null ? parameters : new HashMap<>();
+        enhancedParams.put(NETWORK_OWNER_ACCOUNT_UUID_PARAM, configuration.getThisNetwork().getAccount());
+
+        return super.bulkDeleteWhere("uuid != :" + NETWORK_OWNER_ACCOUNT_UUID_PARAM + " AND (" + whereClause + ")",
+                                     enhancedParams);
+    }
+
+    @Override public void delete(@Nullable final Collection<Account> accounts) {
+        if (empty(accounts)) return;
+        final var networkOwnerUuid = configuration.getThisNetwork().getAccount();
+        if (accounts.removeIf(a -> a != null && a.getUuid().equals(networkOwnerUuid))) {
+            log.warn("delete: skipping deletion of network owner's account: " + networkOwnerUuid);
+        }
+        super.delete(accounts);
     }
 
     @Override public void delete(@NonNull final String uuid) {

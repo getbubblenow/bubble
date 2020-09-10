@@ -46,7 +46,7 @@ abp-parser
 "
 pushd utils
 for repo in ${UTIL_REPOS} ; do
-  pushd ${repo} && git checkout master && mvn -DskipTests=true -Dcheckstyle.skip=true clean install && popd || die "Error installing ${repo}"
+  pushd ${repo} && mvn -DskipTests=true -Dcheckstyle.skip=true clean install && popd || die "Error installing ${repo}"
 done
 popd
 
