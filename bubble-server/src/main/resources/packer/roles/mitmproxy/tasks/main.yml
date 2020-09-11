@@ -95,7 +95,7 @@
 - name: Overwrite _client.py from httpx to fix bug with HTTP/2 redirects
   file:
     src: _client.py
-    dest: /home/mitmproxxy/mitmproxy/venv/lib/python3.8/site-packages/httpx/_client.py
+    dest: /home/mitmproxy/mitmproxy/venv/lib/python3.8/site-packages/httpx/_client.py
     owner: mitmproxy
     group: mitmproxy
 
