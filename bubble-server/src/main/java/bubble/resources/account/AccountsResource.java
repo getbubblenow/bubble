@@ -19,6 +19,7 @@ import bubble.model.device.BubbleDeviceType;
 import bubble.resources.app.AppsResource;
 import bubble.resources.bill.*;
 import bubble.resources.cloud.*;
+import bubble.resources.device.DevicesResource;
 import bubble.resources.driver.DriversResource;
 import bubble.resources.notify.ReceivedNotificationsResource;
 import bubble.resources.notify.SentNotificationsResource;

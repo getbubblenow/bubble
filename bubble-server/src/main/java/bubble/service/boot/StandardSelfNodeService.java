@@ -161,7 +161,7 @@ public class StandardSelfNodeService implements SelfNodeService {
                               .booleanValue()) {
                     deviceDAO.refreshVpnUsers();
                 }
-            });
+            }, "StandardSelfNodeService.onStart.spareDevices");
         }
 
         // start RefundService if payments are enabled and this is a SageLauncher

@@ -12,7 +12,7 @@ import bubble.model.app.config.AppDataDriver;
 import bubble.model.app.config.AppDataView;
 import bubble.model.device.Device;
 import bubble.resources.account.AccountOwnedTemplateResource;
-import bubble.service.cloud.DeviceIdService;
+import bubble.service.device.DeviceService;
 import org.cobbzilla.wizard.model.search.SearchQuery;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -32,7 +32,7 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
 
     private final BubbleApp app;
 
-    @Autowired private DeviceIdService deviceIdService;
+    @Autowired private DeviceService deviceService;
 
     public AppSitesResource(Account account, BubbleApp app) {
         super(account);
@@ -102,7 +102,7 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
         if (view == null) return notFound(viewName);
 
         final String remoteHost = getRemoteHost(req);
-        final Device device = deviceIdService.findDeviceByIp(remoteHost);
+        final Device device = deviceService.findDeviceByIp(remoteHost);
 
         final AppDataDriver driver = app.getDataConfig().getDataDriver(configuration);
         return ok(driver.query(caller, device, app, site, view, query));

@@ -32,7 +32,7 @@ import bubble.service.bill.PromotionService;
 import bubble.service.boot.ActivationService;
 import bubble.service.boot.NodeManagerService;
 import bubble.service.boot.SageHelloService;
-import bubble.service.cloud.DeviceIdService;
+import bubble.service.device.DeviceService;
 import bubble.service.cloud.GeoService;
 import bubble.service.notify.NotificationService;
 import bubble.service.upgrade.BubbleJarUpgradeService;
@@ -102,7 +102,7 @@ public class AuthResource {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private StandardAuthenticatorService authenticatorService;
     @Autowired private PromotionService promoService;
-    @Autowired private DeviceIdService deviceIdService;
+    @Autowired private DeviceService deviceService;
     @Autowired private DeviceDAO deviceDAO;
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
     @Autowired private NodeManagerService nodeManagerService;
@@ -707,7 +707,7 @@ public class AuthResource {
             } else {
                 final String remoteHost = getRemoteHost(req);
                 if (!empty(remoteHost)) {
-                    final Device device = deviceIdService.findDeviceByIp(remoteHost);
+                    final Device device = deviceService.findDeviceByIp(remoteHost);
                     if (device != null) {
                         type = device.getDeviceType().getCertType();
                     }

@@ -2,14 +2,16 @@
  * Copyright (c) 2020 Bubble, Inc.  All rights reserved.
  * For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
  */
-package bubble.resources.account;
+package bubble.resources.device;
 
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
 import bubble.model.device.Device;
 import bubble.model.device.DeviceSecurityLevel;
+import bubble.resources.account.AccountOwnedResource;
+import bubble.resources.account.VpnConfigResource;
 import bubble.server.BubbleConfiguration;
-import bubble.service.cloud.DeviceIdService;
+import bubble.service.device.DeviceService;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -53,7 +55,7 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
     }
 
     @Override protected Device populate(ContainerRequest ctx, Device device) {
-        return device.setStatus(deviceIdService.getDeviceStatus(device.getUuid()));
+        return device.setStatus(deviceService.getDeviceStatus(device.getUuid()));
     }
 
     @Override protected List<Device> sort(List<Device> list, Request req, ContainerRequest ctx) {
@@ -106,14 +108,14 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
         return configuration.subResource(VpnConfigResource.class, device);
     }
 
-    @Autowired private DeviceIdService deviceIdService;
+    @Autowired private DeviceService deviceService;
 
     @GET @Path("/{id}"+EP_IPS)
     public Response getIps(@Context ContainerRequest ctx,
                            @PathParam("id") String id) {
         final Device device = getDao().findByAccountAndId(getAccountUuid(ctx), id);
         if (device == null) return notFound(id);
-        return ok(deviceIdService.findIpsByDevice(device.getUuid()));
+        return ok(deviceService.findIpsByDevice(device.getUuid()));
     }
 
     @GET @Path("/{id}"+EP_STATUS)
@@ -121,7 +123,7 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
                               @PathParam("id") String id) {
         final Device device = getDao().findByAccountAndId(getAccountUuid(ctx), id);
         if (device == null) return notFound(id);
-        return ok(deviceIdService.getLiveDeviceStatus(device.getUuid()));
+        return ok(deviceService.getLiveDeviceStatus(device.getUuid()));
     }
 
 }

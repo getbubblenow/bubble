@@ -150,7 +150,7 @@ public class StandardNetworkService implements NetworkService {
         String lock = nn.getLock();
         NodeProgressMeter progressMeter = null;
         final BubbleNetwork network = nn.getNetworkObject();
-        final ExecutorService backgroundJobs = DaemonThreadFactory.fixedPool(3);
+        final ExecutorService backgroundJobs = DaemonThreadFactory.fixedPool(3, "StandardNetworkService.backgroundJobs");
         boolean killNode = false;
         try {
             progressMeter = launchMonitor.getProgressMeter(nn);
@@ -883,7 +883,7 @@ public class StandardNetworkService implements NetworkService {
             } finally {
                 if (lock != null) unlockNetwork(networkUuid, lock);
             }
-        });
+        }, "StandardNetworkService.stopNetwork");
         return true;
     }
 

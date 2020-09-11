@@ -164,7 +164,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
             background(() -> {
                 sleep(PURCHASE_DELAY, "AccountPlanDAO.postCreate: waiting to finalize purchase");
                 paymentDriver.purchase(accountPlanUuid, paymentMethodUuid, billUuid);
-            });
+            }, "AccountPlanDAO.postCreate");
         }
         return super.postCreate(accountPlan, context);
     }

@@ -95,7 +95,7 @@ public class AmazonEC2Driver extends ComputeServiceDriverBase {
     @Getter(lazy=true) private final RedisService imageCache = redis.prefixNamespace(getClass().getSimpleName()+".ec2_ubuntu_image");
     public static final long IMAGE_CACHE_TIME = DAYS.toSeconds(30);
 
-    @Getter(lazy=true) private final ExecutorService perRegionExecutor = fixedPool(getRegions().size());
+    @Getter(lazy=true) private final ExecutorService perRegionExecutor = fixedPool(getRegions().size(), "AmazonEC2Driver.perRegionExecutor");
 
     @Getter(lazy=true) private final List<OsImage> cloudOsImages = initImages();
     private List<OsImage> initImages() {

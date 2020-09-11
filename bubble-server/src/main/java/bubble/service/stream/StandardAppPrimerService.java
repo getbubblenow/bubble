@@ -14,7 +14,7 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.device.Device;
 import bubble.rule.AppRuleDriver;
 import bubble.server.BubbleConfiguration;
-import bubble.service.cloud.DeviceIdService;
+import bubble.service.device.DeviceService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.SingletonList;
@@ -34,7 +34,7 @@ public class StandardAppPrimerService implements AppPrimerService {
 
     @Autowired private AccountDAO accountDAO;
     @Autowired private DeviceDAO deviceDAO;
-    @Autowired private DeviceIdService deviceIdService;
+    @Autowired private DeviceService deviceService;
     @Autowired private BubbleAppDAO appDAO;
     @Autowired private AppMatcherDAO matcherDAO;
     @Autowired private AppRuleDAO ruleDAO;
@@ -77,7 +77,7 @@ public class StandardAppPrimerService implements AppPrimerService {
     }
 
     public void prime(Account account) {
-        deviceIdService.initBlockStats(account);
+        deviceService.initBlocksAndFlexRoutes(account);
         prime(account, (BubbleApp) null);
     }
 
@@ -99,7 +99,7 @@ public class StandardAppPrimerService implements AppPrimerService {
         prime(account, singleApp);
     }
 
-    @Getter(lazy=true) private final ExecutorService primerThread = fixedPool(1);
+    @Getter(lazy=true) private final ExecutorService primerThread = fixedPool(1, "StandardAppPrimerService.primerThread");
 
     private void prime(Account account, BubbleApp singleApp) {
         if (!isPrimingEnabled()) {
@@ -114,7 +114,7 @@ public class StandardAppPrimerService implements AppPrimerService {
             final Map<String, List<String>> accountDeviceIps = new HashMap<>();
             final List<Device> devices = deviceDAO.findByAccount(account.getUuid());
             for (Device device : devices) {
-                accountDeviceIps.put(device.getUuid(), deviceIdService.findIpsByDevice(device.getUuid()));
+                accountDeviceIps.put(device.getUuid(), deviceService.findIpsByDevice(device.getUuid()));
             }
             if (accountDeviceIps.isEmpty()) return;
 
@@ -144,7 +144,10 @@ public class StandardAppPrimerService implements AppPrimerService {
                     for (Device device : devices) {
                         final Set<String> rejectDomains = new HashSet<>();
                         final Set<String> blockDomains = new HashSet<>();
+                        final Set<String> whiteListDomains = new HashSet<>();
                         final Set<String> filterDomains = new HashSet<>();
+                        final Set<String> flexDomains = new HashSet<>();
+                        final Set<String> flexExcludeDomains = new HashSet<>();
                         for (AppMatcher matcher : matchers) {
                             final AppRuleDriver appRuleDriver = rule.initDriver(app, driver, matcher, account, device);
                             final Set<String> rejects = appRuleDriver.getPrimedRejectDomains();
@@ -159,14 +162,32 @@ public class StandardAppPrimerService implements AppPrimerService {
                             } else {
                                 blockDomains.addAll(blocks);
                             }
+                            final Set<String> whiteList = appRuleDriver.getPrimedWhiteListDomains();
+                            if (empty(whiteList)) {
+                                log.debug("_prime: no whiteListDomains for device/app/rule/matcher: " + device.getName() + "/" + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
+                            } else {
+                                whiteListDomains.addAll(whiteList);
+                            }
                             final Set<String> filters = appRuleDriver.getPrimedFilterDomains();
                             if (empty(filters)) {
                                 log.debug("_prime: no filterDomains for device/app/rule/matcher: " + device.getName() + "/" + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
                             } else {
                                 filterDomains.addAll(filters);
                             }
+                            final Set<String> flexes = appRuleDriver.getPrimedFlexDomains();
+                            if (empty(flexes)) {
+                                log.debug("_prime: no flexDomains for device/app/rule/matcher: " + device.getName() + "/" + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
+                            } else {
+                                flexDomains.addAll(flexes);
+                            }
+                            final Set<String> flexExcludes = appRuleDriver.getPrimedFlexExcludeDomains();
+                            if (empty(flexExcludes)) {
+                                log.debug("_prime: no flexExcludeDomains for device/app/rule/matcher: " + device.getName() + "/" + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
+                            } else {
+                                flexExcludeDomains.addAll(flexExcludes);
+                            }
                         }
-                        if (!empty(rejectDomains) || !empty(blockDomains) || !empty(filterDomains)) {
+                        if (!empty(rejectDomains) || !empty(blockDomains) || !empty(filterDomains) || !empty(flexDomains) || !empty(flexExcludeDomains)) {
                             for (String ip : accountDeviceIps.get(device.getUuid())) {
                                 if (!empty(rejectDomains)) {
                                     AppRuleDriver.defineRedisRejectSet(redis, ip, app.getName() + ":" + app.getUuid(), rejectDomains.toArray(String[]::new));
@@ -174,8 +195,17 @@ public class StandardAppPrimerService implements AppPrimerService {
                                 if (!empty(blockDomains)) {
                                     AppRuleDriver.defineRedisBlockSet(redis, ip, app.getName() + ":" + app.getUuid(), blockDomains.toArray(String[]::new));
                                 }
+                                if (!empty(whiteListDomains)) {
+                                    AppRuleDriver.defineRedisWhiteListSet(redis, ip, app.getName() + ":" + app.getUuid(), whiteListDomains.toArray(String[]::new));
+                                }
                                 if (!empty(filterDomains)) {
                                     AppRuleDriver.defineRedisFilterSet(redis, ip, app.getName() + ":" + app.getUuid(), filterDomains.toArray(String[]::new));
+                                }
+                                if (!empty(flexDomains)) {
+                                    AppRuleDriver.defineRedisFlexSet(redis, ip, app.getName() + ":" + app.getUuid(), flexDomains.toArray(String[]::new));
+                                }
+                                if (!empty(flexExcludeDomains)) {
+                                    AppRuleDriver.defineRedisFlexExcludeSet(redis, ip, app.getName() + ":" + app.getUuid(), flexExcludeDomains.toArray(String[]::new));
                                 }
                             }
                         }

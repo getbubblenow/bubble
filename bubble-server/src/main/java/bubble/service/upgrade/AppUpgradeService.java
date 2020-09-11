@@ -114,14 +114,7 @@ public class AppUpgradeService extends SimpleDaemon {
             return;
         }
 
-        try {
-            ruleEngine.disableCacheFlushing();
-            handleAdminUpgrades(admin, sageNode);
-
-        } finally {
-            ruleEngine.enableCacheFlushing();
-            ruleEngine.flushCaches();
-        }
+        handleAdminUpgrades(admin, sageNode);
     }
 
     private void handleAdminUpgrades(Account admin, BubbleNode sageNode) {
@@ -146,6 +139,8 @@ public class AppUpgradeService extends SimpleDaemon {
 
             final List<RuleDriver> myDrivers = Arrays.asList(upgradeRequest.getDrivers());
             accountDrivers.put(admin.getUuid(), myDrivers);
+
+            ruleEngine.disableCacheFlushing();
             for (RuleDriver sageDriver : sageDrivers) {
                 log.info("handleAdminUpgrades: updating admin driver: "+sageDriver.getName());
                 updateDriver(admin, myDrivers, sageDriver);
@@ -166,6 +161,9 @@ public class AppUpgradeService extends SimpleDaemon {
             }
         } catch (Exception e) {
             log.error("handleAdminUpgrades: "+shortError(e), e);
+
+        } finally {
+            ruleEngine.enableCacheFlushing();
         }
     }
 

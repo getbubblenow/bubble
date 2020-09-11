@@ -114,7 +114,7 @@ public class DatabaseFilterService {
                             ? new FullEntityIterator(configuration, network, readerError)
                             : new FilteredEntityIterator(configuration, account, network, node, planApps, readerError);
                 }
-            }.runInBackground(readerError::set);
+            }.runInBackground("RekeyReaderMain.reader", readerError::set);
 
             // start a RekeyWriter to pull objects from RekeyReader
             final AtomicReference<CommandResult> writeResult = new AtomicReference<>();

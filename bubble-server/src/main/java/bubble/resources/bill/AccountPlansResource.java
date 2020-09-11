@@ -306,7 +306,8 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
 
     // If the accountPlan is not found, look for an orphaned network
     @DELETE @Path("/{id}")
-    @Override public Response delete(@Context ContainerRequest ctx,
+    @Override public Response delete(@Context Request req,
+                                     @Context ContainerRequest ctx,
                                      @PathParam("id") String id) {
         final Account caller = checkEditable(ctx);
         AccountPlan found = find(ctx, id);
@@ -326,7 +327,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         getDao().update(found.setDeleting(true));
 
         final String planUuid = found.getUuid();
-        background(() -> getDao().delete(planUuid));
+        background(() -> getDao().delete(planUuid), "AccountPlansResource.delete");
 
         return ok(found.setDeletedNetwork(found.getNetwork()));
     }

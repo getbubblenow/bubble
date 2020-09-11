@@ -7,7 +7,7 @@ package bubble.service_dbfilter;
 import bubble.model.account.Account;
 import bubble.model.device.Device;
 import bubble.model.device.DeviceStatus;
-import bubble.service.cloud.DeviceIdService;
+import bubble.service.device.DeviceService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.cobbzilla.util.daemon.ZillaRuntime.notSupported;
 
 @Service
-public class DbFilterDeviceIdService implements DeviceIdService {
+public class DbFilterDeviceService implements DeviceService {
 
     @Override public Device findDeviceByIp(String ip) { return notSupported("findDeviceByIp"); }
 
@@ -24,7 +24,7 @@ public class DbFilterDeviceIdService implements DeviceIdService {
     @Override public void initDeviceSecurityLevels() { notSupported("initDeviceSecurityLevels"); }
     @Override public void setDeviceSecurityLevel(Device device) { notSupported("setDeviceSecurityLevel"); }
 
-    @Override public void initBlockStats(Account account) { notSupported("initBlockStats"); }
+    @Override public void initBlocksAndFlexRoutes(Account account) { notSupported("initBlocksAndFlexRoutes"); }
 
     @Override public DeviceStatus getDeviceStatus(String deviceUuid) { return notSupported("getDeviceStats"); }
     @Override public DeviceStatus getLiveDeviceStatus(String deviceUuid) { return notSupported("getLiveDeviceStatus"); }

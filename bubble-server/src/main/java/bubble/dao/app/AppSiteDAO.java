@@ -5,7 +5,7 @@
 package bubble.dao.app;
 
 import bubble.model.app.AppSite;
-import bubble.service.cloud.DeviceIdService;
+import bubble.service.device.DeviceService;
 import bubble.service.stream.RuleEngineService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
 public class AppSiteDAO extends AppTemplateEntityDAO<AppSite> {
 
     @Autowired private RuleEngineService ruleEngineService;
-    @Autowired private DeviceIdService deviceService;
+    @Autowired private DeviceService deviceService;
 
     @Override public AppSite postCreate(AppSite site, Object context) {
         // todo: update entities based on this template if account has updates enabled

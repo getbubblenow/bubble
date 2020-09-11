@@ -41,7 +41,7 @@
   get_url:
     url: https://github.com/getbubblenow/bubble-dist/raw/master/mitmproxy/mitmproxy.zip
     dest: /tmp/mitmproxy.zip
-    checksum: sha256:b288b55e0b25e453fbc08ec2ad130ea22033f200cab1319e7bc8d2332e538ec5
+    checksum: sha256:9883696cc304326d0d94f6d0a498721de9b8c77c833b30f4b1661646467172bf
 
 - name: Unzip mitmproxy.zip
   unarchive:
@@ -59,9 +59,11 @@
   with_items:
     - bubble_api.py
     - bubble_debug.py
-    - dns_spoofing.py
+    - bubble_request.py
     - bubble_conn_check.py
     - bubble_modify.py
+    - bubble_flex.py
+    - bubble_flex_passthru.py
     - run_mitm.sh
 
 - name: Install cert helper scripts
@@ -89,6 +91,13 @@
 
 - name: Install mitmproxy dependencies
   shell: su - mitmproxy -c "bash -c 'cd /home/mitmproxy/mitmproxy && ./dev.sh'"
+
+- name: Overwrite _client.py from httpx to fix bug with HTTP/2 redirects
+  file:
+    src: _client.py
+    dest: /home/mitmproxxy/mitmproxy/venv/lib/python3.8/site-packages/httpx/_client.py
+    owner: mitmproxy
+    group: mitmproxy
 
 - name: Install mitm_monitor
   copy:

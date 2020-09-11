@@ -84,3 +84,12 @@
     group: bubble-log
     mode: 0770
     state: directory
+
+- name: Create bubble flexrouting user
+  user:
+    name: bubble-flex
+    comment: bubble flexrouting user
+    shell: /bin/false
+    system: yes
+    home: /home/bubble-flex
+  when: install_type == 'node'

@@ -1,24 +1,27 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
+import asyncio
 import json
 import re
-import requests
 import urllib
 import traceback
 from mitmproxy.net.http import Headers
-from bubble_config import bubble_port, bubble_host_alias, debug_capture_fqdn, debug_stream_fqdn, debug_stream_uri
-from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, BUBBLE_URI_PREFIX, \
-    HEADER_HEALTH_CHECK, HEALTH_CHECK_URI, \
-    CTX_BUBBLE_REQUEST_ID, CTX_CONTENT_LENGTH, CTX_CONTENT_LENGTH_SENT, bubble_log, get_flow_ctx, add_flow_ctx, \
-    HEADER_USER_AGENT, HEADER_FILTER_PASSTHRU, HEADER_CONTENT_SECURITY_POLICY, REDIS, redis_set, parse_host_header
+from bubble_config import bubble_port, debug_capture_fqdn, debug_stream_fqdn, debug_stream_uri
+from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, CTX_BUBBLE_FLEX, \
+    status_reason, get_flow_ctx, add_flow_ctx, bubble_async, \
+    is_bubble_special_path, is_bubble_health_check, health_check_response, special_bubble_response, \
+    CTX_BUBBLE_REQUEST_ID, CTX_CONTENT_LENGTH, CTX_CONTENT_LENGTH_SENT, CTX_BUBBLE_FILTERED, \
+    HEADER_CONTENT_TYPE, HEADER_CONTENT_ENCODING, HEADER_LOCATION, HEADER_CONTENT_LENGTH, \
+    HEADER_USER_AGENT, HEADER_FILTER_PASSTHRU, HEADER_CONTENT_SECURITY_POLICY, REDIS, redis_set
+from bubble_flex import process_flex
+
+import logging
+from logging import INFO, DEBUG, WARNING, ERROR, CRITICAL
+
+bubble_log = logging.getLogger(__name__)
 
 BUFFER_SIZE = 4096
-HEADER_CONTENT_TYPE = 'Content-Type'
-HEADER_CONTENT_LENGTH = 'Content-Length'
-HEADER_CONTENT_ENCODING = 'Content-Encoding'
-HEADER_TRANSFER_ENCODING = 'Transfer-Encoding'
-HEADER_LOCATION = 'Location'
 CONTENT_TYPE_BINARY = 'application/octet-stream'
 STANDARD_FILTER_HEADERS = {HEADER_CONTENT_TYPE: CONTENT_TYPE_BINARY}
 
@@ -26,6 +29,7 @@ REDIS_FILTER_PASSTHRU_PREFIX = '__chunk_filter_pass__'
 REDIS_FILTER_PASSTHRU_DURATION = 600
 
 DEBUG_STREAM_COUNTERS = {}
+MIN_FILTER_CHUNK_SIZE = 1024 * 32  # Filter data in 32KB chunks
 
 
 def add_csp_part(new_csp, part):
@@ -50,10 +54,12 @@ def ensure_bubble_script_csp(csp):
     return new_csp
 
 
-def filter_chunk(flow, chunk, req_id, user_agent, last, content_encoding=None, content_type=None, content_length=None, csp=None):
+def filter_chunk(loop, flow, chunk, req_id, user_agent, last, content_encoding=None, content_type=None, content_length=None, csp=None):
+    name = 'filter_chunk'
     if debug_capture_fqdn:
         if debug_capture_fqdn in req_id:
-            bubble_log('filter_chunk: debug_capture_fqdn detected, capturing: '+debug_capture_fqdn)
+            if bubble_log.isEnabledFor(DEBUG):
+                bubble_log.debug('filter_chunk: debug_capture_fqdn detected, capturing: '+debug_capture_fqdn)
             f = open('/tmp/bubble_capture_'+req_id, mode='ab', buffering=0)
             f.write(chunk)
             f.close()
@@ -63,7 +69,8 @@ def filter_chunk(flow, chunk, req_id, user_agent, last, content_encoding=None, c
     redis_passthru_key = REDIS_FILTER_PASSTHRU_PREFIX + flow.request.method + '~~~' + user_agent + ':' + flow.request.url
     do_pass = REDIS.get(redis_passthru_key)
     if do_pass:
-        bubble_log('filter_chunk: req_id='+req_id+': passthru found in redis, returning chunk')
+        if bubble_log.isEnabledFor(DEBUG):
+            bubble_log.debug('filter_chunk: req_id='+req_id+': passthru found in redis, returning chunk')
         REDIS.touch(redis_passthru_key)
         return chunk
 
@@ -82,16 +89,21 @@ def filter_chunk(flow, chunk, req_id, user_agent, last, content_encoding=None, c
         else:
             url = url + '?last=true'
 
+    chunk_len = 0
+    if bubble_log.isEnabledFor(DEBUG):
+        if chunk is not None:
+            chunk_len = len(chunk)
     if csp:
-        # bubble_log('filter_chunk: url='+url+' (csp='+csp+')')
-        bubble_log('filter_chunk: url='+url+' (with csp) (last='+str(last)+')')
-        filter_headers = {
+        if bubble_log.isEnabledFor(DEBUG):
+            bubble_log.debug('filter_chunk: url='+url+' (csp='+csp+') size='+str(chunk_len))
+        headers = {
             HEADER_CONTENT_TYPE: CONTENT_TYPE_BINARY,
             HEADER_CONTENT_SECURITY_POLICY: csp
         }
     else:
-        bubble_log('filter_chunk: url='+url+' (no csp) (last='+str(last)+')')
-        filter_headers = STANDARD_FILTER_HEADERS
+        if bubble_log.isEnabledFor(DEBUG):
+            bubble_log.debug('filter_chunk: url='+url+' (no csp) size='+str(chunk_len))
+        headers = STANDARD_FILTER_HEADERS
 
     if debug_stream_fqdn and debug_stream_uri and debug_stream_fqdn in req_id and flow.request.path == debug_stream_uri:
         if req_id in DEBUG_STREAM_COUNTERS:
@@ -99,68 +111,91 @@ def filter_chunk(flow, chunk, req_id, user_agent, last, content_encoding=None, c
         else:
             count = 0
         DEBUG_STREAM_COUNTERS[req_id] = count
-        bubble_log('filter_chunk: debug_stream detected, capturing: '+debug_stream_fqdn)
+        if bubble_log.isEnabledFor(DEBUG):
+            bubble_log.debug('filter_chunk: debug_stream detected, capturing: '+debug_stream_fqdn)
         f = open('/tmp/bubble_stream_'+req_id+'_chunk'+"{:04d}".format(count)+'.data', mode='wb', buffering=0)
         if chunk is not None:
             f.write(chunk)
         f.close()
         f = open('/tmp/bubble_stream_'+req_id+'_chunk'+"{:04d}".format(count)+'.headers.json', mode='w')
-        f.write(json.dumps(filter_headers))
+        f.write(json.dumps(headers))
         f.close()
         f = open('/tmp/bubble_stream_'+req_id+'_chunk'+"{:04d}".format(count)+'.url', mode='w')
         f.write(url)
         f.close()
 
-    response = requests.post(url, data=chunk, headers=filter_headers)
-    if not response.ok:
+    response = bubble_async(name, url, headers=headers, method='POST', data=chunk, loop=loop)
+    if not response.status_code == 200:
         err_message = 'filter_chunk: Error fetching ' + url + ', HTTP status ' + str(response.status_code)
-        bubble_log(err_message)
+        if bubble_log.isEnabledFor(ERROR):
+            bubble_log.error(err_message)
         return b''
 
     elif HEADER_FILTER_PASSTHRU in response.headers:
-        bubble_log('filter_chunk: server returned X-Bubble-Passthru, not filtering subsequent requests')
+        if bubble_log.isEnabledFor(DEBUG):
+            bubble_log.debug('filter_chunk: server returned X-Bubble-Passthru, not filtering subsequent requests')
         redis_set(redis_passthru_key, 'passthru', ex=REDIS_FILTER_PASSTHRU_DURATION)
         return chunk
 
     return response.content
 
 
-def bubble_filter_chunks(flow, chunks, req_id, user_agent, content_encoding, content_type, csp):
-    """
-    chunks is a generator that can be used to iterate over all chunks.
-    """
+def bubble_filter_chunks(flow, chunks, flex_flow, req_id, user_agent, content_encoding, content_type, csp):
+    loop = asyncio.new_event_loop()
+    if bubble_log.isEnabledFor(DEBUG):
+        bubble_log.debug('bubble_filter_chunks: starting with content_type='+content_type)
     first = True
+    last = False
     content_length = get_flow_ctx(flow, CTX_CONTENT_LENGTH)
+    if bubble_log.isEnabledFor(DEBUG):
+        bubble_log.debug('bubble_filter_chunks: found content_length='+str(content_length))
+    if flex_flow is not None:
+        # flex flows with errors are handled before we get here
+        chunks = flex_flow.response_stream.iter_content(8192)
     try:
+        buffer = b''
         for chunk in chunks:
+            buffer = buffer + chunk
+            if len(buffer) < MIN_FILTER_CHUNK_SIZE:
+                continue
+            chunk_len = len(buffer)
+            chunk = buffer
+            buffer = b''
             if content_length:
                 bytes_sent = get_flow_ctx(flow, CTX_CONTENT_LENGTH_SENT)
-                chunk_len = len(chunk)
                 last = chunk_len + bytes_sent >= content_length
-                bubble_log('bubble_filter_chunks: content_length = '+str(content_length)+', bytes_sent = '+str(bytes_sent))
+                if bubble_log.isEnabledFor(DEBUG):
+                    bubble_log.debug('bubble_filter_chunks: content_length = '+str(content_length)+', bytes_sent = '+str(bytes_sent))
                 add_flow_ctx(flow, CTX_CONTENT_LENGTH_SENT, bytes_sent + chunk_len)
             else:
                 last = False
             if first:
-                yield filter_chunk(flow, chunk, req_id, user_agent, last, content_encoding, content_type, content_length, csp)
+                yield filter_chunk(loop, flow, chunk, req_id, user_agent, last, content_encoding, content_type, content_length, csp)
                 first = False
             else:
-                yield filter_chunk(flow, chunk, req_id, user_agent, last)
-        if not content_length:
-            yield filter_chunk(flow, None, req_id, user_agent, True)  # get the last bits of data
+                yield filter_chunk(loop, flow, chunk, req_id, user_agent, last)
+        # send whatever is left in the buffer
+        if len(buffer) > 0:
+            # bubble_log.debug('bubble_filter_chunks(end): sending remainder buffer of size '+str(len(buffer)))
+            if first:
+                yield filter_chunk(loop, flow, buffer, req_id, user_agent, last, content_encoding, content_type, content_length, csp)
+            else:
+                yield filter_chunk(loop, flow, buffer, req_id, user_agent, last)
+        if not content_length or not last:
+            # bubble_log.debug('bubble_filter_chunks(end): sending last empty chunk')
+            yield filter_chunk(loop, flow, None, req_id, user_agent, True)  # get the last bits of data
     except Exception as e:
-        bubble_log('bubble_filter_chunks: exception='+repr(e))
+        if bubble_log.isEnabledFor(ERROR):
+            bubble_log.error('bubble_filter_chunks: exception='+repr(e))
         traceback.print_exc()
         yield None
 
 
-def bubble_modify(flow, req_id, user_agent, content_encoding, content_type, csp):
-    return lambda chunks: bubble_filter_chunks(flow, chunks, req_id, user_agent, content_encoding, content_type, csp)
-
-
-def send_bubble_response(response):
-    for chunk in response.iter_content(8192):
-        yield chunk
+def bubble_modify(flow, flex_flow, req_id, user_agent, content_encoding, content_type, csp):
+    if bubble_log.isEnabledFor(DEBUG):
+        bubble_log.debug('bubble_modify: modifying req_id='+req_id+' with content_type='+content_type)
+    return lambda chunks: bubble_filter_chunks(flow, chunks, flex_flow, req_id,
+                                               user_agent, content_encoding, content_type, csp)
 
 
 EMPTY_XML = [b'<?xml version="1.0" encoding="UTF-8"?><html></html>']
@@ -179,78 +214,82 @@ def abort_data(content_type):
 
 
 def responseheaders(flow):
+    flex_flow = get_flow_ctx(flow, CTX_BUBBLE_FLEX)
+    if flex_flow:
+        flex_flow = process_flex(flex_flow)
+    else:
+        flex_flow = None
+    if bubble_log.isEnabledFor(DEBUG):
+        bubble_log.debug('responseheaders: flex_flow = '+repr(flex_flow))
+    bubble_filter_response(flow, flex_flow)
+
+
+def bubble_filter_response(flow, flex_flow):
+    # only filter once -- flex routing may have pre-filtered
+    if get_flow_ctx(flow, CTX_BUBBLE_FILTERED):
+        return
+    add_flow_ctx(flow, CTX_BUBBLE_FILTERED, True)
 
     path = flow.request.path
-    if path and path.startswith(BUBBLE_URI_PREFIX):
-        if path.startswith(HEALTH_CHECK_URI):
-            # bubble_log('responseheaders: special bubble health check request, responding with OK')
-            flow.response.headers = Headers()
-            flow.response.headers[HEADER_HEALTH_CHECK] = 'OK'
-            flow.response.headers[HEADER_CONTENT_LENGTH] = '3'
-            flow.response.status_code = 200
-            flow.response.stream = lambda chunks: [b'OK\n']
+    client_addr = flow.client_conn.address[0]
+    if is_bubble_special_path(path):
+        if is_bubble_health_check(path):
+            health_check_response(flow)
         else:
-            uri = 'http://127.0.0.1:' + bubble_port + '/' + path[len(BUBBLE_URI_PREFIX):]
-            bubble_log('responseheaders: sending special bubble request to '+uri)
-            headers = {
-                'Accept' : 'application/json',
-                'Content-Type': 'application/json'
-            }
-            response = None
-            if flow.request.method == 'GET':
-                response = requests.get(uri, headers=headers, stream=True)
-            elif flow.request.method == 'POST':
-                bubble_log('responseheaders: special bubble request: POST content is '+str(flow.request.content))
-                headers['Content-Length'] = str(len(flow.request.content))
-                response = requests.post(uri, data=flow.request.content, headers=headers)
-            else:
-                bubble_log('responseheaders: special bubble request: method '+flow.request.method+' not supported')
-            if response is not None:
-                bubble_log('responseheaders: special bubble request: response status = '+str(response.status_code))
-                flow.response.headers = Headers()
-                for key, value in response.headers.items():
-                    flow.response.headers[key] = value
-                flow.response.status_code = response.status_code
-                flow.response.stream = lambda chunks: send_bubble_response(response)
+            special_bubble_response(flow)
+
+    elif flex_flow and flex_flow.is_error():
+        if bubble_log.isEnabledFor(DEBUG):
+            bubble_log.debug('bubble_filter_response: flex_flow had error, returning error_html: ' + repr(flex_flow.response_stream))
+        flow.response.stream = flex_flow.response_stream
 
     else:
         abort_code = get_flow_ctx(flow, CTX_BUBBLE_ABORT)
         if abort_code is not None:
             abort_location = get_flow_ctx(flow, CTX_BUBBLE_LOCATION)
             if abort_location is not None:
-                bubble_log('responseheaders: redirecting request with HTTP status '+str(abort_code)+' to: '+abort_location+', path was: '+path)
+                if bubble_log.isEnabledFor(INFO):
+                    bubble_log.info('bubble_filter_response: redirecting request with HTTP status '+str(abort_code)+' to: '+abort_location+', path was: '+path)
                 flow.response.headers = Headers()
                 flow.response.headers[HEADER_LOCATION] = abort_location
                 flow.response.status_code = abort_code
+                flow.response.reason = status_reason(abort_code)
                 flow.response.stream = lambda chunks: []
             else:
                 if HEADER_CONTENT_TYPE in flow.response.headers:
                     content_type = flow.response.headers[HEADER_CONTENT_TYPE]
                 else:
                     content_type = None
-                bubble_log('responseheaders: aborting request with HTTP status '+str(abort_code)+', path was: '+path)
+                if bubble_log.isEnabledFor(INFO):
+                    bubble_log.info('bubble_filter_response: aborting request from '+client_addr+' with HTTP status '+str(abort_code)+', path was: '+path)
                 flow.response.headers = Headers()
                 flow.response.status_code = abort_code
+                flow.response.reason = status_reason(abort_code)
                 flow.response.stream = lambda chunks: abort_data(content_type)
 
         elif flow.response.status_code // 100 != 2:
-            bubble_log('responseheaders: response had HTTP status '+str(flow.response.status_code)+', returning as-is: '+path)
+            if bubble_log.isEnabledFor(INFO):
+                bubble_log.info('bubble_filter_response: response had HTTP status '+str(flow.response.status_code)+', returning as-is: '+path)
+            flow.response.headers[HEADER_CONTENT_LENGTH] = '0'
             pass
 
         elif flow.response.headers is None or len(flow.response.headers) == 0:
-            bubble_log('responseheaders: response had HTTP status '+str(flow.response.status_code)+', and NO response headers, returning as-is: '+path)
+            if bubble_log.isEnabledFor(INFO):
+                bubble_log.info('bubble_filter_response: response had HTTP status '+str(flow.response.status_code)+', and NO response headers, returning as-is: '+path)
             pass
 
         elif HEADER_CONTENT_LENGTH in flow.response.headers and flow.response.headers[HEADER_CONTENT_LENGTH] == "0":
-            bubble_log('responseheaders: response had HTTP status '+str(flow.response.status_code)+', and '+HEADER_CONTENT_LENGTH+' was zero, returning as-is: '+path)
+            if bubble_log.isEnabledFor(INFO):
+                bubble_log.info('bubble_filter_response: response had HTTP status '+str(flow.response.status_code)+', and '+HEADER_CONTENT_LENGTH+' was zero, returning as-is: '+path)
             pass
 
         else:
             req_id = get_flow_ctx(flow, CTX_BUBBLE_REQUEST_ID)
             matchers = get_flow_ctx(flow, CTX_BUBBLE_MATCHERS)
-            prefix = 'responseheaders(req_id='+str(req_id)+'): '
+            prefix = 'bubble_filter_response(req_id='+str(req_id)+'): '
             if req_id is not None and matchers is not None:
-                bubble_log(prefix+' matchers: '+repr(matchers))
+                if bubble_log.isEnabledFor(DEBUG):
+                    bubble_log.debug(prefix+' matchers: '+repr(matchers))
                 if HEADER_USER_AGENT in flow.request.headers:
                     user_agent = flow.request.headers[HEADER_USER_AGENT]
                 else:
@@ -261,15 +300,17 @@ def responseheaders(flow):
                         any_content_type_matches = False
                         for m in matchers:
                             if 'contentTypeRegex' in m:
-                                typeRegex = m['contentTypeRegex']
-                                if typeRegex is None:
-                                    typeRegex = '^text/html.*'
-                                if re.match(typeRegex, content_type):
+                                type_regex = m['contentTypeRegex']
+                                if type_regex is None:
+                                    type_regex = '^text/html.*'
+                                if re.match(type_regex, content_type):
                                     any_content_type_matches = True
-                                    bubble_log(prefix+'found at least one matcher for content_type ('+content_type+'), filtering: '+path)
+                                    if bubble_log.isEnabledFor(DEBUG):
+                                        bubble_log.debug(prefix+'found at least one matcher for content_type ('+content_type+'), filtering: '+path)
                                     break
                         if not any_content_type_matches:
-                            bubble_log(prefix+'no matchers for content_type ('+content_type+'), passing thru: '+path)
+                            if bubble_log.isEnabledFor(DEBUG):
+                                bubble_log.debug(prefix+'no matchers for content_type ('+content_type+'), passing thru: '+path)
                             return
 
                         if HEADER_CONTENT_ENCODING in flow.response.headers:
@@ -284,8 +325,11 @@ def responseheaders(flow):
                             csp = None
 
                         content_length_value = flow.response.headers.pop(HEADER_CONTENT_LENGTH, None)
-                        # bubble_log(prefix+'content_encoding='+repr(content_encoding) + ', content_type='+repr(content_type))
-                        flow.response.stream = bubble_modify(flow, req_id, user_agent, content_encoding, content_type, csp)
+                        if bubble_log.isEnabledFor(DEBUG):
+                            bubble_log.debug(prefix+'content_encoding='+repr(content_encoding) + ', content_type='+repr(content_type))
+
+                        flow.response.stream = bubble_modify(flow, flex_flow, req_id,
+                                                             user_agent, content_encoding, content_type, csp)
                         if content_length_value:
                             flow.response.headers['transfer-encoding'] = 'chunked'
                             # find server_conn to set fake_chunks on
@@ -295,10 +339,12 @@ def responseheaders(flow):
                                     if hasattr(ctx, 'ctx'):
                                         ctx = ctx.ctx
                                     else:
-                                        bubble_log(prefix+'error finding server_conn for path '+path+'. last ctx has no further ctx. type='+str(type(ctx))+' vars='+str(vars(ctx)))
+                                        if bubble_log.isEnabledFor(ERROR):
+                                            bubble_log.error(prefix+'error finding server_conn for path '+path+'. last ctx has no further ctx. type='+str(type(ctx))+' vars='+str(vars(ctx)))
                                         return
                                 if not hasattr(ctx, 'server_conn'):
-                                    bubble_log(prefix+'error finding server_conn for path '+path+'. ctx type='+str(type(ctx))+' vars='+str(vars(ctx)))
+                                    if bubble_log.isEnabledFor(ERROR):
+                                        bubble_log.error(prefix+'error finding server_conn for path '+path+'. ctx type='+str(type(ctx))+' vars='+str(vars(ctx)))
                                     return
                                 content_length = int(content_length_value)
                                 ctx.server_conn.rfile.fake_chunks = content_length
@@ -306,11 +352,14 @@ def responseheaders(flow):
                                 add_flow_ctx(flow, CTX_CONTENT_LENGTH_SENT, 0)
 
                     else:
-                        bubble_log(prefix+'no matchers, passing thru: '+path)
+                        if bubble_log.isEnabledFor(DEBUG):
+                            bubble_log.debug(prefix+'no matchers, passing thru: '+path)
                         pass
                 else:
-                    bubble_log(prefix+'no '+HEADER_CONTENT_TYPE+' header, passing thru: '+path)
+                    if bubble_log.isEnabledFor(WARNING):
+                        bubble_log.warning(prefix+'no '+HEADER_CONTENT_TYPE+' header, passing thru: '+path)
                     pass
             else:
-                bubble_log(prefix+'no '+CTX_BUBBLE_MATCHERS+' in ctx, passing thru: '+path)
+                if bubble_log.isEnabledFor(DEBUG):
+                    bubble_log.debug(prefix+'no '+CTX_BUBBLE_MATCHERS+' in ctx, passing thru: '+path)
                 pass

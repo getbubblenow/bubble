@@ -11,7 +11,7 @@ import bubble.model.app.AppMatcher;
 import bubble.model.device.Device;
 import bubble.rule.FilterMatchDecision;
 import bubble.server.BubbleConfiguration;
-import bubble.service.cloud.DeviceIdService;
+import bubble.service.device.DeviceService;
 import bubble.service.stream.StandardRuleEngineService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +46,7 @@ public class ReverseProxyResource {
     @Autowired private AppMatcherDAO matcherDAO;
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private StandardRuleEngineService ruleEngine;
-    @Autowired private DeviceIdService deviceIdService;
+    @Autowired private DeviceService deviceService;
     @Autowired private FilterHttpResource filterHttpResource;
 
     @Getter(lazy=true) private final int prefixLength = configuration.getHttp().getBaseUri().length() + PROXY_ENDPOINT.length() + 1;
@@ -60,7 +60,7 @@ public class ReverseProxyResource {
                         @PathParam("path") String path) throws URISyntaxException, IOException {
         final Account account = userPrincipal(request);
         final String remoteHost = getRemoteHost(req);
-        final Device device = deviceIdService.findDeviceByIp(remoteHost);
+        final Device device = deviceService.findDeviceByIp(remoteHost);
         if (device == null) return ruleEngine.passthru(request);
 
         final URIBean ub = getUriBean(request);

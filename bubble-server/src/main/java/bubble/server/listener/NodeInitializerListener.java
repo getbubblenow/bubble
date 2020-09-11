@@ -13,8 +13,9 @@ import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.boot.SelfNodeService;
-import bubble.service.cloud.DeviceIdService;
+import bubble.service.device.DeviceService;
 import bubble.service.cloud.NetworkMonitorService;
+import bubble.service.device.StandardFlexRouterService;
 import bubble.service.stream.AppDataCleaner;
 import bubble.service.stream.AppPrimerService;
 import lombok.extern.slf4j.Slf4j;
@@ -102,7 +103,7 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
                 } catch (Exception e) {
                     die("onStart: error initializing driver for cloud: "+cloud.getName()+"/"+cloud.getUuid()+": "+shortError(e), e);
                 }
-//            background(() -> cloud.wireAndSetup(c));
+//            background(() -> cloud.wireAndSetup(c), "NodeInitializerListener.onStart.cloudInit);
             }
         }
 
@@ -112,7 +113,8 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
             final BubbleNetwork thisNetwork = c.getThisNetwork();
             if (thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.node) {
                 c.getBean(AppPrimerService.class).primeApps();
-                c.getBean(DeviceIdService.class).initDeviceSecurityLevels();
+                c.getBean(StandardFlexRouterService.class).start();
+                c.getBean(DeviceService.class).initDeviceSecurityLevels();
                 c.getBean(AppDataCleaner.class).start();
             }
         }

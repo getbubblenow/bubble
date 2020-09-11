@@ -72,7 +72,7 @@ public class GeoService {
     }
 
     private final Map<String, Future<GeoLocation>> backgroundLookups = new ConcurrentHashMap<>();
-    private final ExecutorService backgroundLookupExec = fixedPool(5);
+    private final ExecutorService backgroundLookupExec = fixedPool(5, "GeoService.backgroundLookupExec");
 
     public GeoLocation locate (String accountUuid, String ip, boolean cacheOnly) {
         final String cacheKey = hashOf(accountUuid, ip);

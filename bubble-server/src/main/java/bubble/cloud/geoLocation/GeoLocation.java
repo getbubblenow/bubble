@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.math.Haversine;
 
@@ -16,7 +17,7 @@ import javax.persistence.Transient;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 
-@NoArgsConstructor @Accessors(chain=true)
+@NoArgsConstructor @Accessors(chain=true) @ToString(of={"lat", "lon"})
 public class GeoLocation {
 
     @Getter @Setter private String country;

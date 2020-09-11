@@ -11,5 +11,6 @@ import static java.util.Collections.emptyMap;
 public interface RuleEngineService {
 
     default Map<Object, Object> flushCaches() { return emptyMap(); }
+    default Map<Object, Object> flushCaches(boolean prime) { return emptyMap(); }
 
 }

@@ -21,7 +21,8 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static bubble.rule.passthru.TlsPassthruFeed.EMPTY_FEEDS;
+import static bubble.rule.passthru.FlexFeed.EMPTY_FLEX_FEEDS;
+import static bubble.rule.passthru.TlsPassthruFeed.EMPTY_PASSTHRU_FEEDS;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
@@ -34,47 +35,90 @@ import static org.cobbzilla.wizard.server.RestServerBase.reportError;
 public class TlsPassthruConfig {
 
     public static final long DEFAULT_TLS_FEED_REFRESH_INTERVAL = HOURS.toMillis(1);
+    public static final long DEFAULT_FLEX_FEED_REFRESH_INTERVAL = HOURS.toMillis(1);
     public static final String FEED_NAME_PREFIX = "# Name:";
 
-    @Getter @Setter private String[] fqdnList;
-    public boolean hasFqdnList () { return !empty(fqdnList); }
-    public boolean hasFqdn(String fqdn) { return hasFqdnList() && ArrayUtils.indexOf(fqdnList, fqdn) != -1; }
+    @Getter @Setter private String[] passthruFqdnList;
+    public boolean hasPassthruFqdnList() { return !empty(passthruFqdnList); }
+    public boolean hasPassthruFqdn(String fqdn) { return hasPassthruFqdnList() && ArrayUtils.indexOf(passthruFqdnList, fqdn) != -1; }
 
-    public TlsPassthruConfig addFqdn(String fqdn) {
-        return setFqdnList(Arrays.stream(ArrayUtil.append(fqdnList, fqdn)).collect(Collectors.toSet()).toArray(String[]::new));
+    public TlsPassthruConfig addPassthruFqdn(String fqdn) {
+        return setPassthruFqdnList(Arrays.stream(ArrayUtil.append(passthruFqdnList, fqdn)).collect(Collectors.toSet()).toArray(String[]::new));
     }
 
-    public TlsPassthruConfig removeFqdn(String id) {
-        return !hasFqdnList() ? this :
-                setFqdnList(Arrays.stream(getFqdnList())
+    public TlsPassthruConfig removePassthruFqdn(String id) {
+        return !hasPassthruFqdnList() ? this :
+                setPassthruFqdnList(Arrays.stream(getPassthruFqdnList())
                         .filter(fqdn -> !fqdn.equalsIgnoreCase(id.trim()))
                         .toArray(String[]::new));
     }
 
-    @Getter @Setter private TlsPassthruFeed[] feedList;
-    public boolean hasFeedList () { return !empty(feedList); }
-    public boolean hasFeed (TlsPassthruFeed feed) {
-        return hasFeedList() && Arrays.stream(feedList).anyMatch(f -> f.getFeedUrl().equals(feed.getFeedUrl()));
+    @Getter @Setter private TlsPassthruFeed[] passthruFeedList;
+    public boolean hasPassthruFeedList() { return !empty(passthruFeedList); }
+    public boolean hasPassthruFeed(TlsPassthruFeed feed) {
+        return hasPassthruFeedList() && Arrays.stream(passthruFeedList).anyMatch(f -> f.getPassthruFeedUrl().equals(feed.getPassthruFeedUrl()));
     }
 
-    public TlsPassthruConfig addFeed(TlsPassthruFeed feed) {
-        final Set<TlsPassthruFeed> feeds = getFeedSet();
-        if (empty(feeds)) return setFeedList(new TlsPassthruFeed[] {feed});
+    public TlsPassthruConfig addPassthruFeed(TlsPassthruFeed feed) {
+        final Set<TlsPassthruFeed> feeds = getPassthruFeedSet();
+        if (empty(feeds)) return setPassthruFeedList(new TlsPassthruFeed[] {feed});
         feeds.add(feed);
-        return setFeedList(feeds.toArray(EMPTY_FEEDS));
+        return setPassthruFeedList(feeds.toArray(EMPTY_PASSTHRU_FEEDS));
     }
 
-    public TlsPassthruConfig removeFeed(String id) {
-        return setFeedList(getFeedSet().stream()
+    public TlsPassthruConfig removePassthruFeed(String id) {
+        return setPassthruFeedList(getPassthruFeedSet().stream()
                 .filter(feed -> !feed.getId().equals(id))
                 .toArray(TlsPassthruFeed[]::new));
     }
 
-    private Map<String, Set<String>> recentFeedValues = new HashMap<>();
+    private final Map<String, Set<String>> recentFeedValues = new HashMap<>();
 
-    @JsonIgnore public Set<TlsPassthruFeed> getFeedSet() {
-        final TlsPassthruFeed[] feedList = getFeedList();
-        return !empty(feedList) ? Arrays.stream(feedList).collect(Collectors.toCollection(TreeSet::new)) : Collections.emptySet();
+    @JsonIgnore public Set<TlsPassthruFeed> getPassthruFeedSet() {
+        final TlsPassthruFeed[] feedList = getPassthruFeedList();
+        return !empty(feedList) ? Arrays.stream(feedList)
+                .collect(Collectors.toCollection(TreeSet::new)) : Collections.emptySet();
+    }
+
+    @Getter @Setter private String[] flexFqdnList;
+    public boolean hasFlexFqdnList () { return !empty(flexFqdnList); }
+    public boolean hasFlexFqdn(String flexFqdn) { return hasFlexFqdnList() && ArrayUtils.indexOf(flexFqdnList, flexFqdn) != -1; }
+
+    public TlsPassthruConfig addFlexFqdn(String flexFqdn) {
+        return setFlexFqdnList(Arrays.stream(ArrayUtil.append(flexFqdnList, flexFqdn)).collect(Collectors.toSet()).toArray(String[]::new));
+    }
+
+    public TlsPassthruConfig removeFlexFqdn(String id) {
+        return !hasFlexFqdnList() ? this :
+                setFlexFqdnList(Arrays.stream(getFlexFqdnList())
+                        .filter(flexFqdn -> !flexFqdn.equalsIgnoreCase(id.trim()))
+                        .toArray(String[]::new));
+    }
+
+    @Getter @Setter private FlexFeed[] flexFeedList;
+    public boolean hasFlexFeedList () { return !empty(flexFeedList); }
+    public boolean hasFlexFeed (FlexFeed flexFeed) {
+        return hasFlexFeedList() && Arrays.stream(flexFeedList).anyMatch(f -> f.getFlexFeedUrl().equals(flexFeed.getFlexFeedUrl()));
+    }
+
+    public TlsPassthruConfig addFlexFeed(FlexFeed flexFeed) {
+        final Set<FlexFeed> flexFeeds = getFlexFeedSet();
+        if (empty(flexFeeds)) return setFlexFeedList(new FlexFeed[] {flexFeed});
+        flexFeeds.add(flexFeed);
+        return setFlexFeedList(flexFeeds.toArray(EMPTY_FLEX_FEEDS));
+    }
+
+    public TlsPassthruConfig removeFlexFeed(String id) {
+        return setFlexFeedList(getFlexFeedSet().stream()
+                .filter(flexFeed -> !flexFeed.getId().equals(id))
+                .toArray(FlexFeed[]::new));
+    }
+
+    private final Map<String, Set<String>> recentFlexFeedValues = new HashMap<>();
+
+    @JsonIgnore public Set<FlexFeed> getFlexFeedSet() {
+        final FlexFeed[] flexFeedList = getFlexFeedList();
+        return !empty(flexFeedList) ? Arrays.stream(flexFeedList).collect(Collectors.toCollection(TreeSet::new)) : Collections.emptySet();
     }
 
     @ToString
@@ -82,6 +126,7 @@ public class TlsPassthruConfig {
         @Getter @Setter private String fqdn;
         @Getter @Setter private Pattern fqdnPattern;
         public boolean hasPattern () { return fqdnPattern != null; }
+        public boolean fqdnOnly () { return !hasPattern(); }
         public TlsPassthruMatcher (String fqdn) {
             this.fqdn = fqdn;
             if (fqdn.startsWith("/") && fqdn.endsWith("/")) {
@@ -103,33 +148,58 @@ public class TlsPassthruConfig {
     @JsonIgnore public Set<TlsPassthruMatcher> getPassthruSet() { return getPassthruSetRef().get(); }
 
     private Set<TlsPassthruMatcher> loadPassthruSet() {
-        final Set<TlsPassthruMatcher> set = new HashSet<>();
-        if (hasFqdnList()) {
-            for (String val : getFqdnList()) {
-                set.add(new TlsPassthruMatcher(val));
-            }
-        }
-        if (hasFeedList()) {
-            // put in a set to avoid duplicate URLs
-            for (TlsPassthruFeed feed : new HashSet<>(Arrays.asList(feedList))) {
-                final TlsPassthruFeed loaded = loadFeed(feed.getFeedUrl());
+        final Set<TlsPassthruMatcher> set = loadFeeds(this.passthruFeedList, this.passthruFqdnList, this.recentFeedValues);
+        if (log.isDebugEnabled()) log.debug("loadPassthruSet: returning set: "+StringUtil.toString(set, ", ")+" -- fqdnList="+Arrays.toString(this.passthruFqdnList));
+        return set;
+    }
 
-                // set name if found in special comment
-                if (!feed.hasFeedName() && loaded.hasFeedName()) feed.setFeedName(loaded.getFeedName());
+    @JsonIgnore @Getter(lazy=true) private final AutoRefreshingReference<Set<TlsPassthruMatcher>> flexSetRef = new AutoRefreshingReference<>() {
+        @Override public Set<TlsPassthruMatcher> refresh() { return loadFlexSet(); }
+        // todo: load refresh interval from config. implement a config view with an action to set it
+        @Override public long getTimeout() { return DEFAULT_FLEX_FEED_REFRESH_INTERVAL; }
+    };
+    @JsonIgnore public Set<TlsPassthruMatcher> getFlexSet() { return getFlexSetRef().get(); }
 
-                // add to set if anything was found
-                if (loaded.hasFqdnList()) recentFeedValues.put(feed.getFeedUrl(), loaded.getFqdnList());
-            }
-        }
-        for (String val : recentFeedValues.values().stream().flatMap(Collection::stream).collect(Collectors.toSet())) {
-            set.add(new TlsPassthruMatcher(val));
-        }
+    @JsonIgnore public Set<String> getFlexDomains() {
+        return getFlexSetRef().get().stream()
+                .filter(TlsPassthruMatcher::fqdnOnly)
+                .map(TlsPassthruMatcher::getFqdn)
+                .collect(Collectors.toSet());
+    }
+
+    private Set<TlsPassthruMatcher> loadFlexSet() {
+        final Set<TlsPassthruMatcher> set = loadFeeds(this.flexFeedList, this.flexFqdnList, this.recentFlexFeedValues);
         if (log.isDebugEnabled()) log.debug("loadPassthruSet: returning fqdnList: "+StringUtil.toString(set, ", "));
         return set;
     }
 
+    private Set<TlsPassthruMatcher> loadFeeds(BasePassthruFeed[] feedList, String[] fqdnList, Map<String, Set<String>> recentValues) {
+        final Set<TlsPassthruMatcher> set = new HashSet<>();
+        if (!empty(fqdnList)) {
+            for (String val : fqdnList) {
+                set.add(new TlsPassthruMatcher(val));
+            }
+        }
+        if (!empty(feedList)) {
+            // put in a set to avoid duplicate URLs
+            for (BasePassthruFeed feed : new HashSet<>(Arrays.asList(feedList))) {
+                final TlsPassthruFeed loaded = loadFeed(feed.getFeedUrl());
+
+                // set name if found in special comment
+                if (!feed.hasFeedName() && loaded.hasFeedName()) feed.setFeedName(loaded.getPassthruFeedName());
+
+                // add to set if anything was found
+                if (loaded.hasFqdnList()) recentValues.put(feed.getFeedUrl(), loaded.getPassthruFqdnList());
+            }
+        }
+        for (String val : recentValues.values().stream().flatMap(Collection::stream).collect(Collectors.toSet())) {
+            set.add(new TlsPassthruMatcher(val));
+        }
+        return set;
+    }
+
     public TlsPassthruFeed loadFeed(String url) {
-        final TlsPassthruFeed loaded = new TlsPassthruFeed().setFeedUrl(url);
+        final TlsPassthruFeed loaded = new TlsPassthruFeed().setPassthruFeedUrl(url);
         try (final InputStream in = getUrlInputStream(url)) {
             final List<String> lines = StringUtil.split(IOUtils.toString(in), "\r\n");
             final Set<String> fqdnList = new HashSet<>();
@@ -139,8 +209,8 @@ public class TlsPassthruConfig {
                 if (trimmed.startsWith("#")) {
                     if (!loaded.hasFeedName() && trimmed.toLowerCase().startsWith(FEED_NAME_PREFIX.toLowerCase())) {
                         final String name = trimmed.substring(FEED_NAME_PREFIX.length()).trim();
-                        if (log.isDebugEnabled()) log.debug("loadFeed("+url+"): setting name="+name+" from special comment: "+trimmed);
-                        loaded.setFeedName(name);
+                        if (log.isTraceEnabled()) log.trace("loadFeed("+url+"): setting name="+name+" from special comment: "+trimmed);
+                        loaded.setPassthruFeedName(name);
                     } else {
                         if (log.isDebugEnabled()) log.debug("loadFeed("+url+"): ignoring comment: "+trimmed);
                     }
@@ -148,7 +218,7 @@ public class TlsPassthruConfig {
                     fqdnList.add(trimmed);
                 }
             }
-            loaded.setFqdnList(fqdnList);
+            loaded.setPassthruFqdnList(fqdnList);
         } catch (Exception e) {
             reportError("loadFeed("+url+"): "+shortError(e), e);
         }
@@ -157,6 +227,13 @@ public class TlsPassthruConfig {
 
     public boolean isPassthru(String fqdn) {
         for (TlsPassthruMatcher match : getPassthruSet()) {
+            if (match.matches(fqdn)) return true;
+        }
+        return false;
+    }
+
+    public boolean isFlex(String fqdn) {
+        for (TlsPassthruMatcher match : getFlexSet()) {
             if (match.matches(fqdn)) return true;
         }
         return false;

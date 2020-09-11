@@ -9,7 +9,7 @@ import bubble.model.app.BubbleApp;
 import bubble.model.app.config.AppDataDriver;
 import bubble.model.app.config.AppDataView;
 import bubble.model.device.Device;
-import bubble.service.cloud.DeviceIdService;
+import bubble.service.device.DeviceService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.model.search.SearchQuery;
 import org.glassfish.grizzly.http.server.Request;
@@ -29,7 +29,7 @@ public class AppsResource extends AppsResourceBase {
 
     public AppsResource(Account account) { super(account); }
 
-    @Autowired private DeviceIdService deviceIdService;
+    @Autowired private DeviceService deviceService;
 
     @GET @Path("/{id}"+EP_VIEW+"/{view}")
     public Response search(@Context Request req,
@@ -58,7 +58,7 @@ public class AppsResource extends AppsResourceBase {
         if (view == null) return notFound(viewName);
 
         final String remoteHost = getRemoteHost(req);
-        final Device device = deviceIdService.findDeviceByIp(remoteHost);
+        final Device device = deviceService.findDeviceByIp(remoteHost);
 
         final AppDataDriver driver = app.getDataConfig().getDataDriver(configuration);
         return ok(driver.query(caller, device, app, null, view, query));

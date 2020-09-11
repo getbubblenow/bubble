@@ -5,40 +5,69 @@
   "template": true,
   "enabled": true,
   "priority": 1000000,
-  "canPrime": false,
+  "canPrime": true,
   "dataConfig": {
     "dataDriver": "bubble.app.passthru.TlsPassthruAppDataDriver",
     "presentation": "none",
     "configDriver": "bubble.app.passthru.TlsPassthruAppConfigDriver",
     "configFields": [
       {"name": "passthruFqdn", "type": "hostname", "truncate": false},
-      {"name": "feedName", "truncate": false},
-      {"name": "feedUrl", "type": "http_url"}
+      {"name": "passthruFeedName", "truncate": false},
+      {"name": "passthruFeedUrl", "type": "http_url"},
+      {"name": "flexFqdn", "type": "hostname", "truncate": false},
+      {"name": "flexFeedName", "truncate": false},
+      {"name": "flexFeedUrl", "type": "http_url"}
     ],
     "configViews": [{
-      "name": "manageDomains",
+      "name": "managePassthruDomains",
       "scope": "app",
       "root": "true",
       "fields": ["passthruFqdn"],
       "actions": [
-        {"name": "removeFqdn", "index": 10},
+        {"name": "removePassthruFqdn", "index": 10},
         {
-          "name": "addFqdn", "scope": "app", "index": 10,
+          "name": "addPassthruFqdn", "scope": "app", "index": 10,
           "params": ["passthruFqdn"],
-          "button": "addFqdn"
+          "button": "addPassthruFqdn"
         }
       ]
     }, {
-      "name": "manageFeeds",
+      "name": "managePassthruFeeds",
       "scope": "app",
       "root": "true",
-      "fields": ["feedName", "feedUrl"],
+      "fields": ["passthruFeedName", "passthruFeedUrl"],
       "actions": [
-        {"name": "removeFeed", "index": 10},
+        {"name": "removePassthruFeed", "index": 10},
         {
-          "name": "addFeed", "scope": "app", "index": 10,
-          "params": ["feedUrl"],
-          "button": "addFeed"
+          "name": "addPassthruFeed", "scope": "app", "index": 10,
+          "params": ["passthruFeedUrl"],
+          "button": "addPassthruFeed"
+        }
+      ]
+    }, {
+      "name": "manageFlexDomains",
+      "scope": "app",
+      "root": "true",
+      "fields": ["flexFqdn"],
+      "actions": [
+        {"name": "removeFlexFqdn", "index": 10},
+        {
+          "name": "addFlexFqdn", "scope": "app", "index": 10,
+          "params": ["flexFqdn"],
+          "button": "addFlexFqdn"
+        }
+      ]
+    }, {
+      "name": "manageFlexFeeds",
+      "scope": "app",
+      "root": "true",
+      "fields": ["flexFeedName", "flexFeedUrl"],
+      "actions": [
+        {"name": "removeFlexFeed", "index": 10},
+        {
+          "name": "addFlexFeed", "scope": "app", "index": 10,
+          "params": ["flexFeedUrl"],
+          "button": "addFlexFeed"
         }
       ]
     }]
@@ -56,9 +85,13 @@
       "driver": "TlsPassthruRuleDriver",
       "priority": -1000000,
       "config": {
-        "fqdnList": [],
-        "feedList": [{
-          "feedUrl": "https://raw.githubusercontent.com/getbubblenow/bubble-filter-lists/master/tls_passthru.txt"
+        "passthruFqdnList": [],
+        "passthruFeedList": [{
+          "passthruFeedUrl": "https://raw.githubusercontent.com/getbubblenow/bubble-filter-lists/master/tls_passthru.txt"
+        }],
+        "flexFqdnList": [],
+        "flexFeedList": [{
+          "flexFeedUrl": "https://raw.githubusercontent.com/getbubblenow/bubble-filter-lists/master/flex_routing.txt"
         }]
       }
     }],
@@ -70,19 +103,41 @@
         {"name": "summary", "value": "Network Bypass"},
         {"name": "description", "value": "Do not perform SSL interception for certificate-pinned domains"},
 
-        {"name": "config.view.manageDomains", "value": "Manage Bypass Domains"},
-        {"name": "config.view.manageFeeds", "value": "Manage Bypass Domain Feeds"},
+        {"name": "config.view.managePassthruDomains", "value": "Manage Bypass Domains"},
+        {"name": "config.view.managePassthruFeeds", "value": "Manage Bypass Domain Feeds"},
         {"name": "config.field.passthruFqdn", "value": "Domain"},
         {"name": "config.field.passthruFqdn.description", "value": "Bypass traffic interception for this hostname"},
-        {"name": "config.field.feedName", "value": "Name"},
-        {"name": "config.field.feedUrl", "value": "Bypass Domains List URL"},
-        {"name": "config.field.feedUrl.description", "value": "URL returning a list of bypass domains and/or hostnames, one per line"},
-        {"name": "config.action.addFqdn", "value": "Add New Bypass Domain"},
-        {"name": "config.button.addFqdn", "value": "Add"},
-        {"name": "config.action.removeFqdn", "value": "Remove"},
-        {"name": "config.action.addFeed", "value": "Add New Bypass Domain Feed"},
-        {"name": "config.button.addFeed", "value": "Add"},
-        {"name": "config.action.removeFeed", "value": "Remove"}
+        {"name": "config.field.passthruFeedName", "value": "Name"},
+        {"name": "config.field.passthruFeedUrl", "value": "Bypass Domains List URL"},
+        {"name": "config.field.passthruFeedUrl.description", "value": "URL returning a list of bypass domains and/or hostnames, one per line"},
+        {"name": "config.action.addPassthruFqdn", "value": "Add New Bypass Domain"},
+        {"name": "config.button.addPassthruFqdn", "value": "Add"},
+        {"name": "config.action.removePassthruFqdn", "value": "Remove"},
+        {"name": "config.action.addPassthruFeed", "value": "Add New Bypass Domain Feed"},
+        {"name": "config.button.addPassthruFeed", "value": "Add"},
+        {"name": "config.action.removePassthruFeed", "value": "Remove"},
+
+        {"name": "config.view.manageFlexDomains", "value": "Manage Flex Routing Domains"},
+        {"name": "config.view.manageFlexFeeds", "value": "Manage Flex Routing Domain Feeds"},
+        {"name": "config.field.flexFqdn", "value": "Domain"},
+        {"name": "config.field.flexFqdn.description", "value": "Use flex routing for this domain and all subdomains. Prefix with ! to exclude from flex routing."},
+        {"name": "config.field.flexFeedName", "value": "Name"},
+        {"name": "config.field.flexFeedUrl", "value": "Flex Routing Domains List URL"},
+        {"name": "config.field.flexFeedUrl.description", "value": "URL returning a list of domains and/or hostnames to flex route, one per line"},
+        {"name": "config.action.addFlexFqdn", "value": "Add New Flex Routing Domain"},
+        {"name": "config.button.addFlexFqdn", "value": "Add"},
+        {"name": "config.action.removeFlexFqdn", "value": "Remove"},
+        {"name": "config.action.addFlexFeed", "value": "Add New Flex Routing Domain Feed"},
+        {"name": "config.button.addFlexFeed", "value": "Add"},
+        {"name": "config.action.removeFlexFeed", "value": "Remove"},
+
+        {"name": "err.passthruFqdn.passthruFqdnRequired", "value": "Domain or Hostname field is required"},
+        {"name": "err.passthruFeedUrl.feedUrlRequired", "value": "Feed URL is required"},
+        {"name": "err.passthruFeedUrl.emptyFqdnList", "value": "Feed URL was not found or contained no data"},
+
+        {"name": "err.flexFqdn.flexFqdnRequired", "value": "Domain or Hostname field is required"},
+        {"name": "err.flexFeedUrl.feedUrlRequired", "value": "Feed URL is required"},
+        {"name": "err.flexFeedUrl.emptyFqdnList", "value": "Feed URL was not found or contained no data"}
       ]
     }]
   }

@@ -107,6 +107,11 @@ public class AppRule extends IdentifiableBaseParentEntity implements AppTemplate
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(500000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String configJson;
 
+    @JsonIgnore @Transient @Getter @Setter private String previousConfigJson;
+    public boolean configJsonChanged () {
+        return (previousConfigJson == null && configJson != null) || (previousConfigJson != null && !previousConfigJson.equals(configJson));
+    }
+
     public AppRule(AppRule other) {
         copy(this, other, CREATE_FIELDS);
         setUuid(null);

@@ -19,12 +19,16 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.device.Device;
 import bubble.model.device.DeviceSecurityLevel;
+import bubble.model.device.DeviceStatus;
 import bubble.rule.FilterMatchDecision;
 import bubble.server.BubbleConfiguration;
 import bubble.service.block.BlockStatsService;
 import bubble.service.block.BlockStatsSummary;
 import bubble.service.boot.SelfNodeService;
-import bubble.service.cloud.DeviceIdService;
+import bubble.service.device.DeviceService;
+import bubble.service.device.FlexRouterInfo;
+import bubble.service.device.StandardFlexRouterService;
+import bubble.service.message.MessageService;
 import bubble.service.stream.ConnectionCheckResponse;
 import bubble.service.stream.StandardRuleEngineService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -51,6 +55,8 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.resources.stream.FilterMatchersResponse.NO_MATCHERS;
+import static bubble.rule.AppRuleDriver.isFlexRouteFqdn;
+import static bubble.service.device.FlexRouterInfo.missingFlexRouter;
 import static bubble.service.stream.HttpStreamDebug.getLogFqdn;
 import static bubble.service.stream.StandardRuleEngineService.MATCHERS_CACHE_TIMEOUT;
 import static com.google.common.net.HttpHeaders.CONTENT_SECURITY_POLICY;
@@ -60,6 +66,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static org.cobbzilla.util.collection.ArrayUtil.arrayToString;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpContentTypes.TEXT_PLAIN;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
@@ -79,11 +86,13 @@ public class FilterHttpResource {
     @Autowired private AppSiteDAO siteDAO;
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private DeviceDAO deviceDAO;
-    @Autowired private DeviceIdService deviceIdService;
+    @Autowired private DeviceService deviceService;
     @Autowired private RedisService redis;
     @Autowired private BubbleConfiguration configuration;
     @Autowired private SelfNodeService selfNodeService;
     @Autowired private BlockStatsService blockStats;
+    @Autowired private StandardFlexRouterService flexRouterService;
+    @Autowired private MessageService messageService;
 
     private static final long ACTIVE_REQUEST_TIMEOUT = HOURS.toSeconds(12);
 
@@ -146,7 +155,7 @@ public class FilterHttpResource {
                                     @Context ContainerRequest request,
                                     FilterConnCheckRequest connCheckRequest) {
         final String prefix = "checkConnection: ";
-        if (connCheckRequest == null || !connCheckRequest.hasAddr() || !connCheckRequest.hasRemoteAddr()) {
+        if (connCheckRequest == null || !connCheckRequest.hasServerAddr() || !connCheckRequest.hasClientAddr()) {
             if (log.isDebugEnabled()) log.debug(prefix+"invalid connCheckRequest, returning forbidden");
             return forbidden();
         }
@@ -157,13 +166,13 @@ public class FilterHttpResource {
         if (isLocalIp) {
             // if it is for our host or net name, passthru
             if (connCheckRequest.hasFqdns() && (connCheckRequest.hasFqdn(getThisNode().getFqdn()) || connCheckRequest.hasFqdn(getThisNetwork().getNetworkDomain()))) {
-                if (log.isDebugEnabled()) log.debug(prefix + "returning passthru for LOCAL fqdn/addr=" + arrayToString(connCheckRequest.getFqdns()) + "/" + connCheckRequest.getAddr());
+                if (log.isDebugEnabled()) log.debug(prefix + "returning passthru for LOCAL fqdn/addr=" + arrayToString(connCheckRequest.getFqdns()) + "/" + connCheckRequest.getServerAddr());
                 return ok(ConnectionCheckResponse.passthru);
             }
         }
 
-        final String vpnAddr = connCheckRequest.getRemoteAddr();
-        final Device device = deviceIdService.findDeviceByIp(vpnAddr);
+        final String vpnAddr = connCheckRequest.getClientAddr();
+        final Device device = deviceService.findDeviceByIp(vpnAddr);
         if (device == null) {
             if (log.isDebugEnabled()) log.debug(prefix+"device not found for IP "+vpnAddr+", returning not found");
             return notFound();
@@ -177,16 +186,21 @@ public class FilterHttpResource {
             return notFound();
         }
 
+        // if this is for a local ip, it's either a flex route or an automatic block
+        // legitimate local requests would have otherwise never reached here
         if (isLocalIp) {
-            final boolean showStats = showStats(accountUuid, connCheckRequest.getAddr(), connCheckRequest.getFqdns());
-            final DeviceSecurityLevel secLevel = device.getSecurityLevel();
-            if (showStats && secLevel.supportsRequestModification()) {
-                // allow it for now
-                if (log.isDebugEnabled()) log.debug(prefix + "returning noop (showStats=true, secLevel="+secLevel+") for LOCAL fqdn/addr=" + arrayToString(connCheckRequest.getFqdns()) + "/" + connCheckRequest.getAddr());
-                return ok(ConnectionCheckResponse.noop);
+            if (isFlexRouteFqdn(redis, vpnAddr, connCheckRequest.getFqdns())) {
+                if (log.isDebugEnabled()) log.debug(prefix + "detected flex route, allowing processing to continue");
             } else {
-                if (log.isDebugEnabled()) log.debug(prefix + "returning block (showStats="+showStats+", secLevel="+secLevel+") for LOCAL fqdn/addr=" + arrayToString(connCheckRequest.getFqdns()) + "/" + connCheckRequest.getAddr());
-                return ok(ConnectionCheckResponse.block);
+                final boolean showStats = showStats(accountUuid, connCheckRequest.getServerAddr(), connCheckRequest.getFqdns());
+                final DeviceSecurityLevel secLevel = device.getSecurityLevel();
+                if (showStats && secLevel.supportsRequestModification()) {
+                    // allow it for now
+                    if (log.isDebugEnabled()) log.debug(prefix + "returning noop (showStats=true, secLevel=" + secLevel + ") for LOCAL fqdn/addr=" + arrayToString(connCheckRequest.getFqdns()) + "/" + connCheckRequest.getServerAddr());
+                } else {
+                    if (log.isDebugEnabled()) log.debug(prefix + "returning block (showStats=" + showStats + ", secLevel=" + secLevel + ") for LOCAL fqdn/addr=" + arrayToString(connCheckRequest.getFqdns()) + "/" + connCheckRequest.getServerAddr());
+                    return ok(ConnectionCheckResponse.block);
+                }
             }
         }
 
@@ -204,17 +218,17 @@ public class FilterHttpResource {
         if (connCheckRequest.hasFqdns()) {
             final String[] fqdns = connCheckRequest.getFqdns();
             for (String fqdn : fqdns) {
-                checkResponse = ruleEngine.checkConnection(account, device, retained, connCheckRequest.getAddr(), fqdn);
+                checkResponse = ruleEngine.checkConnection(account, device, retained, connCheckRequest.getServerAddr(), fqdn);
                 if (checkResponse != ConnectionCheckResponse.noop) {
-                    if (log.isDebugEnabled()) log.debug(prefix + "found " + checkResponse + " (breaking) for fqdn/addr=" + fqdn + "/" + connCheckRequest.getAddr());
+                    if (log.isDebugEnabled()) log.debug(prefix + "found " + checkResponse + " (breaking) for fqdn/addr=" + fqdn + "/" + connCheckRequest.getServerAddr());
                     break;
                 }
             }
-            if (log.isDebugEnabled()) log.debug(prefix+"returning "+checkResponse+" for fqdns/addr="+Arrays.toString(fqdns)+"/"+ connCheckRequest.getAddr());
+            if (log.isDebugEnabled()) log.debug(prefix+"returning "+checkResponse+" for fqdns/addr="+Arrays.toString(fqdns)+"/"+ connCheckRequest.getServerAddr());
             return ok(checkResponse);
 
         } else {
-            if (log.isDebugEnabled()) log.debug(prefix+"returning noop for NO fqdns,  addr="+connCheckRequest.getAddr());
+            if (log.isDebugEnabled()) log.debug(prefix+"returning noop for NO fqdns,  addr="+connCheckRequest.getServerAddr());
             return ok(ConnectionCheckResponse.noop);
         }
     }
@@ -225,7 +239,7 @@ public class FilterHttpResource {
     }
 
     private boolean isForLocalIp(FilterConnCheckRequest connCheckRequest) {
-        return connCheckRequest.hasAddr() && getConfiguredIps().contains(connCheckRequest.getAddr());
+        return connCheckRequest.hasServerAddr() && getConfiguredIps().contains(connCheckRequest.getServerAddr());
     }
 
     private boolean isForLocalIp(FilterMatchersRequest matchersRequest) {
@@ -237,17 +251,17 @@ public class FilterHttpResource {
     @Getter(lazy=true) private final BubbleNetwork thisNetwork = selfNodeService.getThisNetwork();
 
     public boolean showStats(String accountUuid, String ip, String[] fqdns) {
-        if (!deviceIdService.doShowBlockStats(accountUuid)) return false;
+        if (!deviceService.doShowBlockStats(accountUuid)) return false;
         for (String fqdn : fqdns) {
-            final Boolean show = deviceIdService.doShowBlockStatsForIpAndFqdn(ip, fqdn);
+            final Boolean show = deviceService.doShowBlockStatsForIpAndFqdn(ip, fqdn);
             if (show != null) return show;
         }
         return true;
     }
 
     public boolean showStats(String accountUuid, String ip, String fqdn) {
-        if (!deviceIdService.doShowBlockStats(accountUuid)) return false;
-        final Boolean show = deviceIdService.doShowBlockStatsForIpAndFqdn(ip, fqdn);
+        if (!deviceService.doShowBlockStats(accountUuid)) return false;
+        final Boolean show = deviceService.doShowBlockStatsForIpAndFqdn(ip, fqdn);
         return show == null || show;
     }
 
@@ -277,7 +291,7 @@ public class FilterHttpResource {
         }
 
         final String vpnAddr = filterRequest.getClientAddr();
-        final Device device = deviceIdService.findDeviceByIp(vpnAddr);
+        final Device device = deviceService.findDeviceByIp(vpnAddr);
         if (device == null) {
             if (log.isDebugEnabled()) log.debug(prefix+"device not found for IP "+vpnAddr+", returning no matchers");
             else if (extraLog) log.error(prefix+"device not found for IP "+vpnAddr+", returning no matchers");
@@ -287,16 +301,20 @@ public class FilterHttpResource {
         }
         filterRequest.setDevice(device.getUuid());
 
-        // if this is for a local ip, it's an automatic block
-        // legitimate local requests would have been passthru and never reached here
+        // if this is for a local ip, it's either a flex route or an automatic block
+        // legitimate local requests would have otherwise been "passthru" and never reached here
         final boolean isLocalIp = isForLocalIp(filterRequest);
         final boolean showStats = showStats(device.getAccount(), filterRequest.getClientAddr(), filterRequest.getFqdn());
         if (isLocalIp) {
-            if (filterRequest.isBrowser() && showStats) {
-                blockStats.record(filterRequest, FilterMatchDecision.abort_not_found);
+            if (isFlexRouteFqdn(redis, vpnAddr, filterRequest.getFqdn())) {
+                if (log.isDebugEnabled()) log.debug(prefix + "detected flex route, not blocking");
+            } else {
+                if (filterRequest.isBrowser() && showStats) {
+                    blockStats.record(filterRequest, FilterMatchDecision.abort_not_found);
+                }
+                if (log.isDebugEnabled()) log.debug(prefix + "returning FORBIDDEN (showBlockStats==" + showStats + ")");
+                return forbidden();
             }
-            if (log.isDebugEnabled()) log.debug(prefix + "returning FORBIDDEN (showBlockStats=="+ showStats +")");
-            return forbidden();
         }
 
         final FilterMatchersResponse response = getMatchersResponse(filterRequest, req, request);
@@ -619,6 +637,7 @@ public class FilterHttpResource {
     }
 
     @GET @Path(EP_STATUS+"/{requestId}")
+    @Produces(APPLICATION_JSON)
     public Response getRequestStatus(@Context Request req,
                                      @Context ContainerRequest ctx,
                                      @PathParam("requestId") String requestId) {
@@ -628,7 +647,38 @@ public class FilterHttpResource {
         return ok(summary);
     }
 
+    @GET @Path(EP_FLEX_ROUTERS+"/{fqdn}")
+    @Produces(APPLICATION_JSON)
+    public Response getFlexRouter(@Context Request req,
+                                  @Context ContainerRequest ctx,
+                                  @PathParam("fqdn") String fqdn) {
+        final String publicIp = getRemoteAddr(req);
+        final Device device = deviceService.findDeviceByIp(publicIp);
+        if (device == null) {
+            log.warn("getFlexRouter: device not found with IP: "+publicIp);
+            return notFound();
+        }
+
+        final DeviceStatus deviceStatus = deviceService.getDeviceStatus(device.getUuid());
+        if (!deviceStatus.hasIp()) {
+            log.error("getFlexRouter: no device status for device: "+device);
+            return notFound();
+        }
+        final String vpnIp = deviceStatus.getIp();
+
+        if (log.isDebugEnabled()) log.debug("getFlexRouter: finding routers for vpnIp="+vpnIp);
+        Collection<FlexRouterInfo> routers = flexRouterService.selectClosestRouter(device.getAccount(), vpnIp, publicIp);
+
+        if (log.isDebugEnabled()) log.debug("getFlexRouter: found router(s) for vpnIp="+vpnIp+": "+json(routers, COMPACT_MAPPER));
+        if (routers.isEmpty()) {
+            final Account account = accountDAO.findByUuid(device.getAccount());
+            return ok(missingFlexRouter(account, device, fqdn, messageService, configuration.getHandlebars()));
+        }
+        return ok(routers.iterator().next().initAuth());
+    }
+
     @POST @Path(EP_LOGS+"/{requestId}")
+    @Produces(APPLICATION_JSON)
     public Response requestLog(@Context Request req,
                                @Context ContainerRequest ctx,
                                @PathParam("requestId") String requestId,
@@ -642,6 +692,7 @@ public class FilterHttpResource {
             = new ExpirationMap<>(1000, DAYS.toMillis(3), ExpirationEvictionPolicy.atime);
 
     @POST @Path(EP_FOLLOW+"/{requestId}")
+    @Produces(TEXT_PLAIN)
     public Response followLink(@Context Request req,
                                @Context ContainerRequest ctx,
                                @PathParam("requestId") String requestId,

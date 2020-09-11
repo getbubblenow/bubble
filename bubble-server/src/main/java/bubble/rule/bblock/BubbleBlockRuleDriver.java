@@ -16,7 +16,7 @@ import bubble.rule.RequestModifierConfig;
 import bubble.rule.RequestModifierRule;
 import bubble.rule.analytics.TrafficAnalyticsRuleDriver;
 import bubble.server.BubbleConfiguration;
-import bubble.service.cloud.DeviceIdService;
+import bubble.service.device.DeviceService;
 import bubble.service.stream.AppRuleHarness;
 import bubble.service.stream.ConnectionCheckResponse;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -57,6 +57,9 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
 
     private final AtomicReference<Set<String>> fullyBlockedDomains = new AtomicReference<>(Collections.emptySet());
     @Override public Set<String> getPrimedBlockDomains() { return fullyBlockedDomains.get(); }
+
+    private final AtomicReference<Set<String>> whiteListDomains = new AtomicReference<>(Collections.emptySet());
+    @Override public Set<String> getPrimedWhiteListDomains() { return whiteListDomains.get(); }
 
     private final AtomicReference<Set<String>> rejectDomains = new AtomicReference<>(Collections.emptySet());
     @Override public Set<String> getPrimedRejectDomains() { return rejectDomains.get(); }
@@ -164,6 +167,9 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
         }
         if (!newBlockList.getPartiallyBlockedDomains().equals(partiallyBlockedDomains.get())) {
             partiallyBlockedDomains.set(newBlockList.getPartiallyBlockedDomains());
+        }
+        if (!newBlockList.getWhitelistDomains().equals(whiteListDomains.get())) {
+            whiteListDomains.set(newBlockList.getWhitelistDomainNames());
         }
 
         log.debug("refreshBlockLists: rejectDomains="+rejectDomains.get().size());
@@ -419,11 +425,11 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
     }
 
     @Override public void prime(Account account, BubbleApp app, BubbleConfiguration configuration) {
-        final DeviceIdService deviceIdService = configuration.getBean(DeviceIdService.class);
+        final DeviceService deviceService = configuration.getBean(DeviceService.class);
         final AppDataDAO dataDAO = configuration.getBean(AppDataDAO.class);
         log.info("priming app="+app.getName());
         dataDAO.findByAccountAndAppAndAndKeyPrefix(account.getUuid(), app.getUuid(), PREFIX_APPDATA_HIDE_STATS)
-                .forEach(data -> deviceIdService.setBlockStatsForFqdn(account, fqdnFromKey(data.getKey()), !Boolean.parseBoolean(data.getData())));
+                .forEach(data -> deviceService.setBlockStatsForFqdn(account, fqdnFromKey(data.getKey()), !Boolean.parseBoolean(data.getData())));
     }
 
     @Override public Function<AppData, AppData> createCallback(Account account,
@@ -433,15 +439,15 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
             final String prefix = "createCallbackB("+data.getKey()+"="+data.getData()+"): ";
             log.info(prefix+"starting");
             if (data.getKey().startsWith(PREFIX_APPDATA_HIDE_STATS)) {
-                final DeviceIdService deviceIdService = configuration.getBean(DeviceIdService.class);
+                final DeviceService deviceService = configuration.getBean(DeviceService.class);
                 final String fqdn = fqdnFromKey(data.getKey());
                 if (validateRegexMatches(HOST_PATTERN, fqdn)) {
                     if (data.deleting()) {
                         log.info(prefix+"unsetting fqdn: "+fqdn);
-                        deviceIdService.unsetBlockStatsForFqdn(account, fqdn);
+                        deviceService.unsetBlockStatsForFqdn(account, fqdn);
                     } else {
                         log.info(prefix+"setting fqdn: "+fqdn);
-                        deviceIdService.setBlockStatsForFqdn(account, fqdn, !Boolean.parseBoolean(data.getData()));
+                        deviceService.setBlockStatsForFqdn(account, fqdn, !Boolean.parseBoolean(data.getData()));
                     }
                 } else {
                     throw invalidEx("err.fqdn.invalid", "not a valid FQDN: "+fqdn, fqdn);

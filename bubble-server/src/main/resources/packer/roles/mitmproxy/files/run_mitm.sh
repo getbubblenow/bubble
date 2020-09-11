@@ -14,7 +14,7 @@ fi
 
 cd /home/mitmproxy/mitmproxy && \
 ./dev.sh ${SETUP_VENV} && . ./venv/bin/activate && \
-mitmdump \
+BUBBLE_PORT=${PORT} mitmdump \
   --listen-host 0.0.0.0 \
   --listen-port ${PORT} \
   --showhost \
@@ -23,10 +23,10 @@ mitmdump \
   --set block_private=false \
   --set termlog_verbosity=warn \
   --set flow_detail=0 \
-  --set stream_large_bodies=5m \
+  --set stream_large_bodies=1 \
   --set keep_host_header \
   -s ./bubble_debug.py \
-  -s ./dns_spoofing.py \
   -s ./bubble_conn_check.py \
+  -s ./bubble_request.py \
   -s ./bubble_modify.py \
   --mode transparent

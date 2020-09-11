@@ -12,14 +12,14 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
 public class FilterConnCheckRequest {
 
-    @Getter @Setter private String addr;
-    public boolean hasAddr() { return !empty(addr); }
+    @Getter @Setter private String clientAddr;
+    public boolean hasClientAddr() { return !empty(clientAddr); }
+
+    @Getter @Setter private String serverAddr;
+    public boolean hasServerAddr() { return !empty(serverAddr); }
 
     @Getter @Setter private String[] fqdns;
     public boolean hasFqdns() { return !empty(fqdns); }
     public boolean hasFqdn(String f) { return hasFqdns() && ArrayUtils.contains(fqdns, f); }
-
-    @Getter @Setter private String remoteAddr;
-    public boolean hasRemoteAddr() { return !empty(remoteAddr); }
 
 }

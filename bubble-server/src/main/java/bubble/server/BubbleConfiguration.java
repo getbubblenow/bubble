@@ -385,7 +385,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     // called after activation, because now thisNetwork will be defined
     public void refreshPublicSystemConfigs () {
         synchronized (publicSystemConfigs) { publicSystemConfigs.set(null); }
-        background(this::getPublicSystemConfigs);
+        background(this::getPublicSystemConfigs, "BubbleConfiguration.refreshPublicSystemConfigs");
     }
 
     public boolean paymentsEnabled () {

@@ -63,8 +63,9 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
     }
 
     @DELETE @Path("/{id}")
-    public Response delete(@Context ContainerRequest ctx,
-                           @PathParam("id") String id) {
+    @Override public Response delete(@Context Request req,
+                                     @Context ContainerRequest ctx,
+                                     @PathParam("id") String id) {
 
         if (isReadOnly(ctx)) return forbidden();
 

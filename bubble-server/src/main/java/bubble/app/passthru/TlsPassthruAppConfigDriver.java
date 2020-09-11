@@ -9,10 +9,7 @@ import bubble.model.account.Account;
 import bubble.model.app.AppRule;
 import bubble.model.app.BubbleApp;
 import bubble.model.app.config.AppConfigDriverBase;
-import bubble.rule.passthru.TlsPassthruConfig;
-import bubble.rule.passthru.TlsPassthruFeed;
-import bubble.rule.passthru.TlsPassthruFqdn;
-import bubble.rule.passthru.TlsPassthruRuleDriver;
+import bubble.rule.passthru.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -30,32 +27,52 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 @Slf4j
 public class TlsPassthruAppConfigDriver extends AppConfigDriverBase {
 
-    public static final String VIEW_manageDomains = "manageDomains";
-    public static final String VIEW_manageFeeds = "manageFeeds";
+    public static final String VIEW_managePassthruDomains = "managePassthruDomains";
+    public static final String VIEW_managePassthruFeeds = "managePassthruFeeds";
+    public static final String VIEW_manageFlexDomains = "manageFlexDomains";
+    public static final String VIEW_manageFlexFeeds = "manageFlexFeeds";
 
     @Autowired @Getter private AppRuleDAO ruleDAO;
 
     @Override public Object getView(Account account, BubbleApp app, String view, Map<String, String> params) {
         switch (view) {
-            case VIEW_manageDomains:
-                return loadManageDomains(account, app);
-            case VIEW_manageFeeds:
-                return loadManageFeeds(account, app);
+            case VIEW_managePassthruDomains:
+                return loadManagePassthruDomains(account, app);
+            case VIEW_managePassthruFeeds:
+                return loadManagePassthuFeeds(account, app);
+            case VIEW_manageFlexDomains:
+                return loadManageFlexDomains(account, app);
+            case VIEW_manageFlexFeeds:
+                return loadManageFlexFeeds(account, app);
         }
         throw notFoundEx(view);
     }
 
-    private Set<TlsPassthruFeed> loadManageFeeds(Account account, BubbleApp app) {
+    private Set<TlsPassthruFeed> loadManagePassthuFeeds(Account account, BubbleApp app) {
         final TlsPassthruConfig config = getConfig(account, app);
         config.getPassthruSet(); // ensure names are initialized
-        return config.getFeedSet();
+        return config.getPassthruFeedSet();
     }
 
-    private Set<TlsPassthruFqdn> loadManageDomains(Account account, BubbleApp app) {
+    private Set<TlsPassthruFqdn> loadManagePassthruDomains(Account account, BubbleApp app) {
         final TlsPassthruConfig config = getConfig(account, app);
-        return !config.hasFqdnList() ? Collections.emptySet() :
-                Arrays.stream(config.getFqdnList())
+        return !config.hasPassthruFqdnList() ? Collections.emptySet() :
+                Arrays.stream(config.getPassthruFqdnList())
                         .map(TlsPassthruFqdn::new)
+                        .collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    private Set<FlexFeed> loadManageFlexFeeds(Account account, BubbleApp app) {
+        final TlsPassthruConfig config = getConfig(account, app);
+        config.getFlexSet(); // ensure names are initialized
+        return config.getFlexFeedSet();
+    }
+
+    private Set<FlexFqdn> loadManageFlexDomains(Account account, BubbleApp app) {
+        final TlsPassthruConfig config = getConfig(account, app);
+        return !config.hasFlexFqdnList() ? Collections.emptySet() :
+                Arrays.stream(config.getFlexFqdnList())
+                        .map(FlexFqdn::new)
                         .collect(Collectors.toCollection(TreeSet::new));
     }
 
@@ -63,53 +80,106 @@ public class TlsPassthruAppConfigDriver extends AppConfigDriverBase {
         return getConfig(account, app, TlsPassthruRuleDriver.class, TlsPassthruConfig.class);
     }
 
-    public static final String ACTION_addFqdn = "addFqdn";
-    public static final String ACTION_removeFqdn = "removeFqdn";
-    public static final String ACTION_addFeed = "addFeed";
-    public static final String ACTION_removeFeed = "removeFeed";
+    public static final String ACTION_addPassthruFqdn = "addPassthruFqdn";
+    public static final String ACTION_addPassthruFeed = "addPassthruFeed";
+    public static final String ACTION_removePassthruFqdn = "removePassthruFqdn";
+    public static final String ACTION_removePassthruFeed = "removePassthruFeed";
 
-    public static final String PARAM_FQDN = "passthruFqdn";
-    public static final String PARAM_FEED_URL = "feedUrl";
+    public static final String ACTION_addFlexFqdn = "addFlexFqdn";
+    public static final String ACTION_addFlexFeed = "addFlexFeed";
+    public static final String ACTION_removeFlexFqdn = "removeFlexFqdn";
+    public static final String ACTION_removeFlexFeed = "removeFlexFeed";
+
+    public static final String PARAM_PASSTHRU_FQDN = "passthruFqdn";
+    public static final String PARAM_PASSTHRU_FEED_URL = "passthruFeedUrl";
+    public static final String PARAM_FLEX_FQDN = "flexFqdn";
+    public static final String PARAM_FLEX_FEED_URL = "flexFeedUrl";
 
     @Override public Object takeAppAction(Account account, BubbleApp app, String view, String action, Map<String, String> params, JsonNode data) {
         switch (action) {
-            case ACTION_addFqdn:
-                return addFqdn(account, app, data);
-            case ACTION_addFeed:
-                return addFeed(account, app, params, data);
+            case ACTION_addPassthruFqdn:
+                return addPassthruFqdn(account, app, data);
+            case ACTION_addPassthruFeed:
+                return addPassthruFeed(account, app, params, data);
+            case ACTION_addFlexFqdn:
+                return addFlexFqdn(account, app, data);
+            case ACTION_addFlexFeed:
+                return addFlexFeed(account, app, params, data);
         }
-        log.debug("takeAppAction: action not found: "+action);
+        if (log.isWarnEnabled()) log.warn("takeAppAction: action not found: "+action);
         throw notFoundEx(action);
     }
 
-    private List<TlsPassthruFqdn> addFqdn(Account account, BubbleApp app, JsonNode data) {
-        final JsonNode fqdnNode = data.get(PARAM_FQDN);
+    private List<TlsPassthruFqdn> addPassthruFqdn(Account account, BubbleApp app, JsonNode data) {
+        final JsonNode fqdnNode = data.get(PARAM_PASSTHRU_FQDN);
         if (fqdnNode == null || fqdnNode.textValue() == null || empty(fqdnNode.textValue().trim())) {
-            throw invalidEx("err.addFqdn.passthruFqdnRequired");
+            throw invalidEx("err.passthruFqdn.passthruFqdnRequired");
         }
 
         final String fqdn = fqdnNode.textValue().trim().toLowerCase();
+        final TlsPassthruConfig config = getConfig(account, app).addPassthruFqdn(fqdn);
 
-        final TlsPassthruConfig config = getConfig(account, app)
-                .addFqdn(fqdn);
+        final AppRule rule = loadRule(account, app);
+        loadDriver(account, rule, TlsPassthruRuleDriver.class); // validate proper driver
+        if (log.isDebugEnabled()) log.debug("addPassthruFqdn: updating rule: "+rule.getName()+", adding fqdn: "+fqdn);
+        ruleDAO.update(rule.setConfigJson(json(config)));
+
+        return getPassthruFqdnList(config);
+    }
+
+    private List<TlsPassthruFqdn> getPassthruFqdnList(TlsPassthruConfig config) {
+        return Arrays.stream(config.getPassthruFqdnList())
+                .map(TlsPassthruFqdn::new)
+                .collect(Collectors.toList());
+    }
+
+    private Set<TlsPassthruFeed> addPassthruFeed(Account account, BubbleApp app, Map<String, String> params, JsonNode data) {
+        final JsonNode urlNode = data.get(PARAM_PASSTHRU_FEED_URL);
+        if (urlNode == null || urlNode.textValue() == null || empty(urlNode.textValue().trim())) {
+            throw invalidEx("err.passthruFeedUrl.feedUrlRequired");
+        }
+
+        final String url = urlNode.textValue().trim().toLowerCase();
+        final TlsPassthruConfig config = getConfig(account, app);
+
+        final TlsPassthruFeed feed = config.loadFeed(url);
+        if (!feed.hasFqdnList()) throw invalidEx("err.passthruFeedUrl.emptyFqdnList");
+        config.addPassthruFeed(feed);
 
         final AppRule rule = loadRule(account, app);
         loadDriver(account, rule, TlsPassthruRuleDriver.class); // validate proper driver
         ruleDAO.update(rule.setConfigJson(json(config)));
 
-        return getFqdnList(config);
+        return config.getPassthruFeedSet();
     }
 
-    private List<TlsPassthruFqdn> getFqdnList(TlsPassthruConfig config) {
-        return Arrays.stream(config.getFqdnList())
+    private List<TlsPassthruFqdn> addFlexFqdn(Account account, BubbleApp app, JsonNode data) {
+        final JsonNode fqdnNode = data.get(PARAM_FLEX_FQDN);
+        if (fqdnNode == null || fqdnNode.textValue() == null || empty(fqdnNode.textValue().trim())) {
+            throw invalidEx("err.flexFqdn.flexFqdnRequired");
+        }
+
+        final String fqdn = fqdnNode.textValue().trim().toLowerCase();
+        final TlsPassthruConfig config = getConfig(account, app).addFlexFqdn(fqdn);
+
+        final AppRule rule = loadRule(account, app);
+        loadDriver(account, rule, TlsPassthruRuleDriver.class); // validate proper driver
+        if (log.isDebugEnabled()) log.debug("addFlexFqdn: updating rule: "+rule.getName()+", adding fqdn: "+fqdn);
+        ruleDAO.update(rule.setConfigJson(json(config)));
+
+        return getFlexFqdnList(config);
+    }
+
+    private List<TlsPassthruFqdn> getFlexFqdnList(TlsPassthruConfig config) {
+        return Arrays.stream(config.getFlexFqdnList())
                 .map(TlsPassthruFqdn::new)
                 .collect(Collectors.toList());
     }
 
-    private Set<TlsPassthruFeed> addFeed(Account account, BubbleApp app, Map<String, String> params, JsonNode data) {
-        final JsonNode urlNode = data.get(PARAM_FEED_URL);
+    private Set<TlsPassthruFeed> addFlexFeed(Account account, BubbleApp app, Map<String, String> params, JsonNode data) {
+        final JsonNode urlNode = data.get(PARAM_FLEX_FEED_URL);
         if (urlNode == null || urlNode.textValue() == null || empty(urlNode.textValue().trim())) {
-            throw invalidEx("err.addFeed.feedUrlRequired");
+            throw invalidEx("err.flexFeedUrl.feedUrlRequired");
         }
 
         final String url = urlNode.textValue().trim().toLowerCase();
@@ -117,45 +187,69 @@ public class TlsPassthruAppConfigDriver extends AppConfigDriverBase {
         final TlsPassthruConfig config = getConfig(account, app);
 
         final TlsPassthruFeed feed = config.loadFeed(url);
-        if (!feed.hasFqdnList()) throw invalidEx("err.addFeed.emptyFqdnList");
-        config.addFeed(feed);
+        if (!feed.hasFqdnList()) throw invalidEx("err.flexFeedUrl.emptyFqdnList");
+        config.addPassthruFeed(feed);
 
         final AppRule rule = loadRule(account, app);
         loadDriver(account, rule, TlsPassthruRuleDriver.class); // validate proper driver
         ruleDAO.update(rule.setConfigJson(json(config)));
 
-        return config.getFeedSet();
+        return config.getPassthruFeedSet();
     }
 
     @Override public Object takeItemAction(Account account, BubbleApp app, String view, String action, String id, Map<String, String> params, JsonNode data) {
         switch (action) {
-            case ACTION_removeFqdn:
-                return removeFqdn(account, app, id);
-            case ACTION_removeFeed:
-                return removeFeed(account, app, id);
+            case ACTION_removePassthruFqdn:
+                return removePassthruFqdn(account, app, id);
+            case ACTION_removePassthruFeed:
+                return removePassthruFeed(account, app, id);
+            case ACTION_removeFlexFqdn:
+                return removeFlexFqdn(account, app, id);
+            case ACTION_removeFlexFeed:
+                return removeFlexFeed(account, app, id);
         }
-        log.debug("takeItemAction: action not found: "+action);
+        if (log.isWarnEnabled()) log.warn("takeItemAction: action not found: "+action);
         throw notFoundEx(action);
     }
 
-    private List<TlsPassthruFqdn> removeFqdn(Account account, BubbleApp app, String id) {
+    private List<TlsPassthruFqdn> removePassthruFqdn(Account account, BubbleApp app, String id) {
         final AppRule rule = loadRule(account, app);
         loadDriver(account, rule, TlsPassthruRuleDriver.class); // validate proper driver
         final TlsPassthruConfig config = getConfig(account, app);
-        log.debug("removeFqdn: removing id: "+id+" from config.fqdnList: "+ ArrayUtil.arrayToString(config.getFqdnList()));
+        if (log.isDebugEnabled()) log.debug("removePassthruFqdn: removing id: "+id+" from config.fqdnList: "+ ArrayUtil.arrayToString(config.getPassthruFqdnList()));
 
-        final TlsPassthruConfig updated = config.removeFqdn(id);
-        log.debug("removeFqdn: updated.fqdnList: "+ ArrayUtil.arrayToString(updated.getFqdnList()));
+        final TlsPassthruConfig updated = config.removePassthruFqdn(id);
+        if (log.isDebugEnabled()) log.debug("removePassthruFqdn: updated.fqdnList: "+ ArrayUtil.arrayToString(updated.getPassthruFqdnList()));
         ruleDAO.update(rule.setConfigJson(json(updated)));
-        return getFqdnList(updated);
+        return getPassthruFqdnList(updated);
     }
 
-    public Set<TlsPassthruFeed> removeFeed(Account account, BubbleApp app, String id) {
+    public Set<TlsPassthruFeed> removePassthruFeed(Account account, BubbleApp app, String id) {
         final AppRule rule = loadRule(account, app);
         loadDriver(account, rule, TlsPassthruRuleDriver.class); // validate proper driver
-        final TlsPassthruConfig config = getConfig(account, app).removeFeed(id);
+        final TlsPassthruConfig config = getConfig(account, app).removePassthruFeed(id);
         ruleDAO.update(rule.setConfigJson(json(config)));
-        return config.getFeedSet();
+        return config.getPassthruFeedSet();
+    }
+
+    private List<TlsPassthruFqdn> removeFlexFqdn(Account account, BubbleApp app, String id) {
+        final AppRule rule = loadRule(account, app);
+        loadDriver(account, rule, TlsPassthruRuleDriver.class); // validate proper driver
+        final TlsPassthruConfig config = getConfig(account, app);
+        if (log.isDebugEnabled()) log.debug("removeFlexFqdn: removing id: "+id+" from config.fqdnList: "+ ArrayUtil.arrayToString(config.getPassthruFqdnList()));
+
+        final TlsPassthruConfig updated = config.removeFlexFqdn(id);
+        if (log.isDebugEnabled()) log.debug("removeFlexFqdn: updated.fqdnList: "+ ArrayUtil.arrayToString(updated.getPassthruFqdnList()));
+        ruleDAO.update(rule.setConfigJson(json(updated)));
+        return getFlexFqdnList(updated);
+    }
+
+    public Set<TlsPassthruFeed> removeFlexFeed(Account account, BubbleApp app, String id) {
+        final AppRule rule = loadRule(account, app);
+        loadDriver(account, rule, TlsPassthruRuleDriver.class); // validate proper driver
+        final TlsPassthruConfig config = getConfig(account, app).removeFlexFeed(id);
+        ruleDAO.update(rule.setConfigJson(json(config)));
+        return config.getPassthruFeedSet();
     }
 
 }

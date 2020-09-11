@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
 import org.cobbzilla.util.daemon.ZillaRuntime;
-import org.cobbzilla.util.io.FileUtil;
+import org.cobbzilla.util.string.StringUtil;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 
@@ -36,6 +36,7 @@ import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.*;
 import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
+import static org.cobbzilla.util.system.CommandShell.execScript;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
@@ -58,7 +59,7 @@ public class ApiConstants {
 
     private static String initDefaultDomain() {
         final File f = new File(HOME_DIR, ".BUBBLE_DEFAULT_DOMAIN");
-        final String domain = FileUtil.toStringOrDie(f);
+        final String domain = toStringOrDie(f);
         return domain != null ? domain.trim() : die("initDefaultDomain: "+abs(f)+" not found");
     }
 
@@ -74,6 +75,27 @@ public class ApiConstants {
     };
 
     public static final GoogleAuthenticator G_AUTH = new GoogleAuthenticator();
+
+    private static final AtomicReference<String> knownHostKey = new AtomicReference<>();
+    public static String getKnownHostKey () {
+        return lazyGet(knownHostKey,
+                () -> execScript("ssh-keyscan -t rsa $(hostname -d) 2>&1 | grep -v \"^#\""),
+                () -> die("getKnownHostKey"));
+    }
+
+    private static final AtomicReference<String> privateIp = new AtomicReference<>();
+    public static String getPrivateIp() {
+        return lazyGet(privateIp,
+                () -> configuredIps().stream()
+                        .filter(addr -> addr.startsWith("10."))
+                        .findFirst()
+                        .orElse(null),
+                () -> {
+                    final String msg = "getPrivateIp: no system private IP found, configuredIps=" + StringUtil.toString(configuredIps());
+                    log.error(msg);
+                    return die(msg);
+                });
+    }
 
     public static final Predicate ALWAYS_TRUE = m -> true;
     public static final String HOME_DIR;
@@ -176,6 +198,7 @@ public class ApiConstants {
     public static final String EP_NODES = "/nodes";
     public static final String EP_DEVICES = "/devices";
     public static final String EP_DEVICE_TYPES = "/deviceTypes";
+    public static final String EP_FLEX_ROUTERS = "/flexRouters";
     public static final String EP_MODEL = "/model";
     public static final String EP_VPN = "/vpn";
     public static final String EP_IPS = "/ips";
@@ -276,13 +299,17 @@ public class ApiConstants {
     }
 
     public static String getRemoteHost(Request req) {
-        final String xff = req.getHeader("X-Forwarded-For");
-        final String remoteHost = xff == null ? req.getRemoteAddr() : xff;
+        final String remoteHost = getRemoteAddr(req);
         if (isPublicIpv4(remoteHost)) return remoteHost;
         final String publicIp = getFirstPublicIpv4();
         if (publicIp != null) return publicIp;
         final String externalIp = getExternalIp();
         return isPublicIpv4(externalIp) ? externalIp : remoteHost;
+    }
+
+    public static String getRemoteAddr(Request req) {
+        final String xff = req.getHeader("X-Forwarded-For");
+        return xff == null ? req.getRemoteAddr() : xff;
     }
 
     public static String getUserAgent(ContainerRequest ctx) { return ctx.getHeaderString(USER_AGENT); }

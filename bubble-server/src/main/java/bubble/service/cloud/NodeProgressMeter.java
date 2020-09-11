@@ -209,7 +209,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
                 .setAccount(nn.getAccount())
                 .setMessageKey(METER_COMPLETED_OK)
                 .setPercent(100));
-        background(this::close);
+        background(this::close, "NodeProgressMeter.completed");
     }
 
     public NodeProgressMeter uncloseable() throws IOException {
@@ -225,7 +225,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
                 .setAccount(nn.getAccount())
                 .setMessageKey(METER_ERROR_CANCELED)
                 .setPercent(0));
-        background(this::close);
+        background(this::close, "NodeProgressMeter.cancel");
     }
 
     private class UncloseableNodeProgressMeter extends NodeProgressMeter {

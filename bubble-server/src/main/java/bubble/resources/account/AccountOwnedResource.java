@@ -91,16 +91,26 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
         return getDao().findByAccount(getAccountUuid(ctx));
     }
 
+    protected E find(Request req, ContainerRequest ctx, String id) { return find(ctx, id); }
+
     protected E find(ContainerRequest ctx, String id) {
         return getDao().findByAccountAndId(getAccountUuid(ctx), id);
     }
 
     protected E findAlternate(ContainerRequest ctx, E request) { return null; }
+    protected E findAlternate(Request req, ContainerRequest ctx, E request) { return findAlternate(ctx, request); }
+
     protected E findAlternate(ContainerRequest ctx, String id) { return null; }
+    protected E findAlternate(Request req, ContainerRequest ctx, String id) { return findAlternate(ctx, id); }
 
     protected E findAlternateForCreate(ContainerRequest ctx, E request) { return findAlternate(ctx, request); }
+    protected E findAlternateForCreate(Request req, ContainerRequest ctx, E request) { return findAlternateForCreate(ctx, request); }
+
     protected E findAlternateForUpdate(ContainerRequest ctx, String id) { return findAlternate(ctx, id); }
+    protected E findAlternateForUpdate(Request req, ContainerRequest ctx, String id) { return findAlternateForUpdate(ctx, id); }
+
     protected E findAlternateForDelete(ContainerRequest ctx, String id) { return findAlternate(ctx, id); }
+    protected E findAlternateForDelete(Request req, ContainerRequest ctx, String id) { return findAlternateForDelete(ctx, id); }
 
     protected List<E> populate(ContainerRequest ctx, List<E> entities) {
         for (E e : entities) populate(ctx, e);
@@ -110,14 +120,15 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     protected E populate(ContainerRequest ctx, E entity) { return entity; }
 
     @GET @Path("/{id}")
-    public Response view(@Context ContainerRequest ctx,
+    public Response view(@Context Request req,
+                         @Context ContainerRequest ctx,
                          @PathParam("id") String id) {
 
         final Account caller = getAccountForViewById(ctx);
-        E found = find(ctx, id);
+        E found = find(req, ctx, id);
 
         if (found == null) {
-            found = findAlternate(ctx, id);
+            found = findAlternate(req, ctx, id);
             if (found == null) return notFound(id);
         }
         if (caller != null && !found.getAccount().equals(caller.getUuid()) && !caller.admin()) return notFound(id);
@@ -138,15 +149,15 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
                            E request) {
         if (request == null) return invalid("err.request.invalid");
         final Account caller = checkEditable(ctx);
-        E found = find(ctx, request.getName());
+        E found = find(req, ctx, request.getName());
         if (found == null) {
-            found = findAlternateForCreate(ctx, request);
+            found = findAlternateForCreate(req, ctx, request);
         }
         if (found != null) {
             if (!canUpdate(ctx, caller, found, request)) return ok(found);
-            setReferences(ctx, caller, request);
+            setReferences(ctx, req, caller, request);
             found.update(request);
-            return ok(getDao().update(found));
+            return ok(daoUpdate(found));
         }
 
         if (!canCreate(req, ctx, caller, request)) return invalid("err.cannotCreate", "Create entity not allowed", request.getName());
@@ -156,19 +167,21 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     }
 
     protected Object daoCreate(E toCreate) { return getDao().create(toCreate); }
+    protected Object daoUpdate(E toUpdate) { return getDao().update(toUpdate); }
 
     protected E setReferences(ContainerRequest ctx, Account caller, E e) { return e; }
     protected E setReferences(ContainerRequest ctx, Request req, Account caller, E e) { return setReferences(ctx, caller, e); }
 
     @POST @Path("/{id}")
-    public Response update(@Context ContainerRequest ctx,
+    public Response update(@Context Request req,
+                           @Context ContainerRequest ctx,
                            @PathParam("id") String id,
                            E request) {
         if (request == null) return invalid("err.request.invalid");
         final Account caller = checkEditable(ctx);
-        E found = find(ctx, id);
+        E found = find(req, ctx, id);
         if (found == null) {
-            found = findAlternateForUpdate(ctx, id);
+            found = findAlternateForUpdate(req, ctx, id);
             if (found == null) return notFound(id);
         }
         if (!(found instanceof HasAccountNoName) && !canChangeName() && request.hasName() && !request.getName().equals(found.getName())) {
@@ -177,18 +190,19 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
 
         if (!canUpdate(ctx, caller, found, request)) return invalid("err.cannotUpdate", "Update entity not allowed", request.getName());
         found.update(request);
-        return ok(getDao().update(found.setAccount(getAccountUuid(ctx))));
+        return ok(daoUpdate(found.setAccount(getAccountUuid(ctx))));
     }
 
     protected boolean canChangeName() { return false; }
 
     @DELETE @Path("/{id}")
-    public Response delete(@Context ContainerRequest ctx,
+    public Response delete(@Context Request req,
+                           @Context ContainerRequest ctx,
                            @PathParam("id") String id) {
         final Account caller = checkEditable(ctx);
-        E found = find(ctx, id);
+        E found = find(req, ctx, id);
         if (found == null) {
-            found = findAlternateForDelete(ctx, id);
+            found = findAlternateForDelete(req, ctx, id);
             if (found == null) return notFound(id);
         }
 

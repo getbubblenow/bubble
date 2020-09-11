@@ -19,13 +19,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static bubble.ApiConstants.MESSAGE_RESOURCE_BASE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
-import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
+import static org.cobbzilla.util.io.StreamUtil.*;
 import static org.cobbzilla.util.string.StringUtil.UTF8cs;
 
 @Service @Slf4j
 public class MessageService {
 
     public static final String MESSAGE_RESOURCE_PATH = "/server/";
+    public static final String PAGE_TEMPLATES_PATH = "pages/";
+    public static final String PAGE_TEMPLATES_SUFFIX = ".html.hbs";
     public static final String RESOURCE_MESSAGES_PROPS = "ResourceMessages.properties";
 
     public static final String[] PRE_AUTH_MESSAGE_GROUPS = {"pre_auth", "countries", "timezones"};
@@ -81,4 +83,13 @@ public class MessageService {
         });
     }
 
+    private final Map<String, String> pageTemplateCache = new ConcurrentHashMap<>(10);
+
+    public String loadPageTemplate(String locale, String templatePath) {
+        final String key = locale + ":" + templatePath;
+        return pageTemplateCache.computeIfAbsent(key, k -> {
+            final String path = MESSAGE_RESOURCE_BASE + locale + MESSAGE_RESOURCE_PATH + PAGE_TEMPLATES_PATH + templatePath + PAGE_TEMPLATES_SUFFIX;
+            return loadResourceAsStringOrDie(path);
+        });
+    }
 }

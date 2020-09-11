@@ -24,6 +24,7 @@ import bubble.model.cloud.BubbleNodeKey;
 import bubble.model.cloud.notify.ReceivedNotification;
 import bubble.model.cloud.notify.SentNotification;
 import bubble.model.device.Device;
+import bubble.model.device.FlexRouter;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.dao.DAO;
@@ -39,14 +40,14 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 @Slf4j
 public class FilteredEntityIterator extends EntityIterator {
 
-    private static final List<Class<? extends Identifiable>> POST_COPY_ENTITIES = Arrays.asList(new Class[] {
+    private static final List<Class<? extends Identifiable>> NO_DEFAULT_COPY_ENTITIES = Arrays.asList(new Class[] {
         BubbleNode.class, BubbleNodeKey.class, Device.class, AccountMessage.class,
         ReferralCode.class, AccountPayment.class, Bill.class, Promotion.class,
-        ReceivedNotification.class, SentNotification.class, TrustedClient.class
+        ReceivedNotification.class, SentNotification.class, TrustedClient.class, FlexRouter.class
     });
 
-    private static boolean isPostCopyEntity(Class<? extends Identifiable> clazz) {
-        return POST_COPY_ENTITIES.stream().anyMatch(c -> c.isAssignableFrom(clazz));
+    private static boolean isNotDefaultCopyEntity(Class<? extends Identifiable> clazz) {
+        return NO_DEFAULT_COPY_ENTITIES.stream().anyMatch(c -> c.isAssignableFrom(clazz));
     }
 
     private final BubbleConfiguration configuration;
@@ -82,10 +83,10 @@ public class FilteredEntityIterator extends EntityIterator {
         configuration.getEntityClasses().forEach(c -> {
             final DAO dao = configuration.getDaoForEntityClass(c);
             if (!AccountOwnedEntityDAO.class.isAssignableFrom(dao.getClass())) {
-                log.debug("iterate: skipping entity: " + c.getSimpleName());
-            } else if (isPostCopyEntity(c)) {
+                log.debug("iterate: skipping entity, not an AccountOwnedEntityDAO: " + c.getSimpleName());
+            } else if (isNotDefaultCopyEntity(c)) {
                 log.debug("iterate: skipping " + c.getSimpleName()
-                          + ", will copy some of these after other objects are copied");
+                          + ", may copy some of these after default objects are copied");
             } else {
                 // copy entities. this is how the re-keying works (decrypt using current spring config,
                 // encrypt using new config)

@@ -5,6 +5,12 @@
       "site": "All_Sites",
       "template": true,
       "matcher": "BubbleBlockMatcher",
+      "key": "hideStats_abercrombie.com",
+      "data": "true"
+    }, {
+      "site": "All_Sites",
+      "template": true,
+      "matcher": "BubbleBlockMatcher",
       "key": "hideStats_adobe.com",
       "data": "true"
     }, {

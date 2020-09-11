@@ -16,6 +16,7 @@ import bubble.model.device.Device;
 import bubble.resources.account.AccountOwnedTemplateResource;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
+import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -86,14 +87,15 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
     }
 
     @POST @Path("/{id}"+EP_ACTIONS+"/{action}")
-    public Response takeAction(@Context ContainerRequest ctx,
+    public Response takeAction(@Context Request req,
+                               @Context ContainerRequest ctx,
                                @PathParam("id") String id,
                                @PathParam("action") String action) {
         if (isReadOnly(ctx)) return forbidden();
         switch (action) {
             case "enable": return enable(ctx, id);
             case "disable": return disable(ctx, id);
-            case "delete": return delete(ctx, id);
+            case "delete": return delete(req, ctx, id);
             default:
                 app.getDataConfig().getDataDriver(configuration).takeAction(id, action);
                 return ok();

@@ -226,7 +226,7 @@ public class ActivationService {
                 final Map<CrudOperation, Collection<Identifiable>> objects
                         = modelSetupService.setupModel(api, account, "manifest-defaults");
                 log.info("bootstrapThisNode: created default objects\n"+json(objects));
-            });
+            }, "ActivationService.bootstrapThisNode.createDefaultObjects");
         }
 
         return node;

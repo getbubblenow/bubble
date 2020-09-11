@@ -19,6 +19,8 @@ import bubble.model.device.BubbleDeviceType;
 import bubble.resources.app.AppsResource;
 import bubble.resources.bill.*;
 import bubble.resources.cloud.*;
+import bubble.resources.device.DevicesResource;
+import bubble.resources.device.FlexRoutersResource;
 import bubble.resources.driver.DriversResource;
 import bubble.resources.notify.ReceivedNotificationsResource;
 import bubble.resources.notify.SentNotificationsResource;
@@ -371,6 +373,12 @@ public class MeResource {
         return ok(BubbleDeviceType.getSelectableTypes());
     }
 
+    @Path(EP_FLEX_ROUTERS)
+    public FlexRoutersResource getFlexRouters(@Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        return configuration.subResource(FlexRoutersResource.class, caller);
+    }
+
     @Path(EP_REFERRAL_CODES)
     public ReferralCodesResource getReferralCodes(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
@@ -444,7 +452,7 @@ public class MeResource {
         if (!caller.admin()) return forbidden();
         authenticatorService.ensureAuthenticated(ctx);
 
-        background(() -> jarUpgradeService.upgrade());
+        background(() -> jarUpgradeService.upgrade(), "MeResource.upgrade");
         return ok(configuration.getPublicSystemConfigs());
     }
 

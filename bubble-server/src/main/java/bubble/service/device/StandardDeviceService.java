@@ -2,7 +2,7 @@
  * Copyright (c) 2020 Bubble, Inc.  All rights reserved.
  * For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
  */
-package bubble.service.cloud;
+package bubble.service.device;
 
 import bubble.dao.account.AccountDAO;
 import bubble.dao.app.AppSiteDAO;
@@ -12,14 +12,13 @@ import bubble.model.app.AppSite;
 import bubble.model.device.Device;
 import bubble.model.device.DeviceStatus;
 import bubble.server.BubbleConfiguration;
+import bubble.service.cloud.GeoService;
 import bubble.service.stream.StandardRuleEngineService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.collection.SingletonList;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.FilenamePrefixFilter;
-import org.cobbzilla.util.network.NetworkUtil;
-import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,9 +29,9 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static bubble.ApiConstants.HOME_DIR;
+import static bubble.ApiConstants.getPrivateIp;
 import static bubble.model.device.DeviceStatus.NO_DEVICE_STATUS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -40,7 +39,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.server.RestServerBase.reportError;
 
 @Service @Slf4j
-public class StandardDeviceIdService implements DeviceIdService {
+public class StandardDeviceService implements DeviceService {
 
     public static final File WG_DEVICES_DIR = new File(HOME_DIR, "wg_devices");
 
@@ -56,6 +55,9 @@ public class StandardDeviceIdService implements DeviceIdService {
 
     // used in dnscrypt-proxy to determine how to respond to blocked requests
     public static final String REDIS_KEY_DEVICE_REJECT_WITH = "bubble_device_reject_with_";
+
+    // used in dnscrypt-proxy to determine how to respond to flex routed requests
+    public static final String REDIS_KEY_DEVICE_FLEX_WITH = "bubble_device_flex_with_";
 
     // used in mitmproxy to determine how to respond to blocked requests
     public static final String REDIS_KEY_DEVICE_SHOW_BLOCK_STATS = "bubble_device_showBlockStats_";
@@ -161,7 +163,7 @@ public class StandardDeviceIdService implements DeviceIdService {
         }
     }
 
-    @Override public void initBlockStats (Account account) {
+    @Override public void initBlocksAndFlexRoutes(Account account) {
         final boolean showBlockStats = configuration.showBlockStatsSupported() && account.showBlockStats();
         redis.set_plaintext(REDIS_KEY_ACCOUNT_SHOW_BLOCK_STATS+account.getUuid(), Boolean.toString(showBlockStats));
         redis.del_matching_withPrefix(REDIS_KEY_CHUNK_FILTER_PASS+"*");
@@ -171,6 +173,7 @@ public class StandardDeviceIdService implements DeviceIdService {
             } else {
                 hideBlockStats(device);
             }
+            initFlexRoutes(device);
         }
     }
 
@@ -192,15 +195,8 @@ public class StandardDeviceIdService implements DeviceIdService {
     }
 
     public void showBlockStats (Device device) {
-        final Set<String> configuredIps = NetworkUtil.configuredIps();
-        final String privateIp = configuredIps.stream()
-                .filter(addr -> addr.startsWith("10."))
-                .findFirst()
-                .orElse(null);
-        if (privateIp == null) {
-            log.error("showBlockStats: no system private IP found, configuredIps="+StringUtil.toString(configuredIps));
-            return;
-        }
+        final String privateIp = getPrivateIp();
+        if (privateIp == null) return;
         for (String ip : findIpsByDevice(device.getUuid())) {
             redis.set_plaintext(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS + ip, Boolean.toString(true));
             redis.set_plaintext(REDIS_KEY_DEVICE_REJECT_WITH + ip, privateIp);
@@ -211,6 +207,14 @@ public class StandardDeviceIdService implements DeviceIdService {
         for (String ip : findIpsByDevice(device.getUuid())) {
             redis.del_withPrefix(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS + ip);
             redis.del_withPrefix(REDIS_KEY_DEVICE_REJECT_WITH + ip);
+        }
+    }
+
+    public void initFlexRoutes (Device device) {
+        final String privateIp = getPrivateIp();
+        if (privateIp == null) return;
+        for (String ip : findIpsByDevice(device.getUuid())) {
+            redis.set_plaintext(REDIS_KEY_DEVICE_FLEX_WITH + ip, privateIp);
         }
     }
 

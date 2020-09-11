@@ -16,7 +16,7 @@ import bubble.model.device.Device;
 import bubble.resources.stream.FilterHttpRequest;
 import bubble.resources.stream.FilterMatchersRequest;
 import bubble.server.BubbleConfiguration;
-import bubble.service.cloud.StandardDeviceIdService;
+import bubble.service.device.StandardDeviceService;
 import bubble.service.stream.AppPrimerService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
@@ -64,7 +64,7 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
     @Autowired protected BubbleNetworkDAO networkDAO;
     @Autowired protected DeviceDAO deviceDAO;
     @Autowired protected AppPrimerService appPrimerService;
-    @Autowired protected StandardDeviceIdService deviceService;
+    @Autowired protected StandardDeviceService deviceService;
 
     @Getter @Setter private AppRuleDriver next;
 

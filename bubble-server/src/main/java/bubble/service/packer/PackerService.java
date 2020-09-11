@@ -44,7 +44,7 @@ public class PackerService {
 
     private final Map<String, PackerJob> activeJobs = new ConcurrentHashMap<>(16);
     private final Map<String, List<PackerImage>> completedJobs = new ConcurrentHashMap<>(16);
-    private final ExecutorService pool = DaemonThreadFactory.fixedPool(5);
+    private final ExecutorService pool = DaemonThreadFactory.fixedPool(5, "PackerService.pool");
 
     @Autowired private BubbleConfiguration configuration;
 

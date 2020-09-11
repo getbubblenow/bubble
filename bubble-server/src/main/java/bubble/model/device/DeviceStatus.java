@@ -9,6 +9,7 @@ import bubble.service.cloud.GeoService;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.cache.redis.RedisService;
@@ -17,7 +18,7 @@ import static java.util.concurrent.TimeUnit.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 
-@NoArgsConstructor @Accessors(chain=true) @Slf4j
+@NoArgsConstructor @Accessors(chain=true) @ToString(of={"ip", "location"}) @Slf4j
 public class DeviceStatus {
 
     public static final DeviceStatus NO_DEVICE_STATUS = new DeviceStatus();
@@ -97,7 +98,8 @@ public class DeviceStatus {
                 } else {
                     for (int i=0; i<parts.length-1; i+=2) {
                         final int count = Integer.parseInt(parts[i]);
-                        final String unit = parts[i+1];
+                        String unit = parts[i+1].trim();
+                        if (unit.endsWith(",")) unit = unit.substring(0, unit.length()-1);
                         switch (unit) {
                             case "hour": case "hours": setLastHandshakeHours(count); break;
                             case "minute": case "minutes": setLastHandshakeMinutes(count); break;

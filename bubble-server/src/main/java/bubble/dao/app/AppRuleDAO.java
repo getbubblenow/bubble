@@ -5,20 +5,36 @@
 package bubble.dao.app;
 
 import bubble.model.app.AppRule;
+import bubble.model.app.BubbleApp;
+import bubble.service.stream.AppPrimerService;
 import bubble.service.stream.RuleEngineService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-@Repository public class AppRuleDAO extends AppTemplateEntityDAO<AppRule> {
+@Repository @Slf4j
+public class AppRuleDAO extends AppTemplateEntityDAO<AppRule> {
 
     @Autowired private RuleEngineService ruleEngineService;
+    @Autowired private BubbleAppDAO appDAO;
+    @Autowired private AppPrimerService appPrimerService;
 
-    @Override public AppRule postUpdate(AppRule entity, Object context) {
+    @Override public Object preUpdate(AppRule rule) {
+        final AppRule existing = findByUuid(rule.getUuid());
+        rule.setPreviousConfigJson(existing.getConfigJson());
+        return super.preUpdate(rule);
+    }
 
-        ruleEngineService.flushCaches();
+    @Override public AppRule postUpdate(AppRule rule, Object context) {
+
+        if (rule.configJsonChanged()) {
+            final BubbleApp app = appDAO.findByUuid(rule.getApp());
+            appPrimerService.prime(app);
+        }
+        ruleEngineService.flushCaches(false);
 
         // todo: update entities based on this template if account has updates enabled
-        return super.postUpdate(entity, context);
+        return super.postUpdate(rule, context);
     }
 
     @Override public void delete(String uuid) {

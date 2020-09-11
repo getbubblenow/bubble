@@ -23,7 +23,7 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.SearchService;
 import bubble.service.account.SyncAccountService;
 import bubble.service.boot.SelfNodeService;
-import bubble.service.cloud.DeviceIdService;
+import bubble.service.device.DeviceService;
 import bubble.service.stream.RuleEngineService;
 import lombok.Getter;
 import lombok.NonNull;
@@ -80,7 +80,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private SearchService searchService;
     @Autowired private SyncAccountService syncAccountService;
     @Autowired private ReferralCodeDAO referralCodeDAO;
-    @Autowired private DeviceIdService deviceService;
+    @Autowired private DeviceService deviceService;
     @Autowired private RuleEngineService ruleEngineService;
 
     public Account newAccount(Request req, Account caller, AccountRegistration request, Account parent) {
@@ -198,7 +198,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
                 syncAccountService.syncAccount(account);
             }
             if (previousState.isRefreshShowBlockStats()) {
-                deviceService.initBlockStats(account);
+                deviceService.initBlocksAndFlexRoutes(account);
                 ruleEngineService.flushCaches();
             }
         }

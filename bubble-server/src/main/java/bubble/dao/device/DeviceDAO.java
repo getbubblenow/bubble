@@ -11,7 +11,7 @@ import bubble.dao.app.AppDataDAO;
 import bubble.model.device.BubbleDeviceType;
 import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
-import bubble.service.cloud.DeviceIdService;
+import bubble.service.device.DeviceService;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.criterion.Order;
@@ -46,7 +46,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AppDataDAO dataDAO;
     @Autowired private TrustedClientDAO trustDAO;
-    @Autowired private DeviceIdService deviceIdService;
+    @Autowired private DeviceService deviceService;
 
     @Override public Order getDefaultSortOrder() { return ORDER_CTIME_ASC; }
 
@@ -113,7 +113,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
                 result = super.update(uninitialized);
             }
 
-            deviceIdService.setDeviceSecurityLevel(result);
+            deviceService.setDeviceSecurityLevel(result);
             return result;
         }
     }
@@ -125,7 +125,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
         toUpdate.update(updateRequest);
         final var updated = super.update(toUpdate);
-        deviceIdService.setDeviceSecurityLevel(updated);
+        deviceService.setDeviceSecurityLevel(updated);
         refreshVpnUsers();
         return updated;
     }

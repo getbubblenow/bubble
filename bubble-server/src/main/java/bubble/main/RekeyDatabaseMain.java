@@ -34,7 +34,7 @@ public class RekeyDatabaseMain extends BaseMain<RekeyDatabaseOptions> {
             } catch (Exception e) {
                 die("READ ERROR: " + e);
             }
-        });
+        }, "RekeyDatabaseMain.run.reader");
 
         final AtomicReference<CommandResult> writeResult = new AtomicReference<>();
         final Thread writer = runWriter(options, writeResult, options.getEnv());
@@ -58,7 +58,7 @@ public class RekeyDatabaseMain extends BaseMain<RekeyDatabaseOptions> {
             } catch (Exception e) {
                 writeResult.set(new CommandResult(e).setExitStatus(-1));
             }
-        }, e -> writeResult.set(new CommandResult(e).setExitStatus(-1)));
+        }, "RekeyDatabaseMain.runWriter", e -> writeResult.set(new CommandResult(e).setExitStatus(-1)));
     }
 
     public static Command readerCommand(RekeyDatabaseOptions options, Map<String, String> env) {

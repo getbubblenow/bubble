@@ -40,8 +40,11 @@
 <!--    <logger name="org.cobbzilla.wizard.dao.SqlViewSearchHelper" level="DEBUG" />-->
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
     <logger name="bubble.service.notify.NotificationService" level="WARN" />
+    <logger name="bubble.service.device.StandardFlexRouterService" level="ERROR" />
     <logger name="bubble.rule.AbstractAppRuleDriver" level="WARN" />
     <logger name="bubble.rule.bblock.BubbleBlockRuleDriver" level="WARN" />
+<!--    <logger name="bubble.rule.passthru.TlsPassthruRuleDriver" level="DEBUG" />-->
+<!--    <logger name="bubble.rule.passthru.TlsPassthruConfig" level="DEBUG" />-->
     <logger name="bubble.service.block.BlockStatsService" level="WARN" />
     <!--    <logger name="bubble.service.block" level="DEBUG" />-->
     <logger name="bubble.abp" level="WARN" />
@@ -70,8 +73,6 @@
 <!--    <logger name="bubble.service.cloud.StandardDeviceIdService" level="DEBUG" />-->
 <!--    <logger name="bubble.cloud.compute.vultr" level="DEBUG" />-->
     <logger name="bubble.resources.message" level="INFO" />
-    <logger name="bubble.app.analytics" level="DEBUG" />
-    <logger name="bubble.app.passthru" level="DEBUG" />
     <logger name="org.cobbzilla.util.io.regex.RegexFilterReader" level="WARN" />
     <logger name="org.cobbzilla.util.io.multi" level="INFO" />
 <!--    <logger name="bubble.service.cloud.StandardNetworkService" level="INFO" />-->

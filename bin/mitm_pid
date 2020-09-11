@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+# Print PID of currently-active mitmproxy
+# Note: this command only works on a running bubble node
+#
+ps auxwww | grep /home/mitmproxy/mitmproxy/venv/bin/mitmdump | grep $(cat /home/mitmproxy/mitmproxy_port) | grep -v grep | awk '{print $2}'

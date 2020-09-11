@@ -51,7 +51,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
 
     public EntityIterator(AtomicReference<Exception> error) {
         this.error = error;
-        this.thread = background(this::_iterate, this.error::set);
+        this.thread = background(this::_iterate, "EntityIterator", this.error::set);
     }
 
     @Override public boolean hasNext() {

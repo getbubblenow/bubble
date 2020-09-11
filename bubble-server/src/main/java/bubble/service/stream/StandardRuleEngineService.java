@@ -193,7 +193,11 @@ public class StandardRuleEngineService implements RuleEngineService {
             = new ExpirationMap<>(HOURS.toMillis(1), ExpirationEvictionPolicy.atime);
 
     private final AtomicBoolean cachedFlushingEnabled = new AtomicBoolean(true);
-    public void enableCacheFlushing () { cachedFlushingEnabled.set(true); }
+    public void enableCacheFlushing () {
+        if (log.isDebugEnabled()) log.debug("enableCacheFlushing: caching re-enabled, flushing");
+        cachedFlushingEnabled.set(true);
+        flushCaches(false);
+    }
     public void disableCacheFlushing () { cachedFlushingEnabled.set(false); }
 
     public Map<Object, Object> flushCaches() { return flushCaches(true); }

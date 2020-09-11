@@ -102,7 +102,7 @@ public class NetworkKeysService {
                     log.error("Cannot delete tmp backup folder " + backupDir, e);
                 }
             }
-        });
+        }, "NetworkKeysService.startBackupDownload");
     }
 
     @NonNull public BackupPackagingStatus backupDownloadStatus(@NonNull final String keysCode) {

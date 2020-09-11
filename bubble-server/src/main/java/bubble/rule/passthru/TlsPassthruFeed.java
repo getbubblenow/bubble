@@ -4,41 +4,29 @@
  */
 package bubble.rule.passthru;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.util.Set;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
-import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 
-@NoArgsConstructor @Accessors(chain=true) @EqualsAndHashCode(of="feedUrl")
-public class TlsPassthruFeed implements Comparable<TlsPassthruFeed> {
+@NoArgsConstructor @Accessors(chain=true)
+public class TlsPassthruFeed extends BasePassthruFeed {
 
-    public static final TlsPassthruFeed[] EMPTY_FEEDS = new TlsPassthruFeed[0];
+    public static final TlsPassthruFeed[] EMPTY_PASSTHRU_FEEDS = new TlsPassthruFeed[0];
 
-    public String getId() { return sha256_hex(getFeedUrl()); }
-    public void setId(String id) {} // noop
+    public String getPassthruFeedName () { return getFeedName(); }
+    public TlsPassthruFeed setPassthruFeedName (String name) { return (TlsPassthruFeed) setFeedName(name); }
 
-    @Getter @Setter private String feedName;
-    public boolean hasFeedName() { return !empty(feedName); }
+    public String getPassthruFeedUrl () { return getFeedUrl(); }
+    public TlsPassthruFeed setPassthruFeedUrl (String url) { return (TlsPassthruFeed) setFeedUrl(url); }
 
-    @Getter @Setter private String feedUrl;
+    public Set<String> getPassthruFqdnList () { return getFqdnList(); }
+    public TlsPassthruFeed setPassthruFqdnList (Set<String> set) { return (TlsPassthruFeed) setFqdnList(set); }
 
-    @JsonIgnore @Getter @Setter private Set<String> fqdnList;
-    public boolean hasFqdnList () { return !empty(fqdnList); }
-
-    public TlsPassthruFeed(String url) { setFeedUrl(url); }
+    public TlsPassthruFeed(String url) { super(url); }
 
     public TlsPassthruFeed(TlsPassthruFeed feed) { copy(this, feed); }
-
-    @Override public int compareTo(TlsPassthruFeed o) {
-        return getFeedUrl().toLowerCase().compareTo(o.getFeedUrl().toLowerCase());
-    }
 
 }

@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-- name: Install OpenJDK 11 JRE (headless), redis, uuid and jq
+- name: Install OpenJDK 11 JRE (headless), redis, uuid, jq, and zip
   apt:
     name: [ 'openjdk-11-jre-headless', 'redis', 'uuid', 'jq', 'zip' ]
     state: present
@@ -95,6 +95,7 @@
   with_items:
     - refresh_bubble_ssh_keys_monitor.sh
     - refresh_bubble_ssh_keys.sh
+    - refresh_flex_keys_monitor.sh
     - bubble_upgrade_monitor.sh
     - bubble_upgrade.sh
     - log_manager.sh
@@ -103,6 +104,11 @@
   copy:
     src: supervisor_refresh_bubble_ssh_keys_monitor.conf
     dest: /etc/supervisor/conf.d/refresh_bubble_ssh_keys_monitor.conf
+
+- name: Install refresh_flex_keys_monitor supervisor conf file
+  copy:
+    src: supervisor_refresh_flex_keys_monitor.conf
+    dest: /etc/supervisor/conf.d/refresh_flex_keys_monitor.conf
 
 - name: Install bubble_upgrade_monitor supervisor conf file
   copy:
