@@ -46,17 +46,20 @@ public class StandardSyncAccountService implements SyncAccountService {
             log.warn("sync: thisNetwork was null, sync_account is impossible");
             return;
         }
-        if (!account.admin()) {
-            log.info("sync: not syncing non-admin account");
-            return;
-        }
+
         if (!account.sync()) {
             log.info("sync: account sync disabled for account: "+account.getName());
             return;
         }
+
         final AnsibleInstallType installType = thisNetwork.getInstallType();
         if (installType == AnsibleInstallType.sage) {
             // changing account on sage, notify all bubbles launched by user that have syncAccount == true
+
+            // sync account: sage -> node(s)
+            // Note that a non-admin person can change only his own account on sage node, while admin can change any
+            // account. In both cases, the change should be synced through the nodes, so even for non-admin account, the
+            // sync should be done here.
 
             for (BubbleNetwork network : networkDAO.findByAccount(account.getUuid())) {
                 if (network.getState() != BubbleNetworkState.running) continue;
@@ -72,10 +75,21 @@ public class StandardSyncAccountService implements SyncAccountService {
             }
 
         } else if (installType == AnsibleInstallType.node) {
+            // sync account: node -> sage
+            // On sage there's just a single account related to this node - the node's network owner's account. So only
+            // that account should be synced in this case. It doesn't matter if somebody already changed this account
+            // to be non-admin (TODO strange situation and maybe it should be tested if it is forbidden already)
+
+            if (account.getUuid().equals(thisNetwork.getAccount())) {
+                log.info("sync: not syncing non-owner account from node to sage");
+                return;
+            }
+
             if (!thisNetwork.syncAccount()) {
                 log.info("sync: disabled for node, not sending sync_account notification");
                 return;
             }
+
             // changing account on node, notify sage, which will then notify all bubbles launched by user that have
             // syncAccount == true
             log.info("sync: sending sync_account notification from node to sage: "+configuration.getSageNode());
