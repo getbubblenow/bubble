@@ -44,7 +44,7 @@ You only need to run this command once, ever, on a given system.
 It ensures that the appropriate packages are installed and proper databases and database users exist.
 
 `first_time_ubuntu.sh` command uses `apt` commands to install various packages, so Debian (or other Debian-based)
-distributions should work fine. If you are running on a non-Ubuntu system, copy that file to something like:
+distributions should work fine. If you are running a different OS or distribution, copy that file to something like:
                                 
     ./bin/first_time_myoperatingsystem.sh
                                 
