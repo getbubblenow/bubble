@@ -58,6 +58,8 @@ Before running Bubble, you need to build it. Run:
 
 This will grab all the submodules and perform an initial build of all components.
 
+This will take a while to complete, please be patient.
+
 ## Deployment Modes
 Bubble runs in three different modes.
 In order to launch and use your own Bubble that you can connect devices to and use,

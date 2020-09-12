@@ -27,6 +27,8 @@ After running the system setup above, run:
 
 This will grab all the submodules and perform an initial build of all components.
 
+This will take a while to complete, please be patient.
+
 ## Bubble environment file
 You will need a file named `${HOME}/.bubble.env` which contains various environment variables required to run the server.
 
