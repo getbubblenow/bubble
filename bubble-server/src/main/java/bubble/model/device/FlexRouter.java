@@ -67,6 +67,7 @@ public class FlexRouter extends IdentifiableBase implements HasAccount {
     @Getter private String key;
     public boolean hasKey () { return !empty(key); }
     public FlexRouter setKey(String k) {
+        if (k == null) k = "";
         this.key = k.trim();
         if (!empty(key)) this.keyHash = sha256_hex(key);
         return this;

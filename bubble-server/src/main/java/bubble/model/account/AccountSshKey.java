@@ -57,6 +57,7 @@ public class AccountSshKey extends IdentifiableBase implements HasAccount {
     @Type(type=ENCRYPTED_STRING)  @Column(updatable=false, columnDefinition="varchar("+(10000+ENC_PAD)+") NOT NULL")
     @Getter private String sshPublicKey;
     public AccountSshKey setSshPublicKey(String k) {
+        if (k == null) k = "";
         this.sshPublicKey = k.trim();
         if (!empty(sshPublicKey)) this.sshPublicKeyHash = sha256_hex(sshPublicKey);
         return this;
