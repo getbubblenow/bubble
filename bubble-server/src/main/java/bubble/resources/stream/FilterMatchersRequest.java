@@ -31,6 +31,12 @@ public class FilterMatchersRequest {
     @Getter @Setter private String referer;
     public boolean hasReferer () { return !empty(referer) && !referer.equals("NONE"); }
 
+    public String referrerUrlOnly () {
+        if (!hasReferer()) return null;
+        final int qPos = referer.indexOf("?");
+        return qPos == -1 ? referer : referer.substring(0, qPos);
+    }
+
     @JsonIgnore public String getRefererFqdn () {
         if (!hasReferer()) return null;
         final String base = stripScheme(referer);

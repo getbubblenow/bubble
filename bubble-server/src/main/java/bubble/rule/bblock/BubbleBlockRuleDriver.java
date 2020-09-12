@@ -277,12 +277,13 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
 
     public FilterMatchDecision checkRefererDecision(FilterMatchersRequest filter, Account account, Device device, String app, String site, String prefix) {
         prefix = prefix+" (checkRefererDecision): ";
-        final URI refererURI = URIUtil.toUriOrNull(filter.getReferer());
+        final String referer = filter.referrerUrlOnly();
+        final URI refererURI = URIUtil.toUriOrNull(referer);
         if (refererURI == null) {
-            if (log.isInfoEnabled()) log.info(prefix+"invalid referer ("+filter.getReferer()+")");
+            if (log.isInfoEnabled()) log.info(prefix+"invalid referer ("+ referer +")");
             return null;
         } else {
-            if (log.isInfoEnabled()) log.info(prefix+"checking referer: ("+filter.getReferer()+")");
+            if (log.isInfoEnabled()) log.info(prefix+"checking referer: ("+ referer +")");
         }
         final String refererHost = refererURI.getHost();
         final String refererPath = refererURI.getPath();
