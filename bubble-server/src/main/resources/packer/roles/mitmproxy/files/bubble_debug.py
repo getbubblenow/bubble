@@ -20,7 +20,7 @@ if BUBBLE_PORT is None:
 BUBBLE_LOG = '/var/log/bubble/mitmproxy_bubble.log'
 BUBBLE_LOG_LEVEL_FILE = '/home/mitmproxy/bubble_log_level.txt'
 BUBBLE_LOG_LEVEL_ENV_VAR = 'BUBBLE_LOG_LEVEL'
-DEFAULT_BUBBLE_LOG_LEVEL = 'INFO'
+DEFAULT_BUBBLE_LOG_LEVEL = 'WARNING'
 BUBBLE_LOG_LEVEL = None
 try:
     BUBBLE_LOG_LEVEL = Path(BUBBLE_LOG_LEVEL_FILE).read_text().strip()
