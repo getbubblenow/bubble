@@ -23,7 +23,7 @@ BUBBLE_BIN="$(cd "$(dirname "${0}")" && pwd)"
 CURRENT_USER="$(whoami)"
 sudo su - postgres bash -c 'createuser -U postgres --createdb --createrole --superuser '"${CURRENT_USER}"'' || die "Error creating ${CURRENT_USER} DB user"
 
-PG_HBA=/etc/postgresql/10/main/pg_hba.conf
+PG_HBA=$(find /etc/postgresql -mindepth 1 -maxdepth 1 -type d | sort | tail -1)/main/pg_hba.conf
 sudo cat ${PG_HBA} | sed -e 's/  peer/  trust/g' | sed -e 's/  md5/  trust/g' > /tmp/pg_hba.conf || die "Error filtering ${PG_HBA}"
 sudo bash -c "cat /tmp/pg_hba.conf > ${PG_HBA}" || die "Error rewriting ${PG_HBA}"
 sudo service postgresql restart || die "Error restaring pgsql"
