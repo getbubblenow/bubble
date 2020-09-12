@@ -68,7 +68,7 @@ public class NotificationBase extends IdentifiableBase implements HasAccountNoNa
     @Getter @Setter private String uri;
 
     @ECSearchable(filter=true) @ECField(index=70)
-    @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(100_000+ENC_PAD)+")")
+    @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(500_000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String payloadJson;
     public boolean hasPayload () { return payloadJson != null; }
 
