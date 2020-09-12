@@ -27,6 +27,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.http.HttpHeaders.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -37,6 +39,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.*;
 import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 import static org.cobbzilla.util.system.CommandShell.execScript;
+import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
@@ -76,10 +79,24 @@ public class ApiConstants {
 
     public static final GoogleAuthenticator G_AUTH = new GoogleAuthenticator();
 
+    public static final long MAX_KNOWN_HOST_KEY_TIMEOUT = MINUTES.toMillis(1);
+    public static final String KNOWN_HOST_KEY_SSH_KEYSCAN_COMMAND = "ssh-keyscan -t rsa $(hostname -d) 2>&1 | grep -v \"^#\"";
+
     private static final AtomicReference<String> knownHostKey = new AtomicReference<>();
     public static String getKnownHostKey () {
         return lazyGet(knownHostKey,
-                () -> execScript("ssh-keyscan -t rsa $(hostname -d) 2>&1 | grep -v \"^#\""),
+                () -> {
+                    long start = now();
+                    String key = execScript(KNOWN_HOST_KEY_SSH_KEYSCAN_COMMAND).trim();
+                    while (key.contains(" failure ") && now() < start + MAX_KNOWN_HOST_KEY_TIMEOUT) {
+                        log.warn("getKnownHostKey: ssh-keyscan returned: "+key);
+                        sleep(SECONDS.toMillis(5), "getKnownHostKey");
+                        key = execScript(KNOWN_HOST_KEY_SSH_KEYSCAN_COMMAND).trim();
+                    }
+                    if (key.contains(" failure ")) return die("getKnownHostKey: error: ssh-keyscan returned: "+key);
+                    log.info("getKnownHostKey: found key = "+key);
+                    return key;
+                },
                 () -> die("getKnownHostKey"));
     }
 
