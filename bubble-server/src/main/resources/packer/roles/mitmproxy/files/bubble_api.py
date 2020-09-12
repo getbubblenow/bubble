@@ -139,6 +139,7 @@ def async_stream(client, name, url,
                                                      max_redirects=max_redirects))
     except Exception as e:
         bubble_log.error('async_stream('+name+'): error with url='+url+' -- '+repr(e))
+        raise e
 
 
 async def _async_stream(client, name, url,

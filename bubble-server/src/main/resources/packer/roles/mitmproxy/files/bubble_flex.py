@@ -129,6 +129,7 @@ def process_flex(flex_flow):
     except Exception as e:
         if bubble_log.isEnabledFor(ERROR):
             bubble_log.error('process_flex: error sending request to '+url+': '+repr(e))
+        # todo: catch TimeoutException, try another flex router; remember the last router that works for this client_addr
         return None
 
     if response is None:
