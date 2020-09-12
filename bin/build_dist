@@ -42,7 +42,7 @@ if [[ -z "${JAR}" ]] ; then
 fi
 
 VERSION_FILE="${BASE}/bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
-VERSION=$(cat "${VERSION_FILE}" | grep bubble.version | awk -F '=' '{print $2}')
+VERSION=$(cat "${VERSION_FILE}" | grep bubble.version | awk -F '=' '{print $2}' | tr ' ' '_')
 if [[ -z "${VERSION}" ]] ; then
   die "No version found in ${VERSION_FILE}"
 fi
@@ -51,9 +51,9 @@ DIST="${DIST_BASE}/bubble-${VERSION}"
 ZIP="${DIST_BASE}/bubble-${VERSION}.zip"
 mkdir -p "${DIST}" || die "Error creating distribution directory: ${DIST}"
 cp "${JAR}" "${DIST}/bubble.jar" || die "Error copying ${JAR} to ${DIST}/bubble.jar"
-cp "${BASE}/dist-README.md" "${DIST}/README.md" || die "Error copying dist-README.md to ${DIST}/README.md"
+cp "${BASE}/README.md" "${DIST}/README.md" || die "Error copying README.md to ${DIST}/README.md"
+cp -R "${BASE}/docs" "${DIST}" || die "Error copying docs directory to ${DIST}"
 cp -R "${BASE}/bin" "${DIST}" || die "Error copying bin directory to ${DIST}"
-cp -R "${BASE}/scripts" "${DIST}" || die "Error copying scripts directory to ${DIST}"
 cp -R "${BASE}/config" "${DIST}" || die "Error copying config directory to ${DIST}"
 cd "${DIST}/.." && zip -r "${ZIP}" "$(basename ${DIST})"
 echo "Distribution created: "
