@@ -5,7 +5,7 @@ You must already have a Bubble running in [Local Launcher Mode](local-launcher.m
 If your Bubble is not already running on your local system, start it by running `./bin/run.sh`
 
 ## Log In
-When your local Bubble finishes launching, it should open a web page. If you a page with the title "Activation",
+When your local Bubble finishes launching, it should open a web page. If you see a page with the title "Activation",
 then your Bubble still needs to be activated. Read about activation in the [Local Launcher Mode](local-launcher.md) instructions.
 
 If you see a login screen, you should be able to log in as the admin user using the email
