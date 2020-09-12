@@ -48,8 +48,13 @@ public class AccountSshKeyDAO extends AccountOwnedEntityDAO<AccountSshKey> {
         final Account owner = accountDAO.findByUuid(key.getAccount());
         final BubbleNetwork thisNetwork = configuration.getThisNetwork();
         if (thisNetwork == null || thisNetwork.getInstallType() == AnsibleInstallType.sage) {
-            // never allow installation of a key on sage. must be manually set in the database.
-            key.setInstallSshKey(false);
+            // only allow installation of a key on a sage if the user is the first admin and has no keys
+            final Account firstAdmin = accountDAO.getFirstAdmin();
+            if (owner.getUuid().equals(firstAdmin.getUuid())) {
+                key.setInstallSshKey(findByAccount(owner.getUuid()).size() == 0);
+            } else {
+                key.setInstallSshKey(false);
+            }
 
         } else {
             // admin keys are always installed on a node
