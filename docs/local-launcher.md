@@ -12,7 +12,7 @@ into your browser's location bar.
 ### Activation
 Your Bubble is running locally in a "blank" mode. It needs an initial "root" account and some basic services configured.
 
-In order to activate, you will need accounts and API keys from several cloud providers.
+In order to activate your Local Launcher, you'll need accounts and/or API keys from several cloud providers.
 Have these account credentials handy. Be prepared to sign up for new accounts where needed.
 
 #### Activate via Web UI
