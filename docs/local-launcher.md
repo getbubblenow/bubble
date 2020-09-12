@@ -20,7 +20,8 @@ The browser-based admin UI should be displaying an "Activate" page. Complete the
 data. The Bubble Launcher will create an initial "root" account and other basic system configurations. 
 
 #### Activate via command line
-Copy the file in `config/activation.json`, then edit the file. There are comments in the file to guide you.
+Make a copy of the file `config/activation.json` and edit the copy. There are comments in the file to guide you.
+
 After saving the updated file, run this command:
 
    `./bin/bactivate /path/to/activation.json`
