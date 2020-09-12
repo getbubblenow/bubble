@@ -44,6 +44,6 @@ Then fill out the "Email" and "Password" fields, and click or tap the "Sign In" 
 Your Bubble should automatically connect and configure the device. If it does not, click or tap the "Connect" button.
 
 ## Need Help? Have Questions?
-There is a lot more great information on using and managing your Bubble on the [Bubble Support Site](https://support.getbubblenow.com)
+Check out the [Bubble Support Site](https://support.getbubblenow.com) for lots more great information about using and managing your Bubble.
 
-You can also reach out to us at [support@getbubblenow.com](mailto:support@getbubblenow.com) for help.
+Send us an email at [support@getbubblenow.com](mailto:support@getbubblenow.com) if you need more help.
