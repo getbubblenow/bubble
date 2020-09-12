@@ -12,7 +12,7 @@ sudo apt update -y || die "Error running apt update"
 sudo apt upgrade -y || die "Error running apt upgrade"
 
 # Install packages
-sudo apt install openjdk-11-jdk maven postgresql-10 redis-server jq python3 python3-pip npm webpack curl unzip -y || die "Error installing apt packages"
+sudo apt install openjdk-11-jdk maven postgresql redis-server jq python3 python3-pip npm webpack curl unzip -y || die "Error installing apt packages"
 sudo pip3 install setuptools psycopg2-binary || die "Error installing pip packages"
 
 # Install packer
