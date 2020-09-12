@@ -1,5 +1,5 @@
-bubble
-======
+Bubble Developer Guide
+======================
 
 # Development Setup
 These instructions presume you are running a newly setup Ubuntu 20.04 system.
@@ -48,5 +48,4 @@ If you want to grab the latest code, and ensure that all git submodules are prop
 This will update and rebuild all submodules, and the main bubble jar file.
 
 ## Running in development
-Assuming you ran the commands above, you can run a test server using the method described in
-the bubble-web [README](https://git.bubblev.org/bubblev/bubble-web/src/branch/master/README.md).
+Run the `bin/run.sh` script to start the Bubble server.
