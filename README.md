@@ -51,6 +51,13 @@ distributions should work fine. If you are running on a non-Ubuntu system, copy 
 And then edit it such that all the same packages get installed.
 Then submit a pull request and we can add support for your operating system to the main repository.
 
+### Build
+Before running Bubble, you need to build it. Run:
+
+    ./bin/first_time_setup.sh
+
+This will grab all the submodules and perform an initial build of all components.
+
 ## Deployment Modes
 Bubble runs in three different modes.
 In order to launch and use your own Bubble that you can connect devices to and use,
