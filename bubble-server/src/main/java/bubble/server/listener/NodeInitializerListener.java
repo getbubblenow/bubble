@@ -68,10 +68,6 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
 //                    .forEach(dao -> ((AbstractDAO) dao).getSearchView());
 //        }
 
-        // ensure system configs can be loaded properly
-        final Map<String, Object> configs = c.getPublicSystemConfigs();
-        if (empty(configs)) die("onStart: no system configs found");  // should never happen
-
         final AccountDAO accountDAO = c.getBean(AccountDAO.class);
         if (!accountDAO.activated()) {
             final File nodeFile = THIS_NODE_FILE;
@@ -90,6 +86,10 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
         } else {
             log.warn("onStart: thisNode was null, not doing standard initializations");
         }
+
+        // ensure system configs can be loaded properly
+        final Map<String, Object> configs = c.getPublicSystemConfigs();
+        if (empty(configs)) die("onStart: no system configs found");  // should never happen
 
         // start network monitor if we manage networks
         if (c.isSageLauncher()) c.getBean(NetworkMonitorService.class).start();

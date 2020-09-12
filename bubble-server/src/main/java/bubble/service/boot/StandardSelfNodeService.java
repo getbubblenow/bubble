@@ -188,7 +188,7 @@ public class StandardSelfNodeService implements SelfNodeService {
         }
     }
 
-    private OneWayFlag nullWarningPrinted = new OneWayFlag("nullWarningPrinted");
+    private final OneWayFlag nullWarningPrinted = new OneWayFlag("nullWarningPrinted");
 
     public BubbleNode getThisNode () {
         synchronized (thisNode) {

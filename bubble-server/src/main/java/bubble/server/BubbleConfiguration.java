@@ -336,8 +336,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     private final AtomicReference<Map<String, Object>> publicSystemConfigs = new AtomicReference<>();
 
     public Map<String, Object> getPublicSystemConfigs () {
-        final var thisNetwork = getThisNetwork();
-        final var awaitingRestore = thisNetwork != null && thisNetwork.getState() == BubbleNetworkState.restoring;
+        final BubbleNetwork thisNetwork = getThisNetwork();
+        final boolean awaitingRestore = thisNetwork != null && thisNetwork.getState() == BubbleNetworkState.restoring;
 
         synchronized (publicSystemConfigs) {
             if (publicSystemConfigs.get() == null) {
