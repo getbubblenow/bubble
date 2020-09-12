@@ -22,7 +22,7 @@ data. The Bubble Launcher will create an initial "root" account and other basic 
 #### Activate via command line
 Make a copy of the file `config/activation.json` and edit the copy. There are comments in the file to guide you.
 
-After saving the updated file, run this command:
+To activate your Local Launcher Bubble, run this command:
 
    `./bin/bactivate /path/to/activation.json`
 
