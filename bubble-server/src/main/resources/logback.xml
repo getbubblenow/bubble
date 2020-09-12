@@ -40,7 +40,7 @@
 <!--    <logger name="org.cobbzilla.wizard.dao.SqlViewSearchHelper" level="DEBUG" />-->
     <logger name="org.cobbzilla.wizard.server.listener.BrowserLauncherListener" level="INFO" />
     <logger name="bubble.service.notify.NotificationService" level="WARN" />
-    <logger name="bubble.service.device.StandardFlexRouterService" level="ERROR" />
+    <logger name="bubble.service.device.StandardFlexRouterService" level="INFO" />
     <logger name="bubble.rule.AbstractAppRuleDriver" level="WARN" />
     <logger name="bubble.rule.bblock.BubbleBlockRuleDriver" level="WARN" />
 <!--    <logger name="bubble.rule.passthru.TlsPassthruRuleDriver" level="DEBUG" />-->
