@@ -153,13 +153,8 @@ while : ; do
         fi
       else
         LAST_SEEN_LISTENING=$(date +%s)
-        # perform health check
-        HEALTH_CHECK_RESULT="$(healthCheck ${MITM_PORT})"
-        if [[ -z "${HEALTH_CHECK_RESULT}" || "${HEALTH_CHECK_RESULT}" != "OK" ]] ; then
-            log "Warn: health check failed, switching mitm port: ${HEALTH_CHECK_RESULT}"
-            switchPorts ${MITM_PORT}
-            continue
-        fi
+
+        # check memory usage first
         PCT_FREE=$(expr $(free | grep -m 1 Mem: | awk '{print $7"00 / "$2}'))
         PCT_MEM="$(ps q ${MITM_PID} -o %mem --no-headers | tr -d [[:space:]] | cut -f1 -d. | sed 's/[^0-9]*//g')"
         # log "Info: mitm pid ${MITM_PID} using ${PCT_MEM}% of memory"
@@ -170,6 +165,14 @@ while : ; do
             log "Warn: switching mitm port: ${PCT_FREE}% free < ${MIN_PCT_FREE}% min. mitm${MITM_PORT} using ${PCT_MEM}%"
             switchPorts ${MITM_PORT}
           fi
+        fi
+
+        # then perform health check
+        HEALTH_CHECK_RESULT="$(healthCheck ${MITM_PORT})"
+        if [[ -z "${HEALTH_CHECK_RESULT}" || "${HEALTH_CHECK_RESULT}" != "OK" ]] ; then
+            log "Warn: health check failed, switching mitm port: ${HEALTH_CHECK_RESULT}"
+            switchPorts ${MITM_PORT}
+            continue
         fi
       fi
     fi
