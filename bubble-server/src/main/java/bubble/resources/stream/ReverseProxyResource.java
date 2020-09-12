@@ -5,7 +5,6 @@
 package bubble.resources.stream;
 
 import bubble.dao.app.AppMatcherDAO;
-import bubble.dao.app.AppRuleDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppMatcher;
 import bubble.model.device.Device;
@@ -44,7 +43,6 @@ public class ReverseProxyResource {
 
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AppMatcherDAO matcherDAO;
-    @Autowired private AppRuleDAO ruleDAO;
     @Autowired private StandardRuleEngineService ruleEngine;
     @Autowired private DeviceService deviceService;
     @Autowired private FilterHttpResource filterHttpResource;
