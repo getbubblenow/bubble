@@ -42,3 +42,8 @@ Click or tap "Set Launcher" and enter the hostname of your Remote Launcher.
 
 Then fill out the "Email" and "Password" fields, and click or tap the "Sign In" button.
 Your Bubble should automatically connect and configure the device. If it does not, click or tap the "Connect" button.
+
+## Get Help
+There is a lot more great information on using and managing your Bubble on the [Bubble Support Site](https://support.getbubblenow.com)
+
+You can also reach out to us at [support@getbubblenow.com](mailto:support@getbubblenow.com) for help.
