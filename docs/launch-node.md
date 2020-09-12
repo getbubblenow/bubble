@@ -10,7 +10,9 @@ Load your Remote Launcher's home page in a web browser.
 
 Click the "Sign Up" button in the header to create a new user account.
 
-It is highly recommended to launch new Bubbles using a regular user account, and not your Remote Launcher root account.
+Note: You *could* sign in using the root account and launch a Bubble from there, but this is discouraged for security reasons.
+It is *highly recommended* to launch new Bubbles using a regular user account, and not your Remote Launcher root account.
+You should use the root account on the Remote Launcher only to manage the system itself.
 
 ## Verify user
 After you create a user, the Remote Launcher will send an email with a verification link.
