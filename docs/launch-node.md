@@ -6,7 +6,9 @@ Launching a Bubble in Node Mode requires a Bubble in Remote Launcher Mode. If yo
 a Bubble in Remote Launcher Mode, go back and follow the [Remote Launcher Mode instructions](remote-launcher.md).
 
 ## Create a user
-On your Remote Launcher, use the `/register` URL to create a new user account.
+Load your Remote Launcher's home page in a web browser.
+
+Click the "Sign Up" button in the header to create a new user account.
 
 It is highly recommended to launch new Bubbles using a regular user account, and not your Remote Launcher root account.
 
