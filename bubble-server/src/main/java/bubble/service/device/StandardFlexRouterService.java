@@ -243,8 +243,9 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
         if (Arrays.stream(lines).anyMatch(line -> line.trim().equals(trimmedKey))) {
             if (log.isDebugEnabled()) log.debug("allowKey: already present: "+trimmedKey);
         } else {
-            @Cleanup("delete") final File temp = temp("flex_keys_", ".tmp");
+            final File temp = temp("flex_keys_", ".tmp");
             final String dataToWrite = authFileContents != null && authFileContents.endsWith("\n") ? trimmedKey + "\n" : "\n" + trimmedKey + "\n";
+            toFileOrDie(temp, authFileContents, true);
             toFileOrDie(temp, dataToWrite, true);
             renameOrDie(temp, authFile);
             if (log.isInfoEnabled()) log.info("allowKey: added key: "+trimmedKey);
@@ -267,7 +268,7 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
             }
         }
         b.append("\n");
-        @Cleanup("delete") final File temp = temp("flex_keys_", ".tmp");
+        final File temp = temp("flex_keys_", ".tmp");
         toFileOrDie(temp, b.toString());
         renameOrDie(temp, authFile);
         if (found) {
