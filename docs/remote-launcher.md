@@ -13,6 +13,7 @@ address `root@local.local` and the password from your `activation.json` file.
 
 ## Fork a Remote Launcher
 After you log in, you should see a "Launch Bubble" screen.
+If you don't see this screen, click the "My Bubble" link in the header.
 
 In the "Bubble Type" drop-down box, choose "Fork".
 
