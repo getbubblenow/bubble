@@ -16,6 +16,7 @@ if it supports VPN connections, it will probably work just fine.
 However, to launch your own Bubble using this software, you will need a Linux machine to run the launcher.
 It *probably* works on MacOS, but it has not been tested and there are likely to be issues. Pull requests are welcome!
 
+## The Easy Path
 If you'd like to enjoy all the benefits of Bubble without going through this hassle, please try out the Bubble launching
 service available on [getbubblenow.com](https://getbubblenow.com/).
 Any Bubble you launch from [getbubblenow.com](https://getbubblenow.com/) will also be "yours only" -- all Bubbles
