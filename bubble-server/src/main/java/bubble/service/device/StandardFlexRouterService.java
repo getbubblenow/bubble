@@ -207,7 +207,7 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
                 } else {
                     router = existing;
                 }
-                if (log.isWarnEnabled()) log.warn(prefix+"attempting to ping again (try="+(i+1)+"/"+MAX_PING_TRIES+")");
+                if (log.isInfoEnabled()) log.info(prefix+"attempting to ping again (try="+(i+1)+"/"+MAX_PING_TRIES+")");
             }
             try {
                 request.setEntity(json(router.pingObject()));
@@ -227,7 +227,7 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
                 }
 
             } catch (Exception e) {
-                log.warn(prefix+"error: "+shortError(e));
+                log.info(prefix+"error: "+shortError(e));
             }
             setStatus(router, FlexRouterStatus.unreachable);
         }
