@@ -20,8 +20,31 @@ if BUBBLE_PORT is None:
 BUBBLE_LOG = '/var/log/bubble/mitmproxy_bubble.log'
 BUBBLE_LOG_LEVEL_FILE = '/home/mitmproxy/bubble_log_level.txt'
 BUBBLE_LOG_LEVEL_ENV_VAR = 'BUBBLE_LOG_LEVEL'
-DEFAULT_BUBBLE_LOG_LEVEL = 'WARNING'
+DEFAULT_BUBBLE_LOG_LEVEL = 'INFO'
 BUBBLE_LOG_LEVEL = None
+
+
+def get_stack(e=None):
+    if e is None:
+        e = ValueError()
+    return "".join(traceback.TracebackException.from_exception(e).format())
+
+
+# Allow SIGUSR1 to print stack traces to stderr
+def dump_stacks(signal, frame):
+    id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
+    code = []
+    for threadId, stack in sys._current_frames().items():
+        code.append("\n# Thread: %s(%d)" % (id2name.get(threadId,""), threadId))
+        for filename, lineno, name, line in traceback.extract_stack(stack):
+            code.append('File: "%s", line %d, in %s' % (filename, lineno, name))
+            if line:
+                code.append("  %s" % (line.strip()))
+    print("\n------------------------------------- stack traces ------------------------------"+"\n".join(code), file=sys.stderr, flush=True)
+
+
+signal.signal(signal.SIGUSR1, dump_stacks)
+
 try:
     BUBBLE_LOG_LEVEL = Path(BUBBLE_LOG_LEVEL_FILE).read_text().strip()
 except IOError:
@@ -35,22 +58,6 @@ if not isinstance(BUBBLE_NUMERIC_LOG_LEVEL, int):
 logging.basicConfig(format='[mitm'+BUBBLE_PORT+'] %(asctime)s - [%(module)s:%(lineno)d] - %(levelname)s: %(message)s', filename=BUBBLE_LOG, level=BUBBLE_NUMERIC_LOG_LEVEL)
 
 bubble_log = logging.getLogger(__name__)
-
-
-# Allow SIGUSR1 to print stack traces to stderr
-def dumpstacks(signal, frame):
-    id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
-    code = []
-    for threadId, stack in sys._current_frames().items():
-        code.append("\n# Thread: %s(%d)" % (id2name.get(threadId,""), threadId))
-        for filename, lineno, name, line in traceback.extract_stack(stack):
-            code.append('File: "%s", line %d, in %s' % (filename, lineno, name))
-            if line:
-                code.append("  %s" % (line.strip()))
-    print("\n------------------------------------- stack traces ------------------------------"+"\n".join(code), file=sys.stderr, flush=True)
-
-
-signal.signal(signal.SIGUSR1, dumpstacks)
 
 if bubble_log.isEnabledFor(INFO):
     bubble_log.info('debug module initialized, default log level = '+logging.getLevelName(BUBBLE_NUMERIC_LOG_LEVEL))

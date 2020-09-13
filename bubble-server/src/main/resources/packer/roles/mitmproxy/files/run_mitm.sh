@@ -25,7 +25,6 @@ BUBBLE_PORT=${PORT} mitmdump \
   --set flow_detail=0 \
   --set stream_large_bodies=1 \
   --set keep_host_header \
-  -s ./bubble_debug.py \
   -s ./bubble_conn_check.py \
   -s ./bubble_request.py \
   -s ./bubble_modify.py \
