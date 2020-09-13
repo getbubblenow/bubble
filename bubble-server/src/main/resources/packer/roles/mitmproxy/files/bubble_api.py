@@ -17,12 +17,14 @@ import nest_asyncio
 import redis
 from bubble_vpn4 import wireguard_network_ipv4
 from bubble_vpn6 import wireguard_network_ipv6
+from bubble_debug import get_stack
 from netaddr import IPAddress, IPNetwork
 
 from bubble_config import bubble_port, debug_capture_fqdn, \
     bubble_host, bubble_host_alias, bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6
 from mitmproxy import http
 from mitmproxy.net.http import headers as nheaders
+from mitmproxy.proxy.protocol.async_stream_body import AsyncStreamBody
 
 bubble_log = logging.getLogger(__name__)
 
@@ -154,6 +156,7 @@ async def _async_stream(client, name, url,
 
 
 async def _bubble_async(name, url,
+                        client=None,
                         headers=None,
                         method='GET',
                         data=None,
@@ -161,11 +164,15 @@ async def _bubble_async(name, url,
                         proxies=None,
                         timeout=5,
                         max_redirects=0):
-    async with async_client(proxies=proxies, timeout=timeout, max_redirects=max_redirects) as client:
-        return await async_response(client, name, url, headers=headers, method=method, data=data, json=json)
+    if client is not None:
+        return await _async_stream(client, name, url, headers=headers, method=method, data=data, json=json, timeout=timeout, max_redirects=max_redirects)
+    else:
+        async with async_client(proxies=proxies, timeout=timeout, max_redirects=max_redirects) as client:
+            return await async_response(client, name, url, headers=headers, method=method, data=data, json=json)
 
 
 def bubble_async(name, url,
+                 client=None,
                  headers=None,
                  method='GET',
                  data=None,
@@ -176,6 +183,7 @@ def bubble_async(name, url,
                  loop=asyncio.get_running_loop()):
     try:
         return loop.run_until_complete(_bubble_async(name, url,
+                                                     client=client,
                                                      headers=headers,
                                                      method=method,
                                                      data=data,
@@ -184,17 +192,42 @@ def bubble_async(name, url,
                                                      timeout=timeout,
                                                      max_redirects=max_redirects))
     except Exception as e:
-        bubble_log.error('bubble_async('+name+'): error: '+repr(e))
+        bubble_log.error('bubble_async('+name+'): error: '+repr(e)+' from '+get_stack(e))
 
 
 def bubble_async_request_json(name, url, headers, method='GET', json=None):
-    response = bubble_async(name, url, headers, method=method, json=json)
+    response = bubble_async(name, url, headers=headers, method=method, json=json)
     if response and response.status_code == 200:
         return response.json()
+    elif response:
+        if bubble_log.isEnabledFor(DEBUG):
+            bubble_log.debug('bubble_async_request_json('+name+'): received invalid HTTP status: '+repr(response.status_code))
     else:
         if bubble_log.isEnabledFor(DEBUG):
-            bubble_log.debug('bubble_async_request_json('+name+'): received invalid HTTP status: '+str(response.status_code))
+            bubble_log.debug('bubble_async_request_json('+name+'): error, no response')
     return None
+
+
+def cleanup_async(url, loop, client, response):
+    def cleanup():
+        errors = False
+        try:
+            loop.run_until_complete(response.aclose())
+        except Exception as e:
+            bubble_log.error('cleanup_async: error closing response: '+repr(e))
+            errors = True
+        try:
+            loop.run_until_complete(client.aclose())
+        except Exception as e:
+            bubble_log.error('cleanup_async: error: '+repr(e))
+            errors = True
+        if not errors:
+            if bubble_log.isEnabledFor(DEBUG):
+                bubble_log.debug('cleanup_async: successfully completed: '+url)
+        else:
+            if bubble_log.isEnabledFor(WARNING):
+                bubble_log.warning('cleanup_async: successfully completed (but had errors closing): ' + url)
+    return cleanup
 
 
 def bubble_conn_check(client_addr, server_addr, fqdns, security_level):
@@ -218,7 +251,7 @@ def bubble_conn_check(client_addr, server_addr, fqdns, security_level):
         'clientAddr': client_addr
     }
     try:
-        return bubble_async_request_json(name, url, headers, method='POST', json=data)
+        return bubble_async_request_json(name, url, headers=headers, method='POST', json=data)
 
     except Exception as e:
         if bubble_log.isEnabledFor(ERROR):
@@ -366,7 +399,13 @@ def is_not_from_vpn(client_addr):
     return ip not in VPN_IP4_CIDR and ip not in VPN_IP6_CIDR
 
 
-def is_flex_domain(client_addr, fqdn):
+def is_flex_domain(client_addr, server_addr, fqdns):
+    if fqdns is None or len(fqdns) != 1:
+        if bubble_log.isEnabledFor(DEBUG):
+            bubble_log.debug('is_flex_domain: no fqdns or multiple fqdns for server_addr '+server_addr+' ('+repr(fqdns)+'), returning False')
+        return False
+    fqdn = fqdns[0]
+
     if fqdn == bubble_host or fqdn == bubble_host_alias or fqdn == bubble_sage_host:
         if bubble_log.isEnabledFor(DEBUG):
             bubble_log.debug('is_flex_domain: (early) returning False for: '+fqdn)
@@ -429,20 +468,24 @@ def special_bubble_response(flow):
         return
     uri = make_bubble_special_path(path)
     if bubble_log.isEnabledFor(DEBUG):
-        bubble_log.debug('special_bubble_response: sending special bubble request to '+uri)
+        bubble_log.debug('special_bubble_response: sending special bubble request to '+uri+' from '+get_stack())
     headers = {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
     }
     if flow.request.method == 'GET':
-        response = bubble_async(name, uri, headers=headers)
+        loop = asyncio.new_event_loop()
+        client = async_client(timeout=30)
+        response = bubble_async(name, uri, client=client, loop=loop, headers=headers)
 
     elif flow.request.method == 'POST':
+        loop = asyncio.new_event_loop()
+        client = async_client(timeout=30)
         if bubble_log.isEnabledFor(DEBUG):
             bubble_log.debug('special_bubble_response: special bubble request: POST content is '+str(flow.request.content))
         if flow.request.content:
             headers['Content-Length'] = str(len(flow.request.content))
-        response = bubble_async(name, uri, json=flow.request.content, headers=headers)
+        response = bubble_async(name, uri, client=client, loop=loop, json=flow.request.content, headers=headers)
 
     else:
         if bubble_log.isEnabledFor(WARNING):
@@ -454,7 +497,7 @@ def special_bubble_response(flow):
         response_headers = collect_response_headers(response)
         flow.response = http.HTTPResponse(http_version=http_version,
                                           status_code=response.status_code,
-                                          reason=response.reason,
+                                          reason=response.reason_phrase,
                                           headers=response_headers,
                                           content=None)
     if response is not None:
@@ -463,7 +506,7 @@ def special_bubble_response(flow):
         flow.response.headers = collect_response_headers(response)
         flow.response.status_code = response.status_code
         flow.response.reason = status_reason(response.status_code)
-        flow.response.stream = lambda chunks: send_bubble_response(response)
+        flow.response.stream = AsyncStreamBody(owner=client, loop=loop, chunks=response.aiter_raw(), finalize=cleanup_async(uri, loop, client, response))
 
 
 def send_bubble_response(response):

@@ -95,17 +95,16 @@ def conn_check_cache_prefix(client_addr, server_addr):
     return REDIS_CONN_CHECK_PREFIX + client_addr + '_' + server_addr
 
 
-def fqdns_for_addr(server_addr):
-    prefix = REDIS_DNS_PREFIX + server_addr
-    keys = REDIS.keys(prefix + '_*')
-    if keys is None or len(keys) == 0:
+def fqdns_for_addr(client_addr, server_addr):
+    key = REDIS_DNS_PREFIX + server_addr + '~' + client_addr
+    values = REDIS.smembers(key)
+    if values is None or len(values) == 0:
         if bubble_log.isEnabledFor(DEBUG):
-            bubble_log.debug('fqdns_for_addr: no FQDN found for addr '+str(server_addr)+', checking raw addr')
-        return ''
+            bubble_log.debug('fqdns_for_addr: no FQDN found for server_addr '+str(server_addr)+' and client_addr '+client_addr)
+        return None
     fqdns = []
-    for k in keys:
-        fqdn = k.decode()[len(prefix)+1:]
-        fqdns.append(fqdn)
+    for fqdn in values:
+        fqdns.append(fqdn.decode())
     return fqdns
 
 
@@ -120,6 +119,8 @@ class TlsBlock(TlsLayer):
 
 
 class TlsFeedback(TlsLayer):
+    fqdns = None
+    security_level = None
     """
     Monkey-patch _establish_tls_with_client to get feedback if TLS could be established
     successfully on the client connection (which may fail due to cert pinning).
@@ -231,37 +232,31 @@ def check_connection(client_addr, server_addr, fqdns, security_level):
     return check_response
 
 
-def check_passthru_flex(client_addr, server_addr, fqdns):
-    if fqdns:
-        for fqdn in fqdns:
-            if is_flex_domain(client_addr, fqdn):
-                return True
-    else:
-        return is_flex_domain(client_addr, server_addr)
-
-
-def passthru_flex_port(client_addr, fqdns):
-    router = bubble_get_flex_router(client_addr)
+def passthru_flex_port(client_addr, fqdn):
+    router = bubble_get_flex_router(client_addr, fqdn)
     if router is None or 'auth' not in router:
         if bubble_log.isEnabledFor(INFO):
-            bubble_log.info('apply_passthru_flex: no flex router for fqdn(s): '+repr(fqdns))
+            bubble_log.info('apply_passthru_flex: no flex router for fqdn(s): '+repr(fqdn))
     elif 'port' in router:
         return router['port']
     else:
         if bubble_log.isEnabledFor(WARNING):
-            bubble_log.warning('apply_passthru_flex: flex router found but has no port ('+repr(router)+') for fqdn(s): '+repr(fqdns))
+            bubble_log.warning('apply_passthru_flex: flex router found but has no port ('+repr(router)+') for fqdn(s): '+repr(fqdn))
     return None
 
 
 def do_passthru(client_addr, server_addr, fqdns, layer):
     flex_port = None
-    if check_passthru_flex(client_addr, server_addr, fqdns):
-        if bubble_log.isEnabledFor(DEBUG):
-            bubble_log.debug('do_passthru: applying flex passthru for server=' + server_addr + ', fqdns=' + str(fqdns))
-        flex_port = passthru_flex_port(client_addr, fqdns)
+    if is_flex_domain(client_addr, server_addr, fqdns):
+        flex_port = passthru_flex_port(client_addr, fqdns[0])
         if flex_port:
+            if bubble_log.isEnabledFor(DEBUG):
+                bubble_log.debug('do_passthru: applying flex passthru for server=' + server_addr + ', fqdns=' + str(fqdns))
             layer_replacement = BubbleFlexPassthruLayer(layer.ctx, ('127.0.0.1', flex_port), fqdns[0], 443)
             layer.reply.send(layer_replacement)
+        else:
+            if bubble_log.isEnabledFor(DEBUG):
+                bubble_log.debug('do_passthru: detected flex passthru but no flex routers available for server=' + server_addr + ', fqdns=' + str(fqdns))
     if flex_port is None:
         layer_replacement = RawTCPLayer(layer.ctx, ignore=True)
         layer.reply.send(layer_replacement)
@@ -280,7 +275,7 @@ def next_layer(layer):
                 bubble_log.debug('next_layer: using fqdn in SNI: '+ fqdn)
             fqdns = [fqdn]
         else:
-            fqdns = fqdns_for_addr(server_addr)
+            fqdns = fqdns_for_addr(client_addr, server_addr)
             if bubble_log.isEnabledFor(DEBUG):
                 bubble_log.debug('next_layer: NO fqdn in sni, using fqdns from DNS: '+ str(fqdns))
         layer.fqdns = fqdns

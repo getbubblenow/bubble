@@ -263,7 +263,8 @@ class Rerouter:
 
         elif host is not None:
             client_addr = flow.client_conn.address[0]
-            if is_flex_domain(client_addr, host):
+            server_addr= flow.server_conn.address[0]
+            if is_flex_domain(client_addr, server_addr, [host]):
                 flex_flow = new_flex_flow(client_addr, host, flow)
                 add_flow_ctx(flow, CTX_BUBBLE_FLEX, flex_flow)
                 if bubble_log.isEnabledFor(DEBUG):

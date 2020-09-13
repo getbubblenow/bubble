@@ -9,7 +9,7 @@ from mitmproxy import http
 from mitmproxy.net.http import headers as nheaders
 from mitmproxy.proxy.protocol.request_capture import RequestCapture
 
-from bubble_api import bubble_get_flex_router, collect_response_headers, async_client, async_stream, \
+from bubble_api import bubble_get_flex_router, collect_response_headers, async_client, async_stream, cleanup_async, \
     HEADER_TRANSFER_ENCODING, HEADER_CONTENT_LENGTH, HEADER_CONTENT_TYPE
 
 import logging
@@ -159,7 +159,7 @@ def process_flex(flex_flow):
 
     elif content_length is None or int(content_length) > 0:
         response_headers[HEADER_TRANSFER_ENCODING] = 'chunked'
-        flow.response.stream = AsyncStreamBody(owner=client, loop=loop, chunks=response.aiter_raw(), finalize=cleanup_flex(url, loop, client, response))
+        flow.response.stream = AsyncStreamBody(owner=client, loop=loop, chunks=response.aiter_raw(), finalize=cleanup_async(url, loop, client, response))
 
     else:
         response_headers[HEADER_CONTENT_LENGTH] = '0'
@@ -176,30 +176,3 @@ def process_flex(flex_flow):
 async def async_chunk_iter(chunks):
     for chunk in chunks:
         yield chunk
-
-
-def cleanup_flex(url, loop, client, response):
-    def cleanup():
-
-        errors = False
-
-        try:
-            loop.run_until_complete(response.aclose())
-        except Exception as e:
-            bubble_log.error('cleanup_flex: error closing response: '+repr(e))
-            errors = True
-
-        try:
-            loop.run_until_complete(client.aclose())
-        except Exception as e:
-            bubble_log.error('cleanup_flex: error: '+repr(e))
-            errors = True
-
-        if not errors:
-            if bubble_log.isEnabledFor(DEBUG):
-                bubble_log.debug('cleanup_flex: successfully completed: '+url)
-        else:
-            if bubble_log.isEnabledFor(WARNING):
-                bubble_log.warning('cleanup_flex: successfully completed (but had errors closing): ' + url)
-
-    return cleanup
