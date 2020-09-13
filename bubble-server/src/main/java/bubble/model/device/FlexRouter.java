@@ -102,7 +102,13 @@ public class FlexRouter extends IdentifiableBase implements HasAccount {
     public boolean active() { return bool(active); }
     public boolean inactive() { return !active(); }
 
-    @ECSearchable(filter=true) @ECField(index=100)
+    @ECSearchable @ECField(index=100)
+    @ECIndex @Column(nullable=false)
+    @Getter @Setter private Boolean registered = false;
+    public boolean registered() { return bool(registered); }
+    public boolean notRegistered() { return !registered(); }
+
+    @ECSearchable(filter=true) @ECField(index=110)
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100+ENC_PAD)+") NOT NULL")
     @JsonIgnore @Getter @Setter private String token;
     public boolean hasToken () { return !empty(token); }

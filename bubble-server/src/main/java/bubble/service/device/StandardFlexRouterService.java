@@ -10,6 +10,7 @@ import bubble.model.device.DeviceStatus;
 import bubble.model.device.FlexRouter;
 import bubble.model.device.FlexRouterPing;
 import bubble.service.cloud.GeoService;
+import lombok.AllArgsConstructor;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
@@ -28,10 +29,12 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static bubble.model.device.FlexRouterPing.MAX_PING_AGE;
@@ -119,6 +122,9 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
     private final Map<String, FlexRouterStatus> statusMap = new ConcurrentHashMap<>(DEFAULT_MAX_TUNNELS);
     private final Map<String, FlexRouterInfo> activeRouters = new ConcurrentHashMap<>(DEFAULT_MAX_TUNNELS);
 
+    private final int MAX_POLL_FAILURES = 3;
+    private final Map<String, AtomicInteger> pollFailures = new ConcurrentHashMap<>(DEFAULT_MAX_TUNNELS);
+
     public FlexRouterStatus status(String uuid) {
         final FlexRouterStatus stat = statusMap.get(uuid);
         if (stat == FlexRouterStatus.unreachable) interruptSoon();
@@ -165,21 +171,7 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
             final List<Future<?>> futures = new ArrayList<>();
             @Cleanup("shutdownNow") final ExecutorService exec = fixedPool(DEFAULT_MAX_TUNNELS, "StandardFlexRouterService.process");
             for (FlexRouter router : routers) {
-                futures.add(exec.submit(() -> {
-                    final long firstTimeDelay = now() - router.getCtime();
-                    if (firstTimeDelay < FIRST_TIME_WAIT) {
-                        sleep(FIRST_TIME_WAIT - firstTimeDelay, "process: waiting for flex ssh key");
-                    }
-                    boolean active = pingFlexRouter(router, httpClient);
-                    if (active != router.active() || (active && router.uninitialized())) {
-                        if (active && router.uninitialized()) {
-                            router.setInitialized(true);
-                        }
-                        router.setActive(active);
-                        flexRouterDAO.update(router);
-                    }
-                    return active;
-                }));
+                futures.add(exec.submit(new FlexPollJob(router, httpClient)));
             }
             final AwaitResult<Boolean> awaitResult = awaitAll(futures, PING_ALL_TIMEOUT);
             if (log.isTraceEnabled()) log.trace("process: awaitResult="+awaitResult);
@@ -290,6 +282,42 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
         }
         chmod(authFile, "600");
         return authFile;
+    }
+
+    @AllArgsConstructor
+    private class FlexPollJob implements Callable<Boolean> {
+        private final FlexRouter router;
+        private final HttpClient httpClient;
+
+        @Override public Boolean call() {
+                final long firstTimeDelay = now() - router.getCtime();
+                if (firstTimeDelay < FIRST_TIME_WAIT) {
+                    sleep(FIRST_TIME_WAIT - firstTimeDelay, "process: waiting for flex ssh key");
+                }
+                boolean active = pingFlexRouter(router, httpClient);
+                boolean update = false;
+                if (!active) {
+                    if (pollFailures.computeIfAbsent(router.getUuid(), k -> new AtomicInteger(0)).incrementAndGet() > MAX_POLL_FAILURES) {
+                        log.warn("process: too many poll failures for router ("+router+"), marking unregistered");
+                        router.setRegistered(false);
+                        update = true;
+                    }
+                } else {
+                    pollFailures.put(router.getUuid(), new AtomicInteger(0));
+                    if (router.notRegistered()) {
+                        router.setRegistered(true);
+                        update = true;
+                    }
+                }
+                if (update || active != router.active() || (active && router.uninitialized())) {
+                    if (active && router.uninitialized()) {
+                        router.setInitialized(true);
+                    }
+                    router.setActive(active);
+                    flexRouterDAO.update(router);
+                }
+                return active;
+        }
     }
 
 }

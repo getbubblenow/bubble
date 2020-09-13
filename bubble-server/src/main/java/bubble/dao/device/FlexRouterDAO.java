@@ -59,6 +59,7 @@ public class FlexRouterDAO extends AccountOwnedEntityDAO<FlexRouter> {
     public List<FlexRouter> findEnabledAndRegistered() {
         return list(criteria().add(and(
                 eq("enabled", true),
+                eq("registered", true),
                 gt("port", 1024),
                 le("port", 65535),
                 isNotNull("token"))));

@@ -48,9 +48,9 @@ public class FlexRoutersResource extends AccountOwnedResource<FlexRouter, FlexRo
     }
 
     @GET @Path("/{id}"+EP_STATUS)
-    public Response update(@Context Request req,
-                           @Context ContainerRequest ctx,
-                           @PathParam("id") String id) {
+    public Response getStatus(@Context Request req,
+                              @Context ContainerRequest ctx,
+                              @PathParam("id") String id) {
         FlexRouter router = find(req, ctx, id);
         if (router == null) router = findAlternate(req, ctx, id);
         if (router == null) return ok(FlexRouterStatus.deleted);
@@ -58,12 +58,14 @@ public class FlexRoutersResource extends AccountOwnedResource<FlexRouter, FlexRo
     }
 
     @Override protected Object daoCreate(FlexRouter toCreate) {
+        toCreate.setRegistered(true);
         final Object router = super.daoCreate(toCreate);
         flexRouterService.interruptSoon();
         return router;
     }
 
     @Override protected Object daoUpdate(FlexRouter toUpdate) {
+        toUpdate.setRegistered(true);
         final Object router = super.daoUpdate(toUpdate);
         flexRouterService.interruptSoon();
         return router;

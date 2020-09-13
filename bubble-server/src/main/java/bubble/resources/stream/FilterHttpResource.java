@@ -465,7 +465,6 @@ public class FilterHttpResource {
                                @QueryParam("type") String contentType,
                                @QueryParam("length") Long contentLength,
                                @QueryParam("last") Boolean last) throws IOException {
-
         validateMitmCall(req);
 
         requestId = trimQuotes(requestId);
