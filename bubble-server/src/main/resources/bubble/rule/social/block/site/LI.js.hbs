@@ -1,0 +1,97 @@
+{{JS_PREFIX}}_supports_keywords = true;
+
+const {{JS_PREFIX}}_site_host = location.protocol + '//' + window.location.hostname + '/';
+
+function {{JS_PREFIX}}_apply_blocks(blocked_users) {
+    const comments = document.querySelector('#comments');
+    if (comments === null || comments.length === 0) {
+        console.warn('No comments found, not filtering');
+        return;
+    }
+    {{JS_PREFIX}}_consider_block(comments.querySelectorAll('feed-shared-update-v2'), blocked_users);
+}
+
+function {{JS_PREFIX}}_author_from_href(href) {
+    if (typeof href === 'undefined' || href === null) return null;
+    let h = href.startsWith({{JS_PREFIX}}_site_host) ? href.substring({{JS_PREFIX}}_site_host.length) : href;
+    const qPos = h.indexOf('?');
+    if (qPos !== -1) {
+        h = h.substring(0, qPos);
+    }
+    if (h.endsWith('/')) h = h.substring(0, h.length - 1);
+    if (!h.startsWith('in/') && !h.startsWith('company/')) {
+        return null;
+    }
+    const slashPos = h.indexOf('/');
+    const name = h.substring(slashPos);
+    if (name.length > 35 && name.indexOf('-') === -1 && name.indexOf('_') === -1) return null;
+    console.log("author_from_href: found "+name+' from '+href);
+    return name;
+}
+
+function {{JS_PREFIX}}_remove_article_from_dom(comment) {
+    comment.parentNode.removeChild(comment);
+}
+
+function {{JS_PREFIX}}_create_block_control(article, authorName, articleLink) {
+    let linkClass = articleLink.className;
+    if (linkClass && linkClass.indexOf('{{JS_PREFIX}}_link_decorated') !== -1) {
+        return null;
+    } else {
+        articleLink.className = articleLink.className ? articleLink.className + ' {{JS_PREFIX}}_link_decorated' : '{{JS_PREFIX}}_link_decorated';
+    }
+    const imgHolder = {{JS_PREFIX}}_create_block_img();
+    const blockSpan = document.createElement('span');
+    const blockLink = document.createElement('a');
+    blockLink.style.zIndex = '{{APP_CONTROLS_Z_INDEX}}'
+    blockLink.style.cursor = 'pointer';
+    blockLink.addEventListener("click", function (e) {
+        {{JS_PREFIX}}_remove_article_from_dom(article, authorName);
+        {{JS_PREFIX}}_block_user(authorName);
+        e.stopPropagation();
+        e.preventDefault();
+        return false;
+    });
+    blockLink.appendChild(imgHolder);
+    blockSpan.appendChild(document.createTextNode('\u00A0\u00A0'));
+    blockSpan.appendChild(blockLink);
+    blockSpan.id = 'blockSpan_'+{{JS_PREFIX}}_uuidv4();
+    console.log('adding block control on '+authorName);
+    return blockSpan;
+}
+
+function {{JS_PREFIX}}_consider_block(articles, blocked_users) {
+    if (articles && articles.length && articles.length > 0) {
+        for (let i=0; i<articles.length; i++) {
+            const article = articles[i];
+            const firstEval = {{JS_PREFIX}}_mark_evaluated(article);
+            if ({{JS_PREFIX}}_includes_block_keyword(article, firstEval)) {
+                {{JS_PREFIX}}_remove_article_from_dom(article);
+                continue;
+            }
+            const articleLinks = Array.from(article.getElementsByTagName('a'));
+            for (let j=0; j<articleLinks.length; j++) {
+                const articleLink = articleLinks[i];
+                const author = {{JS_PREFIX}}_author_from_href(articleLink.href);
+                if (author === null) continue;
+                if (author in blocked_users) {
+                    {{JS_PREFIX}}_tally_author_block(author);
+                    if (!firstEval) {{JS_PREFIX}}_untally_allow();
+                    {{JS_PREFIX}}_remove_article_from_dom(article);
+
+                } else if (firstEval) {
+                    const authorSpans = Array.from(articleLink.getElementsByClassName('feed-shared-actor__name'));
+                    if (authorSpans.length === 0) {
+                        continue;
+                    }
+
+                    let b = {{JS_PREFIX}}_create_block_control(article, author, articleLink);
+                    // console.log('inserting span='+b.id+' for article by '+author);
+
+                    authorSpans[0].parentNode.appendChild(b);
+                    {{JS_PREFIX}}_tally_allow();
+                }
+            }
+        }
+    }
+}

@@ -214,6 +214,8 @@ public class StandardAppPrimerService implements AppPrimerService {
             }
         } catch (Exception e) {
             die("_prime: "+shortError(e), e);
+        } finally {
+            log.info("_primeApps: completed");
         }
     }
 

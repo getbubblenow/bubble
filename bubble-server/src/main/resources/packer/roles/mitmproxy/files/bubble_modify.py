@@ -2,6 +2,7 @@
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
 import asyncio
+import base64
 import json
 import re
 import urllib
@@ -64,10 +65,10 @@ def ensure_bubble_csp(csp, req_id):
                         break
                 # if no nonce, then add our nonce
                 if not found_nonce:
-                    new_csp = add_csp_part(new_csp, " ".join(tokens) + " 'nonce="+req_id+"'")
+                    new_csp = add_csp_part(new_csp, " ".join(tokens) + " 'nonce-"+base64.b64encode(bytes(req_id, 'utf-8')).decode()+"' ")
             else:
                 # does not allow from self, so add self with our nonce
-                new_csp = add_csp_part(new_csp, tokens[0] + " 'self' 'nonce="+req_id+"'" + " ".join(tokens[1:]))
+                new_csp = add_csp_part(new_csp, tokens[0] + " 'self' 'nonce-"+base64.b64encode(bytes(req_id, 'utf-8')).decode()+"' " + " ".join(tokens[1:]))
         else:
             new_csp = add_csp_part(new_csp, part)
     return new_csp

@@ -1,0 +1,15 @@
+[{
+  "name": "UserBlocker",
+  "children": {
+    "AppMatcher": [{
+      "name": "LIMatcher",
+      "site": "LinkedIn",
+      "template": true,
+      "requestCheck": true,
+      "requestModifier": true,
+      "fqdn": "www.linkedin.com",
+      "urlRegex": "/feed/",
+      "rule": "li_user_blocker"
+    }]
+  }
+}]
