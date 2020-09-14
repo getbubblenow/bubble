@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static bubble.model.cloud.BubbleNode.nodeFromFile;
+import static bubble.server.BubbleConfiguration.getVersion;
 import static bubble.service.boot.StandardSelfNodeService.THIS_NODE_FILE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
@@ -86,14 +87,14 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
 
         restoreKey.set(getRestoreKey());
         if (restoreKey.get() != null) {
-            log.info("Starting BubbleServer in restore mode...");
+            log.info("Starting BubbleServer ("+getVersion()+") in restore mode...");
             main(BubbleServer.class, RESTORE_LIFECYCLE_LISTENERS, configSource, env);
         } else {
             if (Boolean.parseBoolean(env.get(BUBBLE_DUMP_CONFIG))) {
                 log.info("Dumping BubbleConfiguration...");
                 dumpConfig(configSource);
             } else {
-                log.info("Starting BubbleServer...");
+                log.info("Starting BubbleServer ("+getVersion()+")...");
                 main(BubbleServer.class, LIFECYCLE_LISTENERS, configSource, env);
             }
         }

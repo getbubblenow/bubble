@@ -246,7 +246,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         return SCHEME_HTTPS + node.getFqdn() + ":" + node.getSslPort() + getHttp().getBaseUri();
     }
 
-    private String getVersion () {
+    public static String getVersion () {
         final Properties properties = new Properties();
         try {
             properties.load(loadResourceAsStream("META-INF/bubble/bubble.properties"));
