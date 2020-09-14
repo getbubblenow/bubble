@@ -42,7 +42,7 @@ def add_csp_part(new_csp, part):
     return new_csp + part
 
 
-def ensure_bubble_script_csp(csp):
+def ensure_bubble_csp(csp, req_id):
     new_csp = ''
     parts = csp.split(';')
     for part in parts:
@@ -53,6 +53,21 @@ def ensure_bubble_script_csp(csp):
                 continue
             new_csp = add_csp_part(new_csp, tokens[0] + " 'self' " + " ".join(tokens[1:]))
 
+        elif part.startswith(' script-src ') or part.startswith('script-src '):
+            tokens = part.split()
+            if "'self'" in tokens:
+                # allows from self, check if there is an existing nonce. if so we will reuse it
+                found_nonce = False
+                for token in tokens:
+                    if " 'nonce-" in token:
+                        found_nonce = True
+                        break
+                # if no nonce, then add our nonce
+                if not found_nonce:
+                    new_csp = add_csp_part(new_csp, " ".join(tokens) + " 'nonce="+req_id+"'")
+            else:
+                # does not allow from self, so add self with our nonce
+                new_csp = add_csp_part(new_csp, tokens[0] + " 'self' 'nonce="+req_id+"'" + " ".join(tokens[1:]))
         else:
             new_csp = add_csp_part(new_csp, part)
     return new_csp
@@ -371,7 +386,7 @@ def bubble_filter_response(flow, flex_flow):
                             content_encoding = None
 
                         if HEADER_CONTENT_SECURITY_POLICY in flow.response.headers:
-                            csp = ensure_bubble_script_csp(flow.response.headers[HEADER_CONTENT_SECURITY_POLICY])
+                            csp = ensure_bubble_csp(flow.response.headers[HEADER_CONTENT_SECURITY_POLICY], req_id)
                             flow.response.headers[HEADER_CONTENT_SECURITY_POLICY] = csp
                         else:
                             csp = None
