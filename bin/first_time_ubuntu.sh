@@ -7,6 +7,16 @@ function die {
   exit 1
 }
 
+function db_user_exists {
+  username="${1}"
+  num_users="$(echo "select count(*) from pg_user where usename='${username}'" | su - postgres psql -qt | egrep -v '^$')"
+  if [[ -z "${num_users}" || ${num_users} -eq 0 ]] ; then
+    echo "0"
+  else
+    echo "1"
+  fi
+}
+
 # Ensure system is current
 sudo apt update -y || die "Error running apt update"
 sudo apt upgrade -y || die "Error running apt upgrade"
@@ -21,7 +31,11 @@ BUBBLE_BIN="$(cd "$(dirname "${0}")" && pwd)"
 
 # Create DB user for current user, as superuser
 CURRENT_USER="$(whoami)"
-sudo su - postgres bash -c 'createuser -U postgres --createdb --createrole --superuser '"${CURRENT_USER}"'' || die "Error creating ${CURRENT_USER} DB user"
+if [[ $(db_user_exists ${CURRENT_USER}) ]] ; then
+  echo "PostgreSQL user ${CURRENT_USER} already exists, not creating"
+else
+  sudo su - postgres bash -c 'createuser -U postgres --createdb --createrole --superuser '"${CURRENT_USER}"'' || die "Error creating ${CURRENT_USER} DB user"
+fi
 
 PG_HBA=$(find /etc/postgresql -mindepth 1 -maxdepth 1 -type d | sort | tail -1)/main/pg_hba.conf
 sudo cat ${PG_HBA} | sed -e 's/  peer/  trust/g' | sed -e 's/  md5/  trust/g' > /tmp/pg_hba.conf || die "Error filtering ${PG_HBA}"
@@ -30,6 +44,3 @@ sudo service postgresql restart || die "Error restarting pgsql"
 
 # Create DB user 'bubble', with the ability to create databases
 createuser --createdb bubble || die "Error creating bubble DB user"
-
-# Create bubble database
-createdb --encoding=UTF-8 bubble || die "Error creating bubble DB"
