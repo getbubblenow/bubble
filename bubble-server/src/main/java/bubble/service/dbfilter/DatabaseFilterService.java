@@ -42,6 +42,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.wizard.server.config.PgRestServerConfiguration.ENV_PGPASSWORD;
+import static org.cobbzilla.wizard.server.listener.FlywayMigrationListener.getFlywayTableName;
 
 @Service @Slf4j
 public class DatabaseFilterService {
@@ -150,14 +151,19 @@ public class DatabaseFilterService {
                 return die("copyDatabase: writer exited with an error (dbName="+dbName+"): "+writeResult.get());
             }
 
-            // copy flyway schema table
-            log.debug("copyDatabase: dumping flyway_schema_version data");
-            final CommandResult flywayData = pgExec("pg_dump", dbConfig.getDatabaseName(), null, null, FLYWAY_DUMP_OPTIONS);
-            if (!flywayData.isZeroExitStatus()) return die("copyDatabase: error dumping flyway_schema_version data: "+flywayData);
+            // copy flyway schema table, if it exists.
+            // it may not exist if this is the very first time the server has been run
+            if (configuration.tableExists(getFlywayTableName())) {
+                log.debug("copyDatabase: dumping flyway_schema_version data");
+                final CommandResult flywayData = pgExec("pg_dump", dbConfig.getDatabaseName(), null, null, FLYWAY_DUMP_OPTIONS);
+                if (!flywayData.isZeroExitStatus()) return die("copyDatabase: error dumping flyway_schema_version data: " + flywayData);
 
-            log.debug("copyDatabase: inserting flyway_schema_version data");
-            final CommandResult flywayInsert = pgExec("psql", dbName, new ByteArrayInputStream(flywayData.getStdout().getBytes()), null);
-            if (!flywayInsert.isZeroExitStatus()) return die("copyDatabase: error inserting flyway_schema_version data: "+flywayInsert);
+                log.debug("copyDatabase: inserting flyway_schema_version data");
+                final CommandResult flywayInsert = pgExec("psql", dbName, new ByteArrayInputStream(flywayData.getStdout().getBytes()), null);
+                if (!flywayInsert.isZeroExitStatus()) return die("copyDatabase: error inserting flyway_schema_version data: "+flywayInsert);
+            } else {
+                log.warn("copyDatabase: flyway table ("+getFlywayTableName()+") does not exist, not copying");
+            }
 
             // dump new DB
             log.info("copyDatabase: dumping new database: "+dbName);
