@@ -17,6 +17,7 @@
   "apps/user_block/insta/bubbleApp_userBlock_insta_data",
   "apps/user_block/li/bubbleApp_userBlock_li",
   "apps/user_block/li/bubbleApp_userBlock_li_matchers",
+  "apps/user_block/li/bubbleApp_userBlock_li_data",
   "apps/user_block/reddit/bubbleApp_userBlock_reddit",
   "apps/user_block/reddit/bubbleApp_userBlock_reddit_matchers"
 ]
