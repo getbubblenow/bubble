@@ -4,7 +4,7 @@
     "AppData": [{
       "site": "LinkedIn",
       "template": true,
-      "matcher": "LiMatcher",
+      "matcher": "LIMatcher",
       "key": "kw:_<span>Promoted</span>",
       "data": "true"
     }]
