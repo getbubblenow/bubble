@@ -93,14 +93,14 @@
   shell: su - mitmproxy -c "bash -c 'cd /home/mitmproxy/mitmproxy && ./dev.sh'"
 
 - name: Patch _client.py from httpx to fix bug with HTTP/2 redirects
-  file:
+  copy:
     src: _client.py
     dest: /home/mitmproxy/mitmproxy/venv/lib/python3.8/site-packages/httpx/_client.py
     owner: mitmproxy
     group: mitmproxy
 
 - name: Patch _events.py from h11 to fix bug with HTTP status 999 being considered invalid
-  file:
+  copy:
     src: _events.py
     dest: /home/mitmproxy/mitmproxy/venv/lib/python3.8/site-packages/h11/_events.py
     owner: mitmproxy
