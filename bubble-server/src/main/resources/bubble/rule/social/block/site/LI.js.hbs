@@ -3,12 +3,12 @@
 const {{JS_PREFIX}}_site_host = location.protocol + '//' + window.location.hostname + '/';
 
 function {{JS_PREFIX}}_apply_blocks(blocked_users) {
-    const comments = document.querySelector('#comments');
-    if (comments === null || comments.length === 0) {
-        console.warn('No comments found, not filtering');
+    const articles = Array.from(document.getElementsByClassName('feed-shared-update-v2'));
+    if (articles === null || articles.length === 0) {
+        console.warn('No articles found, not filtering');
         return;
     }
-    {{JS_PREFIX}}_consider_block(comments.querySelectorAll('feed-shared-update-v2'), blocked_users);
+    {{JS_PREFIX}}_consider_block(articles, blocked_users);
 }
 
 function {{JS_PREFIX}}_author_from_href(href) {
@@ -29,8 +29,9 @@ function {{JS_PREFIX}}_author_from_href(href) {
     return name;
 }
 
-function {{JS_PREFIX}}_remove_article_from_dom(comment) {
-    comment.parentNode.removeChild(comment);
+function {{JS_PREFIX}}_remove_article_from_dom(article) {
+    // todo: does this work?
+    article.parentNode.removeChild(article);
 }
 
 function {{JS_PREFIX}}_create_block_control(article, authorName, articleLink) {
@@ -72,6 +73,7 @@ function {{JS_PREFIX}}_consider_block(articles, blocked_users) {
             const articleLinks = Array.from(article.getElementsByTagName('a'));
             for (let j=0; j<articleLinks.length; j++) {
                 const articleLink = articleLinks[i];
+                console.log('consider_block: examining articleLink with href='+articleLink.href);
                 const author = {{JS_PREFIX}}_author_from_href(articleLink.href);
                 if (author === null) continue;
                 if (author in blocked_users) {
@@ -86,10 +88,13 @@ function {{JS_PREFIX}}_consider_block(articles, blocked_users) {
                     }
 
                     let b = {{JS_PREFIX}}_create_block_control(article, author, articleLink);
-                    // console.log('inserting span='+b.id+' for article by '+author);
-
-                    authorSpans[0].parentNode.appendChild(b);
-                    {{JS_PREFIX}}_tally_allow();
+                    if (b !== null) {
+                        console.log('consider_block: inserting span='+b.id+' for article by '+author);
+                        authorSpans[0].parentNode.appendChild(b);
+                        {{JS_PREFIX}}_tally_allow();
+                    } else {
+                        console.log('consider_block: create_block_control returned null for author '+author)
+                    }
                 }
             }
         }

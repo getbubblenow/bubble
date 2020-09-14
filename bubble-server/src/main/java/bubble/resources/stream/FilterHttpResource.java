@@ -36,9 +36,11 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
+import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.http.HttpContentEncodingType;
 import org.cobbzilla.util.http.HttpUtil;
 import org.cobbzilla.util.network.NetworkUtil;
+import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -67,6 +69,7 @@ import static org.cobbzilla.util.collection.ArrayUtil.arrayToString;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpContentTypes.TEXT_PLAIN;
+import static org.cobbzilla.util.http.HttpUtil.applyRegexToUrl;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
@@ -695,9 +698,32 @@ public class FilterHttpResource {
     public Response followLink(@Context Request req,
                                @Context ContainerRequest ctx,
                                @PathParam("requestId") String requestId,
-                               JsonNode urlNode) {
+                               JsonNode followSpec) {
         final FilterSubContext filterCtx = new FilterSubContext(req, requestId);
-        return ok(redirectCache.computeIfAbsent(urlNode.textValue(), HttpUtil::chaseRedirects));
+
+        // is this a request to parse regexes from a URL?
+        if (followSpec.has("regex")) {
+            return ok(redirectCache.computeIfAbsent(json(followSpec), k -> {
+                final String url = followSpec.get("url").textValue();
+                final String regex = followSpec.get("regex").textValue();
+                final Integer group = followSpec.has("group") ? followSpec.get("group").asInt() : null;
+                final List<NameAndValue> headers = new ArrayList<>();
+                for (String name : req.getHeaderNames()) {
+                    final String value = req.getHeader(name);
+                    headers.add(new NameAndValue(name, value));
+                }
+                final List<String> matches = applyRegexToUrl(url, headers, regex, group);
+                return matches == null ? null : StringUtil.toString(matches, "\n");
+            }));
+
+        } else if (followSpec.isTextual()) {
+            // just a regular follow -- chase redirects
+            return ok(redirectCache.computeIfAbsent(followSpec.textValue(), HttpUtil::chaseRedirects));
+        } else {
+            final String json = json(followSpec);
+            log.error("followLink: invalid json (expected String or {regex, url}): "+json);
+            return notFound(json);
+        }
     }
 
     @Path(EP_ASSETS+"/{requestId}/{appId}")
