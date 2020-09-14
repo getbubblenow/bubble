@@ -4,6 +4,7 @@
 import logging
 from logging import INFO, DEBUG, WARNING, ERROR, CRITICAL
 
+import inspect
 import os
 import threading
 import traceback
@@ -23,10 +24,17 @@ BUBBLE_LOG_LEVEL_ENV_VAR = 'BUBBLE_LOG_LEVEL'
 DEFAULT_BUBBLE_LOG_LEVEL = 'INFO'
 BUBBLE_LOG_LEVEL = None
 
+STACK_LINE = "[%s:%d] %s\n"
+
 
 def get_stack(e=None):
     if e is None:
-        e = ValueError()
+        stack = ''
+        for frame in inspect.stack()[1:]:
+            file, line, func = frame[1:4]
+            stack = stack + (STACK_LINE % (file, line, func))
+        return stack
+
     return "".join(traceback.TracebackException.from_exception(e).format())
 
 

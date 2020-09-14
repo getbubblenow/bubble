@@ -32,7 +32,7 @@ from mitmproxy.net.http import headers as nheaders
 from bubble_api import bubble_matchers, bubble_activity_log, \
     HEALTH_CHECK_URI, CTX_BUBBLE_MATCHERS, CTX_BUBBLE_SPECIAL, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, \
     CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_FLEX, CTX_BUBBLE_REQUEST_ID, add_flow_ctx, parse_host_header, \
-    is_bubble_special_path, special_bubble_response, is_bubble_health_check, \
+    is_bubble_special_path, is_bubble_health_check, \
     is_bubble_request, is_sage_request, is_not_from_vpn, is_flex_domain
 from bubble_config import bubble_host, bubble_host_alias
 from bubble_flex import new_flex_flow
@@ -254,16 +254,13 @@ class Rerouter:
     def requestheaders(self, flow):
         host = self.bubble_handle_request(flow)
         path = flow.request.path
-        flow.request.capture_stream = True
 
         if is_bubble_special_path(path):
-            # if bubble_log.isEnabledFor(DEBUG):
-            #     bubble_log.debug('request: is_bubble_special_path('+path+') returned true, sending special bubble response')
-            special_bubble_response(flow)
+            flow.request.force_no_stream = True
 
         elif host is not None:
             client_addr = flow.client_conn.address[0]
-            server_addr= flow.server_conn.address[0]
+            server_addr = flow.server_conn.address[0]
             if is_flex_domain(client_addr, server_addr, [host]):
                 flex_flow = new_flex_flow(client_addr, host, flow)
                 add_flow_ctx(flow, CTX_BUBBLE_FLEX, flex_flow)

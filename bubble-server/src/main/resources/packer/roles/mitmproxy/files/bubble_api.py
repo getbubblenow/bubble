@@ -17,14 +17,15 @@ import nest_asyncio
 import redis
 from bubble_vpn4 import wireguard_network_ipv4
 from bubble_vpn6 import wireguard_network_ipv6
-from bubble_debug import get_stack
 from netaddr import IPAddress, IPNetwork
 
+from bubble_debug import get_stack
 from bubble_config import bubble_port, debug_capture_fqdn, \
     bubble_host, bubble_host_alias, bubble_sage_host, bubble_sage_ip4, bubble_sage_ip6
 from mitmproxy import http
 from mitmproxy.net.http import headers as nheaders
 from mitmproxy.proxy.protocol.async_stream_body import AsyncStreamBody
+from mitmproxy.proxy.protocol.request_capture import RequestCapture
 
 bubble_log = logging.getLogger(__name__)
 
@@ -165,7 +166,7 @@ async def _bubble_async(name, url,
                         timeout=5,
                         max_redirects=0):
     if client is not None:
-        return await _async_stream(client, name, url, headers=headers, method=method, data=data, json=json, timeout=timeout, max_redirects=max_redirects)
+        return await async_response(client, name, url, headers=headers, method=method, data=data, json=json)
     else:
         async with async_client(proxies=proxies, timeout=timeout, max_redirects=max_redirects) as client:
             return await async_response(client, name, url, headers=headers, method=method, data=data, json=json)
@@ -192,7 +193,7 @@ def bubble_async(name, url,
                                                      timeout=timeout,
                                                      max_redirects=max_redirects))
     except Exception as e:
-        bubble_log.error('bubble_async('+name+'): error: '+repr(e)+' from '+get_stack(e))
+        bubble_log.error('bubble_async('+name+'): error: '+repr(e))
 
 
 def bubble_async_request_json(name, url, headers, method='GET', json=None):
@@ -211,16 +212,24 @@ def bubble_async_request_json(name, url, headers, method='GET', json=None):
 def cleanup_async(url, loop, client, response):
     def cleanup():
         errors = False
-        try:
-            loop.run_until_complete(response.aclose())
-        except Exception as e:
-            bubble_log.error('cleanup_async: error closing response: '+repr(e))
-            errors = True
-        try:
-            loop.run_until_complete(client.aclose())
-        except Exception as e:
-            bubble_log.error('cleanup_async: error: '+repr(e))
-            errors = True
+        if response is not None:
+            try:
+                loop.run_until_complete(response.aclose())
+            except Exception as e:
+                bubble_log.error('cleanup_async: error closing response: '+repr(e))
+                errors = True
+        if client is not None:
+            try:
+                loop.run_until_complete(client.aclose())
+            except Exception as e:
+                bubble_log.error('cleanup_async: error closing client: '+repr(e))
+                errors = True
+        if loop is not None:
+            try:
+                loop.close()
+            except Exception as e:
+                bubble_log.error('cleanup_async: error closing loop: '+repr(e))
+                errors = True
         if not errors:
             if bubble_log.isEnabledFor(DEBUG):
                 bubble_log.debug('cleanup_async: successfully completed: '+url)
@@ -375,7 +384,7 @@ def get_flow_ctx(flow, name):
 
 def is_bubble_request(ip, fqdns):
     # return ip in LOCAL_IPS
-    return ip in LOCAL_IPS and (bubble_host in fqdns or bubble_host_alias in fqdns)
+    return ip in LOCAL_IPS and fqdns and (bubble_host in fqdns or bubble_host_alias in fqdns)
 
 
 def is_bubble_special_path(path):
@@ -466,9 +475,10 @@ def special_bubble_response(flow):
     if is_bubble_health_check(path):
         health_check_response(flow)
         return
+
     uri = make_bubble_special_path(path)
     if bubble_log.isEnabledFor(DEBUG):
-        bubble_log.debug('special_bubble_response: sending special bubble request to '+uri+' from '+get_stack())
+        bubble_log.debug('special_bubble_response: sending special bubble request to '+uri)
     headers = {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -476,16 +486,16 @@ def special_bubble_response(flow):
     if flow.request.method == 'GET':
         loop = asyncio.new_event_loop()
         client = async_client(timeout=30)
-        response = bubble_async(name, uri, client=client, loop=loop, headers=headers)
+        response = async_stream(client, name, uri, headers=headers, loop=loop)
 
     elif flow.request.method == 'POST':
         loop = asyncio.new_event_loop()
         client = async_client(timeout=30)
-        if bubble_log.isEnabledFor(DEBUG):
-            bubble_log.debug('special_bubble_response: special bubble request: POST content is '+str(flow.request.content))
-        if flow.request.content:
-            headers['Content-Length'] = str(len(flow.request.content))
-        response = bubble_async(name, uri, client=client, loop=loop, json=flow.request.content, headers=headers)
+        data = None
+        if flow.request.content and flow.request.content:
+            headers[HEADER_CONTENT_LENGTH] = str(len(flow.request.content))
+            data = flow.request.content
+        response = async_stream(client, name, uri, headers=headers, method='POST', data=data, loop=loop)
 
     else:
         if bubble_log.isEnabledFor(WARNING):

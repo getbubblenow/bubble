@@ -26,6 +26,7 @@ class FlexFlow(RequestCapture):
     mitm_flow: None
     router: None
     request_chunks: None
+    response: None
     response_stream: None
 
     def __init__(self, flex_host, mitm_flow, router):
@@ -60,9 +61,8 @@ def process_no_flex(flex_flow):
                                       reason='OK',
                                       headers=response_headers,
                                       content=None)
-    error_html = flex_flow.router['error_html']
     flex_flow.response_stream = lambda chunks: error_html
-    flow.response.stream = lambda chunks: error_html
+    error_html = flex_flow.router['error_html']
     if bubble_log.isEnabledFor(DEBUG):
         bubble_log.debug('process_no_flex: no router found, returning error_html')
     return flex_flow
@@ -169,7 +169,7 @@ def process_flex(flex_flow):
     if bubble_log.isEnabledFor(INFO):
         bubble_log.info('process_flex: successfully requested url '+url+' from flex router, proceeding...')
 
-    flex_flow.response_stream = response
+    flex_flow.response = response
     return flex_flow
 
 

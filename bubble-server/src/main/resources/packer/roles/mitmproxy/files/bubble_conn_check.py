@@ -96,6 +96,10 @@ def conn_check_cache_prefix(client_addr, server_addr):
 
 
 def fqdns_for_addr(client_addr, server_addr):
+    if server_addr is None or client_addr is None or len(client_addr) == 0 or len(server_addr) == 0:
+        if bubble_log.isEnabledFor(WARNING):
+            bubble_log.warning('fqdns_for_addr: client_addr ('+repr(client_addr)+') or server_addr ('+repr(server_addr)+') was None or empty')
+        return None
     key = REDIS_DNS_PREFIX + server_addr + '~' + client_addr
     values = REDIS.smembers(key)
     if values is None or len(values) == 0:

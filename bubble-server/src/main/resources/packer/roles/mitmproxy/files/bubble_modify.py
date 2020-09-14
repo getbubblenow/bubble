@@ -6,10 +6,14 @@ import json
 import re
 import urllib
 import traceback
+
 from mitmproxy.net.http import Headers
+from mitmproxy.proxy.protocol.async_stream_body import AsyncStreamBody
+
 from bubble_config import bubble_port, debug_capture_fqdn, debug_stream_fqdn, debug_stream_uri
-from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, CTX_BUBBLE_FLEX, \
-    status_reason, get_flow_ctx, add_flow_ctx, bubble_async, \
+from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, \
+    CTX_BUBBLE_FLEX, CTX_BUBBLE_SPECIAL, \
+    status_reason, get_flow_ctx, add_flow_ctx, bubble_async, async_client, cleanup_async, \
     is_bubble_special_path, is_bubble_health_check, health_check_response, special_bubble_response, \
     CTX_BUBBLE_REQUEST_ID, CTX_CONTENT_LENGTH, CTX_CONTENT_LENGTH_SENT, CTX_BUBBLE_FILTERED, \
     HEADER_CONTENT_TYPE, HEADER_CONTENT_ENCODING, HEADER_LOCATION, HEADER_CONTENT_LENGTH, \
@@ -54,7 +58,7 @@ def ensure_bubble_script_csp(csp):
     return new_csp
 
 
-def filter_chunk(loop, flow, chunk, req_id, user_agent, last, content_encoding=None, content_type=None, content_length=None, csp=None):
+def filter_chunk(loop, flow, chunk, req_id, user_agent, last, content_encoding=None, content_type=None, content_length=None, csp=None, client=None):
     name = 'filter_chunk'
     if debug_capture_fqdn:
         if debug_capture_fqdn in req_id:
@@ -124,9 +128,9 @@ def filter_chunk(loop, flow, chunk, req_id, user_agent, last, content_encoding=N
         f.write(url)
         f.close()
 
-    response = bubble_async(name, url, headers=headers, method='POST', data=chunk, loop=loop)
+    response = bubble_async(name, url, headers=headers, method='POST', data=chunk, loop=loop, client=client)
     if not response.status_code == 200:
-        err_message = 'filter_chunk: Error fetching ' + url + ', HTTP status ' + str(response.status_code)
+        err_message = 'filter_chunk: Error fetching ' + url + ', HTTP status ' + str(response.status_code) + ' content='+repr(response.content)
         if bubble_log.isEnabledFor(ERROR):
             bubble_log.error(err_message)
         return b''
@@ -140,7 +144,7 @@ def filter_chunk(loop, flow, chunk, req_id, user_agent, last, content_encoding=N
     return response.content
 
 
-def bubble_filter_chunks(flow, chunks, flex_flow, req_id, user_agent, content_encoding, content_type, csp):
+def bubble_filter_chunks(flow, chunks, req_id, user_agent, content_encoding, content_type, csp):
     loop = asyncio.new_event_loop()
     if bubble_log.isEnabledFor(DEBUG):
         bubble_log.debug('bubble_filter_chunks: starting with content_type='+content_type)
@@ -149,14 +153,11 @@ def bubble_filter_chunks(flow, chunks, flex_flow, req_id, user_agent, content_en
     content_length = get_flow_ctx(flow, CTX_CONTENT_LENGTH)
     if bubble_log.isEnabledFor(DEBUG):
         bubble_log.debug('bubble_filter_chunks: found content_length='+str(content_length))
-    if flex_flow is not None:
-        # flex flows with errors are handled before we get here
-        chunks = flex_flow.response_stream.iter_content(8192)
     try:
         buffer = b''
         for chunk in chunks:
             buffer = buffer + chunk
-            if len(buffer) < MIN_FILTER_CHUNK_SIZE:
+            if not last and len(buffer) < MIN_FILTER_CHUNK_SIZE:
                 continue
             chunk_len = len(buffer)
             chunk = buffer
@@ -189,13 +190,63 @@ def bubble_filter_chunks(flow, chunks, flex_flow, req_id, user_agent, content_en
             bubble_log.error('bubble_filter_chunks: exception='+repr(e))
         traceback.print_exc()
         yield None
+    finally:
+        loop.close()
 
 
-def bubble_modify(flow, flex_flow, req_id, user_agent, content_encoding, content_type, csp):
+def bubble_modify(flow, req_id, user_agent, content_encoding, content_type, csp):
     if bubble_log.isEnabledFor(DEBUG):
         bubble_log.debug('bubble_modify: modifying req_id='+req_id+' with content_type='+content_type)
-    return lambda chunks: bubble_filter_chunks(flow, chunks, flex_flow, req_id,
+    return lambda chunks: bubble_filter_chunks(flow, chunks, req_id,
                                                user_agent, content_encoding, content_type, csp)
+
+
+class AsyncStreamContext:
+    first = True
+    buffer = b''
+
+
+def async_filter_chunk(stream_body_obj, flow, req_id, user_agent, content_encoding, content_type, csp):
+    client = async_client()
+    loop = asyncio.new_event_loop()
+    stream_body_obj.ctx = AsyncStreamContext()
+    orig_finalize = stream_body_obj.finalize
+
+    def _finalize():
+        bubble_log.info('_finalize: cleaning up for '+req_id+' sent '+str(stream_body_obj.total)+' bytes')
+        if orig_finalize is not None:
+            orig_finalize()
+        cleanup_async('_async_filter_chunk('+req_id+')', loop, client, None)
+
+    stream_body_obj.finalize = _finalize
+    stream_body_obj.total = 0
+
+    def _async_filter_chunk(chunk, last):
+        if chunk is None:
+            bubble_log.info('_async_filter_chunk: filtering None chunk (!!) last='+str(last))
+        else:
+            bubble_log.info('_async_filter_chunk: filtering chunk of size = '+str(len(chunk))+' last=' + str(last))
+            stream_body_obj.ctx.buffer = stream_body_obj.ctx.buffer + chunk
+        if not last and len(stream_body_obj.ctx.buffer) < MIN_FILTER_CHUNK_SIZE:
+            return None
+        chunk = stream_body_obj.ctx.buffer
+        stream_body_obj.ctx.buffer = b''
+        if stream_body_obj.ctx.first:
+            stream_body_obj.ctx.first = False
+            new_chunk = filter_chunk(loop, flow, chunk, req_id, user_agent, last,
+                                     content_encoding=content_encoding, content_type=content_type, content_length=None,
+                                     csp=csp, client=client)
+        else:
+            new_chunk = filter_chunk(loop, flow, chunk, req_id, user_agent, last, client=client)
+        if new_chunk is None or len(chunk) == 0:
+            bubble_log.info('_async_filter_chunk: filtered chunk, got back None or zero chunk (means "send more data")')
+            return None
+        else:
+            bubble_log.info('_async_filter_chunk: filtered chunk, got back chunk of size '+str(len(new_chunk)))
+        stream_body_obj.total = stream_body_obj.total + len(new_chunk)
+        return new_chunk
+
+    return _async_filter_chunk
 
 
 EMPTY_XML = [b'<?xml version="1.0" encoding="UTF-8"?><html></html>']
@@ -236,6 +287,7 @@ def bubble_filter_response(flow, flex_flow):
         if is_bubble_health_check(path):
             health_check_response(flow)
         else:
+            bubble_log.info('bubble_filter_response: sending special bubble response for path: '+path)
             special_bubble_response(flow)
 
     elif flex_flow and flex_flow.is_error():
@@ -328,28 +380,33 @@ def bubble_filter_response(flow, flex_flow):
                         if bubble_log.isEnabledFor(DEBUG):
                             bubble_log.debug(prefix+'content_encoding='+repr(content_encoding) + ', content_type='+repr(content_type))
 
-                        flow.response.stream = bubble_modify(flow, flex_flow, req_id,
-                                                             user_agent, content_encoding, content_type, csp)
-                        if content_length_value:
-                            flow.response.headers['transfer-encoding'] = 'chunked'
-                            # find server_conn to set fake_chunks on
-                            if flow.live and flow.live.ctx:
-                                ctx = flow.live.ctx
-                                while not hasattr(ctx, 'server_conn'):
-                                    if hasattr(ctx, 'ctx'):
-                                        ctx = ctx.ctx
-                                    else:
+                        if flex_flow is not None:
+                            # flex flows with errors are handled before we get here
+                            bubble_log.info(prefix+' filtering async stream, starting with flow.response.stream = '+repr(flow.response.stream))
+                            flow.response.stream.filter_chunk = async_filter_chunk(flow.response.stream, flow, req_id, user_agent, content_encoding, content_type, csp)
+                        else:
+                            flow.response.stream = bubble_modify(flow, req_id, user_agent, content_encoding, content_type, csp)
+                            if content_length_value:
+                                flow.response.headers['transfer-encoding'] = 'chunked'
+                                # find server_conn to set fake_chunks on
+                                if flow.live and flow.live.ctx:
+                                    ctx = flow.live.ctx
+                                    while not hasattr(ctx, 'server_conn'):
+                                        if hasattr(ctx, 'ctx'):
+                                            ctx = ctx.ctx
+                                        else:
+                                            if bubble_log.isEnabledFor(ERROR):
+                                                bubble_log.error(prefix+'error finding server_conn for path '+path+'. last ctx has no further ctx. type='+str(type(ctx))+' vars='+str(vars(ctx)))
+                                            return
+                                    if not hasattr(ctx, 'server_conn'):
                                         if bubble_log.isEnabledFor(ERROR):
-                                            bubble_log.error(prefix+'error finding server_conn for path '+path+'. last ctx has no further ctx. type='+str(type(ctx))+' vars='+str(vars(ctx)))
+                                            bubble_log.error(prefix+'error finding server_conn for path '+path+'. ctx type='+str(type(ctx))+' vars='+str(vars(ctx)))
                                         return
-                                if not hasattr(ctx, 'server_conn'):
-                                    if bubble_log.isEnabledFor(ERROR):
-                                        bubble_log.error(prefix+'error finding server_conn for path '+path+'. ctx type='+str(type(ctx))+' vars='+str(vars(ctx)))
-                                    return
-                                content_length = int(content_length_value)
-                                ctx.server_conn.rfile.fake_chunks = content_length
-                                add_flow_ctx(flow, CTX_CONTENT_LENGTH, content_length)
-                                add_flow_ctx(flow, CTX_CONTENT_LENGTH_SENT, 0)
+                                    content_length = int(content_length_value)
+                                    if ctx.server_conn.rfile:
+                                        ctx.server_conn.rfile.fake_chunks = content_length
+                                    add_flow_ctx(flow, CTX_CONTENT_LENGTH, content_length)
+                                    add_flow_ctx(flow, CTX_CONTENT_LENGTH_SENT, 0)
 
                     else:
                         if bubble_log.isEnabledFor(DEBUG):
