@@ -11,9 +11,9 @@
 
 - name: Download algo dist file
   get_url:
-    url: https://jenkins.bubblev.org/public/releases/algo/latest/algo.zip
+    url: https://jenkins.bubblev.org/public/releases/algo/{{ algo_version }}/algo.zip
     dest: /tmp/algo.zip
-    checksum: sha256:{{ algo_sha256 }}
+    checksum: sha256:{{ algo_sha }}
 
 - name: Unzip algo master.zip
   unarchive:
