@@ -441,14 +441,12 @@ public class StandardSelfNodeService implements SelfNodeService {
         return planDAO.findByUuid(accountPlan.getPlan());
     }
 
-    @Override
-    public boolean getLogFlag() {
+    @Override public boolean getLogFlag() {
         var flagStr = getNodeConfig().get_plaintext(REDIS_LOG_FLAG_KEY);
-        return empty(flagStr) ? false : Boolean.valueOf(flagStr);
+        return Boolean.parseBoolean(flagStr);
     }
 
-    @Override
-    @NonNull public Optional<Long> getLogFlagExpirationTime() {
+    @Override @NonNull public Optional<Long> getLogFlagExpirationTime() {
         var ttl = getNodeConfig().get_ttl(REDIS_LOG_FLAG_KEY);
         return ttl < 0 ? Optional.empty() : Optional.of(now() + ttl * 1000);
     }
