@@ -132,3 +132,12 @@
     special_time: "hourly"
     user: "root"
     job: "find /tmp ~bubble/tmp -mtime +1 -type f -delete && find /tmp ~bubble/tmp -mtime +1 -type d -empty -delete"
+
+- name: Record software versions
+  template:
+    src: bubble_versions.properties.j2
+    dest: /home/bubble/bubble_versions.properties
+    owner: bubble
+    group: bubble
+    mode: 0400
+  when: install_type == 'node'

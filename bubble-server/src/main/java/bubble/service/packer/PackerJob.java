@@ -33,6 +33,7 @@ import org.cobbzilla.util.time.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -62,12 +63,12 @@ public class PackerJob implements Callable<List<PackerImage>> {
 
     public static final String INSTALL_TYPE_VAR = "@@TYPE@@";
     public static final String SAGE_NET_VAR = "@@SAGE_NET@@";
-    public static final String PACKER_KEY_VAR = "@@PACKER_KEY_HASH@@";
+    public static final String PACKER_VERSION_HASH_VAR = "@@PACKER_VERSION_HASH@@";
     public static final String BUBBLE_VERSION_VAR = "@@BUBBLE_VERSION@@";
     public static final String TIMESTAMP_VAR = "@@TIMESTAMP@@";
     public static final String PACKER_IMAGE_NAME_TEMPLATE = PACKER_IMAGE_PREFIX + INSTALL_TYPE_VAR
             + "_" + SAGE_NET_VAR
-            + "_" + PACKER_KEY_VAR
+            + "_" + PACKER_VERSION_HASH_VAR
             + "_" + BUBBLE_VERSION_VAR
             + "_" + TIMESTAMP_VAR;
 
@@ -158,18 +159,16 @@ public class PackerJob implements Callable<List<PackerImage>> {
         // copy ansible and other packer files to temp dir
         @Cleanup final TempDir tempDir = copyClasspathDirectory("packer");
 
-        final String releaseUrlBase = configuration.getReleaseUrlBase();
-        // create var for algo_sha256
-        final String algoVarsDir = abs(tempDir) + "/roles/algo/vars";
-        mkdirOrDie(algoVarsDir);
-        final String algoHash = url2string(releaseUrlBase+"/algo/latest/algo.zip.sha256");
-        FileUtil.toFileOrDie(new File(algoVarsDir, "main.yml"), "algo_sha256 : '"+algoHash+"'");
+        // for nodes, record versions of algo, mitmproxy and dnscrypt_proxy
+        if (installType == AnsibleInstallType.node) {
+            // ensure we use the latest algo and mitmproxy versions
+            final Map<String, String> versions = new HashMap<>();
+            versions.putAll(useLatestVersion(ROLE_ALGO, tempDir));
+            versions.putAll(useLatestVersion(ROLE_MITMPROXY, tempDir));
 
-        // create var for mitmproxy_sha256
-        final String mitmproxyVarsDir = abs(tempDir) + "/roles/mitmproxy/vars";
-        mkdirOrDie(mitmproxyVarsDir);
-        final String mitmproxyHash = url2string(releaseUrlBase+"/mitmproxy/latest/mitmproxy.zip.sha256");
-        FileUtil.toFileOrDie(new File(mitmproxyVarsDir, "main.yml"), "mitmproxy_sha256 : '"+mitmproxyHash+"'");
+            // write versions to bubble vars
+            writeBubbleVersions(tempDir, versions);
+        }
 
         // copy packer ssh key
         copyFile(packerService.getPackerPublicKey(), new File(abs(tempDir)+"/roles/common/files/"+PACKER_KEY_NAME));
@@ -226,7 +225,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
         final String imageName = PACKER_IMAGE_NAME_TEMPLATE
                 .replace(INSTALL_TYPE_VAR, installType.name())
                 .replace(SAGE_NET_VAR, truncate(domainname(), 19))
-                .replace(PACKER_KEY_VAR, packerService.getPackerPublicKeyHash())
+                .replace(PACKER_VERSION_HASH_VAR, packerService.getPackerVersionHash())
                 .replace(BUBBLE_VERSION_VAR, configuration.getShortVersion())
                 .replace(TIMESTAMP_VAR, TimeUtil.format(now(), DATE_FORMAT_YYYYMMDDHHMMSS));
         if (imageName.length() > 128) return die("imageName.length > 128: "+imageName); // sanity check
@@ -294,6 +293,38 @@ public class PackerJob implements Callable<List<PackerImage>> {
         setImagesRefs();
         log.info("packer images created in "+formatDuration(now() - start)+": "+images);
         return images;
+    }
+
+    private void writeBubbleVersions(TempDir tempDir, Map<String, String> versions) {
+        final File varsDir = mkdirOrDie(abs(tempDir) + "/roles/"+ROLE_BUBBLE+"/vars");
+        final StringBuilder b = new StringBuilder();
+        for (Map.Entry<String, String> var : versions.entrySet()) {
+            b.append(var.getKey()).append(" : '").append(var.getValue()).append("'\n");
+        }
+        FileUtil.toFileOrDie(new File(varsDir, "main.yml"), b.toString());
+    }
+
+    private Map<String, String> useLatestVersion(String roleName, TempDir tempDir) throws IOException {
+        final Map<String, String> vars = new HashMap<>();
+        final String releaseUrlBase = configuration.getReleaseUrlBase();
+        final File varsDir = mkdirOrDie(abs(tempDir) + "/roles/"+roleName+"/vars");
+
+        // determine latest version
+        final String version = packerService.getSoftwareVersion(roleName);
+        vars.put(roleName, version);
+
+        final String hash = url2string(releaseUrlBase+"/"+version+"/"+roleName+".zip.sha256");
+        String varsData = roleName+"_sha256 : '"+hash+"'\n"
+                + roleName+"_version : '" + version + "'\n";
+
+        if (roleName.equals(ROLE_ALGO)) {
+            // capture dnscrypt_proxy version for algo
+            final String dnscryptVersion = url2string(releaseUrlBase+"/"+version+"/dnscrypt-proxy_version.txt");
+            varsData += "dnscrypt_version : '"+dnscryptVersion+"'";
+            vars.put(ROLE_DNSCRYPT, dnscryptVersion);
+        }
+        FileUtil.toFileOrDie(new File(varsDir, "main.yml"), varsData);
+        return vars;
     }
 
     private List<String> getRolesForInstallType(AnsibleInstallType installType) {

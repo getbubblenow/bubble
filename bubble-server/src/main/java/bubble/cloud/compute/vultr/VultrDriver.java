@@ -410,7 +410,7 @@ public class VultrDriver extends ComputeServiceDriverBase {
     @Override public List<PackerImage> getPackerImagesForRegion(String region) { return getPackerImages(); }
 
     public List<PackerImage> getPackerImages () {
-        final List<PackerImage> images = loadCloudResources(SNAPSHOT_URL, new VultrPackerImageParser(configuration.getShortVersion(), packerService.getPackerPublicKeyHash()));
+        final List<PackerImage> images = loadCloudResources(SNAPSHOT_URL, new VultrPackerImageParser(configuration.getShortVersion(), packerService.getPackerVersionHash()));
         return images == null ? Collections.emptyList() : images;
     }
 
@@ -424,16 +424,16 @@ public class VultrDriver extends ComputeServiceDriverBase {
         }
 
         // wait longer for the snapshot...
-        final String keyHash = packerService.getPackerPublicKeyHash();
+        final String versionHash = packerService.getPackerVersionHash();
         final long start = now();
         PackerImage snapshot = null;
         while (now() - start < SNAPSHOT_TIMEOUT) {
             snapshot = getPackerImages().stream()
-                    .filter(i -> i.getName().contains("_"+installType.name()+"_") && i.getName().contains(keyHash))
+                    .filter(i -> i.getName().contains("_"+installType.name()+"_") && i.getName().contains(versionHash))
                     .findFirst()
                     .orElse(null);
             if (snapshot != null) break;
-            sleep(SECONDS.toMillis(20), "finalizeIncompletePackerRun: waiting for snapshot: "+keyHash);
+            sleep(SECONDS.toMillis(20), "finalizeIncompletePackerRun: waiting for snapshot: "+versionHash);
         }
         if (snapshot == null) {
             log.error("finalizeIncompletePackerRun: timeout waiting for snapshot");
@@ -447,14 +447,14 @@ public class VultrDriver extends ComputeServiceDriverBase {
 
     public boolean stopImageServer(AnsibleInstallType installType) {
 
-        final String keyHash = packerService.getPackerPublicKeyHash();
+        final String versionHash = packerService.getPackerVersionHash();
         final List<BubbleNode> servers;
 
         // find the server(s)
         try {
             servers = listNodes(server -> {
                 final String tag = server.has(VULTR_TAG) ? server.get(VULTR_TAG).textValue() : null;
-                return tag != null && tag.contains("_"+installType.name()+"_") && tag.contains(keyHash);
+                return tag != null && tag.contains("_"+installType.name()+"_") && tag.contains(versionHash);
             });
         } catch (IOException e) {
             log.error("stopImageServer: error listing servers: "+shortError(e), e);

@@ -10,11 +10,12 @@ import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.daemon.DaemonThreadFactory;
-import org.cobbzilla.util.security.ShaUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,9 +24,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.http.HttpUtil.url2string;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.mkdirOrDie;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
+import static org.cobbzilla.util.security.ShaUtil.*;
 import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 import static org.cobbzilla.util.system.CommandShell.chmod;
 import static org.cobbzilla.util.system.CommandShell.execScript;
@@ -40,6 +43,12 @@ public class PackerService {
 
     public static final List<String> NODE_ROLES = splitAndTrim(stream2string(PACKER_DIR + "/node-roles.txt"), "\n")
             .stream().filter(s -> !empty(s)).collect(Collectors.toList());
+
+    public static final String ROLE_ALGO = "algo";
+    public static final String ROLE_MITMPROXY = "mitmproxy";
+    public static final String ROLE_DNSCRYPT = "dnscrypt";
+    public static final String ROLE_BUBBLE = "bubble";
+
     public static final String PACKER_KEY_NAME = "packer_rsa";
 
     private final Map<String, PackerJob> activeJobs = new ConcurrentHashMap<>(16);
@@ -82,7 +91,17 @@ public class PackerService {
 
     public File getPackerPublicKey () { return initPackerKey(true); }
     public File getPackerPrivateKey () { return initPackerKey(false); }
-    public String getPackerPublicKeyHash () { return ShaUtil.sha256_file(getPackerPublicKey()); }
+    public String getPackerPublicKeyHash () { return sha256_file(getPackerPublicKey()); }
+
+    public String getPackerVersionHash () {
+        final String keyHash = getPackerPublicKeyHash();
+        final String versions = ""
+                +"_d"+getSoftwareVersion(ROLE_DNSCRYPT)
+                +"_a"+getSoftwareVersion(ROLE_ALGO)
+                +"_m"+getSoftwareVersion(ROLE_MITMPROXY);
+        if (versions.length() > 48) return die("getPackerVersionHash: software versions are too long (versions.length == "+versions.length()+" > 48): "+versions);
+        return keyHash.substring(64 - versions.length())+versions;
+    }
 
     public synchronized File initPackerKey(boolean pub) {
         final File keyDir = new File(System.getProperty("user.home"),".ssh");
@@ -96,6 +115,18 @@ public class PackerService {
             if (!pubKeyFile.exists() || !privateKeyFile.exists()) return die("initPackerKey: error creating packer key");
         }
         return pub ? pubKeyFile : privateKeyFile;
+    }
+
+    private final Map<String, String> softwareVersions = new HashMap<>();
+    public String getSoftwareVersion(String roleName) {
+        final String releaseUrlBase = configuration.getReleaseUrlBase();
+        return softwareVersions.computeIfAbsent(roleName, r -> {
+            try {
+                return url2string(releaseUrlBase+"/"+r+"/latest.txt");
+            } catch (IOException e) {
+                return die("getSoftwareVersion("+r+"): "+shortError(e), e);
+            }
+        });
     }
 
 }
