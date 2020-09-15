@@ -299,7 +299,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
         final File varsDir = mkdirOrDie(abs(tempDir) + "/roles/"+ROLE_BUBBLE+"/vars");
         final StringBuilder b = new StringBuilder();
         for (Map.Entry<String, String> var : versions.entrySet()) {
-            b.append(var.getKey().replace("-", "_")).append(" : '").append(var.getValue()).append("'\n");
+            b.append(var.getKey().replace("-", "_")).append(" : '").append(var.getValue().trim()).append("'\n");
         }
         FileUtil.toFileOrDie(new File(varsDir, "main.yml"), b.toString());
     }
@@ -319,7 +319,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
 
         if (roleName.equals(ROLE_ALGO)) {
             // capture dnscrypt_proxy version for algo
-            final String dnscryptVersion = url2string(releaseUrlBase+"/"+roleName+"/"+version+"/dnscrypt-proxy_version.txt");
+            final String dnscryptVersion = url2string(releaseUrlBase+"/"+roleName+"/"+version+"/dnscrypt-proxy_version.txt").trim();
             varsData += "dnscrypt_version : '"+dnscryptVersion+"'";
             vars.put(ROLE_DNSCRYPT, dnscryptVersion);
         }
