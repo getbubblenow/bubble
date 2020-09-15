@@ -42,6 +42,7 @@ import static bubble.ApiConstants.copyScripts;
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
 import static bubble.service.packer.PackerService.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.http.HttpUtil.url2string;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.io.StreamUtil.copyClasspathDirectory;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
@@ -156,6 +157,19 @@ public class PackerJob implements Callable<List<PackerImage>> {
 
         // copy ansible and other packer files to temp dir
         @Cleanup final TempDir tempDir = copyClasspathDirectory("packer");
+
+        final String releaseUrlBase = configuration.getReleaseUrlBase();
+        // create var for algo_sha256
+        final String algoVarsDir = abs(tempDir) + "/roles/algo/vars";
+        mkdirOrDie(algoVarsDir);
+        final String algoHash = url2string(releaseUrlBase+"/algo/latest/algo.zip.sha256");
+        FileUtil.toFileOrDie(new File(algoVarsDir, "main.yml"), "algo_sha256 : '"+algoHash+"'");
+
+        // create var for mitmproxy_sha256
+        final String mitmproxyVarsDir = abs(tempDir) + "/roles/mitmproxy/vars";
+        mkdirOrDie(mitmproxyVarsDir);
+        final String mitmproxyHash = url2string(releaseUrlBase+"/mitmproxy/latest/mitmproxy.zip.sha256");
+        FileUtil.toFileOrDie(new File(mitmproxyVarsDir, "main.yml"), "mitmproxy_sha256 : '"+mitmproxyHash+"'");
 
         // copy packer ssh key
         copyFile(packerService.getPackerPublicKey(), new File(abs(tempDir)+"/roles/common/files/"+PACKER_KEY_NAME));

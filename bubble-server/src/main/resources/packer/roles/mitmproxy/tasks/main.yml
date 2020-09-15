@@ -39,9 +39,9 @@
 
 - name: Download mitmproxy dist file
   get_url:
-    url: https://github.com/getbubblenow/bubble-dist/raw/master/mitmproxy/mitmproxy.zip
+    url: https://jenkins.bubblev.org/public/releases/latest/mitmproxy/mitmproxy.zip
     dest: /tmp/mitmproxy.zip
-    checksum: sha256:eebde85f9d49f34634695c3e3916f5940a31e5393d52d3f2df793a2a4f9f6430
+    checksum: sha256:{{ mitmproxy_sha256 }}
 
 - name: Unzip mitmproxy.zip
   unarchive:

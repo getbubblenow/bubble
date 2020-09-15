@@ -165,6 +165,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public boolean hasSageNode () { return getSageNode() != null; }
 
     @Getter @Setter private String letsencryptEmail;
+    @Getter @Setter private String releaseUrlBase;
 
     @Setter private String localStorageDir = DEFAULT_LOCAL_STORAGE_DIR;
     public String getLocalStorageDir () { return empty(localStorageDir) ? DEFAULT_LOCAL_STORAGE_DIR : localStorageDir; }
