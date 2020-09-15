@@ -299,7 +299,12 @@ public class PackerJob implements Callable<List<PackerImage>> {
         final File varsDir = mkdirOrDie(abs(tempDir) + "/roles/"+ROLE_BUBBLE+"/vars");
         final StringBuilder b = new StringBuilder();
         for (Map.Entry<String, String> var : versions.entrySet()) {
-            b.append(var.getKey().replace("-", "_")).append(" : '").append(var.getValue().trim()).append("'\n");
+            final String roleName = var.getKey();
+            final String version = var.getValue().trim();
+            final String roleBase = roleName.replace("-", "_");
+            final String hash = packerService.getSoftwareHash(roleName, version);
+            b.append(roleBase).append("_version : '").append(version).append("'\n")
+                    .append(roleBase).append("_sha : '").append(hash).append("'\n");
         }
         FileUtil.toFileOrDie(new File(varsDir, "main.yml"), b.toString());
     }
