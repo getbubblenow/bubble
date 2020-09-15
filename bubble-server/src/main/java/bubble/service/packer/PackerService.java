@@ -46,7 +46,7 @@ public class PackerService {
 
     public static final String ROLE_ALGO = "algo";
     public static final String ROLE_MITMPROXY = "mitmproxy";
-    public static final String ROLE_DNSCRYPT = "dnscrypt";
+    public static final String ROLE_DNSCRYPT = "dnscrypt-proxy";
     public static final String ROLE_BUBBLE = "bubble";
 
     public static final String PACKER_KEY_NAME = "packer_rsa";
