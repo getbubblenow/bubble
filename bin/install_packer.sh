@@ -9,7 +9,7 @@ function die {
 
 # Install packer
 if [[ ! -f ${HOME}/packer/packer ]] ; then
-  PACKER_VERSION=1.5.6
+  PACKER_VERSION=1.6.2
   PACKER_FILE=packer_${PACKER_VERSION}_linux_amd64.zip
   PACKER_URL=https://releases.hashicorp.com/packer/${PACKER_VERSION}/${PACKER_FILE}
   mkdir -p ${HOME}/packer && cd ${HOME}/packer && wget ${PACKER_URL} && unzip ${PACKER_FILE} || die "Error installing packer"
