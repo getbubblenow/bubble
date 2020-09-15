@@ -28,6 +28,7 @@ NEW_KEYS=$(mktemp /root/.ssh/authorized_keys.XXXXXXX)
 chmod 600 ${NEW_KEYS} || die "Error setting permissions on new authorized_keys file: ${NEW_KEYS}"
 
 KEY_COUNT=0
+ALL_KEY_COUNT=0
 for key in $(echo "${CURRENT_KEYS_SQL}" | PGPASSWORD="$(cat /home/bubble/.BUBBLE_PG_PASSWORD)" psql -U bubble -h 127.0.0.1 bubble -qt) ; do
   if [[ -z "$(echo "${key}" | tr -d [[:space:]])" ]] ; then
     continue
@@ -40,13 +41,18 @@ for key in $(echo "${CURRENT_KEYS_SQL}" | PGPASSWORD="$(cat /home/bubble/.BUBBLE
   else
     log "Warning: NOT adding malformed key: $(echo "${KEY}" | tr -d '\n')"
   fi
+  ALL_KEY_COUNT=$(expr ${ALL_KEY_COUNT} + 1)
 done
 
 if [[ ${KEY_COUNT} -eq 0 ]] ; then
   # Sanity check that we can even talk to psql
   # We may be out of memory, in which case we do not want to erase existing installed keys
-  if [[ -z "$(echo 'SELECT count(*) FROM account_ssh_key' | PGPASSWORD="$(cat /home/bubble/.BUBBLE_PG_PASSWORD)" psql -U bubble -h 127.0.0.1 bubble)" ]] ; then
+  CHECK_KEY_COUNT="$(echo 'SELECT count(*) FROM account_ssh_key' | PGPASSWORD="$(cat /home/bubble/.BUBBLE_PG_PASSWORD)" psql -U bubble -h 127.0.0.1 bubble)"
+  if [[ -z "${CHECK_KEY_COUNT}" ]] ; then
     log "Warning: error calling psql, not installing/uninstalling any keys"
+    exit 0
+  elif [[ ${CHECK_KEY_COUNT} -ne ${ALL_KEY_COUNT} ]] ; then
+    log "Warning: error CHECK_KEY_COUNT (${CHECK_KEY_COUNT}) -ne ALL_KEY_COUNT (${ALL_KEY_COUNT}), not installing/uninstalling any keys"
     exit 0
   fi
 fi
