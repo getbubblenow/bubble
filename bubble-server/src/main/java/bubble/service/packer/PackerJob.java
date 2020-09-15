@@ -163,8 +163,8 @@ public class PackerJob implements Callable<List<PackerImage>> {
         if (installType == AnsibleInstallType.node) {
             // ensure we use the latest algo and mitmproxy versions
             final Map<String, String> versions = new HashMap<>();
-            versions.putAll(useLatestVersion(ROLE_ALGO, tempDir));
-            versions.putAll(useLatestVersion(ROLE_MITMPROXY, tempDir));
+            versions.putAll(getSoftwareVersion(ROLE_ALGO, tempDir));
+            versions.putAll(getSoftwareVersion(ROLE_MITMPROXY, tempDir));
 
             // write versions to bubble vars
             writeBubbleVersions(tempDir, versions);
@@ -304,7 +304,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
         FileUtil.toFileOrDie(new File(varsDir, "main.yml"), b.toString());
     }
 
-    private Map<String, String> useLatestVersion(String roleName, TempDir tempDir) throws IOException {
+    private Map<String, String> getSoftwareVersion(String roleName, TempDir tempDir) throws IOException {
         final Map<String, String> vars = new HashMap<>();
         final String releaseUrlBase = configuration.getReleaseUrlBase();
         final File varsDir = mkdirOrDie(abs(tempDir) + "/roles/"+roleName+"/vars");
@@ -313,14 +313,15 @@ public class PackerJob implements Callable<List<PackerImage>> {
         final String version = packerService.getSoftwareVersion(roleName);
         vars.put(roleName, version);
 
-        final String hash = url2string(releaseUrlBase+"/"+roleName+"/"+version+"/"+roleName+".zip.sha256").trim();
-        String varsData = roleName+"_sha256 : '"+hash+"'\n"
+        final String hash = packerService.getSoftwareHash(roleName, version);
+        String varsData = roleName+"_sha : '"+hash+"'\n"
                 + roleName+"_version : '" + version + "'\n";
 
         if (roleName.equals(ROLE_ALGO)) {
             // capture dnscrypt_proxy version for algo
             final String dnscryptVersion = url2string(releaseUrlBase+"/"+roleName+"/"+version+"/dnscrypt-proxy_version.txt").trim();
-            varsData += "dnscrypt_version : '"+dnscryptVersion+"'";
+            varsData += "dnscrypt_proxy_version : '"+dnscryptVersion+"'\n"
+                    + "dnscrypt_proxy_sha : '"+packerService.getSoftwareHash(ROLE_DNSCRYPT, dnscryptVersion)+"'";
             vars.put(ROLE_DNSCRYPT, dnscryptVersion);
         }
         FileUtil.toFileOrDie(new File(varsDir, "main.yml"), varsData);

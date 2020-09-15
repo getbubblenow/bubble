@@ -123,7 +123,8 @@ public class PackerService {
     public String getSoftwareVersion(String roleName) {
         final Properties defaults = configuration.getDefaultSoftwareVersions();
         if (defaults != null) {
-            final String version = defaults.getProperty(roleName.replace("-", "_"));
+            final String propName = roleName.replace("-", "_")+"_version";
+            final String version = defaults.getProperty(propName);
             if (version != null) return version;
         }
         final String releaseUrlBase = configuration.getReleaseUrlBase();
@@ -134,6 +135,37 @@ public class PackerService {
                 return die("getSoftwareVersion("+r+"): "+shortError(e), e);
             }
         });
+    }
+
+    private final Map<String, String> softwareHashes = new HashMap<>();
+
+    public String getSoftwareHash(String roleName, String version) {
+        final Properties defaults = configuration.getDefaultSoftwareVersions();
+        if (defaults != null) {
+            final String roleBase = roleName.replace("-", "_");
+            final String foundVersion = defaults.getProperty(roleBase +"_version");
+            if (foundVersion != null && foundVersion.equals(version)) {
+                final String hash = defaults.getProperty(roleBase +"_sha");
+                if (hash != null) return hash;
+            }
+        }
+        final String releaseUrlBase = configuration.getReleaseUrlBase();
+        return softwareHashes.computeIfAbsent(roleName, r -> {
+            try {
+                return url2string(releaseUrlBase+"/"+roleName+"/"+version+"/"+roleName+getSoftwareSuffix(roleName)+".sha256").trim();
+            } catch (IOException e) {
+                return die("getSoftwareHash("+r+"): "+shortError(e), e);
+            }
+        });
+    }
+
+    private String getSoftwareSuffix(String roleName) {
+        switch (roleName) {
+            case ROLE_ALGO: case ROLE_MITMPROXY: return ".zip";
+            case ROLE_DNSCRYPT: return "";
+            default: return die("getSoftwareSuffix: unrecognized roleName: "+roleName);
+        }
+
     }
 
 }
