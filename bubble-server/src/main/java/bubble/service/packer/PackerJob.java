@@ -159,16 +159,13 @@ public class PackerJob implements Callable<List<PackerImage>> {
         // copy ansible and other packer files to temp dir
         @Cleanup final TempDir tempDir = copyClasspathDirectory("packer");
 
-        // for nodes, record versions of algo, mitmproxy and dnscrypt_proxy
-        if (installType == AnsibleInstallType.node) {
-            // ensure we use the latest algo and mitmproxy versions
-            final Map<String, String> versions = new HashMap<>();
-            versions.putAll(getSoftwareVersion(ROLE_ALGO, tempDir));
-            versions.putAll(getSoftwareVersion(ROLE_MITMPROXY, tempDir));
+        // record versions of algo, mitmproxy and dnscrypt_proxy
+        final Map<String, String> versions = new HashMap<>();
+        versions.putAll(getSoftwareVersion(ROLE_ALGO, tempDir));
+        versions.putAll(getSoftwareVersion(ROLE_MITMPROXY, tempDir));
 
-            // write versions to bubble vars
-            writeBubbleVersions(tempDir, versions);
-        }
+        // write versions to bubble vars
+        writeBubbleVersions(tempDir, versions);
 
         // copy packer ssh key
         copyFile(packerService.getPackerPublicKey(), new File(abs(tempDir)+"/roles/common/files/"+PACKER_KEY_NAME));
