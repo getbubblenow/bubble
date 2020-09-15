@@ -217,16 +217,19 @@ public class NetworksResource extends AccountOwnedResource<BubbleNetwork, Bubble
         return configuration.subResource(BackupsResource.class, account, network);
     }
 
-    @Path("/{id}" + EP_LOGS)
+    @Path("/{id}"+EP_LOGS)
     @NonNull public LogsResource getLogs(@NonNull @Context final ContainerRequest ctx,
                                          @NonNull @PathParam("id") String id) {
+        // caller must be admin
+        final Account caller = userPrincipal(ctx);
+        if (!caller.admin()) throw forbiddenEx();
+
         final var network = find(ctx, id);
         if (network == null) throw notFoundEx(id);
 
         // only available for this (current) network
         if (!configuration.getThisNetwork().getUuid().equals(network.getUuid())) throw forbiddenEx();
 
-        final Account caller = userPrincipal(ctx);
         return configuration.subResource(LogsResource.class, caller);
     }
 }
