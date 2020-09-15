@@ -10,6 +10,8 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+import java.util.Properties;
+
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.wizard.model.SemanticVersion.isNewerVersion;
 
@@ -19,6 +21,7 @@ public class BubbleVersionInfo {
     @Getter @Setter private String version;
     @Getter @Setter private String shortVersion;
     @Getter @Setter private String sha256;
+    @Getter @Setter private Properties software;
 
     public boolean valid() { return !empty(version) && !empty(sha256); }
 

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,7 +29,7 @@ import static org.cobbzilla.util.http.HttpUtil.url2string;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.mkdirOrDie;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
-import static org.cobbzilla.util.security.ShaUtil.*;
+import static org.cobbzilla.util.security.ShaUtil.sha256_file;
 import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 import static org.cobbzilla.util.system.CommandShell.chmod;
 import static org.cobbzilla.util.system.CommandShell.execScript;
@@ -118,7 +119,13 @@ public class PackerService {
     }
 
     private final Map<String, String> softwareVersions = new HashMap<>();
+
     public String getSoftwareVersion(String roleName) {
+        final Properties defaults = configuration.getDefaultSoftwareVersions();
+        if (defaults != null) {
+            final String version = defaults.getProperty(roleName.replace("-", "_"));
+            if (version != null) return version;
+        }
         final String releaseUrlBase = configuration.getReleaseUrlBase();
         return softwareVersions.computeIfAbsent(roleName, r -> {
             try {

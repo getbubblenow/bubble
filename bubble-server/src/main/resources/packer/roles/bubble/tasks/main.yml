@@ -140,4 +140,3 @@
     owner: bubble
     group: bubble
     mode: 0400
-  when: install_type == 'node'

@@ -53,6 +53,8 @@ import org.springframework.context.annotation.Configuration;
 
 import java.beans.Transient;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -98,6 +100,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public static final String TAG_SECURITY_LEVELS = "securityLevels";
     public static final String TAG_RESTORE_MODE = "awaitingRestore";
     public static final String TAG_RESTORING_IN_PROGRESS = "restoreInProgress";
+    public static final String TAG_FULL_VERSION = "fullVersion";
     public static final String TAG_JAR_VERSION = "jarVersion";
     public static final String TAG_JAR_UPGRADE_AVAILABLE = "jarUpgradeAvailable";
     public static final String TAG_MAX_USERS = "maxUsers";
@@ -165,7 +168,22 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public boolean hasSageNode () { return getSageNode() != null; }
 
     @Getter @Setter private String letsencryptEmail;
+
     @Getter @Setter private String releaseUrlBase;
+
+    public static final File SOFTWARE_VERSIONS_FILE = new File(HOME_DIR+"/bubble_versions.properties");
+    @Getter(lazy=true) private final Properties defaultSoftwareVersions = initDefaultSoftwareVersions();
+    private Properties initDefaultSoftwareVersions() {
+        if (!SOFTWARE_VERSIONS_FILE.exists()) return null;
+        final Properties props = new Properties();
+        try (InputStream in = new FileInputStream(SOFTWARE_VERSIONS_FILE)) {
+            props.load(in);
+            return props;
+        } catch (Exception e) {
+            log.error("initDefaultSoftwareVersions: "+shortError(e));
+            return null;
+        }
+    }
 
     @Setter private String localStorageDir = DEFAULT_LOCAL_STORAGE_DIR;
     public String getLocalStorageDir () { return empty(localStorageDir) ? DEFAULT_LOCAL_STORAGE_DIR : localStorageDir; }
@@ -265,7 +283,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         return new BubbleVersionInfo()
                 .setVersion(version)
                 .setShortVersion(shortVersion)
-                .setSha256(getJarSha());
+                .setSha256(getJarSha())
+                .setSoftware(getDefaultSoftwareVersions());
     }
     public String getShortVersion () { return getVersionInfo().getShortVersion(); }
 
@@ -367,6 +386,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_SSL_PORT, getDefaultSslPort()},
                         {TAG_SUPPORT, getSupport()},
                         {TAG_SECURITY_LEVELS, DeviceSecurityLevel.values()},
+                        {TAG_FULL_VERSION, getVersionInfo()},
                         {TAG_JAR_VERSION, getVersion()},
                         {TAG_JAR_UPGRADE_AVAILABLE, getJarUpgradeAvailable() ? getSageVersion() : null},
                         {TAG_MAX_USERS, plan == null ? null : plan.getMaxAccounts()},
