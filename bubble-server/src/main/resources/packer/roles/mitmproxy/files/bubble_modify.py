@@ -299,7 +299,8 @@ def bubble_filter_response(flow, flex_flow):
         if is_bubble_health_check(path):
             health_check_response(flow)
         else:
-            bubble_log.info('bubble_filter_response: sending special bubble response for path: '+path)
+            if bubble_log.isEnabledFor(DEBUG):
+                bubble_log.debug('bubble_filter_response: sending special bubble response for path: '+path)
             special_bubble_response(flow)
 
     elif flex_flow and flex_flow.is_error():

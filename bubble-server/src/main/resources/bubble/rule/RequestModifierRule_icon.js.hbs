@@ -87,9 +87,9 @@ function {{JS_PREFIX}}_create_button(labelKey, labelDefault, onclick, labelForma
     return btn;
 }
 
-let {{PAGE_PREFIX}}_url_chasers = {};
-
 if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
+
+    let {{PAGE_PREFIX}}_url_chasers = {};
 
     {{PAGE_PREFIX}}_screenWidth = function () { return window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth };
 

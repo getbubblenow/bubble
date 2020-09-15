@@ -436,8 +436,8 @@ def is_flex_domain(client_addr, server_addr, fqdns):
                 bubble_log.debug('is_flex_domain: returning True for: '+fqdn+' (check='+check_fqdn+')')
             return True
         check_fqdn = check_fqdn[check_fqdn.index('.')+1:]
-    if bubble_log.isEnabledFor(DEBUG):
-        bubble_log.debug('is_flex_domain: (early) returning False for: '+fqdn)
+    # if bubble_log.isEnabledFor(DEBUG):
+    #     bubble_log.debug('is_flex_domain: returning False for: '+fqdn)
     return False
 
 
