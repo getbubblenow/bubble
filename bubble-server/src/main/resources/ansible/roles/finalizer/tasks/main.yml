@@ -25,6 +25,11 @@
     src: "supervisor_bubble.conf.j2"
     dest: /etc/supervisor/conf.d/bubble.conf
 
+# Save 1% of memory, every bit counts on small nodes
+- name: Disable peer manager on small nodes
+  shell: bash -c "supervisorctl stop bubble_peer_manager && rm /etc/supervisor/conf.d/bubble_peer_manager.conf"
+  when: total_memory < 2048
+
 - name: save iptables v4 rules
   shell: iptables-save > /etc/iptables/rules.v4
   become: yes

@@ -30,9 +30,9 @@ import uuid
 from mitmproxy.net.http import headers as nheaders
 
 from bubble_api import bubble_matchers, bubble_activity_log, \
-    HEALTH_CHECK_URI, CTX_BUBBLE_MATCHERS, CTX_BUBBLE_SPECIAL, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, \
+    CTX_BUBBLE_MATCHERS, CTX_BUBBLE_SPECIAL, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, \
     CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_FLEX, CTX_BUBBLE_REQUEST_ID, add_flow_ctx, parse_host_header, \
-    is_bubble_special_path, is_bubble_health_check, \
+    is_bubble_special_path, is_bubble_health_check, health_check_response, \
     is_bubble_request, is_sage_request, is_not_from_vpn, is_flex_domain
 from bubble_config import bubble_host, bubble_host_alias
 from bubble_flex import new_flex_flow
@@ -49,11 +49,9 @@ class Rerouter:
         if host is None:
             return None
 
-        is_health_check = is_bubble_health_check(flow.request.path)
         if is_bubble_special_path(flow.request.path):
-            if not is_health_check:
-                if bubble_log.isEnabledFor(DEBUG):
-                    bubble_log.debug("get_matchers: not filtering special bubble path: "+flow.request.path)
+            if bubble_log.isEnabledFor(DEBUG):
+                bubble_log.debug("get_matchers: not filtering special bubble path: "+flow.request.path)
             return None
 
         client_addr = str(flow.client_conn.address[0])
@@ -138,7 +136,6 @@ class Rerouter:
                     port = int(m.group("port"))
 
         # Determine if this request should be filtered
-        is_health_check = False
         host = None
         path = flow.request.path
         if sni or host_header:
@@ -151,14 +148,17 @@ class Rerouter:
             # If http, we validate client/server here
             if is_http:
                 fqdns = [host]
-                if is_bubble_request(server_addr, fqdns):
-                    is_health_check = path.startswith(HEALTH_CHECK_URI)
-                    if not is_health_check:
-                        if bubble_log.isEnabledFor(DEBUG):
-                            bubble_log.debug('bubble_handle_request: redirecting to https for LOCAL bubble=' + server_addr +' (bubble_host (' + bubble_host +') in fqdns or bubble_host_alias (' + bubble_host_alias +') in fqdns) for client=' + client_addr +', fqdns=' + repr(fqdns) +', path=' + path)
-                        add_flow_ctx(flow, CTX_BUBBLE_ABORT, 301)
-                        add_flow_ctx(flow, CTX_BUBBLE_LOCATION, 'https://' + host + path)
-                        return None
+                if is_bubble_health_check(path):
+                    # Health check
+                    health_check_response(flow)
+                    return None
+
+                elif is_bubble_request(server_addr, fqdns):
+                    if bubble_log.isEnabledFor(DEBUG):
+                        bubble_log.debug('bubble_handle_request: redirecting to https for LOCAL bubble=' + server_addr +' (bubble_host (' + bubble_host +') in fqdns or bubble_host_alias (' + bubble_host_alias +') in fqdns) for client=' + client_addr +', fqdns=' + repr(fqdns) +', path=' + path)
+                    add_flow_ctx(flow, CTX_BUBBLE_ABORT, 301)
+                    add_flow_ctx(flow, CTX_BUBBLE_LOCATION, 'https://' + host + path)
+                    return None
 
                 elif is_sage_request(server_addr, fqdns):
                     if bubble_log.isEnabledFor(DEBUG):
@@ -170,7 +170,7 @@ class Rerouter:
                 elif is_not_from_vpn(client_addr):
                     # todo: add to fail2ban
                     if bubble_log.isEnabledFor(WARNING):
-                        bubble_log.warning('bubble_handle_request: returning 404 for non-VPN client='+client_addr+', url='+log_url)
+                        bubble_log.warning('bubble_handle_request: returning 404 for non-VPN client='+client_addr+', url='+log_url+' host='+host)
                     bubble_activity_log(client_addr, server_addr, 'http_abort_non_vpn', fqdns)
                     add_flow_ctx(flow, CTX_BUBBLE_ABORT, 404)
                     return None
@@ -225,10 +225,9 @@ class Rerouter:
                             bubble_log.debug('bubble_handle_request: no rules returned, passing thru...')
                         bubble_activity_log(client_addr, server_addr, 'http_no_rules', log_url)
                 else:
-                    if not is_health_check:
-                        if bubble_log.isEnabledFor(DEBUG):
-                            bubble_log.debug('bubble_handle_request: no matcher_response returned, passing thru...')
-                        # bubble_activity_log(client_addr, server_addr, 'http_no_matcher_response', log_url)
+                    if bubble_log.isEnabledFor(DEBUG):
+                        bubble_log.debug('bubble_handle_request: no matcher_response returned, passing thru...')
+                    # bubble_activity_log(client_addr, server_addr, 'http_no_matcher_response', log_url)
 
         elif is_http and is_not_from_vpn(client_addr):
             # todo: add to fail2ban

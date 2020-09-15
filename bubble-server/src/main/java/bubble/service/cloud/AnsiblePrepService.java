@@ -161,7 +161,7 @@ public class AnsiblePrepService {
         if (installType == AnsibleInstallType.sage) return (int) (((double) memoryMB) * 0.6d);
         if (memoryMB >= 4096) return (int) (((double) memoryMB) * 0.6d);
         if (memoryMB >= 2048) return (int) (((double) memoryMB) * 0.5d);
-        if (memoryMB >= 1024) return (int) (((double) memoryMB) * 0.196d);
+        if (memoryMB >= 1024) return (int) (((double) memoryMB) * 0.24d);
         // no nodes are this small, API probably would not start, not enough memory
         return (int) (((double) memoryMB) * 0.19d);
     }

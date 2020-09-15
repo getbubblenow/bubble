@@ -3,6 +3,10 @@
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
 LOG=/var/log/bubble/mitm_monitor.log
+if [[ ! -f ${LOG} ]] ; then
+  touch ${LOG}
+fi
+chgrp mitmproxy ${LOG} && chmod 660 ${LOG}  # allow run_mitm.sh to write to this log
 
 function die {
   echo 1>&2 "${1}"
@@ -76,22 +80,25 @@ function fullMitmReset {
 function healthCheck {
   MITM_PORT=${1}
   START=$(date +%s)
-  HEALTH_CHECK_TIMEOUT=20
+  HEALTH_CHECK_TIMEOUT=30
   HEALTH_OK="NOT_RUN"
+  HC_URL="http://$(hostname):${MITM_PORT}/__bubble/__mitm_health"
   while [[ $(expr $(date +%s) - ${START}) -le ${HEALTH_CHECK_TIMEOUT} ]] ; do
-    # log "Performing health check on mitm${MITM_PORT}..."
-    CURL_OUT="$(curl --silent --connect-timeout 2 --max-time 2 http://$(hostname):${MITM_PORT}/__bubble/__mitm_health 2>> ${LOG})"
+    # log "Performing health check on mitm${MITM_PORT} via ${HC_URL} ..."
+    CURL_OUT="$(curl --silent --connect-timeout 2 --max-time 2 ${HC_URL} 2>> ${LOG})"
     if [[ ! -z ${CURL_OUT} && ${CURL_OUT} == "OK" ]] ; then
-      # log "Health check on mitm${MITM_PORT}: OK"
+      # log "Health check on mitm${MITM_PORT} via ${HC_URL} : OK"
       echo -n "OK"
       return
     else
-      log "Health check on mitm${MITM_PORT}: failed: ${CURL_OUT}"
+      log "Health check on mitm${MITM_PORT} via ${HC_URL} failed: ${CURL_OUT}"
       HEALTH_OK="CURL_FAIL"
     fi
-    sleep 1s
+    sleep 5s
+    DELTA=$(expr $(date +%s) - ${START})
+    log "$(expr ${HEALTH_CHECK_TIMEOUT} - ${DELTA}) seconds before restart"
   done
-  log "Health check: final failure for mitm${MITM_PORT}, returning ${HEALTH_OK}"
+  log "Health check: final failure for mitm${MITM_PORT} via ${HC_URL} returning ${HEALTH_OK}"
   echo -n "${HEALTH_OK}"
 }
 

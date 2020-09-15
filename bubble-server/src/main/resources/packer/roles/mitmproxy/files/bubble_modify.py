@@ -9,11 +9,9 @@ import urllib
 import traceback
 
 from mitmproxy.net.http import Headers
-from mitmproxy.proxy.protocol.async_stream_body import AsyncStreamBody
 
 from bubble_config import bubble_port, debug_capture_fqdn, debug_stream_fqdn, debug_stream_uri
-from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, \
-    CTX_BUBBLE_FLEX, CTX_BUBBLE_SPECIAL, \
+from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, CTX_BUBBLE_FLEX, \
     status_reason, get_flow_ctx, add_flow_ctx, bubble_async, async_client, cleanup_async, \
     is_bubble_special_path, is_bubble_health_check, health_check_response, special_bubble_response, \
     CTX_BUBBLE_REQUEST_ID, CTX_CONTENT_LENGTH, CTX_CONTENT_LENGTH_SENT, CTX_BUBBLE_FILTERED, \
@@ -286,8 +284,6 @@ def responseheaders(flow):
         flex_flow = process_flex(flex_flow)
     else:
         flex_flow = None
-    if bubble_log.isEnabledFor(DEBUG):
-        bubble_log.debug('responseheaders: flex_flow = '+repr(flex_flow))
     bubble_filter_response(flow, flex_flow)
 
 
