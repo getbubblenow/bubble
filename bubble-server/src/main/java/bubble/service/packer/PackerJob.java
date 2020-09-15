@@ -313,7 +313,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
         final String version = packerService.getSoftwareVersion(roleName);
         vars.put(roleName, version);
 
-        final String hash = url2string(releaseUrlBase+"/"+version+"/"+roleName+".zip.sha256");
+        final String hash = url2string(releaseUrlBase+"/"+version+"/"+roleName+".zip.sha256").trim();
         String varsData = roleName+"_sha256 : '"+hash+"'\n"
                 + roleName+"_version : '" + version + "'\n";
 

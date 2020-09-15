@@ -122,7 +122,7 @@ public class PackerService {
         final String releaseUrlBase = configuration.getReleaseUrlBase();
         return softwareVersions.computeIfAbsent(roleName, r -> {
             try {
-                return url2string(releaseUrlBase+"/"+r+"/latest.txt");
+                return url2string(releaseUrlBase+"/"+r+"/latest.txt").trim();
             } catch (IOException e) {
                 return die("getSoftwareVersion("+r+"): "+shortError(e), e);
             }
