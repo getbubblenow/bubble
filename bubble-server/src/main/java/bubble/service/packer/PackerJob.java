@@ -313,13 +313,13 @@ public class PackerJob implements Callable<List<PackerImage>> {
         final String version = packerService.getSoftwareVersion(roleName);
         vars.put(roleName, version);
 
-        final String hash = url2string(releaseUrlBase+"/"+version+"/"+roleName+".zip.sha256").trim();
+        final String hash = url2string(releaseUrlBase+"/"+roleName+"/"+version+"/"+roleName+".zip.sha256").trim();
         String varsData = roleName+"_sha256 : '"+hash+"'\n"
                 + roleName+"_version : '" + version + "'\n";
 
         if (roleName.equals(ROLE_ALGO)) {
             // capture dnscrypt_proxy version for algo
-            final String dnscryptVersion = url2string(releaseUrlBase+"/"+version+"/dnscrypt-proxy_version.txt");
+            final String dnscryptVersion = url2string(releaseUrlBase+"/"+roleName+"/"+version+"/dnscrypt-proxy_version.txt");
             varsData += "dnscrypt_version : '"+dnscryptVersion+"'";
             vars.put(ROLE_DNSCRYPT, dnscryptVersion);
         }
