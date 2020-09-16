@@ -40,12 +40,12 @@ function {{JS_PREFIX}}_is_valid_author_name(name) {
 
 function {{JS_PREFIX}}_author_from_href(linkId, callback) {
     if (typeof linkId === 'undefined' || linkId === null || linkId.length === 0) {
-        console.log('author_from_href: invalid link ID: '+linkId);
+        // console.log('author_from_href: invalid link ID: '+linkId);
         return;
     }
     const link = document.getElementById(linkId);
     if (link === null) {
-        console.log('author_from_href: link with ID '+linkId+' not found');
+        // console.log('author_from_href: link with ID '+linkId+' not found');
         return;
     }
     const href = link.href;
@@ -136,7 +136,7 @@ function {{JS_PREFIX}}_create_block_control(article, authorName, articleLink) {
     blockSpan.appendChild(document.createTextNode('\u00A0\u00A0'));
     blockSpan.appendChild(blockLink);
     blockSpan.id = 'blockSpan_'+{{JS_PREFIX}}_uuidv4();
-    console.log('adding block control on '+authorName);
+    // console.log('adding block control on '+authorName);
     return blockSpan;
 }
 
@@ -214,7 +214,7 @@ function {{JS_PREFIX}}_consider_block(articles, blocked_users) {
 
                     const realLink = document.getElementById(linkId);
                     if (realLink === null) {
-                        console.log('consider_block: link with id '+linkId+' seems to have disappeared from the document');
+                        // console.log('consider_block: link with id '+linkId+' seems to have disappeared from the document');
                         return;
                     }
 
@@ -227,17 +227,17 @@ function {{JS_PREFIX}}_consider_block(articles, blocked_users) {
                     } else if (!seenBefore) {
                         let appendToSpan = {{JS_PREFIX}}_find_append_span(realLink);
                         if (!appendToSpan) {
-                            console.log('consider_block: no span found to append to for author '+author);
+                            // console.log('consider_block: no span found to append to for author '+author);
                             return;
                         }
 
                         let b = {{JS_PREFIX}}_create_block_control(article, author, realLink);
                         if (b !== null) {
-                            console.log('consider_block: inserting span='+b.id+' for article by '+author);
+                            // console.log('consider_block: inserting span='+b.id+' for article by '+author);
                             appendToSpan.parentNode.appendChild(b);
                             {{JS_PREFIX}}_tally_allow();
                         } else {
-                            console.log('consider_block: create_block_control returned null for author '+author)
+                            // console.log('consider_block: create_block_control returned null for author '+author)
                         }
                     }
                 });
