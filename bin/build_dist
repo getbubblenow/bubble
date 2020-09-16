@@ -76,7 +76,7 @@ if [[ ! -z "${BUBBLE_DIST_HOME}" ]] ; then
   fi
   cp "${ZIP}" "${BUBBLE_DIST}" && cat "${ZIP}" | sha256sum | cut -f1 -d' ' | tr -d '\n' > "${BUBBLE_DIST}.sha256"
   if [[ ${IS_DEV} -eq 0 ]] ; then
-    cd ${BUBBLE_DIST_TOP} && rm latest && ln -sf ${BUBBLE_VERSION} latest
+    cd ${BUBBLE_DIST_TOP} && rm -f latest && ln -sf ${BUBBLE_VERSION} latest
     echo "${BUBBLE_VERSION}" > latest.txt
   fi
   echo "Published release: ${BUBBLE_DIST}"
