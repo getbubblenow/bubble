@@ -165,7 +165,6 @@ public class PackerService {
             case ROLE_DNSCRYPT: return "";
             default: return die("getSoftwareSuffix: unrecognized roleName: "+roleName);
         }
-
     }
 
 }

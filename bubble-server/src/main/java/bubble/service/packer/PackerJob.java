@@ -295,6 +295,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
     private void writeBubbleVersions(TempDir tempDir, Map<String, String> versions) {
         final File varsDir = mkdirOrDie(abs(tempDir) + "/roles/"+ROLE_BUBBLE+"/vars");
         final StringBuilder b = new StringBuilder();
+        final Properties softwareProps = new Properties();
         for (Map.Entry<String, String> var : versions.entrySet()) {
             final String roleName = var.getKey();
             final String version = var.getValue().trim();
@@ -302,8 +303,11 @@ public class PackerJob implements Callable<List<PackerImage>> {
             final String hash = packerService.getSoftwareHash(roleName, version);
             b.append(roleBase).append("_version : '").append(version).append("'\n")
                     .append(roleBase).append("_sha : '").append(hash).append("'\n");
+            softwareProps.setProperty(roleBase+"_version", version);
+            softwareProps.setProperty(roleBase+"_sha", hash);
         }
         FileUtil.toFileOrDie(new File(varsDir, "main.yml"), b.toString());
+        configuration.saveSoftwareVersions(softwareProps);
     }
 
     private Map<String, String> getSoftwareVersion(String roleName, TempDir tempDir) throws IOException {

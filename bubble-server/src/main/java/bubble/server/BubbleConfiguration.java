@@ -52,9 +52,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.beans.Transient;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -182,6 +180,16 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         } catch (Exception e) {
             log.error("initDefaultSoftwareVersions: "+shortError(e));
             return null;
+        }
+    }
+
+    public void saveSoftwareVersions (Properties softwareVersions) {
+        if (!SOFTWARE_VERSIONS_FILE.exists()) {
+            try (OutputStream out = new FileOutputStream(SOFTWARE_VERSIONS_FILE)) {
+                softwareVersions.store(out, null);
+            } catch (Exception e) {
+                log.error("saveSoftwareVersions: "+shortError(e));
+            }
         }
     }
 
