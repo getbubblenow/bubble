@@ -1,3 +1,31 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+# Adapted from _events.py in the h11 project. The h11 license is reprinted here:
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2016 Nathaniel J. Smith <njs@pobox.com> and other contributors
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
 # High level events that make up HTTP/1.1 conversations. Loosely inspired by
 # the corresponding events in hyper-h2:
 #
@@ -220,6 +248,8 @@ class Response(_ResponseBase):
     """
 
     def _validate(self):
+        # THIS IS THE ONLY THING THAT WAS CHANGED
+        # Certain websites return HTTP status 999 to mean 200
         if self.status_code == 999:
             self.status_code = 200
         if not (200 <= self.status_code < 600):
