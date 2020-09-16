@@ -1,12 +1,6 @@
 [{
   "name": "UserBlocker",
   "children": {
-    "AppData": [{
-      "site": "LinkedIn",
-      "template": true,
-      "matcher": "LIMatcher",
-      "key": "kw:_<span>Promoted</span>",
-      "data": "true"
-    }]
+    "AppData": []
   }
 }]

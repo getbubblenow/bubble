@@ -10,6 +10,16 @@
       "fqdn": "www.linkedin.com",
       "urlRegex": "/feed/",
       "rule": "li_user_blocker"
+    }, {
+      "name": "LIMobileMatcher",
+      "site": "LinkedIn",
+      "template": true,
+      "requestCheck": true,
+      "requestModifier": true,
+      "fqdn": "www.linkedin.com",
+      "urlRegex": "/",
+      "userAgentRegex": "Mobi|Android",
+      "rule": "li_user_blocker"
     }]
   }
 }]

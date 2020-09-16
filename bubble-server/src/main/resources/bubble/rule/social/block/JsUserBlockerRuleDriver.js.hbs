@@ -72,8 +72,11 @@ function {{JS_PREFIX}}_uuidv4() {
 
 const {{JS_PREFIX}}_create_block_img = function(size) {
     const img = document.createElement('img');
+    img.style.all = 'revert';
+    img.style.fontSize = 'x-small';
     img.src = {{JS_PREFIX}}_asset_img_url('icon');
-    img.width = typeof size !== 'undefined' ? size : 24;
+    img.width = typeof size !== 'undefined' && size !== null ? size : 24;
+    img.style.width = img.width+'px';
     return img;
 }
 

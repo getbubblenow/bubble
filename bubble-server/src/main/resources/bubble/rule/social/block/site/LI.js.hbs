@@ -3,6 +3,14 @@
 
 const {{JS_PREFIX}}_site_host = location.protocol + '//' + window.location.hostname + '/';
 
+function {{JS_PREFIX}}_mobile() {
+    const html = Array.from(document.getElementsByTagName('html'));
+    if (html.length !== 0) {
+        return html[0].className && html[0].className.indexOf(' mobile ') !== -1;
+    }
+    return false;
+}
+
 const {{JS_PREFIX}}_jail = document.createElement('div');
 {{JS_PREFIX}}_jail.style.display = 'none';
 
@@ -16,7 +24,9 @@ function {{JS_PREFIX}}_apply_blocks(blocked_users) {
         } else {
         }
     }
-    const articles = Array.from(document.getElementsByClassName('feed-shared-update-v2'));
+    const articles = {{JS_PREFIX}}_mobile()
+        ? Array.from(document.getElementsByClassName('feed-item'))
+        : Array.from(document.getElementsByClassName('feed-shared-update-v2'));
     if (articles === null || articles.length === 0) {
         console.warn('No articles found, not filtering');
         return;
@@ -35,7 +45,7 @@ function {{JS_PREFIX}}_author_from_href(linkId, callback) {
     }
     const link = document.getElementById(linkId);
     if (link === null) {
-        // console.log('author_from_href: link with ID '+linkId+' not found');
+        console.log('author_from_href: link with ID '+linkId+' not found');
         return;
     }
     const href = link.href;
@@ -47,12 +57,17 @@ function {{JS_PREFIX}}_author_from_href(linkId, callback) {
     }
     if (h.endsWith('/')) h = h.substring(0, h.length - 1);
     let profile_type = null;
+
+    const mobile = {{JS_PREFIX}}_mobile();
+    if (mobile && h.startsWith('mwlite/')) {
+        h = h.substring('mwlite/'.length);
+    }
     if (h.startsWith('in/')) {
         profile_type = 'in/';
     } else if (h.startsWith('company/')) {
         profile_type = 'company/';
     } else {
-        // console.log("author_from_href: skipping (not in/ or company/) href: "+href);
+        // console.log("author_from_href: skipping (not in/ or company/) href: "+href+', h='+h);
         return;
     }
     const slashPos = h.indexOf('/');
@@ -127,20 +142,56 @@ function {{JS_PREFIX}}_create_block_control(article, authorName, articleLink) {
 
 function {{JS_PREFIX}}_hash_url(url) { return btoa(url).replaceAll('=', ''); }
 
+function {{JS_PREFIX}}_is_ad(article) {
+    const mobile = {{JS_PREFIX}}_mobile();
+    return (mobile && article.getAttribute('data-is-sponsored') && article.getAttribute('data-is-sponsored') !== "false")
+    || (article.innerHTML.indexOf('<span>Promoted</span>') !== -1)
+    || (article.innerHTML.indexOf('<span dir="ltr">Promoted</span>') !== -1);
+}
+
+function {{JS_PREFIX}}_find_append_span(link) {
+    const mobile = {{JS_PREFIX}}_mobile();
+    if (!mobile) {
+        let authorSpans = Array.from(link.getElementsByClassName('feed-shared-actor__name'));
+        if (authorSpans.length > 0) {
+            return authorSpans[0];
+        } else {
+            return Array.from(link.getElementsByTagName('span'))
+                .find(s => s.getAttribute('dir') === 'ltr' || s.getAttribute('data-entity-type'));
+        }
+    } else {
+        const ltrSpan = Array.from(link.getElementsByTagName('span'))
+            .find(s => s.getAttribute('dir') === 'ltr' || s.getAttribute('data-entity-type'));
+        if (ltrSpan) return ltrSpan;
+        if (link.className && link.className.indexOf('profile-link') !== -1) {
+            return link.lastChild;
+        }
+    }
+}
+
 function {{JS_PREFIX}}_consider_block(articles, blocked_users) {
+    const mobile = {{JS_PREFIX}}_mobile();
     if (articles && articles.length && articles.length > 0) {
         for (let i=0; i<articles.length; i++) {
             const article = articles[i];
+            if ({{JS_PREFIX}}_is_ad(article)) {
+                {{JS_PREFIX}}_tally_author_block({{PAGE_PREFIX}}_msg_or_default({{JS_PREFIX}}_messages, 'web_advertOrOtherBlock', 'ad/other'));
+                {{JS_PREFIX}}_remove_article_from_dom(article);
+                continue;
+            }
             const firstEval = {{JS_PREFIX}}_mark_evaluated(article);
             if ({{JS_PREFIX}}_includes_block_keyword(article, firstEval)) {
                 {{JS_PREFIX}}_remove_article_from_dom(article);
                 continue;
             }
-            const articleLinks = Array.from(article.getElementsByTagName('a'));
+            const articleLinks = mobile
+                ? Array.from(article.getElementsByTagName('a')).filter(a => !a.hasAttribute('aria-hidden'))
+                : Array.from(article.getElementsByTagName('a'));
+            // console.log('consider_block: found '+articleLinks.length+' articleLinks');
             for (let j=0; j<articleLinks.length; j++) {
                 const articleLink = articleLinks[j];
                 if (typeof articleLink === 'undefined' || articleLink === null || typeof articleLink.href === 'undefined') {
-                    console.log('consider_block: skipping invalid articleLink: '+JSON.stringify(articleLink));
+                    // console.log('consider_block: skipping invalid articleLink: '+JSON.stringify(articleLink));
                     continue;
                 }
                 if (typeof articleLink.id === 'undefined' || articleLink.id === null || articleLink.id.length === 0) {
@@ -174,17 +225,10 @@ function {{JS_PREFIX}}_consider_block(articles, blocked_users) {
                         {{JS_PREFIX}}_remove_article_from_dom(article);
 
                     } else if (!seenBefore) {
-                        let appendToSpan = null;
-                        let authorSpans = Array.from(realLink.getElementsByClassName('feed-shared-actor__name'));
-                        if (authorSpans.length > 0) {
-                            appendToSpan = authorSpans[0];
-                        } else {
-                            appendToSpan = Array.from(realLink.getElementsByTagName('span'))
-                                .find(s => s.getAttribute('dir') === 'ltr' || s.getAttribute('data-entity-type'));
-                            if (typeof appendToSpan === 'undefined') {
-                                console.log('consider_block: found no span to attach block control for author: '+author);
-                                return;
-                            }
+                        let appendToSpan = {{JS_PREFIX}}_find_append_span(realLink);
+                        if (!appendToSpan) {
+                            console.log('consider_block: no span found to append to for author '+author);
+                            return;
                         }
 
                         let b = {{JS_PREFIX}}_create_block_control(article, author, realLink);

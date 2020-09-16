@@ -263,7 +263,6 @@ function {{JS_PREFIX}}_chase_redirects (a, removeParams, regex, groups, callback
         body: JSON.stringify(follow_body)
     }
     const follow_url = is_regex ? {{JS_PREFIX}}_follow_and_apply_regex_url : {{JS_PREFIX}}_follow_url;
-    console.log('>>>>>>>>>>>> requesting follow_url ('+follow_url+') with request_opts: '+JSON.stringify(request_opts));
     fetch(follow_url, request_opts)
         .then(response => is_regex ? response.json() : response.text())
         .then(data => {
