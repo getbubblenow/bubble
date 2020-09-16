@@ -7,6 +7,8 @@ LOG=/var/log/bubble/ansible.log
 # Stop unattended upgrades so that apt installs will work
 # unattended upgrades are re-enabled at the end of the ansible run
 systemctl stop unattended-upgrades
+UNATTENDED_UPGRADES_DISABLED=20auto-upgrades-disabled
+cp /usr/share/unattended-upgrades/${UNATTENDED_UPGRADES_DISABLED} /etc/apt/apt.conf.d/${UNATTENDED_UPGRADES_DISABLED}
 
 # Enable job control. Allows us to start creating dhparam in the background right now.
 {{#if isNode}}# For node, also allows us to install AlgoVPN in the background.{{/if}}
@@ -104,6 +106,7 @@ fi
 kill_bg_jobs
 
 # ansible should have already restarted unattended-upgrades, but just in case
-systemctl start unattended-upgrades
+rm -f /etc/apt/apt.conf.d/${UNATTENDED_UPGRADES_DISABLED}
+systemctl restart unattended-upgrades
 
 exit 0
