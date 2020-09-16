@@ -16,6 +16,7 @@ import bubble.model.account.Account;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
+import bubble.server.SoftwareVersions;
 import bubble.service.cloud.GeoService;
 import lombok.Cleanup;
 import lombok.Getter;
@@ -41,9 +42,9 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.copyScripts;
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
+import static bubble.server.SoftwareVersions.*;
 import static bubble.service.packer.PackerService.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
-import static org.cobbzilla.util.http.HttpUtil.url2string;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.io.StreamUtil.copyClasspathDirectory;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
@@ -160,12 +161,9 @@ public class PackerJob implements Callable<List<PackerImage>> {
         @Cleanup final TempDir tempDir = copyClasspathDirectory("packer");
 
         // record versions of algo, mitmproxy and dnscrypt_proxy
-        final Map<String, String> versions = new HashMap<>();
-        versions.putAll(getSoftwareVersion(ROLE_ALGO, tempDir));
-        versions.putAll(getSoftwareVersion(ROLE_MITMPROXY, tempDir));
-
-        // write versions to bubble vars
-        writeBubbleVersions(tempDir, versions);
+        writeSoftwareVars(ROLE_ALGO, tempDir);
+        writeSoftwareVars(ROLE_MITMPROXY, tempDir);
+        writeSoftwareVars(ROLE_BUBBLE, tempDir);
 
         // copy packer ssh key
         copyFile(packerService.getPackerPublicKey(), new File(abs(tempDir)+"/roles/common/files/"+PACKER_KEY_NAME));
@@ -292,46 +290,10 @@ public class PackerJob implements Callable<List<PackerImage>> {
         return images;
     }
 
-    private void writeBubbleVersions(TempDir tempDir, Map<String, String> versions) {
-        final File varsDir = mkdirOrDie(abs(tempDir) + "/roles/"+ROLE_BUBBLE+"/vars");
-        final StringBuilder b = new StringBuilder();
-        final Properties softwareProps = new Properties();
-        for (Map.Entry<String, String> var : versions.entrySet()) {
-            final String roleName = var.getKey();
-            final String version = var.getValue().trim();
-            final String roleBase = roleName.replace("-", "_");
-            final String hash = packerService.getSoftwareHash(roleName, version);
-            b.append(roleBase).append("_version : '").append(version).append("'\n")
-                    .append(roleBase).append("_sha : '").append(hash).append("'\n");
-            softwareProps.setProperty(roleBase+"_version", version);
-            softwareProps.setProperty(roleBase+"_sha", hash);
-        }
-        FileUtil.toFileOrDie(new File(varsDir, "main.yml"), b.toString());
-        configuration.saveSoftwareVersions(softwareProps);
-    }
-
-    private Map<String, String> getSoftwareVersion(String roleName, TempDir tempDir) throws IOException {
-        final Map<String, String> vars = new HashMap<>();
-        final String releaseUrlBase = configuration.getReleaseUrlBase();
+    private void writeSoftwareVars(String roleName, TempDir tempDir) throws IOException {
+        final SoftwareVersions softwareVersions = configuration.getSoftwareVersions();
         final File varsDir = mkdirOrDie(abs(tempDir) + "/roles/"+roleName+"/vars");
-
-        // determine latest version
-        final String version = packerService.getSoftwareVersion(roleName);
-        vars.put(roleName, version);
-
-        final String hash = packerService.getSoftwareHash(roleName, version);
-        String varsData = roleName+"_sha : '"+hash+"'\n"
-                + roleName+"_version : '" + version + "'\n";
-
-        if (roleName.equals(ROLE_ALGO)) {
-            // capture dnscrypt_proxy version for algo
-            final String dnscryptVersion = url2string(releaseUrlBase+"/"+roleName+"/"+version+"/dnscrypt-proxy_version.txt").trim();
-            varsData += "dnscrypt_proxy_version : '"+dnscryptVersion+"'\n"
-                    + "dnscrypt_proxy_sha : '"+packerService.getSoftwareHash(ROLE_DNSCRYPT, dnscryptVersion)+"'";
-            vars.put(ROLE_DNSCRYPT, dnscryptVersion);
-        }
-        FileUtil.toFileOrDie(new File(varsDir, "main.yml"), varsData);
-        return vars;
+        softwareVersions.writeAnsibleVars(new File(varsDir, "main.yml"));
     }
 
     private List<String> getRolesForInstallType(AnsibleInstallType installType) {

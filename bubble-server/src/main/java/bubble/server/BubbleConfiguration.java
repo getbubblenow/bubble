@@ -168,30 +168,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     @Getter @Setter private String letsencryptEmail;
 
     @Getter @Setter private String releaseUrlBase;
-
-    public static final File SOFTWARE_VERSIONS_FILE = new File(HOME_DIR+"/bubble_versions.properties");
-    @Getter(lazy=true) private final Properties defaultSoftwareVersions = initDefaultSoftwareVersions();
-    private Properties initDefaultSoftwareVersions() {
-        if (!SOFTWARE_VERSIONS_FILE.exists()) return null;
-        final Properties props = new Properties();
-        try (InputStream in = new FileInputStream(SOFTWARE_VERSIONS_FILE)) {
-            props.load(in);
-            return props;
-        } catch (Exception e) {
-            log.error("initDefaultSoftwareVersions: "+shortError(e));
-            return null;
-        }
-    }
-
-    public void saveSoftwareVersions (Properties softwareVersions) {
-        if (!SOFTWARE_VERSIONS_FILE.exists()) {
-            try (OutputStream out = new FileOutputStream(SOFTWARE_VERSIONS_FILE)) {
-                softwareVersions.store(out, null);
-            } catch (Exception e) {
-                log.error("saveSoftwareVersions: "+shortError(e));
-            }
-        }
-    }
+    @Getter(lazy=true) private final SoftwareVersions softwareVersions = new SoftwareVersions(getReleaseUrlBase());
 
     @Setter private String localStorageDir = DEFAULT_LOCAL_STORAGE_DIR;
     public String getLocalStorageDir () { return empty(localStorageDir) ? DEFAULT_LOCAL_STORAGE_DIR : localStorageDir; }
@@ -292,7 +269,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                 .setVersion(version)
                 .setShortVersion(shortVersion)
                 .setSha256(getJarSha())
-                .setSoftware(getDefaultSoftwareVersions());
+                .setSoftware(getSoftwareVersions().getDefaultSoftwareVersions());
     }
     public String getShortVersion () { return getVersionInfo().getShortVersion(); }
 
