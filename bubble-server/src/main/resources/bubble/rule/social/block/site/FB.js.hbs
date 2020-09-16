@@ -32,7 +32,7 @@ Element.prototype.appendChild = function() {
                 const block = {{JS_PREFIX}}_should_block({{JS_PREFIX}}_blocked_users, node)
                 if (block) {
                     // log('>>> BLOCKING via appendChild: '+block);
-                    {{JS_PREFIX}}_appendChild.apply({{JS_PREFIX}}_jail, arguments);
+                    return {{JS_PREFIX}}_appendChild.apply({{JS_PREFIX}}_jail, arguments);
                 }
             }
         }
@@ -40,7 +40,7 @@ Element.prototype.appendChild = function() {
         console.log('>>> error inspecting: e='+e);
     }
     try {
-        {{JS_PREFIX}}_appendChild.apply(this, arguments);
+        return {{JS_PREFIX}}_appendChild.apply(this, arguments);
     } catch (e) {
         console.log('>>> error calling document.appendChild: arg[0].tagName = '+node.tagName+' e='+e);
     }

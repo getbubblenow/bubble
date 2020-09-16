@@ -87,9 +87,12 @@ function {{JS_PREFIX}}_create_button(labelKey, labelDefault, onclick, labelForma
     return btn;
 }
 
-if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
+{{JS_PREFIX}}_follow_url = '/__bubble/api/filter/follow/{{BUBBLE_REQUEST_ID}}';
+{{JS_PREFIX}}_follow_and_apply_regex_url = '/__bubble/api/filter/followAndApplyRegex/{{BUBBLE_REQUEST_ID}}';
 
-    let {{PAGE_PREFIX}}_url_chasers = {};
+{{JS_PREFIX}}_url_chasers = {};
+
+if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
 
     {{PAGE_PREFIX}}_screenWidth = function () { return window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth };
 
@@ -232,10 +235,10 @@ if (typeof {{PAGE_PREFIX}}_icon_status === 'undefined') {
     });
 }
 
-function {{JS_PREFIX}}_chase_redirects (a, removeParams) {
+function {{JS_PREFIX}}_chase_redirects (a, removeParams, regex, groups, callback) {
     const initial_href = a.href;
-    if (initial_href in {{PAGE_PREFIX}}_url_chasers) {
-        a.href = {{PAGE_PREFIX}}_url_chasers[initial_href];
+    if (initial_href in {{JS_PREFIX}}_url_chasers) {
+        a.href = {{JS_PREFIX}}_url_chasers[initial_href];
         return;
     }
     if (a.className && a.className.indexOf('{{JS_PREFIX}}_followed') !== -1) return;
@@ -247,20 +250,38 @@ function {{JS_PREFIX}}_chase_redirects (a, removeParams) {
 
     a.rel = 'noopener noreferrer nofollow';
 
-    fetch('/__bubble/api/filter/follow/{{BUBBLE_REQUEST_ID}}', {method: 'POST', body: JSON.stringify(initial_href)})
-        .then(response => response.text())
+    let is_regex = (typeof regex !== 'undefined');
+    const follow_body = !is_regex ? initial_href :
+        {
+            'url': initial_href,
+            'regex': regex,
+            'groups': (typeof groups === 'undefined' || groups === null ? null : groups)
+        };
+    const request_opts = {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(follow_body)
+    }
+    const follow_url = is_regex ? {{JS_PREFIX}}_follow_and_apply_regex_url : {{JS_PREFIX}}_follow_url;
+    console.log('>>>>>>>>>>>> requesting follow_url ('+follow_url+') with request_opts: '+JSON.stringify(request_opts));
+    fetch(follow_url, request_opts)
+        .then(response => is_regex ? response.json() : response.text())
         .then(data => {
-            if (data && (data.startsWith('http://') || data.startsWith('https://'))) {
-                if (typeof removeParams === 'undefined' || removeParams === null || removeParams) {
-                    const qPos = data.indexOf('?');
-                    a.href = qPos === -1 ? data : data.substring(0, qPos);
-                } else {
-                    a.href = data;
-                }
-                {{PAGE_PREFIX}}_url_chasers[initial_href] = a.href;
-                // console.log('chase_redirect: rewrote '+initial_href+' -> '+a.href);
+            if (is_regex) {
+                callback(data);
             } else {
-                console.warn('chase_redirects: '+a.href+' returned non-URL response: '+data);
+                if (data && (data.startsWith('http://') || data.startsWith('https://'))) {
+                    if (typeof removeParams === 'undefined' || removeParams === null || removeParams) {
+                        const qPos = data.indexOf('?');
+                        a.href = qPos === -1 ? data : data.substring(0, qPos);
+                    } else {
+                        a.href = data;
+                    }
+                    {{JS_PREFIX}}_url_chasers[initial_href] = a.href;
+                    // console.log('chase_redirect: rewrote '+initial_href+' -> '+a.href);
+                } else {
+                    console.warn('chase_redirects: ' + a.href + ' returned non-URL response: ' + data);
+                }
             }
         })
         .catch((error) => {

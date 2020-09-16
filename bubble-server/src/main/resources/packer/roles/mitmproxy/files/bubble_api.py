@@ -469,6 +469,10 @@ def health_check_response(flow):
         flow.response.stream = lambda chunks: [b'OK\n']
 
 
+def include_request_headers(path):
+    return '/followAndApplyRegex' in path
+
+
 def special_bubble_response(flow):
     name = 'special_bubble_response'
     path = flow.request.path
@@ -478,7 +482,7 @@ def special_bubble_response(flow):
 
     uri = make_bubble_special_path(path)
     if bubble_log.isEnabledFor(DEBUG):
-        bubble_log.debug('special_bubble_response: sending special bubble request to '+uri)
+        bubble_log.debug('special_bubble_response: sending special bubble '+flow.request.method+' to '+uri)
     headers = {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -489,12 +493,22 @@ def special_bubble_response(flow):
         response = async_stream(client, name, uri, headers=headers, loop=loop)
 
     elif flow.request.method == 'POST':
-        loop = asyncio.new_event_loop()
-        client = async_client(timeout=30)
+        if include_request_headers(flow.request.path):
+            if bubble_log.isEnabledFor(DEBUG):
+                bubble_log.debug('special_bubble_request: including client headers: '+repr(flow.request.headers))
+            # add client request headers
+            for name, value in flow.request.headers.items():
+                headers['X-Bubble-Client-Header-'+name] = value
+            if bubble_log.isEnabledFor(DEBUG):
+                bubble_log.debug('special_bubble_request: NOW headers='+repr(headers))
+
         data = None
         if flow.request.content and flow.request.content:
             headers[HEADER_CONTENT_LENGTH] = str(len(flow.request.content))
             data = flow.request.content
+
+        loop = asyncio.new_event_loop()
+        client = async_client(timeout=30)
         response = async_stream(client, name, uri, headers=headers, method='POST', data=data, loop=loop)
 
     else:

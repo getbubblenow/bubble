@@ -34,13 +34,12 @@ import bubble.service.stream.StandardRuleEngineService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.http.HttpContentEncodingType;
-import org.cobbzilla.util.http.HttpUtil;
 import org.cobbzilla.util.network.NetworkUtil;
-import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -64,15 +63,16 @@ import static bubble.service.stream.StandardRuleEngineService.MATCHERS_CACHE_TIM
 import static com.google.common.net.HttpHeaders.CONTENT_SECURITY_POLICY;
 import static java.util.Collections.emptyMap;
 import static java.util.concurrent.TimeUnit.*;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static org.apache.http.HttpHeaders.*;
 import static org.cobbzilla.util.collection.ArrayUtil.arrayToString;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpContentTypes.TEXT_PLAIN;
 import static org.cobbzilla.util.http.HttpUtil.applyRegexToUrl;
-import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
-import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.http.HttpUtil.chaseRedirects;
+import static org.cobbzilla.util.json.JsonUtil.*;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
+import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.util.string.StringUtil.trimQuotes;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 import static org.cobbzilla.wizard.model.NamedEntity.names;
@@ -446,8 +446,17 @@ public class FilterHttpResource {
     public Response flushCaches(@Context ContainerRequest request) {
         final Account caller = userPrincipal(request);
         if (!caller.admin()) return forbidden();
+
+        final int connCheckMatcherCacheSize = connCheckMatcherCache.size();
         connCheckMatcherCache.clear();
-        return ok(ruleEngine.flushCaches());
+
+        // disable redirect flushing for now -- it works well and it's a lot of work
+        // final Long redirectCacheSize = getRedirectCache().del_matching("*");
+
+        final Map<Object, Object> flushes = ruleEngine.flushCaches();
+        flushes.put("connCheckMatchersCache", connCheckMatcherCacheSize);
+        // flushes.put("redirectCache", redirectCacheSize == null ? 0 : redirectCacheSize);
+        return ok(flushes);
     }
 
     @DELETE @Path(EP_MATCHERS)
@@ -690,40 +699,68 @@ public class FilterHttpResource {
         return ok_empty();
     }
 
-    private final Map<String, String> redirectCache
-            = new ExpirationMap<>(1000, DAYS.toMillis(3), ExpirationEvictionPolicy.atime);
+    public static final String REDIS_PREFIX_REDIRECT_CACHE = "followLink_";
+    @Getter(lazy=true) private final RedisService redirectCache = redis.prefixNamespace(REDIS_PREFIX_REDIRECT_CACHE);
 
     @POST @Path(EP_FOLLOW+"/{requestId}")
+    @Consumes(APPLICATION_JSON)
     @Produces(TEXT_PLAIN)
     public Response followLink(@Context Request req,
                                @Context ContainerRequest ctx,
                                @PathParam("requestId") String requestId,
-                               JsonNode followSpec) {
+                               JsonNode urlNode) {
         final FilterSubContext filterCtx = new FilterSubContext(req, requestId);
+        final RedisService cache = getRedirectCache();
+        final String url = urlNode.textValue();
+        final String cacheKey = sha256_hex(url);
+        final String cachedValue = cache.get(cacheKey);
+        if (cachedValue != null) return ok(cachedValue);
 
-        // is this a request to parse regexes from a URL?
-        if (followSpec.has("regex")) {
-            return ok(redirectCache.computeIfAbsent(json(followSpec), k -> {
-                final String url = followSpec.get("url").textValue();
-                final String regex = followSpec.get("regex").textValue();
-                final Integer group = followSpec.has("group") ? followSpec.get("group").asInt() : null;
-                final List<NameAndValue> headers = new ArrayList<>();
-                for (String name : req.getHeaderNames()) {
-                    final String value = req.getHeader(name);
-                    headers.add(new NameAndValue(name, value));
+        final String result = chaseRedirects(url);
+        cache.set(cacheKey, result, EX, DAYS.toMillis(365));
+        return ok(result);
+    }
+
+    public static final String CLIENT_HEADER_PREFIX = "X-Bubble-Client-Header-";
+
+    public static final String[] EXCLUDED_CLIENT_HEADERS = {
+            ACCEPT.toLowerCase(),
+            CONTENT_TYPE.toLowerCase(), CONTENT_LENGTH.toLowerCase(),
+            CONTENT_ENCODING.toLowerCase(), TRANSFER_ENCODING.toLowerCase()
+    };
+
+    @POST @Path(EP_FOLLOW_AND_APPLY_REGEX+"/{requestId}")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    public Response followLinkThenApplyRegex(@Context Request req,
+                                             @Context ContainerRequest ctx,
+                                             @PathParam("requestId") String requestId,
+                                             FollowThenApplyRegex follow) {
+        final FilterSubContext filterCtx = new FilterSubContext(req, requestId);
+        final RedisService cache = getRedirectCache();
+        final String followJson = json(follow);
+        final String cacheKey = sha256_hex(followJson);
+        final String cachedValue = cache.get(cacheKey);
+        if (cachedValue != null) return ok(cachedValue);
+
+        // collect client headers
+        final List<NameAndValue> headers = new ArrayList<>();
+        for (String name : req.getHeaderNames()) {
+            if (name.toLowerCase().startsWith(CLIENT_HEADER_PREFIX.toLowerCase())) {
+                final String value = req.getHeader(name);
+                final String realName = name.substring(CLIENT_HEADER_PREFIX.length());
+                if (ArrayUtils.indexOf(EXCLUDED_CLIENT_HEADERS, realName.toLowerCase()) == -1) {
+                    headers.add(new NameAndValue(realName, value));
                 }
-                final List<String> matches = applyRegexToUrl(url, headers, regex, group);
-                return matches == null ? null : StringUtil.toString(matches, "\n");
-            }));
-
-        } else if (followSpec.isTextual()) {
-            // just a regular follow -- chase redirects
-            return ok(redirectCache.computeIfAbsent(followSpec.textValue(), HttpUtil::chaseRedirects));
-        } else {
-            final String json = json(followSpec);
-            log.error("followLink: invalid json (expected String or {regex, url}): "+json);
-            return notFound(json);
+            }
         }
+        headers.add(new NameAndValue(ACCEPT, "*/*"));
+        final List<Map<Integer, String>> matches
+                = applyRegexToUrl(follow.getUrl(), headers, follow.getRegex(), Arrays.asList(follow.getGroups()));
+        if (log.isWarnEnabled()) log.warn("followLink(" + follow.getUrl() + ") returning: " + json(matches));
+        final String result = matches == null ? EMPTY_JSON_ARRAY : json(matches);
+        cache.set(cacheKey, result, EX, DAYS.toMillis(365));
+        return ok(result);
     }
 
     @Path(EP_ASSETS+"/{requestId}/{appId}")
