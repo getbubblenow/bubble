@@ -290,7 +290,9 @@ public class StandardNetworkService implements NetworkService {
             prepareLaunchFiles(nn, computeDriver, node, progressMeter, network, sageKey, account, plan, sageNode, automation, errors, sshKeyFile);
 
             // run ansible
-            final String sshArgs = "-o UserKnownHostsFile=/dev/null "
+            final String sshArgs
+                    = "-p 1202 "
+                    + "-o UserKnownHostsFile=/dev/null "
                     + "-o StrictHostKeyChecking=no "
                     + "-o PreferredAuthentications=publickey "
                     + "-i " + abs(sshKeyFile);
