@@ -3,11 +3,22 @@
 #
 # Insert additional firewall rules to allow required services to function
 # Insert them all on rule_num 5, and insert them in reverse order here:
-- name: Allow SSH
+- name: Allow SSH tarpit
   iptables:
     chain: INPUT
     protocol: tcp
     destination_port: 22
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new SSH tarpit connections
+  become: yes
+
+- name: Allow SSH
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 1202
     ctstate: NEW
     syn: match
     jump: ACCEPT
