@@ -168,7 +168,6 @@ class Rerouter:
                     return None
 
                 elif is_not_from_vpn(client_addr):
-                    # todo: add to fail2ban
                     if bubble_log.isEnabledFor(WARNING):
                         bubble_log.warning('bubble_handle_request: sending to tarpit: non-VPN client='+client_addr+', url='+log_url+' host='+host)
                     bubble_activity_log(client_addr, server_addr, 'http_tarpit_non_vpn', fqdns)
@@ -230,11 +229,10 @@ class Rerouter:
                     # bubble_activity_log(client_addr, server_addr, 'http_no_matcher_response', log_url)
 
         elif is_http and is_not_from_vpn(client_addr):
-            # todo: add to fail2ban
             if bubble_log.isEnabledFor(WARNING):
-                bubble_log.warning('bubble_handle_request: returning 404 for non-VPN client='+client_addr+', server_addr='+server_addr)
-            bubble_activity_log(client_addr, server_addr, 'http_abort_non_vpn', [server_addr])
-            add_flow_ctx(flow, CTX_BUBBLE_ABORT, 404)
+                bubble_log.warning('bubble_handle_request: sending to tarpit: non-VPN client='+client_addr)
+            bubble_activity_log(client_addr, server_addr, 'http_tarpit_non_vpn', [server_addr])
+            tarpit_response(flow, host)
             return None
 
         else:
