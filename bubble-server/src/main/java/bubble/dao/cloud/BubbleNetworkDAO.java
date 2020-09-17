@@ -92,6 +92,10 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
         return findByUniqueFields("name", name, "domain", domainUuid);
     }
 
+    public List<BubbleNetwork> findByAccountAndSshKey(String account, String keyUuid) {
+        return findByFields("account", account, "sshKey", keyUuid);
+    }
+
     @Override public void delete(String uuid) {
         final BubbleNetwork network = findByUuid(uuid);
         if (network == null) return;

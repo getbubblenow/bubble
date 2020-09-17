@@ -63,6 +63,10 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
 
     public AccountPlan findByNetwork(String networkUuid) { return findByUniqueField("network", networkUuid); }
 
+    public List<AccountPlan> findByAccountAndSshKey(String account, String keyUuid) {
+        return findByFields("account", account, "sshKey", keyUuid);
+    }
+
     public List<AccountPlan> findByAccountAndNotDeleted(String account) {
         return findByFields("account", account, "deleting", false, "deleted", null);
     }

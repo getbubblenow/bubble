@@ -4,8 +4,11 @@
  */
 package bubble.dao.account;
 
+import bubble.dao.bill.AccountPlanDAO;
+import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.model.account.Account;
 import bubble.model.account.AccountSshKey;
+import bubble.model.bill.AccountPlan;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.server.BubbleConfiguration;
@@ -14,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
+import java.util.List;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static org.cobbzilla.util.io.FileUtil.touch;
@@ -25,6 +29,8 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 public class AccountSshKeyDAO extends AccountOwnedEntityDAO<AccountSshKey> {
 
     @Autowired private AccountDAO accountDAO;
+    @Autowired private AccountPlanDAO accountPlanDAO;
+    @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private BubbleConfiguration configuration;
 
     public AccountSshKey findByAccountAndHash(String accountUuid, String hash) {
@@ -90,6 +96,19 @@ public class AccountSshKeyDAO extends AccountOwnedEntityDAO<AccountSshKey> {
 
     @Override public void delete(String uuid) {
         final AccountSshKey key = findByUuid(uuid);
+
+        // remove from any AccountPlans that reference it
+        final List<AccountPlan> accountPlans = accountPlanDAO.findByAccountAndSshKey(key.getAccount(), key.getUuid());
+        for (AccountPlan plan : accountPlans) {
+            accountPlanDAO.update(plan.setSshKey(null));
+        }
+
+        // remove from any BubbleNetworks that reference it
+        final List<BubbleNetwork> bubbleNetworks = networkDAO.findByAccountAndSshKey(key.getAccount(), key.getUuid());
+        for (BubbleNetwork network : bubbleNetworks) {
+            networkDAO.update(network.setSshKey(null));
+        }
+
         super.delete(uuid);
         if (key.installSshKey()) refreshInstalledKeys();
     }
