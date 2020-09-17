@@ -1,0 +1,54 @@
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+- name: Create tarpit user
+  user:
+    name: tarpit
+    comment: tarpit user
+    shell: /bin/false
+    system: yes
+    home: /home/tarpit
+    groups: bubble-log
+
+- name: Copy bubble_ssh_tarpit script
+  copy:
+    src: bubble_ssh_tarpit.py
+    dest: /home/tarpit/bubble_ssh_tarpit.py
+    owner: tarpit
+    group: tarpit
+    mode: 0500
+
+- name: Copy bubble_http_tarpit script
+  copy:
+    src: bubble_http_tarpit.py
+    dest: /home/tarpit/bubble_http_tarpit.py
+    owner: tarpit
+    group: tarpit
+    mode: 0500
+
+- name: Install ssh tarpit supervisor conf file
+  copy:
+    src: supervisor_ssh_tarpit.conf
+    dest: /etc/supervisor/conf.d/ssh_tarpit.conf
+    owner: root
+    group: root
+    mode: 0400
+
+- name: Install http tarpit supervisor conf file
+  copy:
+    src: supervisor_http_tarpit.conf
+    dest: /etc/supervisor/conf.d/http_tarpit.conf
+    owner: root
+    group: root
+    mode: 0400
+
+- name: Allow HTTP tarpit port
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 8080
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new connections on HTTP tarpit port
+  become: yes

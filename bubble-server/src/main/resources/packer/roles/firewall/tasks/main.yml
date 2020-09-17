@@ -90,14 +90,33 @@
     dest: /usr/local/bin/bubble_peer_manager.py
     owner: root
     group: root
-    mode: 0555
+    mode: 0550
   when: fw_enable_admin
 
-- name: Install supervisor conf file for port manager
+- name: Install supervisor conf file for peer manager
   copy:
     src: supervisor_bubble_peer_manager.conf
     dest: /etc/supervisor/conf.d/bubble_peer_manager.conf
+    owner: root
+    group: root
+    mode: 0550
   when: fw_enable_admin
+
+- name: Install SSH hardening settings
+  copy:
+    src: bubble_sshd.conf
+    dest: /etc/ssh/ssh_config.d/bubble_sshd.conf
+    owner: root
+    group: root
+    mode: 0400
+
+- name: Install SSH fail2ban settings
+  copy:
+    src: jail.local
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: 0400
 
 - include: rules.yml
 

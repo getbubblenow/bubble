@@ -17,15 +17,18 @@
     comment: Allow related and established connections
   become: yes
 
-- name: Allow SSH
+- name: Allow SSH on ports 22 and 1202
   iptables:
     chain: INPUT
     protocol: tcp
-    destination_port: 22
+    destination_port: "{{ item }}"
     ctstate: NEW
     syn: match
     jump: ACCEPT
     comment: Accept new SSH connections
+  with_items:
+    - 22
+    - 1202
   become: yes
   when: fw_enable_ssh
 

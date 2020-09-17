@@ -32,7 +32,7 @@ from mitmproxy.net.http import headers as nheaders
 from bubble_api import bubble_matchers, bubble_activity_log, \
     CTX_BUBBLE_MATCHERS, CTX_BUBBLE_SPECIAL, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, \
     CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_FLEX, CTX_BUBBLE_REQUEST_ID, add_flow_ctx, parse_host_header, \
-    is_bubble_special_path, is_bubble_health_check, health_check_response, \
+    is_bubble_special_path, is_bubble_health_check, health_check_response, tarpit_response,\
     is_bubble_request, is_sage_request, is_not_from_vpn, is_flex_domain
 from bubble_config import bubble_host, bubble_host_alias
 from bubble_flex import new_flex_flow
@@ -170,9 +170,9 @@ class Rerouter:
                 elif is_not_from_vpn(client_addr):
                     # todo: add to fail2ban
                     if bubble_log.isEnabledFor(WARNING):
-                        bubble_log.warning('bubble_handle_request: returning 404 for non-VPN client='+client_addr+', url='+log_url+' host='+host)
-                    bubble_activity_log(client_addr, server_addr, 'http_abort_non_vpn', fqdns)
-                    add_flow_ctx(flow, CTX_BUBBLE_ABORT, 404)
+                        bubble_log.warning('bubble_handle_request: sending to tarpit: non-VPN client='+client_addr+', url='+log_url+' host='+host)
+                    bubble_activity_log(client_addr, server_addr, 'http_tarpit_non_vpn', fqdns)
+                    tarpit_response(flow, host)
                     return None
 
             if is_bubble_special_path(path):

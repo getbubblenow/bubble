@@ -64,6 +64,7 @@ LOCAL_IPS = []
 for local_ip in subprocess.check_output(['hostname', '-I']).split():
     LOCAL_IPS.append(local_ip.decode())
 
+TARPIT_PORT = 8080
 
 VPN_IP4_CIDR = IPNetwork(wireguard_network_ipv4)
 VPN_IP6_CIDR = IPNetwork(wireguard_network_ipv6)
@@ -467,6 +468,24 @@ def health_check_response(flow):
         flow.response.status_code = 200
         flow.response.reason = 'OK'
         flow.response.stream = lambda chunks: [b'OK\n']
+
+
+def tarpit_response(flow, host):
+    # if bubble_log.isEnabledFor(DEBUG):
+    #     bubble_log.debug('health_check_response: special bubble health check request, responding with OK')
+    response_headers = nheaders.Headers()
+    response_headers[HEADER_LOCATION] = 'http://'+host+':'+str(TARPIT_PORT)+'/admin/index.php'
+    if flow.response is None:
+        flow.response = http.HTTPResponse(http_version='HTTP/1.1',
+                                          status_code=301,
+                                          reason='Moved Permanently',
+                                          headers=response_headers,
+                                          content=b'')
+    else:
+        flow.response.headers = nheaders.Headers()
+        flow.response.headers = response_headers
+        flow.response.status_code = 301
+        flow.response.reason = 'Moved Permanently'
 
 
 def include_request_headers(path):

@@ -18,7 +18,7 @@
 - name: Ensure mitmproxy user owns all mitmproxy files
   shell: chown -R mitmproxy /home/mitmproxy/mitmproxy
 
-- name: Install mitmproxy1 supervisor conf file
+- name: Install mitm8888 supervisor conf file
   template:
     src: supervisor_mitmproxy.conf.j2
     dest: /etc/supervisor/conf.d/mitm8888.conf
@@ -28,7 +28,7 @@
   vars:
     port: 8888
 
-- name: Install mitmproxy2 supervisor conf file
+- name: Install mitm9999 supervisor conf file
   template:
     src: supervisor_mitmproxy.conf.j2
     dest: /etc/supervisor/conf.d/mitm9999.conf

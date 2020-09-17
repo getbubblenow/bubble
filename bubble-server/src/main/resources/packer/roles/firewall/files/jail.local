@@ -1,0 +1,5 @@
+[sshd]
+mode    = aggressive
+port    = 1202
+logpath = %(sshd_log)s
+backend = %(sshd_backend)s
