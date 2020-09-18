@@ -144,7 +144,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     }
     @JsonIgnore @Transient public boolean isSageLauncher() {
         final BubbleNetwork thisNetwork = getThisNetwork();
-        return (isSelfSage() || !hasSageNode()) && thisNetwork.sage();
+        return (isSelfSage() || !hasSageNode()) && (thisNetwork == null || thisNetwork.sage());
     }
 
     @JsonIgnore @Transient public boolean isSage() {
