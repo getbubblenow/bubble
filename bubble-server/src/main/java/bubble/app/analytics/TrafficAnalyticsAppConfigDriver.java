@@ -10,7 +10,6 @@ import bubble.model.app.BubbleApp;
 import bubble.model.app.config.AppConfigDriverBase;
 import bubble.rule.analytics.TrafficAnalyticsConfig;
 import bubble.rule.analytics.TrafficAnalyticsRuleDriver;
-import bubble.rule.passthru.TlsPassthruRuleDriver;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ArrayUtil;
@@ -71,7 +70,7 @@ public class TrafficAnalyticsAppConfigDriver extends AppConfigDriverBase {
                 .addFilter(filter);
 
         final AppRule rule = loadRule(account, app);
-        loadDriver(account, rule, TlsPassthruRuleDriver.class); // validate proper driver
+        loadDriver(account, rule, TrafficAnalyticsRuleDriver.class); // validate proper driver
         ruleDAO.update(rule.setConfigJson(json(config)));
 
         return config.getPatterns();
