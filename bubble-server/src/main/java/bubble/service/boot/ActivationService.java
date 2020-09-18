@@ -168,6 +168,7 @@ public class ActivationService {
                 .setDomain(domain.getUuid())
                 .setDomainName(domain.getName())
                 .setComputeSizeType(ComputeNodeSizeType.local)
+                .setInstallType(AnsibleInstallType.sage)
                 .setName(request.getNetworkName())
                 .setTag(TAG_ALLOW_REGISTRATION, true)
                 .setTag(TAG_PARENT_ACCOUNT, account.getUuid())
