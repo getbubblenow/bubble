@@ -7,6 +7,7 @@ package bubble.dao.cloud;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.dao.bill.AccountPlanDAO;
+import bubble.model.account.Account;
 import bubble.model.bill.AccountPlan;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 import static bubble.model.cloud.BubbleNetwork.validateHostname;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static org.cobbzilla.wizard.model.Identifiable.UUID;
+import static org.cobbzilla.wizard.resources.ResourceUtil.forbiddenEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Repository @Slf4j
@@ -46,9 +48,14 @@ public class BubbleNetworkDAO extends AccountOwnedEntityDAO<BubbleNetwork> {
             if (errors.hasSuggestedName()) network.setName(errors.getSuggestedName());
         }
         if (!network.hasNickname()) network.setNickname(network.getName());
-        final AnsibleInstallType installType = network.hasForkHost() && network.getLaunchType() == LaunchType.fork_sage && configuration.isSageLauncher()
+        final AnsibleInstallType installType = network.getLaunchType() == LaunchType.fork_sage && configuration.isSageLauncher()
                 ? AnsibleInstallType.sage
                 : AnsibleInstallType.node;
+        if (installType == AnsibleInstallType.sage) {
+            // ensure caller is an admin
+            final Account account = accountDAO.findByUuid(network.getAccount());
+            if (!account.admin()) throw forbiddenEx();
+        }
         network.setInstallType(installType);
         network.setSslPort(installType == AnsibleInstallType.sage ? 443 : configuration.getDefaultSslPort());
         if (!network.hasLocale()) network.setLocale(getDEFAULT_LOCALE());
