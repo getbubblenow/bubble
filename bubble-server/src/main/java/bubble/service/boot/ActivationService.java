@@ -169,6 +169,7 @@ public class ActivationService {
                 .setDomainName(domain.getName())
                 .setComputeSizeType(ComputeNodeSizeType.local)
                 .setInstallType(AnsibleInstallType.sage)
+                .setLaunchType(LaunchType.fork_sage)
                 .setName(request.getNetworkName())
                 .setTag(TAG_ALLOW_REGISTRATION, true)
                 .setTag(TAG_PARENT_ACCOUNT, account.getUuid())
