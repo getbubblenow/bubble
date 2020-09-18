@@ -44,12 +44,12 @@
     "comment": "as root, check email inbox for welcome message",
     "request": {
       "session": "rootSession",
-      "uri": "debug/inbox/email/test_user_credit_refund_restart@example.com?type=notice&action=welcome&target=account"
+      "uri": "debug/inbox/email/test_user_credit_refund_restart@example.com?type=request&action=welcome&target=account"
     },
     "response": {
       "store": "emailInbox",
       "check": [
-        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'notice'"},
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
         {"condition": "'{{json.[0].ctx.message.action}}' == 'welcome'"},
         {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
       ]

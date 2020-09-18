@@ -208,7 +208,7 @@ public class AccountContact implements Serializable {
         if (!verified()) {
             if ( target == ActionTarget.account && (
                     (action == AccountAction.verify)  // all verification-related messages are allowed to unverified
-                 || (type == AccountMessageType.notice && action == AccountAction.welcome) // welcome is allowed to unverified
+                 || (type == AccountMessageType.request && action == AccountAction.welcome) // welcome is allowed to unverified
             ) ) {
                 log.info("isAllowed(" + message.getAction() + "): allowing "+type+" message to unverified contact: "+action);
             } else {

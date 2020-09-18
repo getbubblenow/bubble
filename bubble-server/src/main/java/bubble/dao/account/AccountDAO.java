@@ -13,6 +13,7 @@ import bubble.dao.bill.AccountPaymentArchivedDAO;
 import bubble.dao.bill.BillDAO;
 import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.BubbleFootprintDAO;
+import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.*;
@@ -410,6 +411,10 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         configuration.getBean(AccountPaymentArchivedDAO.class).createForAccount(account);
 
         log.info("delete: starting to delete account-dependent objects - " + currentThread().getName());
+        final BubbleNetworkDAO networkDAO = configuration.getBean(BubbleNetworkDAO.class);
+        final List<BubbleNetwork> networks = networkDAO.findByAccount(account.getUuid());
+        networks.forEach(n -> networkDAO.delete(n.getUuid())); // deleting all networks dependency objects
+
         configuration.deleteDependencies(account);
         log.info("delete: finished deleting account-dependent objects - " + currentThread().getName());
 

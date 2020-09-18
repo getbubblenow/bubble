@@ -99,7 +99,7 @@ public class AccountInitializer implements Runnable {
                         .setAccount(accountUuid)
                         .setName(accountUuid)
                         .setNetwork(thisNetwork.getUuid())
-                        .setMessageType(AccountMessageType.notice)
+                        .setMessageType(AccountMessageType.request)
                         .setAction(AccountAction.welcome)
                         .setTarget(ActionTarget.account)
                         .setContact(contact));

@@ -41,7 +41,7 @@
       "store": "userInbox",
       "check": [
         {"condition": "json.length == 1"},
-        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'notice'"},
+        {"condition": "'{{json.[0].ctx.message.messageType}}' == 'request'"},
         {"condition": "'{{json.[0].ctx.message.action}}' == 'welcome'"},
         {"condition": "'{{json.[0].ctx.message.target}}' == 'account'"}
       ]

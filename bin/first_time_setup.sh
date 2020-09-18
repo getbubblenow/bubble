@@ -29,8 +29,7 @@ function die {
 BASE=$(cd $(dirname $0)/.. && pwd)
 cd ${BASE}
 
-git submodule init || die "Error in git submodule init"
-git submodule update || die "Error in git submodule update"
+git submodule update --init --recursive || die "Error in git submodule update"
 
 pushd utils/cobbzilla-parent
 mvn install || die "Error installing cobbzilla-parent"
@@ -49,9 +48,6 @@ for repo in ${UTIL_REPOS} ; do
   pushd ${repo} && mvn -DskipTests=true -Dcheckstyle.skip=true clean install && popd || die "Error installing ${repo}"
 done
 popd
-
-MESSAGES_REPO=bubble-server/src/main/resources/messages
-pushd ${MESSAGES_REPO} && git checkout master && popd || die "Error installing ${MESSAGES_REPO}"
 
 if [[ -z "${BUBBLE_SETUP_MODE}" || "${BUBBLE_SETUP_MODE}" == "web" ]] ; then
   INSTALL_WEB=web mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error building bubble jar"

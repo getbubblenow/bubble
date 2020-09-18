@@ -166,24 +166,12 @@ public class AccountMessageDAO extends AccountOwnedEntityDAO<AccountMessage> {
     }
 
     public AccountMessage findOperationRequest(AccountMessage basis) {
-        if (basis.getAction() == AccountAction.welcome && basis.getTarget() == ActionTarget.account) {
-            return findWelcomeNotice(basis);
-        }
         return findByUniqueFields("account", basis.getAccount(),
                 "name", basis.getName(),
                 "requestId", basis.getRequestId(),
                 "messageType", AccountMessageType.request,
                 "action", basis.getAction(),
                 "target", basis.getTarget());
-    }
-
-    public AccountMessage findWelcomeNotice(AccountMessage basis) {
-        return findByUniqueFields("account", basis.getAccount(),
-                "name", basis.getName(),
-                "requestId", basis.getRequestId(),
-                "messageType", AccountMessageType.notice,
-                "action", AccountAction.welcome,
-                "target", ActionTarget.account);
     }
 
     public List<AccountMessage> findOperationDenials(AccountMessage basis) {

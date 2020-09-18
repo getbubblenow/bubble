@@ -18,6 +18,7 @@ import bubble.model.account.message.handlers.*;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.string.StringUtil;
@@ -47,7 +48,29 @@ public class StandardAccountMessageService implements AccountMessageService {
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleConfiguration configuration;
 
+    /**
+     * If returns true, then email/sms will NOT be sent out for this AccountMessage object.
+     */
+    private boolean isQuietMessage(@NonNull final AccountMessage message) {
+        if (message.getMessageType() == AccountMessageType.confirmation
+               && message.getAction() == AccountAction.welcome
+               && message.getTarget() == ActionTarget.account) {
+            // No need for confirmation message here. The end user received `request.welcome.account` message with email
+            // address verification link. When he clicked the link, then the request was approved. That was the only
+            // required approval, and so it was also confirmed at that moment. Hence, AccountMessage
+            // `confirmation.welcome.account` is created. But there no real need to send out email at this point to the
+            // same user. And so this other confirmation message is `quiet`.
+            return true;
+        }
+        return false;
+    }
+
     @Override public boolean send(AccountMessage message) {
+        if (isQuietMessage(message)) {
+            log.info("send(" + message + "): message marked as quiet");
+            return false;
+        }
+
         final String accountUuid = message.getAccount();
         final Account account = accountDAO.findByUuid(accountUuid);
         AccountPolicy policy = policyDAO.findSingleByAccount(accountUuid);
@@ -140,16 +163,19 @@ public class StandardAccountMessageService implements AccountMessageService {
             final AccountMessage request = messageDAO.findOperationRequest(approval);
             if (request == null) throw invalidEx("err.approvalToken.invalid", "Request could not be found for approval: "+approval);
             final AccountPolicy policy = policyDAO.findSingleByAccount(account.getUuid());
-            final AccountMessage confirm = messageDAO.create(new AccountMessage(approval).setMessageType(AccountMessageType.confirmation));
             approval.setRequest(request);
             approval.setRequestContact(policy.findContactByUuid(approval.getRequest().getContact()));
             getCompletionHandler(approval).confirm(approval, data);
 
+            final AccountMessage confirm = new AccountMessage(approval).setMessageType(AccountMessageType.confirmation);
             if (approval.hasConfirmationTokensToRemove()) {
                 final RedisService tokens = getConfirmationTokens();
                 for (String toRemove : approval.getConfirmationTokensToRemove()) tokens.del(toRemove);
             }
-            return confirm;
+
+            // Write AccountMessage entity into database only if Account is still available in there
+            // (i.e. not removed with block_delete deletion policy)
+            return accountDAO.exists(confirm.getAccount()) ? messageDAO.create(confirm) : confirm;
 
         } else if (approvalStatus.ok()) {
             if (approval.hasConfirmationTokensToRemove()) {

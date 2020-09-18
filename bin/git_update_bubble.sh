@@ -32,10 +32,10 @@ cd ${BASE}
 
 git fetch || die "Error calling git fetch"
 git pull origin master || die "Error calling git pull origin master"
-git submodule update || die "Error in git submodule update"
+git submodule update --init --recursive || die "Error in git submodule update"
 
 pushd utils/cobbzilla-parent
-git fetch && git checkout master && git pull origin master && mvn install || die "Error updating cobbzilla-parent"
+mvn install || die "Error installing cobbzilla-parent"
 popd
 
 UTIL_REPOS="
@@ -49,15 +49,12 @@ abp-parser
 pushd utils
 for repo in ${UTIL_REPOS} ; do
   if [[ ${FAST} -eq 1 ]] ; then
-    pushd ${repo} && git fetch && git checkout master && git pull origin master && mvn -DskipTests=true -Dcheckstyle.skip=true install && popd || die "Error updating ${repo}"
+    pushd ${repo} && mvn -DskipTests=true -Dcheckstyle.skip=true install && popd || die "Error installing ${repo}"
   else
-    pushd ${repo} && git fetch && git checkout master && git pull origin master && mvn -DskipTests=true -Dcheckstyle.skip=true clean install && popd || die "Error updating ${repo}"
+    pushd ${repo} && mvn -DskipTests=true -Dcheckstyle.skip=true clean install && popd || die "Error installing ${repo}"
   fi
 done
 popd
-
-MESSAGES_REPO=bubble-server/src/main/resources/messages
-pushd ${MESSAGES_REPO} && git fetch && git checkout master && git pull origin master && popd || die "Error updating ${MESSAGES_REPO}"
 
 if [[ ${FAST} -eq 1 ]] ; then
   mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error building bubble jar"
