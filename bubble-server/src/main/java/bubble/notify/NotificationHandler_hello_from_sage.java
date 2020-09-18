@@ -47,7 +47,7 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
             configuration.setSageVersion(payloadNode.getSageVersion());
 
             // start the app upgrade service, if not running
-            if (!appUpgradeService.getIsAlive()) appUpgradeService.start();
+            if (!appUpgradeService.getIsAlive() && appUpgradeService.shouldRun()) appUpgradeService.start();
         }
 
         final BubbleNode thisNode = configuration.getThisNode();

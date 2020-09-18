@@ -50,22 +50,47 @@ public class AppUpgradeService extends SimpleDaemon {
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private StandardRuleEngineService ruleEngine;
 
+    public boolean shouldRun () {
+        final BubbleNetwork thisNetwork = configuration.getThisNetwork();
+        if (thisNetwork == null) {
+            log.warn("shouldRun: thisNetwork is null, not running");
+            return false;
+        }
+        final BubbleNode thisNode = configuration.getThisNode();
+        if (thisNode == null) {
+            log.warn("shouldRun: thisNode is null, not running");
+            return false;
+        }
+        final BubbleNode sageNode = configuration.getSageNode();
+        if (sageNode == null) {
+            log.warn("shouldRun: sageNode is null, not running");
+            return false;
+        }
+        if (sageNode.getUuid().equals(thisNode.getUuid())) {
+            log.warn("shouldRun: sageNode is thisNode, not running");
+            return false;
+        }
+        return true;
+    }
+
     @Override protected void process() {
         final BubbleNetwork thisNetwork = configuration.getThisNetwork();
         if (thisNetwork == null) {
             log.warn("process: thisNetwork is null, not running");
             return;
         }
-
         final BubbleNode thisNode = configuration.getThisNode();
         if (thisNode == null) {
             log.warn("process: thisNode is null, not running");
             return;
         }
-
         final BubbleNode sageNode = configuration.getSageNode();
         if (sageNode == null) {
             log.warn("process: sageNode is null, not running");
+            return;
+        }
+        if (sageNode.getUuid().equals(thisNode.getUuid())) {
+            log.warn("process: sageNode is thisNode, not running");
             return;
         }
 

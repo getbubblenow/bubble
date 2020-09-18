@@ -43,7 +43,7 @@ public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<Bub
 
     private static final FirstTimeType FIRST_TIME_TYPE_DEFAULT = FirstTimeType.install;
 
-    private static AtomicReference<RedisService> redis = new AtomicReference<>();
+    private static final AtomicReference<RedisService> redis = new AtomicReference<>();
     public static String getUnlockKey () {
         final RedisService r = redis.get();
         return r == null ? null : r.get(UNLOCK_KEY);
