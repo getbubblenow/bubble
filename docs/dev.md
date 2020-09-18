@@ -5,10 +5,18 @@ Bubble Developer Guide
 These instructions presume you are running a newly setup Ubuntu 20.04 system.
 Either the Ubuntu Server or Desktop distribution will work.
 
+Other Debian-based systems will probably also work fine.
+
+See below for other Linux distributions and other operating systems.
+
 ## First-Time System Setup
+You'll need to install some software for Bubble to work correctly.
+
 After you clone this repository, run:
 
     ./bin/first_time_ubuntu.sh
+
+This runs some `apt` commands to install various bits of software needed to run Bubble.
 
 If you are running on a non-Ubuntu system, copy that file to something like:
 

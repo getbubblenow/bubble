@@ -15,7 +15,7 @@ address `root@local.local` and the password from your `activation.json` file.
 After you log in, you should see a "Launch Bubble" screen.
 If you don't see this screen, click the "My Bubble" link in the header.
 
-In the "Bubble Type" drop-down box, choose "Fork".
+In the "Bubble Type" drop-down box, choose "Fork Launcher".
 
 In the "Fork Host" field, enter the fully-qualified domain name (FQDN) that the Bubble will be known as.
 
@@ -26,8 +26,17 @@ In the "Domain" field, choose the domain that corresponds to the FQDN you entere
 
 Configure the remaining fields as you desire. When you're ready, click the "Launch Your Bubble!" button.
 
-The screen will refresh and show a progress meter.
+The screen will refresh and show a progress meter. A typical launch will take about 10 minutes.
+
+## Your Very Remote Launcher
+The very first Remote Launcher you launch will build a [Packer](https://packer.io) image that will be used for this and
+subsequent launches.
+
+This process adds about 20-25 minutes to the launch process. This only happens the first time you launch a Remote Launcher.
+Later launches can skip this step, because Bubble will detect that the packer image already exists.
+
+## Next Steps
 When your Bubble finishes launching, it will show a "Connect to Bubble" button. Click this and you'll be connected
 to your Remote Launcher.
 
-You are now ready to [Launch a Bubble](launch-node.md)
+You are now ready to [Launch a Bubble](launch-node.md) from the Remote Launcher

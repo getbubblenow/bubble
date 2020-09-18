@@ -28,16 +28,23 @@ you can probably figure out how to get things working. If you're running Mac OS 
 more difficult.
 
 ### Download a Bubble Distribution
-Download and unzip the latest Bubble release:
- * [ZIP file](https://git.bubblev.org/bubblev/bubble/archive/release/adventure.zip)
- * [tar.gz archive](https://git.bubblev.org/bubblev/bubble/archive/release/adventure.tar.gz)
+Download the [latest Bubble release](https://jenkins.bubblev.org/public/releases/bubble/latest/bubble.zip)
 
-Unzip or untar the archive that you downloaded.
+Open a command-line terminal.
+
+Unzip the file that you downloaded:
+
+    unzip bubble.zip
+
+Change directories into the directory containing the files that were unzipped:
+
+    cd bubble-Adventure_1.x.x     # replace `Adventure_1.x.x` with the version that you downloaded
 
 ### Install System Software
-You'll need to install some software for Bubble to work correctly.
+You'll need to install some software for Bubble to work correctly. Run:
 
-Run the `bin/first_time_ubuntu.sh` command.
+    ./bin/first_time_ubuntu.sh
+
 This will grab all the submodules and perform an initial build of all components.
 
 You only need to run this command once, ever, on a given system.
@@ -51,23 +58,14 @@ distributions should work fine. If you are running a different OS or distributio
 And then edit it such that all the same packages get installed.
 Then submit a pull request and we can add support for your operating system to the main repository.
 
-### Build
-Before running Bubble, you need to build it. Run:
-
-    ./bin/first_time_setup.sh
-
-This will grab all the submodules and perform an initial build of all components.
-
-This will take a while to complete, please be patient.
-
 ## Deployment Modes
-Bubble runs in three different modes.
-In order to launch and use your own Bubble that you can connect devices to and use,
-you will progress through each of these modes.
+Bubble runs in three different modes. You'll at least need to run a Local Launcher first, then
+decide if you want to use a Remote Launcher to manage multiple Bubble nodes, or just launch a single Bubble
+directly from the Local Launcher.
 
 #### Local Launcher Mode
 In this mode, Bubble runs locally on your machine. You'll setup the various cloud services required to run Bubble,
-and use the Local Launcher to fork a Remote Launcher.
+and use the Local Launcher to start a Remote Launcher or a Bubble Node.
 
 Learn more about setting up [Local Launcher Mode](docs/local-launcher.md)
 
@@ -78,7 +76,7 @@ You cannot connect devices to a Bubble in Launcher Mode, you can only use it to 
 Learn more about setting up [Remote Launcher Mode](docs/remote-launcher.md)
 
 #### Bubble Node Mode
-In this mode, the Bubble has been launched by a Remote Launcher and is a proper Bubble Node.
+In this mode, the Bubble has been launched by a Local Launcher or a Remote Launcher and is a proper Bubble Node.
 You can connect your devices to it and use it as your own private VPN and enhanced internet service.
 
 Learn more about launching a [Bubble Node](docs/launch-node.md)
