@@ -25,7 +25,6 @@ from bubble_config import bubble_port, debug_capture_fqdn, \
 from mitmproxy import http
 from mitmproxy.net.http import headers as nheaders
 from mitmproxy.proxy.protocol.async_stream_body import AsyncStreamBody
-from mitmproxy.proxy.protocol.request_capture import RequestCapture
 
 bubble_log = logging.getLogger(__name__)
 
@@ -401,7 +400,7 @@ def is_bubble_health_check(path):
 
 
 def is_sage_request(ip, fqdns):
-    return (ip == bubble_sage_ip4 or ip == bubble_sage_ip6) and bubble_sage_host in fqdns
+    return fqdns is not None and (ip == bubble_sage_ip4 or ip == bubble_sage_ip6) and bubble_sage_host in fqdns
 
 
 def is_not_from_vpn(client_addr):
@@ -416,7 +415,7 @@ def is_flex_domain(client_addr, server_addr, fqdns):
         return False
     fqdn = fqdns[0]
 
-    if fqdn == bubble_host or fqdn == bubble_host_alias or fqdn == bubble_sage_host:
+    if fqdn == bubble_host or fqdn == bubble_host_alias or (bubble_sage_host is not None and fqdn == bubble_sage_host):
         if bubble_log.isEnabledFor(DEBUG):
             bubble_log.debug('is_flex_domain: (early) returning False for: '+fqdn)
         return False

@@ -7,7 +7,6 @@ package bubble.notify;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
-import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.notify.ReceivedNotification;
 import bubble.service.account.SyncAccountNotification;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +48,7 @@ public class NotificationHandler_sync_account extends ReceivedNotificationHandle
             localAccount.getHashedPassword().setHashedPassword(incomingHashedPassword);
             // if we are a node, set skipSync so we don't get caught in an infinite loop
             // (the node would notify the sage, which would notify the node, ad infinitum)
-            localAccount.setSkipSync(configuration.getThisNetwork().getInstallType() == AnsibleInstallType.node);
+            localAccount.setSkipSync(configuration.getThisNetwork().node());
             // update password, if we are a sage, this will notify all networks of password change
             accountDAO.update(localAccount);
         }
@@ -63,7 +62,7 @@ public class NotificationHandler_sync_account extends ReceivedNotificationHandle
             }
             localPolicy.update(incomingPolicy);
             localPolicy.setAccountContactsJson(incomingPolicy.getAccountContactsJson());
-            localPolicy.setSkipSync(configuration.getThisNetwork().getInstallType() == AnsibleInstallType.node);
+            localPolicy.setSkipSync(configuration.getThisNetwork().node());
             accountPolicyDAO.update(localPolicy);
         }
     }

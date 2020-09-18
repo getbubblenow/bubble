@@ -352,7 +352,7 @@ public class StandardNetworkService implements NetworkService {
             if (!setupOk) return launchFailureCanRetry(node, "newNode: error setting up, all retries failed for node: "+node.getUuid());
 
             // wait for node to be ready
-            if (node.getInstallType() == AnsibleInstallType.node) {
+            if (node.node()) {
                 final long readyStart = now();
                 boolean ready = false;
                 Exception lastEx = null;
@@ -479,7 +479,7 @@ public class StandardNetworkService implements NetworkService {
         progressMeter.write(METER_TICK_PREPARING_ROLES);
         final Map<String, Object> ctx = ansiblePrep.prepAnsible(
                 automation, bubbleFilesDir, account, network, node, computeDriver,
-                errors, nn.fork(), nn.getRestoreKey());
+                errors, nn.fork(), nn.getLaunchType(), nn.getRestoreKey());
         if (errors.isInvalid()) {
             progressMeter.error(METER_ERROR_ROLE_VALIDATION_ERRORS);
             fatalLaunchFailure(node, new MultiViolationException(errors.getViolationBeans()));
@@ -519,7 +519,7 @@ public class StandardNetworkService implements NetworkService {
         writeFile(bubbleFilesDir, null, SAGE_KEY_JSON, json(BubbleNodeKey.sageMask(sageKey)));
 
         // write packer keys if launching sage
-        if (network.getInstallType() == AnsibleInstallType.sage) {
+        if (network.sage()) {
             final File packerPubKeyFile = new File(bubbleFilesDir, PACKER_KEY_NAME+".pub");
             copyFile(packerService.getPackerPublicKey(), packerPubKeyFile);
 
@@ -726,6 +726,7 @@ public class StandardNetworkService implements NetworkService {
 
             final NewNodeNotification newNodeRequest = new NewNodeNotification()
                     .setFork(network.fork())
+                    .setLaunchType(network.getLaunchType())
                     .setNodeHost(network)
                     .setNetLocation(netLocation)
                     .setLock(lock);

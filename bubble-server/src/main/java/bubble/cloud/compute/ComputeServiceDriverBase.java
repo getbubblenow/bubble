@@ -39,9 +39,9 @@ public abstract class ComputeServiceDriverBase
 
     @Override public void postSetup() {
         final String prefix = "postSetup("+getClass().getSimpleName()+"/"+cloud.getUuid()+"): ";
-        if (configuration.isSelfSage()) {
+        if (configuration.getThisNetwork().sage()) {
             if (cloud.delegated()) {
-                log.info(prefix+"NOT starting NodeReaper for delegated driver");
+                log.info(prefix + "NOT starting NodeReaper for delegated driver");
             } else {
                 synchronized (reapers) {
                     if (reapers.get(getCredentials()) == null) {

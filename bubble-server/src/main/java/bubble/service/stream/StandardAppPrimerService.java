@@ -9,7 +9,6 @@ import bubble.dao.app.*;
 import bubble.dao.device.DeviceDAO;
 import bubble.model.account.Account;
 import bubble.model.app.*;
-import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.device.Device;
 import bubble.rule.AppRuleDriver;
@@ -54,7 +53,7 @@ public class StandardAppPrimerService implements AppPrimerService {
             log.info("initPrimingEnabled: thisNetwork is null, not priming");
             return false;
         }
-        if (thisNetwork.getInstallType() != AnsibleInstallType.node) {
+        if (thisNetwork.notNode()) {
             log.info("initPrimingEnabled: thisNetwork is not a node, not priming");
             return false;
         }

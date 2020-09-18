@@ -7,14 +7,13 @@ package bubble.server.listener;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
-import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.boot.SelfNodeService;
-import bubble.service.device.DeviceService;
 import bubble.service.cloud.NetworkMonitorService;
+import bubble.service.device.DeviceService;
 import bubble.service.device.StandardFlexRouterService;
 import bubble.service.stream.AppDataCleaner;
 import bubble.service.stream.AppPrimerService;
@@ -111,7 +110,7 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
         // and start AppDataCleaner
         if (thisNode != null) {
             final BubbleNetwork thisNetwork = c.getThisNetwork();
-            if (thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.node) {
+            if (thisNetwork != null && thisNetwork.node()) {
                 c.getBean(AppPrimerService.class).primeApps();
                 c.getBean(StandardFlexRouterService.class).start();
                 c.getBean(DeviceService.class).initDeviceSecurityLevels();

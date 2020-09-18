@@ -148,8 +148,10 @@ public class StandardSelfNodeService implements SelfNodeService {
 
         // start hello sage and spare devices services, if we have a sage that is not ourselves
         if (!c.isSage()) {
-            log.info("onStart: starting SageHelloService");
-            c.getBean(SageHelloService.class).start();
+            if (thisNode.node() && !c.isSelfSage()) {
+                log.info("onStart: starting SageHelloService");
+                c.getBean(SageHelloService.class).start();
+            }
 
             log.info("onStart: building spare devices for all account that are not root account");
             background(() -> {
@@ -165,7 +167,7 @@ public class StandardSelfNodeService implements SelfNodeService {
         }
 
         // start RefundService if payments are enabled and this is a SageLauncher
-        if (c.paymentsEnabled() && c.isSageLauncher()) {
+        if (c.paymentsEnabled() && c.isSageLauncher() && thisNode.sage()) {
             log.info("onStart: starting BillingService and RefundService");
             c.getBean(BillingService.class).start();
             c.getBean(StandardRefundService.class).start();
@@ -435,7 +437,7 @@ public class StandardSelfNodeService implements SelfNodeService {
     @Override public BubblePlan getThisPlan() {
         final BubbleNetwork network = safeGetThisNetwork();
         if (network == null) return null;
-        if (network.getInstallType() != AnsibleInstallType.node) return null;
+        if (network.notNode()) return null;
         final AccountPlan accountPlan = accountPlanDAO.findByNetwork(network.getUuid());
         if (accountPlan == null) return null;
         return planDAO.findByUuid(accountPlan.getPlan());
@@ -451,8 +453,7 @@ public class StandardSelfNodeService implements SelfNodeService {
         return ttl < 0 ? Optional.empty() : Optional.of(now() + ttl * 1000);
     }
 
-    @Override
-    public void setLogFlag(final boolean logFlag, @NonNull final Optional<Integer> ttlInSeconds) {
+    @Override public void setLogFlag(final boolean logFlag, @NonNull final Optional<Integer> ttlInSeconds) {
         if (logFlag) {
             getNodeConfig().set_plaintext(REDIS_LOG_FLAG_KEY, "true", EX,
                                           ttlInSeconds.orElse(isSelfSage() ? TTL_LOG_FLAG_SAGE : TTL_LOG_FLAG_NODE));

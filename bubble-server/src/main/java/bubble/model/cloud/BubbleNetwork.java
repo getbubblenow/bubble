@@ -136,6 +136,10 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @ECIndex @Column(nullable=false, updatable=false, length=60) @ECField(index=70)
     @Enumerated(EnumType.STRING)
     @Getter @Setter private AnsibleInstallType installType;
+    public boolean sage() { return installType == AnsibleInstallType.sage; }
+    public boolean notSage() { return !sage(); }
+    public boolean node() { return installType == AnsibleInstallType.node; }
+    public boolean notNode() { return !node(); }
 
     @ECSearchable @ECField(index=80)
     @ECForeignKey(entity=AccountSshKey.class)
@@ -146,6 +150,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @ECSearchable @ECField(index=90)
     @ECIndex @Column(nullable=false, updatable=false, length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private ComputeNodeSizeType computeSizeType;
+    public boolean local() { return computeSizeType == ComputeNodeSizeType.local; }
 
     @ECSearchable @ECField(index=100)
     @ECForeignKey(entity=BubbleFootprint.class)
@@ -202,8 +207,11 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     public boolean hasForkHost () { return !empty(forkHost); }
     public boolean fork() { return hasForkHost(); }
 
-    @ECSearchable @ECField(index=190)
-    @Column(length=20)
+    @ECField(index=190) @Column(length=20, updatable=false)
+    @Enumerated(EnumType.STRING) @Getter @Setter private LaunchType launchType = null;
+    public boolean hasLaunchType () { return launchType != null; }
+
+    @ECSearchable @ECField(index=200) @Column(length=20)
     @Enumerated(EnumType.STRING) @Getter @Setter private BubbleNetworkState state = created;
 
     public String hostFromFqdn(String fqdn) {

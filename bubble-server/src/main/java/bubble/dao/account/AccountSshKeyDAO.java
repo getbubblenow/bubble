@@ -9,7 +9,6 @@ import bubble.dao.cloud.BubbleNetworkDAO;
 import bubble.model.account.Account;
 import bubble.model.account.AccountSshKey;
 import bubble.model.bill.AccountPlan;
-import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.server.BubbleConfiguration;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +52,7 @@ public class AccountSshKeyDAO extends AccountOwnedEntityDAO<AccountSshKey> {
 
         final Account owner = accountDAO.findByUuid(key.getAccount());
         final BubbleNetwork thisNetwork = configuration.getThisNetwork();
-        if (thisNetwork == null || thisNetwork.getInstallType() == AnsibleInstallType.sage) {
+        if (thisNetwork == null || thisNetwork.sage()) {
             // only allow installation of a key on a sage if the user is the first admin and has no keys
             final Account firstAdmin = accountDAO.getFirstAdmin();
             if (owner.getUuid().equals(firstAdmin.getUuid())) {
@@ -65,7 +64,7 @@ public class AccountSshKeyDAO extends AccountOwnedEntityDAO<AccountSshKey> {
         } else {
             // admin keys are always installed on a node
             // never install key for non-admin
-            key.setInstallSshKey(owner.admin() && thisNetwork.getInstallType() == AnsibleInstallType.node);
+            key.setInstallSshKey(owner.admin() && thisNetwork.node());
         }
 
         final String hash = sha256_hex(key.getSshPublicKey());

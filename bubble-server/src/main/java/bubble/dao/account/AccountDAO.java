@@ -6,7 +6,6 @@ package bubble.dao.account;
 
 import bubble.cloud.CloudServiceDriver;
 import bubble.cloud.CloudServiceType;
-import bubble.cloud.compute.ComputeNodeSizeType;
 import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.app.*;
 import bubble.dao.bill.AccountPaymentArchivedDAO;
@@ -221,8 +220,8 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
                     final BubbleNetwork thisNetwork = selfNodeService.getThisNetwork();
                     if (parentEntity.delegated()
                             && thisNetwork != null
-                            && thisNetwork.getInstallType() == AnsibleInstallType.node
-                            && thisNetwork.getComputeSizeType() != ComputeNodeSizeType.local) {
+                            && thisNetwork.node()
+                            && thisNetwork.local()) {
                         // on a node, sub-accounts can use the same cloud/config/credentials as their admin
                         return accountEntity.setDelegated(parentEntity.getDelegated())
                                 .setCredentialsJson(parentEntity.getCredentialsJson())

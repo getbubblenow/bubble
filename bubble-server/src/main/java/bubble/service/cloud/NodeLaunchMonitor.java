@@ -4,7 +4,6 @@
  */
 package bubble.service.cloud;
 
-import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.notify.NewNodeNotification;
 import bubble.server.BubbleConfiguration;
@@ -80,7 +79,7 @@ public class NodeLaunchMonitor extends SimpleDaemon {
             if (thisNetwork == null) {
                 die("register: thisNetwork is null");
 
-            } else if (configuration.isSageLauncher() || thisNetwork.getInstallType() == AnsibleInstallType.sage) {
+            } else if (thisNetwork.sage()) {
                 if (log.isInfoEnabled()) log.info("register: first registration, starting launch monitor");
                 start();
 

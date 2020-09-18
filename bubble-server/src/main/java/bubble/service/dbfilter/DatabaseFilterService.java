@@ -12,6 +12,7 @@ import bubble.model.account.Account;
 import bubble.model.bill.BubblePlanApp;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.LaunchType;
 import bubble.server.BubbleConfiguration;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
@@ -53,11 +54,12 @@ public class DatabaseFilterService {
 
     public static final String ENV_OLD_DB_KEY = "OLD_DB_KEY";
     public static final String ENV_NEW_DB_KEY = "NEW_DB_KEY";
-    public static final String[] FLYWAY_DUMP_OPTIONS = {"--table=flyway_schema_history", "--data-only"};
+    public static final String[] FLYWAY_DUMP_OPTIONS = {"--table="+getFlywayTableName(), "--data-only"};
 
     @Autowired private BubbleConfiguration configuration;
 
     public String copyDatabase(boolean fork,
+                               LaunchType launchType,
                                BubbleNetwork network,
                                BubbleNode node,
                                Account account,
@@ -112,7 +114,7 @@ public class DatabaseFilterService {
                 @Override public RekeyOptions getOptions() { return readerOptions; }
                 @Override protected Iterator<Identifiable> getEntityProducer(BubbleConfiguration fromConfig, AtomicReference<Exception> error) {
                     return fork
-                            ? new FullEntityIterator(configuration, network, readerError)
+                            ? new FullEntityIterator(configuration, account, network, launchType, readerError)
                             : new FilteredEntityIterator(configuration, account, network, node, planApps, readerError);
                 }
             }.runInBackground("RekeyReaderMain.reader", readerError::set);

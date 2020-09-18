@@ -57,7 +57,7 @@ public class RekeyReaderMain extends BaseMain<RekeyOptions> {
     }
 
     protected Iterator<Identifiable> getEntityProducer(BubbleConfiguration fromConfig, AtomicReference<Exception> error) {
-        return new FullEntityIterator(fromConfig, null, error);
+        return new FullEntityIterator(fromConfig, null, null, null, error);
     }
 
 }

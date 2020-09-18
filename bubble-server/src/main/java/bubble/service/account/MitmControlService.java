@@ -4,7 +4,6 @@
  */
 package bubble.service.account;
 
-import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.service.boot.SelfNodeService;
 import lombok.extern.slf4j.Slf4j;
@@ -83,7 +82,7 @@ public class MitmControlService {
 
     public void checkMitmInstalled() {
         final BubbleNetwork thisNetwork = selfNodeService.getThisNetwork();
-        if (thisNetwork == null || thisNetwork.getInstallType() != AnsibleInstallType.node) {
+        if (thisNetwork == null || thisNetwork.notNode()) {
             throw invalidEx("err.mitm.notInstalled");
         }
     }

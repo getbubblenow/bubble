@@ -143,12 +143,13 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         return selfNode != null && selfNode.selfSage();
     }
     @JsonIgnore @Transient public boolean isSageLauncher() {
-        return isSelfSage() || !hasSageNode();
+        final BubbleNetwork thisNetwork = getThisNetwork();
+        return (isSelfSage() || !hasSageNode()) && thisNetwork.sage();
     }
 
     @JsonIgnore @Transient public boolean isSage() {
         final BubbleNetwork thisNetwork = getThisNetwork();
-        return thisNetwork != null && thisNetwork.getInstallType() == AnsibleInstallType.sage;
+        return thisNetwork != null && thisNetwork.sage();
     }
 
     @JsonIgnore @Transient public synchronized BubbleNetwork getThisNetwork () {
@@ -356,7 +357,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_ALLOW_REGISTRATION, thisNetwork == null ? null : thisNetwork.getBooleanTag(TAG_ALLOW_REGISTRATION, false)},
                         {TAG_NETWORK_UUID, thisNetwork == null ? null : thisNetwork.getUuid()},
                         {TAG_SAGE_LAUNCHER, thisNetwork == null || isSageLauncher()},
-                        {TAG_BUBBLE_NODE, isSageLauncher() || thisNetwork == null ? null : thisNetwork.getInstallType() == AnsibleInstallType.node},
+                        {TAG_BUBBLE_NODE, isSageLauncher() || thisNetwork == null ? null : thisNetwork.node()},
                         {TAG_PAYMENTS_ENABLED, cloudDAO.paymentsEnabled()},
                         {TAG_PROMO_CODE_POLICY, getPromoCodePolicy().name()},
                         {TAG_REQUIRE_SEND_METRICS, requireSendMetrics()},

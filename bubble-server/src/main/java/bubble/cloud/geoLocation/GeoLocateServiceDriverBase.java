@@ -10,6 +10,7 @@ import lombok.Cleanup;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.http.HttpMeta;
@@ -21,8 +22,7 @@ import org.cobbzilla.util.io.TempDir;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -139,9 +139,15 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
 
     private File downloadDbFile(HttpRequestBean request, File archive) throws IOException {
         Exception lastEx = null;
+        if (!archive.getParentFile().exists()) {
+            mkdirOrDie(archive.getParentFile());
+        }
         for (int i=0; i<MAX_FILE_RETRIES; i++) {
             try {
-                return HttpUtil.getResponse(request).toFile(archive);
+                @Cleanup final InputStream in = HttpUtil.get(request.getUri(), NameAndValue.toMap(request.getHeaders()));
+                @Cleanup final OutputStream out = new FileOutputStream(archive);
+                IOUtils.copyLarge(in, out);
+                return archive;
             } catch (Exception e) {
                 lastEx = e;
                 log.warn("downloadDbFile: "+shortError(e));

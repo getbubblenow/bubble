@@ -16,6 +16,7 @@ import bubble.model.bill.BubblePlanApp;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.LaunchType;
 import bubble.server.BubbleConfiguration;
 import bubble.service.dbfilter.DatabaseFilterService;
 import com.github.jknack.handlebars.Handlebars;
@@ -61,6 +62,7 @@ public class AnsiblePrepService {
                                            ComputeServiceDriver computeDriver,
                                            ValidationResult errors,
                                            boolean fork,
+                                           LaunchType launchType,
                                            String restoreKey) throws IOException {
         final BubbleConfiguration c = configuration;
 
@@ -113,7 +115,7 @@ public class AnsiblePrepService {
         }
 
         // Copy database with new encryption key
-        final String key = dbFilter.copyDatabase(fork, network, node, account, planApps, new File(bubbleFilesDir, "bubble.sql.gz"));
+        final String key = dbFilter.copyDatabase(fork, launchType, network, node, account, planApps, new File(bubbleFilesDir, "bubble.sql.gz"));
         ctx.put("dbEncryptionKey", key);
 
         // if this is a fork, and current server is local, then sage will be self

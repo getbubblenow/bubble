@@ -8,6 +8,7 @@ import bubble.cloud.CloudAndRegion;
 import bubble.model.account.AccountContact;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.LaunchType;
 import bubble.model.cloud.NetLocation;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
@@ -50,6 +51,8 @@ public class NewNodeNotification {
 
     @Getter @Setter private Boolean fork;
     public boolean fork() { return fork != null && fork; }
+
+    @Getter @Setter private LaunchType launchType;
 
     @Getter @Setter private String restoreKey;
     public boolean hasRestoreKey () { return !empty(restoreKey); }

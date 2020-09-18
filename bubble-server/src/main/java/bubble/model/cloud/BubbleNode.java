@@ -131,6 +131,8 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     @ECIndex @Column(nullable=false, updatable=false, length=60)
     @Enumerated(EnumType.STRING)
     @Getter @Setter private AnsibleInstallType installType;
+    public boolean sage() { return installType == AnsibleInstallType.sage; }
+    public boolean node() { return installType == AnsibleInstallType.node; }
 
     @ECSearchable @ECField(index=50)
     @ECForeignKey(entity=BubbleNode.class, cascade=false)

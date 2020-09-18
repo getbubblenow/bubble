@@ -10,6 +10,7 @@ import bubble.model.account.HasNetwork;
 import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.CloudService;
+import bubble.model.cloud.LaunchType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -46,7 +47,7 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
     public static final String[] UPDATE_FIELDS = {"description", "paymentMethod", "paymentMethodObject"};
 
     public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS,
-            "name", "forkHost", "locale", "timezone", "domain", "network",
+            "name", "launchType", "forkHost", "locale", "timezone", "domain", "network",
             "sshKey", "syncAccount", "launchLock", "sendErrors", "sendMetrics", "plan", "footprint");
 
     @SuppressWarnings("unused")
@@ -159,6 +160,9 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
     @JsonIgnore @Transient @Getter @Setter private transient Account accountObject = null;
     public boolean hasAccountObject () { return account != null; }
 
+    @Transient @Getter @Setter private transient LaunchType launchType = null;
+    public boolean hasLaunchType () { return launchType != null; }
+
     @Transient @Getter @Setter private transient String forkHost = null;
     public boolean hasForkHost () { return !empty(forkHost); }
 
@@ -195,6 +199,7 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
                 .setFootprint(getFootprint())
                 .setComputeSizeType(plan.getComputeSizeType())
                 .setStorage(storage.getUuid())
+                .setLaunchType(hasForkHost() && hasLaunchType() ? getLaunchType() : LaunchType.node)
                 .setForkHost(hasForkHost() ? getForkHost() : null);
     }
 
