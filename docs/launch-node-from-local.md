@@ -20,7 +20,12 @@ The screen will refresh and show a progress meter. A typical launch will take ab
 The very first Bubble you launch will build a [Packer](https://packer.io) image that will be used for this and
 subsequent launches.
 
-This process adds about 20-25 minutes to the launch process. This only happens the first time you launch a Bubble.
+This process adds about 20-25 minutes to the launch process.
+
+While the packer image is building, the progress meter will appear to be "stuck" at 1%. This is normal.
+If you're curious, you can observe the packer image being built in your Bubble logs.
+
+This only happens the first time you launch a Bubble.
 Later launches can skip this step, because Bubble will detect that the packer image already exists.
 
 ## Install Bubble Apps
