@@ -43,7 +43,7 @@ public class FilterHttpRequest {
     @Getter @Setter private String contentSecurityPolicy;
     public boolean hasContentSecurityPolicy () { return !empty(contentSecurityPolicy); }
 
-    public static final Pattern NONCE_PATTERN = Pattern.compile(";\\s*script-src\\s+.*'nonce-([^']+)'");
+    public static final Pattern NONCE_PATTERN = Pattern.compile("\\s*script-src\\s+.*?'nonce-([^']+)'");
 
     @Getter(lazy=true) private final String scriptNonce = initScriptNonce();
     private String initScriptNonce () {

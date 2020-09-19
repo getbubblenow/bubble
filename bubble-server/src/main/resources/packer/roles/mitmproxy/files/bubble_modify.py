@@ -54,19 +54,45 @@ def ensure_bubble_csp(csp, req_id):
 
         elif part.startswith(' script-src ') or part.startswith('script-src '):
             tokens = part.split()
-            if "'self'" in tokens:
-                # allows from self, check if there is an existing nonce. if so we will reuse it
-                found_nonce = False
-                for token in tokens:
-                    if " 'nonce-" in token:
-                        found_nonce = True
-                        break
-                # if no nonce, then add our nonce
-                if not found_nonce:
+            found_unsafe_inline = "'unsafe-inline'" in tokens
+            found_nonce = False
+            found_sha = False
+            for token in tokens:
+                if not found_nonce and "'nonce-" in token:
+                    found_nonce = True
+                if not found_sha and ("'sha256-" in token or "'sha384-" in token or "'sha512-" in token):
+                    found_sha = True
+                if found_nonce and found_sha:
+                    break
+            if found_unsafe_inline:
+                if not found_sha and not found_nonce:
+                    # unsafe-inline is set, and there are no shas or nonces
+                    # then we can add ourselves as unsafe inline without any nonce
+                    new_csp = add_csp_part(new_csp, part)
+                elif found_nonce:
+                    # unsafe-inline is set and there is a nonce, we keep the nonce
+                    new_csp = add_csp_part(new_csp, part)
+                elif found_sha:
+                    # unsafe-inline is set and there is no nonce, but at least one sha is present
+                    # we must add a nonce for ourselves
                     new_csp = add_csp_part(new_csp, " ".join(tokens) + " 'nonce-"+base64.b64encode(bytes(req_id, 'utf-8')).decode()+"' ")
+                else:
+                    # unreachable, just for sanity
+                    new_csp = add_csp_part(new_csp, part)
             else:
-                # does not allow from self, so add self with our nonce
-                new_csp = add_csp_part(new_csp, tokens[0] + " 'self' 'nonce-"+base64.b64encode(bytes(req_id, 'utf-8')).decode()+"' " + " ".join(tokens[1:]))
+                # unsafe-inline is not set
+                if not found_nonce or found_sha:
+                    # there is no nonce or a sha is set, add unsafe-inline and our nonce
+                    new_csp = add_csp_part(new_csp, tokens[0] + " 'unsafe-inline' 'nonce-"+base64.b64encode(bytes(req_id, 'utf-8')).decode()+"' " + " ".join(tokens[1:]))
+                elif found_nonce:
+                    # there is a nonce, keep it and add unsafe-inline
+                    new_csp = add_csp_part(new_csp, tokens[0] + " 'unsafe-inline' " + " ".join[tokens[1:]])
+                elif found_sha:
+                    # no nonce but a sha is set, add our nonce and unsafe-inline
+                    new_csp = add_csp_part(new_csp, tokens[0] + " 'unsafe-inline' 'nonce-"+base64.b64encode(bytes(req_id, 'utf-8')).decode()+"' " + " ".join(tokens[1:]))
+                else:
+                    # unreachable, just for sanity
+                    new_csp = add_csp_part(new_csp, part)
         else:
             new_csp = add_csp_part(new_csp, part)
     return new_csp
