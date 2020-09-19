@@ -17,7 +17,6 @@ import bubble.service.device.DeviceService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.SingletonList;
-import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -204,6 +203,7 @@ public class StandardAppPrimerService implements AppPrimerService {
                                     AppRuleDriver.defineRedisFilterSet(redis, ip, app.getName() + ":" + app.getUuid(), filterDomains.toArray(String[]::new));
                                 }
                                 if (!empty(flexDomains)) {
+                                    flexDomains.removeAll(flexExcludeDomains);
                                     AppRuleDriver.defineRedisFlexSet(redis, ip, app.getName() + ":" + app.getUuid(), flexDomains.toArray(String[]::new));
                                 }
                                 if (!empty(flexExcludeDomains)) {
