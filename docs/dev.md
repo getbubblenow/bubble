@@ -59,3 +59,12 @@ This will update and rebuild all submodules, and the main bubble jar file.
 
 ## Running in development
 Run the `bin/run.sh` script to start the Bubble server.
+
+## Resetting everything
+If you want to "start over", run:
+
+     ./bin/reset_bubble_full
+
+This will remove local files stored by Bubble, and drop the bubble database.
+
+If you run `./bin/run.sh` again, it will be like running it for the first time.

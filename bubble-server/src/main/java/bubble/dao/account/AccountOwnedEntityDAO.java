@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
+import static bubble.ApiConstants.BUBBLE_CLOUD_SERVICE_DATA;
 import static bubble.ApiConstants.HOME_DIR;
 import static org.cobbzilla.util.reflect.ReflectionUtil.getFirstTypeParam;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
@@ -79,7 +80,7 @@ public abstract class AccountOwnedEntityDAO<E extends HasAccount>
             pathMiddle = cloudServiceUuid;
         }
         return new File(HOME_DIR + File.separator
-                + "bubble_cloudServiceData" + File.separator
+                + BUBBLE_CLOUD_SERVICE_DATA + File.separator
                 + pathMiddle + File.separator
                 + sha.substring(0, 2) + File.separator
                 + sha.substring(2, 4) + File.separator

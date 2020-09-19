@@ -127,6 +127,7 @@ public class ApiConstants {
         }
     }
 
+    public static final String BUBBLE_CLOUD_SERVICE_DATA = "bubble_cloudServiceData";
     public static final File CACERTS_DIR = new File(HOME_DIR, "cacerts");
     public static final File MITMPROXY_CERT_DIR = new File(HOME_DIR, "mitm_certs");
 

@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+#
+# Perform a full reset of Bubble. Removes the database and all locally stored files
+#
+# Usage:  reset_bubble_full
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+SELF_NODE_JSON="${HOME}/self_node.json"
+BUBBLE_VERSIONS_FILE="${HOME}/bubble_versions.properties"
+
+BUBBLE_LOCAL_STORAGE_DIR_DEFAULT=".bubble_local_storage"
+BUBBLE_LOCAL_STORAGE_DIR=$(${SCRIPT_DIR}/bin/bconst bubble.cloud.storage.local.LocalStorageDriver.BUBBLE_LOCAL_STORAGE_DIR)
+if [[ -z ${BUBBLE_LOCAL_STORAGE_DIR} ]] ; then
+    echo "Error determining Bubble LocalStorage directory, using default: ${BUBBLE_LOCAL_STORAGE_DIR_DEFAULT}"
+    BUBBLE_LOCAL_STORAGE_DIR=${BUBBLE_LOCAL_STORAGE_DIR_DEFAULT}
+fi
+BUBBLE_LOCAL_STORAGE_DIR="${HOME}/${BUBBLE_LOCAL_STORAGE_DIR}"
+
+BUBBLE_CLOUD_DATA_DIR_DEFAULT="bubble_cloudServiceData"
+BUBBLE_CLOUD_DATA_DIR=$(${SCRIPT_DIR}/bin/bconst bubble.ApiConstants.BUBBLE_CLOUD_SERVICE_DATA)
+if [[ -z ${BUBBLE_CLOUD_DATA_DIR} ]] ; then
+    echo "Error determining Bubble Cloud Service Data directory, using default: "
+    BUBBLE_CLOUD_DATA_DIR=${BUBBLE_CLOUD_DATA_DIR_DEFAULT}
+fi
+BUBBLE_CLOUD_DATA_DIR="${HOME}/${BUBBLE_CLOUD_DATA_DIR}"
+
+
+rm -f ${SELF_NODE_JSON} || die "Error removing ${SELF_NODE_JSON}"
+echo "> removed: ${SELF_NODE_JSON}"
+
+rm -f ${BUBBLE_VERSIONS_FILE} || die "Error removing ${BUBBLE_VERSIONS_FILE}"
+echo "> removed: ${BUBBLE_VERSIONS_FILE}"
+
+rm -rf ${BUBBLE_LOCAL_STORAGE_DIR} || die "Error removing ${BUBBLE_LOCAL_STORAGE_DIR}"
+echo "> removed: ${BUBBLE_LOCAL_STORAGE_DIR}"
+
+rm -rf ${BUBBLE_CLOUD_DATA_DIR} || die "Error removing ${BUBBLE_CLOUD_DATA_DIR}"
+echo "> removed: ${BUBBLE_CLOUD_DATA_DIR}"
+
+dropdb bubble || die "Error dropping bubble database"
+echo "> dropped database: bubble"
+
+echo "+++ Bubble Reset Complete"

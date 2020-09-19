@@ -24,11 +24,20 @@ Make a copy of the file `config/activation.json` and edit the copy. There are co
 
 To activate your Local Launcher Bubble, run this command:
 
-   `./bin/bactivate /path/to/activation.json`
+    ./bin/bactivate /path/to/activation.json
 
 After running the above, refresh the web page that opened when the server started. You should see a login page.
 
 You can now login as the admin user using the email address `root@local.local` and the password from your `activation.json` file.
+
+### Resetting everything
+If you want to "start over", run:
+
+     ./bin/reset_bubble_full
+
+This will remove local files stored by Bubble, and drop the bubble database.
+
+If you run `./bin/run.sh` again, it will be like running it for the first time.
 
 ## Next Steps
 You are now read to launch a new Bubble in [Bubble Mode](launch-node.md), or
