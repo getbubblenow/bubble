@@ -34,6 +34,7 @@ public class DeviceStatus {
     @Getter @Setter private String bytesReceived;
     @Getter @Setter private String receivedUnits;
 
+    @Getter @Setter private Integer lastHandshakeDays;
     @Getter @Setter private Integer lastHandshakeHours;
     @Getter @Setter private Integer lastHandshakeMinutes;
     @Getter @Setter private Integer lastHandshakeSeconds;
@@ -101,6 +102,7 @@ public class DeviceStatus {
                         String unit = parts[i+1].trim();
                         if (unit.endsWith(",")) unit = unit.substring(0, unit.length()-1);
                         switch (unit) {
+                            case "day": case "days": setLastHandshakeDays(count); break;
                             case "hour": case "hours": setLastHandshakeHours(count); break;
                             case "minute": case "minutes": setLastHandshakeMinutes(count); break;
                             case "second": case "seconds": setLastHandshakeSeconds(count); break;

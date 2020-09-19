@@ -48,6 +48,7 @@
       "name": "manageFlexDomains",
       "scope": "app",
       "root": "true",
+      "when": "account.firstAdmin === true",
       "fields": ["flexFqdn"],
       "actions": [
         {"name": "removeFlexFqdn", "index": 10},
@@ -61,6 +62,7 @@
       "name": "manageFlexFeeds",
       "scope": "app",
       "root": "true",
+      "when": "account.firstAdmin === true",
       "fields": ["flexFeedName", "flexFeedUrl"],
       "actions": [
         {"name": "removeFlexFeed", "index": 10},

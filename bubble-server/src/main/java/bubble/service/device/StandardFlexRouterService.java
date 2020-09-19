@@ -9,6 +9,7 @@ import bubble.dao.device.FlexRouterDAO;
 import bubble.model.device.DeviceStatus;
 import bubble.model.device.FlexRouter;
 import bubble.model.device.FlexRouterPing;
+import bubble.model.device.FlexRouterRemoveRoutes;
 import bubble.service.cloud.GeoService;
 import lombok.AllArgsConstructor;
 import lombok.Cleanup;
@@ -17,6 +18,8 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
+import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.collection.SingletonSet;
 import org.cobbzilla.util.daemon.AwaitResult;
 import org.cobbzilla.util.daemon.SimpleDaemon;
@@ -24,6 +27,7 @@ import org.cobbzilla.util.http.HttpRequestBean;
 import org.cobbzilla.util.http.HttpResponseBean;
 import org.cobbzilla.util.http.HttpUtil;
 import org.cobbzilla.util.io.FileUtil;
+import org.cobbzilla.util.string.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,11 +39,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static bubble.model.device.FlexRouterPing.MAX_PING_AGE;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.function.Function.identity;
 import static org.cobbzilla.util.daemon.Await.awaitAll;
 import static org.cobbzilla.util.daemon.DaemonThreadFactory.fixedPool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -57,12 +64,17 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
 
     private static final long PING_SLEEP_FACTOR = SECONDS.toMillis(2);
 
-    // HttpClient timeouts are in seconds
-    public static final int DEFAULT_PING_TIMEOUT = (int) SECONDS.toSeconds(MAX_PING_AGE/2);
+    public static final int DEFAULT_PING_TIMEOUT = (int) MAX_PING_AGE/2;
     public static final RequestConfig DEFAULT_PING_REQUEST_CONFIG = RequestConfig.custom()
             .setConnectTimeout(DEFAULT_PING_TIMEOUT)
             .setSocketTimeout(DEFAULT_PING_TIMEOUT)
             .setConnectionRequestTimeout(DEFAULT_PING_TIMEOUT).build();
+
+    public static final int DEFAULT_UPDATE_ROUTES_TIMEOUT = (int) SECONDS.toMillis(10);
+    public static final RequestConfig DEFAULT_UPDATE_ROUTES_REQUEST_CONFIG = RequestConfig.custom()
+            .setConnectTimeout(DEFAULT_UPDATE_ROUTES_TIMEOUT)
+            .setSocketTimeout(DEFAULT_UPDATE_ROUTES_TIMEOUT)
+            .setConnectionRequestTimeout(DEFAULT_UPDATE_ROUTES_TIMEOUT).build();
 
     // wait for ssh key to be written
     private static final long FIRST_TIME_WAIT = SECONDS.toMillis(10);
@@ -71,14 +83,18 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
     public static final long PING_ALL_TIMEOUT
             = (SECONDS.toMillis(1) * DEFAULT_PING_TIMEOUT * MAX_PING_TRIES) + FIRST_TIME_WAIT;
 
+    public static final long UPDATE_ROUTES_ALL_TIMEOUT = SECONDS.toMillis(30);
+
     // thread pool size
     public static final int DEFAULT_MAX_TUNNELS = 5;
 
-    private static CloseableHttpClient getHttpClient() {
+    private static CloseableHttpClient getHttpClient(RequestConfig requestConfig) {
         return HttpClientBuilder.create()
-                .setDefaultRequestConfig(DEFAULT_PING_REQUEST_CONFIG)
+                .setDefaultRequestConfig(requestConfig)
                 .build();
     }
+    private static CloseableHttpClient getPingHttpClient() { return getHttpClient(DEFAULT_PING_REQUEST_CONFIG); }
+    private static CloseableHttpClient getUpdateRoutesHttpClient() { return getHttpClient(DEFAULT_UPDATE_ROUTES_REQUEST_CONFIG); }
 
     public static final long DEFAULT_SLEEP_TIME = MINUTES.toMillis(2);
 
@@ -162,10 +178,52 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
         }
     }
 
+    private final AtomicReference<Set<String>> mostRecentFlexDomains = new AtomicReference<>(null);
+    private final Map<String, String> recentlyRemovedFlexDomains = new ExpirationMap<>(MINUTES.toMillis(20), ExpirationEvictionPolicy.ctime_or_atime);
+
+    public void updateFlexRoutes(Set<String> flexDomains) {
+        synchronized (mostRecentFlexDomains) {
+            final Set<String> mostRecentDomains = mostRecentFlexDomains.get() == null ? Collections.emptySet() : mostRecentFlexDomains.get();
+            if (!mostRecentDomains.isEmpty()) {
+                // what should we remove now?
+                final Set<String> routesToRemove = new HashSet<>(mostRecentDomains);
+                routesToRemove.removeAll(flexDomains);
+
+                // add to recently removed, we will remove all of these in case a previous update was missed
+                recentlyRemovedFlexDomains.putAll(routesToRemove.stream().collect(Collectors.toMap(identity(), identity())));
+
+                // but exclude domains that are currently flex routed, we don't want to remove these
+                for (String current : flexDomains) recentlyRemovedFlexDomains.remove(current);
+
+                if (!recentlyRemovedFlexDomains.isEmpty()) {
+                    try {
+                        @Cleanup final CloseableHttpClient httpClient = getUpdateRoutesHttpClient();
+                        final List<FlexRouter> routers = flexRouterDAO.findEnabledAndRegistered();
+                        if (log.isDebugEnabled()) log.debug("updateFlexRoutes: updating "+routers.size()+" routers");
+                        final List<Future<?>> futures = new ArrayList<>();
+                        @Cleanup("shutdownNow") final ExecutorService exec = fixedPool(DEFAULT_MAX_TUNNELS, "StandardFlexRouterService.updateFlexRoutes");
+                        final Set<String> routes = recentlyRemovedFlexDomains.keySet();
+                        for (FlexRouter router : routers) {
+                            if (log.isDebugEnabled()) log.debug("updateFlexRoutes: starting job for router: " + router + " with routes to remove: "+StringUtil.toString(routes));
+                            futures.add(exec.submit(new FlexRemoveRoutesJob(router, routes, httpClient)));
+                        }
+                        final AwaitResult<Boolean> awaitResult = awaitAll(futures, UPDATE_ROUTES_ALL_TIMEOUT);
+                        if (log.isTraceEnabled()) log.trace("updateFlexRoutes: awaitResult=" + awaitResult);
+                    } catch (Exception e) {
+                        log.error("updateFlexRoutes: " + shortError(e));
+                    }
+                }
+            } else {
+                if (log.isDebugEnabled()) log.debug("updateFlexRoutes: no routes to remove");
+            }
+            mostRecentFlexDomains.set(flexDomains);
+        }
+    }
+
     @Override protected void process() {
         synchronized (interrupted) { interrupted.set(false); }
         try {
-            @Cleanup final CloseableHttpClient httpClient = getHttpClient();
+            @Cleanup final CloseableHttpClient httpClient = getPingHttpClient();
             final List<FlexRouter> routers = flexRouterDAO.findEnabledAndRegistered();
             if (log.isTraceEnabled()) log.trace("process: starting, will ping "+routers.size()+" routers");
             final List<Future<?>> futures = new ArrayList<>();
@@ -219,7 +277,7 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
                 }
 
             } catch (Exception e) {
-                log.info(prefix+"error: "+shortError(e));
+                log.error(prefix+"error: "+shortError(e));
             }
             setStatus(router, FlexRouterStatus.unreachable);
         }
@@ -298,7 +356,7 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
                 boolean update = false;
                 if (!active) {
                     if (pollFailures.computeIfAbsent(router.getUuid(), k -> new AtomicInteger(0)).incrementAndGet() > MAX_POLL_FAILURES) {
-                        log.warn("process: too many poll failures for router ("+router+"), marking unregistered");
+                        if (log.isWarnEnabled()) log.warn("process: too many poll failures for router ("+router+"), marking unregistered");
                         router.setRegistered(false);
                         update = true;
                     }
@@ -317,6 +375,33 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
                     flexRouterDAO.update(router);
                 }
                 return active;
+        }
+    }
+
+    @AllArgsConstructor
+    private static class FlexRemoveRoutesJob implements Callable<Boolean> {
+        private final FlexRouter router;
+        private final Collection<String> routes;
+        private final HttpClient httpClient;
+
+        @Override public Boolean call() {
+            final String removeUrl = router.proxyBaseUri() + "/remove";
+            final HttpRequestBean request = new HttpRequestBean(POST, removeUrl);
+            final String prefix = "FlexRouterRemoveJob(" + router + ", "+ StringUtil.toString(routes)+"): ";
+            request.setEntity(json(new FlexRouterRemoveRoutes(router, routes)));
+            try {
+                if (log.isDebugEnabled()) log.debug(prefix+"sending JSON message to remove routes...");
+                final HttpResponseBean response = HttpUtil.getResponse(request, httpClient);
+                if (!response.isOk()) {
+                    log.error(prefix+"response not OK: "+response);
+                } else {
+                    if (log.isDebugEnabled()) log.debug(prefix+"routes removed from router");
+                    return true;
+                }
+            } catch (Exception e) {
+                log.error(prefix+"error: "+shortError(e));
+            }
+            return false;
         }
     }
 

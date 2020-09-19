@@ -141,6 +141,9 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     @Getter @Setter private Boolean admin = false;
     public boolean admin () { return bool(admin); }
 
+    // set in SessionDAO so UI can know if the user is first admin
+    @Transient @Getter @Setter private boolean firstAdmin = false;
+
     @ECIndex(unique=true, where="sage = true") @ECField(index=70)
     @Getter @Setter private Boolean sage = false;
     public boolean sage () { return bool(sage); }

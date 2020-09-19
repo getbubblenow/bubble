@@ -14,6 +14,7 @@ import bubble.model.device.Device;
 import bubble.rule.AppRuleDriver;
 import bubble.server.BubbleConfiguration;
 import bubble.service.device.DeviceService;
+import bubble.service.device.StandardFlexRouterService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.SingletonList;
@@ -39,6 +40,7 @@ public class StandardAppPrimerService implements AppPrimerService {
     @Autowired private AppRuleDAO ruleDAO;
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private AppDataDAO dataDAO;
+    @Autowired private StandardFlexRouterService flexRouterService;
     @Autowired private RedisService redis;
     @Autowired private BubbleConfiguration configuration;
 
@@ -117,6 +119,13 @@ public class StandardAppPrimerService implements AppPrimerService {
             }
             if (accountDeviceIps.isEmpty()) return;
 
+            // flex domains can only be managed by the first admin
+            final Account firstAdmin = accountDAO.getFirstAdmin();
+            account.setFirstAdmin(account.getUuid().equals(firstAdmin.getUuid()));
+            boolean updateFlexRouters = false;
+            Set<String> flexDomains = null;
+            Set<String> flexExcludeDomains = null;
+
             final List<BubbleApp> appsToPrime = singleApp == null
                     ? appDAO.findByAccount(account.getUuid()).stream()
                     .filter(BubbleApp::canPrime)
@@ -145,8 +154,6 @@ public class StandardAppPrimerService implements AppPrimerService {
                         final Set<String> blockDomains = new HashSet<>();
                         final Set<String> whiteListDomains = new HashSet<>();
                         final Set<String> filterDomains = new HashSet<>();
-                        final Set<String> flexDomains = new HashSet<>();
-                        final Set<String> flexExcludeDomains = new HashSet<>();
                         for (AppMatcher matcher : matchers) {
                             final AppRuleDriver appRuleDriver = rule.initDriver(app, driver, matcher, account, device);
                             final Set<String> rejects = appRuleDriver.getPrimedRejectDomains();
@@ -173,17 +180,19 @@ public class StandardAppPrimerService implements AppPrimerService {
                             } else {
                                 filterDomains.addAll(filters);
                             }
-                            final Set<String> flexes = appRuleDriver.getPrimedFlexDomains();
-                            if (empty(flexes)) {
-                                log.debug("_prime: no flexDomains for device/app/rule/matcher: " + device.getName() + "/" + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
-                            } else {
-                                flexDomains.addAll(flexes);
-                            }
-                            final Set<String> flexExcludes = appRuleDriver.getPrimedFlexExcludeDomains();
-                            if (empty(flexExcludes)) {
-                                log.debug("_prime: no flexExcludeDomains for device/app/rule/matcher: " + device.getName() + "/" + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
-                            } else {
-                                flexExcludeDomains.addAll(flexExcludes);
+                            if (account.isFirstAdmin() && flexDomains == null) {
+                                final Set<String> flexes = appRuleDriver.getPrimedFlexDomains();
+                                if (empty(flexes)) {
+                                    log.debug("_prime: no flexDomains for device/app/rule/matcher: " + device.getName() + "/" + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
+                                } else {
+                                    flexDomains = new HashSet<>(flexes);
+                                }
+                                final Set<String> flexExcludes = appRuleDriver.getPrimedFlexExcludeDomains();
+                                if (empty(flexExcludes)) {
+                                    log.debug("_prime: no flexExcludeDomains for device/app/rule/matcher: " + device.getName() + "/" + app.getName() + "/" + rule.getName() + "/" + matcher.getName());
+                                } else {
+                                    flexExcludeDomains = new HashSet<>(flexExcludes);
+                                }
                             }
                         }
                         if (!empty(rejectDomains) || !empty(blockDomains) || !empty(filterDomains) || !empty(flexDomains) || !empty(flexExcludeDomains)) {
@@ -202,16 +211,22 @@ public class StandardAppPrimerService implements AppPrimerService {
                                 if (!empty(filterDomains)) {
                                     AppRuleDriver.defineRedisFilterSet(redis, ip, app.getName() + ":" + app.getUuid(), filterDomains.toArray(String[]::new));
                                 }
-                                if (!empty(flexDomains)) {
-                                    flexDomains.removeAll(flexExcludeDomains);
-                                    AppRuleDriver.defineRedisFlexSet(redis, ip, app.getName() + ":" + app.getUuid(), flexDomains.toArray(String[]::new));
-                                }
-                                if (!empty(flexExcludeDomains)) {
-                                    AppRuleDriver.defineRedisFlexExcludeSet(redis, ip, app.getName() + ":" + app.getUuid(), flexExcludeDomains.toArray(String[]::new));
+                                if (account.isFirstAdmin() && (!empty(flexDomains) || !empty(flexExcludeDomains))) {
+                                    updateFlexRouters = true;
+                                    if (!empty(flexDomains)) {
+                                        if (flexExcludeDomains != null) flexDomains.removeAll(flexExcludeDomains);
+                                        AppRuleDriver.defineRedisFlexSet(redis, ip, app.getName() + ":" + app.getUuid(), flexDomains.toArray(String[]::new));
+                                    }
+                                    if (!empty(flexExcludeDomains)) {
+                                        AppRuleDriver.defineRedisFlexExcludeSet(redis, ip, app.getName() + ":" + app.getUuid(), flexExcludeDomains.toArray(String[]::new));
+                                    }
                                 }
                             }
                         }
                     }
+                }
+                if (updateFlexRouters && !empty(flexDomains)) {
+                    flexRouterService.updateFlexRoutes(flexDomains);
                 }
             }
         } catch (Exception e) {

@@ -21,8 +21,7 @@ import java.util.stream.Collectors;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
-import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
+import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Slf4j
 public class TlsPassthruAppConfigDriver extends AppConfigDriverBase {
@@ -63,12 +62,14 @@ public class TlsPassthruAppConfigDriver extends AppConfigDriverBase {
     }
 
     private Set<FlexFeed> loadManageFlexFeeds(Account account, BubbleApp app) {
+        if (!account.admin()) throw forbiddenEx();
         final TlsPassthruConfig config = getConfig(account, app);
         config.getFlexSet(); // ensure names are initialized
         return config.getFlexFeedSet();
     }
 
     private Set<FlexFqdn> loadManageFlexDomains(Account account, BubbleApp app) {
+        if (!account.admin()) throw forbiddenEx();
         final TlsPassthruConfig config = getConfig(account, app);
         return !config.hasFlexFqdnList() ? Collections.emptySet() :
                 Arrays.stream(config.getFlexFqdnList())
@@ -154,6 +155,7 @@ public class TlsPassthruAppConfigDriver extends AppConfigDriverBase {
     }
 
     private List<TlsPassthruFqdn> addFlexFqdn(Account account, BubbleApp app, JsonNode data) {
+        if (!account.admin()) throw forbiddenEx();
         final JsonNode fqdnNode = data.get(PARAM_FLEX_FQDN);
         if (fqdnNode == null || fqdnNode.textValue() == null || empty(fqdnNode.textValue().trim())) {
             throw invalidEx("err.flexFqdn.flexFqdnRequired");
@@ -177,6 +179,7 @@ public class TlsPassthruAppConfigDriver extends AppConfigDriverBase {
     }
 
     private Set<TlsPassthruFeed> addFlexFeed(Account account, BubbleApp app, Map<String, String> params, JsonNode data) {
+        if (!account.admin()) throw forbiddenEx();
         final JsonNode urlNode = data.get(PARAM_FLEX_FEED_URL);
         if (urlNode == null || urlNode.textValue() == null || empty(urlNode.textValue().trim())) {
             throw invalidEx("err.flexFeedUrl.feedUrlRequired");
@@ -233,6 +236,7 @@ public class TlsPassthruAppConfigDriver extends AppConfigDriverBase {
     }
 
     private List<TlsPassthruFqdn> removeFlexFqdn(Account account, BubbleApp app, String id) {
+        if (!account.admin()) throw forbiddenEx();
         final AppRule rule = loadRule(account, app);
         loadDriver(account, rule, TlsPassthruRuleDriver.class); // validate proper driver
         final TlsPassthruConfig config = getConfig(account, app);
@@ -245,6 +249,7 @@ public class TlsPassthruAppConfigDriver extends AppConfigDriverBase {
     }
 
     public Set<TlsPassthruFeed> removeFlexFeed(Account account, BubbleApp app, String id) {
+        if (!account.admin()) throw forbiddenEx();
         final AppRule rule = loadRule(account, app);
         loadDriver(account, rule, TlsPassthruRuleDriver.class); // validate proper driver
         final TlsPassthruConfig config = getConfig(account, app).removeFlexFeed(id);
