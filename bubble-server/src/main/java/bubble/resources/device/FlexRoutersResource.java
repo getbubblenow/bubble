@@ -27,7 +27,9 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 
 import static bubble.ApiConstants.EP_STATUS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.network.PortPicker.portIsAvailable;
+import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Slf4j
@@ -60,6 +62,7 @@ public class FlexRoutersResource extends AccountOwnedResource<FlexRouter, FlexRo
     @Override protected Object daoCreate(FlexRouter toCreate) {
         toCreate.setRegistered(true);
         final Object router = super.daoCreate(toCreate);
+        sleep(SECONDS.toMillis(12), "waiting for refresh_flex_keys_monitor to write new flex SSH key");
         flexRouterService.interruptSoon();
         return router;
     }
