@@ -24,6 +24,7 @@ import lombok.Cleanup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.TeeInputStream;
 import org.apache.http.Header;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -40,6 +41,7 @@ import org.cobbzilla.util.collection.SingletonList;
 import org.cobbzilla.util.http.HttpClosingFilterInputStream;
 import org.cobbzilla.util.http.HttpMethods;
 import org.cobbzilla.util.http.URIBean;
+import org.cobbzilla.util.io.multi.MultiStream;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.stream.ByteStreamingOutput;
 import org.cobbzilla.wizard.stream.SendableResource;
@@ -50,6 +52,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.core.Response;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -125,6 +128,8 @@ public class StandardRuleEngineService implements RuleEngineService {
         return send(response);
     }
 
+    // this method is only called by the ReverseProxyResource which is not used in production,
+    // so we can be a little less strict about performance and other things
     public Response applyRulesAndSendResponse(ContainerRequest request,
                                               URIBean ub,
                                               FilterHttpRequest filterRequest) throws IOException {
@@ -153,9 +158,14 @@ public class StandardRuleEngineService implements RuleEngineService {
         filterRequest.setContentLength(contentLength);
 
         final CharsetDetector charsetDetector = CharsetDetector.charSetDetectorForContentType(filterRequest.getContentType());
-        final BubbleCharSet cs = charsetDetector.getCharSet(in, contentLength != null ? contentLength : 1024, true);
+        final long size = contentLength != null ? contentLength : 1024;
+        final ByteArrayOutputStream stash = new ByteArrayOutputStream((int) size);
+        final TeeInputStream teeIn = new TeeInputStream(in, stash);
+        final BubbleCharSet cs = charsetDetector.getCharSet(teeIn, size, true);
         final Charset charset = cs == null ? null : cs.getCharset();
-        final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest, in, charset);
+        final MultiStream multiStream = new MultiStream(new ByteArrayInputStream(stash.toByteArray()));
+        multiStream.addLastStream(in);
+        final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest, multiStream, charset);
 
         // send response
         return sendResponse(responseEntity, proxyResponse);
