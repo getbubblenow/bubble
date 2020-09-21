@@ -73,6 +73,7 @@
                         <include>bubble.test.promo.AccountCreditTest</include>
                         <include>bubble.test.promo.MultiplePromotionsTest</include>
                         <include>bubble.test.system.DriverTest</include>
+                        <include>bubble.test.filter.CharsetDetectionTest</include>
                         <include>bubble.test.filter.ProxyTest</include>
                         <include>bubble.test.filter.TrafficAnalyticsTest</include>
                         <include>bubble.test.filter.BlockSummaryTest</include>
@@ -80,6 +81,7 @@
                         <include>bubble.test.system.BackupTest</include>
                         <include>bubble.test.system.NetworkTest</include>
                         <include>bubble.abp.spec.BlockListTest</include>
+                        <include>org.cobbzilla.util.io.regex.RegexFilterReaderTest</include>
                     </includes>
                 </configuration>
             </plugin>

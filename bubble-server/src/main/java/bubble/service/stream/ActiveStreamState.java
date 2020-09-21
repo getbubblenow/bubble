@@ -5,6 +5,9 @@
 package bubble.service.stream;
 
 import bubble.resources.stream.FilterHttpRequest;
+import bubble.service.stream.charset.BubbleCharSet;
+import bubble.service.stream.charset.CharsetDetector;
+import lombok.Cleanup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -21,9 +24,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
+import static bubble.service.stream.charset.CharsetDetector.charSetDetectorForContentType;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
@@ -32,14 +37,10 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.io.NullInputStream.NULL_STREAM;
 
 @Slf4j
-class ActiveStreamState {
+public class ActiveStreamState {
 
     public static final int DEFAULT_BYTE_BUFFER_SIZE = (int) (8 * Bytes.KB);
     public static final long MAX_BYTE_BUFFER_SIZE = (64 * Bytes.KB);
-
-    // do not wrap input with encoding stream until we have received at least this many bytes
-    // this avoids errors when creating a GZIPInputStream when only one or a few bytes are available
-    public static final long MIN_BYTES_BEFORE_WRAP = Bytes.KB;
 
     // If no data is readable for this long, shut down the underlying MultiStream
     public static final long UNDERFLOW_TIMEOUT = SECONDS.toMillis(60);
@@ -69,6 +70,7 @@ class ActiveStreamState {
     private InputStream output = null;
     private long totalBytesWritten = 0;
     private long totalBytesRead = 0;
+    private CharsetDetector charsetDetector;
 
     public ActiveStreamState(FilterHttpRequest request,
                              List<AppRuleHarness> rules) {
@@ -76,6 +78,7 @@ class ActiveStreamState {
         this.requestId = request.getId();
         this.encoding = request.getEncoding();
         this.firstRule = rules.get(0);
+        this.charsetDetector = charSetDetectorForContentType(request.getContentType());
 
         final String prefix = "ActiveStreamState("+reqId()+"): ";
         if (empty(rules)) {
@@ -130,8 +133,13 @@ class ActiveStreamState {
             }
             // do not wrap input with encoding stream until we have received at least MIN_BYTES_BEFORE_WRAP bytes
             // this avoids errors when creating a GZIPInputStream when only one or a few bytes are available
-            if (output == null && totalBytesWritten > MIN_BYTES_BEFORE_WRAP) {
-                output = outputStream(firstRule.getDriver().filterResponse(request, inputStream(multiStream)));
+            if (output == null && totalBytesWritten > StreamConstants.MIN_BYTES_BEFORE_WRAP) {
+                log.info("addChunk: detecting charset using "+charsetDetector.getClass().getSimpleName());
+                final BubbleCharSet cs = getCharSet(false);
+                log.info("addChunk: detected charset: "+cs);
+                if (cs != null) {
+                    output = outputStream(firstRule.getDriver().filterResponse(request, inputStream(multiStream), cs.getCharset()));
+                }
             }
         }
     }
@@ -147,7 +155,27 @@ class ActiveStreamState {
             multiStream.addLastStream(chunkStream);
         }
         if (output == null) {
-            output = outputStream(firstRule.getDriver().filterResponse(request, inputStream(multiStream)));
+            log.info("addLastChunk: detecting charset using "+charsetDetector.getClass().getSimpleName());
+            final BubbleCharSet cs = getCharSet(true);
+            log.info("addLastChunk: detected charset: "+cs);
+            final Charset charset;
+            if (cs == null) {
+                log.warn(prefix("addLastChunk")+"no charset could be determined");
+                charset = null;
+            } else {
+                charset = cs.getCharset();
+            }
+            output = outputStream(firstRule.getDriver().filterResponse(request, inputStream(multiStream), charset));
+        }
+    }
+
+    public BubbleCharSet getCharSet(boolean last) throws IOException {
+        try {
+            multiStream.mark((int) totalBytesWritten);
+            @Cleanup final InputStream in = inputStream(multiStream);
+            return charsetDetector.getCharSet(in, totalBytesWritten, last);
+        } finally {
+            multiStream.reset();
         }
     }
 
@@ -211,7 +239,7 @@ class ActiveStreamState {
             if (log.isDebugEnabled()) log.debug(prefix+"identity encoding, returning baseStream unmodified");
             return baseStream;
 
-        } else if (doNotWrap.containsKey(url)) {
+        } else if (url == null || doNotWrap.containsKey(url)) {
             if (log.isDebugEnabled()) log.debug(prefix+"previous error wrapping encoding, returning baseStream unmodified");
             encoding = null;
             return baseStream;

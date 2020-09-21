@@ -18,6 +18,8 @@ import bubble.resources.stream.FilterMatchersRequest;
 import bubble.rule.AppRuleDriver;
 import bubble.rule.FilterMatchDecision;
 import bubble.server.BubbleConfiguration;
+import bubble.service.stream.charset.BubbleCharSet;
+import bubble.service.stream.charset.CharsetDetector;
 import lombok.Cleanup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +53,7 @@ import javax.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +67,8 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpHeaders.TRANSFER_ENCODING;
-import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.hashOf;
 import static org.cobbzilla.util.http.HttpStatusCodes.OK;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -141,7 +145,17 @@ public class StandardRuleEngineService implements RuleEngineService {
         // filter response. when stream is closed, close http client
         final Header contentTypeHeader = proxyResponse.getFirstHeader(CONTENT_TYPE);
         filterRequest.setContentType(contentTypeHeader == null ? null : contentTypeHeader.getValue());
-        final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest, new HttpClosingFilterInputStream(httpClient, proxyResponse));
+        final InputStream in = new HttpClosingFilterInputStream(httpClient, proxyResponse);
+
+        // do we have a content length?
+        final Header contentLengthHeader = proxyResponse.getFirstHeader(CONTENT_LENGTH);
+        final Long contentLength = contentLengthHeader == null ? null : Long.parseLong(contentLengthHeader.getValue());
+        filterRequest.setContentLength(contentLength);
+
+        final CharsetDetector charsetDetector = CharsetDetector.charSetDetectorForContentType(filterRequest.getContentType());
+        final BubbleCharSet cs = charsetDetector.getCharSet(in, contentLength != null ? contentLength : 1024, true);
+        final Charset charset = cs == null ? null : cs.getCharset();
+        final InputStream responseEntity = firstRule.getDriver().filterResponse(filterRequest, in, charset);
 
         // send response
         return sendResponse(responseEntity, proxyResponse);

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Set;
 
@@ -155,12 +156,12 @@ public interface AppRuleDriver {
 
     default InputStream doFilterRequest(InputStream in) { return in; }
 
-    default InputStream filterResponse(FilterHttpRequest filterRequest, InputStream in) {
-        if (hasNext()) return doFilterResponse(filterRequest, getNext().filterResponse(filterRequest, in));
-        return doFilterResponse(filterRequest, in);
+    default InputStream filterResponse(FilterHttpRequest filterRequest, InputStream in, Charset charset) {
+        if (hasNext()) return doFilterResponse(filterRequest, getNext().filterResponse(filterRequest, in, charset), charset);
+        return doFilterResponse(filterRequest, in, charset);
     }
 
-    default InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) { return in; }
+    default InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in, Charset charset) { return in; }
 
     default String resolveResource(String res, Map<String, Object> ctx) {
         final String resource = locateResource(res);

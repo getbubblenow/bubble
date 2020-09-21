@@ -30,6 +30,7 @@ import org.glassfish.jersey.server.ContainerRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -331,7 +332,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
     public static final String FILTER_CTX_DECISION = "decision";
     public static final String BLOCK_STATS_JS = "BLOCK_STATS_JS";
 
-    @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
+    @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in, Charset charset) {
 
         final FilterMatchersRequest request = filterRequest.getMatchersResponse().getRequest();
         final String prefix = "doFilterResponse("+filterRequest.getId()+"): ";
@@ -384,14 +385,14 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
         }
         if (bubbleBlockConfig.inPageBlocks() && showStats) {
             if (log.isInfoEnabled()) log.info(prefix + "SEND: both inPageBlocks and showStats are true, filtering");
-            return filterInsertJs(in, filterRequest, filterCtx, BUBBLE_JS_TEMPLATE, getBubbleJsStatsTemplate(), BLOCK_STATS_JS, showStats);
+            return filterInsertJs(in, charset, filterRequest, filterCtx, BUBBLE_JS_TEMPLATE, getBubbleJsStatsTemplate(), BLOCK_STATS_JS, showStats);
         }
         if (bubbleBlockConfig.inPageBlocks()) {
             if (log.isInfoEnabled()) log.info(prefix + "SEND: both inPageBlocks is true, filtering");
-            return filterInsertJs(in, filterRequest, filterCtx, BUBBLE_JS_TEMPLATE, EMPTY, BLOCK_STATS_JS, showStats);
+            return filterInsertJs(in, charset, filterRequest, filterCtx, BUBBLE_JS_TEMPLATE, EMPTY, BLOCK_STATS_JS, showStats);
         }
         if (log.isInfoEnabled()) log.info(prefix+"inserting JS for stats into: "+request.getUrl()+" with Content-Type: "+filterRequest.getContentType());
-        return filterInsertJs(in, filterRequest, filterCtx, getBubbleJsStatsTemplate(), null, null, showStats);
+        return filterInsertJs(in, charset, filterRequest, filterCtx, getBubbleJsStatsTemplate(), null, null, showStats);
     }
 
     protected String getBubbleJsStatsTemplate () {

@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 import static org.cobbzilla.util.io.FileUtil.basename;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
@@ -38,10 +39,10 @@ public class JsUserBlockerRuleDriver extends AbstractAppRuleDriver implements Re
         return loadTemplate(getDefaultSiteJsTemplate(), basename(getRequestModifierConfig().getSiteJsTemplate()));
     }
 
-    @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
+    @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in, Charset charset) {
         if (!filterRequest.isHtml()) return in;
         final String bubbleJsTemplate = loadTemplate(BUBBLE_JS_TEMPLATE, BUBBLE_JS_TEMPLATE_NAME);
         final String siteJsTemplate = getSiteJsTemplate();
-        return filterInsertJs(in, filterRequest, null, bubbleJsTemplate, siteJsTemplate, CTX_APPLY_BLOCKS_JS, true);
+        return filterInsertJs(in, charset, filterRequest, null, bubbleJsTemplate, siteJsTemplate, CTX_APPLY_BLOCKS_JS, true);
     }
 }

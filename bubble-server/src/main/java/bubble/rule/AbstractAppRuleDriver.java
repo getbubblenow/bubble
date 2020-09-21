@@ -36,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,7 +52,6 @@ import static org.cobbzilla.util.io.FileUtil.basename;
 import static org.cobbzilla.util.io.regex.RegexReplacementFilter.DEFAULT_PREFIX_REPLACEMENT_WITH_MATCH;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
-import static org.cobbzilla.util.string.StringUtil.UTF8cs;
 
 public abstract class AbstractAppRuleDriver implements AppRuleDriver {
 
@@ -105,19 +105,21 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
     }
 
     public static final String DEFAULT_INSERTION_REGEX = "<\\s*head[^>]*>";
-    public static final String DEFAULT_SCRIPT_OPEN = "<meta charset=\"UTF-8\"><script>";
+    public static final String CHARSET_VAR = "{{charset}}";
+    public static final String DEFAULT_SCRIPT_OPEN = "<meta charset=\""+CHARSET_VAR+"\"><script>";
     public static final String NONCE_VAR = "{{nonce}}";
-    public static final String DEFAULT_SCRIPT_NONCE_OPEN = "<meta charset=\"UTF-8\"><script nonce=\""+NONCE_VAR+"\">";
+    public static final String DEFAULT_SCRIPT_NONCE_OPEN = "<meta charset=\""+CHARSET_VAR+"\"><script nonce=\""+NONCE_VAR+"\">";
     public static final String DEFAULT_SCRIPT_CLOSE = "</script>";
 
     protected static String insertionRegex (String customRegex) {
         return empty(customRegex) ? DEFAULT_INSERTION_REGEX : customRegex;
     }
 
-    protected static String scriptOpen (FilterHttpRequest filterRequest, String customNonceOpen, String customNoNonceOpen) {
-        return filterRequest.hasScriptNonce()
+    protected static String scriptOpen (FilterHttpRequest filterRequest, String charset, String customNonceOpen, String customNoNonceOpen) {
+        return (filterRequest.hasScriptNonce()
                 ? (empty(customNonceOpen) ? DEFAULT_SCRIPT_NONCE_OPEN : customNonceOpen).replace(NONCE_VAR, filterRequest.getScriptNonce())
-                : (empty(customNoNonceOpen) ? DEFAULT_SCRIPT_OPEN : customNoNonceOpen);
+                : (empty(customNoNonceOpen) ? DEFAULT_SCRIPT_OPEN : customNoNonceOpen)
+        ).replace(CHARSET_VAR, charset);
     }
 
     protected static String scriptClose (String customClose) {
@@ -153,6 +155,7 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
     @Getter(lazy=true) private final String scriptClose = scriptClose(requestModConfig().getScriptClose());
 
     protected InputStream filterInsertJs(InputStream in,
+                                         Charset charset,
                                          FilterHttpRequest filterRequest,
                                          Map<String, Object> filterCtx,
                                          String bubbleJsTemplate,
@@ -161,7 +164,7 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
                                          boolean showIcon) {
         final RequestModifierConfig modConfig = requestModConfig();
         final String replacement = DEFAULT_PREFIX_REPLACEMENT_WITH_MATCH
-                + scriptOpen(filterRequest, modConfig.getScriptOpenNonce(), modConfig.getScriptOpenNoNonce())
+                + scriptOpen(filterRequest, charset.name(), modConfig.getScriptOpenNonce(), modConfig.getScriptOpenNoNonce())
                 + getBubbleJs(filterRequest, filterCtx, bubbleJsTemplate, defaultSiteTemplate, siteJsInsertionVar, showIcon)
                 + getScriptClose();
 
@@ -187,7 +190,7 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
         if (alternates != null) {
             final BubbleAlternateRegexReplacement firstAlt = alternates.get(0);
             if (log.isInfoEnabled()) log.info(prefix + "using alternate filter (0): " +firstAlt);
-            reader = new RegexFilterReader(new InputStreamReader(in), firstAlt.regexFilter(filterRequest, replacement))
+            reader = new RegexFilterReader(new InputStreamReader(in, charset), firstAlt.regexFilter(filterRequest, replacement))
                     .setName(filterNamePrefix + "(alt0: "+firstAlt.getFqdnMatch()+") " + firstAlt.getInsertionRegex())
                     .setMaxMatches(1);
             for (int i=1; i<alternates.size(); i++) {
@@ -200,7 +203,7 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
 
         } else {
             if (log.isInfoEnabled()) log.info(prefix + "using default filter: " +getInsertionRegex());
-            reader = new RegexFilterReader(new InputStreamReader(in), new RegexReplacementFilter(getInsertionRegex(), replacement))
+            reader = new RegexFilterReader(new InputStreamReader(in, charset), new RegexReplacementFilter(getInsertionRegex(), replacement))
                     .setName(filterNamePrefix + getInsertionRegex())
                     .setMaxMatches(1);
         }
@@ -213,7 +216,7 @@ public abstract class AbstractAppRuleDriver implements AppRuleDriver {
             }
         }
 
-        return new ReaderInputStream(reader, UTF8cs);
+        return new ReaderInputStream(reader, charset);
     }
 
     protected String getBubbleJs(FilterHttpRequest filterRequest,

@@ -18,13 +18,13 @@ import org.cobbzilla.util.io.regex.RegexInsertionFilter;
 import org.cobbzilla.util.io.regex.RegexStreamFilter;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.string.StringUtil.UTF8cs;
 
 @Slf4j
 public class UserBlockerRuleDriver extends AbstractAppRuleDriver {
@@ -60,14 +60,14 @@ public class UserBlockerRuleDriver extends AbstractAppRuleDriver {
 
     protected UserBlockerConfig configObject() { return json(getFullConfig(), UserBlockerConfig.class); }
 
-    @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in) {
+    @Override public InputStream doFilterResponse(FilterHttpRequest filterRequest, InputStream in, Charset charset) {
         if (!filterRequest.isHtml()) return in;
 
         final String requestId = filterRequest.getId();
         final UserBlockerStreamFilter filter = new UserBlockerStreamFilter(requestId, matcher, rule, configuration.getHttp().getBaseUri());
         filter.configure(getFullConfig());
         filter.setDataDAO(appDataDAO);
-        RegexFilterReader reader = new RegexFilterReader(in, RESPONSE_BUFSIZ, filter).setName("mainFilterReader");
+        RegexFilterReader reader = new RegexFilterReader(in, charset, RESPONSE_BUFSIZ, filter).setName("mainFilterReader");
 
         final UserBlockerConfig config = configObject();
         if (config.hasCommentDecorator()) {
@@ -110,7 +110,7 @@ public class UserBlockerRuleDriver extends AbstractAppRuleDriver {
             }
         }
 
-        return new ReaderInputStream(reader, UTF8cs);
+        return new ReaderInputStream(reader, charset);
     }
 
     protected String startElementRegex(String el)     { return "(<\\s*"      + el + "[^>]*>)"; }
