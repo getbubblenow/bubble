@@ -78,7 +78,7 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
 
     protected abstract GeoLocation _geolocate (String ip);
 
-    public File initFile(String url, String pathMatch, List<NameAndValue> headers) {
+    public File initFile(String url, String pathMatch, List<NameAndValue> headers, String extension) {
         final File archive;
         final File dbFile;
         String ext;
@@ -107,18 +107,17 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
                 }
 
                 // create a symlink with the proper extension, so "unroll" can detect the archive type
-                ext = getExtension(url);
             }
 
-            if (ext.startsWith(".")) ext = ext.substring(1);
-            switch (ext) {
+            if (extension.startsWith(".")) extension = extension.substring(1);
+            switch (extension) {
                 case "zip": case "tgz": case "gz": case "tar.gz": case "tar.bz2": break;
-                default: return die("initFile: unrecognized archive extension: "+ext+", from URL="+url);
+                default: return die("initFile: unrecognized archive extension: "+extension+", from URL="+url);
             }
 
             final File link;
             if (!isFile) {
-                link = new File(abs(archive) + "." + ext);
+                link = new File(abs(archive) + "." + extension);
                 if (link.exists() && !link.delete()) return die("initFile: error removing link: " + abs(link));
                 symlink(link, archive);
             } else {
@@ -160,7 +159,5 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
         if (lastEx instanceof RuntimeException) throw (RuntimeException) lastEx;
         throw new IllegalStateException(msg, lastEx);
     }
-
-    public String getExtension(String url) { return FileUtil.extension(url); }
 
 }
