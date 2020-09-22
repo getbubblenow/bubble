@@ -1,7 +1,7 @@
 # Copyright (C) 2020 Bubble, Inc.
 
 ## For ANY commercial use of this software
-All rights are reserved. Please contact licensing@bubblev.com for more information.
+All rights are reserved. Please contact [licensing@getbubblenow.com](mailto:licensing@getbubblenow.com) for more information.
 
 ## For individuals and not-for-profit organizations
 If you are an individual person or a not-for-profit organization, and your usage of this software is entirely 
