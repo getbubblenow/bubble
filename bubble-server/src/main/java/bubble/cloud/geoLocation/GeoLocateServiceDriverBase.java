@@ -90,7 +90,8 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
                 dbFile = new File(archive.getParentFile(), archive.getName()+".database");
 
             } else {
-                final String urlWithLicense = HandlebarsUtil.apply(getHandlebars(), url, getCredentials().newContext(), '[', ']');
+                final String urlWithLicense = HandlebarsUtil.apply(getHandlebars(), url, getCredentials().newContext(), '[', ']')
+                        .replace("&amp;", "&");
                 final HttpRequestBean request = new HttpRequestBean(urlWithLicense).setHeaders(headers);
                 final HttpMeta meta = HttpUtil.getHeadMetadata(request);
 
