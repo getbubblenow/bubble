@@ -88,7 +88,8 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     @Transient @JsonIgnore public String getNetwork () { return getUuid(); }
 
     public static final int NETWORK_NAME_MAXLEN = 100;
-    public static final int NETWORK_NAME_MINLEN = 4;
+    public static final int NETWORK_NAME_MINLEN = 3;
+    public static final int NETWORK_NAME_MINLEN_USER = 4;
 
     @ECSearchable @ECField(index=10)
     @HasValue(message="err.name.required")
@@ -243,7 +244,9 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
                 errors.addViolation("err.name.reserved");
             } else if (name.length() > NETWORK_NAME_MAXLEN) {
                 errors.addViolation("err.name.length");
-            } else if (name.length() < NETWORK_NAME_MINLEN && !owner.admin()) {
+            } else if (name.length() < NETWORK_NAME_MINLEN_USER && !owner.admin()) {
+                errors.addViolation("err.name.tooShort");
+            } else if (name.length() < NETWORK_NAME_MINLEN && owner.admin()) {
                 errors.addViolation("err.name.tooShort");
             } else {
                 for (int i=0; i<100; i++) {
