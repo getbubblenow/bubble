@@ -17,7 +17,6 @@ import org.cobbzilla.util.http.HttpMeta;
 import org.cobbzilla.util.http.HttpRequestBean;
 import org.cobbzilla.util.http.HttpUtil;
 import org.cobbzilla.util.io.Decompressors;
-import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.TempDir;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,12 +80,10 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
     public File initFile(String url, String pathMatch, List<NameAndValue> headers, String extension) {
         final File archive;
         final File dbFile;
-        String ext;
         try {
             final boolean isFile = url.startsWith(SCHEME_FILE);
             if (isFile) {
                 archive = new File(url.substring(SCHEME_FILE.length()));
-                ext = FileUtil.extension(archive);
                 dbFile = new File(archive.getParentFile(), archive.getName()+".database");
 
             } else {
