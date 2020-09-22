@@ -94,7 +94,7 @@ public class NodeProgressMeter extends PipedOutputStream implements Runnable {
         writer = new BufferedWriter(new OutputStreamWriter(this));
 
         thread = new Thread(this);
-        thread.setName("NodeProgressMeter-"+nn.getNetworkName());
+        thread.setName("NodeProgressMeter-"+nn.getFqdn());
         thread.setDaemon(true);
         thread.start();
     }
