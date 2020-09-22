@@ -231,6 +231,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     public static HostnameValidationResult validateHostname(HasNetwork request,
                                                             AccountDAO accountDAO,
                                                             BubbleNetworkDAO networkDAO) {
+        final Account owner = accountDAO.findByUuid(request.getAccount());
         HostnameValidationResult errors = new HostnameValidationResult();
         if (!request.hasName()) {
             errors.addViolation("err.name.required");
@@ -242,7 +243,7 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
                 errors.addViolation("err.name.reserved");
             } else if (name.length() > NETWORK_NAME_MAXLEN) {
                 errors.addViolation("err.name.length");
-            } else if (name.length() < NETWORK_NAME_MINLEN) {
+            } else if (name.length() < NETWORK_NAME_MINLEN && !owner.admin()) {
                 errors.addViolation("err.name.tooShort");
             } else {
                 for (int i=0; i<100; i++) {
