@@ -102,8 +102,6 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
                 if (meta.shouldRefresh(archive)) {
                     downloadDbFile(request, archive);
                 }
-
-                // create a symlink with the proper extension, so "unroll" can detect the archive type
             }
 
             if (extension.startsWith(".")) extension = extension.substring(1);
@@ -112,6 +110,7 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
                 default: return die("initFile: unrecognized archive extension: "+extension+", from URL="+url);
             }
 
+            // create a symlink with the proper extension, so "unroll" can detect the archive type
             final File link;
             if (!isFile) {
                 link = new File(abs(archive) + "." + extension);
