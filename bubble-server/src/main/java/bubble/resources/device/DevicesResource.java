@@ -86,9 +86,10 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
             device.initTotpKey();
         }
 
+        // always set to default level upon registration. user can change later.
         final DeviceSecurityLevel defaultSecurityLevel = deviceService.getDefaultSecurityLevel(device.getDeviceType());
-        log.info("setReferences: no securityLevel, setting to default for type "+device.getDeviceType()+": "+ defaultSecurityLevel);
-        if (!device.hasSecurityLevel()) device.setSecurityLevel(defaultSecurityLevel);
+        device.setSecurityLevel(defaultSecurityLevel);
+        log.info("setReferences: set securityLevel="+defaultSecurityLevel+" for device: "+device+" with type="+device.getDeviceType());
 
         return super.setReferences(ctx, caller, device);
     }

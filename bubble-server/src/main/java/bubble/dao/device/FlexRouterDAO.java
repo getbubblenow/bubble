@@ -83,9 +83,9 @@ public class FlexRouterDAO extends AccountOwnedEntityDAO<FlexRouter> implements 
     @Override public void deleteDevice(String uuid) {
         final int count = bulkDelete("device", uuid);
         if (count <= 1) {
-            log.info("deleteDevice: deleted "+count+" TrustedClient records for device "+uuid);
+            log.info("deleteDevice: deleted "+count+" FlexRouter records for device "+uuid);
         } else {
-            log.warn("deleteDevice: deleted "+count+" TrustedClient records (expected only 1) for device "+uuid);
+            log.warn("deleteDevice: deleted "+count+" FlexRouter records (expected only 1) for device "+uuid);
         }
     }
 

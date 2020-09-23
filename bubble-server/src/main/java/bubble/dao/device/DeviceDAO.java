@@ -120,12 +120,12 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
     }
 
     @Override @NonNull public Device update(@NonNull final Device updateRequest) {
-        final var toUpdate = (Device) readOnlySession().get(Device.class, updateRequest.getUuid());
+        final Device toUpdate = (Device) readOnlySession().get(Device.class, updateRequest.getUuid());
         if (toUpdate == null) die("Cannot find device to update with uuid: " + updateRequest.getUuid());
         if (toUpdate.uninitialized()) die("Cannot update special devices: " + updateRequest.getName());
 
         toUpdate.update(updateRequest);
-        final var updated = super.update(toUpdate);
+        final Device updated = super.update(toUpdate);
         deviceService.setDeviceSecurityLevel(updated);
         refreshVpnUsers();
         return updated;
