@@ -19,7 +19,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.hibernate.criterion.Restrictions.*;
 
 @Repository @Slf4j
-public class FlexRouterDAO extends AccountOwnedEntityDAO<FlexRouter> {
+public class FlexRouterDAO extends AccountOwnedEntityDAO<FlexRouter> implements HasDeviceDAO {
 
     @Autowired private FlexRouterService flexRouterService;
 
@@ -79,5 +79,14 @@ public class FlexRouterDAO extends AccountOwnedEntityDAO<FlexRouter> {
     public FlexRouter findByPort(int port) { return findByUniqueField("port", port); }
 
     public FlexRouter findByKeyHash(String keyHash) { return findByUniqueField("keyHash", keyHash); }
+
+    @Override public void deleteDevice(String uuid) {
+        final int count = bulkDelete("device", uuid);
+        if (count <= 1) {
+            log.info("deleteDevice: deleted "+count+" TrustedClient records for device "+uuid);
+        } else {
+            log.warn("deleteDevice: deleted "+count+" TrustedClient records (expected only 1) for device "+uuid);
+        }
+    }
 
 }

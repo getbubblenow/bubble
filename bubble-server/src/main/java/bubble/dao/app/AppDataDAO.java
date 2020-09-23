@@ -4,6 +4,7 @@
  */
 package bubble.dao.app;
 
+import bubble.dao.device.HasDeviceDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppData;
 import bubble.model.app.BubbleApp;
@@ -26,7 +27,7 @@ import static org.hibernate.criterion.Restrictions.eq;
 
 @SuppressWarnings("Duplicates")
 @Repository @Slf4j
-public class AppDataDAO extends AppTemplateEntityDAO<AppData> {
+public class AppDataDAO extends AppTemplateEntityDAO<AppData> implements HasDeviceDAO {
 
     public static final Order KEY_ASC = Order.asc("key");
 

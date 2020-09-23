@@ -4,6 +4,7 @@
  */
 package bubble.dao.account;
 
+import bubble.dao.device.HasDeviceDAO;
 import bubble.model.account.TrustedClient;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.model.Identifiable;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Repository;
 import static java.util.UUID.randomUUID;
 
 @Repository @Slf4j
-public class TrustedClientDAO extends AccountOwnedEntityDAO<TrustedClient> {
+public class TrustedClientDAO extends AccountOwnedEntityDAO<TrustedClient> implements HasDeviceDAO {
 
     @Override protected String getNameField() { return Identifiable.UUID; }
 

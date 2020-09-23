@@ -86,8 +86,9 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
             device.initTotpKey();
         }
 
-        log.info("setReferences: no securityLevel, setting to default for type "+device.getDeviceType()+": "+device.getDeviceType().getDefaultSecurityLevel());
-        if (!device.hasSecurityLevel()) device.setSecurityLevel(device.getDeviceType().getDefaultSecurityLevel());
+        final DeviceSecurityLevel defaultSecurityLevel = deviceService.getDefaultSecurityLevel(device.getDeviceType());
+        log.info("setReferences: no securityLevel, setting to default for type "+device.getDeviceType()+": "+ defaultSecurityLevel);
+        if (!device.hasSecurityLevel()) device.setSecurityLevel(defaultSecurityLevel);
 
         return super.setReferences(ctx, caller, device);
     }

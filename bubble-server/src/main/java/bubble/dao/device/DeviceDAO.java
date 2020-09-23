@@ -46,6 +46,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AppDataDAO dataDAO;
     @Autowired private TrustedClientDAO trustDAO;
+    @Autowired private FlexRouterDAO flexRouterDAO;
     @Autowired private DeviceService deviceService;
 
     @Override public Order getDefaultSortOrder() { return ORDER_CTIME_ASC; }
@@ -134,19 +135,22 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
         final Device device = findByUuid(uuid);
         if (device != null) {
             if (device.uninitialized()) die("Cannot delete special device: " + device.getName());
-
-            dataDAO.deleteDevice(uuid);
-            trustDAO.deleteDevice(uuid);
+            deleteDeviceDependencies(uuid);
             super.delete(uuid);
             refreshVpnUsers();
         }
     }
 
     @Override public void forceDelete(String uuid) {
-        dataDAO.deleteDevice(uuid);
-        trustDAO.deleteDevice(uuid);
+        deleteDeviceDependencies(uuid);
         super.delete(uuid);
         refreshVpnUsers();
+    }
+
+    private void deleteDeviceDependencies(String uuid) {
+        dataDAO.deleteDevice(uuid);
+        trustDAO.deleteDevice(uuid);
+        flexRouterDAO.deleteDevice(uuid);
     }
 
     @Transactional

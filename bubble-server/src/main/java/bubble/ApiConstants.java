@@ -216,6 +216,7 @@ public class ApiConstants {
     public static final String EP_NODES = "/nodes";
     public static final String EP_DEVICES = "/devices";
     public static final String EP_DEVICE_TYPES = "/deviceTypes";
+    public static final String EP_DEFAULT_SECURITY_LEVEL = "/defaultSecurityLevel";
     public static final String EP_FLEX_ROUTERS = "/flexRouters";
     public static final String EP_MODEL = "/model";
     public static final String EP_VPN = "/vpn";

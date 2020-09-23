@@ -5,7 +5,9 @@
 package bubble.service.device;
 
 import bubble.model.account.Account;
+import bubble.model.device.BubbleDeviceType;
 import bubble.model.device.Device;
+import bubble.model.device.DeviceSecurityLevel;
 import bubble.model.device.DeviceStatus;
 
 import java.util.List;
@@ -27,5 +29,8 @@ public interface DeviceService {
 
     DeviceStatus getDeviceStatus(String deviceUuid);
     DeviceStatus getLiveDeviceStatus(String deviceUuid);
+
+    default DeviceSecurityLevel getDefaultSecurityLevel(BubbleDeviceType type) { return type.getDefaultSecurityLevel(); }
+    default void setDefaultSecurityLevel(BubbleDeviceType type, DeviceSecurityLevel level) {}
 
 }

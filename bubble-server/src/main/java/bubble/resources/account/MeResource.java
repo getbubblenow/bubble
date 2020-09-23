@@ -15,10 +15,10 @@ import bubble.model.account.AuthenticatorRequest;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
-import bubble.model.device.BubbleDeviceType;
 import bubble.resources.app.AppsResource;
 import bubble.resources.bill.*;
 import bubble.resources.cloud.*;
+import bubble.resources.device.DeviceTypesResource;
 import bubble.resources.device.DevicesResource;
 import bubble.resources.device.FlexRoutersResource;
 import bubble.resources.driver.DriversResource;
@@ -28,10 +28,10 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
-import bubble.service.upgrade.BubbleJarUpgradeService;
 import bubble.service.boot.BubbleModelSetupService;
 import bubble.service.boot.SageHelloService;
 import bubble.service.cloud.NodeLaunchMonitor;
+import bubble.service.upgrade.BubbleJarUpgradeService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Cleanup;
 import lombok.Getter;
@@ -368,9 +368,10 @@ public class MeResource {
         return configuration.subResource(DevicesResource.class, caller);
     }
 
-    @GET @Path(EP_DEVICE_TYPES)
-    public Response getDeviceTypes(@Context ContainerRequest ctx) {
-        return ok(BubbleDeviceType.getSelectableTypes());
+    @Path(EP_DEVICE_TYPES)
+    public DeviceTypesResource getDeviceTypes(@Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        return configuration.subResource(DeviceTypesResource.class, caller);
     }
 
     @Path(EP_FLEX_ROUTERS)
