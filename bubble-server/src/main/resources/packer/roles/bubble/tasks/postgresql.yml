@@ -36,3 +36,11 @@
     special_time: "hourly"
     user: "postgres"
     job: "HOUR_AGO=$(date -d '1 month ago' +\"%s000\") && psql -d bubble -c \"DELETE FROM sent_notification WHERE mtime < ${HOUR_AGO}\" -c \"DELETE FROM received_notification WHERE mtime < ${HOUR_AGO}\""
+
+- name: Link to postgres log dir from bubble's log dir
+  file:
+    src: /var/log/postgresql
+    dest: /var/log/bubble/postgresql
+    owner: root
+    group: postgres
+    state: link
