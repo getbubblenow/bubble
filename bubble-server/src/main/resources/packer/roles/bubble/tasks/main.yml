@@ -120,7 +120,7 @@
     name: "Log flag check and manager"
     minute: "*/5"
     user: "root"
-    job: "log_manager.sh"
+    job: "bash -c \"/usr/local/sbin/log_manager.sh >>/var/log/bubble/log_manager.log 2>&1\""
 
 - name: Install packer for sage node
   shell: su - bubble bash -c install_packer.sh

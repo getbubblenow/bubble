@@ -13,7 +13,7 @@ function die {
 }
 
 function log {
-  echo "${1}" >> ${LOG}
+  echo "$(date): ${1}" >> ${LOG}
 }
 
 export LANG="en_US.UTF-8"
