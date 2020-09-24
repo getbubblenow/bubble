@@ -84,7 +84,7 @@ public class TrustedAuthResource {
 
         final TrustedClient trusted = findTrustedClient(account, request);
         log.info("loginTrustedClient: logging in trusted: "+account.getName());
-        return ok(account.setToken(newLoginSession(account, accountDAO, sessionDAO)));
+        return ok(newLoginSession(account, accountDAO, sessionDAO));
     }
 
     @DELETE @Path(EP_DELETE+"/{device}")

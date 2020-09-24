@@ -113,11 +113,13 @@ public class AuthResource {
         return accountDAO.update(account.setLastLogin());
     }
 
-    public String newLoginSession(Account account) { return newLoginSession(account, accountDAO, sessionDAO); }
+    public Account newLoginSession(Account account) { return newLoginSession(account, accountDAO, sessionDAO); }
 
-    public static String newLoginSession(Account account, AccountDAO accountDAO, SessionDAO sessionDAO) {
-        if (account.getLastLogin() == null) account.setFirstLogin(true);
-        return sessionDAO.create(updateLastLogin(account, accountDAO));
+    public static Account newLoginSession(Account account, AccountDAO accountDAO, SessionDAO sessionDAO) {
+        return account
+                .setToken(sessionDAO.create(updateLastLogin(account, accountDAO)))
+                .setFirstLogin(account.getLastLogin() == null ? true : null)
+                .setFirstAdmin(accountDAO.isFirstAdmin(account));
     }
 
     @GET @Path(EP_CONFIGS)
@@ -175,7 +177,7 @@ public class AuthResource {
         final Account account = accountDAO.create(new Account(request).setRemoteHost(getRemoteHost(req)));
         activationService.bootstrapThisNode(account, request);
 
-        return ok(account.setToken(newLoginSession(account)));
+        return ok(newLoginSession(account));
     }
 
     @Autowired private NotificationService notificationService;
@@ -344,10 +346,9 @@ public class AuthResource {
             }
         }
         account.getAccountInitializer().setCanSendAccountMessages();
-        return ok(account
+        return ok(newLoginSession(account
                 .waitForAccountInit()
-                .setPromoError(promoEx == null ? null : promoEx.getMessageTemplate())
-                .setToken(newLoginSession(account)));
+                .setPromoError(promoEx == null ? null : promoEx.getMessageTemplate())));
     }
 
     @POST @Path(EP_LOGIN)
@@ -419,8 +420,7 @@ public class AuthResource {
             }
         }
 
-        if (!account.hasToken()) account.setToken(newLoginSession(account));
-        return ok(account);
+        return ok(account.hasToken() ? account : newLoginSession(account));
     }
 
     @POST @Path(EP_APP_LOGIN+"/{session}")
@@ -610,7 +610,7 @@ public class AuthResource {
         if (approval.getMessageType() == AccountMessageType.confirmation) {
             if (account == null) return invalid("err.approvalToken.invalid");
             if (approval.getAction() == AccountAction.login || approval.getAction() == AccountAction.password) {
-                return ok(account.setToken(newLoginSession(account)));
+                return ok(newLoginSession(account));
             } else {
                 return ok_empty();
             }

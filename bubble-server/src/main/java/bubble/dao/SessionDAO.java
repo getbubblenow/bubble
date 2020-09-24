@@ -17,9 +17,4 @@ public class SessionDAO extends AbstractSessionDAO<Account> {
 
     @Override protected boolean canStartSession(Account account) { return !account.suspended(); }
 
-    @Override public String create(Account account) {
-        account.setFirstAdmin(account.getUuid().equals(accountDAO.getFirstAdmin().getUuid()));
-        return super.create(account);
-    }
-
 }
