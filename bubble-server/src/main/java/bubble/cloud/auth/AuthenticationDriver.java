@@ -51,6 +51,26 @@ public interface AuthenticationDriver extends CloudServiceDriver {
     Logger log = LoggerFactory.getLogger(AuthenticationDriver.class);
 
     String CTX_LOCALE = "locale";
+    String CTX_ACCOUNT = "account";
+    String CTX_MESSAGE = "message";
+    String CTX_CONTACT = "contact";
+    String CTX_CONFIGURATION = "configuration";
+    String CTX_SUPPORT = "support";
+    String CTX_APP_LINKS = "appLinks";
+    String CTX_CONFIRMATION_TOKEN = "confirmationToken";
+    String CTX_PLAN = "plan";
+    String CTX_NOW = "now";
+    String CTX_NEXT_BILL_AMOUNT = "nextBillAmount";
+    String CTX_NEXT_BILL_DATE = "nextBillDate";
+    String CTX_BILL_PERIOD_UNIT = "billPeriodUnit";
+    String CTX_BILL_DATE_FORMAT = "billDateFormat";
+    String CTX_TIMEZONE = "timezone";
+    String CTX_CURRENCY_SYMBOL = "currencySymbol";
+    String CTX_CURRENCY_DECIMAL = "currencyDecimal";
+    String CTX_NODE = "node";
+    String CTX_NETWORK = "network";
+    String CTX_PUBLIC_URI = "publicUri";
+    String CTX_SAGE_URI = "sageUri";
 
     default BubbleConfiguration getConfiguration() { return die("getConfiguration: not implemented!"); }
     default String getTemplatePath() { return die("getTemplatePath: not implemented!"); }
@@ -80,16 +100,16 @@ public interface AuthenticationDriver extends CloudServiceDriver {
         final BubbleConfiguration c = configuration;
         final String locale = account.getLocale();
         final Map<String, Object> ctx = new HashMap<>();
-        ctx.put("account", account);
-        ctx.put("message", message);
-        ctx.put("contact", contact);
-        ctx.put("configuration", c);
-        ctx.put("support", c.getSupport().forLocale(locale));
-        ctx.put("appLinks", c.getAppLinks().forLocale(locale));
+        ctx.put(CTX_ACCOUNT, account);
+        ctx.put(CTX_MESSAGE, message);
+        ctx.put(CTX_CONTACT, contact);
+        ctx.put(CTX_CONFIGURATION, c);
+        ctx.put(CTX_SUPPORT, c.getSupport().forLocale(locale));
+        ctx.put(CTX_APP_LINKS, c.getAppLinks().forLocale(locale));
 
         final AccountPolicy policy = bean(c, AccountPolicyDAO.class).findSingleByAccount(account.getUuid());
         account.setPolicy(policy);
-        ctx.put("confirmationToken", bean(c, StandardAccountMessageService.class).confirmationToken(policy, message, contact));
+        ctx.put(CTX_CONFIRMATION_TOKEN, bean(c, StandardAccountMessageService.class).confirmationToken(policy, message, contact));
 
         final Map<String, String> messages = bean(c, MessageService.class).formatStandardMessages(locale);
         final BubbleNode node = getNode(message, c);
@@ -108,21 +128,25 @@ public interface AuthenticationDriver extends CloudServiceDriver {
                 final PaymentServiceDriver paymentDriver = paymentService.getPaymentDriver(c);
                 final long amountDue = paymentDriver.amountDue(accountPlan.getUuid(), bill.getUuid(), paymentMethod.getUuid());
 
-                ctx.put("plan", plan);
-                ctx.put("now", now());
-                ctx.put("nextBillAmount", amountDue);
-                ctx.put("nextBillDate", plan.getPeriod().periodMillis(bill.getPeriodStart()));
-                ctx.put("billPeriodUnit", messages.get("price_period_"+plan.getPeriod().name()+"_unit"));
-                ctx.put("billDateFormat", messages.get("label_date").replace("{", "").replace("}", ""));
-                ctx.put("timezone", network.getTimezone());
-                ctx.put("currencySymbol", messages.get("currency_symbol_"+plan.getCurrency()));
-                ctx.put("currencyDecimal", messages.get("currency_decimal_"+plan.getCurrency()));
+                ctx.put(CTX_PLAN, plan);
+                ctx.put(CTX_NOW, now());
+                ctx.put(CTX_NEXT_BILL_AMOUNT, amountDue);
+                ctx.put(CTX_NEXT_BILL_DATE, plan.getPeriod().periodMillis(bill.getPeriodStart()));
+                ctx.put(CTX_BILL_PERIOD_UNIT, messages.get("price_period_"+plan.getPeriod().name()+"_unit"));
+                ctx.put(CTX_BILL_DATE_FORMAT, messages.get("label_date").replace("{", "").replace("}", ""));
+                ctx.put(CTX_TIMEZONE, network.getTimezone());
+                ctx.put(CTX_CURRENCY_SYMBOL, messages.get("currency_symbol_"+plan.getCurrency()));
+                ctx.put(CTX_CURRENCY_DECIMAL, messages.get("currency_decimal_"+plan.getCurrency()));
             }
         }
-        ctx.put("node", node);
-        ctx.put("network", network);
-        ctx.put("publicUri", network.getPublicUri(c));
-        ctx.put("sageUri", SCHEME_HTTPS+configuration.getSageNode().getFqdn());
+        ctx.put(CTX_NODE, node);
+        ctx.put(CTX_NETWORK, network);
+        ctx.put(CTX_PUBLIC_URI, network.getPublicUri(c));
+        if (configuration.hasSageNode()) {
+            ctx.put(CTX_SAGE_URI, SCHEME_HTTPS + configuration.getSageNode().getFqdn());
+        } else {
+            ctx.put(CTX_SAGE_URI, ctx.get(CTX_PUBLIC_URI));
+        }
         return ctx;
     }
 
