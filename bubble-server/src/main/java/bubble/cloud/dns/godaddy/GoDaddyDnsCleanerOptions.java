@@ -8,6 +8,7 @@ import bubble.model.cloud.CloudCredentials;
 import lombok.Getter;
 import lombok.Setter;
 import org.cobbzilla.util.collection.NameAndValue;
+import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.main.BaseMainOptions;
 import org.kohsuke.args4j.Option;
 
@@ -15,8 +16,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.network.NetworkUtil.toHostSet;
 
@@ -69,6 +72,26 @@ public class GoDaddyDnsCleanerOptions extends BaseMainOptions {
     public boolean hasRetainHostsFile () { return !empty(retainHostsFile); }
     public Set<String> getRetainHosts () throws IOException {
         return hasRetainHostsFile() ? toHostSet(retainHostsFile) : Collections.emptySet();
+    }
+
+    public static final String USAGE_RETAIN_MATCHING_CNAMES = "File containing values to match in CNAME records, one per line. CNAME records containing one of these values will be retained.";
+    public static final String OPT_RETAIN_MATCHING_CNAMES = "-C";
+    public static final String LONGOPT_RETAIN_MATCHING_CNAMES = "--retain-matching-cnames";
+    @Option(name=OPT_RETAIN_MATCHING_CNAMES, aliases=LONGOPT_RETAIN_MATCHING_CNAMES, usage=USAGE_RETAIN_MATCHING_CNAMES)
+    @Getter @Setter private File retainMatchingCNAMEsFile;
+    public boolean hasRetainMatchingCNAMEsFile () { return !empty(retainMatchingCNAMEsFile); }
+    public Set<String> getRetainMatchingCNAMEValues () throws IOException {
+        return hasRetainMatchingCNAMEsFile() ? toSet(retainMatchingCNAMEsFile) : Collections.emptySet();
+    }
+
+    private Set<String> toSet(File f) {
+        try {
+            return FileUtil.toStringList(f).stream()
+                    .filter(line -> !line.trim().isEmpty())
+                    .collect(Collectors.toSet());
+        } catch (Exception e) {
+            return die("toSet: "+e);
+        }
     }
 
     public static final String USAGE_HTTP_CHECK = "Timeout for HTTP check in seconds. Use zero to disable check. Default is "+DEFAULT_HTTP_CHECK_TIMEOUT_SECONDS+" seconds";

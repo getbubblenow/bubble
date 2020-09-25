@@ -16,7 +16,10 @@ import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.main.BaseMain;
 import org.cobbzilla.util.network.NetworkUtil;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import static bubble.cloud.dns.godaddy.GoDaddyDnsConfig.GODADDY_BASE_URI;
@@ -25,7 +28,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpMethods.PUT;
-import static org.cobbzilla.util.http.HttpSchemes.SCHEME_HTTP;
+import static org.cobbzilla.util.http.HttpSchemes.SCHEME_HTTPS;
 import static org.cobbzilla.util.http.HttpUtil.url2string;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -91,6 +94,8 @@ public class GoDaddyDnsCleanerMain extends BaseMain<GoDaddyDnsCleanerOptions> {
         retain.addAll(opts.getAdditionalSages());
         retain.addAll(opts.getRetainHosts());
 
+        final Set<String> cnameValuesToRetain = opts.getRetainMatchingCNAMEValues();
+
         final GoDaddyDnsDriver dns = new GoDaddyDnsDriver();
         dns.setCredentials(opts.getCredentials());
 
@@ -103,13 +108,14 @@ public class GoDaddyDnsCleanerMain extends BaseMain<GoDaddyDnsCleanerOptions> {
                     final Set<GoDaddyDnsRecord> retainRecords = new HashSet<>();
                     final GoDaddyDnsRecord[] dnsRecords = dns._listGoDaddyDnsRecords(url+"/"+type);
                     for (GoDaddyDnsRecord rec : dnsRecords) {
-                        final String host = rec.getName() + "." + domain;
-                        if (retain.contains(host)) {
+                        final String recordName = rec.getName();
+                        final String host = recordName + "." + domain;
+                        if (shouldRetain(rec, host, retain, cnameValuesToRetain)) {
                             retainRecords.add(rec);
                         } else {
                             if (opts.hasHttpCheckTimeout()) {
                                 try {
-                                    url2string(SCHEME_HTTP + host + "/", opts.getHttpCheckTimeoutMillis());
+                                    url2string(SCHEME_HTTPS + host + "/", opts.getHttpCheckTimeoutMillis());
                                     final String msg = "Host seems alive, not removing: " + host;
                                     log.warn(msg);
                                     out("WARN: " + msg);
@@ -126,20 +132,38 @@ public class GoDaddyDnsCleanerMain extends BaseMain<GoDaddyDnsCleanerOptions> {
                         }
                     }
 
-                    log.info("Removing "+type+" records:\n" + json(removed));
-                    final HttpRequestBean domainUpdate = dns.auth(url+"/"+type)
-                            .setMethod(PUT)
-                            .setHeader(CONTENT_TYPE, APPLICATION_JSON)
-                            .setEntity(json(retainRecords));
-                    final HttpResponseBean response = HttpUtil.getResponse(domainUpdate);
-                    if (!response.isOk()) {
-                        log.error("Error updating "+type+" records for domain: " + domain + ": " + response);
+                    if (removed.isEmpty()) {
+                        log.info("No "+type+" records found to remove for domain "+domain);
+                    } else {
+                        log.info("Removing "+type+" records for domain "+domain+":\n" + json(removed));
+                        final HttpRequestBean domainUpdate = dns.auth(url + "/" + type)
+                                .setMethod(PUT)
+                                .setHeader(CONTENT_TYPE, APPLICATION_JSON)
+                                .setEntity(json(retainRecords));
+                        final HttpResponseBean response = HttpUtil.getResponse(domainUpdate);
+                        if (!response.isOk()) {
+                            log.error("Error updating " + type + " records for domain: " + domain + ": " + response);
+                        }
                     }
                 }
             } catch (Exception e) {
                 log.error("Error reading DNS records for domain: "+domain+": "+shortError(e));
             }
         }
+    }
+
+    private boolean shouldRetain(GoDaddyDnsRecord rec,
+                                 String host,
+                                 SortedSet<String> retain,
+                                 Set<String> cnameValuesToRetain) {
+        return rec.getName().equals("@")
+                || retain.contains(host)
+                || retain.contains(rec.getName())
+                || (rec.getType() == DnsType.CNAME
+                && (
+                       retain.contains(rec.getData())
+                    || cnameValuesToRetain.stream().anyMatch(val -> rec.getData().contains(val)))
+                );
     }
 
 }
