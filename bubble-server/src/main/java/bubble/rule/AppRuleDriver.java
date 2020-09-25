@@ -47,6 +47,7 @@ public interface AppRuleDriver {
     String REDIS_FILTER_LISTS = "filterLists";
     String REDIS_FLEX_LISTS = "flexLists";  // used in mitmproxy and dnscrypt-proxy for flex routing
     String REDIS_FLEX_EXCLUDE_LISTS = "flexExcludeLists";  // used in mitmproxy and dnscrypt-proxy for flex routing
+    String REDIS_RESPONSE_HEADER_MODIFIER_LISTS = "responseHeaderModifierLists";  // used in mitmproxy
     String REDIS_LIST_SUFFIX = "~UNION";
 
     default Set<String> getPrimedRejectDomains () { return null; }
@@ -55,6 +56,7 @@ public interface AppRuleDriver {
     default Set<String> getPrimedFilterDomains () { return null; }
     default Set<String> getPrimedFlexDomains () { return null; }
     default Set<String> getPrimedFlexExcludeDomains () { return null; }
+    default Set<String> getPrimedResponseHeaderModifiers () { return null; }
 
     static void defineRedisRejectSet(RedisService redis, String ip, String list, String[] rejectDomains) {
         defineRedisSet(redis, ip, REDIS_REJECT_LISTS, list, rejectDomains);
@@ -80,12 +82,22 @@ public interface AppRuleDriver {
         defineRedisSet(redis, ip, REDIS_FLEX_EXCLUDE_LISTS, list, flexExcludeDomains);
     }
 
-    static void defineRedisSet(RedisService redis, String ip, String listOfListsName, String listName, String[] domains) {
+    static void defineRedisResponseHeaderModifiersSet(RedisService redis, String ip, String list,
+                                                      String[] modifiers) {
+        defineRedisSet(redis, ip, REDIS_RESPONSE_HEADER_MODIFIER_LISTS, list, modifiers);
+    }
+
+    /**
+     * `settings` parameter may be list of domains or any other list of strings - i.e. list of JSONs with specific setup
+     * for the prime option of the driver.
+     */
+    static void defineRedisSet(RedisService redis, String ip, String listOfListsName, String listName,
+                               String[] settings) {
         final String listOfListsForIp = listOfListsName + "~" + ip;
         final String unionSetName = listOfListsForIp + REDIS_LIST_SUFFIX;
         final String ipList = listOfListsForIp + "~" + listName;
         final String tempList = ipList + "~"+now()+randomAlphanumeric(5);
-        redis.sadd_plaintext(tempList, domains);
+        redis.sadd_plaintext(tempList, settings);
         redis.rename(tempList, ipList);
         redis.sadd_plaintext(listOfListsForIp, ipList);
         final Long count = redis.sunionstore(unionSetName, redis.smembers(listOfListsForIp));

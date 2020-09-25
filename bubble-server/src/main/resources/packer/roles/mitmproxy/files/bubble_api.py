@@ -25,6 +25,7 @@ from bubble_config import bubble_port, debug_capture_fqdn, \
 from mitmproxy import http
 from mitmproxy.net.http import headers as nheaders
 from mitmproxy.proxy.protocol.async_stream_body import AsyncStreamBody
+from mitmproxy.utils import strutils
 
 bubble_log = logging.getLogger(__name__)
 
@@ -447,6 +448,131 @@ def original_flex_ip(client_addr, fqdns):
         if ip is not None:
             return ip.decode()
     return None
+
+
+def update_host_and_port(flow):
+    if flow.request:
+        if flow.client_conn.tls_established:
+            flow.request.scheme = "https"
+            sni = flow.client_conn.connection.get_servername()
+            port = 443
+        else:
+            flow.request.scheme = "http"
+            sni = None
+            port = 80
+
+        host_header = flow.request.host_header
+        if host_header:
+            m = parse_host_header.match(host_header)
+            if m:
+                host_header = m.group("host").strip("[]")
+                if m.group("port"):
+                    port = int(m.group("port"))
+
+        host = None
+        if sni or host_header:
+            host = str(sni or host_header)
+            if host.startswith("b'"):
+                host = host[2:-1]
+
+        flow.request.host_header = host_header
+        if host:
+            flow.request.host = host
+        else:
+            flow.request.host = host_header
+        flow.request.port = port
+
+    return flow
+
+
+def _replace_in_headers(headers: nheaders.Headers, modifiers_dict: dict) -> int:
+    """
+    Taken from original mitmproxy's Header class implementation with some changes.
+
+    Replaces a regular expression pattern with repl in each "name: value"
+    header line.
+
+    Returns:
+        The number of replacements made.
+    """
+    repl_count = 0
+    fields = []
+
+    for name, value in headers.fields:
+
+        line = name + b": " + value
+        inner_repl_count = 0
+        for pattern, replacement in modifiers_dict.items():
+            line, n = pattern.subn(replacement, line)
+            inner_repl_count += n
+            if len(line) == 0:
+                # No need to go though other patterns for this line
+                break
+
+        if len(line) == 0:
+            # Skip (remove) this header line in this case
+            break
+
+        if inner_repl_count > 0:
+            # only in case when there were some replacements:
+            try:
+                name, value = line.split(b": ", 1)
+            except ValueError:
+                # We get a ValueError if the replacement removed the ": "
+                # There's not much we can do about this, so we just keep the header as-is.
+                pass
+            else:
+                repl_count += inner_repl_count
+
+        fields.append((name, value))
+
+    headers.fields = tuple(fields)
+    return repl_count
+
+
+def response_header_modify(flow) -> int:
+    if flow.response is None:
+        return None
+
+    flow = update_host_and_port(flow)
+    ctx = {'fqdn': flow.request.host}
+    return _header_modify(flow.client_conn.address[0], ctx, flow.response.headers)
+
+
+def _header_modify(client_addr: str, ctx: dict, headers: nheaders.Headers) -> int:
+    modifiers_set = 'responseHeaderModifierLists~' + client_addr + '~UNION'
+    modifiers = REDIS.smembers(modifiers_set)
+
+    repl_count = 0
+    if modifiers:
+        modifiers_dict = {}
+        for modifier in modifiers:
+            regex, replacement = _extract_modifier_config(modifier, ctx)
+            modifiers_dict[regex] = replacement
+        repl_count += _replace_in_headers(headers, modifiers_dict)
+
+    if bubble_log.isEnabledFor(DEBUG):
+        bubble_log.debug('_header_modify: replacing headers - replacements count: ' + repl_count)
+
+    return repl_count
+
+
+def _extract_modifier_config(modifier: bytes, ctx: dict) -> tuple:
+    modifier_obj = json.loads(modifier)
+
+    regex = _replace_modifier_values(modifier_obj['regex'], ctx)
+    replacement = _replace_modifier_values(modifier_obj['replacement'], ctx)
+
+    regex = re.compile(strutils.escaped_str_to_bytes(regex))
+    replacement = strutils.escaped_str_to_bytes(replacement)
+
+    return regex, replacement
+
+
+def _replace_modifier_values(s: str, ctx: dict) -> str:
+    # no loop over ctx currently to speed up as there's just 1 variable inside
+    s = s.replace('{{fqdn}}', re.escape(ctx['fqdn']))
+    return s
 
 
 def health_check_response(flow):

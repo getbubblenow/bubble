@@ -1,0 +1,81 @@
+[{
+  "name": "RequestProtector",
+  "description": "Change or remove parts of request/response - i.e. remove cross-domain cookies from response",
+  "url": "https://getbubblenow.com/apps/request",
+  "template": true,
+  "enabled": true,
+  "priority": 1000,
+  "canPrime": true,
+  "dataConfig": {
+    "dataDriver": "bubble.app.request.RequestProtectorAppDataDriver",
+    "presentation": "app",
+    "configDriver": "bubble.app.request.RequestProtectorAppConfigDriver",
+    "configFields": [
+      {"name": "regex", "truncate": false},
+      {"name": "replacement", "truncate": false}
+    ],
+    "configViews": [{
+      "name": "manageHeaderReplacements",
+      "scope": "app",
+      "root": "true",
+      "fields": [ "regex", "replacement" ],
+      "actions": [
+        {"name": "removeHeaderReplacement", "index": 10},
+        {
+          "name": "addHeaderReplacement", "scope": "app", "index": 10,
+          "params": [ "regex", "replacement" ],
+          "button": "addHeaderReplacement"
+        }
+      ]
+    }]
+  },
+  "children": {
+    "AppSite": [{
+      "name": "All_Sites",
+      "url": "*",
+      "description": "All websites",
+      "template": true
+    }],
+    "AppRule": [{
+      "name": "request",
+      "template": true,
+      "driver": "RequestProtectorRuleDriver",
+      "priority": -1000,
+      "config": {
+        "headerReplacements": [{
+          "regex": "^(?i:Set-Cookie):(.*;)?\\s*(?i:Domain)=(((([\\*\\.].*)|(.*\\.))\\s*(;.*)?)|((?!([^;,]*\\.)?{{fqdn}}\\s*(;|$)).*))$",
+          "replacement": ""
+        }]
+      }
+    }],
+    "AppMessage": [{
+      "locale": "en_US",
+      "messages": [
+        { "name": "name", "value": "RequestProtector" },
+        { "name": "icon", "value": "classpath:models/apps/request/request-icon.svg" },
+        { "name": "summary", "value": "Request Protector" },
+        {
+          "name": "description",
+          "value": "Change or remove parts of request/response - i.e. remove cross-domain cookies from response"
+        },
+
+        { "name": "config.view.manageHeaderReplacements", "value": "Manage Header Replacements" },
+        { "name": "config.field.regex", "value": "RegEx" },
+        {
+          "name": "config.field.regex.description",
+          "value": "Regular expression compared with full header's line string value"
+        },
+        { "name": "config.field.replacement", "value": "Replacement" },
+        {
+          "name": "config.field.replacement.description",
+          "value": "May use reference from regex as in python's re.Pattern.sub method. If set to empty string, found header will be fully removed from response"
+        },
+        { "name": "config.button.addHeaderReplacement", "value": "Add" },
+        { "name": "config.action.addHeaderReplacement", "value": "Add New Header Replacement" },
+        { "name": "config.action.removeHeaderReplacement", "value": "Remove" },
+
+        { "name": "err.requestProtector.headerRegexRequired", "value": "RegEx field is required" }
+      ]
+    }]
+  }
+}]

@@ -1,0 +1,15 @@
+[{
+  "name": "RequestProtector",
+  "children": {
+    "AppMatcher": [{
+      "name": "RequestProtectorMatcher",
+      "template": true,
+      "connCheck": true,
+      "site": "All_Sites",
+      "fqdn": "*",
+      "urlRegex": ".*",
+      "rule": "request",
+      "priority": -1000000
+    }]
+  }
+}]

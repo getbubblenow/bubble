@@ -16,7 +16,7 @@ from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATIO
     is_bubble_special_path, is_bubble_health_check, health_check_response, special_bubble_response, \
     CTX_BUBBLE_REQUEST_ID, CTX_CONTENT_LENGTH, CTX_CONTENT_LENGTH_SENT, CTX_BUBBLE_FILTERED, \
     HEADER_CONTENT_TYPE, HEADER_CONTENT_ENCODING, HEADER_LOCATION, HEADER_CONTENT_LENGTH, \
-    HEADER_USER_AGENT, HEADER_FILTER_PASSTHRU, HEADER_CONTENT_SECURITY_POLICY, REDIS, redis_set
+    HEADER_USER_AGENT, HEADER_FILTER_PASSTHRU, HEADER_CONTENT_SECURITY_POLICY, REDIS, redis_set, response_header_modify
 from bubble_flex import process_flex
 
 import logging
@@ -311,6 +311,7 @@ def responseheaders(flow):
     else:
         flex_flow = None
     bubble_filter_response(flow, flex_flow)
+    response_header_modify(flow)
 
 
 def bubble_filter_response(flow, flex_flow):

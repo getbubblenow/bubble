@@ -28,5 +28,11 @@
     "driverClass": "bubble.rule.bblock.BubbleBlockRuleDriver",
     "template": true,
     "userConfig": { "fields": [] }
+  },
+  {
+    "name": "RequestProtectorRuleDriver",
+    "driverClass": "bubble.rule.request.RequestProtectorRuleDriver",
+    "template": true,
+    "userConfig": { "fields": [] }
   }
 ]

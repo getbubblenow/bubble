@@ -33,7 +33,7 @@ from bubble_api import bubble_matchers, bubble_activity_log, \
     CTX_BUBBLE_MATCHERS, CTX_BUBBLE_SPECIAL, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, \
     CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_FLEX, CTX_BUBBLE_REQUEST_ID, add_flow_ctx, parse_host_header, \
     is_bubble_special_path, is_bubble_health_check, health_check_response, tarpit_response,\
-    is_bubble_request, is_sage_request, is_not_from_vpn, is_flex_domain
+    is_bubble_request, is_sage_request, is_not_from_vpn, is_flex_domain, update_host_and_port
 from bubble_config import bubble_host, bubble_host_alias
 from bubble_flex import new_flex_flow
 
@@ -114,34 +114,20 @@ class Rerouter:
     def bubble_handle_request(self, flow):
         client_addr = flow.client_conn.address[0]
         server_addr = flow.server_conn.address[0]
-        is_http = False
+        flow = update_host_and_port(flow)
+
         if flow.client_conn.tls_established:
-            flow.request.scheme = "https"
             sni = flow.client_conn.connection.get_servername()
-            port = 443
+            is_http = False
         else:
-            flow.request.scheme = "http"
             sni = None
-            port = 80
             is_http = True
 
-        # check if https and sni is missing but we have a host header, fill in the sni
-        
-        host_header = flow.request.host_header
-        if host_header:
-            m = parse_host_header.match(host_header)
-            if m:
-                host_header = m.group("host").strip("[]")
-                if m.group("port"):
-                    port = int(m.group("port"))
-
         # Determine if this request should be filtered
-        host = None
+        host_header = flow.request.host_header
+        host = flow.request.host
         path = flow.request.path
         if sni or host_header:
-            host = str(sni or host_header)
-            if host.startswith("b'"):
-                host = host[2:-1]
             log_url = flow.request.scheme + '://' + host + path
 
             # If https, we have already checked that the client/server are legal in bubble_conn_check.py
@@ -240,12 +226,6 @@ class Rerouter:
                 bubble_log.warning('bubble_handle_request: no sni/host found, not applying rules to path: ' + path)
             bubble_activity_log(client_addr, server_addr, 'http_no_sni_or_host', [server_addr])
 
-        flow.request.host_header = host_header
-        if host:
-            flow.request.host = host
-        else:
-            flow.request.host = host_header
-        flow.request.port = port
         return host
 
     def requestheaders(self, flow):
