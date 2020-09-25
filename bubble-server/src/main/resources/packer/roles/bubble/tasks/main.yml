@@ -131,7 +131,7 @@
     name: "Cleaning tmp folders"
     special_time: "hourly"
     user: "root"
-    job: "find /tmp ~bubble/tmp -mtime +1 -type f -delete && find /tmp ~bubble/tmp -mtime +1 -type d -empty -delete"
+    job: "find /tmp ~bubble/tmp /var/lib/postgresql/tmp -mtime +1 -type f -delete && find /tmp ~bubble/tmp /var/lib/postgresql/tmp -mindepth 1 -mtime +1 -type d -empty -delete"
 
 - name: Record software versions
   template:
