@@ -68,10 +68,10 @@ public abstract class PaymentDriverBase<T> extends CloudServiceDriverBase<T> imp
 
     public Bill getBill(String billUuid, long purchaseAmount, String currency, AccountPlan accountPlan) {
         final Bill bill = billDAO.findByUuid(billUuid);
-        if (bill == null) throw invalidEx("err.purchase.billNotFound");
-        if (!bill.getAccount().equals(accountPlan.getAccount())) throw invalidEx("err.purchase.accountMismatch");
-        if (bill.getTotal() != purchaseAmount) throw invalidEx("err.purchase.amountMismatch");
-        if (!bill.getCurrency().equals(currency)) throw invalidEx("err.purchase.currencyMismatch");
+        if (bill == null) throw invalidEx("err.purchase.billNotFound", "bill not found: "+billUuid);
+        if (!bill.getAccount().equals(accountPlan.getAccount())) throw invalidEx("err.purchase.accountMismatch", "bill.account ("+bill.getAccount()+") != accountPlan.account ("+accountPlan.getAccount()+")");
+        if (bill.getTotal() != purchaseAmount) throw invalidEx("err.purchase.amountMismatch", "bill.total ("+bill.getTotal()+") != purchaseAmount ("+purchaseAmount+")");
+        if (!bill.getCurrency().equals(currency)) throw invalidEx("err.purchase.currencyMismatch", "bill.currency ("+bill.getCurrency()+") != currency ("+currency+")");
         return bill;
     }
 
