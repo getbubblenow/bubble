@@ -8,7 +8,7 @@
   "canPrime": true,
   "dataConfig": {
     "dataDriver": "bubble.app.request.RequestProtectorAppDataDriver",
-    "presentation": "app",
+    "presentation": "none",
     "configDriver": "bubble.app.request.RequestProtectorAppConfigDriver",
     "configFields": [
       {"name": "regex", "truncate": false},
