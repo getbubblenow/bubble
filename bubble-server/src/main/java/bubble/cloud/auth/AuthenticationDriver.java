@@ -42,6 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.http.HttpSchemes.SCHEME_HTTPS;
 import static org.cobbzilla.util.io.FileUtil.basename;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 
@@ -121,6 +122,7 @@ public interface AuthenticationDriver extends CloudServiceDriver {
         ctx.put("node", node);
         ctx.put("network", network);
         ctx.put("publicUri", network.getPublicUri(c));
+        ctx.put("sageUri", SCHEME_HTTPS+configuration.getSageNode().getFqdn());
         return ctx;
     }
 
