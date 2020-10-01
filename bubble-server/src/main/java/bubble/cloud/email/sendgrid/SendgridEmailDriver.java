@@ -35,7 +35,7 @@ import static org.cobbzilla.wizard.model.IdentifiableBase.DEFAULT_SHORT_ID_LENGT
 /**
  * Only to be used with Sendgrid account with Subusers supported!
  */
-public class SendgridSmtpEmailDriver extends SmtpEmailDriver {
+public class SendgridEmailDriver extends SmtpEmailDriver {
 
     public static final String SENDGRID_SMTP = "smtp.sendgrid.net";
     public static final String SG_API_BASE = "https://api.sendgrid.com/v3/";

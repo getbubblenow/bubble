@@ -7,13 +7,12 @@ package bubble.cloud.email.mock;
 import bubble.cloud.email.SmtpEmailDriver;
 import org.cobbzilla.mail.sender.SmtpMailSender;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
-
 public class MockEmailDriver extends SmtpEmailDriver {
 
     private static final MockMailSender MOCK_MAIL_SENDER = new MockMailSender();
 
     @Override public SmtpMailSender getSender() { return MOCK_MAIL_SENDER; }
 
-    @Override protected boolean isServiceCompatible(final String serviceHost) { return empty(serviceHost); }
+    @Override protected boolean isServiceCompatible(final String serviceHost) { return true; }
+
 }
