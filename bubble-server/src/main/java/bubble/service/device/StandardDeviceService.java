@@ -268,7 +268,8 @@ public class StandardDeviceService implements DeviceService {
 
     @Override public DeviceStatus getLiveDeviceStatus(String deviceUuid) {
         if (configuration.testMode()) return NO_DEVICE_STATUS;
-        return new DeviceStatus(redis, accountDAO.getFirstAdmin().getUuid(), geoService, deviceUuid);
+        final List<String> vpnIps = findIpsByDevice(deviceUuid);
+        return new DeviceStatus(redis, accountDAO.getFirstAdmin().getUuid(), geoService, deviceUuid, vpnIps);
     }
 
     private Device findTestDevice(String ipAddr) {

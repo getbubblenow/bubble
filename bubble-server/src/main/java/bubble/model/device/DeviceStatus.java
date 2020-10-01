@@ -14,6 +14,8 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 
+import java.util.List;
+
 import static java.util.concurrent.TimeUnit.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
@@ -26,6 +28,8 @@ public class DeviceStatus {
     @Getter @Setter private String ip;
     public boolean hasIp () { return ip != null; }
     @Getter @Setter private int port;
+
+    @Getter @Setter private List<String> vpnIps;
 
     @Getter @Setter private GeoLocation location;
 
@@ -45,8 +49,12 @@ public class DeviceStatus {
     public static final String DEVICE_STATUS_TRANSFER_SUFFIX = "_transfer";
     public static final String DEVICE_STATUS_HANDSHAKE_SUFFIX = "_latestHandshake";
 
-    public DeviceStatus(RedisService redis, String geoAccount, GeoService geoService, String deviceUuid) {
-
+    public DeviceStatus(RedisService redis,
+                        String geoAccount,
+                        GeoService geoService,
+                        String deviceUuid,
+                        List<String> vpnIps) {
+        this.vpnIps = vpnIps;
         final String endpoint = redis.get_plaintext(DEVICE_STATUS_PREFIX+deviceUuid+DEVICE_STATUS_ENDPOINT_SUFFIX);
         if (endpoint != null) {
             try {
