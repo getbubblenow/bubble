@@ -12,13 +12,18 @@ import bubble.model.account.Account;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import javax.annotation.Nullable;
+import javax.transaction.Transactional;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.cloud.NoopCloud.NOOP_CLOUD;
@@ -143,5 +148,32 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
         final Account admin = accountDAO.findFirstAdmin();
         if (admin == null) return false;
         return !findPublicTemplatesByType(admin.getUuid(), CloudServiceType.payment).isEmpty();
+    }
+
+    @Override public int bulkDeleteWhere(@NonNull String whereClause, @Nullable Map<String, Object> parameters) {
+        // TODO for these maybe an outside cron would be better solution. BulkDelete is used here to be fast.
+        // For now this postServiceDelete is called within a single place where this method is used - Account Deletion.
+        log.warn("Not calling postServiceDelete for services deleted in this way");
+        return super.bulkDeleteWhere(whereClause, parameters);
+    }
+
+    @Transactional @Override public void delete(String uuid) {
+        if (empty(uuid)) return;
+
+        final CloudService cs = findByUuid(uuid);
+        if (cs == null) return;
+        cs.getDriver().postServiceDelete(this, cs);
+
+        super.delete(uuid);
+    }
+
+    @Override public void delete(Collection<CloudService> entities) {
+        if (empty(entities)) return;
+
+        for (final CloudService cs : entities) {
+            cs.getDriver().postServiceDelete(this, cs);
+        }
+
+        super.delete(entities);
     }
 }

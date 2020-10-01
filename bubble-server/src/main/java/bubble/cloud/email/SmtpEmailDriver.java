@@ -10,19 +10,28 @@ import bubble.cloud.email.mock.MockMailSender;
 import bubble.model.account.Account;
 import bubble.model.account.AccountContact;
 import bubble.model.account.message.AccountMessage;
+import bubble.model.cloud.CloudCredentials;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.mail.sender.SmtpMailSender;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+
 @Slf4j
 public class SmtpEmailDriver extends CloudServiceDriverBase<EmailDriverConfig> implements EmailServiceDriver {
+    protected static final String SENDGRID_SMTP = "smtp.sendgrid.net";
 
-    private static final String PARAM_USER = "user";
-    private static final String PARAM_PASSWORD = "password";
-    private static final String PARAM_HOST = "host";
-    private static final String PARAM_PORT = "port";
+    private static final List<String> SEPARATE_DRIVERS_SMTPS = new ArrayList<>();
+
+    protected static final String PARAM_USER = "user";
+    protected static final String PARAM_PASSWORD = "password";
+    protected static final String PARAM_HOST = "host";
+    protected static final String PARAM_PORT = "port";
 
     @Autowired @Getter protected BubbleConfiguration configuration;
 
@@ -36,6 +45,18 @@ public class SmtpEmailDriver extends CloudServiceDriverBase<EmailDriverConfig> i
         final SmtpMailSender smtpSender = new SmtpMailSender(cfg);
         smtpSender.setDebugSender(new MockMailSender());
         return smtpSender;
+    }
+
+    @Override public void setCredentials(CloudCredentials credentials) {
+        super.setCredentials(credentials);
+        if (credentials != null && !isServiceCompatible(credentials.getParam(PARAM_HOST))) {
+            die("Specified Smtp Email Driver is not compatible with given config: " + this.getClass().getSimpleName());
+        }
+    }
+
+    protected boolean isServiceCompatible(final String serviceHost) {
+        // Allow even Sendgrid here if Subusers are not supported for specified API key
+        return !SEPARATE_DRIVERS_SMTPS.contains(serviceHost);
     }
 
     @Override public boolean send(Account account, AccountMessage message, AccountContact contact) {

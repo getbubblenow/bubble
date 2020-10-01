@@ -229,12 +229,11 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
                                 .setTemplate(false);
 
                     } else {
-                        return accountEntity.setDelegated(parentEntity.getUuid())
-                                .setCredentials(CloudCredentials.delegate(configuration.getThisNode(), configuration))
-                                .setTemplate(false);
+                        return driver.setupDelegatedCloudService(configuration, parentEntity, accountEntity);
                     }
                 }
             }
+
             @Override public void postCreate(CloudService parentEntity, CloudService accountEntity) {
                 clouds.put(parentEntity.getUuid(), accountEntity);
             }
@@ -413,6 +412,12 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         final BubbleNetworkDAO networkDAO = configuration.getBean(BubbleNetworkDAO.class);
         final List<BubbleNetwork> networks = networkDAO.findByAccount(account.getUuid());
         networks.forEach(n -> networkDAO.delete(n.getUuid())); // deleting all networks dependency objects
+
+        // Separate deletion of dependant CloudServices to fully respect their post delete methods
+        final List<CloudService> services = cloudDAO.findByAccount(account.getUuid());
+        for (final CloudService cs : services) {
+            cs.getDriver().postServiceDelete(cloudDAO, cs);
+        }
 
         configuration.deleteDependencies(account);
         log.info("delete: finished deleting account-dependent objects - " + currentThread().getName());

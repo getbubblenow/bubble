@@ -72,7 +72,7 @@
   {
     "name": "SmtpServer",
     "type": "email",
-    "driverClass": "bubble.cloud.email.SmtpEmailDriver",
+    "driverClass": "{{BUBBLE_SMTP_DRIVER}}",
     "driverConfig": {
       "tlsEnabled": true
     },

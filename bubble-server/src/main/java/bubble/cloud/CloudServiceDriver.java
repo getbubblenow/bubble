@@ -5,11 +5,13 @@
 package bubble.cloud;
 
 import bubble.BubbleHandlebars;
+import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.cloud.CloudCredentials;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jknack.handlebars.Handlebars;
+import lombok.NonNull;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.http.HttpResponseBean;
 import org.cobbzilla.util.http.HttpUtil;
@@ -27,6 +29,18 @@ public interface CloudServiceDriver {
     String CTX_PARAMS = "params";
 
     default boolean disableDelegation () { return false; }
+
+    @NonNull default CloudService setupDelegatedCloudService(@NonNull final BubbleConfiguration configuration,
+                                                             @NonNull final CloudService parentService,
+                                                             @NonNull final CloudService delegatedService) {
+        return delegatedService.setDelegated(parentService.getUuid())
+                               .setCredentials(CloudCredentials.delegate(configuration.getThisNode(), configuration))
+                               .setTemplate(false);
+    }
+
+    default void postServiceDelete(@NonNull final CloudServiceDAO serviceDAO, @NonNull final CloudService service) {
+        // noop
+    }
 
     void setConfig(JsonNode json, CloudService cloudService);
 
