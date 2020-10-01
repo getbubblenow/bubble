@@ -358,8 +358,8 @@
   },
 
   {
-    "before": "fast_forward_and_bill 7d",
-    "comment": "5th fast-forward: fast-forward another +7 days, bill is still unpaid, bubble is stopped",
+    "before": "fast_forward_and_bill 8d",
+    "comment": "5th fast-forward: fast-forward another +8 days, bill is still unpaid, bubble is stopped",
     "request": {
       "session": "userSession",
       "uri": "me/plans/{{accountPlan.uuid}}/bills"
