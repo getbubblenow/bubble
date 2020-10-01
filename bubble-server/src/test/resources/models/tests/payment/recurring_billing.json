@@ -196,8 +196,8 @@
   },
 
   {
-    "before": "fast_forward_and_bill 31d",
-    "comment": "1st fast-forward: +31 days, verify a new bill exists for accountPlan",
+    "before": "fast_forward_and_bill +1M",
+    "comment": "1st fast-forward: +1 month, verify a new bill exists for accountPlan",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
     "response": {
       "check": [
@@ -229,8 +229,8 @@
   },
 
   {
-    "before": "fast_forward_and_bill 31d",
-    "comment": "2nd fast-forward: fast-forward another +31 days, verify a new bill exists for accountPlan",
+    "before": "fast_forward_and_bill +1M",
+    "comment": "2nd fast-forward: fast-forward another month, verify a new bill exists for accountPlan",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
     "response": {
       "check": [
@@ -262,8 +262,8 @@
   },
 
   {
-    "before": "fast_forward_and_bill 66d 60s",
-    "comment": "3rd fast-forward: fast-forward even more, +66 days, we have missed a billing cycle, so two new bills should be created",
+    "before": "fast_forward_and_bill 2M 60s",
+    "comment": "3rd fast-forward: fast-forward even more, 2 months, we have missed a billing cycle, so two new bills should be created",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
     "response": {
       "check": [
@@ -308,8 +308,8 @@
   },
 
   {
-    "before": "fast_forward_and_bill 31d",
-    "comment": "4nd fast-forward: fast-forward another +33 days, verify new bill (unpaid) created",
+    "before": "fast_forward_and_bill 1M",
+    "comment": "4nd fast-forward: fast-forward another month, verify new bill (unpaid) created",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
     "response": {
       "store": "bills",
@@ -359,7 +359,7 @@
 
   {
     "before": "fast_forward_and_bill 7d",
-    "comment": "5th fast-forward: fast-forward another +6 days, bill is still unpaid, bubble is stopped",
+    "comment": "5th fast-forward: fast-forward another +7 days, bill is still unpaid, bubble is stopped",
     "request": {
       "session": "userSession",
       "uri": "me/plans/{{accountPlan.uuid}}/bills"
