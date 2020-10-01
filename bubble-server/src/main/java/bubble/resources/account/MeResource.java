@@ -99,7 +99,9 @@ public class MeResource {
                 reportError("MeResource.me: account in session but not in DB: "+account.getName()+"/"+account.getUuid());
                 return unauthorized();
             }
-            return ok(acct.setPolicy(policyDAO.findSingleByAccount(account.getUuid())));
+            return ok(acct
+                    .setPolicy(policyDAO.findSingleByAccount(account.getUuid()))
+                    .setToken(account.getToken()));
         } catch (Exception e) {
             return notFound();
         }
