@@ -17,16 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.mail.sender.SmtpMailSender;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 
 @Slf4j
 public class SmtpEmailDriver extends CloudServiceDriverBase<EmailDriverConfig> implements EmailServiceDriver {
-    protected static final String SENDGRID_SMTP = "smtp.sendgrid.net";
-
-    private static final List<String> SEPARATE_DRIVERS_SMTPS = new ArrayList<>();
 
     protected static final String PARAM_USER = "user";
     protected static final String PARAM_PASSWORD = "password";
@@ -54,10 +48,7 @@ public class SmtpEmailDriver extends CloudServiceDriverBase<EmailDriverConfig> i
         }
     }
 
-    protected boolean isServiceCompatible(final String serviceHost) {
-        // Allow even Sendgrid here if Subusers are not supported for specified API key
-        return !SEPARATE_DRIVERS_SMTPS.contains(serviceHost);
-    }
+    protected boolean isServiceCompatible(final String serviceHost) { return true; }
 
     @Override public boolean send(Account account, AccountMessage message, AccountContact contact) {
         return EmailServiceDriver.send(this, account, message, contact);

@@ -1,5 +1,10 @@
-package bubble.cloud.email;
+/**
+ * Copyright (c) 2020 Bubble, Inc.  All rights reserved.
+ * For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+ */
+package bubble.cloud.email.sendgrid;
 
+import bubble.cloud.email.SmtpEmailDriver;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
@@ -31,6 +36,8 @@ import static org.cobbzilla.wizard.model.IdentifiableBase.DEFAULT_SHORT_ID_LENGT
  * Only to be used with Sendgrid account with Subusers supported!
  */
 public class SendgridSmtpEmailDriver extends SmtpEmailDriver {
+
+    public static final String SENDGRID_SMTP = "smtp.sendgrid.net";
     public static final String SG_API_BASE = "https://api.sendgrid.com/v3/";
 
     private static final String PARAM_PARENT_SERVICE = "parentService";
