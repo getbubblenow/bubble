@@ -174,11 +174,11 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     @ECField(index=130)
     @Getter @Setter private Boolean sync;
-    public boolean sync() { return sync == null ? true : sync; }
+    public boolean sync() { return sync == null || sync; }
 
     @ECField(index=140)
     @Getter @Setter private Boolean showBlockStats;
-    public boolean showBlockStats() { return showBlockStats == null ? true : showBlockStats; }
+    public boolean showBlockStats() { return showBlockStats == null || showBlockStats; }
 
     @JsonIgnore @Transient @Getter @Setter private boolean refreshShowBlockStats;
 

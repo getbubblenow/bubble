@@ -111,6 +111,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Override public Object preCreate(Account account) {
         if (!account.hasLocale()) account.setLocale(getDEFAULT_LOCALE());
         account.setShowBlockStats(account.showBlockStats());  // ensure non-null
+        account.setSync(account.sync());                      // ensure non-null
 
         // check account limit for plan, if there is a plan
         final BubblePlan plan = selfNodeService.getThisPlan();
