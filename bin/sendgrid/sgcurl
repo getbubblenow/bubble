@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+if [[ -z "${BUBBLE_SMTP_PASS}" ]] ; then
+  echo "BUBBLE_SMTP_PASS not defined in environment"
+  exit 1
+fi
+
+API_BASE=https://api.sendgrid.com/v3/
+
+URI="${1:?no uri}"
+POST_FILE="${2}"
+HTTP_METHOD=${3}
+
+if [[ ! -z "${POST_FILE}" ]] ; then
+  if [[ -z "${HTTP_METHOD}" ]] ; then
+    curl -d @${POST_FILE} -s -H 'Content-Type: application/json' -H "Authorization: Bearer ${BUBBLE_SMTP_PASS}" ${API_BASE}${URI}
+  else
+    curl -d @${POST_FILE} -X ${HTTP_METHOD} -s -H 'Content-Type: application/json' -H "Authorization: Bearer ${BUBBLE_SMTP_PASS}" ${API_BASE}${URI}
+  fi
+else
+  curl -s -H "Authorization: Bearer ${BUBBLE_SMTP_PASS}" ${API_BASE}${URI}
+fi
