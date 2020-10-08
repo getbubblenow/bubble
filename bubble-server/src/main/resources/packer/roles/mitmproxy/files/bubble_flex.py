@@ -18,6 +18,11 @@ from logging import INFO, DEBUG, WARNING, ERROR, CRITICAL
 
 bubble_log = logging.getLogger(__name__)
 
+log_debug = bubble_log.isEnabledFor(DEBUG)
+log_info = bubble_log.isEnabledFor(INFO)
+log_warning = bubble_log.isEnabledFor(WARNING)
+log_error = bubble_log.isEnabledFor(ERROR)
+
 FLEX_TIMEOUT = 20
 
 
@@ -63,7 +68,7 @@ def process_no_flex(flex_flow):
                                       content=None)
     flex_flow.response_stream = lambda chunks: error_html
     error_html = flex_flow.router['error_html']
-    if bubble_log.isEnabledFor(DEBUG):
+    if log_debug:
         bubble_log.debug('process_no_flex: no router found, returning error_html')
     return flex_flow
 
@@ -71,11 +76,11 @@ def process_no_flex(flex_flow):
 def new_flex_flow(client_addr, flex_host, flow):
     router = bubble_get_flex_router(client_addr, flex_host)
     if router is None or 'auth' not in router:
-        if bubble_log.isEnabledFor(ERROR):
+        if log_error:
             bubble_log.error('new_flex_flow: no flex router for host: '+flex_host)
         return None
 
-    if bubble_log.isEnabledFor(INFO):
+    if log_info:
         bubble_log.info('new_flex_flow: found router '+repr(router)+' for flex host: '+flex_host)
     return FlexFlow(flex_host, flow, router)
 
@@ -83,11 +88,11 @@ def new_flex_flow(client_addr, flex_host, flow):
 def process_flex(flex_flow):
 
     if flex_flow.is_error():
-        if bubble_log.isEnabledFor(DEBUG):
+        if log_debug:
             bubble_log.debug('process_flex: no router found, returning default flow')
         return process_no_flex(flex_flow)
     else:
-        if bubble_log.isEnabledFor(DEBUG):
+        if log_debug:
             bubble_log.debug('process_flex: using router: '+repr(flex_flow.router))
 
     flex_host = flex_flow.flex_host
@@ -112,7 +117,7 @@ def process_flex(flex_flow):
     proxy_url = router['proxyUrl']
     proxies = {"http": proxy_url, "https": proxy_url}
 
-    if bubble_log.isEnabledFor(DEBUG):
+    if log_debug:
         bubble_log.debug('process_flex: sending flex request for '+method+' '+url+' to '+proxy_url)
 
     loop = asyncio.new_event_loop()
@@ -124,10 +129,10 @@ def process_flex(flex_flow):
                                 timeout=30,
                                 data=async_chunk_iter(flex_flow.request_chunks),
                                 loop=loop)
-        if bubble_log.isEnabledFor(DEBUG):
+        if log_debug:
             bubble_log.debug('process_flex: response returned HTTP status '+str(response.status_code)+' for '+url)
     except Exception as e:
-        if bubble_log.isEnabledFor(ERROR):
+        if log_error:
             bubble_log.error('process_flex: error sending request to '+url+': '+repr(e))
         # todo: catch TimeoutException, try another flex router; remember the last router that works for this client_addr
         return None
@@ -166,7 +171,7 @@ def process_flex(flex_flow):
         flow.response.stream = lambda chunks: []
 
     # Apply filters
-    if bubble_log.isEnabledFor(INFO):
+    if log_info:
         bubble_log.info('process_flex: successfully requested url '+url+' from flex router, proceeding...')
 
     flex_flow.response = response

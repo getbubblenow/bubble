@@ -42,6 +42,10 @@ from logging import INFO, DEBUG, WARNING, ERROR, CRITICAL
 
 bubble_log = logging.getLogger(__name__)
 
+log_debug = bubble_log.isEnabledFor(DEBUG)
+log_info = bubble_log.isEnabledFor(INFO)
+log_warning = bubble_log.isEnabledFor(WARNING)
+
 
 class Rerouter:
     @staticmethod
@@ -50,8 +54,8 @@ class Rerouter:
             return None
 
         if is_bubble_special_path(flow.request.path):
-            if bubble_log.isEnabledFor(DEBUG):
-                bubble_log.debug("get_matchers: not filtering special bubble path: "+flow.request.path)
+            if log_debug:
+                bubble_log.debug("not filtering special bubble path: "+flow.request.path)
             return None
 
         client_addr = str(flow.client_conn.address[0])
@@ -62,22 +66,23 @@ class Rerouter:
             try:
                 host = str(host)
             except Exception as e:
-                if bubble_log.isEnabledFor(WARNING):
+                if log_warning:
                     bubble_log.warning('get_matchers: host '+repr(host)+' could not be decoded, type='+str(type(host))+' e='+repr(e))
                 return None
 
         if host == bubble_host or host == bubble_host_alias:
-            if bubble_log.isEnabledFor(INFO):
+            if log_info:
                 bubble_log.info('get_matchers: request is for bubble itself ('+host+'), not matching')
             return None
 
+        prefix = 'get_matchers('+host+flow.request.path+'): '
         req_id = str(host) + '.' + str(uuid.uuid4()) + '.' + str(time.time())
-        if bubble_log.isEnabledFor(DEBUG):
-            bubble_log.debug("get_matchers: requesting match decision for req_id="+req_id)
+        if log_debug:
+            bubble_log.debug(prefix+"requesting match decision for req_id="+req_id)
         resp = bubble_matchers(req_id, client_addr, server_addr, flow, host)
 
         if not resp:
-            if bubble_log.isEnabledFor(WARNING):
+            if log_warning:
                 bubble_log.warning('get_matchers: no response for client_addr/host: '+client_addr+'/'+str(host))
             return None
 
@@ -85,21 +90,21 @@ class Rerouter:
         if 'matchers' in resp and resp['matchers'] is not None:
             for m in resp['matchers']:
                 if 'urlRegex' in m:
-                    if bubble_log.isEnabledFor(DEBUG):
+                    if log_debug:
                         bubble_log.debug('get_matchers: checking for match of path='+flow.request.path+' against regex: '+m['urlRegex'])
                 else:
-                    if bubble_log.isEnabledFor(DEBUG):
+                    if log_debug:
                         bubble_log.debug('get_matchers: checking for match of path='+flow.request.path+' -- NO regex, skipping')
                     continue
                 if re.match(m['urlRegex'], flow.request.path):
-                    if bubble_log.isEnabledFor(DEBUG):
+                    if log_debug:
                         bubble_log.debug('get_matchers: rule matched, adding rule: '+m['rule'])
                     matchers.append(m)
                 else:
-                    if bubble_log.isEnabledFor(DEBUG):
+                    if log_debug:
                         bubble_log.debug('get_matchers: rule (regex='+m['urlRegex']+') did NOT match, skipping rule: '+m['rule'])
         else:
-            if bubble_log.isEnabledFor(DEBUG):
+            if log_debug:
                 bubble_log.debug('get_matchers: no matchers. response='+repr(resp))
 
         decision = None
@@ -107,8 +112,8 @@ class Rerouter:
             decision = resp['decision']
 
         matcher_response = {'decision': decision, 'matchers': matchers, 'request_id': req_id}
-        if bubble_log.isEnabledFor(INFO):
-            bubble_log.info("get_matchers: returning "+repr(matcher_response))
+        if log_info:
+            bubble_log.info(prefix+"returning "+repr(matcher_response))
         return matcher_response
 
     def bubble_handle_request(self, flow):
@@ -140,21 +145,21 @@ class Rerouter:
                     return None
 
                 elif is_bubble_request(server_addr, fqdns):
-                    if bubble_log.isEnabledFor(DEBUG):
+                    if log_debug:
                         bubble_log.debug('bubble_handle_request: redirecting to https for LOCAL bubble=' + server_addr +' (bubble_host (' + bubble_host +') in fqdns or bubble_host_alias (' + bubble_host_alias +') in fqdns) for client=' + client_addr +', fqdns=' + repr(fqdns) +', path=' + path)
                     add_flow_ctx(flow, CTX_BUBBLE_ABORT, 301)
                     add_flow_ctx(flow, CTX_BUBBLE_LOCATION, 'https://' + host + path)
                     return None
 
                 elif is_sage_request(server_addr, fqdns):
-                    if bubble_log.isEnabledFor(DEBUG):
+                    if log_debug:
                         bubble_log.debug('bubble_handle_request: redirecting to https for SAGE server='+server_addr+' for client='+client_addr)
                     add_flow_ctx(flow, CTX_BUBBLE_ABORT, 301)
                     add_flow_ctx(flow, CTX_BUBBLE_LOCATION, 'https://' + host + path)
                     return None
 
                 elif is_not_from_vpn(client_addr):
-                    if bubble_log.isEnabledFor(WARNING):
+                    if log_warning:
                         bubble_log.warning('bubble_handle_request: sending to tarpit: non-VPN client='+client_addr+', url='+log_url+' host='+host)
                     bubble_activity_log(client_addr, server_addr, 'http_tarpit_non_vpn', fqdns)
                     tarpit_response(flow, host)
@@ -167,32 +172,36 @@ class Rerouter:
                 if matcher_response:
                     has_decision = 'decision' in matcher_response and matcher_response['decision'] is not None
                     if has_decision and matcher_response['decision'] == 'pass_thru':
-                        if bubble_log.isEnabledFor(DEBUG):
-                            bubble_log.debug('bubble_handle_request: passthru response returned, passing thru...')
+                        if log_info:
+                            bubble_log.info('bubble_handle_request: REQ-DECISION PASSTHRU '+log_url+' passthru response returned, passing thru...')
                         add_flow_ctx(flow, CTX_BUBBLE_PASSTHRU, True)
                         bubble_activity_log(client_addr, server_addr, 'http_passthru', log_url)
                         return host
 
                     elif has_decision and matcher_response['decision'].startswith('abort_'):
-                        if bubble_log.isEnabledFor(DEBUG):
-                            bubble_log.debug('bubble_handle_request: found abort code: ' + str(matcher_response['decision']) + ', aborting')
-                        if matcher_response['decision'] == 'abort_ok':
+                        decision = str(matcher_response['decision'])
+                        if log_debug:
+                            bubble_log.debug('bubble_handle_request: found abort code: '+decision+', aborting')
+                        if decision == 'abort_ok':
                             abort_code = 200
-                        elif matcher_response['decision'] == 'abort_not_found':
+                        elif decision == 'abort_not_found':
                             abort_code = 404
                         else:
-                            if bubble_log.isEnabledFor(DEBUG):
-                                bubble_log.debug('bubble_handle_request: unknown abort code: ' + str(matcher_response['decision']) + ', aborting with 404 Not Found')
+                            if log_debug:
+                                bubble_log.debug('bubble_handle_request: unknown abort code: '+decision+', aborting with 404 Not Found')
                             abort_code = 404
                         flow.request.headers = nheaders.Headers([])
                         flow.request.content = b''
                         add_flow_ctx(flow, CTX_BUBBLE_ABORT, abort_code)
                         bubble_activity_log(client_addr, server_addr, 'http_abort' + str(abort_code), log_url)
+                        if log_info:
+                            bubble_log.info('bubble_handle_request: REQ-DECISION: BLOCK '+log_url+' ('+decision+')')
                         return None
 
                     elif has_decision and matcher_response['decision'] == 'no_match':
-                        if bubble_log.isEnabledFor(DEBUG):
-                            bubble_log.debug('bubble_handle_request: decision was no_match, passing thru...')
+                        if log_info:
+                            decision = str(matcher_response['decision'])
+                            bubble_log.info('bubble_handle_request: REQ-DECISION: ALLOW '+log_url+' ('+decision+')')
                         bubble_activity_log(client_addr, server_addr, 'http_no_match', log_url)
                         return host
 
@@ -200,29 +209,29 @@ class Rerouter:
                           and 'request_id' in matcher_response
                           and len(matcher_response['matchers']) > 0):
                         req_id = matcher_response['request_id']
-                        if bubble_log.isEnabledFor(DEBUG):
-                            bubble_log.debug("bubble_handle_request: found request_id: " + req_id + ' with matchers: ' + repr(matcher_response['matchers']))
+                        if log_info:
+                            bubble_log.info('bubble_handle_request: REQ-DECISION: FILTER '+log_url+' found request_id: '+req_id+' with matchers: '+repr(matcher_response['matchers']))
                         add_flow_ctx(flow, CTX_BUBBLE_MATCHERS, matcher_response['matchers'])
                         add_flow_ctx(flow, CTX_BUBBLE_REQUEST_ID, req_id)
                         bubble_activity_log(client_addr, server_addr, 'http_match', log_url)
                     else:
-                        if bubble_log.isEnabledFor(DEBUG):
-                            bubble_log.debug('bubble_handle_request: no rules returned, passing thru...')
+                        if log_info:
+                            bubble_log.info('bubble_handle_request: REQ-DECISION: ALLOW '+log_url+' no rules returned')
                         bubble_activity_log(client_addr, server_addr, 'http_no_rules', log_url)
                 else:
-                    if bubble_log.isEnabledFor(DEBUG):
-                        bubble_log.debug('bubble_handle_request: no matcher_response returned, passing thru...')
+                    if log_info:
+                        bubble_log.info('bubble_handle_request: REQ-DECISION: ALLOW '+log_url+'no matcher_response')
                     # bubble_activity_log(client_addr, server_addr, 'http_no_matcher_response', log_url)
 
         elif is_http and is_not_from_vpn(client_addr):
-            if bubble_log.isEnabledFor(WARNING):
+            if log_warning:
                 bubble_log.warning('bubble_handle_request: sending to tarpit: non-VPN client='+client_addr)
             bubble_activity_log(client_addr, server_addr, 'http_tarpit_non_vpn', [server_addr])
             tarpit_response(flow, host)
             return None
 
         else:
-            if bubble_log.isEnabledFor(WARNING):
+            if log_warning:
                 bubble_log.warning('bubble_handle_request: no sni/host found, not applying rules to path: ' + path)
             bubble_activity_log(client_addr, server_addr, 'http_no_sni_or_host', [server_addr])
 
@@ -241,7 +250,7 @@ class Rerouter:
             if is_flex_domain(client_addr, server_addr, [host]):
                 flex_flow = new_flex_flow(client_addr, host, flow)
                 add_flow_ctx(flow, CTX_BUBBLE_FLEX, flex_flow)
-                if bubble_log.isEnabledFor(DEBUG):
+                if log_debug:
                     bubble_log.debug('request: is_flex_domain('+host+') returned true, setting ctx: '+CTX_BUBBLE_FLEX)
 
 

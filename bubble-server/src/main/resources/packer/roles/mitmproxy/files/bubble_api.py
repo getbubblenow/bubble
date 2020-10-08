@@ -29,6 +29,11 @@ from mitmproxy.utils import strutils
 
 bubble_log = logging.getLogger(__name__)
 
+log_debug = bubble_log.isEnabledFor(DEBUG)
+log_info = bubble_log.isEnabledFor(INFO)
+log_warning = bubble_log.isEnabledFor(WARNING)
+log_error = bubble_log.isEnabledFor(ERROR)
+
 nest_asyncio.apply()
 
 HEADER_USER_AGENT = 'User-Agent'
@@ -93,7 +98,7 @@ def bubble_activity_log(client_addr, server_addr, event, data):
         'event': event,
         'data': str(data)
     })
-    if bubble_log.isEnabledFor(DEBUG):
+    if log_debug:
         bubble_log.debug('bubble_activity_log: setting '+key+' = '+value)
     redis_set(key, value, BUBBLE_ACTIVITY_LOG_EXPIRATION)
     pass
@@ -110,16 +115,16 @@ async def async_response(client, name, url,
                          method='GET',
                          data=None,
                          json=None):
-    if bubble_log.isEnabledFor(INFO):
+    if log_info:
         bubble_log.info('bubble_async_request(' + name + '): starting async: ' + method + ' ' + url)
 
     response = await client.request(method=method, url=url, headers=headers, json=json, data=data)
 
-    if bubble_log.isEnabledFor(INFO):
+    if log_info:
         bubble_log.info('bubble_async_request(' + name + '): async request returned HTTP status ' + str(response.status_code))
 
     if response.status_code != 200:
-        if bubble_log.isEnabledFor(ERROR):
+        if log_error:
             bubble_log.error('bubble_async_request(' + name + '): API call failed ('+url+'): ' + repr(response))
 
     return response
@@ -202,10 +207,10 @@ def bubble_async_request_json(name, url, headers, method='GET', json=None):
     if response and response.status_code == 200:
         return response.json()
     elif response:
-        if bubble_log.isEnabledFor(DEBUG):
+        if log_debug:
             bubble_log.debug('bubble_async_request_json('+name+'): received invalid HTTP status: '+repr(response.status_code))
     else:
-        if bubble_log.isEnabledFor(DEBUG):
+        if log_debug:
             bubble_log.debug('bubble_async_request_json('+name+'): error, no response')
     return None
 
@@ -232,10 +237,10 @@ def cleanup_async(url, loop, client, response):
                 bubble_log.error('cleanup_async: error closing loop: '+repr(e))
                 errors = True
         if not errors:
-            if bubble_log.isEnabledFor(DEBUG):
+            if log_debug:
                 bubble_log.debug('cleanup_async: successfully completed: '+url)
         else:
-            if bubble_log.isEnabledFor(WARNING):
+            if log_warning:
                 bubble_log.warning('cleanup_async: successfully completed (but had errors closing): ' + url)
     return cleanup
 
@@ -244,7 +249,7 @@ def bubble_conn_check(client_addr, server_addr, fqdns, security_level):
     if debug_capture_fqdn and fqdns:
         for f in debug_capture_fqdn:
             if f in fqdns:
-                if bubble_log.isEnabledFor(DEBUG):
+                if log_debug:
                     bubble_log.debug('bubble_conn_check: debug_capture_fqdn detected, returning noop: '+f)
                 return 'noop'
 
@@ -264,7 +269,7 @@ def bubble_conn_check(client_addr, server_addr, fqdns, security_level):
         return bubble_async_request_json(name, url, headers=headers, method='POST', json=data)
 
     except Exception as e:
-        if bubble_log.isEnabledFor(ERROR):
+        if log_error:
             bubble_log.error('bubble_conn_check: API call failed: '+repr(e))
         traceback.print_exc()
         if security_level is not None and security_level['level'] == 'maximum':
@@ -283,7 +288,7 @@ def bubble_get_flex_router(client_addr, host):
         return bubble_async_request_json(name, url, headers)
 
     except Exception as e:
-        if bubble_log.isEnabledFor(ERROR):
+        if log_error:
             bubble_log.error('bubble_get_flex_routes: API call failed with exception: '+repr(e))
         traceback.print_exc()
         return None
@@ -312,7 +317,7 @@ BLOCK_MATCHER = {
 
 def bubble_matchers(req_id, client_addr, server_addr, flow, host):
     if debug_capture_fqdn and host and host in debug_capture_fqdn:
-        if bubble_log.isEnabledFor(INFO):
+        if log_info:
             bubble_log.info('bubble_matchers: debug_capture_fqdn detected, returning DEBUG_MATCHER: '+host)
         return DEBUG_MATCHER
 
@@ -324,21 +329,21 @@ def bubble_matchers(req_id, client_addr, server_addr, flow, host):
         'Content-Type': 'application/json'
     }
     if HEADER_USER_AGENT not in flow.request.headers:
-        if bubble_log.isEnabledFor(WARNING):
+        if log_warning:
             bubble_log.warning('bubble_matchers: no User-Agent header, setting to UNKNOWN')
         user_agent = 'UNKNOWN'
     else:
         user_agent = flow.request.headers[HEADER_USER_AGENT]
 
     if HEADER_REFERER not in flow.request.headers:
-        if bubble_log.isEnabledFor(DEBUG):
+        if log_debug:
             bubble_log.debug('bubble_matchers: no Referer header, setting to NONE')
         referer = 'NONE'
     else:
         try:
             referer = flow.request.headers[HEADER_REFERER].encode().decode()
         except Exception as e:
-            if bubble_log.isEnabledFor(WARNING):
+            if log_warning:
                 bubble_log.warning('bubble_matchers: error parsing Referer header: '+repr(e))
             referer = 'NONE'
 
@@ -357,13 +362,13 @@ def bubble_matchers(req_id, client_addr, server_addr, flow, host):
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 403:
-            if bubble_log.isEnabledFor(DEBUG):
+            if log_debug:
                 bubble_log.debug('bubble_matchers: response was FORBIDDEN, returning block: '+str(response.status_code)+' / '+repr(response.text))
             return BLOCK_MATCHER
-        if bubble_log.isEnabledFor(WARNING):
+        if log_warning:
             bubble_log.warning('bubble_matchers: response not OK, returning empty matchers array: '+str(response.status_code)+' / '+repr(response.text))
     except Exception as e:
-        if bubble_log.isEnabledFor(ERROR):
+        if log_error:
             bubble_log.error('bubble_matchers: API call failed: '+repr(e))
         traceback.print_exc()
     return None
@@ -411,13 +416,13 @@ def is_not_from_vpn(client_addr):
 
 def is_flex_domain(client_addr, server_addr, fqdns):
     if fqdns is None or len(fqdns) != 1:
-        if bubble_log.isEnabledFor(DEBUG):
+        if log_debug:
             bubble_log.debug('is_flex_domain: no fqdns or multiple fqdns for server_addr '+server_addr+' ('+repr(fqdns)+'), returning False')
         return False
     fqdn = fqdns[0]
 
     if fqdn == bubble_host or fqdn == bubble_host_alias or (bubble_sage_host is not None and fqdn == bubble_sage_host):
-        if bubble_log.isEnabledFor(DEBUG):
+        if log_debug:
             bubble_log.debug('is_flex_domain: (early) returning False for: '+fqdn)
         return False
     check_fqdn = fqdn
@@ -425,7 +430,7 @@ def is_flex_domain(client_addr, server_addr, fqdns):
     exclusion_set = 'flexExcludeLists~' + client_addr + '~UNION'
     excluded = REDIS.sismember(exclusion_set, fqdn)
     if excluded:
-        if bubble_log.isEnabledFor(DEBUG):
+        if log_debug:
             bubble_log.debug('is_flex_domain: returning False for excluded flex domain: ' + fqdn + ' (check=' + check_fqdn + ')')
         return False
 
@@ -433,11 +438,11 @@ def is_flex_domain(client_addr, server_addr, fqdns):
     while '.' in check_fqdn:
         found = REDIS.sismember(flex_set, check_fqdn)
         if found:
-            if bubble_log.isEnabledFor(DEBUG):
+            if log_debug:
                 bubble_log.debug('is_flex_domain: returning True for: '+fqdn+' (check='+check_fqdn+')')
             return True
         check_fqdn = check_fqdn[check_fqdn.index('.')+1:]
-    # if bubble_log.isEnabledFor(DEBUG):
+    # if log_debug:
     #     bubble_log.debug('is_flex_domain: returning False for: '+fqdn)
     return False
 
@@ -530,7 +535,7 @@ def _replace_in_headers(headers: nheaders.Headers, modifiers_dict: dict) -> int:
     return repl_count
 
 
-def response_header_modify(flow) -> int:
+def response_header_modify(flow):
     if flow.response is None:
         return None
 
@@ -551,8 +556,8 @@ def _header_modify(client_addr: str, ctx: dict, headers: nheaders.Headers) -> in
             modifiers_dict[regex] = replacement
         repl_count += _replace_in_headers(headers, modifiers_dict)
 
-    if bubble_log.isEnabledFor(DEBUG):
-        bubble_log.debug('_header_modify: replacing headers - replacements count: ' + repl_count)
+    if log_debug:
+        bubble_log.debug('_header_modify: replacing headers - replacements count: '+str(repl_count))
 
     return repl_count
 
@@ -576,7 +581,7 @@ def _replace_modifier_values(s: str, ctx: dict) -> str:
 
 
 def health_check_response(flow):
-    # if bubble_log.isEnabledFor(DEBUG):
+    # if log_debug:
     #     bubble_log.debug('health_check_response: special bubble health check request, responding with OK')
     response_headers = nheaders.Headers()
     response_headers[HEADER_HEALTH_CHECK] = 'OK'
@@ -596,7 +601,7 @@ def health_check_response(flow):
 
 
 def tarpit_response(flow, host):
-    # if bubble_log.isEnabledFor(DEBUG):
+    # if log_debug:
     #     bubble_log.debug('health_check_response: special bubble health check request, responding with OK')
     response_headers = nheaders.Headers()
     response_headers[HEADER_LOCATION] = 'http://'+host+':'+str(TARPIT_PORT)+'/admin/index.php'
@@ -625,7 +630,7 @@ def special_bubble_response(flow):
         return
 
     uri = make_bubble_special_path(path)
-    if bubble_log.isEnabledFor(DEBUG):
+    if log_debug:
         bubble_log.debug('special_bubble_response: sending special bubble '+flow.request.method+' to '+uri)
     headers = {
         'Accept': 'application/json',
@@ -638,12 +643,12 @@ def special_bubble_response(flow):
 
     elif flow.request.method == 'POST':
         if include_request_headers(flow.request.path):
-            if bubble_log.isEnabledFor(DEBUG):
+            if log_debug:
                 bubble_log.debug('special_bubble_request: including client headers: '+repr(flow.request.headers))
             # add client request headers
             for name, value in flow.request.headers.items():
                 headers['X-Bubble-Client-Header-'+name] = value
-            if bubble_log.isEnabledFor(DEBUG):
+            if log_debug:
                 bubble_log.debug('special_bubble_request: NOW headers='+repr(headers))
 
         data = None
@@ -656,7 +661,7 @@ def special_bubble_response(flow):
         response = async_stream(client, name, uri, headers=headers, method='POST', data=data, loop=loop)
 
     else:
-        if bubble_log.isEnabledFor(WARNING):
+        if log_warning:
             bubble_log.warning('special_bubble_response: special bubble request: method '+flow.request.method+' not supported')
         return
 
@@ -669,7 +674,7 @@ def special_bubble_response(flow):
                                           headers=response_headers,
                                           content=None)
     if response is not None:
-        # if bubble_log.isEnabledFor(DEBUG):
+        # if log_debug:
         #     bubble_log.debug('special_bubble_response: special bubble request: response status = '+str(response.status_code))
         flow.response.headers = collect_response_headers(response)
         flow.response.status_code = response.status_code
