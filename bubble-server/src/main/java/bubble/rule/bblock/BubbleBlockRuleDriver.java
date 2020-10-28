@@ -506,11 +506,11 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
                 final String fqdn = fqdnFromKey(data.getKey());
                 if (validateRegexMatches(HOST_PATTERN, fqdn)) {
                     if (data.deleting()) {
-                        log.info(prefix+"unsetting fqdn: "+fqdn);
+                        if (log.isInfoEnabled()) log.info(prefix+"unsetting fqdn: "+fqdn);
                         deviceService.unsetBlockStatsForFqdn(account, fqdn);
                     } else {
-                        log.info(prefix+"setting fqdn: "+fqdn);
-                        deviceService.setBlockStatsForFqdn(account, fqdn, !Boolean.parseBoolean(data.getData()));
+                        if (log.isInfoEnabled()) log.info(prefix+"setting fqdn: "+fqdn);
+                        deviceService.setBlockStatsForFqdn(account, fqdn, Boolean.parseBoolean(data.getData()));
                     }
                 } else {
                     throw invalidEx("err.fqdn.invalid", "not a valid FQDN: "+fqdn, fqdn);
