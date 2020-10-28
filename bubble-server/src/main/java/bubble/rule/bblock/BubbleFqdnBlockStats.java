@@ -14,33 +14,36 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import static bubble.app.bblock.BubbleBlockAppConfigDriver.PREFIX_APPDATA_HIDE_STATS;
+import static bubble.rule.bblock.BubbleBlockRuleDriver.PREFIX_APPDATA_SHOW_STATS;
 import static bubble.rule.bblock.BubbleBlockRuleDriver.fqdnFromKey;
 
 @NoArgsConstructor @Accessors(chain=true)
-public class BubbleHideStats {
+public class BubbleFqdnBlockStats {
 
     @Getter @Setter private String id;
     @Getter @Setter private String fqdn;
+    @Getter @Setter private boolean showBlockStats;
 
-    public BubbleHideStats(String fqdn) {
+    public BubbleFqdnBlockStats(String fqdn, boolean showBlockStats) {
         setFqdn(fqdn);
+        setShowBlockStats(showBlockStats);
     }
 
-    public BubbleHideStats(AppData datum) {
+    public BubbleFqdnBlockStats(AppData datum) {
         final String key = datum.getKey();
         setId(datum.getUuid());
         setFqdn(fqdnFromKey(key));
+        setShowBlockStats(Boolean.parseBoolean(datum.getData()));
     }
 
-    public AppData toAppData(Account account, BubbleApp app, AppMatcher matcher, AppSite site) {
+    public AppData toAppData(Account account, BubbleApp app, AppMatcher matcher, AppSite site, boolean enabled) {
         return new AppData()
                 .setAccount(account.getUuid())
                 .setApp(app.getUuid())
                 .setMatcher(matcher.getUuid())
                 .setSite(site.getUuid())
-                .setKey(PREFIX_APPDATA_HIDE_STATS +fqdn)
-                .setData("true");
+                .setKey(PREFIX_APPDATA_SHOW_STATS + fqdn)
+                .setData(Boolean.toString(enabled));
     }
 
 }

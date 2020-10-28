@@ -69,7 +69,7 @@ function {{JS_PREFIX}}_show_app_details(ev) {
                 const hide_show_stats_url = '/__bubble/api/filter/data/{{BUBBLE_DATA_ID}}/write';
                 const requestOptions = {
                     method: 'POST',
-                    body: JSON.stringify({key: 'hideStats_'+domain, data: 'true'})
+                    body: JSON.stringify({key: 'showStats_'+domain, data: 'false'})
                 };
                 fetch(hide_show_stats_url, requestOptions)
                     .then(() => window.location.reload());

@@ -39,7 +39,8 @@
       {"name": "testUrlPrimary", "type": "flag"},
       {"name": "urlRegex", "required": false},
       {"name": "userAgentRegex"},
-      {"name": "fqdn", "type": "fqdn"}
+      {"name": "fqdn", "type": "fqdn", "required": true},
+      {"name": "showBlockStats", "type": "flag"}
     ],
     "configViews": [{
       "name": "manageLists",
@@ -113,17 +114,17 @@
         }
       ]
     }, {
-      "name": "manageHideStats",
+      "name": "manageStatsDisplay",
       "scope": "app",
       "root": "true",
-      "fields": ["fqdn"],
+      "fields": ["fqdn", "showBlockStats"],
       "when": "configs.showBlockStatsSupported",
       "actions": [
-        {"name": "removeHideStats", "index": 10},
+        {"name": "removeStatsDisplay", "index": 10},
         {
-          "name": "createHideStats", "scope": "app", "index": 10,
-          "params": ["fqdn"],
-          "button": "createHideStats"
+          "name": "createStatsDisplay", "scope": "app", "index": 10,
+          "params": ["fqdn", "showBlockStats"],
+          "button": "createStatsDisplay"
         }
       ]
     }]
@@ -145,6 +146,22 @@
           "fqdnMatch": "((mobile|www)\\.)?twitter\\.com",
           "insertionRegex": "<\\s*html[^>]*>"
         }],
+        "statsDisplayLists": [
+          {
+            "name": "Bubble Stats Disabled",
+            "id": "stats_disabled_list",
+            "url": "https://raw.githubusercontent.com/getbubblenow/bubble-filter-lists/master/stats_display_disabled.txt",
+            "description": "Disable in-page stats on these domains, unless overridden in App Data",
+            "mode": "default_off"
+          },
+          {
+            "name": "Bubble Stats Enabled",
+            "id": "stats_enabled_list",
+            "url": "https://raw.githubusercontent.com/getbubblenow/bubble-filter-lists/master/stats_display_enabled.txt",
+            "description": "Enable in-page stats on these domains, unless overridden in App Data",
+            "mode": "default_on"
+          }
+        ],
         "blockLists": [
           {
             "name": "EasyList",
@@ -211,7 +228,7 @@
         {"name": "config.view.manageList", "value": "Manage Filter List"},
         {"name": "config.view.manageRules", "value": "Manage Filter Rules"},
         {"name": "config.view.manageUserAgents", "value": "Manage User-Agents"},
-        {"name": "config.view.manageHideStats", "value": "Disable In-Page Block Stats"},
+        {"name": "config.view.manageStatsDisplay", "value": "Manage In-Page Block Stats Display"},
 
         {"name": "config.field.name", "value": "Name"},
         {"name": "config.field.description", "value": "Description"},
@@ -235,7 +252,8 @@
         {"name": "config.field.userAgentRegex", "value": "User-Agent"},
         {"name": "config.field.userAgentRegex.description", "value": "A regular expression to match against the User-Agent"},
         {"name": "config.field.fqdn", "value": "Domain Name"},
-        {"name": "config.field.fqdn.description", "value": "In-page block stats will be disabled for this domain"},
+        {"name": "config.field.fqdn.description", "value": "Manage in-page block stats for this domain"},
+        {"name": "config.field.showBlockStats", "value": "Enabled?"},
 
         {"name": "config.action.enableList", "value": "Enable"},
         {"name": "config.action.disableList", "value": "Disable"},
@@ -253,10 +271,10 @@
         {"name": "config.button.createUserAgentBlock", "value": "Add"},
         {"name": "config.action.removeUserAgentBlock", "value": "Remove Rule"},
         {"name": "config.button.removeUserAgentBlock", "value": "Remove"},
-        {"name": "config.action.createHideStats", "value": "Disable Block Stats"},
-        {"name": "config.button.createHideStats", "value": "Add"},
-        {"name": "config.action.removeHideStats", "value": "Remove"},
-        {"name": "config.button.removeHideStats", "value": "Remove"},
+        {"name": "config.action.createStatsDisplay", "value": "Set Block Stats Display"},
+        {"name": "config.button.createStatsDisplay", "value": "Add"},
+        {"name": "config.action.removeStatsDisplay", "value": "Remove"},
+        {"name": "config.button.removeStatsDisplay", "value": "Remove"},
         {"name": "config.action.testUrl", "value": "Test URL"},
         {"name": "config.button.testUrl", "value": "Test"},
         {"name": "config.response.block", "value": "Block"},

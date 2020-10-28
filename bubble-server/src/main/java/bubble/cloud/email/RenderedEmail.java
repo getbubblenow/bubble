@@ -20,8 +20,8 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 @NoArgsConstructor @Accessors(chain=true)
 public class RenderedEmail extends SimpleEmailMessage implements RenderedMessage {
 
-    @Getter private long ctime = now();
-    @Getter private String uuid = randomUUID().toString();
+    @Getter private final long ctime = now();
+    @Getter private final String uuid = randomUUID().toString();
     @Getter @Setter private Map<String, Object> ctx;
 
     public RenderedEmail (Map<String, Object> ctx) { this.ctx = ctx; }

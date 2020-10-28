@@ -50,7 +50,7 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> implements HasDevi
         return filterExpired(findByUniqueFields("app", app, "site", site, "key", key, "device", device));
     }
 
-    public List<AppData> findByAccountAndAppAndAndKey(String account, String app, String key) {
+    public List<AppData> findByAccountAndAppAndKey(String account, String app, String key) {
         return filterExpired(findByFields("account", account, "app", app, "key", key));
     }
 
@@ -91,12 +91,11 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> implements HasDevi
         final Function<AppData, AppData> callback = dataSetCallbacks.get(data.getApp());
         log.info("set: found callback="+callback+" for app: "+data.getApp());
 
-        if (found == null) return callback == null ? create(data) : callback.apply(create(data).setCreating(true));
+        if (found == null) return callback == null ? create(data) : create(callback.apply(data.setCreating(true)));
 
         if (!found.getSite().equals(data.getSite())) return die("set: matcher mismatch: found ("+found.getUuid()+"/"+found.getKey()+") with site "+found.getSite()+", update has site: "+data.getSite());
         found.update(data);
-        final AppData updated = update(found);
-        return callback != null ? callback.apply(updated) : updated;
+        return update(callback == null ? found : callback.apply(found));
     }
 
     public List<AppData> findByExample(Account account, AppData basis) {
@@ -109,7 +108,7 @@ public class AppDataDAO extends AppTemplateEntityDAO<AppData> implements HasDevi
         if (byUuid != null) return new SingletonList<>(byUuid);
 
         final List<Criterion> crits = new ArrayList<>();
-        if (account != null) crits.add(eq("account", account.getUuid()));
+        crits.add(eq("account", account.getUuid()));
         if (basis.hasApp()) crits.add(eq("app", basis.getApp()));
         if (basis.hasSite()) crits.add(eq("site", basis.getSite()));
         if (basis.hasMatcher()) crits.add(eq("matcher", basis.getMatcher()));

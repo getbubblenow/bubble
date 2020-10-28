@@ -27,9 +27,16 @@ public class BubbleBlockConfig extends RequestModifierConfig {
     @Getter @Setter private BubbleUserAgentBlock[] userAgentBlocks;
     public boolean hasUserAgentBlocks () { return !empty(userAgentBlocks); }
 
+    @Getter @Setter private BubbleBlockStatsDisplayList[] statsDisplayLists;
+    public boolean hasStatsDisplayLists () { return !empty(statsDisplayLists); }
+    public void addStatsDisplayList(BubbleBlockStatsDisplayList list) { statsDisplayLists = ArrayUtil.append(statsDisplayLists, list); }
+    public boolean hasStatsDisplayList(BubbleBlockStatsDisplayList list) {
+        return hasStatsDisplayLists() && Arrays.stream(statsDisplayLists).anyMatch(l -> l.getUrl().equals(list.getUrl()));
+    }
+
     @Getter @Setter private BubbleBlockList[] blockLists;
     public boolean hasBlockLists () { return !empty(blockLists); }
-    public void addBlockList(BubbleBlockList blockList) { blockLists = ArrayUtil.append(blockLists, blockList); }
+    public void addBlockList(BubbleBlockList list) { blockLists = ArrayUtil.append(blockLists, list); }
     public boolean hasBlockList(BubbleBlockList list) {
         return hasBlockLists() && Arrays.stream(blockLists).anyMatch(l -> l.getUrl().equals(list.getUrl()));
     }

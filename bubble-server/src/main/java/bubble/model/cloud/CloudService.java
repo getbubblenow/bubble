@@ -130,7 +130,8 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     @Column(nullable=false, length=1000)
     @Getter @Setter private String driverClass;
 
-    @JsonIgnore @Getter(lazy=true) private final Map<Class, Boolean> _driverUsesCache = new ConcurrentHashMap<>();
+    @JsonIgnore @Transient @Getter(lazy=true)
+    private final Map<Class<? extends CloudServiceDriver>, Boolean> _driverUsesCache = new ConcurrentHashMap<>();
 
     public boolean usesDriver(Class<? extends CloudServiceDriver> clazz) {
         return get_driverUsesCache().computeIfAbsent(clazz, c -> {

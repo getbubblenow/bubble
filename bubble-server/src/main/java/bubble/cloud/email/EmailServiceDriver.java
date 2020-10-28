@@ -17,6 +17,10 @@ public interface EmailServiceDriver extends AuthenticationDriver {
 
     @Override default CloudServiceType getType() { return CloudServiceType.email; }
 
+    @Override default boolean send(Account account, AccountMessage message, AccountContact contact) {
+        return send(this, account, message, contact);
+    }
+
     static boolean send(EmailServiceDriver driver, Account account, AccountMessage message, AccountContact contact) {
         final RenderedEmail email = driver.renderMessage(account, message, contact);
         return driver.send(email);
@@ -43,6 +47,5 @@ public interface EmailServiceDriver extends AuthenticationDriver {
         }
         return email;
     }
-
 
 }

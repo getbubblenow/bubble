@@ -90,13 +90,22 @@ public class AppRule extends IdentifiableBaseParentEntity implements AppTemplate
     @Column(nullable=false, length=UUID_MAXLEN)
     @Getter @Setter private String driver;
 
-    public AppRuleDriver initDriver(BubbleApp app, RuleDriver driver, AppMatcher matcher, Account account, Device device) {
-        final AppRuleDriver d = driver.getDriver();
+    public AppRuleDriver initDriver(BubbleConfiguration configuration,
+                                    BubbleApp app,
+                                    RuleDriver driver,
+                                    AppMatcher matcher,
+                                    Account account,
+                                    Device device) {
+        final AppRuleDriver d = configuration.autowire(driver.getDriver());
         d.init(json(configJson, JsonNode.class), driver.getUserConfig(), app, this, matcher, account, device);
         return d;
     }
 
-    public AppRuleDriver initQuickDriver(BubbleApp app, RuleDriver driver, AppMatcher matcher, Account account, Device device) {
+    public AppRuleDriver initQuickDriver(BubbleApp app,
+                                         RuleDriver driver,
+                                         AppMatcher matcher,
+                                         Account account,
+                                         Device device) {
         final AppRuleDriver d = driver.getDriver();
         d.initQuick(json(configJson, JsonNode.class), driver.getUserConfig(), app, this, matcher, account, device);
         return d;

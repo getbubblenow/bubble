@@ -221,7 +221,7 @@ public class FilterHttpResource {
         if (connCheckRequest.hasFqdns()) {
             final String[] fqdns = connCheckRequest.getFqdns();
             for (String fqdn : fqdns) {
-                checkResponse = ruleEngine.checkConnection(account, device, retained, connCheckRequest.getServerAddr(), fqdn);
+                checkResponse = ruleEngine.checkConnection(account, device, retained, connCheckRequest.getClientAddr(), connCheckRequest.getServerAddr(), fqdn);
                 if (checkResponse != ConnectionCheckResponse.noop) {
                     if (log.isDebugEnabled()) log.debug(prefix + "found " + checkResponse + " (breaking) for fqdn/addr=" + fqdn + "/" + connCheckRequest.getServerAddr());
                     break;

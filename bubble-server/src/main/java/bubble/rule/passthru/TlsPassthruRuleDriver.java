@@ -56,13 +56,18 @@ public class TlsPassthruRuleDriver extends AbstractAppRuleDriver {
         passthruConfig.getFlexSet();
     }
 
-    @Override public ConnectionCheckResponse checkConnection(AppRuleHarness harness, Account account, Device device, String addr, String fqdn) {
+    @Override public ConnectionCheckResponse checkConnection(AppRuleHarness harness,
+                                                             Account account,
+                                                             Device device,
+                                                             String clientAddr,
+                                                             String serverAddr,
+                                                             String fqdn) {
         final TlsPassthruConfig passthruConfig = getRuleConfig();
-        if (passthruConfig.isPassthru(fqdn) || passthruConfig.isPassthru(addr)) {
-            if (log.isDebugEnabled()) log.debug("checkConnection: detected passthru for fqdn/addr="+fqdn+"/"+addr);
+        if (passthruConfig.isPassthru(fqdn) || passthruConfig.isPassthru(serverAddr)) {
+            if (log.isDebugEnabled()) log.debug("checkConnection: detected passthru for fqdn/addr="+fqdn+"/"+ serverAddr);
             return ConnectionCheckResponse.passthru;
         }
-        if (log.isDebugEnabled()) log.debug("checkConnection: returning noop for fqdn/addr="+fqdn+"/"+addr);
+        if (log.isDebugEnabled()) log.debug("checkConnection: returning noop for fqdn/addr="+fqdn+"/"+ serverAddr);
         return ConnectionCheckResponse.noop;
     }
 

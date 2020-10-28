@@ -245,6 +245,13 @@
             <version>1.11.699</version>
         </dependency>
 
+        <!-- mailgun driver users this library -->
+        <dependency>
+            <groupId>com.mashape.unirest</groupId>
+            <artifactId>unirest-java</artifactId>
+            <version>1.4.9</version>
+        </dependency>
+
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>

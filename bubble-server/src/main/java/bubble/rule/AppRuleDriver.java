@@ -221,7 +221,8 @@ public interface AppRuleDriver {
     default ConnectionCheckResponse checkConnection(AppRuleHarness harness,
                                                     Account account,
                                                     Device device,
-                                                    String addr,
+                                                    String clientAddr,
+                                                    String serverAddr,
                                                     String fqdn) {
         return ConnectionCheckResponse.noop;
     }

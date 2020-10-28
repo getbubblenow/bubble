@@ -26,7 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static bubble.rule.bblock.BubbleBlockRuleDriver.fqdnFromKey;
+import static bubble.rule.bblock.BubbleBlockRuleDriver.*;
 import static java.util.Collections.emptySet;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
@@ -49,12 +49,10 @@ public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
     public static final String VIEW_manageList = "manageList";
     public static final String VIEW_manageRules = "manageRules";
     public static final String VIEW_manageUserAgents = "manageUserAgents";
-    public static final String VIEW_manageHideStats = "manageHideStats";
+    public static final String VIEW_manageStatsDisplay = "manageStatsDisplay";
     public static final AppMatcher TEST_MATCHER = new AppMatcher();
     public static final Device TEST_DEVICE = new Device();
-    public static final String PREFIX_APPDATA_HIDE_STATS = "hideStats_";
     public static final String DEFAULT_MATCHER_NAME = "BubbleBlockMatcher";
-    public static final String DEFAULT_SITE_NAME = "All_Sites";
 
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AppDataDAO dataDAO;
@@ -92,8 +90,8 @@ public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
             case VIEW_manageUserAgents:
                 return loadUserAgentBlocks(account, app);
 
-            case VIEW_manageHideStats:
-                return loadHideStats(account, app);
+            case VIEW_manageStatsDisplay:
+                return loadBlockStats(account, app);
         }
         throw notFoundEx(view);
     }
@@ -139,11 +137,10 @@ public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
         return empty(blocks) ? BubbleUserAgentBlock.NO_BLOCKS : blocks;
     }
 
-    private List<BubbleHideStats> loadHideStats(Account account, BubbleApp app) {
-        return dataDAO.findByAccountAndAppAndAndKeyPrefix(account.getUuid(), app.getUuid(), PREFIX_APPDATA_HIDE_STATS)
+    private List<BubbleFqdnBlockStats> loadBlockStats(Account account, BubbleApp app) {
+        return dataDAO.findByAccountAndAppAndAndKeyPrefix(account.getUuid(), app.getUuid(), PREFIX_APPDATA_SHOW_STATS)
                 .stream()
-                .filter(d -> Boolean.parseBoolean(d.getData()))
-                .map(BubbleHideStats::new)
+                .map(BubbleFqdnBlockStats::new)
                 .collect(Collectors.toList());
     }
 
@@ -157,8 +154,8 @@ public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
     public static final String ACTION_createUserAgentBlock = "createUserAgentBlock";
     public static final String ACTION_removeUserAgentBlock = "removeUserAgentBlock";
     public static final String ACTION_testUrl = "testUrl";
-    public static final String ACTION_removeHideStats = "removeHideStats";
-    public static final String ACTION_createHideStats = "createHideStats";
+    public static final String ACTION_removeStatsDisplay = "removeStatsDisplay";
+    public static final String ACTION_createStatsDisplay = "createStatsDisplay";
 
     public static final String PARAM_URL = "url";
     public static final String PARAM_RULE = "rule";
@@ -167,6 +164,7 @@ public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
     public static final String PARAM_TEST_USER_AGENT = "testUserAgent";
     public static final String PARAM_TEST_URL_PRIMARY = "testUrlPrimary";
     public static final String PARAM_FQDN = "fqdn";
+    public static final String PARAM_SHOW_BLOCK_STATS = "showBlockStats";
 
     @Override public Object takeAppAction(Account account,
                                           BubbleApp app,
@@ -183,8 +181,8 @@ public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
                 return testUrl(account, app, data);
             case ACTION_createUserAgentBlock:
                 return createUserAgentBlock(account, app, params, data);
-            case ACTION_createHideStats:
-                return createHideStats(account, app, params, data);
+            case ACTION_createStatsDisplay:
+                return createStatsDisplay(account, app, params, data);
         }
         throw notFoundEx(action);
     }
@@ -222,8 +220,7 @@ public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
         try {
             final AppRule rule = loadRule(account, app);
             final RuleDriver ruleDriver = loadDriver(account, rule, BubbleBlockRuleDriver.class);
-            final BubbleBlockRuleDriver unwiredDriver = (BubbleBlockRuleDriver) rule.initDriver(app, ruleDriver, TEST_MATCHER, account, TEST_DEVICE);
-            final BubbleBlockRuleDriver driver = configuration.autowire(unwiredDriver);
+            final BubbleBlockRuleDriver driver = (BubbleBlockRuleDriver) rule.initDriver(configuration, app, ruleDriver, TEST_MATCHER, account, TEST_DEVICE);
             final BlockDecision decision = driver.getDecision(host, path, userAgent, primary);
             return getBuiltinList(account, app).setResponse(decision);
 
@@ -319,23 +316,27 @@ public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
     }
 
 
-    private BubbleHideStats createHideStats(Account account, BubbleApp app, Map<String, String> params, JsonNode data) {
+    private BubbleFqdnBlockStats createStatsDisplay(Account account, BubbleApp app, Map<String, String> params, JsonNode data) {
         final JsonNode fqdnNode = data.get(PARAM_FQDN);
         if (fqdnNode == null) throw invalidEx("err.fqdn.required");
         final String fqdn = fqdnNode.textValue();
-        final BubbleHideStats hideStats = new BubbleHideStats(fqdn);
-        final AppData appData = dataDAO.set(hideStats.toAppData(account, app, getDefaultMatcher(account, app), getDefaultSite(account, app)));
-        hideStats.setId(appData.getUuid());
-        return hideStats;
+
+        final JsonNode enabledNode = data.get(PARAM_SHOW_BLOCK_STATS);
+        final boolean enabled = enabledNode != null && enabledNode.booleanValue();
+
+        final BubbleFqdnBlockStats blockStats = new BubbleFqdnBlockStats(fqdn, enabled);
+        final AppData appData = dataDAO.set(blockStats.toAppData(account, app, getDefaultMatcher(account, app), getDefaultSite(account, app), enabled));
+        blockStats.setId(appData.getUuid());
+        return blockStats;
     }
 
-    private List<BubbleHideStats> removeHideStats(Account account, BubbleApp app, String uuid) {
+    private List<BubbleFqdnBlockStats> removeStatsDisplay(Account account, BubbleApp app, String uuid) {
         final AppData appData = dataDAO.findByAccountAndId(account.getUuid(), uuid);
         if (appData != null) {
             final String fqdn = fqdnFromKey(appData.getKey());  // sanity check that key is in the right format
-            dataDAO.set(appData.setData("false"));
+            dataDAO.delete(appData.getUuid());
         }
-        return loadHideStats(account, app);
+        return loadBlockStats(account, app);
     }
 
     @Override public Object takeItemAction(Account account,
@@ -382,8 +383,8 @@ public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
             case ACTION_removeUserAgentBlock:
                 return removeUserAgentBlock(account, app, id);
 
-            case ACTION_removeHideStats:
-                return removeHideStats(account, app, id);
+            case ACTION_removeStatsDisplay:
+                return removeStatsDisplay(account, app, id);
         }
 
         throw notFoundEx(action);

@@ -32,7 +32,7 @@ public class AppDataResource extends DataResourceBase {
         if (byUuid != null) {
             found = new SingletonList<>(byUuid);
         } else {
-            found = getDao().findByAccountAndAppAndAndKey(accountUuid, basis.getApp(), key);
+            found = getDao().findByAccountAndAppAndKey(accountUuid, basis.getApp(), key);
         }
         for (AppData d : found) {
             if (!canDelete(ctx, caller, d)) return forbidden();

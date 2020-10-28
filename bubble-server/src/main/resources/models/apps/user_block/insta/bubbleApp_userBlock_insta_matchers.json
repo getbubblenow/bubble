@@ -5,6 +5,7 @@
       "name": "InstaMatcher",
       "site": "Instagram",
       "template": true,
+      "connCheck": true,
       "requestCheck": true,
       "requestModifier": true,
       "fqdn": "www.instagram.com",

@@ -1,0 +1,23 @@
+{
+  "from": {
+    "email": {{{json m.fromEmail}}}{{#exists m.fromName}},
+    "name": {{{json m.fromName}}}{{/exists}}
+  },
+  "subject": {{{json m.subject}}},
+  "personalizations": [
+    {
+      "to": [{ "email": {{{json m.toEmail}}} }]
+    }
+  ],
+  "content": [
+    { "type": "text/plain", "value": {{{json m.message}}} }{{#exists m.htmlMessage}},
+    { "type": "text/html", "value": {{{json m.htmlMessage}}} }
+    {{/exists}}
+  ],
+  "tracking_settings": {
+    "click_tracking":        { "enable": false, "enable_text": false },
+    "open_tracking":         { "enable": false },
+    "subscription_tracking": { "enable": false },
+    "ganalytics":            { "enable": false }
+  }
+}

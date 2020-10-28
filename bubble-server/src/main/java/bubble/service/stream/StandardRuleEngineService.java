@@ -291,8 +291,7 @@ public class StandardRuleEngineService implements RuleEngineService {
                 log.warn("initRuleHarnesses: app not found: "+h.getRule().getApp());
                 continue;
             }
-            final AppRuleDriver unwiredDriver = h.getRule().initDriver(app, ruleDriver, h.getMatcher(), account, device);
-            final AppRuleDriver driver = configuration.autowire(unwiredDriver);
+            final AppRuleDriver driver = h.getRule().initDriver(configuration, app, ruleDriver, h.getMatcher(), account, device);
             h.setRuleDriver(ruleDriver);
             h.setDriver(driver);
         }
@@ -343,10 +342,10 @@ public class StandardRuleEngineService implements RuleEngineService {
     @Getter(lazy=true) private final HttpClientBuilder httpClientBuilder = newHttpClientBuilder(1000, 50);
     public CloseableHttpClient newHttpConn() { return getHttpClientBuilder().build(); }
 
-    public ConnectionCheckResponse checkConnection(Account account, Device device, List<AppMatcher> matchers, String addr, String fqdn) {
+    public ConnectionCheckResponse checkConnection(Account account, Device device, List<AppMatcher> matchers, String clientAddr, String serverAddr, String fqdn) {
         final List<AppRuleHarness> ruleHarnesses = initRules(account, device, matchers);
         for (AppRuleHarness harness : ruleHarnesses) {
-            final ConnectionCheckResponse checkResponse = harness.getDriver().checkConnection(harness, account, device, addr, fqdn);
+            final ConnectionCheckResponse checkResponse = harness.getDriver().checkConnection(harness, account, device, clientAddr, serverAddr, fqdn);
             if (checkResponse != ConnectionCheckResponse.noop) return checkResponse;
         }
         return ConnectionCheckResponse.noop;

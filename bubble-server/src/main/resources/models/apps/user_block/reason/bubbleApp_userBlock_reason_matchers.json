@@ -5,6 +5,7 @@
       "name": "ReasonMatcher",
       "site": "Reason",
       "template": true,
+      "connCheck": true,
       "requestCheck": true,
       "requestModifier": true,
       "fqdn": "reason.com",

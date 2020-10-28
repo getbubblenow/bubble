@@ -245,7 +245,7 @@ def cleanup_async(url, loop, client, response):
     return cleanup
 
 
-def bubble_conn_check(client_addr, server_addr, fqdns, security_level):
+def bubble_conn_check(client_addr, server_addr, fqdns, sec_level):
     if debug_capture_fqdn and fqdns:
         for f in debug_capture_fqdn:
             if f in fqdns:
@@ -272,7 +272,7 @@ def bubble_conn_check(client_addr, server_addr, fqdns, security_level):
         if log_error:
             bubble_log.error('bubble_conn_check: API call failed: '+repr(e))
         traceback.print_exc()
-        if security_level is not None and security_level['level'] == 'maximum':
+        if sec_level == 'maximum':
             return False
         return None
 

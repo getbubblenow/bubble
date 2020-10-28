@@ -8,6 +8,7 @@ import bubble.abp.*;
 import bubble.dao.app.AppDataDAO;
 import bubble.model.account.Account;
 import bubble.model.app.*;
+import bubble.model.device.BlockStatsDisplayMode;
 import bubble.model.device.Device;
 import bubble.resources.stream.FilterHttpRequest;
 import bubble.resources.stream.FilterMatchersRequest;
@@ -22,6 +23,7 @@ import bubble.service.stream.ConnectionCheckResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.SingletonMap;
+import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.util.http.URIUtil;
 import org.cobbzilla.util.string.StringUtil;
 import org.glassfish.grizzly.http.server.Request;
@@ -36,9 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-import static bubble.app.bblock.BubbleBlockAppConfigDriver.PREFIX_APPDATA_HIDE_STATS;
 import static bubble.service.stream.HttpStreamDebug.getLogFqdn;
-import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
@@ -52,6 +53,9 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @Slf4j
 public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
         implements RequestModifierRule, HasAppDataCallback {
+
+    public static final String DEFAULT_SITE_NAME = "All_Sites";
+    public static final String PREFIX_APPDATA_SHOW_STATS = "showStats_";
 
     private final AtomicReference<BlockList> blockList = new AtomicReference<>(new BlockList());
     private BlockList getBlockList() { return blockList.get(); }
@@ -70,10 +74,11 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
 
     private final static Map<String, BlockListSource> blockListCache = new ConcurrentHashMap<>();
 
-    public boolean showStats(String ip, String fqdn) {
+    public boolean showStats(Device device, String ip, String fqdn) {
+        if (!device.getSecurityLevel().statsEnabled()) return false;
         if (!deviceService.doShowBlockStats(account.getUuid())) return false;
         final Boolean show = deviceService.doShowBlockStatsForIpAndFqdn(ip, fqdn);
-        return show == null || show;
+        return show != null ? show : device.getSecurityLevel().preferStatsOn();
     }
 
     @Override public <C> Class<C> getConfigClass() { return (Class<C>) BubbleBlockConfig.class; }
@@ -83,7 +88,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
     @Override public boolean couldModify(FilterHttpRequest request) {
         final BubbleBlockConfig config = getRuleConfig();
         final FilterMatchersRequest req = request.getMatchersResponse().getRequest();
-        return request.isHtml() && request.isBrowser() && (config.inPageBlocks() || showStats(req.getClientAddr(), req.getFqdn()));
+        return request.isHtml() && request.isBrowser() && (config.inPageBlocks() || showStats(request.getDevice(), req.getClientAddr(), req.getFqdn()));
     }
 
     @Override public void init(JsonNode config,
@@ -94,7 +99,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
                                Account account,
                                Device device) {
         initQuick(config, userConfig, app, rule, matcher, account, device);
-        refreshBlockLists();
+        refreshLists();
     }
 
     @Override public void initQuick(JsonNode config,
@@ -121,74 +126,123 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
         return json(json(localConfig), JsonNode.class);
     }
 
-    public void refreshBlockLists() {
-        final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
-        final BubbleBlockList[] blockLists = bubbleBlockConfig.getBlockLists();
-        final Set<String> refreshed = new HashSet<>();
-        final BlockList newBlockList = new BlockList();
-        for (BubbleBlockList list : blockLists) {
-            if (!list.enabled()) continue;
+    private final Map<Account, AppSite> defaultSites = new ExpirationMap<>(4, HOURS.toMillis(1));
+    private AppSite getDefaultSite (Account account, BubbleApp app) {
+        return defaultSites.computeIfAbsent(account, a -> appSiteDAO.findByAccountAndAppAndId(account.getUuid(), app.getUuid(), DEFAULT_SITE_NAME));
+    }
 
-            BlockListSource blockListSource = blockListCache.get(list.getId());
-            if (list.hasUrl()) {
-                final String listUrl = list.getUrl();
-                if (blockListSource == null || blockListSource.age() > DAYS.toMillis(5)) {
+    private static final Map<String, List<String>> statsDisplayLists = new ExpirationMap<>(2, MINUTES.toMillis(5));
+    private static List<String> getUrlLines (BubbleBlockStatsDisplayList list) {
+        return statsDisplayLists.computeIfAbsent(list.getUrl(), k -> list.loadLines());
+    }
+
+    public void refreshLists() {
+        log.info("refreshLists: starting");
+        final BubbleBlockConfig bubbleBlockConfig = getRuleConfig();
+        refreshBlockDisplayLists(bubbleBlockConfig);
+        if (bubbleBlockConfig.hasBlockLists()) {
+            final BubbleBlockList[] blockLists = bubbleBlockConfig.getBlockLists();
+            final Set<String> refreshed = new HashSet<>();
+            final BlockList newBlockList = new BlockList();
+            for (BubbleBlockList list : blockLists) {
+                if (!list.enabled()) continue;
+
+                BlockListSource blockListSource = blockListCache.get(list.getId());
+                if (list.hasUrl()) {
+                    final String listUrl = list.getUrl();
+                    if (blockListSource == null || blockListSource.age() > DAYS.toMillis(5)) {
+                        try {
+                            final BlockListSource newList = new BlockListSource()
+                                    .setUrl(listUrl)
+                                    .download();
+                            blockListCache.put(list.getId(), newList);
+                            blockListSource = newList;
+                            refreshed.add(newList.getUrl());
+                        } catch (Exception e) {
+                            log.error("init: error downloading blockList " + listUrl + ": " + shortError(e));
+                            continue;
+                        }
+                    }
+                } else {
+                    refreshed.add(list.getName());
+                }
+                if (list.hasAdditionalEntries()) {
+                    if (blockListSource == null) blockListSource = new BlockListSource(); // might be built-in source
                     try {
-                        final BlockListSource newList = new BlockListSource()
-                                .setUrl(listUrl)
-                                .download();
-                        blockListCache.put(list.getId(), newList);
-                        blockListSource = newList;
-                        refreshed.add(newList.getUrl());
-                    } catch (Exception e) {
-                        log.error("init: error downloading blockList " + listUrl + ": " + shortError(e));
-                        continue;
+                        blockListSource.addEntries(list.getAdditionalEntries());
+                    } catch (IOException e) {
+                        log.error("init: error adding additional entries: " + shortError(e));
                     }
                 }
-            } else {
-                refreshed.add(list.getName());
+                if (blockListSource != null) newBlockList.merge(blockListSource.getBlockList());
             }
-            if (list.hasAdditionalEntries()) {
-                if (blockListSource == null) blockListSource = new BlockListSource(); // might be built-in source
+            blockList.set(newBlockList);
+
+            if (!newBlockList.getRejectList().equals(rejectDomains.get())) {
+                rejectDomains.set(newBlockList.getRejectList());
+            }
+            if (!newBlockList.getFullyBlockedDomains().equals(fullyBlockedDomains.get())) {
+                fullyBlockedDomains.set(newBlockList.getFullyBlockedDomains());
+            }
+            if (!newBlockList.getPartiallyBlockedDomains().equals(partiallyBlockedDomains.get())) {
+                partiallyBlockedDomains.set(newBlockList.getPartiallyBlockedDomains());
+            }
+            if (!newBlockList.getWhitelistDomainNames().equals(whiteListDomains.get())) {
+                whiteListDomains.set(newBlockList.getWhitelistDomainNames());
+            }
+
+            log.debug("refreshBlockLists: rejectDomains=" + rejectDomains.get().size());
+            log.debug("refreshBlockLists: fullyBlockedDomains=" + fullyBlockedDomains.get().size());
+            log.debug("refreshBlockLists: partiallyBlockedDomains=" + partiallyBlockedDomains.get().size());
+            log.debug("refreshBlockLists: refreshed " + refreshed.size() + " block lists: " + StringUtil.toString(refreshed));
+        }
+    }
+
+    protected void refreshBlockDisplayLists(BubbleBlockConfig bubbleBlockConfig) {
+        log.info("refreshBlockDisplayLists: starting");
+        if (bubbleBlockConfig.hasStatsDisplayLists()) {
+            final BubbleBlockStatsDisplayList[] displayLists = bubbleBlockConfig.getStatsDisplayLists();
+            log.info("refreshBlockDisplayLists: starting with "+displayLists.length+" lists...");
+            for (BubbleBlockStatsDisplayList list : displayLists) {
                 try {
-                    blockListSource.addEntries(list.getAdditionalEntries());
-                } catch (IOException e) {
-                    log.error("init: error adding additional entries: "+shortError(e));
+                    final List<String> lines = getUrlLines(list);
+                    if (log.isInfoEnabled()) log.info("refreshBlockDisplayLists: loaded "+lines.size()+" domains from list "+list.getId()+": "+list.getUrl());
+                    for (String domain : lines) {
+                        final String key = PREFIX_APPDATA_SHOW_STATS + domain;
+                        final List<AppData> data = appDataDAO.findByAccountAndAppAndKey(account.getUuid(), app.getUuid(), key);
+                        if (empty(data)) {
+                            final String value = String.valueOf(list.getMode() == BlockStatsDisplayMode.default_on);
+                            if (log.isInfoEnabled()) log.info("refreshBlockDisplayLists: creating AppData("+key+") => "+value);
+                            appDataDAO.create(new AppData()
+                                    .setAccount(account.getUuid())
+                                    .setApp(app.getUuid())
+                                    .setMatcher(matcher.getUuid())
+                                    .setSite(getDefaultSite(account, app).getUuid())
+                                    .setKey(key)
+                                    .setData(value)
+                            );
+                        } else {
+                            if (log.isDebugEnabled()) log.debug("refreshBlockDisplayLists: AppData("+key+") already exists, found records: "+json(data));
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("refreshBlockDisplayLists: error loading statsDisplayList ("+list.getUrl()+"): "+shortError(e), e);
                 }
             }
-            if (blockListSource != null) newBlockList.merge(blockListSource.getBlockList());
         }
-        blockList.set(newBlockList);
-
-        if (!newBlockList.getRejectList().equals(rejectDomains.get())) {
-            rejectDomains.set(newBlockList.getRejectList());
-        }
-        if (!newBlockList.getFullyBlockedDomains().equals(fullyBlockedDomains.get())) {
-            fullyBlockedDomains.set(newBlockList.getFullyBlockedDomains());
-        }
-        if (!newBlockList.getPartiallyBlockedDomains().equals(partiallyBlockedDomains.get())) {
-            partiallyBlockedDomains.set(newBlockList.getPartiallyBlockedDomains());
-        }
-        if (!newBlockList.getWhitelistDomains().equals(whiteListDomains.get())) {
-            whiteListDomains.set(newBlockList.getWhitelistDomainNames());
-        }
-
-        log.debug("refreshBlockLists: rejectDomains="+rejectDomains.get().size());
-        log.debug("refreshBlockLists: fullyBlockedDomains="+fullyBlockedDomains.get().size());
-        log.debug("refreshBlockLists: partiallyBlockedDomains="+partiallyBlockedDomains.get().size());
-        log.debug("refreshBlockLists: refreshed "+refreshed.size()+" block lists: "+StringUtil.toString(refreshed));
     }
 
     @Override public ConnectionCheckResponse checkConnection(AppRuleHarness harness,
                                                              Account account,
                                                              Device device,
-                                                             String addr,
+                                                             String clientAddr,
+                                                             String serverAddr,
                                                              String fqdn) {
         final BlockDecision decision = getBlockList().getFqdnDecision(fqdn);
         final BlockDecisionType decisionType = decision.getDecisionType();
         switch (decisionType) {
             case allow:
-                return ConnectionCheckResponse.noop;
+                return showStats(device, clientAddr, fqdn) ? ConnectionCheckResponse.filter : ConnectionCheckResponse.noop;
             case block:
                 return ConnectionCheckResponse.block;
             default:
@@ -255,7 +309,14 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
         }
     }
 
-    public FilterMatchDecision checkRefererAndShowStats(BlockDecisionType decisionType, FilterMatchersRequest filter, Account account, Device device, boolean extraLog, String app, String site, String prefix) {
+    public FilterMatchDecision checkRefererAndShowStats(BlockDecisionType decisionType,
+                                                        FilterMatchersRequest filter,
+                                                        Account account,
+                                                        Device device,
+                                                        boolean extraLog,
+                                                        String app,
+                                                        String site,
+                                                        String prefix) {
         prefix += "(checkRefererAndShowStats): ";
         if (filter.hasReferer()) {
             final FilterMatchDecision refererDecision = checkRefererDecision(filter, account, device, app, site, prefix);
@@ -265,7 +326,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
                 return refererDecision;
             }
         }
-        if (showStats(filter.getClientAddr(), filter.getFqdn())) {
+        if (showStats(device, filter.getClientAddr(), filter.getFqdn())) {
             if (log.isInfoEnabled()) log.info(prefix+"decision was "+decisionType+" but showStats=true, returning match");
             else if (extraLog) log.error(prefix+"decision was "+decisionType+" but showStats=true, returning match");
             return FilterMatchDecision.match;
@@ -378,7 +439,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
             return in;
         }
 
-        final boolean showStats = showStats(request.getClientAddr(), request.getFqdn());
+        final boolean showStats = showStats(filterRequest.getDevice(), request.getClientAddr(), request.getFqdn());
         if (!bubbleBlockConfig.inPageBlocks() && !showStats) {
             if (log.isInfoEnabled()) log.info(prefix + "SEND: both inPageBlocks and showStats are false, returning as-is");
             return in;
@@ -422,25 +483,25 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
     }
 
     public static String fqdnFromKey(String key) {
-        if (!key.startsWith(PREFIX_APPDATA_HIDE_STATS)) die("expected key to start with '"+ PREFIX_APPDATA_HIDE_STATS +"', was: "+ key);
-        return key.substring(PREFIX_APPDATA_HIDE_STATS.length());
+        if (!key.startsWith(PREFIX_APPDATA_SHOW_STATS)) die("expected key to start with '"+ PREFIX_APPDATA_SHOW_STATS +"', was: "+ key);
+        return key.substring(PREFIX_APPDATA_SHOW_STATS.length());
     }
 
     @Override public void prime(Account account, BubbleApp app, BubbleConfiguration configuration) {
         final DeviceService deviceService = configuration.getBean(DeviceService.class);
         final AppDataDAO dataDAO = configuration.getBean(AppDataDAO.class);
         log.info("priming app="+app.getName());
-        dataDAO.findByAccountAndAppAndAndKeyPrefix(account.getUuid(), app.getUuid(), PREFIX_APPDATA_HIDE_STATS)
-                .forEach(data -> deviceService.setBlockStatsForFqdn(account, fqdnFromKey(data.getKey()), !Boolean.parseBoolean(data.getData())));
+        dataDAO.findByAccountAndAppAndAndKeyPrefix(account.getUuid(), app.getUuid(), PREFIX_APPDATA_SHOW_STATS)
+                .forEach(data -> deviceService.setBlockStatsForFqdn(account, fqdnFromKey(data.getKey()), Boolean.parseBoolean(data.getData())));
     }
 
     @Override public Function<AppData, AppData> createCallback(Account account,
                                                                BubbleApp app,
                                                                BubbleConfiguration configuration) {
         return data -> {
-            final String prefix = "createCallbackB("+data.getKey()+"="+data.getData()+"): ";
-            log.info(prefix+"starting");
-            if (data.getKey().startsWith(PREFIX_APPDATA_HIDE_STATS)) {
+            final String prefix = "createCallback("+data.getKey()+"="+data.getData()+"): ";
+            if (log.isDebugEnabled()) log.debug(prefix+"starting with data="+json(data));
+            if (data.getKey().startsWith(PREFIX_APPDATA_SHOW_STATS)) {
                 final DeviceService deviceService = configuration.getBean(DeviceService.class);
                 final String fqdn = fqdnFromKey(data.getKey());
                 if (validateRegexMatches(HOST_PATTERN, fqdn)) {
@@ -454,6 +515,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
                 } else {
                     throw invalidEx("err.fqdn.invalid", "not a valid FQDN: "+fqdn, fqdn);
                 }
+                data.setDevice(null); // block stats are enabled/disabled for all devices
             }
             return data;
         };

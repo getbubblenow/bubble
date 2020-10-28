@@ -181,7 +181,7 @@ public class StandardAppPrimerService implements AppPrimerService {
 
                 boolean areAllSetsEmpty = true;
                 for (AppMatcher matcher : matchers) {
-                    final AppRuleDriver appRuleDriver = rule.initDriver(app, driver, matcher, account, device);
+                    final AppRuleDriver appRuleDriver = rule.initDriver(configuration, app, driver, matcher, account, device);
 
                     final Set<String> rejects = appRuleDriver.getPrimedRejectDomains();
                     if (empty(rejects)) {

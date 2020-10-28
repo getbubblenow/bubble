@@ -41,6 +41,8 @@ import static org.cobbzilla.wizard.model.entityconfig.annotations.ECForeignKeySe
 @ECIndexes({
         @ECIndex(unique=true, of={"app", "matcher", "device", "key"}),
         @ECIndex(unique=true, of={"app", "site", "device", "key"}),
+        @ECIndex(unique=true, of={"app", "matcher", "key"}, where="device IS NULL", name="app_data_uniq_matcher_key_null_device"),
+        @ECIndex(unique=true, of={"app", "site", "key"}, where="device IS NULL", name="app_data_uniq_site_key_null_device"),
         @ECIndex(of={"account", "app"}),
         @ECIndex(of={"account", "app", "device"}),
         @ECIndex(of={"account", "app", "device", "key"}),

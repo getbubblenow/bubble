@@ -47,7 +47,7 @@
 
   {
     "_subst": true,
-    "name": "SmtpServer",
+    "name": "SmtpEmail",
     "type": "email",
     "driverClass": "{{BUBBLE_SMTP_DRIVER}}",
     "driverConfig": {
@@ -59,6 +59,35 @@
         {"name": "password", "value": "{{BUBBLE_SMTP_PASS}}"},
         {"name": "host", "value": "{{BUBBLE_SMTP_SERVER}}"},
         {"name": "port", "value": "{{BUBBLE_SMTP_PORT}}"}
+      ]
+    },
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "SendGridEmail",
+    "type": "email",
+    "driverClass": "bubble.cloud.email.sendgrid.SendGridEmailDriver",
+    "driverConfig": {},
+    "credentials": {
+      "params": [
+        {"name": "apiKey", "value": "{{BUBBLE_SENDGRID_API_KEY}}"}
+      ]
+    },
+    "template": true
+  },
+
+  {
+    "_subst": true,
+    "name": "MailgunEmail",
+    "type": "email",
+    "driverClass": "bubble.cloud.email.mailgun.MailgunEmailDriver",
+    "driverConfig": {},
+    "credentials": {
+      "params": [
+        {"name": "domain", "value": "{{BUBBLE_MAILGUN_DOMAIN}}"},
+        {"name": "apiKey", "value": "{{BUBBLE_MAILGUN_API_KEY}}"}
       ]
     },
     "template": true

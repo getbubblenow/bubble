@@ -7,9 +7,6 @@ package bubble.cloud.email;
 import bubble.cloud.CloudServiceDriverBase;
 import bubble.cloud.auth.RenderedMessage;
 import bubble.cloud.email.mock.MockMailSender;
-import bubble.model.account.Account;
-import bubble.model.account.AccountContact;
-import bubble.model.account.message.AccountMessage;
 import bubble.model.cloud.CloudCredentials;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
@@ -44,15 +41,11 @@ public class SmtpEmailDriver extends CloudServiceDriverBase<EmailDriverConfig> i
     @Override public void setCredentials(CloudCredentials credentials) {
         super.setCredentials(credentials);
         if (credentials != null && !isServiceCompatible(credentials.getParam(PARAM_HOST))) {
-            die("Specified Smtp Email Driver is not compatible with given config: " + this.getClass().getSimpleName());
+            die("setCredentials: driver "+this.getClass().getSimpleName()+" not compatible with config/credentials");
         }
     }
 
     protected boolean isServiceCompatible(final String serviceHost) { return true; }
-
-    @Override public boolean send(Account account, AccountMessage message, AccountContact contact) {
-        return EmailServiceDriver.send(this, account, message, contact);
-    }
 
     @Override public boolean send(RenderedMessage email) {
         try {

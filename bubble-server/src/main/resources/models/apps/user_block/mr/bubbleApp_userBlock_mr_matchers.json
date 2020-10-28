@@ -5,6 +5,7 @@
       "name": "MRMatcher",
       "site": "MarginalRevolution",
       "template": true,
+      "connCheck": true,
       "requestCheck": true,
       "requestModifier": true,
       "fqdn": "marginalrevolution.com",
