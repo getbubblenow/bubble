@@ -37,11 +37,10 @@ while [[ $(expr $(date +%s) - ${start}) -le ${TIMEOUT} ]] ; do
     log "END-RUNNING-COMPLETED"
 
     HEADER_COUNT=$(grep -c "BEGIN DH PARAMETERS" ${DH_PARAMS})
-    if [[ ${rval} -eq 0 && -s ${DH_PARAMS} && ${HEADER_COUNT} -gt 0 ]] ; then
+    if [[ ${rval} -eq 0 && -s ${DH_PARAMS} && $(cat ${DH_PARAMS} | tr -d '\n' | tr -d '[[:blank:]]' | wc -c) -gt 100 && ${HEADER_COUNT} -gt 0 ]] ; then
       log "BEGIN-SUCCESS: created ${DH_PARAMS}: "
       cat ${DH_PARAMS} >> ${LOG}
-      log "END-SUCCESS"
-      exit 0
+      log "END-SUCCESS (will recheck)"
     fi
 
     if [[ ${rval} -ne 0 ]] ; then
@@ -49,8 +48,8 @@ while [[ $(expr $(date +%s) - ${start}) -le ${TIMEOUT} ]] ; do
       cat ${DH_PARAMS} >> ${LOG}
       log "END-ERROR"
 
-    elif [[ ! -s ${DH_PARAMS} ]] ; then
-      log "BEGIN-ERROR: command 'openssl dhparam -out ${DH_PARAMS} 2048' returned ${rval} and produced empty file, retrying. dhparams="
+    elif [[ ! -s ${DH_PARAMS} || $(cat ${DH_PARAMS} | tr -d '\n' | tr -d '[[:blank:]]' | wc -c) -le 100 ]] ; then
+      log "BEGIN-ERROR: command 'openssl dhparam -out ${DH_PARAMS} 2048' returned ${rval} and produced empty (or short) file, retrying. dhparams="
       cat ${DH_PARAMS} >> ${LOG}
       log "END-ERROR"
 
