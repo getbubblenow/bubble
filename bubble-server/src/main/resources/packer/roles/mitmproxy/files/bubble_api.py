@@ -556,7 +556,7 @@ def _header_modify(client_addr: str, ctx: dict, headers: nheaders.Headers) -> in
             modifiers_dict[regex] = replacement
         repl_count += _replace_in_headers(headers, modifiers_dict)
 
-    if log_debug:
+    if log_debug and repl_count > 0:
         bubble_log.debug('_header_modify: replacing headers - replacements count: '+str(repl_count))
 
     return repl_count

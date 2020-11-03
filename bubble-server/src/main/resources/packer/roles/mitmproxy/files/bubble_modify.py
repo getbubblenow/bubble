@@ -317,6 +317,7 @@ def responseheaders(flow):
         flex_flow = None
     bubble_filter_response(flow, flex_flow)
     response_header_modify(flow)
+    pass
 
 
 def bubble_filter_response(flow, flex_flow):

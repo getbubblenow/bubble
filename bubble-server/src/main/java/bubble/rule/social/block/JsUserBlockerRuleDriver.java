@@ -43,8 +43,12 @@ public class JsUserBlockerRuleDriver extends AbstractAppRuleDriver implements Re
                                                              String clientAddr,
                                                              String serverAddr,
                                                              String fqdn) {
-        if (log.isInfoEnabled()) log.info("checkConnection("+fqdn+") returning filter for matcher="+harness.getMatcher().getName()+" with fqdn="+harness.getMatcher().getFqdn()+", rule="+harness.getRule().getName());
-        return ConnectionCheckResponse.filter;
+        if (harness.getMatcher().getFqdn().equals(fqdn)) {
+            if (log.isInfoEnabled()) log.info("checkConnection(" + fqdn + ") returning filter for matcher=" + harness.getMatcher().getName() + " with fqdn=" + harness.getMatcher().getFqdn() + ", rule=" + harness.getRule().getName());
+            return ConnectionCheckResponse.filter;
+        }
+        if (log.isInfoEnabled()) log.info("checkConnection(" + fqdn + ") returning noop for matcher=" + harness.getMatcher().getName() + " with fqdn=" + harness.getMatcher().getFqdn() + ", rule=" + harness.getRule().getName());
+        return ConnectionCheckResponse.noop;
     }
 
     @Getter(lazy=true) private final String defaultSiteJsTemplate = stream2string(getRequestModifierConfig().getSiteJsTemplate());
