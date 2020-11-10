@@ -29,8 +29,8 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 @Produces(APPLICATION_JSON)
 public class BackupsResource {
 
-    private Account account;
-    private BubbleNetwork network;
+    private final Account account;
+    private final BubbleNetwork network;
 
     public BackupsResource(Account account, BubbleNetwork network) {
         this.account = account;
