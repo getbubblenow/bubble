@@ -9,6 +9,10 @@ function die {
 
 # Ensure system is current
 
+# Install packer
+BUBBLE_BIN="$(cd "$(dirname "${0}")" && pwd)"
+"${BUBBLE_BIN}/install_packer.sh" || die "Error installing packer"
+
 # Install homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 
@@ -16,10 +20,10 @@ function die {
 brew cask install emacs
 
 # Install AdoptOpenJDK 11
-echo "Install AdoptOpenJDK 11 from https://adoptopenjdk.net/index.html?variant=openjdk11&jvmVariant=hotspot"
+echo ">>> Please install AdoptOpenJDK 11 from https://adoptopenjdk.net/index.html?variant=openjdk11&jvmVariant=hotspot"
 
 # Install IntelliJ IDEA
-echo "Install IntelliJ IDEA from https://www.jetbrains.com/idea/download/#section=mac"
+echo "Consider installing IntelliJ IDEA from https://www.jetbrains.com/idea/download/#section=mac"
 
 # Install packages
 brew install maven

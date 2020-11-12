@@ -4,6 +4,7 @@
  */
 package bubble.service.packer;
 
+import bubble.ApiConstants;
 import bubble.cloud.CloudRegion;
 import bubble.cloud.CloudRegionRelative;
 import bubble.cloud.compute.ComputeConfig;
@@ -40,6 +41,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static bubble.ApiConstants.HOME_DIR;
 import static bubble.ApiConstants.copyScripts;
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
 import static bubble.server.SoftwareVersions.*;
@@ -155,6 +157,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
         for (NameAndValue variable : packerConfig.getVars()) {
             env.put(variable.getName(), HandlebarsUtil.apply(configuration.getHandlebars(), variable.getValue(), ctx, '[', ']'));
         }
+        if (!env.containsKey("HOME")) env.put("HOME", HOME_DIR);
         ctx.put(VARIABLES_VAR, packerConfig.getVars());
 
         // copy ansible and other packer files to temp dir

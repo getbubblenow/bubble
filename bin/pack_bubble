@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+# Create packer images for sage and/or node
+#
+# Usage:  pack_bubble [-node|-sage] [-cloud CloudName]
+#
+#   -node             : only pack the node image, do not pack the sage
+#   -sage             : only pack the sage image, do not pack the node
+#   -cloud CloudName  : only pack for CloudName compute cloud, do not pack for all clouds
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+if [[ -z "${1}" ]] ; then
+  IMAGES="node sage"
+elif [[ "${1}" == "-node" ]] ; then
+  IMAGES="node"
+  shift
+elif [[ "${1}" == "-sage" ]] ; then
+  IMAGES="sage"
+  shift
+fi
+
+if [[ -z "${1}" ]] ; then
+  CLOUDS_URL="me/clouds?type=compute"
+  CLOUDS="$("${SCRIPT_DIR}/bgetn" "${CLOUDS_URL}")"
+  if [[ -z "${CLOUDS}" ]] ; then
+    die "Error reading compute cloud names from ${CLOUDS_URL}"
+  fi
+
+elif [[ "${1}" == "-cloud" ]] ; then
+  CLOUDS="${2}"
+  if [[ -z "${CLOUDS}" ]] ; then
+    die "No cloud name specified after -cloud"
+  fi
+
+else
+  die ""
+fi
+
+for cloud in ${CLOUDS} ; do
+  for image in ${IMAGES} ; do
+    echo "Building ${image} image for cloud ${cloud} ..."
+    "${SCRIPT_DIR}/bpute" "me/clouds/${cloud}/packer/${image}" || die "Error submitting packer build: ${image} / ${cloud}"
+  done
+done
