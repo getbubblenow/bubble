@@ -119,7 +119,7 @@ public class ApiConstants {
     static {
         final String userHome = System.getProperty("user.home");
         final String envHome = System.getenv("HOME");
-        if (!userHome.equals(envHome)) {
+        if (envHome != null && !userHome.equals(envHome)) {
             log.warn("System.getProperty(\"user.home\") == "+userHome+" differs from System.getenv(\"HOME\") == "+envHome+", using HOME from environment: "+envHome);
             HOME_DIR = envHome;
         } else {

@@ -37,6 +37,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.network.NetworkUtil.IPv4_ALL_ADDRS;
 import static org.cobbzilla.util.network.NetworkUtil.IPv4_LOCALHOST;
 import static org.cobbzilla.util.system.OutOfMemoryErrorUncaughtExceptionHandler.EXIT_ON_OOME;
 
@@ -74,7 +75,9 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
         restoreKey.set(null);
     }
 
-    @Override protected String getListenAddress() { return IPv4_LOCALHOST; }
+    @Override protected String getListenAddress() { return listenAll() ? IPv4_ALL_ADDRS : IPv4_LOCALHOST; }
+
+    private boolean listenAll() { return Boolean.parseBoolean(System.getProperty("bubble.listenAll")); }
 
     // config is loaded from the classpath
     public static void main(String[] args) throws Exception {
