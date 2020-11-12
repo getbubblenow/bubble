@@ -548,7 +548,7 @@ public class StandardNetworkService implements NetworkService {
                 .addArgument("-c")
                 .addArgument(script, false))
                 .setOut(progressMeter)
-                .setCopyToStandard(configuration.testMode()));
+                .setCopyToStandard(log.isTraceEnabled()));
     }
 
     protected String getAnsibleSetupScript(TempDir automation, String sshArgs, String nodeUser, String sshTarget) {
@@ -558,9 +558,12 @@ public class StandardNetworkService implements NetworkService {
                 "echo '" + METER_TICK_COPYING_ANSIBLE + "' && " +
                 "rsync -az -e \"ssh " + sshArgs + "\" . "+sshTarget+ ":" + ANSIBLE_DIR + " && " +
 
+                // ensure ansible dir is owned by root
+                "ssh "+sshArgs+" "+sshTarget+" chown -R root " + ANSIBLE_DIR + " && " +
+
                 // run install_local.sh on remote host, installs ansible locally
                 "echo '" + METER_TICK_RUNNING_ANSIBLE + "' && " +
-                "ssh "+sshArgs+" "+sshTarget+" ~"+nodeUser+ "/" + ANSIBLE_DIR + "/" + INSTALL_LOCAL_SH;
+                "ssh "+sshArgs+" "+sshTarget+" ./" + ANSIBLE_DIR + "/" + INSTALL_LOCAL_SH;
     }
 
     private File writeFile(File dir, Map<String, Object> ctx, String filename, String templateOrData) throws IOException {
