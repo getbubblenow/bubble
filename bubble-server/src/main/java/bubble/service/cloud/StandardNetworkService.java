@@ -558,8 +558,8 @@ public class StandardNetworkService implements NetworkService {
                 "echo '" + METER_TICK_COPYING_ANSIBLE + "' && " +
                 "rsync -az -e \"ssh " + sshArgs + "\" . "+sshTarget+ ":" + ANSIBLE_DIR + " && " +
 
-                // ensure ansible dir is owned by root
-                "ssh "+sshArgs+" "+sshTarget+" chown -R root " + ANSIBLE_DIR + " && " +
+                // ensure ansible dir is owned by nodeUser
+                "ssh "+sshArgs+" "+sshTarget+" chown -R "+nodeUser+" " + ANSIBLE_DIR + " && " +
 
                 // run install_local.sh on remote host, installs ansible locally
                 "echo '" + METER_TICK_RUNNING_ANSIBLE + "' && " +
