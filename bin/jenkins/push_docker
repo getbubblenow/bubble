@@ -33,6 +33,8 @@ fi
 
 echo "Version does not exist on dockerhub, building and pushing it..."
 
+docker login || die "Error logging in to docker"
+
 BUBBLE_DOCKER="${BUBBLE_DIR}/docker/bubble.sh"
 ${BUBBLE_DOCKER} build || die "Error building docker image"
 ${BUBBLE_DOCKER} push || die "Error pushing docker image"
