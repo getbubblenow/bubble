@@ -43,7 +43,7 @@ fi
 echo "Found Bubble version ${VERSION}"
 
 echo "Checking to see if this version already exists on dockerhub..."
-if docker manifest inspect "getbubble/launcher:${VERSION}" 2> /dev/null ; then
+if docker manifest inspect "getbubble/launcher:${VERSION}" > /dev/null 2> /dev/null ; then
   echo "Version already exists on dockerhub, not re-publishing: ${VERSION}"
   exit 0
 fi
