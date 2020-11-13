@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+# Build and push a docker image to docker hub, if needed.
+# Run by jenkins after a successful build of the main Bubble repository.
+#
+# If an image has already been pushed with the current version, we do nothing.
+# If no image has been pushed with the current version, we build it and push it.
+#
+
+function die {
+  echo 1>&2 "${1}"
+  exit 1
+}
+
+THISDIR="$(cd "$(dirname "${0}")" && pwd)"
+BUBBLE_DIR="$(cd "${THISDIR}/../.." && pwd)"
+
+echo "Determining Bubble version..."
+META_FILE="${BUBBLE_DIR}/bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
+VERSION="$(cat "${META_FILE}" | grep bubble.version | awk -F '=' '{print $2}' | awk -F ' ' '{print $NF}' | awk '{$1=$1};1')"
+if [[ -z "${VERSION}" ]] ; then
+  die "Error determining version from: ${META_FILE}"
+fi
+echo "Found Bubble version ${VERSION}"
+
+echo "Checking to see if this version already exists on dockerhub..."
+if docker manifest inspect getbubble/launcher:${VERSION} 2> /dev/null ; then
+  echo "Version already exists on dockerhub, not re-publishing: ${VERSION}"
+  exit 0
+fi
+
+echo "Version does not exist on dockerhub, building and pushing it..."
+
+BUBBLE_DOCKER="${BUBBLE_DIR}/docker/bubble.sh"
+${BUBBLE_DOCKER} build || die "Error building docker image"
+${BUBBLE_DOCKER} push || die "Error pushing docker image"
+
+echo "Successfully built/pushed to dockerhub: ${VERSION}"
