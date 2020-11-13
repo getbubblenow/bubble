@@ -40,7 +40,7 @@ fi
 echo "Found Bubble version ${VERSION}"
 
 echo "Logging in to docker"
-docker login -u "${BUBBLE_DOCKER_USER}" -p "${BUBBLE_DOCKER_PASS}" || die "Error logging in to docker"
+echo -n "${BUBBLE_DOCKER_PASS}" | docker login -u "${BUBBLE_DOCKER_USER}" --password-stdin || die "Error logging in to docker"
 
 echo "Checking to see if this version already exists on dockerhub..."
 if docker manifest inspect "getbubble/launcher:${VERSION}" 2> /dev/null ; then
