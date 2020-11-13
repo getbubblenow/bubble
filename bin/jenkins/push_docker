@@ -8,11 +8,25 @@
 # If an image has already been pushed with the current version, we do nothing.
 # If no image has been pushed with the current version, we build it and push it.
 #
+# Environment Variables:
+#
+#    BUBBLE_DOCKER_USER   - dockerhub username for "docker login"
+#    BUBBLE_DOCKER_PASS   - dockerhub password for "docker login"
+#
 
 function die {
   echo 1>&2 "${1}"
   exit 1
 }
+
+if [[ -z "${BUBBLE_DOCKER_USER}" ]] ; then
+  die "No BUBBLE_DOCKER_USER env var found"
+fi
+if [[ -z "${BUBBLE_DOCKER_PASS}" ]] ; then
+  die "No BUBBLE_DOCKER_PASS env var found"
+fi
+
+set +x
 
 THISDIR="$(cd "$(dirname "${0}")" && pwd)"
 BUBBLE_DIR="$(cd "${THISDIR}/../.." && pwd)"
@@ -25,18 +39,19 @@ if [[ -z "${VERSION}" ]] ; then
 fi
 echo "Found Bubble version ${VERSION}"
 
+echo "Logging in to docker"
+docker login -u "${BUBBLE_DOCKER_USER}" -p "${BUBBLE_DOCKER_PASS}" || die "Error logging in to docker"
+
 echo "Checking to see if this version already exists on dockerhub..."
-if docker manifest inspect getbubble/launcher:${VERSION} 2> /dev/null ; then
+if docker manifest inspect "getbubble/launcher:${VERSION}" 2> /dev/null ; then
   echo "Version already exists on dockerhub, not re-publishing: ${VERSION}"
   exit 0
 fi
 
 echo "Version does not exist on dockerhub, building and pushing it..."
 
-docker login || die "Error logging in to docker"
-
 BUBBLE_DOCKER="${BUBBLE_DIR}/docker/bubble.sh"
 ${BUBBLE_DOCKER} build || die "Error building docker image"
 ${BUBBLE_DOCKER} push || die "Error pushing docker image"
 
-echo "Successfully built/pushed to dockerhub: ${VERSION}"
+echo "Successfully pushed to dockerhub: ${VERSION}"
