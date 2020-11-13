@@ -31,6 +31,9 @@ set +x
 THISDIR="$(cd "$(dirname "${0}")" && pwd)"
 BUBBLE_DIR="$(cd "${THISDIR}/../.." && pwd)"
 
+echo "Logging in to docker"
+echo -n "${BUBBLE_DOCKER_PASS}" | docker login -u "${BUBBLE_DOCKER_USER}" --password-stdin || die "Error logging in to docker"
+
 echo "Determining Bubble version..."
 META_FILE="${BUBBLE_DIR}/bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
 VERSION="$(cat "${META_FILE}" | grep bubble.version | awk -F '=' '{print $2}' | awk -F ' ' '{print $NF}' | awk '{$1=$1};1')"
@@ -38,9 +41,6 @@ if [[ -z "${VERSION}" ]] ; then
   die "Error determining version from: ${META_FILE}"
 fi
 echo "Found Bubble version ${VERSION}"
-
-echo "Logging in to docker"
-echo -n "${BUBBLE_DOCKER_PASS}" | docker login -u "${BUBBLE_DOCKER_USER}" --password-stdin || die "Error logging in to docker"
 
 echo "Checking to see if this version already exists on dockerhub..."
 if docker manifest inspect "getbubble/launcher:${VERSION}" 2> /dev/null ; then
