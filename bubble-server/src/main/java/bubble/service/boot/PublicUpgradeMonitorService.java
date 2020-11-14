@@ -8,6 +8,7 @@ import org.cobbzilla.util.daemon.SimpleDaemon;
 import org.cobbzilla.util.io.Decompressors;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.TempDir;
+import org.cobbzilla.wizard.model.SemanticVersion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpUtil.url2file;
 import static org.cobbzilla.util.http.HttpUtil.url2string;
 import static org.cobbzilla.util.io.FileUtil.abs;
+import static org.cobbzilla.wizard.model.SemanticVersion.SEMANTIC_VERSION_RE;
 import static org.cobbzilla.wizard.model.SemanticVersion.isNewerVersion;
 
 @Service @Slf4j
@@ -50,10 +52,11 @@ public class PublicUpgradeMonitorService extends JarUpgradeMonitor {
             // -- newer than the current sageVersion (or the current sageVersion is null)
             if (isNewerVersion(fullVersion, currentVersion)
                     && (configuration.getSageVersion() == null || isNewerVersion(fullVersion, configuration.getSageVersion().getVersion()))) {
-                log.info("process: found newer version: "+fullVersion+" (current version "+currentVersion+"), setting sage version on BubbleConfiguration");
+                log.info("process: found newer version: "+fullVersion+" (current version "+currentVersion+"), setting configuration.sageVersion");
+                final String shortVersion = fullVersion.substring(fullVersion.indexOf(" ") + 1);
                 configuration.setSageVersion(new BubbleVersionInfo()
                         .setVersion(fullVersion)
-                        .setShortVersion(fullVersion.substring(fullVersion.indexOf(" ")+1))
+                        .setShortVersion(shortVersion)
                         .setSha256(url2string(RELEASE_SHA_URL.replace(VERSION_TOKEN, fullVersion))));
             }
         } catch (Exception e) {
