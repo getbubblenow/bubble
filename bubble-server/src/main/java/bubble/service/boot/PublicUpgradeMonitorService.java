@@ -45,7 +45,8 @@ public class PublicUpgradeMonitorService extends JarUpgradeMonitor {
 
     @Override protected void process() {
         try {
-            final String fullVersion = url2string(RELEASE_VERSION_URL).replace("_", " ");
+            final String rawVersion = url2string(RELEASE_VERSION_URL);
+            final String fullVersion = rawVersion.replace("_", " ");
             String currentVersion = configuration.getVersionInfo().getVersion();
             // only update our sage version if the new public version is both
             // -- newer than ourselves
@@ -57,7 +58,7 @@ public class PublicUpgradeMonitorService extends JarUpgradeMonitor {
                 configuration.setSageVersion(new BubbleVersionInfo()
                         .setVersion(fullVersion)
                         .setShortVersion(shortVersion)
-                        .setSha256(url2string(RELEASE_SHA_URL.replace(VERSION_TOKEN, fullVersion))));
+                        .setSha256(url2string(RELEASE_SHA_URL.replace(VERSION_TOKEN, rawVersion))));
             }
         } catch (Exception e) {
             log.warn("process: error: "+shortError(e));
@@ -68,7 +69,9 @@ public class PublicUpgradeMonitorService extends JarUpgradeMonitor {
         try {
             @Cleanup final TempDir temp = new TempDir();
             final File bubbleZip = new File(temp, "bubble.zip");
-            url2file(RELEASE_JAR_URL.replace(VERSION_TOKEN, sageVersion.getVersion()), bubbleZip);
+            final String jarUrl = RELEASE_JAR_URL.replace(VERSION_TOKEN, sageVersion.getVersion().replace(" ", "_"));
+            log.info("downloadJar: downloading from "+jarUrl+" -> "+abs(bubbleZip));
+            url2file(jarUrl, bubbleZip);
             Decompressors.extract(bubbleZip, temp);
             final File jarFile = new File(abs(temp) + "/bubble-" + sageVersion.getVersion() + "/bubble.jar");
             if (!jarFile.exists()) {
