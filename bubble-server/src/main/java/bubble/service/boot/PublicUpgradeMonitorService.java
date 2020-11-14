@@ -16,8 +16,7 @@ import java.io.File;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpUtil.url2file;
 import static org.cobbzilla.util.http.HttpUtil.url2string;
 import static org.cobbzilla.util.io.FileUtil.abs;
@@ -51,8 +50,9 @@ public class PublicUpgradeMonitorService extends JarUpgradeMonitor {
             // only update our sage version if the new public version is both
             // -- newer than ourselves
             // -- newer than the current sageVersion (or the current sageVersion is null)
-            if (isNewerVersion(fullVersion, currentVersion)
-                    && (configuration.getSageVersion() == null || isNewerVersion(fullVersion, configuration.getSageVersion().getVersion()))) {
+            final BubbleVersionInfo currentSageVersion = configuration.getSageVersion();
+            if (isNewerVersion(currentVersion, fullVersion)
+                    && (currentSageVersion == null || empty(currentSageVersion.getVersion()) || isNewerVersion(currentSageVersion.getVersion(), fullVersion))) {
                 log.info("process: latest version ("+fullVersion+") is newer than current version ("+currentVersion+"), setting configuration.sageVersion");
                 final String shortVersion = fullVersion.substring(fullVersion.indexOf(" ") + 1);
                 final String shaUrl = RELEASE_SHA_URL.replace(VERSION_TOKEN, rawVersion);
