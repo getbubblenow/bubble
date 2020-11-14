@@ -84,10 +84,10 @@ function setup_docker() {
   BUBBLE_TAG=$(get_bubble_tag)
 
   # Pull bubble docker image
-  docker pull ${BUBBLE_TAG}
+  docker pull ${BUBBLE_TAG} || die "Error pulling docker image: ${BUBBLE_TAG}"
 
   # Run bubble docker image
-  docker run -p 8090:8090 -t ${BUBBLE_TAG} || die "Error running docker container"
+  docker run -p 8090:8090 -t ${BUBBLE_TAG}
 }
 
 setup_docker
