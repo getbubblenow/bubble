@@ -20,6 +20,8 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 @NoArgsConstructor @Accessors(chain=true) @ToString(of={"lat", "lon"})
 public class GeoLocation {
 
+    public static final GeoLocation NULL_LOCATION = new GeoLocation().setLat("-1.0").setLon("-1.0");
+
     @Getter @Setter private String country;
     public boolean hasCountry() { return !empty(country); }
 

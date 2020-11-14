@@ -4,6 +4,7 @@
  */
 package bubble.resources;
 
+import bubble.cloud.CloudServiceType;
 import bubble.service.cloud.GeoService;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
@@ -20,8 +21,7 @@ import javax.ws.rs.core.Response;
 
 import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
-import static org.cobbzilla.wizard.resources.ResourceUtil.ok;
-import static org.cobbzilla.wizard.resources.ResourceUtil.optionalUserPrincipal;
+import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)

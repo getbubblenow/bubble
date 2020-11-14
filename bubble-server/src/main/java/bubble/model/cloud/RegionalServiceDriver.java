@@ -62,7 +62,7 @@ public interface RegionalServiceDriver {
                     if (latLonIsValid) {
                         r.setDistance(latitude, longitude);
                     } else {
-                        r.setDistance(0);
+                        r.setDistance(-1);
                     }
                     allRegions.add(r);
                 }
@@ -73,12 +73,6 @@ public interface RegionalServiceDriver {
     }
 
     List<CloudRegion> getRegions();
-
-    default List<CloudRegion> getRegionsExcluding(Collection<String> exclude) {
-        ArrayList<CloudRegion> filtered = new ArrayList<>(getRegions());
-        filtered.removeIf(r -> exclude.contains(r.getInternalName()) || exclude.contains(r.getName()));
-        return filtered;
-    }
 
     default List<CloudRegion> getRegions(BubbleFootprint footprint) {
         return getRegions().stream()

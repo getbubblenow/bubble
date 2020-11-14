@@ -80,7 +80,8 @@ public class GeoService {
 
     public GeoLocation locate (String accountUuid, String ip, boolean cacheOnly) {
         if (!supportsGeoLocation()) {
-            throw invalidEx("err.geoLocateService.notFound");
+            log.warn("locate: no geoLocation cloud services defined, returning null location");
+            return GeoLocation.NULL_LOCATION;
         }
         final String cacheKey = hashOf(accountUuid, ip);
         return locateCache.computeIfAbsent(cacheKey, k -> {
@@ -103,8 +104,9 @@ public class GeoService {
     }
 
     private GeoLocation getLocation(String accountUuid, String ip, String cacheKey) {
-        if (!supportsGeoCode()) {
-            throw invalidEx("err.geoCodeService.notFound");
+        if (!supportsGeoLocation()) {
+            log.warn("getLocation: no geoLocation cloud services defined, returning null location");
+            return GeoLocation.NULL_LOCATION;
         }
         List<CloudService> geoLocationServices = null;
         if (accountUuid != null) {
@@ -128,7 +130,7 @@ public class GeoService {
             try {
                 final GeoLocation result = geo.getGeoLocateDriver(configuration).geolocate(ip);
                 if (result != null) {
-                    if (!result.hasLatLon()) {
+                    if (!result.hasLatLon() && supportsGeoCode()) {
                         if (geoCodeDriver == null) {
                             List<CloudService> geoCodeServices = null;
                             if (accountUuid != null) {
@@ -211,7 +213,8 @@ public class GeoService {
 
     public GeoTimeZone getTimeZone (final Account account, String ip) {
         if (!supportsGeoTime()) {
-            throw invalidEx("err.geoTimeService.notFound");
+            log.warn("getTimeZone: no geoTime clouds configured, returning UTC time zone");
+            return GeoTimeZone.UTC;
         }
         final AtomicReference<Account> acct = new AtomicReference<>(account);
         return timezoneCache.computeIfAbsent(ip, k -> {
@@ -289,9 +292,6 @@ public class GeoService {
     public CloudAndRegion selectCloudAndRegion(BubbleNetwork network,
                                                NetLocation netLocation,
                                                Collection<CloudAndRegion> exclude) {
-        if (!supportsGeoLocation()) {
-            throw invalidEx("err.geoLocateService.notFound");
-        }
         final CloudRegion closest;
         final String cloudUuid;
         if (netLocation.hasIp()) {
