@@ -19,6 +19,7 @@ import bubble.service.device.StandardFlexRouterService;
 import bubble.service.stream.AppDataCleaner;
 import bubble.service.stream.AppPrimerService;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.security.RsaKeyPair;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
@@ -26,10 +27,12 @@ import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
 import java.io.File;
 import java.util.Map;
 
+import static bubble.ApiConstants.HOME_DIR;
 import static bubble.service.boot.StandardSelfNodeService.SELF_NODE_JSON;
 import static bubble.service.boot.StandardSelfNodeService.THIS_NODE_FILE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.abs;
+import static org.cobbzilla.util.security.RsaKeyPair.ENABLE_PBKDF2;
 import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss;
 
 @Slf4j
@@ -37,12 +40,13 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
 
     private static final int MIN_WORKER_THREADS = 16;
 
+    public static final File PBKDF2_ENABLED_FILE = new File(HOME_DIR, ".pbkdf2_enabled");
+
     @Override public void beforeStart(RestServer server) {
         final BubbleConfiguration c = (BubbleConfiguration) server.getConfiguration();
 
         // special file to enable PBKDF2 in RSA for older releases
-        final File pbkdf2_enabled = new File(ApiConstants.HOME_DIR, ".pbkdf2_enabled");
-        RsaKeyPair.ENABLE_PBKDF2 = pbkdf2_enabled.exists();
+        ENABLE_PBKDF2.set(enablePBKDF2());
 
         // ensure we can reference our own jar file
         final File bubbleJar = c.getBubbleJar();
@@ -58,6 +62,19 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
             c.getHttp().setWorkerThreads(MIN_WORKER_THREADS);
         } else {
             log.info("beforeStart: http.workerThreads="+c.getHttp().getWorkerThreads());
+        }
+    }
+
+    public static boolean enablePBKDF2() {
+        // PBKDF2 is disabled on newer releases. Older Bubbles can upgrade to use newer code
+        // as long as they touch the ~bubble/.pbkdf2_enabled file
+        if (!PBKDF2_ENABLED_FILE.exists()) return false;
+        if (PBKDF2_ENABLED_FILE.length() == 0) return true;
+        try {
+            return Boolean.parseBoolean(FileUtil.toString(PBKDF2_ENABLED_FILE).trim());
+        } catch (Exception e) {
+            log.warn("enablePBKDF2: error parsing "+abs(PBKDF2_ENABLED_FILE)+" (returning false): "+shortError(e));
+            return false;
         }
     }
 
