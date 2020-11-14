@@ -48,13 +48,10 @@ set +x
 THISDIR="$(cd "$(dirname "${0}")" && pwd)"
 BUBBLE_DIR="$(cd "${THISDIR}/../.." && pwd)"
 
-# Jenkins sets HOME to be the bubble workspace dir, so that is where docker config will be
-echo '{"experimental": "enabled"}' > "${BUBBLE_DIR}/.docker/config.json"
-
-echo "Logging in to docker"
+echo "Logging in to docker ..."
 echo -n "${BUBBLE_DOCKER_PASS}" | docker login -u "${BUBBLE_DOCKER_USER}" --password-stdin || die "Error logging in to docker"
 
-echo "Determining Bubble version..."
+echo "Determining Bubble version ..."
 META_FILE="${BUBBLE_DIR}/bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
 VERSION="$(cat "${META_FILE}" | grep bubble.version | awk -F '=' '{print $2}' | awk -F ' ' '{print $NF}' | awk '{$1=$1};1')"
 if [[ -z "${VERSION}" ]] ; then
@@ -69,15 +66,12 @@ ${BUBBLE_DOCKER} build || die "Error building docker image"
 echo "Checking to see if version ${VERSION} already exists on dockerhub..."
 ensure_docker_experimental_enabled
 if docker manifest inspect "getbubble/launcher:${VERSION}" > /dev/null 2> /dev/null ; then
-  echo "Version ${VERSION} already exists on dockerhub, not re-publishing: "
-  docker manifest inspect "getbubble/launcher:${VERSION}"
+  echo "Version ${VERSION} already exists on dockerhub, not re-publishing"
   exit 0
 fi
 
-echo "Version does not exist on dockerhub, pushing it..."
+echo "Version ${VERSION} does not exist on dockerhub, pushing it ..."
 
 ${BUBBLE_DOCKER} push || die "Error pushing docker image"
 
 echo "Successfully pushed to dockerhub: ${VERSION}"
-echo "After publishing, docker manifest inspect \"getbubble/launcher:${VERSION}\" --> "
-docker manifest inspect "getbubble/launcher:${VERSION}"
