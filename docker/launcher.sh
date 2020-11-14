@@ -22,10 +22,10 @@ function die {
 }
 
 function get_bubble_tag() {
-  BUBBLE_META_URL="https://git.bubblev.org/bubblev/bubble/raw/branch/master/bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
-  VERSION="$(curl -s ${BUBBLE_META_URL} | grep bubble.version | awk -F '=' '{print $2}' | awk -F ' ' '{print $NF}' | awk '{$1=$1};1')"
+  BUBBLE_RELEASE_URL="https://jenkins.bubblev.org/public/releases/bubble/latest.txt"
+  VERSION="$(curl -s ${BUBBLE_RELEASE_URL}  | awk -F '_' '{print $2}' | awk -F '.' '{print $1"."$2"."$3}')"
   if [[ -z "${VERSION}" ]] ; then
-    die "Error determining version from URL: ${BUBBLE_META_URL}"
+    die "Error determining version from URL: ${BUBBLE_RELEASE_URL}"
   fi
   echo -n "getbubble/launcher:${VERSION}"
 }
