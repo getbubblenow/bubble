@@ -45,7 +45,7 @@ public class PublicUpgradeMonitorService extends JarUpgradeMonitor {
 
     @Override protected void process() {
         try {
-            final String rawVersion = url2string(RELEASE_VERSION_URL);
+            final String rawVersion = url2string(RELEASE_VERSION_URL).trim();
             final String fullVersion = rawVersion.replace("_", " ");
             String currentVersion = configuration.getVersionInfo().getVersion();
             // only update our sage version if the new public version is both
@@ -53,12 +53,15 @@ public class PublicUpgradeMonitorService extends JarUpgradeMonitor {
             // -- newer than the current sageVersion (or the current sageVersion is null)
             if (isNewerVersion(fullVersion, currentVersion)
                     && (configuration.getSageVersion() == null || isNewerVersion(fullVersion, configuration.getSageVersion().getVersion()))) {
-                log.info("process: found newer version: "+fullVersion+" (current version "+currentVersion+"), setting configuration.sageVersion");
+                log.info("process: latest version ("+fullVersion+") is newer than current version ("+currentVersion+"), setting configuration.sageVersion");
                 final String shortVersion = fullVersion.substring(fullVersion.indexOf(" ") + 1);
+                final String shaUrl = RELEASE_SHA_URL.replace(VERSION_TOKEN, rawVersion);
                 configuration.setSageVersion(new BubbleVersionInfo()
                         .setVersion(fullVersion)
                         .setShortVersion(shortVersion)
-                        .setSha256(url2string(RELEASE_SHA_URL.replace(VERSION_TOKEN, rawVersion))));
+                        .setSha256(url2string(shaUrl)));
+            } else {
+                log.info("process: latest version ("+fullVersion+") is older than current version ("+currentVersion+"), not setting configuration.sageVersion");
             }
         } catch (Exception e) {
             log.warn("process: error: "+shortError(e));
