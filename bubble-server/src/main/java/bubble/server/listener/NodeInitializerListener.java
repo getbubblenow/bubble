@@ -4,6 +4,7 @@
  */
 package bubble.server.listener;
 
+import bubble.ApiConstants;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
@@ -18,6 +19,7 @@ import bubble.service.device.StandardFlexRouterService;
 import bubble.service.stream.AppDataCleaner;
 import bubble.service.stream.AppPrimerService;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.security.RsaKeyPair;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
 
@@ -37,6 +39,10 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
 
     @Override public void beforeStart(RestServer server) {
         final BubbleConfiguration c = (BubbleConfiguration) server.getConfiguration();
+
+        // special file to enable PBKDF2 in RSA for older releases
+        final File pbkdf2_enabled = new File(ApiConstants.HOME_DIR, ".pbkdf2_enabled");
+        RsaKeyPair.ENABLE_PBKDF2 = pbkdf2_enabled.exists();
 
         // ensure we can reference our own jar file
         final File bubbleJar = c.getBubbleJar();
