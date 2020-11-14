@@ -29,6 +29,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.cache.Refreshable;
+import org.cobbzilla.util.daemon.SimpleDaemon;
 import org.cobbzilla.util.http.HttpSchemes;
 import org.cobbzilla.util.http.HttpUtil;
 import org.cobbzilla.util.io.FileUtil;
@@ -93,6 +94,8 @@ public class StandardSelfNodeService implements SelfNodeService {
     @Autowired private RedisService redisService;
     @Getter(lazy=true) private final RedisService nodeConfig = redisService.prefixNamespace(getClass().getSimpleName());
 
+    @Getter private JarUpgradeMonitor jarUpgradeMonitorBean;
+
     @Override public boolean initThisNode(BubbleNode thisNode) {
         log.info("initThisNode: initializing with thisNode="+thisNode.id());
         final BubbleConfiguration c = configuration;
@@ -146,12 +149,14 @@ public class StandardSelfNodeService implements SelfNodeService {
             }
         }
 
-        // start hello sage and spare devices services, if we have a sage that is not ourselves
+        // start jar upgrade monitor and spare devices services, if we have a sage that is not ourselves
         if (!c.isSage()) {
             if (thisNode.node() && !c.isSelfSage()) {
-                log.info("onStart: starting SageHelloService");
-                c.getBean(SageHelloService.class).start();
+                jarUpgradeMonitorBean = c.getBean(SageHelloService.class);
+            } else {
+                jarUpgradeMonitorBean = c.getBean(PublicUpgradeMonitorService.class);
             }
+            jarUpgradeMonitorBean.start();
 
             log.info("onStart: building spare devices for all account that are not root account");
             background(() -> {
@@ -164,6 +169,10 @@ public class StandardSelfNodeService implements SelfNodeService {
                     deviceDAO.refreshVpnUsers();
                 }
             }, "StandardSelfNodeService.onStart.spareDevices");
+
+        } else {
+            jarUpgradeMonitorBean = c.getBean(PublicUpgradeMonitorService.class);
+            jarUpgradeMonitorBean.start();
         }
 
         // start RefundService if payments are enabled and this is a SageLauncher

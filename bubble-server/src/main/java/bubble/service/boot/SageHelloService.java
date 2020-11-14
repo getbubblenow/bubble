@@ -8,26 +8,37 @@ import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.BubbleVersionInfo;
 import bubble.model.cloud.notify.NotificationReceipt;
+import bubble.notify.upgrade.JarUpgradeNotification;
 import bubble.server.BubbleConfiguration;
 import bubble.service.notify.NotificationService;
+import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.daemon.SimpleDaemon;
+import org.cobbzilla.util.http.HttpUtil;
+import org.cobbzilla.util.io.FileUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static bubble.ApiConstants.AUTH_ENDPOINT;
+import static bubble.ApiConstants.EP_UPGRADE;
 import static bubble.model.cloud.notify.NotificationType.hello_to_sage;
+import static bubble.model.cloud.notify.NotificationType.upgrade_request;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
+import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
 @Service @Slf4j
-public class SageHelloService extends SimpleDaemon {
+public class SageHelloService extends JarUpgradeMonitor {
 
     public static final long HELLO_SAGE_INTERVAL = HOURS.toMillis(6);
     public static final long HELLO_SAGE_START_DELAY = SECONDS.toMillis(10);
@@ -88,5 +99,28 @@ public class SageHelloService extends SimpleDaemon {
         log.error("hello_to_sage: " + e, e);
         if (getIsDone()) throw e;
         sleep(HELLO_SAGE_INTERVAL / 10, "hello_to_sage: awaiting next hello after error");
+    }
+
+    @Override public void downloadJar(File upgradeJar, BubbleVersionInfo sageVersion) {
+        // ask the sage to allow us to download the upgrade
+        final String key = notificationService.notifySync(configuration.getSageNode(), upgrade_request, new JarUpgradeNotification(sageVersion));
+        log.info("downloadJar: received upgrade key from sage: "+key);
+
+        // request the jar from the sage
+        final String uri = AUTH_ENDPOINT + EP_UPGRADE + "/" + configuration.getThisNode().getUuid() + "/" + key;
+        final String url = configuration.nodeBaseUri(configuration.getSageNode()) + uri;
+        final File newJar;
+        try {
+            newJar = temp(".jar");
+            @Cleanup final InputStream in = HttpUtil.getUrlInputStream(url);
+            FileUtil.toFile(newJar, in);
+        } catch (Exception e) {
+            log.error("downloadJar: error downloading jar: "+shortError(e));
+            return;
+        }
+
+        // move to upgrade location, should trigger upgrade monitor
+        log.info("downloadJar: writing upgradeJar: "+abs(upgradeJar));
+        renameOrDie(newJar, upgradeJar);
     }
 }

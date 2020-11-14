@@ -115,7 +115,7 @@
     src: supervisor_bubble_upgrade_monitor.conf
     dest: /etc/supervisor/conf.d/bubble_upgrade_monitor.conf
 
-- name: Install log_namager monitor cron
+- name: Install log_manager monitor cron
   cron:
     name: "Log flag check and manager"
     minute: "*/5"

@@ -11,6 +11,8 @@ import bubble.model.cloud.BubbleVersionInfo;
 import bubble.notify.upgrade.JarUpgradeNotification;
 import bubble.server.BubbleConfiguration;
 import bubble.service.backup.BackupService;
+import bubble.service.boot.JarUpgradeMonitor;
+import bubble.service.boot.StandardSelfNodeService;
 import bubble.service.notify.NotificationService;
 import lombok.Cleanup;
 import lombok.Getter;
@@ -46,6 +48,7 @@ public class BubbleJarUpgradeService {
     @Autowired private BubbleBackupDAO backupDAO;
     @Autowired private NotificationService notificationService;
     @Autowired private RedisService redis;
+    @Autowired private StandardSelfNodeService selfNodeService;
 
     @Getter(lazy=true) private final RedisService nodeUpgradeRequests = redis.prefixNamespace(getClass().getName());
 
@@ -91,25 +94,7 @@ public class BubbleJarUpgradeService {
             return;
         }
 
-        // ask the sage to allow us to download the upgrade
-        final String key = notificationService.notifySync(configuration.getSageNode(), upgrade_request, new JarUpgradeNotification(sageVersion));
-        log.info("upgrade: received upgrade key from sage: "+key);
-
-        // request the jar from the sage
-        final String uri = AUTH_ENDPOINT + EP_UPGRADE + "/" + configuration.getThisNode().getUuid() + "/" + key;
-        final String url = configuration.nodeBaseUri(configuration.getSageNode()) + uri;
-        final File newJar;
-        try {
-            newJar = temp(".jar");
-            @Cleanup final InputStream in = HttpUtil.getUrlInputStream(url);
-            FileUtil.toFile(newJar, in);
-        } catch (Exception e) {
-            log.error("upgrade: error downloading jar: "+shortError(e));
-            return;
-        }
-
-        // move to upgrade location, should trigger upgrade monitor
-        log.info("upgrade: writing upgradeJar: "+abs(upgradeJar));
-        renameOrDie(newJar, upgradeJar);
+        final JarUpgradeMonitor jarUpgradeMonitor = selfNodeService.getJarUpgradeMonitorBean();
+        jarUpgradeMonitor.downloadJar(upgradeJar, sageVersion);
     }
 }

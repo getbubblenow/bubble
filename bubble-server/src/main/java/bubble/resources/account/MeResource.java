@@ -30,6 +30,7 @@ import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.BubbleModelSetupService;
 import bubble.service.boot.SageHelloService;
+import bubble.service.boot.StandardSelfNodeService;
 import bubble.service.cloud.NodeLaunchMonitor;
 import bubble.service.upgrade.BubbleJarUpgradeService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -426,7 +427,7 @@ public class MeResource {
         return ok(model);
     }
 
-    @Autowired private SageHelloService sageHelloService;
+    @Autowired private StandardSelfNodeService selfNodeService;
     @Autowired private BubbleJarUpgradeService jarUpgradeService;
 
     private final AtomicLong lastUpgradeCheck = new AtomicLong(0);
@@ -442,7 +443,7 @@ public class MeResource {
         synchronized (lastUpgradeCheck) {
             if (now() - lastUpgradeCheck.get() > UPGRADE_CHECK_INTERVAL) {
                 lastUpgradeCheck.set(now());
-                sageHelloService.interrupt();
+                selfNodeService.getJarUpgradeMonitorBean().interrupt();
             }
         }
         return ok_empty();

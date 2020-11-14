@@ -274,6 +274,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     }
     public String getShortVersion () { return getVersionInfo().getShortVersion(); }
 
+    // For a Bubble node with a sage, this will be set in the hello_from_sage notification handler
+    // For a Bubble without a sage, this will be set in NodeInitializerListener
     @Getter private BubbleVersionInfo sageVersion;
     public void setSageVersion(BubbleVersionInfo version) {
         sageVersion = version;
