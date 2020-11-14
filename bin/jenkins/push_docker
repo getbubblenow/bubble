@@ -31,6 +31,9 @@ set +x
 THISDIR="$(cd "$(dirname "${0}")" && pwd)"
 BUBBLE_DIR="$(cd "${THISDIR}/../.." && pwd)"
 
+# Jenkins sets HOME to be the bubble workspace dir, so that is where docker config will be
+echo '{"experimental": "enabled"}' > "${BUBBLE_DIR}/.docker/config.json"
+
 echo "Logging in to docker"
 echo -n "${BUBBLE_DOCKER_PASS}" | docker login -u "${BUBBLE_DOCKER_USER}" --password-stdin || die "Error logging in to docker"
 
