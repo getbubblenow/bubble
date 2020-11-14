@@ -61,7 +61,7 @@ public class PublicUpgradeMonitorService extends JarUpgradeMonitor {
                         .setShortVersion(shortVersion)
                         .setSha256(url2string(shaUrl)));
             } else {
-                log.info("process: latest version ("+fullVersion+") is older than current version ("+currentVersion+"), not setting configuration.sageVersion");
+                log.info("process: latest version ("+fullVersion+") is not newer than current version ("+currentVersion+"), not setting configuration.sageVersion");
             }
         } catch (Exception e) {
             log.warn("process: error: "+shortError(e));
