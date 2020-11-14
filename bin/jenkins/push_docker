@@ -19,6 +19,23 @@ function die {
   exit 1
 }
 
+function ensure_docker_experimental_enabled() {
+  DOCKER_DIR=${HOME}/.docker
+  mkdir -p "${DOCKER_DIR}" || die "Error creating ${DOCKER_DIR}"
+  if [[ -f ${DOCKER_DIR}/config.json ]] ; then
+    TMP_CONFIG=$(mktemp /tmp/config.json.XXXX) &&
+    jq '. + {"experimental": "enabled"}' < "${DOCKER_DIR}/config.json" > "${TMP_CONFIG}" &&
+    mv "${TMP_CONFIG}" "${DOCKER_DIR}/config.json" || ( rm -f "${TMP_CONFIG}" ; die "Error adding experimental flag to ${DOCKER_DIR}/config.json" )
+    if [[ -f ${TMP_CONFIG} ]] ; then rm -f "${TMP_CONFIG}" ; fi
+    echo "ensure_docker_experimental_enabled: updated ${DOCKER_DIR}/config.json --> "
+    cat "${DOCKER_DIR}/config.json"
+  else
+    echo '{"experimental": "enabled"}' > ~/.docker/config.json
+    echo "ensure_docker_experimental_enabled: created ${DOCKER_DIR}/config.json --> "
+    cat "${DOCKER_DIR}/config.json"
+  fi
+}
+
 if [[ -z "${BUBBLE_DOCKER_USER}" ]] ; then
   die "No BUBBLE_DOCKER_USER env var found"
 fi
@@ -50,6 +67,7 @@ BUBBLE_DOCKER="${BUBBLE_DIR}/docker/bubble.sh"
 ${BUBBLE_DOCKER} build || die "Error building docker image"
 
 echo "Checking to see if version ${VERSION} already exists on dockerhub..."
+ensure_docker_experimental_enabled
 if docker manifest inspect "getbubble/launcher:${VERSION}" > /dev/null 2> /dev/null ; then
   echo "Version ${VERSION} already exists on dockerhub, not re-publishing: "
   docker manifest inspect "getbubble/launcher:${VERSION}"
