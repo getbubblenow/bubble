@@ -122,6 +122,14 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
         return findByFields("account", accountUuid, "type", csType, "enabled", true);
     }
 
+    public List<CloudService> findByFirstAdminAndType(CloudServiceType csType) {
+        return findByFields("account", accountDAO.getFirstAdmin().getUuid(), "type", csType, "enabled", true);
+    }
+
+    public boolean adminHasType(CloudServiceType csType) {
+        return !findByFirstAdminAndType(csType).isEmpty();
+    }
+
     public List<CloudService> findByType(CloudServiceType csType) { return findByField("type", csType); }
 
     public List<CloudService> findByName(String name) { return findByField("name", name); }

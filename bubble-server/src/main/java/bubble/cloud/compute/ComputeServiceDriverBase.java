@@ -8,6 +8,7 @@ import bubble.cloud.CloudRegion;
 import bubble.cloud.CloudServiceDriverBase;
 import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.model.cloud.AnsibleInstallType;
+import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudCredentials;
 import bubble.service.packer.PackerService;
@@ -39,7 +40,8 @@ public abstract class ComputeServiceDriverBase
 
     @Override public void postSetup() {
         final String prefix = "postSetup("+getClass().getSimpleName()+"/"+cloud.getUuid()+"): ";
-        if (configuration.getThisNetwork().sage()) {
+        final BubbleNetwork thisNetwork = configuration.getThisNetwork();
+        if (thisNetwork != null && thisNetwork.sage()) {
             if (cloud.delegated()) {
                 log.info(prefix + "NOT starting NodeReaper for delegated driver");
             } else {

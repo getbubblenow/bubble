@@ -28,7 +28,7 @@ public interface RegionalServiceDriver {
                                                         BubbleFootprint footprint,
                                                         double latitude,
                                                         double longitude) {
-        return findClosestRegions(configuration, clouds, footprint, latitude, longitude, null);
+        return findClosestRegions(configuration, clouds, footprint, latitude, longitude, null, true);
     }
 
     static List<CloudRegionRelative> findClosestRegions(BubbleConfiguration configuration,
@@ -36,7 +36,8 @@ public interface RegionalServiceDriver {
                                                         BubbleFootprint footprint,
                                                         double latitude,
                                                         double longitude,
-                                                        Collection<CloudAndRegion> exclude) {
+                                                        Collection<CloudAndRegion> exclude,
+                                                        boolean latLonIsValid) {
 
         final List<CloudRegionRelative> allRegions = new ArrayList<>();
         for (CloudService c : clouds) {
@@ -58,7 +59,11 @@ public interface RegionalServiceDriver {
                     }
                     final CloudRegionRelative r = new CloudRegionRelative(region);
                     r.setCloud(c.getUuid());
-                    r.setDistance(latitude, longitude);
+                    if (latLonIsValid) {
+                        r.setDistance(latitude, longitude);
+                    } else {
+                        r.setDistance(0);
+                    }
                     allRegions.add(r);
                 }
             }
@@ -68,6 +73,12 @@ public interface RegionalServiceDriver {
     }
 
     List<CloudRegion> getRegions();
+
+    default List<CloudRegion> getRegionsExcluding(Collection<String> exclude) {
+        ArrayList<CloudRegion> filtered = new ArrayList<>(getRegions());
+        filtered.removeIf(r -> exclude.contains(r.getInternalName()) || exclude.contains(r.getName()));
+        return filtered;
+    }
 
     default List<CloudRegion> getRegions(BubbleFootprint footprint) {
         return getRegions().stream()

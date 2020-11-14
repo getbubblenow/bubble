@@ -61,6 +61,10 @@ public class GeoService {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private RedisService redis;
 
+    public boolean supportsGeoLocation () { return cloudDAO.adminHasType(CloudServiceType.geoLocation); }
+    public boolean supportsGeoCode () { return cloudDAO.adminHasType(CloudServiceType.geoCode); }
+    public boolean supportsGeoTime () { return cloudDAO.adminHasType(CloudServiceType.geoTime); }
+
     private static final long REDIS_CACHE_TIME = DAYS.toSeconds(1);
     private static final long MEMORY_CACHE_TIME = MINUTES.toSeconds(20);
 
@@ -75,6 +79,9 @@ public class GeoService {
     private final ExecutorService backgroundLookupExec = fixedPool(5, "GeoService.backgroundLookupExec");
 
     public GeoLocation locate (String accountUuid, String ip, boolean cacheOnly) {
+        if (!supportsGeoLocation()) {
+            throw invalidEx("err.geoLocateService.notFound");
+        }
         final String cacheKey = hashOf(accountUuid, ip);
         return locateCache.computeIfAbsent(cacheKey, k -> {
             final String found = getLocateRedis().get(cacheKey);
@@ -96,6 +103,9 @@ public class GeoService {
     }
 
     private GeoLocation getLocation(String accountUuid, String ip, String cacheKey) {
+        if (!supportsGeoCode()) {
+            throw invalidEx("err.geoCodeService.notFound");
+        }
         List<CloudService> geoLocationServices = null;
         if (accountUuid != null) {
             geoLocationServices = cloudDAO.findByAccountAndType(accountUuid, CloudServiceType.geoLocation);
@@ -108,7 +118,7 @@ public class GeoService {
             }
         }
         if (empty(geoLocationServices)) {
-            throw new SimpleViolationException("err.geoLocateService.notFound");
+            throw invalidEx("err.geoLocateService.notFound");
         }
 
         log.info("locate: resolving IP: "+ip+" for cacheKey: "+cacheKey);
@@ -131,7 +141,7 @@ public class GeoService {
                                 }
                             }
                             if (empty(geoCodeServices)) {
-                                throw new SimpleViolationException("err.geoCodeService.notFound");
+                                throw invalidEx("err.geoCodeService.notFound");
                             }
                             geoCodeDriver = geoCodeServices.get(0).getGeoCodeDriver(configuration);
                         }
@@ -158,7 +168,7 @@ public class GeoService {
 
     public GeoLocation getGeoLocation(String ip, List<CloudService> geoLocationServices, List<GeoLocation> resolved) {
         switch (resolved.size()) {
-            case 0: throw new SimpleViolationException("err.geoService.unresolvable", "could not resolve: "+ip, ip);
+            case 0: throw invalidEx("err.geoService.unresolvable", "could not resolve: "+ip, ip);
 
             // if we only have one, use that
             case 1: return resolved.get(0);
@@ -200,13 +210,16 @@ public class GeoService {
     private final Map<String, GeoTimeZone> timezoneCache = new ExpirationMap<>(MEMORY_CACHE_TIME);
 
     public GeoTimeZone getTimeZone (final Account account, String ip) {
+        if (!supportsGeoTime()) {
+            throw invalidEx("err.geoTimeService.notFound");
+        }
         final AtomicReference<Account> acct = new AtomicReference<>(account);
         return timezoneCache.computeIfAbsent(ip, k -> {
             final String found = getTimezoneRedis().get(ip);
             if (found != null) return json(found, GeoTimeZone.class);
 
             if (acct.get() == null) acct.set(accountDAO.getFirstAdmin());
-            if (acct.get() == null) throw new SimpleViolationException("err.activation.required");
+            if (acct.get() == null) throw invalidEx("err.activation.required");
             List<CloudService> geoServices = cloudDAO.findByAccountAndType(acct.get().getUuid(), CloudServiceType.geoTime);
             if (geoServices.isEmpty() && !account.admin()) {
                 // try to find using admin
@@ -216,13 +229,13 @@ public class GeoService {
                 }
             }
             if (geoServices.isEmpty()) {
-                throw new SimpleViolationException("err.geoTimeService.notFound");
+                throw invalidEx("err.geoTimeService.notFound");
             }
 
             final GeoLocation location = locate(acct.get().getUuid(), ip);
             if (!location.hasLatLon()) {
                 final List<CloudService> geocodes = cloudDAO.findByAccountAndType(acct.get().getUuid(), CloudServiceType.geoCode);
-                if (geocodes.isEmpty()) throw new SimpleViolationException("err.geoCodeService.notFound");
+                if (geocodes.isEmpty()) throw invalidEx("err.geoCodeService.notFound");
                 final GeoCodeResult code = geocodes.get(0).getGeoCodeDriver(configuration).lookup(location);
                 location.setLat(code.getLat());
                 location.setLon(code.getLon());
@@ -241,10 +254,14 @@ public class GeoService {
     public List<CloudRegionRelative> getCloudRegionRelatives(BubbleNetwork network,
                                                              String userIp,
                                                              Collection<CloudAndRegion> exclude) {
-        final GeoLocation geo = locate(network.getAccount(), userIp);
-        final double latitude = geo.getLatitude();
-        final double longitude = geo.getLongitude();
-        return getCloudRegionRelatives(network, latitude, longitude, exclude);
+        if (supportsGeoLocation()) {
+            final GeoLocation geo = locate(network.getAccount(), userIp);
+            final double latitude = geo.getLatitude();
+            final double longitude = geo.getLongitude();
+            return getCloudRegionRelatives(network, latitude, longitude, exclude);
+        } else {
+            return getCloudRegionRelatives(network, 0.0, 0.0, exclude);
+        }
     }
 
     public List<CloudRegionRelative> getCloudRegionRelatives(BubbleNetwork network,
@@ -260,7 +277,7 @@ public class GeoService {
 
         // find all cloud services available to us
         final List<CloudService> clouds = cloudDAO.findByAccountAndType(network.getAccount(), CloudServiceType.compute);
-        final List<CloudRegionRelative> closestRegions = findClosestRegions(configuration, clouds, footprint, latitude, longitude, exclude);
+        final List<CloudRegionRelative> closestRegions = findClosestRegions(configuration, clouds, footprint, latitude, longitude, exclude, supportsGeoLocation());
         if (closestRegions.isEmpty()) throw invalidEx("err.cloudRegions.required");
         return closestRegions;
     }
@@ -272,6 +289,9 @@ public class GeoService {
     public CloudAndRegion selectCloudAndRegion(BubbleNetwork network,
                                                NetLocation netLocation,
                                                Collection<CloudAndRegion> exclude) {
+        if (!supportsGeoLocation()) {
+            throw invalidEx("err.geoLocateService.notFound");
+        }
         final CloudRegion closest;
         final String cloudUuid;
         if (netLocation.hasIp()) {
@@ -329,7 +349,7 @@ public class GeoService {
         });
     }
 
-    private Map<String, List<String>> localesCache = new ExpirationMap<>(DAYS.toMillis(1));
+    private final Map<String, List<String>> localesCache = new ExpirationMap<>(DAYS.toMillis(1));
 
     public List<String> getSupportedLocales(Account caller, String remoteHost, String langHeader) {
         return localesCache.computeIfAbsent((caller==null?"null":caller.getUuid())+remoteHost+"\t"+langHeader, k -> {
