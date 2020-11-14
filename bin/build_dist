@@ -2,7 +2,6 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-#
 # Build Bubble distribution ZIP file
 #
 # Usage:
@@ -78,7 +77,7 @@ if [[ ! -z "${BUBBLE_DIST_HOME}" ]] ; then
   if [[ ${IS_DEV} -eq 0 ]] ; then
     cd ${BUBBLE_DIST_TOP} && rm -f latest && ln -sf ${BUBBLE_VERSION} latest
     echo "${BUBBLE_VERSION}" > latest.txt
-    cd ${BUBBLE_DIST_DIR} && ln -s "$(basename ${BUBBLE_DIST})" bubble.zip && ln -s "$(basename ${BUBBLE_DIST}).sha" bubble.zip.sha256
+    cd ${BUBBLE_DIST_DIR} && ln -s "$(basename ${BUBBLE_DIST})" bubble.zip && ln -s "$(basename ${BUBBLE_DIST}).sha256" bubble.zip.sha256
   fi
   echo "Published release: ${BUBBLE_DIST}"
 fi
