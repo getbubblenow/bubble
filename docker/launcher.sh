@@ -11,6 +11,10 @@
 #   - pull bubble launcher docker image
 #   - run bubble launcher docker image
 #
+# Upon successful startup, the bubble launcher will be listening on port 8090
+#
+# Open http://127.0.0.1:8090/ in a web browser to continue with activation.
+#
 
 function die {
   echo 1>&2 "${1}"
