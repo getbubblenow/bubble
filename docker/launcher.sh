@@ -2,15 +2,14 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-# Run bubble launcher in a docker container. Intended for non-developers to run via curl | bash:
+# Run bubble launcher in a docker container. Works on Linux or Mac OS.
 #
-# Usage:
-#
-#    launcher.sh
+#   /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/docker/launcher.sh)"
 #
 # This command will:
-#   - install docker if not found
-#   - pull and run bubble docker image
+#   - install docker if no "docker" command found
+#   - pull bubble launcher docker image
+#   - run bubble launcher docker image
 #
 
 function die {
@@ -18,12 +17,14 @@ function die {
   exit 1
 }
 
-BUBBLE_META_URL="https://git.bubblev.org/bubblev/bubble/raw/branch/master/bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
-VERSION="$(curl -s ${BUBBLE_META_URL} | grep bubble.version | awk -F '=' '{print $2}' | awk -F ' ' '{print $NF}' | awk '{$1=$1};1')"
-if [[ -z "${VERSION}" ]] ; then
-  die "Error determining version from URL: ${BUBBLE_META_URL}"
-fi
-BUBBLE_TAG="getbubble/launcher:${VERSION}"
+function get_bubble_tag() {
+  BUBBLE_META_URL="https://git.bubblev.org/bubblev/bubble/raw/branch/master/bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
+  VERSION="$(curl -s ${BUBBLE_META_URL} | grep bubble.version | awk -F '=' '{print $2}' | awk -F ' ' '{print $NF}' | awk '{$1=$1};1')"
+  if [[ -z "${VERSION}" ]] ; then
+    die "Error determining version from URL: ${BUBBLE_META_URL}"
+  fi
+  echo -n "getbubble/launcher:${VERSION}"
+}
 
 function setup_docker_linux() {
   # Ensure apt is up to date
@@ -75,12 +76,14 @@ function setup_docker() {
     fi
   fi
 
+  # Determine bubble docker tag based on meta props bubble version
+  BUBBLE_TAG=$(get_bubble_tag)
+
   # Pull bubble docker image
   docker pull ${BUBBLE_TAG}
 
   # Run bubble docker image
   docker run -p 8090:8090 -t ${BUBBLE_TAG} || die "Error running docker container"
-
 }
 
 setup_docker

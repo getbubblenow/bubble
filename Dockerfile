@@ -1,6 +1,12 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
+# Creates a Docker image that runs the Bubble Launcher. You shouldn't have to use this file directly.
+#
+# For Linux and Mac OS, you can try the easier way, using a prebuilt image from DockerHub:
+#
+#   /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/docker/launcher.sh)"
+#
 FROM phusion/baseimage:focal-1.0.0alpha1-amd64
 MAINTAINER jonathan@getbubblenow.com
 LABEL maintainer="jonathan@getbubblenow.com"
