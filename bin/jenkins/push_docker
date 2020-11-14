@@ -48,7 +48,8 @@ ${BUBBLE_DOCKER} build || die "Error building docker image"
 
 echo "Checking to see if version ${VERSION} already exists on dockerhub..."
 if docker manifest inspect "getbubble/launcher:${VERSION}" > /dev/null 2> /dev/null ; then
-  echo "Version ${VERSION} already exists on dockerhub, not re-publishing"
+  echo "Version ${VERSION} already exists on dockerhub, not re-publishing: "
+  docker manifest inspect "getbubble/launcher:${VERSION}"
   exit 0
 fi
 
@@ -57,3 +58,5 @@ echo "Version does not exist on dockerhub, pushing it..."
 ${BUBBLE_DOCKER} push || die "Error pushing docker image"
 
 echo "Successfully pushed to dockerhub: ${VERSION}"
+echo "After publishing, docker manifest inspect \"getbubble/launcher:${VERSION}\" --> "
+docker manifest inspect "getbubble/launcher:${VERSION}"
