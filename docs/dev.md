@@ -9,24 +9,10 @@ Other Debian-based systems will probably also work fine.
 
 See below for other Linux distributions and other operating systems.
 
-## First-Time System Setup
+## One-Time System Setup
 You'll need to install some software for Bubble to work correctly.
 
-After you clone this repository, run:
-
-    ./bin/first_time_ubuntu.sh
-
-This runs some `apt` commands to install various bits of software needed to run Bubble.
-
-If you are running on a non-Ubuntu system, copy that file to something like:
-
-    ./bin/first_time_myoperatingsystem.sh
-
-And then edit it such that all the same packages get installed.
-Then submit a pull request and we can add support for your operating system to the main repository.
-
-You only need to run this command once, ever, on a development system.
-It ensures that the appropriate packages are installed and proper databases and database users exist.
+Follow the instructions in [System Software Setup](system-software.md) to install the required software. 
 
 ## First-Time Dev Setup
 After running the system setup above, run:
