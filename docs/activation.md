@@ -30,8 +30,8 @@ To activate your Local Launcher Bubble, run this command:
 
 ## Activation Notes
 
-### Root User Name
-Do not change the name of the root user, or some things might not work correctly. 
+### Admin User Name
+Do not change the name of the initial admin user, or some things might not work correctly. 
  * For web-based activation, this is the `Username` field near the top.
  * For JSON-based activation, this is the `name` JSON element.
 
