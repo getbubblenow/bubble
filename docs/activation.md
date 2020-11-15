@@ -31,10 +31,11 @@ To activate your Local Launcher Bubble, run this command:
 ## Activation Notes
 
 ### Root User Name
-Do not change the name of the root user. Certain parts of the system have hardcoded references to "root" as the
-name of the admin user.
+Do not change the name of the root user, or some things might not work correctly. 
  * For web-based activation, this is the `Username` field near the top.
  * For JSON-based activation, this is the `name` JSON element.
+
+The username of the initial admin user should always be `root`.
 
 ### Required Clouds
 You must define at least one cloud provider for each of these categories:
