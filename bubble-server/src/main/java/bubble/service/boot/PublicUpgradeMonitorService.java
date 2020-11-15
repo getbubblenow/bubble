@@ -13,13 +13,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.util.regex.Pattern;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpUtil.url2file;
 import static org.cobbzilla.util.http.HttpUtil.url2string;
-import static org.cobbzilla.util.io.FileUtil.abs;
+import static org.cobbzilla.util.io.Decompressors.extract;
+import static org.cobbzilla.util.io.FileUtil.*;
+import static org.cobbzilla.util.system.CommandShell.execScript;
 import static org.cobbzilla.wizard.model.SemanticVersion.SEMANTIC_VERSION_RE;
 import static org.cobbzilla.wizard.model.SemanticVersion.isNewerVersion;
 
@@ -51,17 +54,21 @@ public class PublicUpgradeMonitorService extends JarUpgradeMonitor {
             // -- newer than ourselves
             // -- newer than the current sageVersion (or the current sageVersion is null)
             final BubbleVersionInfo currentSageVersion = configuration.getSageVersion();
-            if (isNewerVersion(currentVersion, fullVersion)
-                    && (currentSageVersion == null || empty(currentSageVersion.getVersion()) || isNewerVersion(currentSageVersion.getVersion(), fullVersion))) {
-                log.info("process: latest version ("+fullVersion+") is newer than current version ("+currentVersion+"), setting configuration.sageVersion");
-                final String shortVersion = fullVersion.substring(fullVersion.indexOf(" ") + 1);
-                final String shaUrl = RELEASE_SHA_URL.replace(VERSION_TOKEN, rawVersion);
-                configuration.setSageVersion(new BubbleVersionInfo()
-                        .setVersion(fullVersion)
-                        .setShortVersion(shortVersion)
-                        .setSha256(url2string(shaUrl)));
+            final String prefix = "process: latest public version ("+fullVersion+") is ";
+            if (isNewerVersion(currentVersion, fullVersion)) {
+                if (currentSageVersion == null || empty(currentSageVersion.getVersion()) || isNewerVersion(currentSageVersion.getVersion(), fullVersion)) {
+                    log.info(prefix+"newer than current version ("+currentVersion+"), setting configuration.sageVersion");
+                    final String shortVersion = fullVersion.substring(fullVersion.indexOf(" ") + 1);
+                    final String shaUrl = RELEASE_SHA_URL.replace(VERSION_TOKEN, rawVersion);
+                    configuration.setSageVersion(new BubbleVersionInfo()
+                            .setVersion(fullVersion)
+                            .setShortVersion(shortVersion)
+                            .setSha256(url2string(shaUrl)));
+                } else {
+                    log.info(prefix+"newer than current version ("+currentVersion+") but not the existing configuration.sageVersion ("+currentSageVersion+"), not setting configuration.sageVersion");
+                }
             } else {
-                log.info("process: latest version ("+fullVersion+") is not newer than current version ("+currentVersion+"), not setting configuration.sageVersion");
+                log.info(prefix+"not newer than current version ("+currentVersion+"), not setting configuration.sageVersion");
             }
         } catch (Exception e) {
             log.warn("process: error: "+shortError(e));
@@ -75,14 +82,15 @@ public class PublicUpgradeMonitorService extends JarUpgradeMonitor {
             final String jarUrl = RELEASE_JAR_URL.replace(VERSION_TOKEN, sageVersion.getVersion().replace(" ", "_"));
             log.info("downloadJar: downloading from "+jarUrl+" -> "+abs(bubbleZip));
             url2file(jarUrl, bubbleZip);
-            Decompressors.extract(bubbleZip, temp);
-            final File jarFile = new File(abs(temp) + "/bubble-" + sageVersion.getVersion() + "/bubble.jar");
-            if (!jarFile.exists()) {
-                die("downloadJar: jar file not found in zip file: "+abs(jarFile));
+            extract(bubbleZip, temp);
+            final File jarFile = findFile(temp, "bubble.jar");
+            if (jarFile == null) {
+                die("downloadJar: bubble.jar file not found in zip file");
             }
-            FileUtil.copyFile(jarFile, upgradeJar);
+            copyFile(jarFile, upgradeJar);
+
         } catch (Exception e) {
-            die("downloadJar: "+shortError(e));
+            die("downloadJar: "+shortError(e), e);
         }
     }
 
