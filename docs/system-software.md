@@ -9,6 +9,7 @@ You'll need to install some software for Bubble to work correctly.
 Bubble needs a PostgreSQL database, Redis, and a bunch of command line tools installed. 
 
 It ensures that the appropriate packages are installed and proper databases and database users exist.
+
 You only need to install system software once, ever, on a given system.
 
 ### Ubuntu
