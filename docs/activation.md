@@ -1,4 +1,5 @@
-# Bubble Activation
+Bubble Activation
+=================
 The very first time Bubble runs it has a blank database, nothing has been defined.
 
 This is a Bubble that is awaiting activation.

@@ -1,4 +1,5 @@
-# Bubble Node Mode
+Bubble Node Mode
+================
 A Bubble in Node Mode is a proper Bubble that allows you to connect your devices to it, and manages network traffic
 on behalf of those devices.
 

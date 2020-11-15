@@ -1,5 +1,5 @@
-# Bubble Docker Launcher
-
+Bubble Docker Launcher
+======================
 The Bubble Docker Launcher makes it easy to run a Bubble launcher.
 
 You can use the launcher to then start Bubbles that you can use.

@@ -1,9 +1,11 @@
 Bubble Developer Guide
 ======================
+This guide is intended for developers who would like to work directly with the Bubble source code.
 
 # Development Setup
-These instructions presume you are running a newly setup Ubuntu 20.04 system.
-Either the Ubuntu Server or Desktop distribution will work.
+These instructions presume you are running a newly setup Ubuntu 20.04 or Mac OS X system.
+
+For Ubuntu, either the Server or Desktop distribution will work.
 
 Other Debian-based systems will probably also work fine.
 
