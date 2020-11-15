@@ -12,8 +12,7 @@ This script will automatically install docker, pull the Bubble docker image and 
 If you're running Windows, or if the above script has problems installing Docker,
 please [install Docker manually](https://docs.docker.com/engine/install/).
 
-If you're on Mac OS X or Linux, after installing Docker you can try to re-run the above script
-and it will probably work since Docker is already installed.
+If you're on Mac OS X or Linux, after installing Docker please re-run the above script.
 
 If you're on Windows or would like to run the Bubble docker image directly, follow the instructions below in "Manual Setup".
 
