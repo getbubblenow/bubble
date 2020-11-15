@@ -251,7 +251,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         return SCHEME_HTTPS + node.getFqdn() + ":" + node.getSslPort() + getHttp().getBaseUri();
     }
 
-    public static String getVersion () {
+    public static String jarVersion() {
         final Properties properties = new Properties();
         try {
             properties.load(loadResourceAsStream("META-INF/bubble/bubble.properties"));
@@ -263,7 +263,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     @Getter(lazy=true) private final BubbleVersionInfo versionInfo = initBubbleVersionInfo();
     private BubbleVersionInfo initBubbleVersionInfo() {
-        final String version = getVersion();
+        final String version = jarVersion();
         final String[] parts = version.split("\\s+");
         final String shortVersion = parts[parts.length-1];
         return new BubbleVersionInfo()
@@ -273,6 +273,8 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                 .setSoftware(getSoftwareVersions().getDefaultSoftwareVersions());
     }
     public String getShortVersion () { return getVersionInfo().getShortVersion(); }
+
+    @Override public String getVersion () { return getVersionInfo().getVersion(); }
 
     // For a Bubble node with a sage, this will be set in the hello_from_sage notification handler
     // For a Bubble without a sage, this will be set in NodeInitializerListener
@@ -375,7 +377,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_SUPPORT, getSupport()},
                         {TAG_SECURITY_LEVELS, DeviceSecurityLevel.values()},
                         {TAG_FULL_VERSION, getVersionInfo()},
-                        {TAG_JAR_VERSION, getVersion()},
+                        {TAG_JAR_VERSION, jarVersion()},
                         {TAG_JAR_UPGRADE_AVAILABLE, getJarUpgradeAvailable() ? getSageVersion() : null},
                         {TAG_MAX_USERS, plan == null ? null : plan.getMaxAccounts()},
                         {TAG_SHOW_BLOCK_STATS_SUPPORTED, showBlockStatsSupported()}
