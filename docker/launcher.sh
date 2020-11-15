@@ -17,7 +17,10 @@
 #
 
 function die {
-  echo 1>&2 "${1}"
+  echo 1>&2 "
+
+***** ${1}
+"
   exit 1
 }
 
@@ -76,47 +79,8 @@ function setup_docker_ubuntu() {
   sudo apt install -y docker-ce
 }
 
-function setup_docker_centos_dnf() {
-  # Update dnf
-  sudo dnf update -y --nobest
-
-  # Add docker repo
-  sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-
-  # Refresh dnf after adding repo
-  sudo dnf update -y --nobest
-
-  # Install docker
-  sudo dnf install -y docker-ce --best --allowerasing
-
-  # Start docker
-  sudo systemctl start docker
-}
-
-function setup_docker_centos_yum() {
-  # Remove obsolete docker packages
-  sudo yum remove docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine
-
-  # Add docker repo
-  sudo yum install -y yum-utils
-  sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-
-  # Install docker
-  sudo yum install docker-ce docker-ce-cli containerd.io
-
-  # Start docker
-  sudo systemctl start docker
-}
-
-function setup_docker_fedora_dnf() {
-  # Update dnf
-  sudo dnf update -y --nobest
-
-  # Install docker
-  sudo dnf install -y docker-ce
-
-  # Start docker
-  sudo systemctl start docker
+function setup_docker_generic_linux() {
+  curl -fsSL https://get.docker.com | sudo sh -
 }
 
 function setup_docker_linux() {
@@ -125,20 +89,8 @@ function setup_docker_linux() {
     setup_docker_debian
   elif [[ $(echo -n ${DISTRO} | grep -c Ubuntu | tr -d ' ') -gt 0 ]] ; then
     setup_docker_ubuntu
-  elif [[ $(echo -n ${DISTRO} | grep -c CentOS | tr -d ' ') -gt 0 ]] ; then
-    if [[ ! -z "$(which dnf)" ]] ; then
-      setup_docker_centos_dnf
-    elif [[ ! -z "$(which yum)" ]] ; then
-      setup_docker_centos_yum
-    else
-      die "Neither dnf nor yum found, cannot install on CentOS.
-Please install docker manually from https://docker.io/"
-    fi
-  elif [[ $(echo -n ${DISTRO} | grep -c Fedora | tr -d ' ') -gt 0 ]] ; then
-    setup_docker_fedora_dnf
   else
-    die "Automatic docker installation for ${DISTRO} is not yet supported
-Please install docker manually from https://docker.io/"
+    setup_docker_generic_linux
   fi
 }
 
@@ -180,6 +132,12 @@ function run_launcher() {
 
   if [[ -z "$(which docker)" ]] ; then
     setup_docker
+    if [[ -z "$(which docker)" ]] ; then
+      die "Error installing docker
+Install docker manually from https://docs.docker.com/engine/install/
+Then re-run this script
+"
+    fi
   fi
 
   # Determine bubble docker tag
