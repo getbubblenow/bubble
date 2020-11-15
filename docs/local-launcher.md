@@ -27,5 +27,5 @@ This will remove local files stored by Bubble, and drop the bubble database.
 If you run `./bin/run.sh` again, it will be like running it for the first time.
 
 ## Next Steps
-You are now read to launch a new Bubble in [Bubble Mode](launch-node.md), or
+You are now read to launch a new Bubble in [Node Mode](launch-node.md), or
 a Remote Launcher via [Remote Launcher Mode](remote-launcher.md)
