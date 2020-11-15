@@ -1,7 +1,9 @@
 # Bubble Local Launcher Mode
-A Bubble in Local Launcher Mode is the starting point for standing up a Bubble in
-[Remote Launcher Mode](remote-launcher.md), which you can then use to launch proper Bubbles
-in [Bubble Node Mode](launch-node.md).
+A Bubble in Local Launcher Mode is the starting point for standing up any kind of Bubble.
+
+You can use a Local Launcher to:
+ * [Start a new Bubble directly in Node Mode](launch-node-from-local.md)
+ * [Start a new Bubble in Remote Launcher Mode](remote-launcher.md) which can then [launch new Bubbles in Node Mode](launch-node-from-remote.md).
 
 ## Run Bubble
 Run the `./bin/run.sh` script on your local machine to start Bubble in Local Launcher mode.
