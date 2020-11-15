@@ -8,12 +8,20 @@ This script will automatically install docker, pull the Bubble docker image and 
 
     /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/docker/launcher.sh)"
 
-If the script cannot install docker, please [install Docker manually](https://docs.docker.com/engine/install/)
-and then re-run the above command.
+## Docker Installation
+If you're running Windows, or if the above script has problems installing Docker,
+please [install Docker manually](https://docs.docker.com/engine/install/).
+
+If you're on Mac OS X or Linux, after installing Docker you can try to re-run the above script
+and it will probably work since Docker is already installed.
+
+If you're on Windows or would like to run the Bubble docker image directly, follow the instructions below in "Manual Setup".
 
 ## Manual Setup
-If you're on Windows or are if you already have Docker installed and are comfortable using it directly,
-you can run the Bubble Docker Launcher via:
+The commands below assume you already have docker installed, the docker daemon is running and the current user
+has appropriate permissions to start docker containers.
+
+To pull and run the Bubble Docker Launcher, open a terminal and run: 
 
     BUBBLE_RELEASE_URL="https://jenkins.bubblev.org/public/releases/bubble/latest.txt"
     VERSION="$(curl -s ${BUBBLE_RELEASE_URL}  | awk -F '_' '{print $2}' | awk -F '.' '{print $1"."$2"."$3}')"
@@ -23,7 +31,7 @@ you can run the Bubble Docker Launcher via:
     docker run -p 8090:8090 -t ${BUBBLE_TAG}
 
 ## Activation
-Upon successful startup, the bubble launcher will be listening on port 8090
+Upon a successful startup, the bubble launcher will be listening on port 8090
 
 Your Bubble is running locally in a "blank" mode. It needs an initial "root" account and some basic services configured.
 
