@@ -1,4 +1,5 @@
-# Launching a Bubble from a Local Launcher
+Launching a Bubble from a Local Launcher
+========================================
 These instructions assume you have already set up a [Local Launcher](local-launcher.md).
 
 ## Login

@@ -1,4 +1,5 @@
-# Run Bubble from a Binary Distribution
+Run Bubble from a Binary Distribution
+=====================================
 The setup instructions below assume you are running Ubuntu 20.04 or Mac OS X.
 
 If you're running another flavor of Linux, you can probably figure out how to get things working.

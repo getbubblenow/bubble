@@ -1,4 +1,5 @@
-# Bubble Local Launcher Mode
+Bubble Local Launcher Mode
+==========================
 A Bubble in Local Launcher Mode is the starting point for standing up any kind of Bubble.
 
 You can use a Local Launcher to:

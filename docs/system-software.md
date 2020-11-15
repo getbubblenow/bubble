@@ -1,4 +1,5 @@
-# Install Required System Software
+Install Required System Software
+================================
 You only need to do this if you're [running from a binary distribution](run-binary.md)
 or [building and running from source](dev.md).
 

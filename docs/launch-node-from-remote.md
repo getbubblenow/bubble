@@ -1,4 +1,5 @@
-# Launching a Bubble from a Remote Launcher
+Launching a Bubble from a Remote Launcher
+=========================================
 These instructions assume you have already set up a [Remote Launcher](remote-launcher.md).
 
 ## Create a user

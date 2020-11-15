@@ -1,4 +1,5 @@
-# Bubble Remote Launcher Mode
+Bubble Remote Launcher Mode
+===========================
 You must already have a Bubble running in [Local Launcher Mode](local-launcher.md) to proceed.
 
 ## Start Bubble
