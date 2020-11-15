@@ -30,24 +30,116 @@ function get_bubble_tag() {
   echo -n "getbubble/launcher:${VERSION}"
 }
 
-function setup_docker_linux() {
+function setup_docker_debian() {
   # Ensure apt is up to date
   sudo apt update -y
 
-  # Ensure apt can install packages over https
-  sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
+  # Remove obsolete packages
+  sudo apt-get remove docker docker-engine docker.io containerd runc
 
-  # Install Docker GPG key
+  # Ensure apt can install packages over https
+  sudo apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+
+  # Install docker GPG key
+  curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+
+  # Add docker repo
+  sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+
+  # Refresh apt after adding repo
+  sudo apt update -y
+
+  # Install docker
+  sudo apt install -y docker-ce docker-ce-cli containerd.io
+}
+
+function setup_docker_ubuntu() {
+  # Ensure apt is up to date
+  sudo apt update -y
+
+  # Remove obsolete packages
+  sudo apt-get remove docker docker-engine docker.io containerd runc
+
+  # Ensure apt can install packages over https
+  sudo apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+
+  # Install docker GPG key
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 
-  # Add Docker apt repo
-  sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+  # Add docker repo
+  sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
   # Refresh apt after adding repo
   sudo apt update -y
 
   # Install docker
   sudo apt install -y docker-ce
+}
+
+function setup_docker_centos_dnf() {
+  # Update dnf
+  sudo dnf update -y --nobest
+
+  # Add docker repo
+  sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+  # Refresh dnf after adding repo
+  sudo dnf update -y --nobest
+
+  # Install docker
+  sudo dnf install -y docker-ce --best --allowerasing
+
+  # Start docker
+  sudo systemctl start docker
+}
+
+function setup_docker_centos_yum() {
+  # Remove obsolete docker packages
+  sudo yum remove docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine
+
+  # Add docker repo
+  sudo yum install -y yum-utils
+  sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+  # Install docker
+  sudo yum install docker-ce docker-ce-cli containerd.io
+
+  # Start docker
+  sudo systemctl start docker
+}
+
+function setup_docker_fedora_dnf() {
+  # Update dnf
+  sudo dnf update -y --nobest
+
+  # Install docker
+  sudo dnf install -y docker-ce
+
+  # Start docker
+  sudo systemctl start docker
+}
+
+function setup_docker_linux() {
+  DISTRO="$(cat /etc/os-release | grep "^NAME" | awk -F '=' '{print $2}' | tr -d '"')"
+  if [[ $(echo -n ${DISTRO} | grep -c Debian | tr -d ' ') -gt 0 ]] ; then
+    setup_docker_debian
+  elif [[ $(echo -n ${DISTRO} | grep -c Ubuntu | tr -d ' ') -gt 0 ]] ; then
+    setup_docker_ubuntu
+  elif [[ $(echo -n ${DISTRO} | grep -c CentOS | tr -d ' ') -gt 0 ]] ; then
+    if [[ ! -z "$(which dnf)" ]] ; then
+      setup_docker_centos_dnf
+    elif [[ ! -z "$(which yum)" ]] ; then
+      setup_docker_centos_yum
+    else
+      die "Neither dnf nor yum found, cannot install on CentOS.
+Please install docker manually from https://docker.io/"
+    fi
+  elif [[ $(echo -n ${DISTRO} | grep -c Fedora | tr -d ' ') -gt 0 ]] ; then
+    setup_docker_fedora_dnf
+  else
+    die "Automatic docker installation for ${DISTRO} is not yet supported
+Please install docker manually from https://docker.io/"
+  fi
 }
 
 function setup_docker_macosx() {
@@ -62,25 +154,35 @@ function setup_docker_macosx() {
 }
 
 function setup_docker() {
-  PLATFORM="$(uname -s)"
-  if [[ -z "${PLATFORM}" ]] ; then
-    die "'uname -a command' returned empty string!"
-  fi
+    echo "Installing docker via sudo ..."
+    if [[ $(whoami) != "root" ]] ; then
+      echo "Note: you may need to enter your password (for Linux user $(whoami)) to enable sudo commands"
+    fi
 
-  if [[ -z "$(which docker)" ]] ; then
-    echo "docker command not found"
-    echo "Installing docker via sudo (you may need to enter your password) ..."
     if [[ "${PLATFORM}" == "Linux" ]] ; then
       setup_docker_linux
+
     elif [[ "${PLATFORM}" == "Darwin" ]] ; then
       setup_docker_macosx
       eval "$(docker-machine env default)"
+      docker-machine start default
+
     else
       die "Don't know how to install docker on ${PLATFORM}"
     fi
+}
+
+function run_launcher() {
+  PLATFORM="$(uname -s)"
+  if [[ -z "${PLATFORM}" ]] ; then
+    die "'uname -s' returned empty string!"
   fi
 
-  # Determine bubble docker tag based on meta props bubble version
+  if [[ -z "$(which docker)" ]] ; then
+    setup_docker
+  fi
+
+  # Determine bubble docker tag
   BUBBLE_TAG=$(get_bubble_tag)
 
   # Pull bubble docker image
@@ -90,4 +192,4 @@ function setup_docker() {
   docker run -p 8090:8090 -t ${BUBBLE_TAG}
 }
 
-setup_docker
+run_launcher
