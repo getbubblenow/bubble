@@ -40,4 +40,5 @@ Then edit it such that all the same packages get installed.
 
 Submit a pull request, and we'll add support for your operating system to the main repository.
 
-## 
+## Run Bubble
+Continue by running your Bubble as a [Local Launcher](local-launcher.md).
