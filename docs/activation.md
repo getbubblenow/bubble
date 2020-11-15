@@ -13,12 +13,14 @@ In order to activate your Local Launcher, you'll need accounts and/or API keys f
 Have these account credentials handy. Be prepared to sign up for new accounts where needed.
 
 ## Activate via Web UI
-The browser-based admin UI should be displaying an "Activate" page. Complete the information on this page and submit the
-data. The Bubble Launcher will create an initial "root" account and other basic system configurations. 
+The browser-based admin UI should be displaying an "Activate" page.
+
+Review the "Activation Notes" below, then complete the information on this page and press the "Activate" button
+to activate your Bubble Launcher. 
 
 ## Activate via command line
-If you installed Bubble from a binary distribution or built it from source, you can also perform activation
-using the Bubble command line tools.
+If you installed Bubble from a [binary distribution](run-binary.md) or built it [from source](dev.md),
+you can also perform activation using the Bubble command line tools.
 
 Make a copy of the file `config/activation.json` and edit the copy. There are comments in the file to guide you.
 
