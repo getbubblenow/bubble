@@ -105,7 +105,12 @@ public abstract class BubbleModelTestBase extends ApiModelTestBase<BubbleConfigu
                 die("beforeStart: error deleting " + abs(THIS_NODE_FILE));
             }
         }
+
+        // this will start a redis server
         super.beforeStart(server);
+
+        // now we can set redis port in config
+        configuration.getRedis().setPort(getRedisPort());
     }
 
     @Getter(lazy=true) private final ApiClientBase _api = new TestBubbleApiClient(getConfiguration());
