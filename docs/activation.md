@@ -41,7 +41,8 @@ The username of the initial admin user should always be `root`.
 You must define at least one cloud provider for each of these categories:
   * DNS (Amazon Route53 or GoDaddy DNS)
   * Email (SMTP, SendGrid or Mailgun)
-  * Compute (Vultr, DigitalOcean or Amazon EC2)  (note EC2 support is WIP, Vultr and DigitalOcean are stable)
+  * Compute (Vultr, DigitalOcean)
+    * Note: Amazon EC2 support is incomplete, do not use for now
 
 ### Initial Domain
 The initial Domain you define during activation must be owned by you.
