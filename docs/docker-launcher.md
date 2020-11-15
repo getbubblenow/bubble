@@ -2,8 +2,6 @@ Bubble Docker Launcher
 ======================
 The Bubble Docker Launcher makes it easy to run a Bubble launcher.
 
-You can use the launcher to then start Bubbles that you can use.
-
 ## Automatic Setup
 If you're running Linux or Mac OS X, try the automatic setup script first.
 This script will automatically install docker, pull the Bubble docker image and run it.
