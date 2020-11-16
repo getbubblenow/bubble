@@ -71,7 +71,7 @@ cp ${RESTORE_BASE}/bubble.jar ${BUBBLE_HOME}/api/bubble.jar
 
 # set wasRestored flag in self_node.json
 log "Adding wasRestored=true to ${SELF_NODE}"
-TEMP_SELF=$(mktemp /tmp/self_node.XXXXXXX.json)
+TEMP_SELF=$(mktemp /tmp/self_node.json.XXXXXXX)
 cat ${BUBBLE_SELF_NODE} | jq '.wasRestored = true' > ${TEMP_SELF} || die "Error adding 'wasRestored' flag to ${SELF_NODE}"
 cat ${TEMP_SELF} > ${BUBBLE_SELF_NODE} || die "Error rewriting ${SELF_NODE}"
 

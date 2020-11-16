@@ -35,13 +35,13 @@ function handle_help_request () {
 function make_temp () {
   prefix="${1}"
   suffix="${2}"
-  echo "$(mktemp ${prefix}.XXXXXXXX${suffix})"
+  echo "$(mktemp ${prefix}.${suffix}.XXXXXXXX)"
 }
 
 function make_temp_dir () {
   prefix="${1}"
   suffix="${2}"
-  echo "$(mktemp -d ${prefix}.XXXXXXXX${suffix})"
+  echo "$(mktemp -d ${prefix}.${suffix}.XXXXXXXX)"
 }
 
 function quote_args () {
