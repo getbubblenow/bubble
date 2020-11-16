@@ -112,7 +112,6 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
 
     @Override @Transient public String getName() { return getEmail(); }
     public Account setName(String n) { return setEmail(n); }
-    @Transient @JsonIgnore public boolean isRoot() { return getName().equals(ROOT_USERNAME); }
 
     // make this updatable if we ever want accounts to be able to change parents
     // there might be a lot more involved in that action though (read-only parent objects that will no longer be visible, must be copied in?)

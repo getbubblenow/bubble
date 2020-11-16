@@ -81,7 +81,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
             var uninitializedDevices = findByAccountAndUninitialized(accountUuid);
 
             if (uninitializedDevices.size() <= SPARE_DEVICES_PER_ACCOUNT_THRESHOLD
-                    && !configuration.getBean(AccountDAO.class).findByUuid(accountUuid).isRoot()) {
+                    && !configuration.getBean(AccountDAO.class).isFirstAdmin(accountUuid)) {
                 if (ensureAllSpareDevices(accountUuid, device.getNetwork())) refreshVpnUsers();
             }
 

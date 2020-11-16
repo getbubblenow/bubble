@@ -208,6 +208,9 @@ public class BubbleNetwork extends IdentifiableBase implements HasNetwork, HasBu
     public boolean hasForkHost () { return !empty(forkHost); }
     public boolean fork() { return hasForkHost(); }
 
+    @Transient @Getter @Setter private transient String adminEmail;
+    public boolean hasAdminEmail () { return !empty(adminEmail); }
+
     @ECField(index=190) @Column(length=20, updatable=false)
     @Enumerated(EnumType.STRING) @Getter @Setter private LaunchType launchType = null;
     public boolean hasLaunchType () { return launchType != null; }

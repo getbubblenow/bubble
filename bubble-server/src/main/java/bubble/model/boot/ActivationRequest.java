@@ -23,7 +23,8 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 public class ActivationRequest {
 
     @HasValue(message="err.email.required")
-    @Getter @Setter private String email;
+    @Getter private String email;
+    public ActivationRequest setEmail(String e) { this.email = empty(e) ? e : e.trim(); return this; }
     public boolean hasEmail() { return !empty(email); }
 
     public String getName() { return getEmail(); }
@@ -54,6 +55,9 @@ public class ActivationRequest {
 
     @Getter @Setter private Boolean skipTests = false;
     public boolean skipTests () { return bool(skipTests); };
+
+    @Getter @Setter private Boolean skipPacker = false;
+    public boolean skipPacker () { return bool(skipPacker); };
 
     @Getter @Setter private AccountSshKey sshKey;
     public boolean hasSshKey () { return sshKey != null; }

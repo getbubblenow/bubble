@@ -54,9 +54,9 @@
       }
     },
 
-    // You must configure the an SMTP service, it is required to send emails
-    // SendGrid, MailGun, or any other SMTP service should work fine
-    "SmtpServer": {
+    // You must configure an email service, it is required to send emails
+    // Comment out the email clouds that you don't use
+    "SmtpEmail": {
       "config": {
         "tlsEnabled": true
       },
@@ -65,6 +65,21 @@
         "password": "your_smtp_password",
         "host": "your_smtp_server_hostname",
         "port": "your_smtp_server_port"
+      }
+    },
+
+    "SendGridEmail": {
+      "config": {},
+      "credentials": {
+        "apiKey": "your_sendgrid_api_key"
+      }
+    },
+
+    "MailgunEmail": {
+      "config": {},
+      "credentials": {
+        "domain": "your_mailgun_domain",
+        "apiKey": "your_mailgun_api_key"
       }
     },
 

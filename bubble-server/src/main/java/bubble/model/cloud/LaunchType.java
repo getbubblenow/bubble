@@ -5,13 +5,20 @@
 package bubble.model.cloud;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import lombok.AllArgsConstructor;
 
 import static bubble.ApiConstants.enumFromString;
 
+@AllArgsConstructor
 public enum LaunchType {
 
-    node, fork_node, fork_sage;
+    node      (false),
+    fork_node (true),
+    fork_sage (true);
 
     @JsonCreator public static LaunchType fromString(String v) { return enumFromString(LaunchType.class, v); }
+
+    private final boolean fork;
+    public boolean fork () { return fork; }
 
 }

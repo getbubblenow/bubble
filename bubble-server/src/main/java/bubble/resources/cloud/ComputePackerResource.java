@@ -28,8 +28,8 @@ public class ComputePackerResource {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private PackerService packer;
 
-    private Account account;
-    private CloudService cloud;
+    private final Account account;
+    private final CloudService cloud;
 
     public ComputePackerResource (Account account, CloudService cloud) {
         this.account = account;

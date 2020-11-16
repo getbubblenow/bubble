@@ -41,10 +41,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
+import static bubble.model.account.Account.ROOT_EMAIL;
 import static bubble.model.cloud.BubbleNetwork.validateHostname;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
-import static org.cobbzilla.util.string.ValidationRegexes.HOST_PATTERN;
-import static org.cobbzilla.util.string.ValidationRegexes.validateRegexMatches;
+import static org.cobbzilla.util.string.ValidationRegexes.*;
 import static org.cobbzilla.wizard.model.NamedEntity.NAME_MAXLEN;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -165,6 +165,18 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                 } else if (domain != null) {
                     request.setName(domain.networkFromFqdn(forkHost, errors));
                     validateName(request, errors);
+                }
+            }
+            final String adminEmail = request.getAdminEmail();
+            if (request.hasLaunchType() && request.getLaunchType().fork() && caller.admin()) {
+                if (empty(adminEmail) && caller.getEmail().equals(ROOT_EMAIL)) {
+                    errors.addViolation("err.adminEmail.required");
+                } else if (!empty(adminEmail) && !validateRegexMatches(EMAIL_PATTERN, adminEmail)) {
+                    errors.addViolation("err.adminEmail.invalid");
+                }
+            } else {
+                if (!empty(adminEmail)) {
+                    errors.addViolation("err.adminEmail.cannotSet");
                 }
             }
         } else {

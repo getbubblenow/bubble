@@ -164,7 +164,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
 
         // create an uninitialized device for the account, but only if this is a regular node network
         // sage networks do not allow devices, they launch and manage other regular node networks
-        if (!account.isRoot() && !configuration.isSage()) {
+        if (!isFirstAdmin(account) && !configuration.isSage()) {
             deviceDAO.ensureAllSpareDevices(account.getUuid(), configuration.getThisNetwork().getUuid());
             deviceDAO.refreshVpnUsers();
         }
@@ -475,7 +475,8 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     private final Refreshable<Account> firstAdmin = new Refreshable<>("firstAdmin", FIRST_ADMIN_CACHE_MILLIS, this::findFirstAdmin);
     public Account getFirstAdmin() { return firstAdmin.get(); }
 
-    public boolean isFirstAdmin(Account account) { return getFirstAdmin().getUuid().equals(account.getUuid()); }
+    public boolean isFirstAdmin(Account account) { return isFirstAdmin(account.getUuid()); }
+    public boolean isFirstAdmin(String accountUuid) { return getFirstAdmin().getUuid().equals(accountUuid); }
 
     public Account findFirstAdmin() {
         final List<Account> admins = findByField("admin", true);

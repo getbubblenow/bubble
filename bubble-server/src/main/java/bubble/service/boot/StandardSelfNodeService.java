@@ -15,10 +15,12 @@ import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.dao.device.DeviceDAO;
-import bubble.model.account.Account;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
-import bubble.model.cloud.*;
+import bubble.model.cloud.BubbleNetwork;
+import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.BubbleNodeKey;
+import bubble.model.cloud.BubbleNodeState;
 import bubble.model.cloud.notify.NotificationReceipt;
 import bubble.model.cloud.notify.NotificationType;
 import bubble.server.BubbleConfiguration;
@@ -29,7 +31,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.cache.Refreshable;
-import org.cobbzilla.util.daemon.SimpleDaemon;
 import org.cobbzilla.util.http.HttpSchemes;
 import org.cobbzilla.util.http.HttpUtil;
 import org.cobbzilla.util.io.FileUtil;
@@ -53,7 +54,6 @@ import static bubble.server.BubbleServer.disableRestoreMode;
 import static bubble.server.BubbleServer.isRestoreMode;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.function.Predicate.not;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.toFileOrDie;
@@ -162,7 +162,7 @@ public class StandardSelfNodeService implements SelfNodeService {
             background(() -> {
                 if (accountDAO.findAll()
                               .stream()
-                              .filter(not(Account::isRoot))
+                              .filter(a -> !accountDAO.isFirstAdmin(a))
                               .map(a -> deviceDAO.ensureAllSpareDevices(a.getUuid(), thisNetworkUuid))
                               .reduce(false, Boolean::logicalOr)
                               .booleanValue()) {

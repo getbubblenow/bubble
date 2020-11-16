@@ -18,6 +18,7 @@ import bubble.model.boot.ActivationRequest;
 import bubble.model.boot.CloudServiceConfig;
 import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
+import bubble.service.packer.PackerService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Cleanup;
 import lombok.Getter;
@@ -64,6 +65,7 @@ public class ActivationService {
     @Autowired private StandardSelfNodeService selfNodeService;
     @Autowired private BubbleConfiguration configuration;
     @Autowired private ModelSetupService modelSetupService;
+    @Autowired private PackerService packerService;
 
     public BubbleNode bootstrapThisNode(Account account, ActivationRequest request) {
         String ip = getFirstPublicIpv4();
@@ -228,10 +230,24 @@ public class ActivationService {
                 final Map<CrudOperation, Collection<Identifiable>> objects
                         = modelSetupService.setupModel(api, account, "manifest-defaults");
                 log.info("bootstrapThisNode: created default objects\n"+json(objects));
+
+                if (!request.skipPacker()) initialPacker(account);
+
             }, "ActivationService.bootstrapThisNode.createDefaultObjects");
+
+        } else if (!request.skipPacker()) {
+            initialPacker(account);
         }
 
         return node;
+    }
+
+    private void initialPacker(Account account) {
+        for (CloudService cloud : cloudDAO.findByAccountAndType(account.getUuid(), CloudServiceType.compute)) {
+            log.info("initialPacker: creating images for compute cloud: "+cloud.getName());
+            packerService.writePackerImages(cloud, AnsibleInstallType.sage, null);
+            packerService.writePackerImages(cloud, AnsibleInstallType.node, null);
+        }
     }
 
     public BubbleNetwork createRootNetwork(BubbleNetwork network) {

@@ -166,6 +166,11 @@ public class AuthResource {
         if (accountDAO.activated()) {
             return invalid("err.activation.alreadyDone", "activation has already been done");
         }
+
+        if (!request.hasEmail()) return invalid("err.email.required", "email is required");
+        if (request.getEmail().contains("{{") && request.getEmail().contains("}}")) {
+            request.setEmail(configuration.applyHandlebars(request.getEmail()).trim());
+        }
         if (!request.hasEmail()) return invalid("err.email.required", "email is required");
 
         if (!request.hasPassword()) return invalid("err.password.required", "password is required");

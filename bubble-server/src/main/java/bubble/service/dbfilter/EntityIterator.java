@@ -7,9 +7,7 @@ package bubble.service.dbfilter;
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.storage.local.LocalStorageConfig;
 import bubble.cloud.storage.local.LocalStorageDriver;
-import bubble.model.account.Account;
-import bubble.model.account.AccountSshKey;
-import bubble.model.account.AccountTemplate;
+import bubble.model.account.*;
 import bubble.model.app.AppTemplateEntity;
 import bubble.model.app.BubbleApp;
 import bubble.model.bill.AccountPaymentMethod;
@@ -135,7 +133,29 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
                     .forEach(this::add);
 
         } else if (Account.class.isAssignableFrom(c)) {
-            entities.forEach(e -> add(((Account) e).setPreferredPlan(null)));
+            entities.forEach(e -> {
+                if (network.hasAdminEmail() && network.getAccount().equals(e.getUuid())) {
+                    final Account a = (Account) e;
+                    a.setEmail(network.getAdminEmail());
+                }
+                add(((Account) e).setPreferredPlan(null));
+            });
+
+        } else if (AccountPolicy.class.isAssignableFrom(c) && network.hasAdminEmail()) {
+            entities.forEach(e -> {
+                if (network.hasAdminEmail()) {
+                    final AccountPolicy p = (AccountPolicy) e;
+                    if (p.getAccount().equals(network.getAccount())) {
+                        final AccountContact adminContact = new AccountContact()
+                                .setType(CloudServiceType.email)
+                                .setInfo(network.getAdminEmail())
+                                .setVerified(true)
+                                .setRemovable(false);
+                        p.setAccountContacts(new AccountContact[]{adminContact});
+                    }
+                }
+                add(e);
+            });
 
         } else if (AccountSshKey.class.isAssignableFrom(c)) {
             entities.forEach(e -> add(setInstallKey((AccountSshKey) e, network)));

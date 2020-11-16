@@ -166,6 +166,9 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
     @Transient @Getter @Setter private transient String forkHost = null;
     public boolean hasForkHost () { return !empty(forkHost); }
 
+    @Transient @Getter @Setter private transient String adminEmail = null;
+    public boolean hasAdminEmail() { return !empty(adminEmail); }
+
     @Transient @Getter @Setter private transient Boolean syncAccount = null;
     public boolean syncAccount() { return syncAccount == null || syncAccount; }
 
@@ -200,7 +203,8 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
                 .setComputeSizeType(plan.getComputeSizeType())
                 .setStorage(storage.getUuid())
                 .setLaunchType(hasForkHost() && hasLaunchType() ? getLaunchType() : LaunchType.node)
-                .setForkHost(hasForkHost() ? getForkHost() : null);
+                .setForkHost(hasForkHost() ? getForkHost() : null)
+                .setAdminEmail(hasAdminEmail() ? getAdminEmail() : null);
     }
 
 }
