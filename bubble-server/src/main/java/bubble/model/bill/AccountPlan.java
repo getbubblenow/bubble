@@ -47,7 +47,7 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
     public static final String[] UPDATE_FIELDS = {"description", "paymentMethod", "paymentMethodObject"};
 
     public static final String[] CREATE_FIELDS = ArrayUtil.append(UPDATE_FIELDS,
-            "name", "launchType", "forkHost", "locale", "timezone", "domain", "network",
+            "name", "launchType", "forkHost", "adminEmail", "locale", "timezone", "domain", "network",
             "sshKey", "syncAccount", "launchLock", "sendErrors", "sendMetrics", "plan", "footprint");
 
     @SuppressWarnings("unused")
