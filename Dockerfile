@@ -7,6 +7,8 @@
 #
 #   /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/docker/launcher.sh)"
 #
+# See docs/docker-launcher.md for more information
+#
 FROM phusion/baseimage:focal-1.0.0alpha1-amd64
 MAINTAINER jonathan@getbubblenow.com
 LABEL maintainer="jonathan@getbubblenow.com"
