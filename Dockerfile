@@ -35,7 +35,7 @@ COPY docker/run_redis.sh /etc/service/redis/run
 ### PostgreSQL
 #################
 # trust local postgresql users
-#RUN bash -c "sed -i -e 's/  md5/  trust/g' $(find /etc/postgresql -mindepth 1 -maxdepth 1 -type d | sort | tail -1)/main/pg_hba.conf"
+RUN bash -c "sed -i -e 's/  md5/  trust/g' $(find /etc/postgresql -mindepth 1 -maxdepth 1 -type d | sort | tail -1)/main/pg_hba.conf"
 
 # Create "root" postgres user and bubble database
 RUN bash -c "service postgresql start && sleep 5s && service postgresql status && \
