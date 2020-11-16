@@ -64,7 +64,7 @@ is in the process of being built, and wait until it is ready before trying to us
 ## Sign In to Admin Account
 After performing activation, refresh the web page that opened when the server started. You should see a login page.
 
-You can now login as the admin user using the email address (`name`) and password from your `activation.json` file.
+You can now login as the admin user using the email address and password you set during activation.
 
 ## Launch Time
 Activation is complete! Ready to [launch a Bubble](launch-node.md)?
