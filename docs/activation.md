@@ -30,6 +30,10 @@ To activate your Local Launcher Bubble, run this command:
 
 ## Activation Notes
 
+### Admin Email
+For the initial admin user, choose an email address that only you have access to. Otherwise someone else
+with access to that email could change your password and lock you out of your account. 
+
 ### Required Clouds
 You must define at least one cloud provider for each of these categories:
   * DNS (Amazon Route53 or GoDaddy DNS)
@@ -60,7 +64,7 @@ is in the process of being built, and wait until it is ready before trying to us
 ## Sign In to Admin Account
 After performing activation, refresh the web page that opened when the server started. You should see a login page.
 
-You can now login as the admin user using the email address `root@local.local` and the password from your `activation.json` file.
+You can now login as the admin user using the email address (`name`) and password from your `activation.json` file.
 
 ## Launch Time
 Activation is complete! Ready to [launch a Bubble](launch-node.md)?
