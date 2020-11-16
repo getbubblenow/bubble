@@ -15,11 +15,14 @@
 #
 # The docker tag used will be getbubble/launcher:version
 #
+# If you want to change the "getbubble/launcher" part of the Docker tag, set the BUBBLE_DOCKER_REPO
+# environment variable in your shell environment.
+#
 # When using the 'run' mode, you'll be asked for an email address to associate with any LetsEncrypt
 # certificates that will be created.
 #
 # If you want to run this unattended, set the LETSENCRYPT_EMAIL environment variable
-# in your ~/.bubble.env file.
+# in your ~/.bubble.env file or in your shell environment.
 #
 
 function die {
@@ -37,7 +40,8 @@ VERSION="${2:-$(cat ${META_FILE} | grep bubble.version | awk -F '=' '{print $2}'
 if [[ -z "${VERSION}" ]] ; then
   die "Error determining version from: ${META_FILE}"
 fi
-BUBBLE_TAG="getbubble/launcher:${VERSION}"
+DOCKER_REPO=${BUBBLE_DOCKER_REPO?getbubble/launcher}
+BUBBLE_TAG="${DOCKER_REPO}:${VERSION}"
 
 BUBBLE_ENV="${HOME}/.bubble.env"
 
