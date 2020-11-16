@@ -15,7 +15,10 @@ import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
-import bubble.model.cloud.*;
+import bubble.model.cloud.BubbleNetwork;
+import bubble.model.cloud.BubbleNetworkState;
+import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.BubbleVersionInfo;
 import bubble.model.device.DeviceSecurityLevel;
 import bubble.server.listener.BubbleFirstTimeListener;
 import bubble.service.backup.RestoreService;
@@ -52,7 +55,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.beans.Transient;
-import java.io.*;
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -61,7 +64,6 @@ import static bubble.ApiConstants.*;
 import static bubble.cloud.CloudServiceDriver.CLOUD_DRIVER_PACKAGE;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static bubble.server.BubbleServer.getConfigurationSource;
-import static java.util.Collections.emptyMap;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.handlebars.HandlebarsUtil.registerUtilityHelpers;
 import static org.cobbzilla.util.http.HttpSchemes.SCHEME_HTTPS;
@@ -315,7 +317,13 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                                                                                               String key) {
         final RestServerHarness<BubbleConfiguration, BubbleDbFilterServer> harness = new RestServerHarness<>(BubbleDbFilterServer.class);
         harness.setConfigurationSource(getConfigurationSource());
-        harness.init(emptyMap());
+
+        final HashMap<String, String> env = new HashMap<>();
+        // dbFilterServers never server any real traffic, so this email address will never go anywhere
+        // but it's marked as {{required ..}} in the bubble-config.yml, so we defined it here
+        env.put("LETSENCRYPT_EMAIL", "noreply@example.com");
+        harness.init(env);
+
         final BubbleConfiguration c = harness.getConfiguration();
         c.setSpringContextPath(SPRING_DB_FILTER);
         if (dbName != null) c.getDatabase().setDatabaseName(dbName);
