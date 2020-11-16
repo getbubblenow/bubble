@@ -13,8 +13,9 @@ If you're interested in developing on Bubble, see the [Bubble Developer Guide](d
 Once your Bubble is running, any device can connect to it: Windows, Linux, Mac, iOS, Android;
 if it supports VPN connections, it will probably work just fine.
 
-However, to launch your own Bubble using this software, you will need a Linux machine to run the launcher.
-It *probably* works on MacOS, but it has not been tested and there are likely to be issues. Pull requests are welcome!
+To launch your own Bubble using this software, you will need either:
+ * A system with Docker installed, to run the [Bubble Docker Launcher](docs/docker-launcher.md)
+ * A Mac or Linux system, to run the launcher and/or build from source
 
 ## The Easy Path
 If you'd like to enjoy all the benefits of Bubble without going through this hassle, please try out the Bubble launching
