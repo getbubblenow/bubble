@@ -74,7 +74,7 @@ errorApi:
 
 localNotificationStrategy: {{#exists BUBBLE_LOCAL_NOTIFY}}{{BUBBLE_LOCAL_NOTIFY}}{{else}}inline{{/exists}}
 
-letsencryptEmail: {{LETSENCRYPT_EMAIL}}
+letsencryptEmail: {{#required LETSENCRYPT_EMAIL}}
 localStorageDir: {{LOCALSTORAGE_BASE_DIR}}
 releaseUrlBase: {{#exists BUBBLE_RELEASE_URL_BASE}}{{BUBBLE_RELEASE_URL_BASE}}{{else}}https://jenkins.bubblev.org/public/releases{{/exists}}
 
@@ -91,25 +91,25 @@ rateLimits:
   - { limit: 100000, interval: 6h, block: 96h }
 
 support:
-  email: {{SUPPORT_EMAIL}}
-  site: {{SUPPORT_SITE}}
+  email: {{#exists SUPPORT_EMAIL}}{{{SUPPORT_EMAIL}}}{{else}}support@getbubblenow.com{{/exists}}
+  site: {{#exists SUPPORT_SITE}}{{{SUPPORT_SITE}}}{{else}}https://support.getbubblenow.com/{{/exists}}
   locale:
     en_US:
-      email: {{SUPPORT_EMAIL}}
-      site: {{SUPPORT_SITE}}
+      email: {{#exists SUPPORT_EMAIL}}{{{SUPPORT_EMAIL}}}{{else}}support@getbubblenow.com{{/exists}}
+      site: {{#exists SUPPORT_SITE}}{{{SUPPORT_SITE}}}{{else}}https://support.getbubblenow.com/{{/exists}}
 
 appLinks:
-  ios: {{APP_LINK_IOS}}
-  android: {{APP_LINK_ANDROID}}
-  windows: {{APP_LINK_WINDOWS}}
-  macosx: {{APP_LINK_MACOSX}}
-  linux: {{APP_LINK_LINUX}}
+  ios: {{#exists APP_LINK_IOS}}{{{APP_LINK_IOS}}}{{else}}https://support.getbubblenow.com/hc/en-us/articles/360051573613-Connect-an-Apple-iOS-device-to-your-Bubble{{/exists}}
+  android: {{#exists APP_LINK_ANDROID}}{{{APP_LINK_ANDROID}}}{{else}}https://support.getbubblenow.com/hc/en-us/articles/360050800074-Connect-an-Android-device-to-your-Bubble{{/exists}}
+  windows: {{#exists APP_LINK_WINDOWS}}{{{APP_LINK_WINDOWS}}}{{else}}https://support.getbubblenow.com/hc/en-us/articles/360051349493-Connect-a-Windows-system-to-your-Bubble{{/exists}}
+  macosx: {{#exists APP_LINK_MACOSX}}{{{APP_LINK_MACOSX}}}{{else}}https://support.getbubblenow.com/hc/en-us/articles/360051573753-Connect-an-Apple-Mac-OS-X-system-to-your-Bubble{{/exists}}
+  linux: {{#exists APP_LINK_LINUX}}{{{APP_LINK_LINUX}}}{{else}}https://support.getbubblenow.com/hc/en-us/articles/360050799434-Connect-a-Linux-system-to-your-Bubble{{/exists}}
   locale:
     en_US:
-      ios: {{APP_LINK_IOS}}
-      android: {{APP_LINK_ANDROID}}
-      windows: {{APP_LINK_WINDOWS}}
-      macosx: {{APP_LINK_MACOSX}}
-      linux: {{APP_LINK_LINUX}}
+      ios: {{#exists APP_LINK_IOS}}{{{APP_LINK_IOS}}}{{else}}https://support.getbubblenow.com/hc/en-us/articles/360051573613-Connect-an-Apple-iOS-device-to-your-Bubble{{/exists}}
+      android: {{#exists APP_LINK_ANDROID}}{{{APP_LINK_ANDROID}}}{{else}}https://support.getbubblenow.com/hc/en-us/articles/360050800074-Connect-an-Android-device-to-your-Bubble{{/exists}}
+      windows: {{#exists APP_LINK_WINDOWS}}{{{APP_LINK_WINDOWS}}}{{else}}https://support.getbubblenow.com/hc/en-us/articles/360051349493-Connect-a-Windows-system-to-your-Bubble{{/exists}}
+      macosx: {{#exists APP_LINK_MACOSX}}{{{APP_LINK_MACOSX}}}{{else}}https://support.getbubblenow.com/hc/en-us/articles/360051573753-Connect-an-Apple-Mac-OS-X-system-to-your-Bubble{{/exists}}
+      linux: {{#exists APP_LINK_LINUX}}{{{APP_LINK_LINUX}}}{{else}}https://support.getbubblenow.com/hc/en-us/articles/360050799434-Connect-a-Linux-system-to-your-Bubble{{/exists}}
 
-certificateValidationHost: {{CERT_VALIDATION_HOST}}
+certificateValidationHost: {{#exists CERT_VALIDATION_HOST}}{{CERT_VALIDATION_HOST}}{{else}}example.com{{/exists}}

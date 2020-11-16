@@ -11,6 +11,10 @@
 #   - pull bubble launcher docker image
 #   - run bubble launcher docker image
 #
+# You'll be asked for an email address to associate with any LetsEncrypt certificates that will be created.
+#
+# If you want to run this unattended, set the LETSENCRYPT_EMAIL environment variable.
+#
 # Upon successful startup, the bubble launcher will be listening on port 8090
 #
 # Open http://127.0.0.1:8090/ in a web browser to continue with activation.
@@ -146,8 +150,17 @@ Then re-run this script
   # Pull bubble docker image
   docker pull ${BUBBLE_TAG} || die "Error pulling docker image: ${BUBBLE_TAG}"
 
+  # Determine email for LetsEncrypt certs
+  if [[ -z "${LETSENCRYPT_EMAIL}" ]] ; then
+    echo ; echo -n "Email address for LetsEncrypt certificates: "
+    read -r LETSENCRYPT_EMAIL
+  fi
+
   # Run bubble docker image
-  docker run -p 8090:8090 -t ${BUBBLE_TAG}
+  docker run \
+    -p 8090:8090 \
+    -e LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL}" \
+    -t ${BUBBLE_TAG}
 }
 
 run_launcher
