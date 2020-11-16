@@ -4,7 +4,6 @@
  */
 package bubble.server.listener;
 
-import bubble.ApiConstants;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
@@ -20,7 +19,6 @@ import bubble.service.stream.AppDataCleaner;
 import bubble.service.stream.AppPrimerService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.io.FileUtil;
-import org.cobbzilla.util.security.RsaKeyPair;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
 
@@ -47,6 +45,11 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
 
         // special file to enable PBKDF2 in RSA for older releases
         ENABLE_PBKDF2.set(enablePBKDF2());
+
+        // ensure letsEncryptEmail is defined or refuse to start
+        if (empty(c.getLetsencryptEmail())) {
+            die("beforeStart: letsencryptEmail was not defined\nConsider adding LETSENCRYPT_EMAIL=someone@example.com to your Bubble env file");
+        }
 
         // ensure we can reference our own jar file
         final File bubbleJar = c.getBubbleJar();
