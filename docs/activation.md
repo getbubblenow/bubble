@@ -30,13 +30,6 @@ To activate your Local Launcher Bubble, run this command:
 
 ## Activation Notes
 
-### Admin User Name
-Do not change the name of the initial admin user, or some things might not work correctly. 
- * For web-based activation, this is the `Username` field near the top.
- * For JSON-based activation, this is the `name` JSON element.
-
-The username of the initial admin user should always be `root`.
-
 ### Required Clouds
 You must define at least one cloud provider for each of these categories:
   * DNS (Amazon Route53 or GoDaddy DNS)
@@ -53,7 +46,18 @@ The DNS provider for this domain must be specified.
  * For web-based activation, this is the `DNS for this Domain` field at the bottom.
  * For JSON-based activation, this is the `domain.publicDns` JSON element.
 
-## After Activating
+## Behind the Scenes
+In the background, the Bubble launcher is building packer images for the compute cloud(s) defined during activation.
+
+This process usually takes about 20 minutes but can take up to an hour, depending on how many compute clouds you have
+and how fast the internet is.
+
+[Learn more about Packer images](packer.md).
+
+## Sign In to Admin Account
 After performing activation, refresh the web page that opened when the server started. You should see a login page.
 
 You can now login as the admin user using the email address `root@local.local` and the password from your `activation.json` file.
+
+## Launch Time
+Activation is complete! Ready to [launch a Bubble](launch-node.md)?
