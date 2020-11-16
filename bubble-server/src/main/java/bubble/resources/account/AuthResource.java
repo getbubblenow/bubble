@@ -345,6 +345,12 @@ public class AuthResource {
                 promoEx = e;
             }
         }
+        // When running locally and not in test mode, mark sole contact as verified
+        // It will be automatically verified in AccountInitializer.
+        if (configuration.getThisNetwork().local() && !configuration.testMode()) {
+            final AccountContact firstContact = account.getPolicy().getAccountContacts()[0];
+            account.getPolicy().verifyContact(firstContact.getUuid());
+        }
         account.getAccountInitializer().setCanSendAccountMessages();
         return ok(newLoginSession(account
                 .waitForAccountInit()

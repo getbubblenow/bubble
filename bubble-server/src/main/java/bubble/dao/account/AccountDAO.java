@@ -170,7 +170,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         }
 
         if (account.hasParent()) {
-            final AccountInitializer init = new AccountInitializer(account, this, policyDAO, messageDAO, selfNodeService);
+            final AccountInitializer init = new AccountInitializer(account, this, policyDAO, messageDAO, selfNodeService, configuration);
             account.setAccountInitializer(init);
             daemon(init);
         }
