@@ -74,7 +74,7 @@ errorApi:
 
 localNotificationStrategy: {{#exists BUBBLE_LOCAL_NOTIFY}}{{BUBBLE_LOCAL_NOTIFY}}{{else}}inline{{/exists}}
 
-letsencryptEmail: {{#required LETSENCRYPT_EMAIL}}
+letsencryptEmail: {{required LETSENCRYPT_EMAIL}}
 localStorageDir: {{LOCALSTORAGE_BASE_DIR}}
 releaseUrlBase: {{#exists BUBBLE_RELEASE_URL_BASE}}{{BUBBLE_RELEASE_URL_BASE}}{{else}}https://jenkins.bubblev.org/public/releases{{/exists}}
 
