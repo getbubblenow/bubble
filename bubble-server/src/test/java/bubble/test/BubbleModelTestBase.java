@@ -127,7 +127,7 @@ public abstract class BubbleModelTestBase extends ApiModelTestBase<BubbleConfigu
         return runner;
     }
 
-    @Getter private StreamConfigurationSource configurationSource
+    @Getter private final StreamConfigurationSource configurationSource
             = new StreamConfigurationSource("test-bubble-config.yml");
 
     @Override protected Map<String, String> getServerEnvironment() {
