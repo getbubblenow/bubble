@@ -78,7 +78,8 @@ if [[ "${BUBBLE_API}" == "local" ]] ; then
   if [[ -z "${BUBBLE_PORT}" ]] ; then
     BUBBLE_PORT="$(cat ${BUBBLE_ENV} | egrep -v '\s*#' | grep BUBBLE_SERVER_PORT | awk -F '=' '{print $NF}' | tr -d "'" | tr -d '"')"
     if [[ -z "${BUBBLE_PORT}" ]] ; then
-      die "Error reading BUBBLE_SERVER_PORT from ${BUBBLE_ENV}"
+      echo "Error reading BUBBLE_SERVER_PORT from ${BUBBLE_ENV} (using default 8090)"
+      BUBBLE_PORT=8090
     fi
   fi
   BUBBLE_API="http://127.0.0.1:${BUBBLE_PORT}/api"
