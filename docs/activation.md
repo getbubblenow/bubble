@@ -52,6 +52,9 @@ In the background, the Bubble launcher is building packer images for the compute
 This process usually takes about 20 minutes but can take up to an hour, depending on how many compute clouds you have
 and how fast the internet is.
 
+If you try to launch a Bubble before the required packer image is ready, your Bubble launcher will detect that the image
+is in the process of being built, and wait until it is ready before trying to use them.
+
 [Learn more about Packer images](packer.md).
 
 ## Sign In to Admin Account

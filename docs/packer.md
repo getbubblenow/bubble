@@ -28,7 +28,7 @@ To set the Launch Type: on the Bubble launch screen, click the "Launch with Adva
 When using the API, set the `launchType` property in the JSON request that creates the Bubble. 
 
 ## Launching a Bubble while Packer Images are Building
-If you try to launch a Bubble before the required packer image is ready, your Bubble launch will detect that the image
+If you try to launch a Bubble before the required packer image is ready, your Bubble launcher will detect that the image
 is in the process of being built, and wait until it is ready before trying to use them.
 
 ## Image Validity
