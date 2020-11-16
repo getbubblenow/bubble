@@ -21,6 +21,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.annotation.Nullable;
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -123,7 +124,9 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
     }
 
     public List<CloudService> findByFirstAdminAndType(CloudServiceType csType) {
-        return findByFields("account", accountDAO.getFirstAdmin().getUuid(), "type", csType, "enabled", true);
+        final Account firstAdmin = accountDAO.getFirstAdmin();
+        if (firstAdmin == null) return new ArrayList<>();
+        return findByFields("account", firstAdmin.getUuid(), "type", csType, "enabled", true);
     }
 
     public boolean adminHasType(CloudServiceType csType) {
