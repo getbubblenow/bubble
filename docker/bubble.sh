@@ -40,7 +40,10 @@ VERSION="${2:-$(cat ${META_FILE} | grep bubble.version | awk -F '=' '{print $2}'
 if [[ -z "${VERSION}" ]] ; then
   die "Error determining version from: ${META_FILE}"
 fi
-DOCKER_REPO=${BUBBLE_DOCKER_REPO?getbubble/launcher}
+DOCKER_REPO="getbubble/launcher"
+if [[ ! -z "${BUBBLE_DOCKER_REPO}" ]] ; then
+  DOCKER_REPO="${BUBBLE_DOCKER_REPO}"
+fi
 BUBBLE_TAG="${DOCKER_REPO}:${VERSION}"
 
 BUBBLE_ENV="${HOME}/.bubble.env"
