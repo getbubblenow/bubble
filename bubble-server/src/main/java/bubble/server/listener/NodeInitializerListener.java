@@ -43,7 +43,7 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
     @Override public void beforeStart(RestServer server) {
         final BubbleConfiguration c = (BubbleConfiguration) server.getConfiguration();
 
-        // special file to enable PBKDF2 in RSA for older releases
+        // special file to enable PBKDF2 in RSA for older bubble releases
         ENABLE_PBKDF2.set(enablePBKDF2());
 
         // ensure letsEncryptEmail is defined or refuse to start
