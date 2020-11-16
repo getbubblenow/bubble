@@ -13,10 +13,7 @@ import bubble.model.account.Account;
 import bubble.model.account.AccountPolicy;
 import bubble.model.account.message.ActionTarget;
 import bubble.model.bill.AccountPlan;
-import bubble.model.cloud.BubbleDomain;
-import bubble.model.cloud.BubbleNetwork;
-import bubble.model.cloud.BubbleNode;
-import bubble.model.cloud.NetLocation;
+import bubble.model.cloud.*;
 import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.cloud.NodeLaunchMonitor;
@@ -152,18 +149,16 @@ public class NetworkActionsResource {
         return ok(networkService.restoreNetwork(network, cloud, region, exactRegion, req));
     }
 
-    @PUT @Path(EP_FORK +"/{fqdn}")
+    @PUT @Path(EP_FORK)
     public Response fork(@Context Request req,
                          @Context ContainerRequest ctx,
-                         @PathParam("fqdn") String fqdn,
-                         @QueryParam("cloud") String cloud,
-                         @QueryParam("region") String region,
-                         @QueryParam("exactRegion") Boolean exactRegion) {
+                         ForkRequest forkRequest) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();
 
         authenticatorService.ensureAuthenticated(ctx, ActionTarget.network);
 
+        final String fqdn = forkRequest.getFqdn();
         final BubbleDomain domain = domainDAO.findByFqdn(fqdn);
         if (domain == null) return invalid("err.fqdn.domain.invalid", "domain not found for "+fqdn, fqdn);
 
@@ -179,20 +174,25 @@ public class NetworkActionsResource {
         network.setTag(TAG_ALLOW_REGISTRATION, configuration.getThisNetwork().getBooleanTag(TAG_ALLOW_REGISTRATION, false));
         networkDAO.update(network);
 
-        if (cloud == null) {
-            cloud = configuration.getThisNode().getCloud();
+        if (forkRequest.getCloud() == null) {
+            forkRequest.setCloud(configuration.getThisNode().getCloud());
         }
-        if (region == null) {
+        if (forkRequest.getRegion() == null) {
             // todo: choose region that is closest to the caller's IP, but is not the same region
-            region = configuration.getThisNode().getRegion();
+            forkRequest.setRegion(configuration.getThisNode().getRegion());
         }
 
         final AccountPlan accountPlan = accountPlanDAO.findByAccountAndId(caller.getUuid(), network.getName());
         if (accountPlan == null) return invalid("err.fqdn.plan.invalid", "no plan found for network "+network.getName(), network.getName());
 
         network.setForkHost(network.hostFromFqdn(fqdn));
+        network.setAdminEmail(forkRequest.getAdminEmail());
 
-        return _startNetwork(network, cloud, region, exactRegion, req);
+        return _startNetwork(network,
+                forkRequest.getCloud(),
+                forkRequest.getRegion(),
+                forkRequest.getExactRegion(),
+                req);
     }
 
     public Response _startNetwork(BubbleNetwork network,

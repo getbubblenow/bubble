@@ -83,8 +83,14 @@
   {
     "comment": "fork the system; sets up the first node, which does the rest",
     "request": {
-      "uri": "me/networks/<<network>>/actions/fork/<<forkHost>>.<<network>>.<<domain>>?cloud=<<urlEncode compute>>&region=<<urlEncode region>>",
-      "method": "put"
+      "uri": "me/networks/<<network>>/actions/fork",
+      "method": "put",
+      "entity": {
+        "fqdn": "<<forkHost>>.<<network>>.<<domain>>",
+        "adminEmail": "<<email>>",
+        "cloud": "<<compute>>",
+        "region": "<<region>>"
+      }
     },
     "response": {
       "store": "<<networkVar>>"
