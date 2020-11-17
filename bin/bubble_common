@@ -73,6 +73,19 @@ elif [[ ! -f "${BUBBLE_SCRIPTS}/run.sh" ]] ; then
   die "run.sh script not found in BUBBLE_SCRIPTS dir (${BUBBLE_SCRIPTS})"
 fi
 
+# If BUBBLE_API is defined, we may have cached credentials
+if [[ ! -z "${BUBBLE_API}" ]] ; then
+  if [[ -z "${BUBBLE_DISABLE_AUTH_CACHE}" || "${BUBBLE_DISABLE_AUTH_CACHE}" == "false" ]] ; then
+    API_HOST="$(echo -n "${BUBBLE_API}" | awk -F '/' '{print $3}')"
+    USER_FILE="${HOME}/.bubble_auth/${API_HOST}/user"
+    PASS_FILE="${HOME}/.bubble_auth/${API_HOST}/pass"
+    if [[ -f ${USER_FILE} && -f ${PASS_FILE} ]] ; then
+      BUBBLE_USER="$(cat "${USER_FILE}" | tr -d '[:space:]')"
+      BUBBLE_PASS="$(cat "${PASS_FILE}" | tr -d '[:space:]')"
+    fi
+  fi
+fi
+
 if [[ -z "${BUBBLE_PASS}" ]] ; then
   if [[ ! -z "${REQUIRE_BUBBLE_PASS}" ]] ; then
     die "No BUBBLE_PASS env var defined"
