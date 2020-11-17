@@ -4,17 +4,21 @@
  */
 package bubble.dao.account;
 
+import bubble.model.account.Account;
 import bubble.model.account.AccountPolicy;
 import bubble.service.account.SyncAccountService;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 import static bubble.model.account.AccountDeletionPolicy.full_delete;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
-@Repository
+@Repository @Slf4j
 public class AccountPolicyDAO extends AccountOwnedEntityDAO<AccountPolicy> {
 
     @Override protected String getNameField() { return "account"; }
@@ -47,7 +51,7 @@ public class AccountPolicyDAO extends AccountOwnedEntityDAO<AccountPolicy> {
     }
 
     public AccountPolicy findSingleByAccount(String accountUuid) {
-        final var found = findByAccount(accountUuid);
+        final List<AccountPolicy> found = findByAccount(accountUuid);
         if (found.size() == 1) return found.get(0);
 
         if (found.size() > 1) {
@@ -56,8 +60,12 @@ public class AccountPolicyDAO extends AccountOwnedEntityDAO<AccountPolicy> {
 
         // If there's no policy, create one. Note that is account is marked as deleted, the new policy will be with full
         // deletion set in.
-        final var newPolicy = new AccountPolicy().setAccount(accountUuid);
-        final var account = getConfiguration().getBean(AccountDAO.class).findById(accountUuid);
+        final AccountPolicy newPolicy = new AccountPolicy().setAccount(accountUuid);
+        final Account account = getConfiguration().getBean(AccountDAO.class).findById(accountUuid);
+        if (account == null) {
+            log.warn("findSingleByAccount: account not found: "+accountUuid);
+            return null;
+        }
         if (account.deleted()) newPolicy.setDeletionPolicy(full_delete);
         return create(newPolicy);
     }

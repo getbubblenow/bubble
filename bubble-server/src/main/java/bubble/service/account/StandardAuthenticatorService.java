@@ -74,7 +74,7 @@ public class StandardAuthenticatorService implements AuthenticatorService {
     }
 
     public void ensureAuthenticated(Account account, AccountPolicy policy, ActionTarget target) {
-        if (policy == null || !policy.hasVerifiedAuthenticator()) return;
+        if (account == null || policy == null || !policy.hasVerifiedAuthenticator()) return;
         if (target != null) {
             final AccountContact authenticator = policy.getAuthenticator();
             if (authenticator == null) {
