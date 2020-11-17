@@ -9,6 +9,18 @@ function log {
   echo "$(date): ${1}" | tee -a ${LOG}
 }
 
+function log_dhparam {
+  if [[ -f "${DH_PARAMS}" ]] ; then
+    if [[ -s "${DH_PARAMS}" ]] ; then
+      cat ${DH_PARAMS} | tee -a ${LOG}
+    else
+      echo "(${DH_PARAMS} file exists but is empty)" | tee -a ${LOG}
+    fi
+  else
+    echo "(${DH_PARAMS} file does not exist)" | tee -a ${LOG}
+  fi
+}
+
 rval=255
 start=$(date +%s)
 TIMEOUT=600  # 10 minute timeout
@@ -18,12 +30,12 @@ while [[ $(expr $(date +%s) - ${start}) -le ${TIMEOUT} ]] ; do
 
   if [[ -s ${DH_PARAMS} && $(grep -c "BEGIN DH PARAMETERS" ${DH_PARAMS}) -gt 0 ]] ; then
     log "BEGIN-PRE-SUCCESS: ${DH_PARAMS} is already OK:"
-    cat ${DH_PARAMS} >> ${LOG}
+    log_dhparam
     log "END-PRE-SUCCESS"
     exit 0
   else
     log "BEGIN-PRE-FAILURE: ${DH_PARAMS} is NOT OK:"
-    cat ${DH_PARAMS} >> ${LOG}
+    log_dhparam
     log "END-PRE-FAILURE"
   fi
 
@@ -33,29 +45,29 @@ while [[ $(expr $(date +%s) - ${start}) -le ${TIMEOUT} ]] ; do
     log "END-RUNNING: openssl dhparam -out ${DH_PARAMS} 2048 ..."
     rval=$?
     log "BEGIN-RUNNING-COMPLETED: openssl dhparam -out ${DH_PARAMS} 2048 returned exit status ${rval} with contents: "
-    cat ${DH_PARAMS} >> ${LOG}
+    log_dhparam
     log "END-RUNNING-COMPLETED"
 
     HEADER_COUNT=$(grep -c "BEGIN DH PARAMETERS" ${DH_PARAMS})
     if [[ ${rval} -eq 0 && -s ${DH_PARAMS} && $(cat ${DH_PARAMS} | tr -d '\n' | tr -d '[[:blank:]]' | wc -c) -gt 100 && ${HEADER_COUNT} -gt 0 ]] ; then
       log "BEGIN-SUCCESS: created ${DH_PARAMS}: "
-      cat ${DH_PARAMS} >> ${LOG}
+      log_dhparam
       log "END-SUCCESS (will recheck)"
     fi
 
     if [[ ${rval} -ne 0 ]] ; then
       log "BEGIN-ERROR: command 'openssl dhparam -out ${DH_PARAMS} 2048' returned ${rval}, retrying. dhparams="
-      cat ${DH_PARAMS} >> ${LOG}
+      log_dhparam
       log "END-ERROR"
 
     elif [[ ! -s ${DH_PARAMS} || $(cat ${DH_PARAMS} | tr -d '\n' | tr -d '[[:blank:]]' | wc -c) -le 100 ]] ; then
       log "BEGIN-ERROR: command 'openssl dhparam -out ${DH_PARAMS} 2048' returned ${rval} and produced empty (or short) file, retrying. dhparams="
-      cat ${DH_PARAMS} >> ${LOG}
+      log_dhparam
       log "END-ERROR"
 
     elif [[ ${HEADER_COUNT} -le 0 ]] ; then
       log "BEGIN-ERROR: command 'openssl dhparam -out ${DH_PARAMS} 2048' returned ${rval} and produced invalid file, retrying. dhparams="
-      cat ${DH_PARAMS} >> ${LOG}
+      log_dhparam
       log "END-ERROR"
     fi
   fi
@@ -65,7 +77,7 @@ while [[ $(expr $(date +%s) - ${start}) -le ${TIMEOUT} ]] ; do
 done
 
 log "BEGIN-TIMEOUT: failed to create ${DH_PARAMS} dhparams="
-cat ${DH_PARAMS} >> ${LOG}
+log_dhparam
 log "END-TIMEOUT"
 
 exit 1
