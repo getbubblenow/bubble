@@ -18,8 +18,9 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import static bubble.resources.cloud.PackerResource.packerNotAllowedForUser;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.cobbzilla.wizard.resources.ResourceUtil.ok;
+import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -39,6 +40,7 @@ public class ComputePackerResource {
     @GET
     public Response listImages(@Context Request req,
                                @Context ContainerRequest ctx) {
+        if (packerNotAllowedForUser(ctx)) return forbidden();
         final ComputeServiceDriver driver = cloud.getComputeDriver(configuration);
         return ok(driver.getAllPackerImages());
     }
@@ -47,6 +49,7 @@ public class ComputePackerResource {
     public Response writeImages(@Context Request req,
                                 @Context ContainerRequest ctx,
                                 @PathParam("type") AnsibleInstallType installType) {
+        if (packerNotAllowedForUser(ctx)) return forbidden();
         packer.writePackerImages(cloud, installType, null);
         return ok();
     }

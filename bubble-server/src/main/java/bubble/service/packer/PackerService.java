@@ -68,7 +68,10 @@ public class PackerService {
     }
 
     public static String cacheKey(CloudService cloud, AnsibleInstallType installType) {
-        return cloud.getUuid()+"_"+installType;
+        // note: only cloud.uuid and installType are needed for uniqueness in the cache key
+        // we add the account uuid so we can filter completed jobs based on account
+        // we add the cloud name so to make the key human-readable
+        return cloud.getAccount()+"_"+cloud.getUuid()+"_"+cloud.getName()+"_"+installType;
     }
 
     public void recordJobCompleted(PackerJob job) {
@@ -81,6 +84,22 @@ public class PackerService {
     public void recordJobError(PackerJob job, Exception e) {
         log.error("recordJobError: "+shortError(e), e);
         activeJobs.remove(job.cacheKey());
+    }
+
+    public List<PackerJobSummary> getActiveSummary(String accountUuid) {
+        synchronized (activeJobs) {
+            return activeJobs.values().stream()
+                    .filter(j -> j.getCloud().getAccount().equals(accountUuid))
+                    .map(PackerJobSummary::new)
+                    .collect(Collectors.toList());
+        }
+    }
+
+    public Map<String, List<PackerImage>> getCompletedSummary(String accountUuid) {
+        return completedJobs.entrySet()
+                .stream()
+                .filter(entry -> entry.getKey().contains(accountUuid))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     public File getPackerPublicKey () { return initPackerKey(true); }

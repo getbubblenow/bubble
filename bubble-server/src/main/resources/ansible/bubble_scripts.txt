@@ -21,3 +21,5 @@ rmembers
 rdelkeys
 mitm_pid
 reset_bubble_logs
+pack_bubble
+pack_status

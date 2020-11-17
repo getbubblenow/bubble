@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+# Display active and completed packer jobs
+#
+# Usage:
+#
+#   pack_status [running|completed]
+#
+# If the first argument is 'running' then only the status of running jobs will be shown
+# If the first argument is 'completed' then only the status of completed jobs will be shown
+#
+# Based on your BUBBLE_USER, BUBBLE_PASS and BUBBLE_API environment variables, this command will
+# use the bubble API to display the current status of the PackerService
+#
+# It returns a JSON object in the form:
+# {
+#   "running": [
+#     {...job1...},
+#     {...job2...},
+#     ...
+#   ],
+#   "completed": {
+#     "cloud_key1": [ {...image1...}, {...image2...}, ... ],
+#     "cloud_key2": [ {...image1...}, {...image2...}, ... ],
+#     ...
+#   }
+# }
+#
+# In the above, "running" is an array of job summary objects
+# and "completed" is a key/value map where they key indicates a cloud,
+# and the value is an array of packer images that have completed
+#
+# If you pass the 'running' argument, only the array of running jobs will be printed
+# If you pass the 'completed' argument, only the map of cloud->image[] will be printed
+#
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/bubble_common
+
+if [[ -z "${1}" ]] ; then
+  bget me/packer
+elif [[ "${1}" == "running" ]] ; then
+  bget me/packer/running
+elif [[ "${1}" == "completed" ]] ; then
+  bget me/packer/completed
+else
+  echo "Unrecognized argument ${1}, expected 'running' or 'completed' (or nothing)"
+  exit 1
+fi

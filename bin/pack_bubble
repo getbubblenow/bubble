@@ -4,11 +4,13 @@
 #
 # Create packer images for sage and/or node
 #
-# Usage:  pack_bubble [-node|-sage] [-cloud CloudName]
+# Usage:
 #
-#   -node             : only pack the node image, do not pack the sage
-#   -sage             : only pack the sage image, do not pack the node
-#   -cloud CloudName  : only pack for CloudName compute cloud, do not pack for all clouds
+#   pack_bubble [node|sage] [cloud CloudName]
+#
+#   node             : only pack the node image, do not pack the sage
+#   sage             : only pack the sage image, do not pack the node
+#   cloud CloudName  : only pack for CloudName compute cloud, do not pack for all clouds
 #
 SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
@@ -16,10 +18,10 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 
 if [[ -z "${1}" ]] ; then
   IMAGES="node sage"
-elif [[ "${1}" == "-node" ]] ; then
+elif [[ "${1}" == "node" ]] ; then
   IMAGES="node"
   shift
-elif [[ "${1}" == "-sage" ]] ; then
+elif [[ "${1}" == "sage" ]] ; then
   IMAGES="sage"
   shift
 fi
@@ -31,7 +33,7 @@ if [[ -z "${1}" ]] ; then
     die "Error reading compute cloud names from ${CLOUDS_URL}"
   fi
 
-elif [[ "${1}" == "-cloud" ]] ; then
+elif [[ "${1}" == "cloud" ]] ; then
   CLOUDS="${2}"
   if [[ -z "${CLOUDS}" ]] ; then
     die "No cloud name specified after -cloud"

@@ -24,7 +24,7 @@ public class AccountPromotionsResource {
 
     @Autowired private PromotionService promoService;
 
-    private Account account;
+    private final Account account;
 
     public AccountPromotionsResource (Account account) { this.account = account; }
 

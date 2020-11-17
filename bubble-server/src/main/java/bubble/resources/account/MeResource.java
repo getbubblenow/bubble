@@ -29,7 +29,6 @@ import bubble.service.account.StandardAccountMessageService;
 import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.BubbleModelSetupService;
-import bubble.service.boot.SageHelloService;
 import bubble.service.boot.StandardSelfNodeService;
 import bubble.service.cloud.NodeLaunchMonitor;
 import bubble.service.upgrade.BubbleJarUpgradeService;
@@ -396,6 +395,13 @@ public class MeResource {
                                        @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return ok(launchMonitor.listLaunchStatuses(caller.getUuid()));
+    }
+
+    @Path(EP_PACKER)
+    public PackerResource getPackerResource(@Context Request req,
+                                            @Context ContainerRequest ctx) {
+        final Account caller = userPrincipal(ctx);
+        return configuration.subResource(PackerResource.class, caller);
     }
 
     @Path(EP_PROMOTIONS)

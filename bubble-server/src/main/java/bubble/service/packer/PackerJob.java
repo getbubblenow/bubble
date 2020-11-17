@@ -4,7 +4,6 @@
  */
 package bubble.service.packer;
 
-import bubble.ApiConstants;
 import bubble.cloud.CloudRegion;
 import bubble.cloud.CloudRegionRelative;
 import bubble.cloud.compute.ComputeConfig;
@@ -38,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -92,6 +92,13 @@ public class PackerJob implements Callable<List<PackerImage>> {
     @Getter private final AnsibleInstallType installType;
     @Getter private final List<AtomicReference<List<PackerImage>>> imagesRefList = new ArrayList<>();
     @Getter private List<PackerImage> images = new ArrayList<>();
+    @Getter private final long ctime = now();
+
+    private final AtomicLong completedAt = new AtomicLong(0);
+    public Long getCompletedAt() {
+        long t = completedAt.get();
+        return t == 0 ? null : t;
+    }
 
     public PackerJob(CloudService cloud, AnsibleInstallType installType) {
         this.cloud = cloud;
@@ -121,10 +128,12 @@ public class PackerJob implements Callable<List<PackerImage>> {
     @Override public List<PackerImage> call() throws Exception {
         try {
             final List<PackerImage> images = _call();
+            completedAt.set(now());
             packerService.recordJobCompleted(this);
             return images;
 
         } catch (Exception e) {
+            completedAt.set(now());
             packerService.recordJobError(this, e);
             throw e;
         }
