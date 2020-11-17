@@ -125,5 +125,46 @@ else
   BUBBLE_CP="${BUBBLE_JAR}:${BUBBLE_ADDITIONAL_CLASSPATH}"
 fi
 
+# If BUBBLE_API is defined, we may have cached credentials
+BUBBLE_AUTH="${HOME}/.bubble_auth"
+if [[ ! -z "${BUBBLE_API}" && -d "${BUBBLE_AUTH}" ]] ; then
+  if [[ -z "${BUBBLE_DISABLE_AUTH_CACHE}" || "${BUBBLE_DISABLE_AUTH_CACHE}" == "false" ]] ; then
+    API_HOST="$(echo -n "${BUBBLE_API}" | awk -F '/' '{print $3}')"
+    AUTH_DIR="${BUBBLE_AUTH}/${API_HOST}"
+    USER_FILE="${AUTH_DIR}/user"
+    PASS_FILE="${AUTH_DIR}/pass"
+
+    if [[ ! -z "${BUBBLE_USER}" && -f "${AUTH_DIR}/${BUBBLE_USER}" ]] ; then
+      echo "in $0 - Using cached password for user ${BUBBLE_USER} from ${AUTH_DIR}/${BUBBLE_USER} (set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior)"
+      BUBBLE_PASS="$(cat "${AUTH_DIR}/${BUBBLE_USER}" | tr -d '[:space:]')"
+
+    elif [[ -f ${USER_FILE} && -f ${PASS_FILE} ]] ; then
+      echo "Using cached user/pass from ${USER_FILE} and ${PASS_FILE} (set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior)"
+      BUBBLE_USER="$(cat "${USER_FILE}" | tr -d '[:space:]')"
+      BUBBLE_PASS="$(cat "${PASS_FILE}" | tr -d '[:space:]')"
+    else
+      echo ".... no auth files found: user and pass = ${USER_FILE} and ${PASS_FILE}"
+    fi
+  fi
+else
+  echo ".... no auth in $0"
+fi
+
+# Default password if none set
+if [[ -z "${BUBBLE_PASS}" ]] ; then
+  if [[ ! -z "${REQUIRE_BUBBLE_PASS}" ]] ; then
+    die "No BUBBLE_PASS env var defined"
+  fi
+  BUBBLE_PASS=password
+fi
+
+# Default user if none set
+if [[ -z "${BUBBLE_USER}" ]] ; then
+  if [[ ! -z "${REQUIRE_BUBBLE_USER}" ]] ; then
+    die "No BUBBLE_USER env var defined"
+  fi
+  BUBBLE_USER=root@local.local
+fi
+
 # Run!
 BUBBLE_JAR="${BUBBLE_JAR}" java ${LOG_CONFIG} ${BUBBLE_JVM_OPTS} ${debug} -server -cp "${BUBBLE_CP}" ${CLASS} ${command} "${@}"

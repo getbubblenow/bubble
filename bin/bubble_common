@@ -77,40 +77,6 @@ elif [[ ! -f "${BUBBLE_SCRIPTS}/run.sh" ]] ; then
   die "run.sh script not found in BUBBLE_SCRIPTS dir (${BUBBLE_SCRIPTS})"
 fi
 
-# If BUBBLE_API is defined, we may have cached credentials
-BUBBLE_AUTH="${HOME}/.bubble_auth"
-if [[ ! -z "${BUBBLE_API}" && -d "${BUBBLE_AUTH}" ]] ; then
-  if [[ -z "${BUBBLE_DISABLE_AUTH_CACHE}" || "${BUBBLE_DISABLE_AUTH_CACHE}" == "false" ]] ; then
-    API_HOST="$(echo -n "${BUBBLE_API}" | awk -F '/' '{print $3}')"
-    AUTH_DIR="${BUBBLE_AUTH}/${API_HOST}"
-    USER_FILE="${AUTH_DIR}/user"
-    PASS_FILE="${AUTH_DIR}/pass"
-
-    if [[ ! -z "${BUBBLE_USER}" && -f ${PASS_FILE} ]] ; then
-      echo "Using cached password from ${AUTH_DIR} (set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior)"
-      BUBBLE_PASS="$(cat "${PASS_FILE}" | tr -d '[:space:]')"
-
-    elif [[ -f ${USER_FILE} && -f ${PASS_FILE} ]] ; then
-      echo "Using cached user/pass from ${AUTH_DIR} (set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior)"
-      BUBBLE_USER="$(cat "${USER_FILE}" | tr -d '[:space:]')"
-      BUBBLE_PASS="$(cat "${PASS_FILE}" | tr -d '[:space:]')"
-    fi
-  fi
-fi
-
-if [[ -z "${BUBBLE_PASS}" ]] ; then
-  if [[ ! -z "${REQUIRE_BUBBLE_PASS}" ]] ; then
-    die "No BUBBLE_PASS env var defined"
-  fi
-  BUBBLE_PASS=password
-fi
-if [[ -z "${BUBBLE_USER}" ]] ; then
-  if [[ ! -z "${REQUIRE_BUBBLE_USER}" ]] ; then
-    die "No BUBBLE_USER env var defined"
-  fi
-  BUBBLE_USER=root
-fi
-
 if [[ -z "${BUBBLE_JAR}" ]] ; then
   if [[ -f "${HOME}/api/bubble.jar" ]] ; then
     BUBBLE_JAR="${HOME}/api/bubble.jar"
