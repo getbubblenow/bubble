@@ -80,7 +80,7 @@
     <logger name="bubble.resources.notify" level="WARN" />
 <!--    <logger name="bubble.resources.notify.InboundNotifyResource" level="TRACE" />-->
     <logger name="bubble.client" level="WARN" />
-    <logger name="bubble.main.rekey" level="DEBUG" />
+    <logger name="bubble.main.rekey" level="INFO" />
     <logger name="bubble" level="INFO" />
 
     <root level="INFO">
