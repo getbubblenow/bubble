@@ -75,3 +75,9 @@ To only see running packer jobs:
 To only see completed packer images:
 
     ./bin/pack_status completed
+
+### Packer Build Status in Logs
+If you're able to view the Bubble API logs, you'll see a line like the one below when a packer
+image has completed processing:
+
+    ... [PackerJob.java:301] packer images created in 00:19:30.0933: [PackerImage(id=ce95fb4371175, name=packer_bubble_node_local_868d2fba8f83ab3591c60b7bade35_d1.1.4.8_a1.1.4.10_m1.1.4.21_1.4.20_20201117153449, regions=null)]

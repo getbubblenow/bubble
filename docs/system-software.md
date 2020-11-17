@@ -25,11 +25,17 @@ For Mac OS X systems, run:
     ./bin/first_time_macosx.sh
 
 ### Other Operating Systems
-If you are running a different OS or distribution, copy `first_time_ubuntu.sh` to something like:
-                                
-    ./bin/first_time_myoperatingsystem.sh
-                                
-Then edit it such that all the same packages get installed.
+The important things to install:
+  * Java 11
+  * PostgreSQL (12 preferred)
+  * Redis
+  * Python 3
+  * Packer
+  * Required tools: curl, jq, uuid, sha256sum, openssl, ssh, scp, rsync, npm, webpack, unzip
 
-Submit a pull request, and we'll add support for your operating system to the main repository.
+Look at the `first_time_ubuntu.sh` script and ensure you've basically done all that it does,
+including creating PostgreSQL users/databases.
 
+If you get Bubble working on another platform and are feeling generous, please create a
+`./bin/first_time_some_new_os.sh` file to capture your work and submit a pull request so
+it can be shared with others.
