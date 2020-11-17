@@ -157,7 +157,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                             .filter(d -> forkHost.equals("." + d.getName()))
                             .findFirst().orElse(null);
                     if (foundDomain == null) {
-                        errors.addViolation("err.forkHost.domain.notFound");
+                        errors.addViolation("err.forkHost.domainNotFound");
                     } else {
                         request.setDomain(foundDomain.getUuid());
                     }
