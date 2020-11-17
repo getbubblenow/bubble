@@ -44,7 +44,7 @@ public class FullEntityIterator extends EntityIterator {
             config.getEntityClasses()
                     .forEach(c -> addEntities(true, c, config.getDaoForEntityClass(c).findAll(ORDER_CTIME_ASC),
                             network, null, null));
-            if (account != null && launchType != null && launchType == LaunchType.fork_node) {
+            if (account != null && network != null && launchType != null && launchType == LaunchType.fork_node) {
                 // add an initial device so that algo starts properly the first time
                 // name and totp key will be overwritten when the device is initialized for use
                 log.info(prefix+"creating a single dummy device for algo to start properly");
