@@ -27,7 +27,8 @@ For Mac OS X systems, run:
 ### Other Operating Systems
 The important things to install:
   * Java 11
-  * PostgreSQL (12 preferred)
+  * Maven 3
+  * PostgreSQL 12
   * Redis
   * Python 3
   * Packer
