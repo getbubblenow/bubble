@@ -135,19 +135,15 @@ if [[ ! -z "${BUBBLE_API}" && -d "${BUBBLE_AUTH}" ]] ; then
     PASS_FILE="${AUTH_DIR}/pass"
 
     if [[ ! -z "${BUBBLE_USER}" && -f "${AUTH_DIR}/${BUBBLE_USER}" ]] ; then
-      echo "in $0 - Using cached password for user ${BUBBLE_USER} from ${AUTH_DIR}/${BUBBLE_USER} (set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior)"
+      echo 1>&2 "Using cached password for user ${BUBBLE_USER} from ${AUTH_DIR}/${BUBBLE_USER} (set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior)"
       BUBBLE_PASS="$(cat "${AUTH_DIR}/${BUBBLE_USER}" | tr -d '[:space:]')"
 
     elif [[ -f ${USER_FILE} && -f ${PASS_FILE} ]] ; then
-      echo "Using cached user/pass from ${USER_FILE} and ${PASS_FILE} (set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior)"
+      echo 1>&2 "Using cached user/pass from ${USER_FILE} and ${PASS_FILE} (set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior)"
       BUBBLE_USER="$(cat "${USER_FILE}" | tr -d '[:space:]')"
       BUBBLE_PASS="$(cat "${PASS_FILE}" | tr -d '[:space:]')"
-    else
-      echo ".... no auth files found: user and pass = ${USER_FILE} and ${PASS_FILE}"
     fi
   fi
-else
-  echo ".... no auth in $0"
 fi
 
 # Default password if none set
