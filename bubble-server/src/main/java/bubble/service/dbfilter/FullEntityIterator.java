@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static bubble.model.device.Device.newUninitializedDevice;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.wizard.dao.AbstractCRUDDAO.ORDER_CTIME_ASC;
 
 @Slf4j
@@ -37,17 +39,23 @@ public class FullEntityIterator extends EntityIterator {
     }
 
     protected void iterate() {
-        config.getEntityClasses()
-              .forEach(c -> addEntities(true, c, config.getDaoForEntityClass(c).findAll(ORDER_CTIME_ASC),
-                                        network, null, null));
-        if (account != null && launchType != null && launchType == LaunchType.fork_node) {
-            // add an initial device so that algo starts properly the first time
-            // name and totp key will be overwritten when the device is initialized for use
-            log.info("iterate: creating a single dummy device for algo to start properly");
-            final var initDevice = newUninitializedDevice(network.getUuid(), account.getUuid());
-            add(config.getBean(DeviceDAO.class).create(initDevice));
+        final String prefix = "iterate(" + (network == null ? "no-network" : network.getUuid()) + "): ";
+        try {
+            config.getEntityClasses()
+                    .forEach(c -> addEntities(true, c, config.getDaoForEntityClass(c).findAll(ORDER_CTIME_ASC),
+                            network, null, null));
+            if (account != null && launchType != null && launchType == LaunchType.fork_node) {
+                // add an initial device so that algo starts properly the first time
+                // name and totp key will be overwritten when the device is initialized for use
+                log.info(prefix+"creating a single dummy device for algo to start properly");
+                final var initDevice = newUninitializedDevice(network.getUuid(), account.getUuid());
+                add(config.getBean(DeviceDAO.class).create(initDevice));
+            }
+            log.debug(prefix+"completed");
+
+        } catch (Exception e) {
+            die(prefix+"error: "+shortError(e), e);
         }
-        log.info("iterate: completed");
     }
 
 }

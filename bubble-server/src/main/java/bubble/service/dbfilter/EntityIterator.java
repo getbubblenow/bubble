@@ -25,6 +25,7 @@ import org.cobbzilla.wizard.model.IdentifiableBase;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -46,6 +47,9 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
     @Getter private final AtomicReference<Exception> error;
     private List<BubbleApp> userApps;
     private final Map<CloudServiceType, CloudService> noopClouds = new HashMap<>();
+
+    private final AtomicBoolean iterating = new AtomicBoolean(false);
+    public boolean iterating () { return iterating.get(); }
 
     public EntityIterator(AtomicReference<Exception> error) {
         this.error = error;
@@ -71,8 +75,16 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
     }
 
     private void _iterate() {
-        iterate();
-        add(END_OF_ENTITY_STREAM);
+        try {
+            iterating.set(true);
+            iterate();
+            add(END_OF_ENTITY_STREAM);
+        } catch (Exception e) {
+            error.set(e);
+            die("_iterate: "+shortError(e), e);
+        } finally {
+            iterating.set(false);
+        }
     }
 
     protected abstract void iterate();

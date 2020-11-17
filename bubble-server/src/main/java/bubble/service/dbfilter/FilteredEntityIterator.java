@@ -71,6 +71,8 @@ public class FilteredEntityIterator extends EntityIterator {
     }
 
     @Override protected void iterate() {
+        final String prefix = "iterate(" + (network == null ? "no-network" : network.getUuid()) + "): ";
+
         // in the new DB, the admin on this system is NOT an admin,
         // and the new/initial user IS the admin
         if (account.hasParent()) {
@@ -83,10 +85,9 @@ public class FilteredEntityIterator extends EntityIterator {
         configuration.getEntityClasses().forEach(c -> {
             final DAO dao = configuration.getDaoForEntityClass(c);
             if (!AccountOwnedEntityDAO.class.isAssignableFrom(dao.getClass())) {
-                log.debug("iterate: skipping entity, not an AccountOwnedEntityDAO: " + c.getSimpleName());
+                log.debug(prefix+"skipping entity, not an AccountOwnedEntityDAO: " + c.getSimpleName());
             } else if (isNotDefaultCopyEntity(c)) {
-                log.debug("iterate: skipping " + c.getSimpleName()
-                          + ", may copy some of these after default objects are copied");
+                log.debug(prefix+"skipping " + c.getSimpleName() + ", may copy some of these after default objects are copied");
             } else {
                 // copy entities. this is how the re-keying works (decrypt using current spring config,
                 // encrypt using new config)
@@ -112,7 +113,7 @@ public class FilteredEntityIterator extends EntityIterator {
 
         // add an initial device so that algo starts properly the first time
         // name and totp key will be overwritten when the device is initialized for use
-        log.info("iterate: creating a single dummy device for algo to start properly");
+        log.debug(prefix+"creating a single dummy device for algo to start properly");
         final var initDevice = newUninitializedDevice(network.getUuid(), account.getUuid());
         add(configuration.getBean(DeviceDAO.class).create(initDevice));
 

@@ -22,6 +22,8 @@ import java.net.Socket;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.IPv4_LOCALHOST;
 
 @Slf4j
@@ -31,8 +33,9 @@ public class RekeyReaderMain extends BaseMain<RekeyOptions> {
 
     @Override protected void run() throws Exception {
 
+        final boolean debugEnabled = log.isDebugEnabled();
         final RekeyOptions options = getOptions();
-        // log.info("run: options=\n"+json(options));
+        if (debugEnabled) out("READER: options="+json(options, COMPACT_MAPPER));
 
         @Cleanup final ServerSocket sock = new ServerSocket(options.getPort(), 10, InetAddress.getByName(IPv4_LOCALHOST));
         out("READER: awaiting connection from WRITER...");
@@ -42,9 +45,11 @@ public class RekeyReaderMain extends BaseMain<RekeyOptions> {
 
         final RestServerHarness<BubbleConfiguration, BubbleDbFilterServer> fromHarness = getOptions().getServer();
         final BubbleConfiguration fromConfig = fromHarness.getConfiguration();
-        final boolean debugEnabled = log.isDebugEnabled();
         final AtomicReference<Exception> error = new AtomicReference<>();
+
+        if (debugEnabled) out("READER: creating entity producer...");
         final Iterator<Identifiable> producer = getEntityProducer(fromConfig, error);
+        if (debugEnabled) out("READER: created entity producer, iterating...");
         while (producer.hasNext()) {
             final Identifiable from = producer.next();
             if (from instanceof EndOfEntityStream) break;

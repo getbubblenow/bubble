@@ -24,6 +24,8 @@ import java.util.HashMap;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
+import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.IPv4_LOCALHOST;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
@@ -36,15 +38,15 @@ public class RekeyWriterMain extends BaseMain<RekeyOptions> {
 
     @Override protected void run() throws Exception {
 
+        final boolean debugEnabled = log.isDebugEnabled();
         final RekeyOptions options = getOptions();
-        // log.info("run: options=\n"+json(options));
+        if (debugEnabled) out("WRITER: options="+json(options, COMPACT_MAPPER));
 
         final RestServerHarness<BubbleConfiguration, BubbleDbFilterServer> toHarness = options.getServer();
         final BubbleConfiguration toConfig = toHarness.getConfiguration();
 
         IdentifiableBase.getEnforceNullUuidOnCreate().set(false);
         AbstractCRUDDAO.getRawMode().set(true);
-        final boolean debugEnabled = log.isDebugEnabled();
         final var daoMap = new HashMap<Class<? extends Identifiable>, DAO>();
 
         while (true) {
@@ -52,6 +54,7 @@ public class RekeyWriterMain extends BaseMain<RekeyOptions> {
                 @Cleanup final Socket clientSocket = new Socket(IPv4_LOCALHOST, options.getPort());
                 @Cleanup BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 String line;
+                if (debugEnabled) out("WRITER: reading first object from reader...");
                 while ((line = inFromServer.readLine()) != null) {
                     if (debugEnabled) out("WRITER<<< received json: " + line);
                     final Identifiable entity = Identifiable.deserialize(line);
