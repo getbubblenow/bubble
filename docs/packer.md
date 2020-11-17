@@ -29,11 +29,11 @@ When using the API, set the `launchType` property in the JSON request that creat
 
 ## Launching a Bubble while Packer Images are Building
 If you try to launch a Bubble before the required packer image is ready, your Bubble launcher will detect that the image
-is in the process of being built, and wait until it is ready before trying to use them.
+is in the process of being built, and wait until it is ready before trying to use it.
 
 ## Image Validity
 The packer images are tied to a specific Bubble version. As long as the Bubble API launcher can find packer images
-that match its version, it will be able to launch Bubbles.
+that match its own version, it will be able to launch Bubbles.
 
 When your Bubble is upgraded, its version changes, so the old packer images are no longer valid.
 
@@ -61,3 +61,17 @@ appropriately for your Bubble. For example:
 
     ./bin/pack_bubble
 
+## Packer Build Status
+When packer images are being built, you can check status with:
+
+    ./bin/pack_status
+
+This will show all running packer jobs, and all completed packer images.
+
+To only see running packer jobs:
+
+    ./bin/pack_status running
+
+To only see completed packer images:
+
+    ./bin/pack_status completed
