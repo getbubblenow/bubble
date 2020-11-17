@@ -24,6 +24,7 @@ import java.util.HashMap;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
+import static org.cobbzilla.util.network.NetworkUtil.IPv4_LOCALHOST;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
 @Slf4j
@@ -48,7 +49,7 @@ public class RekeyWriterMain extends BaseMain<RekeyOptions> {
 
         while (true) {
             try {
-                @Cleanup final Socket clientSocket = new Socket("127.0.0.1", options.getPort());
+                @Cleanup final Socket clientSocket = new Socket(IPv4_LOCALHOST, options.getPort());
                 @Cleanup BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 String line;
                 while ((line = inFromServer.readLine()) != null) {

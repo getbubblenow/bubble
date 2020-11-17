@@ -16,10 +16,13 @@ import org.cobbzilla.wizard.server.RestServerHarness;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.cobbzilla.util.network.NetworkUtil.IPv4_LOCALHOST;
 
 @Slf4j
 public class RekeyReaderMain extends BaseMain<RekeyOptions> {
@@ -31,7 +34,7 @@ public class RekeyReaderMain extends BaseMain<RekeyOptions> {
         final RekeyOptions options = getOptions();
         // log.info("run: options=\n"+json(options));
 
-        @Cleanup final ServerSocket sock = new ServerSocket(options.getPort());
+        @Cleanup final ServerSocket sock = new ServerSocket(options.getPort(), 10, InetAddress.getByName(IPv4_LOCALHOST));
         out("READER: awaiting connection from WRITER...");
         @Cleanup final Socket connectionSocket = sock.accept();
         out("READER: connection established");
