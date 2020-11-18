@@ -109,6 +109,7 @@
   copy:
     src: supervisor_refresh_flex_keys_monitor.conf
     dest: /etc/supervisor/conf.d/refresh_flex_keys_monitor.conf
+  when: install_type == 'node'
 
 - name: Install bubble_upgrade_monitor supervisor conf file
   copy:

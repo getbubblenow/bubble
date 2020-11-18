@@ -14,11 +14,12 @@ function log {
   echo "$(date): ${1}" >> ${LOG}
 }
 
-SSH_KEY_BASE=/home/bubble-flex/.ssh
+FLEX_HOME=/home/bubble-flex
+SSH_KEY_BASE=${FLEX_HOME}/.ssh
 if [[ ! -d ${SSH_KEY_BASE} ]] ; then
-  mkdir ${SSH_KEY_BASE}
+  mkdir ${SSH_KEY_BASE} || die "Error creating ${SSH_KEY_BASE} directory"
 fi
-chown -R bubble-flex ${SSH_KEY_BASE} && chmod 700 ${SSH_KEY_BASE}
+chown -R bubble-flex ${SSH_KEY_BASE} && chmod 700 ${SSH_KEY_BASE} && chown -R bubble-flex ${FLEX_HOME} || die "Error setting permissions on bubble-flex files"
 
 BUBBLE_FLEX_KEYS=/home/bubble/.ssh/flex_authorized_keys
 AUTH_FLEX_KEYS=${SSH_KEY_BASE}/authorized_keys
