@@ -1,0 +1,234 @@
+#!/bin/bash
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+# Connect a Linux system to a Bubble
+#
+# Usage:
+#
+#     bubble_linux_connect [hostname]
+#
+#   hostname : hostname of the bubble to connect this Linux system to
+#
+# Environment Variables
+#
+#   BUBBLE_API     : which Bubble API to use. Typically this ends with /api
+#   BUBBLE_USER    : account to use
+#   BUBBLE_PASS    : password for account
+#
+# What this command does:
+#  * Disconnects from any current Bubble
+#  * Checks if the device already exists for the Bubble. If not, creates the device.
+#  * Checks if we have a local copy of the certificate and vpn.conf files. If not, download them.
+#  * Ensures routing configuration is correct
+#  * Installs the certificate (this step requires your interaction)
+#  * Installs the VPN config
+#  * Starts the VPN
+#
+function die() {
+  echo 1>&2 "$0: fatal error: ${1}"
+  exit 1
+}
+
+SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+API_HOST="${1}"
+if [[ -z "${API_HOST}" ]] ; then
+  if [[ -z "${BUBBLE_API}" ]]; then
+    echo -n "No hostname argument provided and BUBBLE_API env var not defined. Enter Bubble hostname: "
+    read -r API_HOST
+    if [[ -z "${API_HOST}" ]] ; then
+      die "Empty Bubble hostname"
+    fi
+    BUBBLE_API="https://${API_HOST}/api"
+  fi
+else
+  BUBBLE_API="https://${API_HOST}/api"
+fi
+
+if [[ -z "${BUBBLE_USER}" ]]; then
+  echo -n "BUBBLE_USER env var not defined. Enter Bubble username: "
+  read -r BUBBLE_USER
+fi
+if [[ -z "${BUBBLE_PASS}" ]]; then
+  echo -n "BUBBLE_PASS env var not defined. Enter Bubble password: "
+  read -r BUBBLE_PASS
+fi
+
+BUBBLE_HOST="$(echo -n "${BUBBLE_API}" | awk -F '/' '{print $3}' | awk -F ':' '{print $1}')"
+if [[ -z "${BUBBLE_HOST}" ]]; then
+  die "No hostname could be determined from BUBBLE_API = ${BUBBLE_API}"
+fi
+
+if [[ -z "$(which wg)" ]]; then
+  die "No wg command found - is WireGuard installed?"
+fi
+if [[ -z "$(which wg-quick)" ]]; then
+  die "No wg-quick command found - is WireGuard installed?"
+fi
+
+if [[ -z "$(which bget)" ]]; then
+  export PATH=${PATH}:${SCRIPT_DIR}
+  if [[ -z "$(which bget)" ]]; then
+    die "bget command not found, even after adding ${SCRIPT_DIR} to PATH"
+  fi
+fi
+
+bget me || die "Error logging into Bubble with API: ${BUBBLE_API}"
+
+# Ensure WireGuard is not running
+if [[ ! -z "$(wg show)" ]]; then
+  wg-quick down wg0
+fi
+
+BUBBLE_DEVICE_BASE="${HOME}/bubble_devices"
+BUBBLE_DIR="${BUBBLE_DEVICE_BASE}/${BUBBLE_HOST}"
+mkdir -p "${BUBBLE_DIR}" || die "Error creating directory: ${BUBBLE_DIR}"
+
+CERT_FILE="${BUBBLE_DIR}"/bubble-cert.crt
+VPN_FILE="${BUBBLE_DIR}"/vpn.conf
+
+DEVICE_NAME_FILE=${BUBBLE_DIR}/bubble_device_name
+if [[ ! -f "${DEVICE_NAME_FILE}" ]]; then
+  DISTRO="$(cat /etc/os-release  | grep ^NAME= | awk -F '=' '{print $2}' | tr -d '"')"
+  echo -n "Linux_${DISTRO}_$(hostname -s)" >"${DEVICE_NAME_FILE}"
+  echo "Initialized device: ${DEVICE_NAME_FILE}"
+fi
+DEVICE_NAME="$(cat "${DEVICE_NAME_FILE}")"
+
+# Check API to see if device is already registered
+if [[ $(bgetn me/devices | grep -c "${DEVICE_NAME}") -eq 0 ]]; then
+  echo "Device not found, registering now: ${DEVICE_NAME}"
+  echo "{
+  \"name\": \"${DEVICE_NAME}\",
+  \"deviceType\": \"Linux\"
+}" | bput me/devices - || die "Error creating device"
+  rm -f "${VPN_FILE}" "${CERT_FILE}" || die "Error removing obsolete vpn.conf and cert files"
+else
+  echo "Device already registered: ${DEVICE_NAME}"
+fi
+
+# Do we have both a cert file and a vpn.conf? If so, we are done
+if [[ ! -f "${CERT_FILE}" ]]; then
+  # Download cert file
+  echo "Downloading certificate ..."
+  if [[ ! -f "${CERT_FILE}" ]]; then
+    bget auth/cacert?deviceType=Linux --raw >"${CERT_FILE}" || die "Error downloading certificate file"
+  fi
+fi
+if [[ ! -f "${VPN_FILE}" ]]; then
+  # Download vpn.conf file
+  echo "Downloading vpn.conf ..."
+  if [[ ! -f "${VPN_FILE}" ]]; then
+    bget "me/devices/${DEVICE_NAME}/vpn/vpn.conf" --raw >"${VPN_FILE}" || die "Error downloading vpn.conf file"
+  fi
+fi
+
+echo "Marking ${BUBBLE_HOST} as current Bubble ..."
+cd "${BUBBLE_DEVICE_BASE}" && ln -sf "${BUBBLE_HOST}" current || die "Error creating symlink ${BUBBLE_DEVICE_BASE}/current -> ${BUBBLE_DEVICE_BASE}/${BUBBLE_HOST}"
+
+EXTRA_CERTS_DIR=/usr/share/ca-certificates/extra/
+CERT_DEST="${EXTRA_CERTS_DIR}/${CERT_FILE}"
+echo "Copying certificate to ${CERT_DEST} ..."
+sudo cp "${CERT_FILE}" "${CERT_DEST}" || die "Error copying certificate: ${CERT_FILE} -> ${CERT_DEST}"
+
+echo "
+### Finishing Certificate Installation for Ubuntu
+
+We're going to run the Ubuntu certificate wizard via:
+
+   sudo dpkg-reconfigure ca-certificates
+
+When the wizard opens, check the box for your Bubble certificate and press OK.
+
+To continue, press Enter
+"
+read -r DUMMY
+sudo dpkg-reconfigure ca-certificates || die "Error reconfiguring system CA certificates"
+
+# Ensure ssh route table exists
+if [[ $(cat /etc/iproute2/rt_tables | grep -c ssh) -eq 0 ]] ; then
+  sudo echo "2 ssh" >> /etc/iproute2/rt_tables
+else
+  echo "ssh table already exists in rt_tables"
+fi
+
+REBOOT_FILE=/tmp/reboot-required.bubble
+
+# Set sysctl vars
+SYSCTL="/etc/sysctl.conf"
+SYS_RP_FILTER="net.ipv4.conf.all.rp_filter"
+if [[ $(cat ${SYSCTL} | grep -v '^#' | grep -c "${SYS_RP_FILTER}") -eq 0 ]] ; then
+  echo "${SYS_RP_FILTER} = 2" >> ${SYSCTL}
+  touch ${REBOOT_FILE}
+else
+  echo "${SYS_RP_FILTER} already defined in ${SYSCTL}"
+fi
+
+SYS_IP_FORWARD="net.ipv4.ip_forward"
+if [[ $(cat ${SYSCTL} | grep -v '^#' | grep -c "${SYS_IP_FORWARD}") -eq 0 ]] ; then
+  echo "${SYS_IP_FORWARD} = 1" >> ${SYSCTL}
+  touch ${REBOOT_FILE}
+else
+  echo "${SYS_IP_FORWARD} already defined in ${SYSCTL}"
+fi
+
+WG_CONF=/etc/wireguard/wg0.conf
+echo "Copying vpn.conf to ${WG_CONF} ..."
+sudo cp "${VPN_FILE}" ${WG_CONF} || die "Error copying vpn.conf: ${VPN_FILE} -> ${WG_CONF}"
+
+if [[ $(sudo cat "${WG_CONF}" | grep -c PostUp) -ne 0 ]] ; then
+  echo "${WG_CONF} already contains PostUp directives"
+else
+  GATEWAY=$(route -n | grep "^0.0.0.0" | awk '{print $2}')
+  if [[ -z "${GATEWAY}" ]] ; then
+    die "Error determining gateway IP using 'route -n'"
+  fi
+
+  IFACE=$(route -n | grep "^0.0.0.0" | awk '{print $8}')
+  if [[ -z "${IFACE}" ]] ; then
+    die "Error determining gateway interface using 'route -n'"
+  fi
+
+  WG_TEMP=$(mktemp /tmp/wg.conf.XXXXXXX)
+  cat ${WG_CONF} | grep -A 3 '\[Interface\]' >> "${WG_TEMP}"
+  echo "PostUp = ip route add default via ${GATEWAY} dev ${IFACE} table ssh
+  PostUp = ip rule add fwmark 0x2 table ssh
+  PostUp = /sbin/iptables -A OUTPUT -t mangle -o wg0 -p tcp --sport 22 -j MARK --set-mark 2
+  PreDown = /sbin/iptables -D OUTPUT -t mangle -o wg0 -p tcp --sport 22 -j MARK --set-mark 2
+  PreDown = ip rule del fwmark 0x2 table ssh
+  PreDown = ip route del default via ${GATEWAY} dev ${IFACE} table ssh
+  " >> "${WG_TEMP}"
+  cat ${WG_CONF} | grep -A 10 '\[Peer\]' >> "${WG_TEMP}"
+
+  mv "${WG_TEMP}" ${WG_CONF} || die "Error installing updated ${WG_CONF} file"
+fi
+
+echo "Starting WireGuard VPN ..."
+sudo wg-quick up wg0 || die "Error starting WireGuard"
+
+echo "
+======= Linux device successfully connected to Bubble! =======
+
+Device Name : ${DEVICE_NAME}
+Bubble Host : ${BUBBLE_HOST}
+Certificate : ${CERT_FILE} - installed: ${CERT_DEST}
+VPN Config  : ${VPN_FILE} - configured and installed: ${WG_CONF}
+"
+
+if [[ ! -z "$(which firefox)" ]] ; then
+  echo "
+###### WARNING: Firefox will not properly connect to most websites until you install
+                the Bubble certificate in Firefox
+
+To install the Bubble Certificate in Firefox:
+
+ * Open Firefox
+ * In the search box (top right of page), enter \"certificate\"
+ * Scroll down, click \"View Certificates\" button
+ * Click \"Import\" button
+ * Select your certificate file: ${CERT_FILE}
+ * Check the box \"Trust this CA to identify websites\" and click OK.
+
+More detailed instructions, with screenshots, can be found here:
+https://git.bubblev.org/bubblev/bubble-docs/src/branch/master/cert_instructions/firefox_cert.md"
+fi
