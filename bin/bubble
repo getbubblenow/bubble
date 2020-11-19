@@ -65,7 +65,9 @@ if [[ -z "${BUBBLE_ENV}" ]] ; then
   elif [[ -f "/home/bubble/api/bubble.env" ]] ; then
     BUBBLE_ENV="/home/bubble/api/bubble.env"
   else
-    echo 1>&2 "Warning: bubble environment file not found"
+    echo 1>&2 "Warning: bubble environment file not found, creating empty file: ${HOME}/.bubble.env"
+    BUBBLE_ENV="${HOME}/.bubble.env"
+    touch "${BUBBLE_ENV}"
   fi
 fi
 
