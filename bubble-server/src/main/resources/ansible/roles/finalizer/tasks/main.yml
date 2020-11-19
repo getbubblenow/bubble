@@ -43,10 +43,6 @@
     name: netfilter-persistent
     state: restarted
 
-# We cannot receive notifications until nginx is running, so start bubble API as the very last step
-- name: reload supervisord
-  shell: supervisorctl reload
-
 - name: Ensure nginx dhparams.pem file exists and is valid
   shell: /usr/local/bin/init_dhparams.sh wait
 
@@ -67,3 +63,7 @@
 
 - name: Ensure authorized SSH keys are up-to-date
   shell: su - bubble bash -c "touch /home/bubble/.refresh_ssh_keys"
+
+# We cannot receive notifications until nginx is running, so start bubble API as the very last step
+- name: reload supervisord
+  shell: supervisorctl status > /var/log/bubble/finalizer_supervisor_status_before_reload.log && supervisorctl reload
