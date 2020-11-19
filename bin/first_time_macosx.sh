@@ -2,19 +2,35 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
+# Perform one-time setup of a new Mac OS X system.
+#
+# NOTE: you must manually install AdoptOpenJDK 11 from https://adoptopenjdk.net/index.html?variant=openjdk11&jvmVariant=hotspot
+#
+# It is safe to run this multiple times, it is idempotent.
+#
 function die {
   echo 1>&2 "${1}"
   exit 1
 }
 
-# Ensure system is current
+function db_user_exists {
+  username="${1}"
+  num_users="$(echo "select count(*) from pg_user where usename='${username}'" | psql -qt | egrep -v '^$')"
+  if [[ -z "${num_users}" || ${num_users} -eq 0 ]] ; then
+    echo "0"
+  else
+    echo "1"
+  fi
+}
 
 # Install packer
 BUBBLE_BIN="$(cd "$(dirname "${0}")" && pwd)"
 "${BUBBLE_BIN}/install_packer.sh" || die "Error installing packer"
 
-# Install homebrew
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+if [[ -z "$(which brew)" ]] ; then
+  # Install homebrew
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+fi
 
 # Install emacs
 brew cask install emacs
@@ -40,10 +56,15 @@ export LDFLAGS="-L/usr/local/opt/python@3.8/lib"
 export PATH="/usr/local/opt/python@3.8/bin:$PATH"
 
 # Create DB user 'postgres' as super admin
-createuser --createdb --superuser --createrole postgres || die "Error creating postgres DB user"
+if [[ $(db_user_exists 'postgres') == "1" ]] ; then
+  echo "PostgreSQL user ${CURRENT_USER} already exists, not creating"
+else
+  createuser --createdb --superuser --createrole postgres || die "Error creating postgres DB user"
+fi
 
 # Create DB user 'bubble', with the ability to create databases
-createuser --createdb bubble || die "Error creating bubble DB user"
-
-# Create bubble database
-createdb --encoding=UTF-8 bubble || die "Error creating bubble DB"
+if [[ $(db_user_exists 'bubble') == "1" ]] ; then
+  echo "PostgreSQL user 'bubble' already exists, not creating"
+else
+  createuser --createdb bubble || die "Error creating bubble DB user"
+fi

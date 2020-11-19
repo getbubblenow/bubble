@@ -2,6 +2,10 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
+# Perform one-time setup of a new Ubuntu system. Works with Ubuntu 20.04 and 18.04
+#
+# It is safe to run this multiple times, it is idempotent.
+#
 function die {
   echo 1>&2 "${1}"
   exit 1
@@ -43,4 +47,8 @@ sudo bash -c "cat /tmp/pg_hba.conf > ${PG_HBA}" || die "Error rewriting ${PG_HBA
 sudo service postgresql restart || die "Error restarting pgsql"
 
 # Create DB user 'bubble', with the ability to create databases
-createuser --createdb bubble || die "Error creating bubble DB user"
+if [[ $(db_user_exists 'bubble') == "1" ]] ; then
+  echo "PostgreSQL user 'bubble' already exists, not creating"
+else
+  createuser --createdb bubble || die "Error creating bubble DB user"
+fi
