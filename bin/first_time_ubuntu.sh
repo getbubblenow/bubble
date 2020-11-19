@@ -9,7 +9,7 @@ function die {
 
 function db_user_exists {
   username="${1}"
-  num_users="$(echo "select count(*) from pg_user where usename='${username}'" | su - postgres psql -qt | egrep -v '^$')"
+  num_users="$(echo "select count(*) from pg_user where usename='${username}'" | sudo -u postgres bash -c 'psql -qt' | egrep -v '^$')"
   if [[ -z "${num_users}" || ${num_users} -eq 0 ]] ; then
     echo "0"
   else
@@ -31,10 +31,10 @@ BUBBLE_BIN="$(cd "$(dirname "${0}")" && pwd)"
 
 # Create DB user for current user, as superuser
 CURRENT_USER="$(whoami)"
-if [[ $(db_user_exists ${CURRENT_USER}) ]] ; then
+if [[ $(db_user_exists ${CURRENT_USER}) == "1" ]] ; then
   echo "PostgreSQL user ${CURRENT_USER} already exists, not creating"
 else
-  sudo su - postgres bash -c 'createuser -U postgres --createdb --createrole --superuser '"${CURRENT_USER}"'' || die "Error creating ${CURRENT_USER} DB user"
+  sudo -u postgres bash -c 'createuser -U postgres --createdb --createrole --superuser '"${CURRENT_USER}"'' || die "Error creating ${CURRENT_USER} DB user"
 fi
 
 PG_HBA=$(find /etc/postgresql -mindepth 1 -maxdepth 1 -type d | sort | tail -1)/main/pg_hba.conf
