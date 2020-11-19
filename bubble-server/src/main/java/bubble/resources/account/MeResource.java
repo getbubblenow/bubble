@@ -29,6 +29,7 @@ import bubble.service.account.StandardAccountMessageService;
 import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.BubbleModelSetupService;
+import bubble.service.boot.JarUpgradeMonitor;
 import bubble.service.boot.StandardSelfNodeService;
 import bubble.service.cloud.NodeLaunchMonitor;
 import bubble.service.upgrade.BubbleJarUpgradeService;
@@ -449,7 +450,8 @@ public class MeResource {
         synchronized (lastUpgradeCheck) {
             if (now() - lastUpgradeCheck.get() > UPGRADE_CHECK_INTERVAL) {
                 lastUpgradeCheck.set(now());
-                selfNodeService.getJarUpgradeMonitorBean().interrupt();
+                final JarUpgradeMonitor jarUpgradeMonitor = selfNodeService.getJarUpgradeMonitorBean();
+                if (jarUpgradeMonitor != null) jarUpgradeMonitor.interrupt();
             }
         }
         return ok_empty();
