@@ -48,7 +48,7 @@ sudo service postgresql restart || die "Error restarting pgsql"
 
 # Create DB user 'bubble', with the ability to create databases
 if [[ $(db_user_exists 'bubble') == "1" ]] ; then
-  echo "PostgreSQL user 'bubble' already exists, not creating"
+  echo "PostgreSQL user bubble already exists, not creating"
 else
   createuser --createdb bubble || die "Error creating bubble DB user"
 fi
