@@ -130,7 +130,9 @@ public class AuthResource {
     @GET @Path(EP_READY)
     public Response getNodeIsReady(@Context ContainerRequest ctx) {
         try {
-            if (configuration.getThisNetwork().getState() == BubbleNetworkState.restoring) return ok();
+            final BubbleNetwork thisNetwork = configuration.getThisNetwork();
+            final BubbleNetworkState state = thisNetwork.getState();
+            if (state == BubbleNetworkState.restoring || thisNetwork.sage()) return ok();
             if (deviceDAO.findByAccountAndUninitialized(accountDAO.getFirstAdmin().getUuid())
                     .stream()
                     .anyMatch(Device::configsOk)) {

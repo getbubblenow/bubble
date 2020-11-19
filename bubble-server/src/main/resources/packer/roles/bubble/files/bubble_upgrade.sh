@@ -31,7 +31,7 @@ function verify_api_ok {
     CURL_STATUS=255
     START_VERIFY=$(date +%s)
     VERIFY_TIMEOUT=180
-    VERIFY_URL="https://$(hostname):1443/api/auth/ready"
+    VERIFY_URL="https://$(hostname)/api/auth/ready"
     while [[ $(expr $(date +%s) - ${START_VERIFY}) -le ${VERIFY_TIMEOUT} ]] ; do
       log "verify_api_ok: Verifying ${VERIFY_URL} is OK...."
       CURL_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${VERIFY_URL}")
@@ -72,20 +72,23 @@ else
   log "Upgrading web site files..."
   cd ~bubble && unzip -o "${BUBBLE_JAR}" 'site/*' && chown -R bubble:bubble site || die "Error updating web files..."
 
-  log "Upgrading mitm files"
-  MITM_PORT_FILE=/home/mitmproxy/mitmproxy_port
-  CURRENT_MITM_PORT=$(cat ${MITM_PORT_FILE})
-  if [[ -z "${CURRENT_MITM_PORT}" || "${CURRENT_MITM_PORT}" == "8888" ]] ; then
-    CURRENT_MITM_PORT=8888
-    OTHER_MITM_PORT=9999
-  else
-    CURRENT_MITM_PORT=9999
-    OTHER_MITM_PORT=8888
+  MITM_HOME=/home/mitmproxy
+  if [[ -d ${MITM_HOME} ]] ; then
+    log "Upgrading mitm files"
+    MITM_PORT_FILE=${MITM_HOME}/mitmproxy_port
+    CURRENT_MITM_PORT=$(cat ${MITM_PORT_FILE})
+    if [[ -z "${CURRENT_MITM_PORT}" || "${CURRENT_MITM_PORT}" == "8888" ]] ; then
+      CURRENT_MITM_PORT=8888
+      OTHER_MITM_PORT=9999
+    else
+      CURRENT_MITM_PORT=9999
+      OTHER_MITM_PORT=8888
+    fi
+    # todo: add health check. if restarting mitm on OTHER_MITM_PORT fails, revert the changes
+    cd /tmp \
+      && unzip -o "${BUBBLE_JAR}" 'packer/roles/mitmproxy/files/*.py' \
+      && cp packer/roles/mitmproxy/files/*.py ${MITM_HOME}/mitmproxy/ \
+      && supervisorctl restart mitm${OTHER_MITM_PORT} \
+      && supervisorctl restart mitm${CURRENT_MITM_PORT} || die "Error updating mitm files"
   fi
-  # todo: add health check. if restarting mitm on OTHER_MITM_PORT fails, revert the changes
-  cd /tmp \
-    && unzip -o "${BUBBLE_JAR}" 'packer/roles/mitmproxy/files/*.py' \
-    && cp packer/roles/mitmproxy/files/*.py /home/mitmproxy/mitmproxy/ \
-    && supervisorctl restart mitm${OTHER_MITM_PORT} \
-    && supervisorctl restart mitm${CURRENT_MITM_PORT} || die "Error updating mitm files"
 fi
