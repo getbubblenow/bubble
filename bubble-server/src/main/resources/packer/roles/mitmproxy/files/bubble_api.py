@@ -200,6 +200,7 @@ def bubble_async(name, url,
                                                      max_redirects=max_redirects))
     except Exception as e:
         bubble_log.error('bubble_async('+name+'): error: '+repr(e))
+        return None
 
 
 def bubble_async_request_json(name, url, headers, method='GET', json=None):
@@ -359,6 +360,10 @@ def bubble_matchers(req_id, client_addr, server_addr, flow, host):
 
     try:
         response = bubble_async(name, url, headers=headers, method='POST', json=data)
+        if response is None:
+            if log_error:
+                bubble_log.error('bubble_matchers: call bubble_async('+url+') returned None')
+            return None
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 403:
