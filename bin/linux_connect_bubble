@@ -12,7 +12,8 @@
 #
 # Environment Variables
 #
-#   BUBBLE_API     : which Bubble API to use. Typically this ends with /api
+#   BUBBLE_HOST    : hostname of the Bubble to use. The API base URI will be https://<hostname>/api
+#   BUBBLE_API     : full base URL of the Bubble API to use. Typically this ends with /api
 #   BUBBLE_USER    : account to use
 #   BUBBLE_PASS    : password for account
 #
@@ -33,14 +34,18 @@ function die() {
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 API_HOST="${1}"
 if [[ -z "${API_HOST}" ]] ; then
-  if [[ -z "${BUBBLE_API}" ]]; then
-    echo -n "No hostname argument provided and BUBBLE_API env var not defined. Enter Bubble hostname: "
-    read -r API_HOST
-    if [[ -z "${API_HOST}" ]] ; then
-      die "Empty Bubble hostname"
+  if [[ -z "${BUBBLE_API}" ]] ; then
+    if [[ -z "${BUBBLE_HOST}" ]] ; then
+      echo -n "No hostname argument provided and neither BUBBLE_API nor BUBBLE_HOST env vars were defined.
+Enter Bubble hostname: "
+      read -r API_HOST
+      if [[ -z "${API_HOST}" ]] ; then
+        die "Empty Bubble hostname"
+      fi
+      BUBBLE_API="https://${API_HOST}/api"
+    else
+      BUBBLE_API="https://${BUBBLE_HOST}/api"
     fi
-    BUBBLE_API="https://${API_HOST}/api"
-  fi
 else
   BUBBLE_API="https://${API_HOST}/api"
 fi
