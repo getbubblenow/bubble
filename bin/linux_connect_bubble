@@ -3,12 +3,16 @@
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
 # Connect a Linux system to a Bubble
+# You must run this as a user who has "sudo" privileges
 #
 # Usage:
 #
 #     bubble_linux_connect [hostname]
 #
-#   hostname : hostname of the bubble to connect this Linux system to
+#   hostname : bubble to connect this Linux system to
+#              If not specified, an env var will be used (see below)
+#              If neither BUBBLE_HOST (hostname) or BUBBLE_API (URL) are specified,
+#                then you'll be asked to enter the Bubble hostname
 #
 # Environment Variables
 #
@@ -17,14 +21,14 @@
 #   BUBBLE_USER    : account to use
 #   BUBBLE_PASS    : password for account
 #
-# What this command does:
-#  * Disconnects from any current Bubble
-#  * Checks if the device already exists for the Bubble. If not, creates the device.
-#  * Checks if we have a local copy of the certificate and vpn.conf files. If not, download them.
-#  * Ensures routing configuration is correct
-#  * Installs the certificate (this step requires your interaction)
-#  * Installs the VPN config
-#  * Starts the VPN
+# This command will:
+#  * Disconnect from any current Bubble
+#  * Check if the device already exists for the Bubble. If not, creates the device
+#  * Check if we have a local copy of the certificate and vpn.conf files. If not, download them
+#  * Ensure routing configuration is correct
+#  * Install the certificate (this step requires your interaction)
+#  * Install the VPN config
+#  * Start the VPN
 #
 function die() {
   echo 1>&2 "$0: fatal error: ${1}"
@@ -79,11 +83,13 @@ if [[ -z "$(which bget)" ]]; then
   fi
 fi
 
+echo "Logging in to Bubble ${BUBBLE_API} ..."
 bget me || die "Error logging into Bubble with API: ${BUBBLE_API}"
 
 # Ensure WireGuard is not running
 if [[ ! -z "$(wg show)" ]]; then
-  wg-quick down wg0
+  echo "Stopping WireGuard VPN ..."
+  sudo wg-quick down wg0
 fi
 
 BUBBLE_DEVICE_BASE="${HOME}/bubble_devices"
