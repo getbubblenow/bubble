@@ -56,9 +56,9 @@ fi
 
 if [[ ${DO_DELETE} -eq 0 ]] ; then
   echo "
-===================================================================
-======= Linux device successfully disconnected from Bubble! =======
-===================================================================
+====================================================================
+======= Ubuntu system successfully disconnected from Bubble! =======
+====================================================================
 Public IP   : $(curl -s http://checkip.amazonaws.com/)
 "
   exit 0
@@ -154,9 +154,9 @@ echo "Removing symlink: ${BUBBLE_DEVICE_BASE}/current"
 rm -f "${BUBBLE_DEVICE_BASE}/current" || die "Error removing ${BUBBLE_DEVICE_BASE}/current"
 
 echo "
-==============================================================
-======= Linux device successfully DELETED from Bubble! =======
-==============================================================
+===============================================================
+======= Ubuntu system successfully DELETED from Bubble! =======
+===============================================================
 Device Name : ${DEVICE_NAME}
 Bubble Host : ${BUBBLE_HOST}
 Public IP   : $(curl -s http://checkip.amazonaws.com/)
