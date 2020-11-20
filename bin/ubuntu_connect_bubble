@@ -42,12 +42,10 @@ function uriencode { jq -nr --arg v "$1" '$v|@uri'; }
 
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 
+INSTALL_PACKAGES=""
 if [[ -z "$(which wg)" ]] ; then
-  echo "Installing WireGuard ..."
-  sudo apt update && sudo apt install -y wireguard || die "Error installing WireGuard"
-fi
-if [[ -z "$(which wg-quick)" ]] ; then
-  die "No wg-quick command found - is WireGuard installed?"
+  echo "Adding WireGuard to install list ..."
+  INSTALL_PACKAGES="${INSTALL_PACKAGES} wireguard"
 fi
 
 if [[ -z "$(which bget)" ]] ; then
@@ -58,27 +56,44 @@ if [[ -z "$(which bget)" ]] ; then
 fi
 
 if [[ -z "$(which java)" ]] ; then
-  echo "Installing Java 11 ..."
-  sudo apt update && sudo apt install -y openjdk-11-jre || die "Error installing Java 11"
+  echo "Adding Java 11 to install list ..."
+  INSTALL_PACKAGES="${INSTALL_PACKAGES} openjdk-11-jre"
 else
   JAVA_VERSION="$(java -version 2>&1 | grep "openjdk version" | awk -F '"' '{print $2}' | awk -F '.' '{print $1}')"
   if [[ -z "${JAVA_VERSION}" ]] ; then
-    echo "Installing Java 11 (unknown java version found) ..."
-    sudo apt install -y openjdk-11-jre || die "Error installing Java 11"
+    echo "Adding Java 11 to install list (unknown java version found) ..."
+    INSTALL_PACKAGES="${INSTALL_PACKAGES} openjdk-11-jre"
   elif [[ ${JAVA_VERSION} -lt 11 ]] ; then
-    echo "Installing Java 11 (unexpected java version: ${JAVA_VERSION}) ..."
-    sudo apt install -y openjdk-11-jre || die "Error installing Java 11"
+    echo "Adding Java 11 to install list (unexpected java version: ${JAVA_VERSION}) ..."
+    INSTALL_PACKAGES="${INSTALL_PACKAGES} openjdk-11-jre"
   fi
 fi
 
 if [[ -z "$(which jq)" ]] ; then
-  echo "Installing jq ..."
-  sudo apt update && sudo apt install -y jq || die "Error installing jq"
+  echo "Adding jq to install list ..."
+  INSTALL_PACKAGES="${INSTALL_PACKAGES} jq"
 fi
 if [[ -z "$(which route)" ]] ; then
-  echo "Installing net-tools (route command) ..."
-  sudo apt update && sudo apt install -y net-tools || die "Error installing net-tools"
+  echo "Adding net-tools to install list ..."
+  INSTALL_PACKAGES="${INSTALL_PACKAGES} net-tools"
 fi
+if [[ -z "$(which resolvconf)" ]] ; then
+  echo "Adding resolvconf to install list ..."
+  INSTALL_PACKAGES="${INSTALL_PACKAGES} resolvconf"
+fi
+
+if [[ ! -z "${INSTALL_PACKAGES}" ]] ; then
+  echo "
+The following apt packages will be installed:
+
+  ${INSTALL_PACKAGES}
+
+Press Enter to continue with installation, or Control-C to exit"
+  read -r DUMMY || die "Bubble connection canceled"
+fi
+
+# Do not quote INSTALL_PACKAGES, we want to install all packages...
+sudo apt update && sudo apt install -y ${INSTALL_PACKAGES} || die "Error installing packages: ${INSTALL_PACKAGES}"
 
 ARG_HOST="${1}"
 if [[ -z "${ARG_HOST}" ]] ; then
@@ -260,7 +275,7 @@ if [[ -f ${REBOOT_FILE} ]] ; then
 sysctl settings changed, reboot required.
 
 Press Enter to reboot, or Control-C to exit and reboot later"
-  read -r DUMMY
+  read -r DUMMY || die "Please reboot later to ensure sysctl changes take effect"
   sudo bash -c 'sync && shutdown -r now' && exit 1 || die "Error rebooting"
 fi
 
