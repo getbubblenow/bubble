@@ -3,7 +3,7 @@
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
 # Performs first-time setup after a fresh git clone.
-# Installs utility libraries.
+# Checks out submodules and performs initial build.
 #
 # Before from running this script, if you want to run the Bubble Server, install dependencies
 # with the first_time_ubuntu.sh script. If you're running something other than Ubuntu (18.04 or 20.04),
