@@ -71,6 +71,11 @@ else
   fi
 fi
 
+if [[ -z "$(which jq)" ]] ; then
+  echo "Installing jq ..."
+  sudo apt update && sudo apt install -y jq || die "Error installing jq"
+fi
+
 ARG_HOST="${1}"
 if [[ -z "${ARG_HOST}" ]] ; then
   if [[ -z "${BUBBLE_API}" ]] ; then
