@@ -353,7 +353,7 @@ To install the Bubble Certificate in Firefox:
  * Select your certificate file: ${CERT_FILE}
  * Check the box \"Trust this CA to identify websites\" and click OK.
 
-More detailed instructions, with screenshots, can be found here:
+More detailed instructions (with screenshots) can be found here:
   https://git.bubblev.org/bubblev/bubble-docs/src/branch/master/cert_instructions/firefox_cert.md
 "
 fi
