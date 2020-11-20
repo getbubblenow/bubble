@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-# Disconnect an Ubuntu system from a Bubble
+# Disconnect an Ubuntu 20.04 system from a Bubble
 # You must run this as a user who has "sudo" privileges
 #
 # Usage:
@@ -31,43 +31,43 @@ function die() {
 
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 DO_DELETE=0
-if [[ ! -z "${1}" ]]; then
-  if [[ "${1}" == "delete" ]]; then
+if [[ ! -z "${1}" ]] ; then
+  if [[ "${1}" == "delete" ]] ; then
     DO_DELETE=1
   else
     die "Invalid argument: ${1} (expected 'delete' or nothing)"
   fi
 fi
 
-if [[ -z "$(which wg)" ]]; then
+if [[ -z "$(which wg)" ]] ; then
   die "No wg command found - is WireGuard installed?"
 fi
-if [[ -z "$(which wg-quick)" ]]; then
+if [[ -z "$(which wg-quick)" ]] ; then
   die "No wg-quick command found - is WireGuard installed?"
 fi
 
 # Ensure WireGuard is not running
-if [[ ! -z "$(sudo wg show)" ]]; then
+if [[ ! -z "$(sudo wg show)" ]] ; then
   echo "Stopping WireGuard VPN ..."
   sudo wg-quick down wg0
 else
   echo "VPN not running"
 fi
 
-if [[ ${DO_DELETE} -eq 0 ]]; then
+if [[ ${DO_DELETE} -eq 0 ]] ; then
   exit 0
 fi
 
-if [[ -z "$(which bget)" ]]; then
+if [[ -z "$(which bget)" ]] ; then
   export PATH=${PATH}:${SCRIPT_DIR}
-  if [[ -z "$(which bget)" ]]; then
+  if [[ -z "$(which bget)" ]] ; then
     die "bget command not found, even after adding ${SCRIPT_DIR} to PATH"
   fi
 fi
 
 BUBBLE_DEVICE_BASE="${HOME}/bubble_devices"
 DEVICE_JSON_FILE="${BUBBLE_DEVICE_BASE}/current/device.json"
-if [[ ! -f "${DEVICE_JSON_FILE}" ]]; then
+if [[ ! -f "${DEVICE_JSON_FILE}" ]] ; then
   die "No ${DEVICE_JSON_FILE} file found"
 fi
 CURRENT_DEVICE_DIR="${BUBBLE_DEVICE_BASE}/current"
@@ -81,7 +81,7 @@ CERT_FILE="${BUBBLE_DIR}"/bubble-${BUBBLE_HOST}.crt
 
 CERTS_DIR=/usr/share/ca-certificates/extra
 CERT_DEST="${CERTS_DIR}/$(basename "${CERT_FILE}")"
-if [[ -f "${CERT_DEST}" ]]; then
+if [[ -f "${CERT_DEST}" ]] ; then
   echo "Removing certificate: ${CERT_DEST} ..."
   sudo rm -f "${CERT_DEST}"
 else
@@ -116,13 +116,13 @@ DEVICE_UUID="$(echo "${CURRENT_DEVICE_JSON}" | jq -r .uuid)"
 if [[ -z "${DEVICE_UUID}" ]] ; then
   die "No device UUID could be read from JSON: ${CURRENT_DEVICE_JSON}"
 fi
-if [[ -z "${BUBBLE_USER}" ]]; then
+if [[ -z "${BUBBLE_USER}" ]] ; then
   echo -n "BUBBLE_USER env var not defined.
 Enter Bubble username: "
   read -r BUBBLE_USER
   echo
 fi
-if [[ -z "${BUBBLE_PASS}" ]]; then
+if [[ -z "${BUBBLE_PASS}" ]] ; then
   echo -n "BUBBLE_PASS env var not defined.
 Enter Bubble password: "
   read -rs BUBBLE_PASS
@@ -140,7 +140,7 @@ bget me | jq .email > /dev/null || die "Error logging into Bubble with API: ${BU
 echo "Deleting device: ${DEVICE_NAME}"
 bdelete "me/devices/${DEVICE_UUID}" || die "Error deleting device: ${DEVICE_NAME} (uuid ${DEVICE_UUID})"
 
-if [[ -d "${BUBBLE_DIR}" ]]; then
+if [[ -d "${BUBBLE_DIR}" ]] ; then
   echo "Removing directory: ${BUBBLE_DIR}"
   rm -rf "${BUBBLE_DIR}" || die "Error removing ${BUBBLE_DIR}"
 fi
@@ -155,7 +155,7 @@ Device Name : ${DEVICE_NAME}
 Bubble Host : ${BUBBLE_HOST}
 "
 
-if [[ ! -z "$(which firefox)" ]]; then
+if [[ ! -z "$(which firefox)" ]] ; then
   echo "
 ===========================================================
 ===================== Firefox Warning =====================

@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-# Connect an Ubuntu system to a Bubble
+# Connect an Ubuntu 20.04 system to a Bubble
 # You must run this as a user who has "sudo" privileges
 #
 # Usage:
@@ -42,16 +42,17 @@ function uriencode { jq -nr --arg v "$1" '$v|@uri'; }
 
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 
-if [[ -z "$(which wg)" ]]; then
-  die "No wg command found - is WireGuard installed?"
+if [[ -z "$(which wg)" ]] ; then
+  echo "Installing WireGuard ..."
+  sudo apt install -y wireguard || die "Error installing WireGuard"
 fi
-if [[ -z "$(which wg-quick)" ]]; then
+if [[ -z "$(which wg-quick)" ]] ; then
   die "No wg-quick command found - is WireGuard installed?"
 fi
 
-if [[ -z "$(which bget)" ]]; then
+if [[ -z "$(which bget)" ]] ; then
   export PATH=${PATH}:${SCRIPT_DIR}
-  if [[ -z "$(which bget)" ]]; then
+  if [[ -z "$(which bget)" ]] ; then
     die "bget command not found, even after adding ${SCRIPT_DIR} to PATH"
   fi
 fi
@@ -76,13 +77,13 @@ else
   BUBBLE_API="https://${ARG_HOST}/api"
 fi
 
-if [[ -z "${BUBBLE_USER}" ]]; then
+if [[ -z "${BUBBLE_USER}" ]] ; then
   echo -n "BUBBLE_USER env var not defined.
 Enter Bubble username: "
   read -r BUBBLE_USER
   echo
 fi
-if [[ -z "${BUBBLE_PASS}" ]]; then
+if [[ -z "${BUBBLE_PASS}" ]] ; then
   echo -n "BUBBLE_PASS env var not defined.
 Enter Bubble password: "
   read -rs BUBBLE_PASS
@@ -90,7 +91,7 @@ Enter Bubble password: "
 fi
 
 BUBBLE_HOST="$(echo -n "${BUBBLE_API}" | awk -F '/' '{print $3}' | awk -F ':' '{print $1}')"
-if [[ -z "${BUBBLE_HOST}" ]]; then
+if [[ -z "${BUBBLE_HOST}" ]] ; then
   die "No hostname could be determined from BUBBLE_API: ${BUBBLE_API}"
 fi
 
@@ -115,7 +116,7 @@ CERT_FILE="${BUBBLE_DIR}"/bubble-${BUBBLE_HOST}.crt
 VPN_FILE="${BUBBLE_DIR}"/vpn.conf
 
 DEVICE_NAME_FILE=${BUBBLE_DIR}/bubble_device_name
-if [[ ! -f "${DEVICE_NAME_FILE}" ]]; then
+if [[ ! -f "${DEVICE_NAME_FILE}" ]] ; then
   DISTRO="$(cat /etc/os-release  | grep ^NAME= | awk -F '=' '{print $2}' | tr -d '"')"
   echo -n "Linux_${DISTRO}_$(hostname -s)" >"${DEVICE_NAME_FILE}"
   echo "Initialized device: ${DEVICE_NAME_FILE}"
@@ -123,7 +124,7 @@ fi
 DEVICE_NAME="$(cat "${DEVICE_NAME_FILE}")"
 
 # Check API to see if device is already registered
-if [[ $(bgetn me/devices | grep -c "${DEVICE_NAME}") -eq 0 ]]; then
+if [[ $(bgetn me/devices | grep -c "${DEVICE_NAME}") -eq 0 ]] ; then
   echo "Device not found, registering now: ${DEVICE_NAME}"
   echo "{
   \"name\": \"${DEVICE_NAME}\",
@@ -139,12 +140,12 @@ else
 fi
 
 # Do we have both a cert file and a vpn.conf? If so, we are done
-if [[ ! -s "${CERT_FILE}" ]]; then
+if [[ ! -s "${CERT_FILE}" ]] ; then
   # Download cert file
   echo "Downloading certificate ..."
   bget auth/cacert?deviceType=Linux --raw >"${CERT_FILE}" || die "Error downloading certificate file"
 fi
-if [[ ! -s "${VPN_FILE}" ]]; then
+if [[ ! -s "${VPN_FILE}" ]] ; then
   # Download vpn.conf file
   echo "Downloading vpn.conf ..."
   bget "me/devices/${DEVICE_NAME}/vpn/vpn.conf" --raw >"${VPN_FILE}" || die "Error downloading vpn.conf file"
