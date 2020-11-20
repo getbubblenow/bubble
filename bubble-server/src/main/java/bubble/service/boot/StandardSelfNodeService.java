@@ -15,6 +15,7 @@ import bubble.dao.cloud.BubbleNodeDAO;
 import bubble.dao.cloud.BubbleNodeKeyDAO;
 import bubble.dao.cloud.CloudServiceDAO;
 import bubble.dao.device.DeviceDAO;
+import bubble.model.account.Account;
 import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.BubbleNetwork;
@@ -158,11 +159,12 @@ public class StandardSelfNodeService implements SelfNodeService {
             }
             jarUpgradeMonitorBean.start();
 
-            log.info("onStart: building spare devices for all account that are not root account");
+            log.info("onStart: building spare devices for all accounts that are not deleted");
             background(() -> {
                 if (accountDAO.findAll()
                               .stream()
-                              .filter(a -> !accountDAO.isFirstAdmin(a))
+                              .filter(Account::notDeleted)
+                              .filter(Account::isNotSpecialHashedPassword) // exclude sage admin account
                               .map(a -> deviceDAO.ensureAllSpareDevices(a.getUuid(), thisNetworkUuid))
                               .reduce(false, Boolean::logicalOr)
                               .booleanValue()) {

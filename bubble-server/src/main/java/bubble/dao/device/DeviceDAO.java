@@ -32,6 +32,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.touch;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
@@ -70,7 +71,12 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
     @Transactional
     @Override public Device create(@NonNull final Device device) {
+        final String prefix = "create(" + device.getName() + "): ";
+
         if (isRawMode() || device.uninitialized() || device.getDeviceType().isNonVpnDevice() || configuration.isSage()) {
+            if (log.isDebugEnabled()) {
+                log.debug(prefix+"creating real device object; isRawMode==" + isRawMode() + " || device.uninitialized()==" + device.uninitialized() + " || device.getDeviceType().isNonVpnDevice()==" + device.getDeviceType().isNonVpnDevice() + " || configuration.isSage()==" + configuration.isSage());
+            }
             return super.create(device);
         }
 
@@ -88,7 +94,7 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
             final Device result;
             uninitializedDevices = findByAccountAndUninitialized(accountUuid);
             if (uninitializedDevices.isEmpty()) {
-                log.warn("create: no uninitialized devices for account " + accountUuid);
+                log.warn(prefix+"creating real device object; no uninitialized devices for account " + accountUuid);
                 // just create the device now:
                 device.initTotpKey();
                 result = super.create(device);
@@ -99,22 +105,24 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
                 final long start = now();
                 while (availableDevice.isEmpty() && now() - start < DEVICE_INIT_TIMEOUT) {
                     if (configuration.testMode()) {
-                        log.warn("create: no available uninitialized devices and in test mode, using first uninitialized device...");
+                        log.warn(prefix+"no available uninitialized devices and in test mode, using first uninitialized device...");
                         availableDevice = Optional.of(uninitializedDevices.get(0));
                     } else {
                         // wait for configs to be ok
-                        log.warn("create: no available uninitialized devices, waiting...");
+                        log.warn(prefix+"no available uninitialized devices, waiting...");
                         sleep(SECONDS.toMillis(5), "waiting for available uninitialized device");
                         availableDevice = uninitializedDevices.stream().filter(Device::configsOk).findAny();
                     }
                 }
-                if (availableDevice.isEmpty()) return die("create: timeout waiting for available uninitialized device");
+                if (availableDevice.isEmpty()) return die(prefix+"timeout waiting for available uninitialized device");
                 uninitialized = availableDevice.get();
                 copy(uninitialized, device);
+                if (log.isDebugEnabled()) log.debug(prefix+"initializing existing device: "+uninitialized.getUuid());
                 result = super.update(uninitialized);
             }
 
             deviceService.setDeviceSecurityLevel(result);
+            if (log.isDebugEnabled()) log.debug(prefix+"returning device: "+json(result));
             return result;
         }
     }
@@ -155,13 +163,19 @@ public class DeviceDAO extends AccountOwnedEntityDAO<Device> {
 
     @Transactional
     public synchronized boolean ensureAllSpareDevices(@NonNull final String account, @NonNull final String network) {
-        if (configuration.isSage()) return true;
+        final String prefix = "ensureAllSpareDevices(" + account + "): ";
+        if (configuration.isSage()) {
+            if (log.isDebugEnabled()) log.debug(prefix+"configuration.isSage == true, returning true without doing anything");
+            return true;
+        }
         final var currentSpareDevices = findByAccountAndUninitialized(account);
         boolean newDevicesCreated = false;
         for (var i = currentSpareDevices.size(); i < SPARE_DEVICES_PER_ACCOUNT_MAX; i++) {
+            if (log.isDebugEnabled()) log.debug(prefix+"creating new uninitialized device...");
             super.create(newUninitializedDevice(network, account));
             newDevicesCreated = true;
         }
+        if (log.isDebugEnabled()) log.debug(prefix+"returning newDevicesCreated="+newDevicesCreated);
         return newDevicesCreated;
     }
 

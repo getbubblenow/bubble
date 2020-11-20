@@ -66,6 +66,7 @@
 <!--    <logger name="bubble.service.dbfilter" level="DEBUG" />-->
 <!--    <logger name="bubble.service.account.StandardAccountMessageService" level="DEBUG" />-->
 <!--    <logger name="bubble.dao.account.message.AccountMessageDAO" level="DEBUG" />-->
+<!--    <logger name="bubble.dao.device.DeviceDAO" level="DEBUG" />-->
 <!--    <logger name="bubble.service.cloud.job" level="DEBUG" />-->
 <!--    <logger name="bubble.service.cloud.NodeLauncher" level="DEBUG" />-->
 <!--    <logger name="bubble.service.cloud.NodeService" level="DEBUG" />-->

@@ -158,6 +158,7 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
     @ECIndex @ECSearchable @ECField(index=100, type=epoch_time, mode=readOnly)
     @Getter @Setter private Long deleted;
     public boolean deleted () { return deleted != null; }
+    public boolean notDeleted () { return !deleted(); }
     public Account setDeleted() { return setDeleted(now()); }
 
     @ECIndex @ECSearchable @ECField(index=110, type=epoch_time, mode=readOnly)
@@ -187,6 +188,9 @@ public class Account extends IdentifiableBaseParentEntity implements TokenPrinci
         this.hashedPasswordChanged = true;
         return this;
     }
+    @JsonIgnore @Transient public boolean isSpecialHashedPassword () { return hashedPassword != null && hashedPassword.isSpecial(); }
+    @JsonIgnore @Transient public boolean isNotSpecialHashedPassword () { return hashedPassword != null && !hashedPassword.isSpecial(); }
+
     @JsonIgnore @Transient @Getter @Setter private boolean hashedPasswordChanged = false;
     @JsonIgnore @Transient @Getter @Setter private String previousPasswordHash;
     @JsonIgnore @Transient @Getter @Setter private Boolean skipSync;

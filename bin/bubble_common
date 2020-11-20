@@ -99,5 +99,6 @@ if [[ -z "${BUBBLE_SKIP_PATH_WARNING}" && -z "$(which "$(basename "${0}")")" ]] 
   echo 1>&2 ""
   echo 1>&2 "export PATH=\${PATH}:${BUBBLE_BIN}"
   echo 1>&2 ""
+  echo 1>&2 "(set BUBBLE_SKIP_PATH_WARNING to silence this warning)"
   export BUBBLE_SKIP_PATH_WARNING=1
 fi

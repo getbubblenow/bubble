@@ -1,0 +1,159 @@
+#!/bin/bash
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+# Disconnect an Ubuntu system from a Bubble
+# You must run this as a user who has "sudo" privileges
+#
+# Usage:
+#
+#     ubuntu_disconnect_bubble [delete]
+#
+#   delete : Delete all local files, including any installed certificate
+#
+# If delete is not specified, then the VPN is simply turned off.
+#
+# If delete is specified, then the VPN is turned off and then:
+#   - VPN config file is removed
+#   - Bubble certificate is removed and certificate wizard is re-run
+#   - Local files in ~/bubble_devices are removed
+#
+# Environment Variables - these are only used when 'delete' is specified
+#
+#   BUBBLE_USER    : account to use
+#   BUBBLE_PASS    : password for account
+#
+#
+function die() {
+  echo 1>&2 "$0: fatal error: ${1}"
+  exit 1
+}
+
+SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+DO_DELETE=0
+if [[ ! -z "${1}" ]]; then
+  if [[ "${1}" == "delete" ]]; then
+    DO_DELETE=1
+  else
+    die "Invalid argument: ${1} (expected 'delete' or nothing)"
+  fi
+fi
+
+if [[ -z "$(which wg)" ]]; then
+  die "No wg command found - is WireGuard installed?"
+fi
+if [[ -z "$(which wg-quick)" ]]; then
+  die "No wg-quick command found - is WireGuard installed?"
+fi
+
+# Ensure WireGuard is not running
+if [[ ! -z "$(sudo wg show)" ]]; then
+  echo "Stopping WireGuard VPN ..."
+  sudo wg-quick down wg0
+else
+  echo "VPN not running"
+fi
+
+if [[ ${DO_DELETE} -eq 0 ]]; then
+  exit 0
+fi
+
+BUBBLE_DEVICE_BASE="${HOME}/bubble_devices"
+DEVICE_JSON_FILE="${BUBBLE_DEVICE_BASE}/current/device.json"
+if [[ ! -f "${DEVICE_JSON_FILE}" ]]; then
+  die "No ${DEVICE_JSON_FILE} file found"
+fi
+CURRENT_DEVICE_DIR="${BUBBLE_DEVICE_BASE}/current"
+CURRENT_DEVICE_JSON="$(cat "${CURRENT_DEVICE_DIR}/device.json")"
+if [[ -z "${CURRENT_DEVICE_JSON}" ]] ; then
+  die "File was empty: ${CURRENT_DEVICE_JSON}"
+fi
+BUBBLE_HOST="$(basename "$(readlink -f "${CURRENT_DEVICE_DIR}")")"
+BUBBLE_DIR="${BUBBLE_DEVICE_BASE}/${BUBBLE_HOST}"
+
+if [[ -d "${BUBBLE_DIR}" ]]; then
+  echo "Removing directory: ${BUBBLE_DIR}"
+  rm -rf "${BUBBLE_DIR}" || die "Error removing ${BUBBLE_DIR}"
+fi
+echo "Removing symlink: ${BUBBLE_DEVICE_BASE}/current"
+rm -f "${BUBBLE_DEVICE_BASE}/current" || die "Error removing ${BUBBLE_DEVICE_BASE}/current"
+
+CERTS_DIR=/usr/share/ca-certificates/extra
+CERT_DEST="${CERTS_DIR}/$(basename "${CERT_FILE}")"
+if [[ -f "${CERT_DEST}" ]]; then
+  echo "Removing certificate: ${CERT_DEST} ..."
+  rm -f "${CERT_DEST}"
+fi
+
+echo "
+### Finishing Certificate Uninstallation for Ubuntu
+
+We're going to run the Ubuntu certificate wizard via:
+
+   sudo dpkg-reconfigure ca-certificates
+
+When the wizard opens:
+ - Press Enter with 'Yes' selected for 'Trust new certificates from certificate authorities?'
+ - Press Enter to commit the changes
+
+To continue and run the Ubuntu certificate wizard, press Enter now
+"
+read -r DUMMY
+sudo dpkg-reconfigure ca-certificates || die "Error reconfiguring system CA certificates"
+
+WG_CONF=/etc/wireguard/wg0.conf
+echo "Removing WireGuard config: ${WG_CONF} ..."
+sudo rm -f ${WG_CONF} || die "Error removing ${WG_CONF}"
+
+DEVICE_NAME="$(echo "${CURRENT_DEVICE_JSON}" | jq -r .name)"
+if [[ -z "${DEVICE_NAME}" ]] ; then
+  die "No device name could be read from JSON: ${CURRENT_DEVICE_JSON}"
+fi
+DEVICE_UUID="$(echo "${CURRENT_DEVICE_JSON}" | jq -r .uuid)"
+if [[ -z "${DEVICE_UUID}" ]] ; then
+  die "No device UUID could be read from JSON: ${CURRENT_DEVICE_JSON}"
+fi
+if [[ -z "${BUBBLE_USER}" ]]; then
+  echo -n "BUBBLE_USER env var not defined.
+Enter Bubble username: "
+  read -r BUBBLE_USER
+  echo
+fi
+if [[ -z "${BUBBLE_PASS}" ]]; then
+  echo -n "BUBBLE_PASS env var not defined.
+Enter Bubble password: "
+  read -rs BUBBLE_PASS
+  echo
+fi
+BUBBLE_API="https://${BUBBLE_HOST}/api"
+
+echo "Logging in to Bubble ${BUBBLE_API} ..."
+export BUBBLE_API
+export BUBBLE_USER
+export BUBBLE_PASS
+export BUBBLE_SKIP_PATH_WARNING=true
+bget me | jq .email > /dev/null || die "Error logging into Bubble with API: ${BUBBLE_API}"
+
+echo "Deleting device: ${DEVICE_NAME}"
+bdelete "me/devices/${DEVICE_UUID}" || die "Error deleting device: ${DEVICE_NAME} (uuid ${DEVICE_UUID})"
+
+echo "
+==============================================================
+======= Linux device successfully deleted from Bubble! =======
+==============================================================
+Device Name : ${DEVICE_NAME}
+Bubble Host : ${BUBBLE_HOST}
+"
+
+if [[ ! -z "$(which firefox)" ]]; then
+  echo "
+===========================================================
+===================== Firefox Warning =====================
+===========================================================
+Firefox does not use the Ubuntu certificate store. It has its
+own certificate store.
+
+If you installed the Bubble certificate in Firefox, now would
+be the time to remove it from Firefox.
+"
+fi

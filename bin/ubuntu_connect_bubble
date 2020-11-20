@@ -2,12 +2,12 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-# Connect a Linux system to a Bubble
+# Connect an Ubuntu system to a Bubble
 # You must run this as a user who has "sudo" privileges
 #
 # Usage:
 #
-#     bubble_linux_connect [hostname]
+#     ubuntu_connect_bubble [hostname]
 #
 #   hostname : bubble to connect this Linux system to
 #              If not specified, an env var will be used (see below)
@@ -16,10 +16,12 @@
 #
 # Environment Variables
 #
-#   BUBBLE_HOST    : hostname of the Bubble to use. The API base URI will be https://<hostname>/api
-#   BUBBLE_API     : full base URL of the Bubble API to use. Typically this ends with /api
-#   BUBBLE_USER    : account to use
-#   BUBBLE_PASS    : password for account
+#   BUBBLE_HOST      : hostname of the Bubble to use. The API base URI will be https://<hostname>/api
+#   BUBBLE_API       : full base URL of the Bubble API to use. Typically this ends with /api
+#   BUBBLE_USER      : account to use
+#   BUBBLE_PASS      : password for account
+#   BUBBLE_CERT_WIZ  : Set this to 'true' to run the Ubuntu certificate wizard, even if it looks
+#                      like the certificate is already installed
 #
 # This command will:
 #  * Disconnect from any current Bubble
@@ -36,38 +38,6 @@ function die() {
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
-ARG_HOST="${1}"
-if [[ -z "${ARG_HOST}" ]] ; then
-  if [[ -z "${BUBBLE_API}" ]] ; then
-    if [[ -z "${BUBBLE_HOST}" ]] ; then
-      echo -n "No hostname argument provided and neither BUBBLE_API nor BUBBLE_HOST env vars were defined.
-Enter Bubble hostname: "
-      read -r ARG_HOST
-      if [[ -z "${ARG_HOST}" ]] ; then
-        die "Empty Bubble hostname"
-      fi
-      BUBBLE_API="https://${ARG_HOST}/api"
-    else
-      BUBBLE_API="https://${BUBBLE_HOST}/api"
-    fi
-  fi
-else
-  BUBBLE_API="https://${ARG_HOST}/api"
-fi
-
-if [[ -z "${BUBBLE_USER}" ]]; then
-  echo -n "BUBBLE_USER env var not defined. Enter Bubble username: "
-  read -r BUBBLE_USER
-fi
-if [[ -z "${BUBBLE_PASS}" ]]; then
-  echo -n "BUBBLE_PASS env var not defined. Enter Bubble password: "
-  read -r BUBBLE_PASS
-fi
-
-BUBBLE_HOST="$(echo -n "${BUBBLE_API}" | awk -F '/' '{print $3}' | awk -F ':' '{print $1}')"
-if [[ -z "${BUBBLE_HOST}" ]]; then
-  die "No hostname could be determined from BUBBLE_API = ${BUBBLE_API}"
-fi
 
 if [[ -z "$(which wg)" ]]; then
   die "No wg command found - is WireGuard installed?"
@@ -83,11 +53,53 @@ if [[ -z "$(which bget)" ]]; then
   fi
 fi
 
+ARG_HOST="${1}"
+if [[ -z "${ARG_HOST}" ]] ; then
+  if [[ -z "${BUBBLE_API}" ]] ; then
+    if [[ -z "${BUBBLE_HOST}" ]] ; then
+      echo -n "No hostname argument provided and neither BUBBLE_API nor BUBBLE_HOST env vars were defined.
+Enter Bubble hostname: "
+      read -r ARG_HOST
+      echo
+      if [[ -z "${ARG_HOST}" ]] ; then
+        die "Empty Bubble hostname"
+      fi
+      BUBBLE_API="https://${ARG_HOST}/api"
+    else
+      BUBBLE_API="https://${BUBBLE_HOST}/api"
+    fi
+  fi
+else
+  BUBBLE_API="https://${ARG_HOST}/api"
+fi
+
+if [[ -z "${BUBBLE_USER}" ]]; then
+  echo -n "BUBBLE_USER env var not defined.
+Enter Bubble username: "
+  read -r BUBBLE_USER
+  echo
+fi
+if [[ -z "${BUBBLE_PASS}" ]]; then
+  echo -n "BUBBLE_PASS env var not defined.
+Enter Bubble password: "
+  read -rs BUBBLE_PASS
+  echo
+fi
+
+BUBBLE_HOST="$(echo -n "${BUBBLE_API}" | awk -F '/' '{print $3}' | awk -F ':' '{print $1}')"
+if [[ -z "${BUBBLE_HOST}" ]]; then
+  die "No hostname could be determined from BUBBLE_API: ${BUBBLE_API}"
+fi
+
 echo "Logging in to Bubble ${BUBBLE_API} ..."
-bget me || die "Error logging into Bubble with API: ${BUBBLE_API}"
+export BUBBLE_API
+export BUBBLE_USER
+export BUBBLE_PASS
+export BUBBLE_SKIP_PATH_WARNING=true
+bget me | jq .email > /dev/null || die "Error logging into Bubble with API: ${BUBBLE_API}"
 
 # Ensure WireGuard is not running
-if [[ ! -z "$(wg show)" ]]; then
+if [[ ! -z "$(sudo wg show)" ]] ; then
   echo "Stopping WireGuard VPN ..."
   sudo wg-quick down wg0
 fi
@@ -96,7 +108,7 @@ BUBBLE_DEVICE_BASE="${HOME}/bubble_devices"
 BUBBLE_DIR="${BUBBLE_DEVICE_BASE}/${BUBBLE_HOST}"
 mkdir -p "${BUBBLE_DIR}" || die "Error creating directory: ${BUBBLE_DIR}"
 
-CERT_FILE="${BUBBLE_DIR}"/bubble-cert.crt
+CERT_FILE="${BUBBLE_DIR}"/bubble-${BUBBLE_HOST}.crt
 VPN_FILE="${BUBBLE_DIR}"/vpn.conf
 
 DEVICE_NAME_FILE=${BUBBLE_DIR}/bubble_device_name
@@ -113,53 +125,70 @@ if [[ $(bgetn me/devices | grep -c "${DEVICE_NAME}") -eq 0 ]]; then
   echo "{
   \"name\": \"${DEVICE_NAME}\",
   \"deviceType\": \"Linux\"
-}" | bput me/devices - || die "Error creating device"
+}" | bput me/devices - > "${BUBBLE_DIR}/device.json" || die "Error creating device"
   rm -f "${VPN_FILE}" "${CERT_FILE}" || die "Error removing obsolete vpn.conf and cert files"
 else
   echo "Device already registered: ${DEVICE_NAME}"
 fi
 
 # Do we have both a cert file and a vpn.conf? If so, we are done
-if [[ ! -f "${CERT_FILE}" ]]; then
+if [[ ! -s "${CERT_FILE}" ]]; then
   # Download cert file
   echo "Downloading certificate ..."
-  if [[ ! -f "${CERT_FILE}" ]]; then
-    bget auth/cacert?deviceType=Linux --raw >"${CERT_FILE}" || die "Error downloading certificate file"
-  fi
+  bget auth/cacert?deviceType=Linux --raw >"${CERT_FILE}" || die "Error downloading certificate file"
 fi
-if [[ ! -f "${VPN_FILE}" ]]; then
+if [[ ! -s "${VPN_FILE}" ]]; then
   # Download vpn.conf file
   echo "Downloading vpn.conf ..."
-  if [[ ! -f "${VPN_FILE}" ]]; then
-    bget "me/devices/${DEVICE_NAME}/vpn/vpn.conf" --raw >"${VPN_FILE}" || die "Error downloading vpn.conf file"
-  fi
+  bget "me/devices/${DEVICE_NAME}/vpn/vpn.conf" --raw >"${VPN_FILE}" || die "Error downloading vpn.conf file"
 fi
 
 echo "Marking ${BUBBLE_HOST} as current Bubble ..."
 cd "${BUBBLE_DEVICE_BASE}" && ln -sf "${BUBBLE_HOST}" current || die "Error creating symlink ${BUBBLE_DEVICE_BASE}/current -> ${BUBBLE_DEVICE_BASE}/${BUBBLE_HOST}"
 
-EXTRA_CERTS_DIR=/usr/share/ca-certificates/extra/
-CERT_DEST="${EXTRA_CERTS_DIR}/${CERT_FILE}"
-echo "Copying certificate to ${CERT_DEST} ..."
-sudo cp "${CERT_FILE}" "${CERT_DEST}" || die "Error copying certificate: ${CERT_FILE} -> ${CERT_DEST}"
+CERTS_DIR=/usr/share/ca-certificates/extra
+if [[ ! -d "${CERTS_DIR}" ]] ; then
+  echo "Creating ${CERTS_DIR}"
+  sudo mkdir -p ${CERTS_DIR}
+fi
+CERT_DEST="${CERTS_DIR}/$(basename "${CERT_FILE}")"
+RUN_CERT_WIZ=0
+if cmp "${CERT_FILE}" "${CERT_DEST}" ; then
+  if [[ -z "${BUBBLE_CERT_WIZ}" ]] ; then
+    echo "Certificate already installed: ${CERT_DEST}"
+  elif [[ "${BUBBLE_CERT_WIZ}" == "true" ]] ; then
+    RUN_CERT_WIZ=1
+  else
+    die "Invalid value for BUBBLE_CERT_WIZ env var: ${BUBBLE_CERT_WIZ} (expected 'true' or nothing)"
+  fi
+else
+  RUN_CERT_WIZ=1
+  echo "Copying certificate to ${CERT_DEST} ..."
+  sudo cp "${CERT_FILE}" "${CERT_DEST}" || die "Error copying certificate: ${CERT_FILE} -> ${CERT_DEST}"
+fi
 
-echo "
+if [[ ${RUN_CERT_WIZ} -eq 1 ]] ; then
+  echo "
 ### Finishing Certificate Installation for Ubuntu
 
 We're going to run the Ubuntu certificate wizard via:
 
    sudo dpkg-reconfigure ca-certificates
 
-When the wizard opens, check the box for your Bubble certificate and press OK.
+When the wizard opens:
+ - Press Enter with 'Yes' selected for 'Trust new certificates from certificate authorities?'
+ - Press the space bar to check the box for your Bubble certificate
+ - Press Enter to commit the changes
 
-To continue, press Enter
+To continue and run the Ubuntu certificate wizard, press Enter now
 "
-read -r DUMMY
-sudo dpkg-reconfigure ca-certificates || die "Error reconfiguring system CA certificates"
+  read -r DUMMY
+  sudo dpkg-reconfigure ca-certificates || die "Error reconfiguring system CA certificates"
+fi
 
 # Ensure ssh route table exists
-if [[ $(cat /etc/iproute2/rt_tables | grep -c ssh) -eq 0 ]] ; then
-  sudo echo "2 ssh" >> /etc/iproute2/rt_tables
+if [[ $(sudo cat /etc/iproute2/rt_tables | grep -c ssh) -eq 0 ]] ; then
+  sudo bash -c 'echo "2 ssh" >> /etc/iproute2/rt_tables'
 else
   echo "ssh table already exists in rt_tables"
 fi
@@ -169,8 +198,8 @@ REBOOT_FILE=/tmp/reboot-required.bubble
 # Set sysctl vars
 SYSCTL="/etc/sysctl.conf"
 SYS_RP_FILTER="net.ipv4.conf.all.rp_filter"
-if [[ $(cat ${SYSCTL} | grep -v '^#' | grep -c "${SYS_RP_FILTER}") -eq 0 ]] ; then
-  echo "${SYS_RP_FILTER} = 2" >> ${SYSCTL}
+if [[ $(sudo cat ${SYSCTL} | grep -v '^#' | grep -c "${SYS_RP_FILTER}") -eq 0 ]] ; then
+  sudo bash -c 'echo "'"${SYS_RP_FILTER}"' = 2" >> '"${SYSCTL}"'' || die "Error setting ${SYS_RP_FILTER} = 2 in ${SYSCTL}"
   touch ${REBOOT_FILE}
 else
   echo "${SYS_RP_FILTER} already defined in ${SYSCTL}"
@@ -178,10 +207,19 @@ fi
 
 SYS_IP_FORWARD="net.ipv4.ip_forward"
 if [[ $(cat ${SYSCTL} | grep -v '^#' | grep -c "${SYS_IP_FORWARD}") -eq 0 ]] ; then
-  echo "${SYS_IP_FORWARD} = 1" >> ${SYSCTL}
+  sudo bash -c 'echo "'"${SYS_IP_FORWARD}"' = 1" >> '"${SYSCTL}"'' || die "Error setting ${SYS_IP_FORWARD} = 1 in ${SYSCTL}"
   touch ${REBOOT_FILE}
 else
   echo "${SYS_IP_FORWARD} already defined in ${SYSCTL}"
+fi
+
+if [[ -f ${REBOOT_FILE} ]] ; then
+  echo "
+sysctl settings changed, reboot required.
+
+Press Enter to reboot, or Control-C to exit and reboot later"
+  read -r DUMMY
+  sudo bash -c 'sync && shutdown -r now' && exit 1 || die "Error rebooting"
 fi
 
 WG_CONF=/etc/wireguard/wg0.conf
@@ -202,7 +240,7 @@ else
   fi
 
   WG_TEMP=$(mktemp /tmp/wg.conf.XXXXXXX)
-  cat ${WG_CONF} | grep -A 3 '\[Interface\]' >> "${WG_TEMP}"
+  sudo cat ${WG_CONF} | grep -A 3 '\[Interface\]' >> "${WG_TEMP}"
   echo "PostUp = ip route add default via ${GATEWAY} dev ${IFACE} table ssh
   PostUp = ip rule add fwmark 0x2 table ssh
   PostUp = /sbin/iptables -A OUTPUT -t mangle -o wg0 -p tcp --sport 22 -j MARK --set-mark 2
@@ -210,30 +248,37 @@ else
   PreDown = ip rule del fwmark 0x2 table ssh
   PreDown = ip route del default via ${GATEWAY} dev ${IFACE} table ssh
   " >> "${WG_TEMP}"
-  cat ${WG_CONF} | grep -A 10 '\[Peer\]' >> "${WG_TEMP}"
+  sudo cat ${WG_CONF} | grep -A 10 '\[Peer\]' >> "${WG_TEMP}"
 
-  mv "${WG_TEMP}" ${WG_CONF} || die "Error installing updated ${WG_CONF} file"
+  sudo mv "${WG_TEMP}" ${WG_CONF} || die "Error installing updated ${WG_CONF} file"
 fi
 
 echo "Starting WireGuard VPN ..."
 sudo wg-quick up wg0 || die "Error starting WireGuard"
 
 echo "
+==============================================================
 ======= Linux device successfully connected to Bubble! =======
-
+==============================================================
 Device Name : ${DEVICE_NAME}
 Bubble Host : ${BUBBLE_HOST}
-Certificate : ${CERT_FILE} - installed: ${CERT_DEST}
-VPN Config  : ${VPN_FILE} - configured and installed: ${WG_CONF}
+Device Dir  : ${BUBBLE_DIR}
+Certificate : ${CERT_DEST}
+VPN Config  : ${WG_CONF}
 "
 
 if [[ ! -z "$(which firefox)" ]] ; then
   echo "
-###### WARNING: Firefox will not properly connect to most websites until you install
-                the Bubble certificate in Firefox
+===========================================================
+===================== Firefox Warning =====================
+===========================================================
+Firefox does not use the Ubuntu certificate store. It has its
+own certificate store.
+
+Firefox will not properly connect to most websites until you
+install the Bubble certificate in Firefox.
 
 To install the Bubble Certificate in Firefox:
-
  * Open Firefox
  * In the search box (top right of page), enter \"certificate\"
  * Scroll down, click \"View Certificates\" button
@@ -242,5 +287,6 @@ To install the Bubble Certificate in Firefox:
  * Check the box \"Trust this CA to identify websites\" and click OK.
 
 More detailed instructions, with screenshots, can be found here:
-https://git.bubblev.org/bubblev/bubble-docs/src/branch/master/cert_instructions/firefox_cert.md"
+  https://git.bubblev.org/bubblev/bubble-docs/src/branch/master/cert_instructions/firefox_cert.md
+"
 fi
