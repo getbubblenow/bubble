@@ -90,10 +90,10 @@ The following apt packages will be installed:
 
 Press Enter to continue with installation, or Control-C to exit"
   read -r DUMMY || die "Bubble connection canceled"
-fi
 
-# Do not quote INSTALL_PACKAGES, we want to install all packages...
-sudo apt update && sudo apt install -y ${INSTALL_PACKAGES} || die "Error installing packages: ${INSTALL_PACKAGES}"
+  # Do not quote INSTALL_PACKAGES, we want to install all packages...
+  sudo apt update && sudo apt install -y ${INSTALL_PACKAGES} || die "Error installing packages: ${INSTALL_PACKAGES}"
+fi
 
 ARG_HOST="${1}"
 if [[ -z "${ARG_HOST}" ]] ; then
