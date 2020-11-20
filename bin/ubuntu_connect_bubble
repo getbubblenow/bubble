@@ -37,6 +37,9 @@ function die() {
   exit 1
 }
 
+# from https://stackoverflow.com/a/34407620
+function uriencode { jq -nr --arg v "$1" '$v|@uri'; }
+
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 
 if [[ -z "$(which wg)" ]]; then
@@ -129,6 +132,10 @@ if [[ $(bgetn me/devices | grep -c "${DEVICE_NAME}") -eq 0 ]]; then
   rm -f "${VPN_FILE}" "${CERT_FILE}" || die "Error removing obsolete vpn.conf and cert files"
 else
   echo "Device already registered: ${DEVICE_NAME}"
+  if [[ ! -f "${BUBBLE_DIR}/device.json" ]] ; then
+    echo "Downloading device.json file ..."
+    bget "me/devices/$(uriencode "${DEVICE_NAME}")" > "${BUBBLE_DIR}/device.json" || die "Error downloading device JSON file"
+  fi
 fi
 
 # Do we have both a cert file and a vpn.conf? If so, we are done
@@ -143,8 +150,19 @@ if [[ ! -s "${VPN_FILE}" ]]; then
   bget "me/devices/${DEVICE_NAME}/vpn/vpn.conf" --raw >"${VPN_FILE}" || die "Error downloading vpn.conf file"
 fi
 
-echo "Marking ${BUBBLE_HOST} as current Bubble ..."
-cd "${BUBBLE_DEVICE_BASE}" && ln -sf "${BUBBLE_HOST}" current || die "Error creating symlink ${BUBBLE_DEVICE_BASE}/current -> ${BUBBLE_DEVICE_BASE}/${BUBBLE_HOST}"
+CURRENT_DEVICE_DIR="${BUBBLE_DEVICE_BASE}/current"
+CREATE_CURRENT_SYMLINK=0
+if [[ -e "${CURRENT_DEVICE_DIR}" ]] ; then
+  if [[ "$(basename "$(readlink -f "${CURRENT_DEVICE_DIR}")")" != "${BUBBLE_HOST}" ]] ; then
+    CREATE_CURRENT_SYMLINK=1
+  fi
+else
+  CREATE_CURRENT_SYMLINK=1
+fi
+if [[ ${CREATE_CURRENT_SYMLINK} -eq 1 ]] ; then
+  echo "Marking ${BUBBLE_HOST} as current Bubble (cd ${BUBBLE_DEVICE_BASE} && ln -sf ${BUBBLE_HOST} current)..."
+  cd "${BUBBLE_DEVICE_BASE}" && ln -sf "${BUBBLE_HOST}" current || die "Error creating symlink ${BUBBLE_DEVICE_BASE}/current -> ${BUBBLE_DEVICE_BASE}/${BUBBLE_HOST}"
+fi
 
 CERTS_DIR=/usr/share/ca-certificates/extra
 if [[ ! -d "${CERTS_DIR}" ]] ; then

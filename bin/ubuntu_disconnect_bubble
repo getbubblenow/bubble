@@ -58,6 +58,13 @@ if [[ ${DO_DELETE} -eq 0 ]]; then
   exit 0
 fi
 
+if [[ -z "$(which bget)" ]]; then
+  export PATH=${PATH}:${SCRIPT_DIR}
+  if [[ -z "$(which bget)" ]]; then
+    die "bget command not found, even after adding ${SCRIPT_DIR} to PATH"
+  fi
+fi
+
 BUBBLE_DEVICE_BASE="${HOME}/bubble_devices"
 DEVICE_JSON_FILE="${BUBBLE_DEVICE_BASE}/current/device.json"
 if [[ ! -f "${DEVICE_JSON_FILE}" ]]; then
@@ -70,19 +77,15 @@ if [[ -z "${CURRENT_DEVICE_JSON}" ]] ; then
 fi
 BUBBLE_HOST="$(basename "$(readlink -f "${CURRENT_DEVICE_DIR}")")"
 BUBBLE_DIR="${BUBBLE_DEVICE_BASE}/${BUBBLE_HOST}"
-
-if [[ -d "${BUBBLE_DIR}" ]]; then
-  echo "Removing directory: ${BUBBLE_DIR}"
-  rm -rf "${BUBBLE_DIR}" || die "Error removing ${BUBBLE_DIR}"
-fi
-echo "Removing symlink: ${BUBBLE_DEVICE_BASE}/current"
-rm -f "${BUBBLE_DEVICE_BASE}/current" || die "Error removing ${BUBBLE_DEVICE_BASE}/current"
+CERT_FILE="${BUBBLE_DIR}"/bubble-${BUBBLE_HOST}.crt
 
 CERTS_DIR=/usr/share/ca-certificates/extra
 CERT_DEST="${CERTS_DIR}/$(basename "${CERT_FILE}")"
 if [[ -f "${CERT_DEST}" ]]; then
   echo "Removing certificate: ${CERT_DEST} ..."
-  rm -f "${CERT_DEST}"
+  sudo rm -f "${CERT_DEST}"
+else
+  echo "Certificate not installed, not removing: ${CERT_DEST}"
 fi
 
 echo "
@@ -136,6 +139,13 @@ bget me | jq .email > /dev/null || die "Error logging into Bubble with API: ${BU
 
 echo "Deleting device: ${DEVICE_NAME}"
 bdelete "me/devices/${DEVICE_UUID}" || die "Error deleting device: ${DEVICE_NAME} (uuid ${DEVICE_UUID})"
+
+if [[ -d "${BUBBLE_DIR}" ]]; then
+  echo "Removing directory: ${BUBBLE_DIR}"
+  rm -rf "${BUBBLE_DIR}" || die "Error removing ${BUBBLE_DIR}"
+fi
+echo "Removing symlink: ${BUBBLE_DEVICE_BASE}/current"
+rm -f "${BUBBLE_DEVICE_BASE}/current" || die "Error removing ${BUBBLE_DEVICE_BASE}/current"
 
 echo "
 ==============================================================
