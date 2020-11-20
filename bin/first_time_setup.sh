@@ -2,7 +2,6 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-#
 # Performs first-time setup after a fresh git clone.
 # Installs utility libraries.
 #
@@ -16,8 +15,11 @@
 # ~/.bubble.env is the environment used by the BubbleServer started by run.sh
 # ~/.bubble-test.env is the environment used by the BubbleServer that runs during the integration tests
 #
+# If you prefer to checkout git submodules using SSH instead of HTTPS, set the BUBBLE_SSH_SUBMODULES
+# environment variable to 'true'
+#
 
-function die {
+function die() {
   if [[ -z "${SCRIPT}" ]] ; then
     echo 1>&2 "${1}"
   else
@@ -26,14 +28,18 @@ function die {
   exit 1
 }
 
-BASE=$(cd $(dirname $0)/.. && pwd)
-cd ${BASE}
+BASE="$(cd "$(dirname "${0}")/.." && pwd)"
+cd "${BASE}" || die "Error changing to ${BASE} directory"
+
+if [[ -z "${BUBBLE_SSH_SUBMODULES}" || "${BUBBLE_SSH_SUBMODULES}" != "true" ]] ; then
+  "${BASE}"/bin/git_https_submodules.sh || die "Error switching to HTTPS git submodules"
+fi
 
 git submodule update --init --recursive || die "Error in git submodule update"
 
-pushd utils/cobbzilla-parent
+pushd utils/cobbzilla-parent || die "Error pushing utils/cobbzilla-parent directory"
 mvn install || die "Error installing cobbzilla-parent"
-popd
+popd || die "Error popping back from utils/cobbzilla-parent"
 
 UTIL_REPOS="
 cobbzilla-parent
@@ -43,11 +49,11 @@ templated-mail-sender
 cobbzilla-wizard
 abp-parser
 "
-pushd utils
-for repo in ${UTIL_REPOS} ; do
-  pushd ${repo} && mvn -DskipTests=true -Dcheckstyle.skip=true clean install && popd || die "Error installing ${repo}"
+pushd utils || die "Error pushing utils directory"
+for repo in ${UTIL_REPOS}; do
+  pushd "${repo}" && mvn -DskipTests=true -Dcheckstyle.skip=true clean install && popd || die "Error installing ${repo}"
 done
-popd
+popd || die "Error popping back from utils directory"
 
 if [[ -z "${BUBBLE_SETUP_MODE}" || "${BUBBLE_SETUP_MODE}" == "web" ]] ; then
   INSTALL_WEB=web mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error building bubble jar"

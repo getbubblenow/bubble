@@ -1,6 +1,10 @@
 #!/usr/bin/python3
 #
-# Replay a stream, as if mitmproxy were sending filter requests via the filter/apply API
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+# Replay a stream, as if mitmproxy were sending filter requests via the filter/apply API.
+#
+# This is an advanced tool for low-level debugging and diagnostics of the Bubble filtering system.
 #
 # Usage:
 #
@@ -13,8 +17,18 @@
 #
 # To capture requests for later playback:
 #   * Set debug_stream_fqdn and debug_stream_uri in mitmproxy/bubble_config.py and restart mitmproxy servers
-#   * Request a matching using a device whose traffic will be routed through the mitmproxy
+#   * Request the debug fqdn and URI using a device whose traffic will be routed through the mitmproxy
 #   * Capture files will be written to /tmp/bubble_stream_[request-id]_chunkXXXX.[url, headers.json, data]
+#
+# When capturing, the URL you request must match the debug_stream_fqdn and debug_stream_uri exactly
+# in order for capturing to be triggered. For example, if we have:
+#
+#   debug_stream_fqdn = 'www.example.com'
+#   debug_stream_uri = '/dir/test.html'
+#
+# Then the URL to use when requesting from the connected device is:
+#
+#   https://www.example.com/dir/test.html
 #
 import glob
 import json
