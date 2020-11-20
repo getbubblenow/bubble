@@ -153,6 +153,7 @@ echo "
 ==============================================================
 Device Name : ${DEVICE_NAME}
 Bubble Host : ${BUBBLE_HOST}
+Public IP   : $(curl -s http://checkip.amazonaws.com/)
 "
 
 if [[ ! -z "$(which firefox)" ]] ; then

@@ -322,6 +322,7 @@ Bubble Host : ${BUBBLE_HOST}
 Device Dir  : ${BUBBLE_DIR}
 Certificate : ${CERT_DEST}
 VPN Config  : ${WG_CONF}
+Public IP   : $(curl -s http://checkip.amazonaws.com/)
 "
 
 if [[ ! -z "$(which firefox)" ]] ; then
