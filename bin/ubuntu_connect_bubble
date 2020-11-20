@@ -202,6 +202,14 @@ if [[ ${CREATE_CURRENT_SYMLINK} -eq 1 ]] ; then
   echo "Marking ${BUBBLE_HOST} as current Bubble (cd ${BUBBLE_DEVICE_BASE} && ln -sf ${BUBBLE_HOST} current)..."
   cd "${BUBBLE_DEVICE_BASE}" && ln -sf "${BUBBLE_HOST}" current || die "Error creating symlink ${BUBBLE_DEVICE_BASE}/current -> ${BUBBLE_DEVICE_BASE}/${BUBBLE_HOST}"
 fi
+CURRENT_DEVICE_JSON="$(cat "${CURRENT_DEVICE_DIR}/device.json")"
+if [[ -z "${CURRENT_DEVICE_JSON}" ]] ; then
+  die "File was empty: ${CURRENT_DEVICE_JSON}"
+fi
+DEVICE_UUID="$(echo "${CURRENT_DEVICE_JSON}" | jq -r .uuid)"
+if [[ -z "${DEVICE_UUID}" ]] ; then
+  die "No device UUID could be read from JSON: ${CURRENT_DEVICE_JSON}"
+fi
 
 CERTS_DIR=/usr/share/ca-certificates/extra
 if [[ ! -d "${CERTS_DIR}" ]] ; then
@@ -317,6 +325,7 @@ echo "
 ==============================================================
 ======= Linux device successfully connected to Bubble! =======
 ==============================================================
+Device UUID : ${DEVICE_UUID}
 Device Name : ${DEVICE_NAME}
 Bubble Host : ${BUBBLE_HOST}
 Device Dir  : ${BUBBLE_DIR}
