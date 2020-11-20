@@ -75,6 +75,10 @@ if [[ -z "$(which jq)" ]] ; then
   echo "Installing jq ..."
   sudo apt update && sudo apt install -y jq || die "Error installing jq"
 fi
+if [[ -z "$(which route)" ]] ; then
+  echo "Installing net-tools (route command) ..."
+  sudo apt update && sudo apt install -y net-tools || die "Error installing net-tools"
+fi
 
 ARG_HOST="${1}"
 if [[ -z "${ARG_HOST}" ]] ; then
