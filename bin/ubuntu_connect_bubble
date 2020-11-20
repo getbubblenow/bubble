@@ -44,7 +44,7 @@ SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 
 if [[ -z "$(which wg)" ]] ; then
   echo "Installing WireGuard ..."
-  sudo apt install -y wireguard || die "Error installing WireGuard"
+  sudo apt update && sudo apt install -y wireguard || die "Error installing WireGuard"
 fi
 if [[ -z "$(which wg-quick)" ]] ; then
   die "No wg-quick command found - is WireGuard installed?"
@@ -59,7 +59,7 @@ fi
 
 if [[ -z "$(which java)" ]] ; then
   echo "Installing Java 11 ..."
-  sudo apt install -y openjdk-11-jre || die "Error installing Java 11"
+  sudo apt update && sudo apt install -y openjdk-11-jre || die "Error installing Java 11"
 else
   JAVA_VERSION="$(java -version 2>&1 | grep "openjdk version" | awk -F '"' '{print $2}' | awk -F '.' '{print $1}')"
   if [[ -z "${JAVA_VERSION}" ]] ; then
