@@ -57,6 +57,20 @@ if [[ -z "$(which bget)" ]] ; then
   fi
 fi
 
+if [[ -z "$(which java)" ]] ; then
+  echo "Installing Java 11 ..."
+  sudo apt install -y openjdk-11-jre || die "Error installing Java 11"
+else
+  JAVA_VERSION="$(java -version 2>&1 | grep "openjdk version" | awk -F '"' '{print $2}' | awk -F '.' '{print $1}')"
+  if [[ -z "${JAVA_VERSION}" ]] ; then
+    echo "Installing Java 11 (unknown java version found) ..."
+    sudo apt install -y openjdk-11-jre || die "Error installing Java 11"
+  elif [[ ${JAVA_VERSION} -lt 11 ]] ; then
+    echo "Installing Java 11 (unexpected java version: ${JAVA_VERSION}) ..."
+    sudo apt install -y openjdk-11-jre || die "Error installing Java 11"
+  fi
+fi
+
 ARG_HOST="${1}"
 if [[ -z "${ARG_HOST}" ]] ; then
   if [[ -z "${BUBBLE_API}" ]] ; then
