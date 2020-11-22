@@ -34,7 +34,7 @@ from bubble_api import bubble_matchers, bubble_activity_log, \
     CTX_BUBBLE_PASSTHRU, CTX_BUBBLE_FLEX, CTX_BUBBLE_REQUEST_ID, add_flow_ctx, parse_host_header, \
     is_bubble_special_path, is_bubble_health_check, health_check_response, tarpit_response,\
     is_bubble_request, is_sage_request, is_not_from_vpn, is_flex_domain, update_host_and_port
-from bubble_config import bubble_host, bubble_host_alias
+from bubble_config import bubble_host, bubble_host_alias, bubble_log_request
 from bubble_flex import new_flex_flow
 
 import logging
@@ -78,7 +78,10 @@ class Rerouter:
         prefix = 'get_matchers('+host+flow.request.path+'): '
         req_id = str(host) + '.' + str(uuid.uuid4()) + '.' + str(time.time())
         if log_debug:
-            bubble_log.debug(prefix+"requesting match decision for req_id="+req_id)
+            if bubble_log_request:
+                bubble_log.debug(prefix+'requesting match decision for req_id='+req_id+' with request headers: '+repr(flow.request.headers))
+            else:
+                bubble_log.debug(prefix+'requesting match decision for req_id='+req_id)
         resp = bubble_matchers(req_id, client_addr, server_addr, flow, host)
 
         if not resp:

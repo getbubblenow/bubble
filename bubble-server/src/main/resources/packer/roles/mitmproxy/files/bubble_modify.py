@@ -10,7 +10,7 @@ import traceback
 
 from mitmproxy.net.http import Headers
 
-from bubble_config import bubble_port, debug_capture_fqdn, debug_stream_fqdn, debug_stream_uri
+from bubble_config import bubble_port, debug_capture_fqdn, debug_stream_fqdn, debug_stream_uri, bubble_log_response
 from bubble_api import CTX_BUBBLE_MATCHERS, CTX_BUBBLE_ABORT, CTX_BUBBLE_LOCATION, CTX_BUBBLE_FLEX, \
     status_reason, update_host_and_port, get_flow_ctx, add_flow_ctx, bubble_async, async_client, cleanup_async, \
     is_bubble_special_path, is_bubble_health_check, health_check_response, special_bubble_response, \
@@ -174,7 +174,13 @@ def filter_chunk(loop, flow, chunk, req_id, user_agent, last, content_encoding=N
         f.close()
 
     response = bubble_async(name, url, headers=headers, method='POST', data=chunk, loop=loop, client=client)
-    if not response.status_code == 200:
+    if response is None:
+        err_message = 'filter_chunk: Error fetching ' + url + ', response was None'
+        if log_error:
+            bubble_log.error(err_message)
+        return b''
+
+    elif not response.status_code == 200:
         err_message = 'filter_chunk: Error fetching ' + url + ', HTTP status ' + str(response.status_code) + ' content='+repr(response.content)
         if log_error:
             bubble_log.error(err_message)
@@ -186,6 +192,8 @@ def filter_chunk(loop, flow, chunk, req_id, user_agent, last, content_encoding=N
         redis_set(redis_passthru_key, 'passthru', ex=REDIS_FILTER_PASSTHRU_DURATION)
         return chunk
 
+    if log_debug:
+        bubble_log.debug('filter_chunk: returning '+str(len(response.content))+' bytes of filtered content')
     return response.content
 
 
@@ -315,8 +323,13 @@ def responseheaders(flow):
         flex_flow = process_flex(flex_flow)
     else:
         flex_flow = None
+    if log_debug and bubble_log_response:
+        bubble_log.debug('responseheaders: response headers are: '+repr(flow.response.headers))
+
+    # fixme: when response header modification is enabled, some filtered requests hang when iterating chunks
+    # response_header_modify(flow)
+
     bubble_filter_response(flow, flex_flow)
-    response_header_modify(flow)
     pass
 
 
@@ -328,7 +341,7 @@ def bubble_filter_response(flow, flex_flow):
     update_host_and_port(flow)
     path = flow.request.path
     host = flow.request.host
-    log_url = flow.request.scheme + '://' + host + path
+    log_url = str(flow.request.scheme) + '://' + str(host) + str(path)
     client_addr = flow.client_conn.address[0]
     if is_bubble_special_path(path):
         if is_bubble_health_check(path):

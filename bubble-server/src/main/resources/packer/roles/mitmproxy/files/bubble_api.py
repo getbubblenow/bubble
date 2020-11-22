@@ -10,6 +10,7 @@ import time
 import traceback
 import uuid
 from http import HTTPStatus
+from requests import get
 from logging import INFO, DEBUG, WARNING, ERROR
 
 import httpx
@@ -68,6 +69,10 @@ BUBBLE_ACTIVITY_LOG_EXPIRATION = 600
 LOCAL_IPS = []
 for local_ip in subprocess.check_output(['hostname', '-I']).split():
     LOCAL_IPS.append(local_ip.decode())
+
+PUBLIC_IP = get('https://api.ipify.org').text
+if log_info:
+    bubble_log.debug('Detected public IP: '+PUBLIC_IP)
 
 TARPIT_PORT = 8080
 
@@ -364,14 +369,23 @@ def bubble_matchers(req_id, client_addr, server_addr, flow, host):
             if log_error:
                 bubble_log.error('bubble_matchers: call bubble_async('+url+') returned None')
             return None
-        if response.status_code == 200:
+
+        elif not hasattr(response, 'status_code'):
+            if log_error:
+                bubble_log.error('bubble_matchers: call bubble_async('+url+') returned invalid response (no status_code): '+repr(response))
+            return None
+
+        elif response.status_code == 200:
             return response.json()
+
         elif response.status_code == 403:
             if log_debug:
                 bubble_log.debug('bubble_matchers: response was FORBIDDEN, returning block: '+str(response.status_code)+' / '+repr(response.text))
             return BLOCK_MATCHER
+
         if log_warning:
             bubble_log.warning('bubble_matchers: response not OK, returning empty matchers array: '+str(response.status_code)+' / '+repr(response.text))
+
     except Exception as e:
         if log_error:
             bubble_log.error('bubble_matchers: API call failed: '+repr(e))
@@ -558,6 +572,10 @@ def _header_modify(client_addr: str, ctx: dict, headers: nheaders.Headers) -> in
         modifiers_dict = {}
         for modifier in modifiers:
             regex, replacement = _extract_modifier_config(modifier, ctx)
+            if regex is None or replacement is None:
+                if log_debug:
+                    bubble_log.debug('_header_modify: _extract_modifier_config returned None for modifier='+repr(modifier)+', ctx='+repr(ctx))
+                continue
             modifiers_dict[regex] = replacement
         repl_count += _replace_in_headers(headers, modifiers_dict)
 
@@ -571,7 +589,11 @@ def _extract_modifier_config(modifier: bytes, ctx: dict) -> tuple:
     modifier_obj = json.loads(modifier)
 
     regex = _replace_modifier_values(modifier_obj['regex'], ctx)
+    if regex is None:
+        return None, None
     replacement = _replace_modifier_values(modifier_obj['replacement'], ctx)
+    if replacement is None:
+        return None, None
 
     regex = re.compile(strutils.escaped_str_to_bytes(regex))
     replacement = strutils.escaped_str_to_bytes(replacement)
@@ -581,6 +603,8 @@ def _extract_modifier_config(modifier: bytes, ctx: dict) -> tuple:
 
 def _replace_modifier_values(s: str, ctx: dict) -> str:
     # no loop over ctx currently to speed up as there's just 1 variable inside
+    if s is None or 'fqdn' not in ctx:
+        return s
     s = s.replace('{{fqdn}}', re.escape(ctx['fqdn']))
     return s
 
@@ -609,6 +633,8 @@ def tarpit_response(flow, host):
     # if log_debug:
     #     bubble_log.debug('health_check_response: special bubble health check request, responding with OK')
     response_headers = nheaders.Headers()
+    if host is None:
+        host = PUBLIC_IP
     response_headers[HEADER_LOCATION] = 'http://'+host+':'+str(TARPIT_PORT)+'/admin/index.php'
     if flow.response is None:
         flow.response = http.HTTPResponse(http_version='HTTP/1.1',
