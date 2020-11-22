@@ -18,8 +18,8 @@ To launch your own Bubble using this software, you will need either:
  * A Mac or Linux system, to run the launcher and/or build from source
 
 ## The Easy Path
-If you'd like to enjoy all the benefits of Bubble without going through this hassle, please try out the Bubble launching
-service available on [getbubblenow.com](https://getbubblenow.com/).
+If you'd like to enjoy all the benefits of Bubble without going through all this hassle,
+try launching a Bubble from [getbubblenow.com](https://getbubblenow.com/).
 
 Any Bubble you launch from [getbubblenow.com](https://getbubblenow.com/) will also be "yours only" -- all Bubbles
 disconnect from their launcher during configuration.
