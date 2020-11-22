@@ -2,6 +2,15 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
+# Dump set members from redis for keys matching a pattern
+#
+# Usage:  rmembers keytext
+#
+#   keytext   : any key that contains this text will be dumped
+#               the dump text that is printed is "key => smembers(key)"
+#
+# If the value referred to by the key is not a set, an error message will be printed.
+#
 KEY_MATCH="${1}"
 SEP="${2:- }"
 for k in $(echo 'keys *'"""${KEY_MATCH}"""'*' | redis-cli)  ; do

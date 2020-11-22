@@ -2,6 +2,12 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
+# Delete keys from redis.
+#
+# Usage:  rdelkeys keytext
+#
+#   keytext   : any key that contains this text will be deleted
+#
 KEY_MATCH="${1:?no key match}"
 for k in $(echo 'keys *'"""${KEY_MATCH}"""'*' | redis-cli )  ; do
   echo "del ${k} => $(echo "del ${k}" | redis-cli)"

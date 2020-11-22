@@ -9,7 +9,7 @@
 #
 #     ubuntu_connect_bubble [hostname]
 #
-#   hostname : bubble to connect this Linux system to
+#   hostname : bubble to connect this Ubuntu system to
 #              If not specified, an env var will be used (see below)
 #              If neither BUBBLE_HOST (hostname) or BUBBLE_API (URL) are specified,
 #                then you'll be asked to enter the Bubble hostname
@@ -322,9 +322,9 @@ echo "Starting WireGuard VPN ..."
 sudo wg-quick up wg0 || die "Error starting WireGuard"
 
 echo "
-==============================================================
-======= Linux device successfully connected to Bubble! =======
-==============================================================
+===============================================================
+======= Ubuntu device successfully connected to Bubble! =======
+===============================================================
 Device UUID : ${DEVICE_UUID}
 Device Name : ${DEVICE_NAME}
 Bubble Host : ${BUBBLE_HOST}
