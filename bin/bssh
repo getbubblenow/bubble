@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+# Wrap ssh with options to use port 1202, the standard Bubble SSH port.
+#
+# Environment variables:
+#
+#    BUBBLE_SSH_PORT  : If set, this port will be used instead of 1202
+#
+
+if [[ -z "${BUBBLE_SSH_PORT}" ]] ; then
+  BUBBLE_SSH_PORT="1202"
+fi
+
+ssh -p ${BUBBLE_SSH_PORT} "${@}"

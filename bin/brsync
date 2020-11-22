@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+# Wrap rsync with options to use port 1202, the standard Bubble SSH port.
+# If your rsync command already contains a `-e` or `--rsh` option, this wrapper will not work.
+#
+# Environment variables:
+#
+#    BUBBLE_SSH_PORT  : If set, this port will be used instead of 1202
+#
+
+if [[ -z "${BUBBLE_SSH_PORT}" ]] ; then
+  BUBBLE_SSH_PORT="1202"
+fi
+
+function die() {
+  echo 1>&2 "${1}"
+  exit 1
+}
+
+
+if [[ $(echo "${@}" | grep -c -- "-e ") -gt 0 || $(echo "${@}" | grep -c -- "--rsh") -gt 0 ]] ; then
+  die "$0 does not work correctly when -e or --rsh is used, since it sets its own: ${@}"
+fi
+
+rsync -e ''"$(which ssh)"' -p '"${BUBBLE_SSH_PORT}"'' "${@}"
