@@ -23,8 +23,7 @@ import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 
-import static bubble.ApiConstants.DB_JSON_MAPPER;
-import static bubble.ApiConstants.ERROR_MAXLEN;
+import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.bool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.errorString;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -91,7 +90,7 @@ public class NotificationBase extends IdentifiableBase implements HasAccountNoNa
     @ECSearchable(filter=true) @ECField(index=100)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(ERROR_MAXLEN+ENC_PAD)+")")
     @JsonIgnore @Getter private String error;
-    public NotificationBase setError (String err) { this.error = ellipsis(err, ERROR_MAXLEN); return this; }
+    public NotificationBase setError (String err) { this.error = ellipsis(err, ERROR_MAX_BEFORE_ELLIPSES); return this; }
     public void setException(Exception e) { setError(errorString(e, ERROR_MAXLEN)); }
 
 }

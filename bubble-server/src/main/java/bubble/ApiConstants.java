@@ -288,7 +288,8 @@ public class ApiConstants {
     public static final String Q_REDIRECT = "redirect";
 
     public static final int MAX_NOTIFY_LOG = 10000;
-    public static final int ERROR_MAXLEN = 4000;
+    public static final int ERROR_MAXLEN = 20000;
+    public static final int ERROR_MAX_BEFORE_ELLIPSES = 19900;
 
     public static String getToken(String json) {
         if (json == null) return null;

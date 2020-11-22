@@ -21,8 +21,7 @@ import javax.persistence.*;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
-import static bubble.ApiConstants.EP_BACKUPS;
-import static bubble.ApiConstants.ERROR_MAXLEN;
+import static bubble.ApiConstants.*;
 import static bubble.service.backup.BackupService.BR_STATE_LOCK_TIMEOUT;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.string.StringUtil.ellipsis;
@@ -72,7 +71,7 @@ public class BubbleBackup extends IdentifiableBase implements HasAccount {
     @ECSearchable(filter=true) @ECField(index=60)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(ERROR_MAXLEN+ENC_PAD)+")")
     @Getter private String error;
-    public BubbleBackup setError (String err) { this.error = ellipsis(err, ERROR_MAXLEN); return this; }
+    public BubbleBackup setError (String err) { this.error = ellipsis(err, ERROR_MAX_BEFORE_ELLIPSES); return this; }
     public boolean hasError () { return !empty(error); }
 
     public boolean canDelete() { return status.isDeletable() || getCtimeAge() > BR_STATE_LOCK_TIMEOUT; }
