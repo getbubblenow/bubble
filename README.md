@@ -19,9 +19,9 @@ To launch your own Bubble using this software, you will need either:
 
 ## The Easy Path
 If you'd like to enjoy all the benefits of Bubble without going through all this hassle,
-try launching a Bubble from [getbubblenow.com](https://getbubblenow.com/).
+try launching a Bubble using [GetBubbleNow.com](https://GetBubbleNow.com/).
 
-Any Bubble you launch from [getbubblenow.com](https://getbubblenow.com/) will also be "yours only" -- all Bubbles
+Any Bubble you launch from [GetBubbleNow.com](https://GetBubbleNow.com/) will also be "yours only" -- all Bubbles
 disconnect from their launcher during configuration.
 
 ## Getting Started
