@@ -74,6 +74,13 @@
     // Storage
     ///////////////////////
 
+    // LocalStorage is required, just leave this as-is.
+    // If you really want, you can change the baseDir
+    "LocalStorage": {
+      "config": { "baseDir": ".bubble_local_storage" },
+      "credentials": {}
+    },
+
     // You must configure the AWS S3 Storage service in order to launch new Bubbles
     "S3Storage" : {
       "config": {
@@ -192,10 +199,10 @@
   // Expert Settings
   ///////////////////////
 
-  // You can safely chop off everything from here down from your copy.
+  // You can safely chop off everything from here down from your copy (well, except the closing curl-brace).
 
-  // The settings below rarely be changed, omitting them is the same as not changing them
-  // and you really shouldn't change them unless you know what you're doing.
+  // The settings below rarely be changed, and omitting them is the same as not changing them.
+  // You really shouldn't change them unless you know what you're doing.
 
   // -----------
   // skipTests
