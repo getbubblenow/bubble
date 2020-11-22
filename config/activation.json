@@ -8,7 +8,7 @@
 //
 //     ./bin/bactivate /path/to/your/activation.json
 //
-// NOTE: In this file, if you see '//' it means that it and everything after it on that line is a comment.
+// NOTE: In this file '//' is used for comments
 // Normally comments are not valid JSON, but when you run `bactivate` the Bubble toolchain strips out
 // the comments before sending the request to the Bubble server.
 //
