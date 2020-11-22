@@ -110,7 +110,7 @@ public class StandardNetworkService implements NetworkService {
     private static final long NET_LOCK_TIMEOUT = MINUTES.toMillis(4);
     private static final long NET_DEADLOCK_TIMEOUT = MINUTES.toMillis(3);
     private static final long PLAN_ENABLE_TIMEOUT = PURCHASE_DELAY + SECONDS.toMillis(10);
-    private static final long NODE_START_JOB_TIMEOUT = MINUTES.toMillis(10);
+    private static final long NODE_START_JOB_TIMEOUT = MINUTES.toMillis(15);
     private static final long PACKER_NODE_START_JOB_TIMEOUT = BubbleNode.PACKER_IP_ADDR_TIMEOUT;
     private static final long NODE_START_JOB_AWAIT_SLEEP = SECONDS.toMillis(2);
     private static final long NODE_READY_TIMEOUT = MINUTES.toMillis(6);
