@@ -21,21 +21,18 @@
 #  BUBBLE_SSH_PORT  : SSH port, default is 1202
 #
 SCRIPT="${0}"
-SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
-. ${SCRIPT_DIR}/bubble_common
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
+. "${SCRIPT_DIR}"/bubble_common
 
 HOST=${1:?no host provided}
 NO_RESTART=${2}
-
-if [[ -z "$(echo "${HOST}" | tr -cd '[:alnum:].-')" ]] ; then
-  die "invalid host: ${HOST}"
-fi
+validate_user_at_host "${HOST}"
 
 BUBBLE_SERVER_DIR="${SCRIPT_DIR}/../bubble-server"
 if [[ ! -d "${BUBBLE_SERVER_DIR}" ]] ; then
   die "bubble-server dir not found: ${BUBBLE_SERVER_DIR}"
 fi
-cd ${BUBBLE_SERVER_DIR}
+cd "${BUBBLE_SERVER_DIR}" || die "Error changing to ${BUBBLE_SERVER_DIR} directory"
 
 mvn -DskipTests=true -Dcheckstyle.skip=true compile && rsync -avzc ./target/classes ${HOST}:/tmp/ | egrep -v '*/$' || die "Error recompiling classes"
 

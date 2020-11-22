@@ -14,7 +14,6 @@ function die() {
 }
 
 function handle_help_request() {
-
   if [[ -z "${2}" ]]; then
     return
   fi
@@ -31,7 +30,23 @@ function handle_help_request() {
     done <"${1}"
     exit 1
   fi
+}
 
+# Validate that argument is "hostname" or "user@hostname"
+# Validate that user (if present) is valid username and hostname is valid hostname
+function validate_user_at_host() {
+  HOST="${1}"
+  if [[ -z "$(echo "${HOST}" | grep '@')" ]] ; then
+    if [[ $(echo "${HOST}" | awk -F '@' '{print $2}' | tr -cd '[:alnum:].-' | wc -c) -ne ${#HOST} ]] ; then
+      die "Invalid host: ${HOST}"
+    elif [[ $(echo "${HOST}" | awk -F '@' '{print $1}' | tr -cd '[:alnum:].-' | wc -c) -ne ${#HOST} ]] ; then
+      die "Invalid user: ${HOST}"
+    fi
+  else
+    if [[ $(echo "${HOST}" | tr -cd '[:alnum:].-' | wc -c) -ne ${#HOST} ]] ; then
+      die "Invalid host: ${HOST}"
+    fi
+  fi
 }
 
 function make_temp() {
