@@ -34,12 +34,12 @@ if [[ ! -d "${BUBBLE_SERVER_DIR}" ]] ; then
 fi
 cd "${BUBBLE_SERVER_DIR}" || die "Error changing to ${BUBBLE_SERVER_DIR} directory"
 
-mvn -DskipTests=true -Dcheckstyle.skip=true compile && rsync -avzc ./target/classes ${HOST}:/tmp/ | egrep -v '*/$' || die "Error recompiling classes"
+mvn -DskipTests=true -Dcheckstyle.skip=true compile && "${SCRIPT_DIR}"/brsync -avzc ./target/classes ${HOST}:/tmp/ | egrep -v '*/$' || die "Error recompiling classes"
 
 if [[ ! -z "${NO_RESTART}" && "${NO_RESTART}" == "norestart" ]] ; then
   echo "Patching but not restarting: ${HOST} ..."
-  ssh -p ${BUBBLE_SSH_PORT} ${HOST} "cd /tmp && cp ~bubble/api/bubble.jar . && cd classes && jar uvf ../bubble.jar . | egrep -v '*/\(*' && cat ../bubble.jar > ~bubble/api/bubble.jar" || die "Error patching remote jar"
+  "${SCRIPT_DIR}"/bssh ${HOST} "cd /tmp && cp ~bubble/api/bubble.jar . && cd classes && jar uvf ../bubble.jar . | egrep -v '*/\(*' && cat ../bubble.jar > ~bubble/api/bubble.jar" || die "Error patching remote jar"
 else
   echo "Patching and restarting: ${HOST} ..."
-  ssh -p ${BUBBLE_SSH_PORT} ${HOST} "cd /tmp && cp ~bubble/api/bubble.jar . && cd classes && jar uvf ../bubble.jar . | egrep -v '*/\(*' && cat ../bubble.jar > ~bubble/api/bubble.jar && supervisorctl restart bubble" || die "Error patching remote jar"
+  "${SCRIPT_DIR}"/bssh ${HOST} "cd /tmp && cp ~bubble/api/bubble.jar . && cd classes && jar uvf ../bubble.jar . | egrep -v '*/\(*' && cat ../bubble.jar > ~bubble/api/bubble.jar && supervisorctl restart bubble" || die "Error patching remote jar"
 fi
