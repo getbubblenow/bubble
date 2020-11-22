@@ -1819,7 +1819,6 @@ chefs
 cheka
 chela
 chelp
-chemo
 chere
 chert
 chess
@@ -1833,7 +1832,6 @@ chias
 chibs
 chica
 chich
-chick
 chico
 chics
 chide
@@ -2133,7 +2131,6 @@ coney
 confs
 conga
 conge
-congo
 conia
 conic
 conin
@@ -2156,11 +2153,9 @@ cools
 coomb
 cooms
 coomy
-coons
 coops
 coopt
 coost
-coots
 copal
 copay
 coped
@@ -2501,7 +2496,6 @@ dargs
 daric
 daris
 darks
-darky
 darns
 darre
 darts
