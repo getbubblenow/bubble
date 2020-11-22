@@ -17,7 +17,6 @@ import org.cobbzilla.util.http.HttpContentEncodingType;
 import org.cobbzilla.util.io.FilterInputStreamViaOutputStream;
 import org.cobbzilla.util.io.FixedByteArrayInputStream;
 import org.cobbzilla.util.io.multi.MultiStream;
-import org.cobbzilla.util.io.multi.MultiUnderflowHandlerMonitor;
 import org.cobbzilla.util.system.Bytes;
 
 import java.io.ByteArrayInputStream;
@@ -28,6 +27,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
+import static bubble.service.stream.StreamConstants.MIN_BYTES_BEFORE_WRAP;
 import static bubble.service.stream.charset.CharsetDetector.charSetDetectorForContentType;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -35,6 +35,7 @@ import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.io.NullInputStream.NULL_STREAM;
+import static org.cobbzilla.util.io.multi.MultiUnderflowHandlerMonitor.DEFAULT_UNDERFLOW_MONITOR;
 
 @Slf4j
 public class ActiveStreamState {
@@ -45,15 +46,17 @@ public class ActiveStreamState {
     // If no data is readable for this long, shut down the underlying MultiStream
     public static final long UNDERFLOW_TIMEOUT = SECONDS.toMillis(60);
 
+    public static final String GRIZZLY_WORKER_STACK_LINE
+            = "org.glassfish.grizzly.threadpool.AbstractThreadPool$Worker.run";
     static {
         // do not terminate threads that are idling just fine
         // only terminate threads with abnormally long or short stacks
-        MultiUnderflowHandlerMonitor.DEFAULT_UNDERFLOW_MONITOR.setTerminateThreadFunc(t -> {
+        DEFAULT_UNDERFLOW_MONITOR.setTerminateThreadFunc(t -> {
             final StackTraceElement[] stack = t.getStackTrace();
             if (stack.length < 5) return false;
             if (stack.length > 15) return true;
             for (int i=0; i<5; i++) {
-                if (stack[i].toString().contains("org.glassfish.grizzly.threadpool.AbstractThreadPool$Worker.run")) {
+                if (stack[i].toString().contains(GRIZZLY_WORKER_STACK_LINE)) {
                     return false;
                 }
             }
@@ -70,7 +73,7 @@ public class ActiveStreamState {
     private InputStream output = null;
     private long totalBytesWritten = 0;
     private long totalBytesRead = 0;
-    private CharsetDetector charsetDetector;
+    private final CharsetDetector charsetDetector;
 
     public ActiveStreamState(FilterHttpRequest request,
                              List<AppRuleHarness> rules) {
@@ -133,7 +136,7 @@ public class ActiveStreamState {
             }
             // do not wrap input with encoding stream until we have received at least MIN_BYTES_BEFORE_WRAP bytes
             // this avoids errors when creating a GZIPInputStream when only one or a few bytes are available
-            if (output == null && totalBytesWritten > StreamConstants.MIN_BYTES_BEFORE_WRAP) {
+            if (output == null && totalBytesWritten > MIN_BYTES_BEFORE_WRAP) {
                 log.info("addChunk: detecting charset using "+charsetDetector.getClass().getSimpleName());
                 final BubbleCharSet cs = getCharSet(false);
                 log.info("addChunk: detected charset: "+cs);
@@ -233,7 +236,7 @@ public class ActiveStreamState {
         final String prefix = prefix("inputStream");
         final String url = request.getUrl();
         if (encoding == null) {
-            if (log.isDebugEnabled()) log.debug(prefix + "no encoding, returning baseStream unmodified");
+            if (log.isDebugEnabled()) log.debug(prefix+"no encoding, returning baseStream unmodified");
             return baseStream;
         } else if (encoding == HttpContentEncodingType.identity) {
             if (log.isDebugEnabled()) log.debug(prefix+"identity encoding, returning baseStream unmodified");
@@ -249,7 +252,7 @@ public class ActiveStreamState {
             if (log.isDebugEnabled()) log.debug(prefix+"returning baseStream wrapped in " + wrapped.getClass().getSimpleName());
             return wrapped;
         } catch (IOException e) {
-            if (log.isWarnEnabled()) log.warn(prefix+"error wrapping with "+encoding+", sending as-is (perhaps missing a byte or two): "+shortError(e), e);
+            if (log.isWarnEnabled()) log.warn(prefix+"error wrapping with "+encoding+", sending as-is (perhaps missing a byte or two) url: "+url+" error:"+shortError(e), e);
             doNotWrap.put(url, url);
             return baseStream;
         }
