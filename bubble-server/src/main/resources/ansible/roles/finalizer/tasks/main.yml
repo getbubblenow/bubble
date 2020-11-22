@@ -66,4 +66,5 @@
 
 # We cannot receive notifications until nginx is running, so start bubble API as the very last step
 - name: reload supervisord
-  shell: supervisorctl status > /var/log/bubble/finalizer_supervisor_status_before_reload.log && supervisorctl reload
+  shell: |
+    supervisorctl reload || echo "WARNING: supervisorctl reload exited with $?"
