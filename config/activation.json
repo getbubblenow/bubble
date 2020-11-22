@@ -58,6 +58,7 @@
       "credentials": {"apiKey": "your_digitalocean_api_key"}
     },
 
+    // EC2 driver is incomplete, use one of the above instead
     "AmazonEC2Driver" : {
       "config": {
         // region must be a valid value from the Regions enum: https://github.com/aws/aws-sdk-java/blob/master/aws-java-sdk-core/src/main/java/com/amazonaws/regions/Regions.java
