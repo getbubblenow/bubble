@@ -25,6 +25,10 @@ HOST="${1:?no host provided}"
 NO_RESTART=${2}
 validate_user_at_host "${HOST}"
 
+if [[ -z "${BUBBLE_SSH_PORT}" ]] ; then
+  BUBBLE_SSH_PORT="1202"
+fi
+
 BUBBLE_SERVER_DIR="${SCRIPT_DIR}/../bubble-server"
 if [[ ! -d "${BUBBLE_SERVER_DIR}" ]] ; then
   die "bubble-server dir not found: ${BUBBLE_SERVER_DIR}"
@@ -39,7 +43,7 @@ else
 fi
 if [[ ${ANY_CHANGES} -eq 0 ]] ; then
   echo "No changes, not repackaging jar, copying to ${HOST} ..."
-  "${SCRIPT_DIR}"/bscp ./target/bubble*.jar ${HOST}:/tmp/bubble.jar || die "Error copying file to remote host ${HOST}"
+  scp -P ${BUBBLE_SSH_PORT} ./target/bubble*.jar ${HOST}:/tmp/bubble.jar || die "Error copying file to remote host ${HOST}"
 else
   if [[ ${ANY_JAR} -eq 0 ]] ; then
     echo "No bubble jar file found, rebuilding, then copying to ${HOST} ..."
@@ -48,18 +52,18 @@ else
     find "./src/main" -type f -newer "$(find "./target" -type f -name "bubble*.jar" | head -1)"
   fi
   BUBBLE_PRODUCTION=1 mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error packaging jar"
-  "${SCRIPT_DIR}"/bscp ./target/bubble*.jar ${HOST}:/tmp/bubble.jar || die "Error copying file to remote host ${HOST}"
+  scp -P ${BUBBLE_SSH_PORT} ./target/bubble*.jar ${HOST}:/tmp/bubble.jar || die "Error copying file to remote host ${HOST}"
 fi
 
 if [[ ! -z "${NO_RESTART}" && "${NO_RESTART}" == "norestart" ]] ; then
   echo "Patching but not restarting: ${HOST} ..."
-  "${SCRIPT_DIR}"/bscp ${HOST} "cat /tmp/bubble.jar > ~bubble/api/bubble.jar"
+  ssh -p ${BUBBLE_SSH_PORT} ${HOST} "cat /tmp/bubble.jar > ~bubble/api/bubble.jar"
 else
   echo "Patching and restarting: ${HOST} ..."
-  "${SCRIPT_DIR}"/bscp ${HOST} "cat /tmp/bubble.jar > ~bubble/api/bubble.jar && supervisorctl restart bubble"
+  ssh -p ${BUBBLE_SSH_PORT} ${HOST} "cat /tmp/bubble.jar > ~bubble/api/bubble.jar && supervisorctl restart bubble"
 fi
 
 if unzip -Z -1 ./target/bubble*.jar | grep -q "^site/$" ; then
   echo "Deploying new web: ${HOST} ..."
-  "${SCRIPT_DIR}"/bscp ${HOST} "cd ~bubble && unzip -q -o /tmp/bubble.jar 'site/*' && chown -R bubble:bubble site"
+  ssh -p ${BUBBLE_SSH_PORT} ${HOST} "cd ~bubble && unzip -q -o /tmp/bubble.jar 'site/*' && chown -R bubble:bubble site"
 fi
