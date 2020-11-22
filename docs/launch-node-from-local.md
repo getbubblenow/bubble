@@ -1,6 +1,7 @@
 Launching a Bubble from a Local Launcher
 ========================================
-These instructions assume you have already set up a [Local Launcher](local-launcher.md).
+These instructions assume you have already set up a [Local Launcher](local-launcher.md)
+or are running the [Bubble Docker Launcher](docker-launcher.md).
 
 ## Login
 Login to your Local Launcher using the root admin account that was created during activation.

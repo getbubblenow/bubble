@@ -135,11 +135,19 @@ if [[ ! -z "${BUBBLE_API}" && -d "${BUBBLE_AUTH}" ]] ; then
     PASS_FILE="${AUTH_DIR}/pass"
 
     if [[ ! -z "${BUBBLE_USER}" && -f "${AUTH_DIR}/${BUBBLE_USER}" ]] ; then
-      echo 1>&2 "Using cached password for user ${BUBBLE_USER} from ${AUTH_DIR}/${BUBBLE_USER} (set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior)"
+      if [[ -z "${BUBBLE_QUIET_AUTH_CACHE}" || "${BUBBLE_QUIET_AUTH_CACHE}" != "true" ]] ; then
+        echo 1>&2 "Using cached password for user ${BUBBLE_USER} from ${AUTH_DIR}/${BUBBLE_USER}
+Set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior
+Set BUBBLE_QUIET_AUTH_CACHE=true to hide this warning"
+      fi
       BUBBLE_PASS="$(cat "${AUTH_DIR}/${BUBBLE_USER}" | tr -d '[:space:]')"
 
     elif [[ -f ${USER_FILE} && -f ${PASS_FILE} ]] ; then
-      echo 1>&2 "Using cached user/pass from ${USER_FILE} and ${PASS_FILE} (set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior)"
+      if [[ -z "${BUBBLE_QUIET_AUTH_CACHE}" || "${BUBBLE_QUIET_AUTH_CACHE}" != "true" ]] ; then
+        echo 1>&2 "Using cached user/pass from ${USER_FILE} and ${PASS_FILE}
+Set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior
+Set BUBBLE_QUIET_AUTH_CACHE=true to hide this warning"
+      fi
       BUBBLE_USER="$(cat "${USER_FILE}" | tr -d '[:space:]')"
       BUBBLE_PASS="$(cat "${PASS_FILE}" | tr -d '[:space:]')"
     fi
