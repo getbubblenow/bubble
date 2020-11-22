@@ -65,5 +65,5 @@ fi
 
 if unzip -Z -1 ./target/bubble*.jar | grep -q "^site/$" ; then
   echo "Deploying new web: ${HOST} ..."
-  ssh -p ${BUBBLE_SSH_PORT} ${HOST} "cd ~bubble && unzip -o /tmp/bubble.jar 'site/*' && chown -R bubble:bubble site"
+  ssh -p ${BUBBLE_SSH_PORT} ${HOST} "cd ~bubble && unzip -q -o /tmp/bubble.jar 'site/*' && chown -R bubble:bubble site"
 fi
