@@ -2,7 +2,6 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-#
 # Perform a full reset of Bubble. Removes the database and all locally stored files
 #
 # Usage:  reset_bubble_full

@@ -2,7 +2,6 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-#
 # Run an HTTP GET against the API, then print out the "uuid" attribute only
 #
 # Usage:

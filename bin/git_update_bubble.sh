@@ -2,7 +2,6 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-#
 # Update repository from master, including submodules, and rebuild bubble jar file
 #
 # Usage:
