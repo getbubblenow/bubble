@@ -33,18 +33,21 @@ function handle_help_request() {
 }
 
 # Validate that argument is "hostname" or "user@hostname"
-# Validate that user (if present) is valid username and hostname is valid hostname
+# Validate that user (if present) is valid username and hostname not invalid
+# Does not perform a full RFC-compliant check, just some basics
 function validate_user_at_host() {
   HOST="${1}"
   if [[ -z "$(echo "${HOST}" | grep '@')" ]] ; then
-    if [[ $(echo "${HOST}" | awk -F '@' '{print $2}' | tr -cd '[:alnum:].-' | wc -c) -ne ${#HOST} ]] ; then
-      die "Invalid host: ${HOST}"
-    elif [[ $(echo "${HOST}" | awk -F '@' '{print $1}' | tr -cd '[:alnum:].-' | wc -c) -ne ${#HOST} ]] ; then
-      die "Invalid user: ${HOST}"
-    fi
-  else
     if [[ $(echo "${HOST}" | tr -cd '[:alnum:].-' | wc -c) -ne ${#HOST} ]] ; then
       die "Invalid host: ${HOST}"
+    fi
+  else
+    USER_PART="$(echo "${HOST}" | awk -F '@' '{print $1}')"
+    HOST_PART="$(echo "${HOST}" | awk -F '@' '{print $2}')"
+    if [[ $(echo "${USER_PART}" | tr -cd '[:alnum:].-' | wc -c) -ne ${#USER_PART} ]] ; then
+      die "Invalid user: ${USER_PART}"
+    elif [[ $(echo "${HOST_PART}" | tr -cd '[:alnum:].-' | wc -c) -ne ${#HOST_PART} ]] ; then
+      die "Invalid host: ${HOST_PART}"
     fi
   fi
 }
