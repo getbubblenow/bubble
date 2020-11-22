@@ -25,7 +25,8 @@ Any Bubble you launch from [GetBubbleNow.com](https://GetBubbleNow.com/) will al
 disconnect from their launcher during configuration.
 
 ## Getting Started
-The [Bubble Docker Launcher](docs/docker-launcher.md) is the fastest way to get started using Bubble.
+If you've decided you want to launch your own Bubble, the [Bubble Docker Launcher](docs/docker-launcher.md)
+is the easiest way to get started.
 
 If you're feeling more adventurous, you can also [run a binary distribution](docs/run-binary.md), or [build Bubble from source](docs/dev.md).
  
