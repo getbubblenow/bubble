@@ -19,9 +19,9 @@ cat "${GIT_MODS}" | while read -r line; do
 done
 
 if [[ -f "${CHANGED_MARKER}" ]]; then
-  cd "${SCRIPT_DIR}/.." &&
-    git update-index --assume-unchanged "$(basename "${GIT_MODS}")" &&
-    mv "${GIT_TEMP_FILE}" "${GIT_MODS}" ||
+  cd "${SCRIPT_DIR}/.." && \
+    git update-index --assume-unchanged "$(basename "${GIT_MODS}")" && \
+    mv "${GIT_TEMP_FILE}" "${GIT_MODS}" || \
     echo "$0: error updating file: ${GIT_MODS}"
 fi
 rm -f "${CHANGED_MARKER}"
