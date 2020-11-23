@@ -21,15 +21,8 @@ A `sage` image is for deploying new Bubbles in Launcher mode. A launcher is call
 
 A `node` image is for deploying new Bubbles in Node mode. A regular Bubble that acts as a VPN for devices is called a `node` in the Bubble API.
 
-Bubble will automatically use the appropriate image type based on the Launch Type.
-
-### Setting the Launch Type
-#### Via Web UI
-On the Bubble launch screen, click the "Launch with Advanced Settings" link.
-The first drop-down option is "Bubble Type".
-
-#### Via the API
-When using the API, set the `launchType` property in the JSON  object that creates the Bubble. 
+Bubble will automatically use the appropriate image type based on the [Launch Type](launch-types.md)
+in effect for each launch.
 
 ## Launching a Bubble while Packer Images are Building
 If you try to launch a Bubble before the required packer image is ready,
