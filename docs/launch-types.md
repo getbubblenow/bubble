@@ -27,6 +27,7 @@ A `sage`, also called a launcher, is a Bubble that launches other Bubbles.
 You don't connect devices to a sage/launcher. You just launcher other Bubbles with it.
 
 A `node`, also often just called a Bubble, is a regular Bubble that acts as a VPN and you connect devices to it.
+
 A Bubble can either delegate cloud services back to the Bubble that launched it (we call this a Bubble in cloud mode),
 or it can call cloud services directly (a Bubble in standalone mode).
 
