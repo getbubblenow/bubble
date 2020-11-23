@@ -47,7 +47,7 @@ Bubble supports the following Launch Types:
   * **Packer Image**: `node`
   * **Mode**: `node` (cloud)
   * **Cloud Services**: delegated to the `sage` that launched it
-  * **Scenario**: Launching a [regular Bubble](launch-node-from-remote.md) from a [Remote Launcher](remote-launcher.md)
+  * **Scenario**: Launching a [cloud Bubble](launch-node-from-remote.md) from a [Remote Launcher](remote-launcher.md)
 
 ## Fork Launcher
   * **Packer Image**: `sage`
