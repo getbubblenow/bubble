@@ -2,11 +2,11 @@ Bubble Launch Types
 ===================
 There are different ways to launch a Bubble, depending on what you're trying to do.
 
-First we'll discuss how to set the launch type, then look at what the different options are and what
+First we'll discuss how to set the Launch Type, then look at what the different options are and what
 they mean.
 
 # Setting the Launch Type
-How you set the launch type depends on whether you use the web interface or the [CLI/API](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md).
+How you set the Launch Type depends on whether you use the web interface or the [CLI/API](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md).
 
 ### Via Web UI
 Launch Type is called "Bubble Type" in the web interface.
@@ -42,7 +42,7 @@ Alternatively, if you're starting a launcher or don't want cloud services mediat
 you'll want your Bubble to call cloud services directly.
 
 # Launch Types in Detail
-Bubble supports the following launch types:
+Bubble supports the following Launch Types:
   
 ## Regular
   * **Packer Image**: `node`
