@@ -30,8 +30,8 @@ A `node`, also often just called a Bubble, is a regular Bubble that acts as a VP
 
 ### Cloud Services
 When it needs to use cloud services, a Bubble can either:
- * delegate cloud services back to the launcher that created it (a "cloud Bubble")
- * use the cloud services directly itself (a "standalone Bubble")
+ * Delegate the call back to its launcher (a "cloud Bubble")
+ * Call the cloud service directly (a "standalone Bubble")
 
 What are the pros/cons of each approach?
 
