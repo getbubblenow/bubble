@@ -15,7 +15,9 @@ On the Bubble launch screen, click the "Launch with Advanced Settings" link.
 The first drop-down option is "Bubble Type".
 
 ### Via the API
-The Launch Type is called `installType` in the Bubble API. When using the API, set the `launchType` property in the JSON object that creates the Bubble. 
+The Launch Type is called `installType` in the Bubble API.
+
+When using the API, set the `launchType` property in the JSON object that creates the Bubble. 
 
 # What Makes Launch Types Different?
 The two key distinguishing characteristics of each Launch Type are its **Mode** and how it handles **Cloud Services**.
