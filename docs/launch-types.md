@@ -31,7 +31,7 @@ A `node`, also often just called a Bubble, is a regular Bubble that acts as a VP
 A Bubble can either delegate cloud services back to the Bubble that launched it (we call this a Bubble in cloud mode),
 or it can call cloud services directly (a Bubble in standalone mode).
 
-The mode is called `installType` in the [API](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md)
+The mode is called `installType` in the [API](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md).
 
 ### Cloud Services
 A bubble will either delegate cloud services back to the launcher that created it,
