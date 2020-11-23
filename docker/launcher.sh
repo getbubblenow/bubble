@@ -20,7 +20,7 @@
 # Open http://127.0.0.1:8090/ in a web browser to continue with activation.
 #
 
-function die {
+function die() {
   echo 1>&2 "
 
 ***** ${1}
@@ -30,11 +30,19 @@ function die {
 
 function get_bubble_tag() {
   BUBBLE_RELEASE_URL="https://jenkins.bubblev.org/public/releases/bubble/latest.txt"
-  VERSION="$(curl -s ${BUBBLE_RELEASE_URL}  | awk -F '_' '{print $2}' | awk -F '.' '{print $1"."$2"."$3}')"
-  if [[ -z "${VERSION}" ]] ; then
+  VERSION="$(curl -s ${BUBBLE_RELEASE_URL} | awk -F '_' '{print $2}' | awk -F '.' '{print $1"."$2"."$3}')"
+  if [[ -z "${VERSION}" ]]; then
     die "Error determining version from URL: ${BUBBLE_RELEASE_URL}"
   fi
   echo -n "getbubble/launcher:${VERSION}"
+}
+
+function ensure_docker_group() {
+  CALLER="$(whoami)"
+  if [[ "${CALLER}" != "root" && "$(sudo id -Gn "${CALLER}" | grep -c docker | tr -d ' ')" -eq 0 ]]; then
+    echo "Adding user ${CALLER} to docker group ..."
+    sudo usermod -a -G docker "${CALLER}"
+  fi
 }
 
 function setup_docker_debian() {
@@ -58,6 +66,8 @@ function setup_docker_debian() {
 
   # Install docker
   sudo apt install -y docker-ce docker-ce-cli containerd.io
+
+  ensure_docker_group
 }
 
 function setup_docker_ubuntu() {
@@ -81,6 +91,8 @@ function setup_docker_ubuntu() {
 
   # Install docker
   sudo apt install -y docker-ce
+
+  ensure_docker_group
 }
 
 function setup_docker_generic_linux() {
@@ -89,9 +101,9 @@ function setup_docker_generic_linux() {
 
 function setup_docker_linux() {
   DISTRO="$(cat /etc/os-release | grep "^NAME" | awk -F '=' '{print $2}' | tr -d '"')"
-  if [[ $(echo -n ${DISTRO} | grep -c Debian | tr -d ' ') -gt 0 ]] ; then
+  if [[ $(echo -n ${DISTRO} | grep -c Debian | tr -d ' ') -gt 0 ]]; then
     setup_docker_debian
-  elif [[ $(echo -n ${DISTRO} | grep -c Ubuntu | tr -d ' ') -gt 0 ]] ; then
+  elif [[ $(echo -n ${DISTRO} | grep -c Ubuntu | tr -d ' ') -gt 0 ]]; then
     setup_docker_ubuntu
   else
     setup_docker_generic_linux
@@ -99,7 +111,7 @@ function setup_docker_linux() {
 }
 
 function setup_docker_macosx() {
-  if [[ -z "$(which brew)" ]] ; then
+  if [[ -z "$(which brew)" ]]; then
     die "Homebrew not installed (brew command not found). Install homebrew by running:
     /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)\"
     "
@@ -110,57 +122,75 @@ function setup_docker_macosx() {
 }
 
 function setup_docker() {
-    echo "Installing docker via sudo ..."
-    if [[ $(whoami) != "root" ]] ; then
-      echo "Note: you may need to enter your password (for Linux user $(whoami)) to enable sudo commands"
-    fi
+  echo "Installing docker via sudo ..."
+  if [[ $(whoami) != "root" ]]; then
+    echo "Note: you may need to enter your password (for Linux user $(whoami)) to enable sudo commands"
+  fi
 
-    if [[ "${PLATFORM}" == "Linux" ]] ; then
-      setup_docker_linux
+  if [[ "${PLATFORM}" == "Linux" ]]; then
+    setup_docker_linux
 
-    elif [[ "${PLATFORM}" == "Darwin" ]] ; then
-      setup_docker_macosx
-      eval "$(docker-machine env default)"
-      docker-machine start default
+  elif [[ "${PLATFORM}" == "Darwin" ]]; then
+    setup_docker_macosx
+    eval "$(docker-machine env default)"
+    docker-machine start default
 
-    else
-      die "Don't know how to install docker on ${PLATFORM}"
-    fi
+  else
+    die "Don't know how to install docker on ${PLATFORM}"
+  fi
 }
 
 function run_launcher() {
   PLATFORM="$(uname -s)"
-  if [[ -z "${PLATFORM}" ]] ; then
+  if [[ -z "${PLATFORM}" ]]; then
     die "'uname -s' returned empty string!"
   fi
 
-  if [[ -z "$(which docker)" ]] ; then
+  if [[ -z "$(which docker)" ]]; then
     setup_docker
-    if [[ -z "$(which docker)" ]] ; then
+    if [[ -z "$(which docker)" ]]; then
       die "Error installing docker
 Install docker manually from https://docs.docker.com/engine/install/
 Then re-run this script
 "
     fi
   fi
+  if [[ "${PLATFORM}" == "Linux" ]]; then
+    ensure_docker_group
+  fi
 
   # Determine bubble docker tag
   BUBBLE_TAG=$(get_bubble_tag)
 
+  # Determine OS user
+  CALLER="$(whoami)"
+
   # Pull bubble docker image
-  docker pull ${BUBBLE_TAG} || die "Error pulling docker image: ${BUBBLE_TAG}"
+  if [[ "${CALLER}" == "root" ]] ; then
+    docker pull "${BUBBLE_TAG}" || die "Error pulling docker image: ${BUBBLE_TAG}"
+  else
+    sudo su - "${CALLER}" -c "docker pull ${BUBBLE_TAG}" || die "Error pulling docker image: ${BUBBLE_TAG}"
+  fi
 
   # Determine email for LetsEncrypt certs
-  if [[ -z "${LETSENCRYPT_EMAIL}" ]] ; then
-    echo ; echo -n "Email address for LetsEncrypt certificates: "
+  if [[ -z "${LETSENCRYPT_EMAIL}" ]]; then
+    echo
+    echo -n "Email address for LetsEncrypt certificates: "
     read -r LETSENCRYPT_EMAIL
   fi
 
   # Run bubble docker image
-  docker run \
-    -p 8090:8090 \
-    -e LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL}" \
-    -t ${BUBBLE_TAG}
+  if [[ "${CALLER}" == "root" ]] ; then
+    docker run \
+      -p 8090:8090 \
+      -e LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL}" \
+      -t "${BUBBLE_TAG}"
+  else
+    sudo su - "${CALLER}" -c "docker run \
+      -p 8090:8090 \
+      -e LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL} \
+      -t ${BUBBLE_TAG}"
+  fi
 }
 
 run_launcher
