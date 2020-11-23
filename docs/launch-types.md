@@ -47,19 +47,19 @@ Bubble supports the following Launch Types:
   * **Packer Image**: `node`
   * **Mode**: `node` (cloud)
   * **Cloud Services**: delegated to the `sage` that launched it
-  * **Scenario**: Launching regular Bubbles from a Remote Launcher
+  * **Scenario**: Launching a [regular Bubble](launch-node-from-remote.md) from a [Remote Launcher](remote-launcher.md)
 
 ## Fork Launcher
   * **Packer Image**: `sage`
   * **Mode**: `sage`
   * **Cloud Services**: cloned from launcher, called directly
-  * **Scenario**: Creating a Remote Launcher from a Local Launcher
+  * **Scenario**: Creating a [Remote Launcher](remote-launcher.md) from a [Local Launcher](local-launcher.md)
 
 ## Fork Bubble
   * **Packer Image**: `node`
   * **Mode**: `node` (standalone)
   * **Cloud Services**: cloned from launcher, called directly
-  * **Scenario**: Creating a standalone Bubble with no ties to any launcher
+  * **Scenario**: Creating a [standalone Bubble](launch-node-from-local.md) from a [Local Launcher](local-launcher.md)
 
 ### Local Launchers
 A [Local Launcher](local-launcher.md) is a special case, since it bootstraps everything else.
@@ -70,4 +70,4 @@ Nonetheless, using the same bullet points as above can be informative:
   * **Packer Image**: none
   * **Mode**: `sage`
   * **Cloud Services**: supplied during [activation](activation.md), called directly
-  * **Scenario**: The first step before launching a proper Bubble
+  * **Scenario**: The first step before launching any other kind of Bubble
