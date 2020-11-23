@@ -1,18 +1,18 @@
 # Bubble Packer Images
-A [packer image](https://packer.io) is way to initialize a new cloud system with an operating system and
+A [packer](https://packer.io) image is way to initialize a new cloud system with an operating system and
 software and files pre-installed. This is an oversimplified explanation but will suffice for our current needs.
  
-Before packer images, we launched Bubbles onto "blank" Ubuntu systems and then did
+Before packer images, we launched Bubbles starting with "blank" Ubuntu systems and then did
 tons of installation and configuration. It took 20+ minutes to launch a new Bubble.
 
 We decided we could do better. Packer allows us to create Ubuntu images that already have 
 PostgreSQL, Redis and nginx installed and configured, and lots more.
 
-Launching a Bubble is now faster (usually 10 minutes or less) because all the standard software
+Launching a Bubble is now faster (usually under 10 minutes) because all the standard software
 and configs are already present on the packer image that each launch starts with.
 
-We can make it even faster, but getting a new Bubble launched in under 10 minutes is a real accomplishment,
-and Packer makes it possible. 
+We can make it even faster, and we plan to, but getting a new Bubble launched in less than 10 minutes
+is a real accomplishment, and Packer makes it possible. 
 
 ## Image Types
 There are two types of packer images: `sage` and `node`

@@ -19,16 +19,33 @@ Choose your configuration options, then click the "Launch Your Bubble!" button k
 The screen will refresh and show a progress meter. A typical launch will take about 10 minutes.
 
 ## Your Very First Bubble
-The very first Bubble you launch will build a [Packer](https://packer.io) image that will be used for this and
-subsequent launches.
+The very first Bubble you launch will use a [packer image](packer.md) that was created
+during [activation](activation.md).
 
-This process adds about 20-25 minutes to the launch process.
+### Packer Image Creation
+Normally the packer images are created during activation, and are generally available within about 20 minutes.
 
-While the packer image is building, the progress meter will appear to be "stuck" at 1%. This is normal.
-If you're curious, you can observe the packer image being built in your Bubble logs.
+If the required packer image is still being built when you launch your first Bubble, it's OK,
+the launcher will wait for the packer image to be ready.
 
-This only happens the first time you launch a Bubble.
-Later launches can skip this step, because Bubble will detect that the packer image already exists.
+If for some reason the packer image does not exist and is not currently being built,
+then the launcher will start building the packer image right then.
+This process adds about 20 minutes to the launch process.
+ 
+When launching a Bubble and the required packer image is still being built,
+the progress meter will appear to be "stuck" at 1% until the image is ready. This is normal.
+
+If you're running the launcher from a [binary](run-binary.md) or [source](dev.md) Bubble distribution,
+you can check the status of the packer jobs by running
+```shell script
+pack_status
+```
+
+If you're running the launcher from using the [Bubble Docker Launcher](docker-launcher.md),
+you can observe output of the packer image being built in your Bubble logs.
+
+More details on packer and the `pack_status` command are available in
+the [Bubble packer documentation](packer.md).
 
 ## Install Bubble Apps
 While your Bubble is launching, take a moment to
