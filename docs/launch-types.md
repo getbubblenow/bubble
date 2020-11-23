@@ -29,13 +29,11 @@ You don't connect devices to a sage/launcher. You just launcher other Bubbles wi
 A `node`, also often just called a Bubble, is a regular Bubble that acts as a VPN and you connect devices to it.
 
 ### Cloud Services
-A Bubble can either delegate cloud services back to the launcher that created it,
-or use the cloud services directly itself.
+A Bubble can either delegate cloud services back to the launcher that created it (a "cloud Bubble"),
+or use the cloud services directly itself (a "standalone Bubble").
 
- * When a Bubble delegates cloud services back to the Bubble that launched it, we call this a Bubble in cloud mode.
- * When a Bubble calls cloud services directly, we call this a Bubble in standalone mode.
+What are the pros/cons of each approach?
 
-What are the upsides/downsides of each approach?
 If you don't want your cloud credentials stored in your node, use delegated cloud services.
 Alternatively, if you're starting a launcher or don't want cloud services mediated via a launcher,
 you'll want your Bubble to call cloud services directly.
