@@ -21,8 +21,7 @@ When using the API, set the `launchType` property in the JSON object that create
 The two key distinguishing characteristics of each Launch Type are its **Mode** and how it handles **Cloud Services**.
 
 ### Bubble Mode
-The mode can be either `sage` or `node`, and
-is called `installType` in the [API](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md).
+The mode can be either `sage` or `node`.
 
 A `sage`, also called a launcher, is a Bubble that launches other Bubbles.
 You don't connect devices to a sage/launcher. You just launcher other Bubbles with it.
