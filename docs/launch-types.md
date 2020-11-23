@@ -61,7 +61,7 @@ Bubble supports the following Launch Types:
   * **Scenario**: Creating a [standalone Bubble](launch-node-from-local.md) from a [Local Launcher](local-launcher.md)
 
 ### Local Launchers
-A [Local Launcher](local-launcher.md) is a special case, since it bootstraps everything else.
+The [Local Launcher](local-launcher.md) is a special case, since it bootstraps everything else.
 
 Nonetheless, using the same bullet points as above can be informative:
  
