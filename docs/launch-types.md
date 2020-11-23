@@ -29,7 +29,7 @@ You don't connect devices to a sage/launcher. You just launcher other Bubbles wi
 A `node`, also often just called a Bubble, is a regular Bubble that acts as a VPN and you connect devices to it.
 
 ### Cloud Services
-A bubble will either delegate cloud services back to the launcher that created it,
+A Bubble can either delegate cloud services back to the launcher that created it,
 or use the cloud services directly itself.
 
  * When a Bubble delegates cloud services back to the Bubble that launched it, we call this a Bubble in cloud mode.
