@@ -21,16 +21,12 @@ Choose your configuration options, then click the "Launch Your Bubble!" button k
 The screen will refresh and show a progress meter. A typical launch will take about 10 minutes.
 
 ## Your Very First Bubble
-The very first Bubble you launch will build a [Packer](https://packer.io) image that will be used for this and
-subsequent launches.
+The very first Bubble you launch will use a [packer image](packer.md) that was created
+during [activation](activation.md).
 
-This process adds about 20-25 minutes to the launch process.
+If the image is still being built or needs to be built, that will add some time to the launch process.
 
-While the packer image is building, the progress meter will appear to be "stuck" at 1%. This is normal.
-If you're curious, you can observe the packer image being built in your Bubble logs.
-
-This only happens the first time you launch a Bubble.
-Later launches can skip this step, because Bubble will detect that the packer image already exists.
+The [Bubble packer documentation](packer.md) has more details on this process. 
 
 ## Install Bubble Apps
 While your Bubble is launching, take a moment to

@@ -23,13 +23,18 @@ A `node` image is for deploying new Bubbles in Node mode. A regular Bubble that 
 
 Bubble will automatically use the appropriate image type based on the Launch Type.
 
-To set the Launch Type: on the Bubble launch screen, click the "Launch with Advanced Settings" link.
+### Setting the Launch Type
+#### Via Web UI
+On the Bubble launch screen, click the "Launch with Advanced Settings" link.
+The first drop-down option is "Bubble Type".
 
-When using the API, set the `launchType` property in the JSON request that creates the Bubble. 
+#### Via the API
+When using the API, set the `launchType` property in the JSON  object that creates the Bubble. 
 
 ## Launching a Bubble while Packer Images are Building
-If you try to launch a Bubble before the required packer image is ready, your Bubble launcher will detect that the image
-is in the process of being built, and wait until it is ready before trying to use it.
+If you try to launch a Bubble before the required packer image is ready,
+your Bubble launcher will detect that the image is in the process of being built,
+and wait until it is ready before trying to use it.
 
 ## Image Validity
 The packer images are tied to a specific Bubble version. As long as the Bubble API launcher can find packer images
