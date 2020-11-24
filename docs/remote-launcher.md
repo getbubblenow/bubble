@@ -10,7 +10,7 @@ When your local Bubble finishes launching, it should open a web page. If you see
 then your Bubble still needs to be activated. Read about activation in the [Local Launcher Mode](local-launcher.md) instructions.
 
 If you see a login screen, you should be able to log in as the admin user using the email
-address `root@local.local` and the password from your `activation.json` file.
+address and the password used during activation.
 
 ## Fork a Remote Launcher
 After you log in, you should see a "Launch Bubble" screen.

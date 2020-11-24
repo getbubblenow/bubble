@@ -6,9 +6,6 @@ or are running the [Bubble Docker Launcher](docker-launcher.md).
 ## Login
 Login to your Local Launcher using the root admin account that was created during activation.
 
-Because the login field must be an email address, use the special email address `root@local.local` to login
-with the admin account.
-
 ## Launch Bubble
 You should see a "Launch Bubble" screen.
 
