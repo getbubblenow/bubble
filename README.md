@@ -34,7 +34,7 @@ Any Bubble you launch from [GetBubbleNow.com](https://GetBubbleNow.com/) will al
 -- all Bubbles, shortly after launching, disable all admin access.
 
 ## Getting Started
-To self-launch your own Bubble, the [Bubble Docker Launcher](docs/docker-launcher.md)
+To self-host your own Bubble, the [Bubble Docker Launcher](docs/docker-launcher.md)
 is the easiest way to get started.
 
 If you're feeling more adventurous, you can also [run a binary distribution](docs/run-binary.md), or [build Bubble from source](docs/dev.md).
