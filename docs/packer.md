@@ -29,6 +29,10 @@ If you try to launch a Bubble before the required packer image is ready,
 your Bubble launcher will detect that the image is in the process of being built,
 and wait until it is ready before trying to use it.
 
+In some cases the Bubble you were launching may time-out while packer images are building.
+When this happens, the packer images will continue being built, just wait until they are done before
+re-launching your Bubble.
+
 ## Image Validity
 The packer images are tied to a specific Bubble version. As long as the Bubble API launcher can find packer images
 that match its own version, it will be able to launch Bubbles.
