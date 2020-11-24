@@ -15,8 +15,8 @@
 # Environment variables
 #
 #   BUBBLE_API     : which API to use. Default is local (http://127.0.0.1:PORT, where PORT is found in .bubble.env)
-#   BUBBLE_USER    : account to use. Default is root
-#   BUBBLE_PASS    : password for account. Default is root
+#   BUBBLE_USER    : account to use. Default is root@local.local
+#   BUBBLE_PASS    : password for account. Default is password
 #   BUBBLE_INCLUDE : path to look for JSON include files. default value is to assume we are being run from
 #                      bubble repo, bubble-models repo, or bubble-client and use include files from minimal model.
 #

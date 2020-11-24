@@ -13,8 +13,8 @@
 # Environment variables
 #
 #   BUBBLE_API     : which API to use. Default is local (http://127.0.0.1:PORT, where PORT is found in .bubble.env)
-#   BUBBLE_USER    : account to use. Default is root
-#   BUBBLE_PASS    : password for account. Default is root
+#   BUBBLE_USER    : account to use. Default is root@local.local
+#   BUBBLE_PASS    : password for account. Default is password
 #
 SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)

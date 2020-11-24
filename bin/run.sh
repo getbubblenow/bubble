@@ -25,8 +25,8 @@
 # Environment variables for API commands
 #
 #   BUBBLE_API      : which API to use. Default is local (http://127.0.0.1:PORT, where PORT is found in .bubble.env)
-#   BUBBLE_USER     : account to use. Default is root
-#   BUBBLE_PASS     : password for account. Default is root
+#   BUBBLE_USER     : account to use. Default is root@local.local
+#   BUBBLE_PASS     : password for account. Default is password
 #
 #
 SCRIPT="${0}"
@@ -124,49 +124,42 @@ else
   BUBBLE_CP="${BUBBLE_JAR}:${BUBBLE_ADDITIONAL_CLASSPATH}"
 fi
 
-# If BUBBLE_API is defined, we may have cached credentials
-BUBBLE_AUTH="${HOME}/.bubble_auth"
-if [[ ! -z "${BUBBLE_API}" && -d "${BUBBLE_AUTH}" ]] ; then
-  if [[ -z "${BUBBLE_DISABLE_AUTH_CACHE}" || "${BUBBLE_DISABLE_AUTH_CACHE}" == "false" ]] ; then
-    API_HOST="$(echo -n "${BUBBLE_API}" | awk -F '/' '{print $3}')"
-    AUTH_DIR="${BUBBLE_AUTH}/${API_HOST}"
-    USER_FILE="${AUTH_DIR}/user"
-    PASS_FILE="${AUTH_DIR}/pass"
-
-    if [[ ! -z "${BUBBLE_USER}" && -f "${AUTH_DIR}/${BUBBLE_USER}" ]] ; then
-      if [[ -z "${BUBBLE_QUIET_AUTH_CACHE}" || "${BUBBLE_QUIET_AUTH_CACHE}" != "true" ]] ; then
-        echo 1>&2 "Using cached password for user ${BUBBLE_USER} from ${AUTH_DIR}/${BUBBLE_USER}
-Set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior
-Set BUBBLE_QUIET_AUTH_CACHE=true to hide this warning"
-      fi
-      BUBBLE_PASS="$(cat "${AUTH_DIR}/${BUBBLE_USER}" | tr -d '[:space:]')"
-
-    elif [[ -f ${USER_FILE} && -f ${PASS_FILE} ]] ; then
-      if [[ -z "${BUBBLE_QUIET_AUTH_CACHE}" || "${BUBBLE_QUIET_AUTH_CACHE}" != "true" ]] ; then
-        echo 1>&2 "Using cached user/pass from ${USER_FILE} and ${PASS_FILE}
-Set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior
-Set BUBBLE_QUIET_AUTH_CACHE=true to hide this warning"
-      fi
-      BUBBLE_USER="$(cat "${USER_FILE}" | tr -d '[:space:]')"
-      BUBBLE_PASS="$(cat "${PASS_FILE}" | tr -d '[:space:]')"
-    fi
-  fi
-fi
-
-# Default password if none set
-if [[ -z "${BUBBLE_PASS}" ]] ; then
-  if [[ ! -z "${REQUIRE_BUBBLE_PASS}" ]] ; then
-    die "No BUBBLE_PASS env var defined"
-  fi
-  BUBBLE_PASS=password
-fi
-
 # Default user if none set
 if [[ -z "${BUBBLE_USER}" ]] ; then
   if [[ ! -z "${REQUIRE_BUBBLE_USER}" ]] ; then
     die "No BUBBLE_USER env var defined"
   fi
   BUBBLE_USER=root@local.local
+fi
+
+# Default password if none set
+if [[ -z "${BUBBLE_PASS}" ]] ; then
+
+  # If BUBBLE_API is defined, we may have cached credentials
+  BUBBLE_AUTH="${HOME}/.bubble_auth"
+  if [[ ! -z "${BUBBLE_API}" && -d "${BUBBLE_AUTH}" ]] ; then
+    if [[ -z "${BUBBLE_DISABLE_AUTH_CACHE}" || "${BUBBLE_DISABLE_AUTH_CACHE}" == "false" ]] ; then
+      API_HOST="$(echo -n "${BUBBLE_API}" | awk -F '/' '{print $3}')"
+      AUTH_DIR="${BUBBLE_AUTH}/${API_HOST}"
+      PASS_FILE="${AUTH_DIR}/${BUBBLE_USER}"
+
+      if [[ ! -z "${BUBBLE_USER}" && -f "${PASS_FILE}" ]] ; then
+        if [[ -z "${BUBBLE_QUIET_AUTH_CACHE}" || "${BUBBLE_QUIET_AUTH_CACHE}" != "true" ]] ; then
+          echo 1>&2 "Using cached password for user ${BUBBLE_USER} from ${AUTH_DIR}/${BUBBLE_USER}
+  - Set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior
+  - Set env var BUBBLE_QUIET_AUTH_CACHE=true to hide this warning
+"
+        fi
+        BUBBLE_PASS="$(cat "${PASS_FILE}" | tr -d '[:space:]')"
+      fi
+    fi
+  fi
+
+  if [[ ! -z "${REQUIRE_BUBBLE_PASS}" ]] ; then
+    die "No BUBBLE_PASS env var defined"
+  fi
+  echo 1>&2 "*** Warning: BUBBLE_PASS env var was not defined, using default password (probable authentication failure)"
+  BUBBLE_PASS=password
 fi
 
 # Run!
