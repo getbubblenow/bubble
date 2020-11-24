@@ -5,7 +5,7 @@ on behalf of those devices.
 
 Launching a Bubble in Node Mode requires a Bubble in Local or Remote Launcher Mode. If you don't have
 a Bubble in Local or Remote Launcher Mode, go back and follow the [Local Launcher Mode instructions](local-launcher.md)
-and/or the [Remote Launcher Mode instructions](remote-launcher.md).
+or the [Remote Launcher Mode instructions](remote-launcher.md).
 
 Load your Launcher's home page in a web browser.
 
