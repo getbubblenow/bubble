@@ -17,8 +17,10 @@ If you're on Mac OS X or Linux, after installing Docker please re-run the above 
 If you're on Windows or would like to run the Bubble docker image directly, follow the instructions below in "Manual Setup".
 
 ## Manual Setup
-The commands below assume you already have docker installed, the docker daemon is running and the current user
-has appropriate permissions to start docker containers.
+The commands below assume:
+ * you already have docker installed
+ * the docker daemon is running
+ * the current user has appropriate permissions to start docker containers
 
 To pull and run the Bubble Docker Launcher, open a terminal and run: 
 
