@@ -20,30 +20,36 @@ Follow the instructions in [System Software Setup](system-software.md) to instal
 
 ## First-Time Dev Setup
 After running the system setup above, run:
-
-    ./bin/first_time_setup.sh
+```shell script
+./bin/first_time_setup.sh
+```
 
 This will grab all the submodules and perform an initial build of all components.
 
 This will take a while to complete, please be patient.
 
 ## Bubble environment file
-You will need a file named `${HOME}/.bubble.env` which contains various environment variables required to run the server.
+You will need a file named `${HOME}/.bubble.env` which contains various environment variables
+required to run the server. At the least, it should contain:
+```shell script
+export LETSENCRYPT_EMAIL=user@example.com
+```
 
-Talk to another developer to get a copy of this file.
-Do not ever send this file over email or any other unencrypted channel, it contains secret keys to various cloud
-services that your Bubble will use. Always use `scp` to copy this file from one machine to another.
+This defines what email address is used with LetsEncrypt when creating new SSL certificates.
 
 If you will be running any tests, create a symlink called `${HOME}/.bubble-test.env`
 
-    cd ${HOME} && ln -s .bubble.env .bubble-test.env
+```shell script
+cd ${HOME} && ln -s .bubble.env .bubble-test.env
+```
 
 The `.bubble-test.env` file is used by the test suite.
 
 ## Subsequent Updates
 If you want to grab the latest code, and ensure that all git submodules are properly in sync with the main repository, run:
-
-    ./bin/git_update_bubble.sh
+```shell script
+./bin/git_update_bubble.sh
+```
 
 This will update and rebuild all submodules, and the main bubble jar file.
 
@@ -52,8 +58,9 @@ Run the `bin/run.sh` script to start the Bubble server.
 
 ## Resetting everything
 If you want to "start over", run:
-
-     ./bin/reset_bubble_full
+```shell script
+./bin/reset_bubble_full
+```
 
 This will remove local files stored by Bubble, and drop the bubble database.
 
