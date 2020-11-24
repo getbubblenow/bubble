@@ -30,7 +30,7 @@ To launch your own Bubble using this software, you will need either:
 If you'd like to enjoy all the benefits of Bubble without going through all this hassle,
 try launching a Bubble using [GetBubbleNow.com](https://GetBubbleNow.com/).
 
-There are no technical steps, you can be up and running with a few clicks in a few minutes.
+There are no technical steps, you can be up and running with in a few minutes.
 
 Any Bubble you launch from [GetBubbleNow.com](https://GetBubbleNow.com/) will also be "yours only"
 -- all Bubbles, shortly after launching, disable all admin access.
