@@ -12,12 +12,14 @@ Download the [latest Bubble release](https://jenkins.bubblev.org/public/releases
 Open a command-line terminal.
 
 Unzip the file that you downloaded:
-
-    unzip bubble.zip
+```shell script
+unzip bubble.zip
+```
 
 Change directories into the directory containing the files that were unzipped:
-
-    cd bubble-Adventure_1.x.x     # replace `Adventure_1.x.x` with the version that you downloaded
+```shell script
+cd bubble-Adventure_1.x.x     # replace `Adventure_1.x.x` with the version that you downloaded
+```
 
 ## One-Time System Setup
 You'll need to install some software for Bubble to work correctly.
