@@ -22,8 +22,8 @@ To launch your own Bubble using this software, you will need either:
 If you'd like to enjoy all the benefits of Bubble without going through all this hassle,
 try launching a Bubble using [GetBubbleNow.com](https://GetBubbleNow.com/).
 
-Any Bubble you launch from [GetBubbleNow.com](https://GetBubbleNow.com/) will also be "yours only" -- all Bubbles
-disconnect from their launcher during configuration.
+Any Bubble you launch from [GetBubbleNow.com](https://GetBubbleNow.com/) will also be "yours only"
+-- all Bubbles, shortly after launching, will disable all admin access.
 
 ## Getting Started
 To self-launch your own Bubble, the [Bubble Docker Launcher](docs/docker-launcher.md)
