@@ -5,10 +5,16 @@ Bubble helps you start and manage your own private VPN.
 It also adds tools to this VPN to improve your internet experience by modifying your traffic: to
 remove ads, block malware, and much more.
 
-Visit the [Bubble website](https://getbubblenow.com/) to learn more.
+Visit the [**Bubble website**](https://getbubblenow.com/) to learn more.
 
-If you're interested in developing on Bubble, see the [Bubble Developer Guide](docs/dev.md) and
-[Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md).
+The [**Bubble Manifesto**](https://github.com/getbubblenow/bubble-docs/blob/master/README.md)
+is a statement of the values we cherish and the goals we strive to achieve.
+
+Read [**What is Bubble?**](https://github.com/getbubblenow/bubble-docs/blob/master/what_is_bubble.md)
+to get a more in-depth view of what Bubble is and how it works.
+
+If you're interested in developing on Bubble, see the [**Bubble Developer Guide**](docs/dev.md) and
+[**Bubble API Guide**](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md).
 
 ## Operating System Support
 Once your Bubble is running, any device can connect to it: Windows, Linux, Mac, iOS, Android;
