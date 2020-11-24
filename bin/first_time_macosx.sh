@@ -44,14 +44,14 @@ echo ; echo '
 '
 
 # Install packages
-#brew install maven
-#brew install postgresql@10 && brew services start postgresql@10
-#brew install redis && brew services start redis
-#brew install jq
-#brew install python@3.8
-#brew install npm
-#brew install webpack
-#sudo pip3 install setuptools psycopg2-binary
+brew install maven
+brew install postgresql@10 && brew services start postgresql@10
+brew install redis && brew services start redis
+brew install jq
+brew install python@3.8
+brew install npm
+brew install webpack
+sudo pip3 install setuptools psycopg2-binary
 
 # Add python paths to script rc
 export LDFLAGS="-L/usr/local/opt/python@3.8/lib"
