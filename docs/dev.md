@@ -2,7 +2,7 @@ Bubble Developer Guide
 ======================
 This guide is intended for developers who would like to work directly with the Bubble source code.
 
-For API-level details, see the [the Bubble API](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md)
+For API-level details, see the [Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md)
 
 # Development Setup
 These instructions presume you are running a newly setup Ubuntu 20.04 or Mac OS X system.
