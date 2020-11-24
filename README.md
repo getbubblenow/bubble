@@ -42,7 +42,7 @@ is the easiest way to get started.
 If you're feeling more adventurous, you can also [run a binary distribution](docs/run-binary.md), or [build Bubble from source](docs/dev.md).
  
 ## Deployment Modes
-Bubble runs in three different modes. You'll at least need to run a Local Launcher first, then
+Bubble runs in three different modes. You'll need to run a Local Launcher first, then
 decide if you want to use a Remote Launcher to manage multiple Bubble nodes, or just launch a single Bubble
 directly from the Local Launcher.
 
