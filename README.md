@@ -7,7 +7,8 @@ remove ads, block malware, and much more.
 
 Visit the [Bubble website](https://getbubblenow.com/) to learn more.
 
-If you're interested in developing on Bubble, see the [Bubble Developer Guide](docs/dev.md).
+If you're interested in developing on Bubble, see the [Bubble Developer Guide](docs/dev.md) and
+[Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md).
 
 ## Operating System Support
 Once your Bubble is running, any device can connect to it: Windows, Linux, Mac, iOS, Android;
