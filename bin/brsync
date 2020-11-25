@@ -24,4 +24,5 @@ if [[ $(echo "${@}" | grep -c -- "-e ") -gt 0 || $(echo "${@}" | grep -c -- "--r
   die "$0 does not work correctly when -e or --rsh is used, since it sets its own: ${@}"
 fi
 
-rsync -e ''"$(which ssh)"' -p '"${BUBBLE_SSH_PORT}"'' "${@}"
+RSYNC_SSH_OPTS="$(which ssh) -p ${BUBBLE_SSH_PORT}"
+rsync -e "${RSYNC_SSH_OPTS}" "${@}"
