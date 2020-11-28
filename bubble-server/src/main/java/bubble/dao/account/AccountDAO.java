@@ -164,7 +164,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
 
         // create an uninitialized device for the account, but only if this is a regular node network
         // sage networks do not allow devices, they launch and manage other regular node networks
-        if (!isFirstAdmin(account) && !configuration.isSage()) {
+        if (!isFirstAdmin(account) && !configuration.isSage() && configuration.getThisNetwork() != null) {
             deviceDAO.ensureAllSpareDevices(account.getUuid(), configuration.getThisNetwork().getUuid());
             deviceDAO.refreshVpnUsers();
         }
