@@ -49,7 +49,7 @@ public class BubbleAuthFilter extends AuthFilter<Account> {
     @Autowired @Getter private BubbleAuthProvider authProvider;
     @Autowired @Getter private BubbleConfiguration configuration;
 
-    @Override protected String getAuthTokenHeader() { return SESSION_HEADER; }
+    @Override public String getAuthTokenHeader() { return SESSION_HEADER; }
 
     @Override protected Set<String> getSkipAuthPaths() {
         if (configuration.testMode()) return SKIP_AUTH_TEST;
