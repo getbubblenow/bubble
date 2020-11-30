@@ -8,6 +8,14 @@ serverName: bubble-api
 
 publicUriBase: {{PUBLIC_BASE_URI}}
 
+openApi:
+  title: Bubble API Reference, <<configuration.version>>
+  description: This is the Bubble API. It is used by the web UI, native apps, and CLI tools.
+  contactEmail: {{OPENAPI_CONTACT_EMAIL}}
+  terms: https://getbubblenow.com/terms/
+  licenseName: Bubble License
+  licenseUrl: https://getbubblenow.com/bubble-license/
+
 defaultLocale: {{#exists BUBBLE_DEFAULT_LOCALE}}{{BUBBLE_DEFAULT_LOCALE}}{{else}}en_US{{/exists}}
 testMode: {{#exists BUBBLE_TEST_MODE}}{{BUBBLE_TEST_MODE}}{{else}}false{{/exists}}
 

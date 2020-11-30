@@ -20,6 +20,7 @@
     {"name": "db_name", "value": "bubble"},
     {"name": "db_key", "value": "[[dbEncryptionKey]]"},
     {"name": "letsencrypt_email", "value": "[[configuration.letsencryptEmail]]"},
+    {"name": "openapi_contact_email", "value": "openapi_contact_email"},
     {"name": "is_fork", "value": "[[fork]]"},
     {"name": "restore_key", "value": "[[restoreKey]]"},
     {"name": "restore_timeout", "value": "[[restoreTimeoutSeconds]]"},

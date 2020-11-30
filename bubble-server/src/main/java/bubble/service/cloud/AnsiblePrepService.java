@@ -45,9 +45,12 @@ import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.mkdirOrDie;
 import static org.cobbzilla.util.io.StreamUtil.copyClasspathDirectory;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.OPENAPI_DISABLED;
 
 @Service @Slf4j
 public class AnsiblePrepService {
+
+    private static final int MIN_OPEN_API_MEMORY = 4096;
 
     @Autowired private DatabaseFilterService dbFilter;
     @Autowired private BubbleConfiguration configuration;
@@ -91,6 +94,12 @@ public class AnsiblePrepService {
         ctx.put("publicBaseUri", network.getPublicUri());
         ctx.put("support", configuration.getSupport());
         ctx.put("appLinks", configuration.getAppLinks());
+
+        if (shouldEnableOpenApi(installType, nodeSize)) {
+            ctx.put("openapi_contact_email", configuration.getOpenApi().getContactEmail());
+        } else {
+            ctx.put("openapi_contact_email", OPENAPI_DISABLED);
+        }
 
         if (network.sendErrors() && configuration.hasErrorApi()) {
             final ErrorApiConfiguration errorApi = configuration.getErrorApi();
@@ -166,6 +175,14 @@ public class AnsiblePrepService {
         if (memoryMB >= 1024) return (int) (((double) memoryMB) * 0.24d);
         // no nodes are this small, API probably would not start, not enough memory
         return (int) (((double) memoryMB) * 0.19d);
+    }
+
+    private boolean shouldEnableOpenApi(AnsibleInstallType installType, ComputeNodeSize nodeSize) {
+        // to enable OpenAPI on a deployed node:
+        // - it must already be enabled on the current bubble
+        // - the bubble being launched must be a sage or have 4GB+ memory
+        return configuration.hasOpenApi() &&
+                (installType == AnsibleInstallType.sage || nodeSize.getMemoryMB() >= MIN_OPEN_API_MEMORY);
     }
 
 }

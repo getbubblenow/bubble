@@ -259,7 +259,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         try {
             properties.load(loadResourceAsStream("META-INF/bubble/bubble.properties"));
         } catch (Exception e) {
-            return die("getVersion: "+e, e);
+            return die("jarVersion: "+e, e);
         }
         return properties.getProperty(META_PROP_BUBBLE_VERSION);
     }

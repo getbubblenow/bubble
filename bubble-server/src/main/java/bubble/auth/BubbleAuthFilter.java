@@ -32,7 +32,8 @@ public class BubbleAuthFilter extends AuthFilter<Account> {
             PLANS_ENDPOINT, PAYMENT_METHODS_ENDPOINT,
             BUBBLE_MAGIC_ENDPOINT,
             MESSAGES_ENDPOINT, TIMEZONES_ENDPOINT,
-            NOTIFY_ENDPOINT, FILTER_HTTP_ENDPOINT, DETECT_ENDPOINT
+            NOTIFY_ENDPOINT, FILTER_HTTP_ENDPOINT, DETECT_ENDPOINT,
+            OPENAPI_JSON_ENDPOINT
     ));
     public static final Set<String> SKIP_AUTH_PATHS = new SingletonSet<>(AUTH_ENDPOINT);
     public static final Set<String> SKIP_ALL_AUTH = new SingletonSet<>("/");
