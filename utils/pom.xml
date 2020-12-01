@@ -24,7 +24,6 @@ This code is available under the GNU Affero General Public License, version 3: h
         <module>cobbzilla-parent</module>
         <module>cobbzilla-utils</module>
         <module>cobbzilla-wizard</module>
-        <module>restex</module>
         <module>templated-mail-sender</module>
         <module>abp-parser</module>
     </modules>
