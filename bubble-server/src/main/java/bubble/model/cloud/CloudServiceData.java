@@ -59,7 +59,7 @@ public class CloudServiceData extends IdentifiableBase implements HasAccount {
     @Column(nullable=false, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String cloud;
 
-    @ECSearchable(filter=true) @ECField(index=40)
+    @ECSearchable(filter=true) @ECField(index=40, type=EntityFieldType.json)
     @Size(max=100000, message="err.data.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @Getter @Setter private String data;

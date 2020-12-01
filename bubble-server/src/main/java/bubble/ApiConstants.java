@@ -299,7 +299,7 @@ public class ApiConstants {
     public static final String API_TAG_ACCOUNT_OBJECTS = "account-owned objects";
     public static final String API_TAG_SEARCH = "search";
     public static final String API_TAG_BACKUP_RESTORE = "backup and restore";
-    public static final String API_TAG_UTILITY = "utility";
+    public static final String API_TAG_NODE = "node";
 
     public static String getToken(String json) {
         if (json == null) return null;

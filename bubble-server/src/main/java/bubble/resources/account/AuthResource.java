@@ -87,6 +87,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.LocaleUtil.currencyForLocale;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
@@ -130,7 +131,8 @@ public class AuthResource {
                 .setFirstAdmin(accountDAO.isFirstAdmin(account));
     }
 
-    @GET @Path(EP_CONFIGS) @Operation(tags={API_TAG_UTILITY},
+    @GET @Path(EP_CONFIGS)
+    @Operation(tags={API_TAG_UTILITY},
             summary="Read public system configuration",
             description="Read public system configuration",
             responses={@ApiResponse(description="a Map<String, Object> of public system configuration settings")}
@@ -139,7 +141,8 @@ public class AuthResource {
         return ok(configuration.getPublicSystemConfigs());
     }
 
-    @GET @Path(EP_READY) @Operation(tags={API_TAG_UTILITY},
+    @GET @Path(EP_READY)
+    @Operation(tags={API_TAG_UTILITY},
             summary="Determine if the API is running and ready for login",
             description="Determine if the API is running and ready for login",
             responses={
@@ -163,7 +166,8 @@ public class AuthResource {
         return invalid("err.node.notReady");
     }
 
-    @GET @Path(EP_ACTIVATE) @Operation(tags={API_TAG_ACTIVATION},
+    @GET @Path(EP_ACTIVATE)
+    @Operation(tags={API_TAG_ACTIVATION},
             summary="Determine if the API has been activated",
             description="Determine if the API has been activated",
             responses={
@@ -176,7 +180,8 @@ public class AuthResource {
     )
     public Response isActivated(@Context ContainerRequest ctx) { return ok(accountDAO.activated()); }
 
-    @GET @Path(EP_ACTIVATE+EP_CONFIGS) @Operation(tags={API_TAG_ACTIVATION},
+    @GET @Path(EP_ACTIVATE+EP_CONFIGS)
+    @Operation(tags={API_TAG_ACTIVATION},
             summary="Get activation default configuration",
             description="Get activation default configuration",
             responses={@ApiResponse(description="returns an array of CloudService[] representing the default CloudServices and their settings")}
@@ -188,7 +193,8 @@ public class AuthResource {
     }
 
     @Transactional
-    @PUT @Path(EP_ACTIVATE) @Operation(tags={API_TAG_ACTIVATION},
+    @PUT @Path(EP_ACTIVATE)
+    @Operation(tags={API_TAG_ACTIVATION},
             summary="Perform one-time activation",
             description="Perform one-time activation",
             responses={
@@ -253,7 +259,8 @@ public class AuthResource {
         return sageNode;
     }
 
-    @POST @Path(EP_RESTORE+"/{restoreKey}") @Operation(tags={API_TAG_BACKUP_RESTORE},
+    @POST @Path(EP_RESTORE+"/{restoreKey}")
+    @Operation(tags={API_TAG_BACKUP_RESTORE},
             summary="Restore a Bubble from a backup stored by sage.",
             description="Restore a Bubble from a backup stored by sage.",
             parameters={@Parameter(name="restoreKey", description="the restore key")},
@@ -512,6 +519,15 @@ public class AuthResource {
     }
 
     @POST @Path(EP_APP_LOGIN+"/{session}")
+    @Operation(tags={API_TAG_AUTH},
+            summary="Login an Account using an existing session token, starts a new API session. If an existing session exists, it is invalidated",
+            description="Login an Account using an existing session token, starts a new API session. If an existing session exists, it is invalidated",
+            parameters={@Parameter(name="session", description="the session token to use for logging in")},
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="the Account object that was logged in", ref="#/components/schemas/Account"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+            }
+    )
     public Response appLogin(@Context Request req,
                              @Context ContainerRequest ctx,
                              @PathParam("session") String sessionId) {
@@ -572,6 +588,14 @@ public class AuthResource {
     public TrustedAuthResource getTrustedAuthResource() { return configuration.subResource(TrustedAuthResource.class); }
 
     @POST @Path(EP_VERIFY_KEY)
+    @Operation(tags={API_TAG_NODE},
+            summary="Called between Bubbles to verify RSA keys",
+            description="Called between Bubbles to verify RSA keys",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="an RsaMessage object representing the encrypted challenge response", ref="#/components/schemas/RsaMessage"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="some error occurred, check response")
+            }
+    )
     public Response verifyNodeKey(@Context Request req,
                                   @Context ContainerRequest ctx,
                                   RsaMessage message) {
@@ -625,7 +649,16 @@ public class AuthResource {
     }
 
     @POST @Path(EP_REKEY)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_NODE},
+            summary="Re-key a node. Must be admin. Creates a new NodeKey that, being newest, will be the one the node starts using",
+            description="Re-key a node. Must be admin. Creates a new NodeKey that, being newest, will be the one the node starts using",
+            responses={
+                    @ApiResponse(description="the NodeKey  that was created", ref="#/components/schemas/BubbleNodeKey"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+            }
+    )
     public Response rekeyNode(@Context Request req,
                               @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
@@ -637,7 +670,16 @@ public class AuthResource {
     }
 
     @POST @Path("/sage_hello")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_NODE},
+            summary="Send a 'hello_to_sage' message to our sage node",
+            description="Send a 'hello_to_sage' message to our sage node. Must be admin. Normally a hello message is sent upon startup an every few hours thereafter. Use this endpoint to force a hello to be sent immediately.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="the NotificationReceipt for the message sent to the sage"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="is this node does not have a sage")
+            }
+    )
     public Response sageHello (@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();
@@ -654,6 +696,14 @@ public class AuthResource {
     }
 
     @POST @Path(EP_FORGOT_PASSWORD)
+    @Operation(tags={API_TAG_AUTH},
+            summary="Send a reset password message",
+            description="Send a reset password message",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="an empty response with HTTP status 200 indicates success"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="if no email address was supplied in the request body")
+            }
+    )
     public Response forgotPassword(@Context Request req,
                                    @Context ContainerRequest ctx,
                                    AccountLoginRequest request) {

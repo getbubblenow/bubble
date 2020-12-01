@@ -17,7 +17,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.network.NetworkUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
-import org.cobbzilla.wizard.dao.SearchResults;
+import org.cobbzilla.wizard.model.search.SearchResults;
 import org.cobbzilla.wizard.model.search.SearchBoundComparison;
 import org.cobbzilla.wizard.model.search.SearchQuery;
 import org.cobbzilla.wizard.model.search.SearchSort;

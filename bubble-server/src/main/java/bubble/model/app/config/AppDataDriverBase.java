@@ -12,7 +12,7 @@ import bubble.model.device.Device;
 import bubble.server.BubbleConfiguration;
 import bubble.service.StandardSearchService;
 import org.cobbzilla.wizard.cache.redis.RedisService;
-import org.cobbzilla.wizard.dao.SearchResults;
+import org.cobbzilla.wizard.model.search.SearchResults;
 import org.cobbzilla.wizard.model.search.SearchQuery;
 import org.cobbzilla.wizard.model.search.SearchSort;
 import org.springframework.beans.factory.annotation.Autowired;

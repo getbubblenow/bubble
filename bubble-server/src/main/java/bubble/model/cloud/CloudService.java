@@ -144,7 +144,7 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
         });
     }
 
-    @ECSearchable @ECField(index=100)
+    @ECSearchable @ECField(index=100, type=EntityFieldType.json)
     @Size(max=100000, message="err.driverConfigJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String driverConfigJson;
@@ -153,6 +153,7 @@ public class CloudService extends IdentifiableBaseParentEntity implements Accoun
     @Transient public JsonNode getDriverConfig () { return json(driverConfigJson, JsonNode.class); }
     public CloudService setDriverConfig (JsonNode node) { return setDriverConfigJson(node == null ? null : json(node, DB_JSON_MAPPER)); }
 
+    @ECField(type=EntityFieldType.json)
     @Size(max=10000, message="err.credentialsJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(10000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String credentialsJson;

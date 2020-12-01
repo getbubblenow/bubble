@@ -16,6 +16,7 @@ import org.cobbzilla.util.collection.HasPriority;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 
 import javax.persistence.Column;
@@ -73,7 +74,7 @@ public class AppMessage extends IdentifiableBase implements AppTemplateEntity, H
     public boolean hasLocale () { return !empty(locale); }
 
     @Size(max=100000, message="err.appMessages.length")
-    @ECSearchable @ECField(index=40) @Column(length=100000, nullable=false)
+    @ECSearchable @ECField(index=40, type=EntityFieldType.json_array) @Column(length=100000, nullable=false)
     @JsonIgnore @Getter @Setter private String messagesJson;
 
     @Transient public NameAndValue[] getMessages () { return messagesJson == null ? null : json(messagesJson, NameAndValue[].class); }

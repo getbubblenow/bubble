@@ -7,6 +7,7 @@ package bubble.model.cloud;
 import bubble.model.account.Account;
 import bubble.model.account.HasAccountNoName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -36,7 +37,7 @@ import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENCRYPTED_STRING;
 import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 
-@Entity @ECType(root=true) @ECTypeCreate(method="DISABLED")
+@Entity @ECType(root=true) @ECTypeCreate(method="DISABLED") @Schema
 @NoArgsConstructor @Accessors(chain=true) @ToString(of={"publicKeyHash"}, callSuper=true)
 public class BubbleNodeKey extends IdentifiableBase implements HasAccountNoName {
 

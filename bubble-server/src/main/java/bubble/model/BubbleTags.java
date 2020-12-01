@@ -11,6 +11,8 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.NameAndValue;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECField;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
@@ -28,7 +30,7 @@ import static org.cobbzilla.wizard.model.crypto.EncryptedTypes.ENC_PAD;
 @Embeddable @NoArgsConstructor @Accessors(chain=true)
 public class BubbleTags implements Serializable {
 
-    @Size(max=100000, message="err.tagsJson.length")
+    @Size(max=100000, message="err.tagsJson.length") @ECField(type=EntityFieldType.json_array)
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String tagsJson;
 

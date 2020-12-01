@@ -14,6 +14,7 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.IdentifiableBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.hibernate.annotations.Type;
 
@@ -87,7 +88,7 @@ public class BubbleFootprint extends IdentifiableBase implements AccountTemplate
     @ECIndex @Column(nullable=false)
     @Getter @Setter private Boolean enabled = true;
 
-    @ECSearchable @ECField(index=60)
+    @ECSearchable @ECField(index=60, type=EntityFieldType.json_array)
     @Size(max=5000, message="err.allowedCountriesJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(5000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String allowedCountriesJson;
@@ -96,7 +97,7 @@ public class BubbleFootprint extends IdentifiableBase implements AccountTemplate
     @Transient public String[] getAllowedCountries () { return allowedCountriesJson == null ? null : json(allowedCountriesJson, String[].class); }
     public BubbleFootprint setAllowedCountries (String[] countries) { return setAllowedCountriesJson(countries == null ? null : json(countries, DB_JSON_MAPPER)); }
 
-    @ECSearchable @ECField(index=70)
+    @ECSearchable @ECField(index=70, type=EntityFieldType.json_array)
     @Size(max=5000, message="err.disallowedCountriesJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(5000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String disallowedCountriesJson;

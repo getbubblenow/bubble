@@ -31,7 +31,6 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static bubble.ApiConstants.API_TAG_UTILITY;
 import static bubble.ApiConstants.ENTITY_CONFIGS_ENDPOINT;
 import static java.lang.Boolean.TRUE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
@@ -39,6 +38,7 @@ import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.string.StringUtil.packagePath;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Path(ENTITY_CONFIGS_ENDPOINT)

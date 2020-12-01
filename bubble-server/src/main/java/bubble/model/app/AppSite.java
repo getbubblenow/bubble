@@ -85,7 +85,7 @@ public class AppSite extends IdentifiableBase implements AppTemplateEntity {
     @Getter @Setter private String url;
 
     // Json array of hosts that should always get maximum security
-    @ECField(index=80)
+    @ECField(index=80, type=EntityFieldType.json_array)
     @Column(length=5000)
     @JsonIgnore @Getter @Setter private String maxSecurityHostsJson;
 

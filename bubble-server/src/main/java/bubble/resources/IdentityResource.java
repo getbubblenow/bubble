@@ -28,10 +28,10 @@ import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.Map;
 
-import static bubble.ApiConstants.API_TAG_UTILITY;
 import static bubble.ApiConstants.ID_ENDPOINT;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)

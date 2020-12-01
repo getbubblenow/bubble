@@ -85,7 +85,7 @@ public class RuleDriver extends IdentifiableBase implements AccountTemplate {
     @Column(nullable=false, updatable=false, length=1000)
     @Getter @Setter private String driverClass;
 
-    @Column(length=100000) @ECField(index=80)
+    @Column(length=100000) @ECField(index=80, type=EntityFieldType.json)
     @JsonIgnore @Getter @Setter private String userConfigJson;
 
     @Transient public RuleDriver setUserConfig (JsonNode json) { return setUserConfigJson(json(json, DB_JSON_MAPPER)); }

@@ -14,7 +14,7 @@ import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.wizard.dao.AbstractDAO;
 import org.cobbzilla.wizard.dao.DAO;
-import org.cobbzilla.wizard.dao.SearchResults;
+import org.cobbzilla.wizard.model.search.SearchResults;
 import org.cobbzilla.wizard.model.search.SearchBoundComparison;
 import org.cobbzilla.wizard.model.search.SearchQuery;
 import org.cobbzilla.wizard.model.search.SearchSort;

@@ -17,6 +17,7 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.HasPriority;
 import org.cobbzilla.wizard.model.Identifiable;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.IdentifiableBaseParentEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
@@ -92,7 +93,7 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @Getter @Setter private Boolean canPrime;
     public boolean canPrime () { return canPrime != null && canPrime; }
 
-    @Column(length=100000, nullable=false) @ECField(index=60)
+    @Column(length=100000, nullable=false) @ECField(index=60, type= EntityFieldType.json)
     @JsonIgnore @Getter @Setter private String dataConfigJson;
 
     @Transient public AppDataConfig getDataConfig () { return dataConfigJson == null ? null : ensureDefaults(json(dataConfigJson, AppDataConfig.class)); }

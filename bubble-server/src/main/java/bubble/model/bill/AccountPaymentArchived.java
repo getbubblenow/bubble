@@ -32,7 +32,7 @@ public class AccountPaymentArchived extends IdentifiableBase {
     @ECIndex(unique=true) @Column(unique=true, updatable=false, length=UUID_MAXLEN)
     @Getter @Setter private String accountUuid;
 
-    @ECSearchable @ECField(index=20, type=EntityFieldType.opaque_string)
+    @ECSearchable @ECField(index=20, type=EntityFieldType.json_array)
     @Type(type=ENCRYPTED_STRING)
     @Column(updatable=false, nullable=false, columnDefinition="varchar") // no length limit
     @JsonIgnore @Getter @Setter private String billsJson;
@@ -40,7 +40,7 @@ public class AccountPaymentArchived extends IdentifiableBase {
     @Transient public Bill[] getBills() { return json(billsJson, Bill[].class); }
     public AccountPaymentArchived setBills(List<Bill> bills) { return setBillsJson(json(bills, DB_JSON_MAPPER)); }
 
-    @ECSearchable @ECField(index=30)
+    @ECSearchable @ECField(index=30, type=EntityFieldType.json_array)
     @Type(type=ENCRYPTED_STRING)
     @Column(updatable=false, nullable=false, columnDefinition="varchar") // no length limit
     @JsonIgnore @Getter @Setter private String paymentsJson;
@@ -50,7 +50,7 @@ public class AccountPaymentArchived extends IdentifiableBase {
         return setPaymentsJson(json(payments, DB_JSON_MAPPER));
     }
 
-    @ECSearchable @ECField(index=40)
+    @ECSearchable @ECField(index=40, type=EntityFieldType.json_array)
     @Type(type=ENCRYPTED_STRING)
     @Column(updatable=false, nullable=false, columnDefinition="varchar") // no length limit
     @JsonIgnore @Getter @Setter private String paymentMethodsJson;

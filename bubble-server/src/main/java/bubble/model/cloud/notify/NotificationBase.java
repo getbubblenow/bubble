@@ -66,7 +66,7 @@ public class NotificationBase extends IdentifiableBase implements HasAccountNoNa
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(1024+ENC_PAD)+") NOT NULL")
     @Getter @Setter private String uri;
 
-    @ECSearchable(filter=true) @ECField(index=70)
+    @ECSearchable(filter=true) @ECField(index=70, type=EntityFieldType.json)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(500_000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String payloadJson;
     public boolean hasPayload () { return payloadJson != null; }
@@ -80,7 +80,7 @@ public class NotificationBase extends IdentifiableBase implements HasAccountNoNa
     @Getter @Setter private Boolean truncated = false;
     public boolean truncated () { return bool(truncated); }
 
-    @ECField(index=90)
+    @ECField(index=90, type=EntityFieldType.json)
     @Type(type=ENCRYPTED_STRING) @Column(updatable=false, columnDefinition="varchar("+(1000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String receiptJson;
 

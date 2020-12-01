@@ -18,6 +18,7 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.HasPriority;
 import org.cobbzilla.wizard.model.Identifiable;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
 import org.cobbzilla.wizard.model.entityconfig.IdentifiableBaseParentEntity;
 import org.cobbzilla.wizard.model.entityconfig.annotations.*;
 import org.cobbzilla.wizard.validation.HasValue;
@@ -111,7 +112,7 @@ public class AppRule extends IdentifiableBaseParentEntity implements AppTemplate
         return d;
     }
 
-    @ECSearchable(filter=true) @ECField(index=80)
+    @ECSearchable(filter=true) @ECField(index=80, type=EntityFieldType.json)
     @Size(max=500000, message="err.configJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(500000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String configJson;

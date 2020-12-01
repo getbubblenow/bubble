@@ -87,7 +87,7 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
     @JsonIgnore @Transient public boolean isFullDelete () { return deletionPolicy == AccountDeletionPolicy.full_delete; }
     @JsonIgnore @Transient public boolean isBlockDelete () { return deletionPolicy == AccountDeletionPolicy.block_delete; }
 
-    @ECSearchable(filter=true) @ECField(index=60)
+    @ECSearchable(filter=true) @ECField(index=60, type=EntityFieldType.json_array)
     @Size(max=100000, message="err.accountContactsJson.length")
     @Type(type=ENCRYPTED_STRING) @Column(columnDefinition="varchar("+(100000+ENC_PAD)+")")
     @JsonIgnore @Getter @Setter private String accountContactsJson;

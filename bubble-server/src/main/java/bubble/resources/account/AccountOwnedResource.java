@@ -250,7 +250,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             tags={API_TAG_ACCOUNT_OBJECTS},
             summary="Delete an existing object",
-            description="Delete an new object. For many types, the object will be created if it does not exist. If validation errors occur, status "+SC_PRECONDITION_FAILED+" is returned and the response will contain an array of errors. Within each error, the `messageTemplate` field refers to messages that can be localized using the /messages resource",
+            description="Delete an existing object",
             parameters={@Parameter(name="id", description="the UUID (or name, if allowed) of the object to delete")},
             responses={
                     @ApiResponse(description="the object that was deleted"),
