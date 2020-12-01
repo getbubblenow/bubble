@@ -7,9 +7,6 @@
 [submodule "utils/cobbzilla-wizard"]
 	path = utils/cobbzilla-wizard
 	url = git@git.bubblev.org:bubblev/cobbzilla-wizard.git
-[submodule "utils/restex"]
-	path = utils/restex
-	url = git@git.bubblev.org:bubblev/restex.git
 [submodule "utils/templated-mail-sender"]
 	path = utils/templated-mail-sender
 	url = git@git.bubblev.org:bubblev/templated-mail-sender.git
