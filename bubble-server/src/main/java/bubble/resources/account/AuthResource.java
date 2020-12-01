@@ -135,7 +135,7 @@ public class AuthResource {
     @Operation(tags={API_TAG_UTILITY},
             summary="Read public system configuration",
             description="Read public system configuration",
-            responses={@ApiResponse(description="a Map<String, Object> of public system configuration settings")}
+            responses={@ApiResponse(responseCode=SC_OK, description="a Map<String, Object> of public system configuration settings")}
     )
     public Response getPublicSystemConfigs(@Context ContainerRequest ctx) {
         return ok(configuration.getPublicSystemConfigs());
@@ -171,7 +171,7 @@ public class AuthResource {
             summary="Determine if the API has been activated",
             description="Determine if the API has been activated",
             responses={
-                    @ApiResponse(description="returns true if API is activated, false otherwise",
+                    @ApiResponse(responseCode=SC_OK, description="returns true if API is activated, false otherwise",
                             content={@Content(mediaType=APPLICATION_JSON, examples={
                                     @ExampleObject(name="Bubble is activated", value="true"),
                                     @ExampleObject(name="Bubble has not been activated", value="false")
@@ -184,7 +184,7 @@ public class AuthResource {
     @Operation(tags={API_TAG_ACTIVATION},
             summary="Get activation default configuration",
             description="Get activation default configuration",
-            responses={@ApiResponse(description="returns an array of CloudService[] representing the default CloudServices and their settings")}
+            responses={@ApiResponse(responseCode=SC_OK, description="returns an array of CloudService[] representing the default CloudServices and their settings")}
     )
     public Response getActivationConfigs(@Context ContainerRequest ctx) {
         final Account caller = optionalUserPrincipal(ctx);
@@ -198,7 +198,7 @@ public class AuthResource {
             summary="Perform one-time activation",
             description="Perform one-time activation",
             responses={
-                    @ApiResponse(description="the Account object for the initial admin account, with a new session token"),
+                    @ApiResponse(responseCode=SC_OK, description="the Account object for the initial admin account, with a new session token"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and activation has already been completed"),
                     @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred: activation has already been completed, or there were errors processing the ActivationRequest object")
             }
@@ -326,7 +326,7 @@ public class AuthResource {
             summary="Register a new Account, starts a new API session.",
             description="Register a new Account, starts a new API session.",
             responses={
-                    @ApiResponse(responseCode=SC_OK, description="the Account object that was registered", ref="#/components/schemas/Account"),
+                    @ApiResponse(responseCode=SC_OK, description="the Account object that was registered, `token` property holds session token"),
                     @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
             }
     )
@@ -443,7 +443,7 @@ public class AuthResource {
             description="Login an Account, starts a new API session.",
             parameters={@Parameter(name="k", description="for a new Bubble that was launched with the lock enabled, the unlock key is required for the first login")},
             responses={
-                    @ApiResponse(responseCode=SC_OK, description="the Account object that was logged in", ref="#/components/schemas/Account"),
+                    @ApiResponse(responseCode=SC_OK, description="the Account object that was logged in"),
                     @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
             }
     )
@@ -524,7 +524,7 @@ public class AuthResource {
             description="Login an Account using an existing session token, starts a new API session. If an existing session exists, it is invalidated",
             parameters={@Parameter(name="session", description="the session token to use for logging in")},
             responses={
-                    @ApiResponse(responseCode=SC_OK, description="the Account object that was logged in", ref="#/components/schemas/Account"),
+                    @ApiResponse(responseCode=SC_OK, description="the Account object that was logged in"),
                     @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
             }
     )
@@ -592,7 +592,7 @@ public class AuthResource {
             summary="Called between Bubbles to verify RSA keys",
             description="Called between Bubbles to verify RSA keys",
             responses={
-                    @ApiResponse(responseCode=SC_OK, description="an RsaMessage object representing the encrypted challenge response", ref="#/components/schemas/RsaMessage"),
+                    @ApiResponse(responseCode=SC_OK, description="an RsaMessage object representing the encrypted challenge response"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="some error occurred, check response")
             }
     )
@@ -654,7 +654,7 @@ public class AuthResource {
             summary="Re-key a node. Must be admin. Creates a new NodeKey that, being newest, will be the one the node starts using",
             description="Re-key a node. Must be admin. Creates a new NodeKey that, being newest, will be the one the node starts using",
             responses={
-                    @ApiResponse(description="the NodeKey  that was created", ref="#/components/schemas/BubbleNodeKey"),
+                    @ApiResponse(responseCode=SC_OK, description="the NodeKey that was created"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
                     @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
             }
@@ -727,6 +727,19 @@ public class AuthResource {
     }
 
     @POST @Path(EP_APPROVE+"/{token}")
+    @Operation(tags={API_TAG_AUTH},
+            summary="Approve a request",
+            description="Approve a request. The token comes from an email or SMS message sent to the user.",
+            parameters={@Parameter(name="token", description="the confirmation token")},
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success",
+                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                                    @ExampleObject(name="if no login requested, returns an empty response", value=""),
+                                    @ExampleObject(name="if login requested, returns an Account object with either a valid session token ('token' property) or additional auth factors required (check 'multifactorAuth' property)")
+                            })}),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="a validation error occurred, for example the token might be invalid")
+            }
+    )
     public Response approve(@Context Request req,
                             @Context ContainerRequest ctx,
                             @PathParam("token") String token,
@@ -764,6 +777,18 @@ public class AuthResource {
     }
 
     @POST @Path(EP_AUTHENTICATOR)
+    @Operation(tags={API_TAG_AUTH},
+            summary="Approve a TOTP request",
+            description="Approve a TOTP request. The token comes the end user's authenticator app.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success",
+                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                                    @ExampleObject(name="if no login requested, returns an empty response", value=""),
+                                    @ExampleObject(name="if login requested, returns an Account object with either a valid session token ('token' property) or additional auth factors required (check 'multifactorAuth' property)")
+                            })}),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="a validation error occurred, for example the token might be invalid")
+            }
+    )
     public Response authenticator(@Context Request req,
                                   @Context ContainerRequest ctx,
                                   AuthenticatorRequest request) {
@@ -816,15 +841,38 @@ public class AuthResource {
     }
 
     @DELETE @Path(EP_AUTHENTICATOR)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_AUTH},
+            summary="Flush authenticator tokens",
+            description="Flush authenticator tokens. The next operation that requires TOTP auth will require the user to re-authenticate.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success",
+                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                                    @ExampleObject(name="returns an empty JSON object", value="{}")
+                            })}),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="a validation error occurred, for example the token might be invalid")
+            }
+    )
     public Response flushAuthenticatorTokens(@Context Request req,
-                                  @Context ContainerRequest ctx) {
+                                             @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         authenticatorService.flush(caller.getToken());
         return ok_empty();
     }
 
     @POST @Path(EP_DENY+"/{token}")
+    @Operation(tags={API_TAG_AUTH},
+            summary="Deny a request",
+            description="Deny a request. The token comes from an email or SMS message sent to the user.",
+            parameters={@Parameter(name="token", description="the confirmation token")},
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success",
+                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                                    @ExampleObject(name="returns the denial AccountMessage")
+                            })}),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="a validation error occurred, for example the token might be invalid")
+            }
+    )
     public Response deny(@Context Request req,
                          @Context ContainerRequest ctx,
                          @PathParam("token") String token) {
@@ -838,6 +886,15 @@ public class AuthResource {
 
     @GET @Path(EP_CA_CERT)
     @Produces(CONTENT_TYPE_ANY)
+    @Operation(tags={API_TAG_UTILITY},
+            summary="Get the CA Certificate for this Bubble",
+            description="Get the CA Certificate for this Bubble. Response body is the certificate itself, in a format determined by deviceType or type",
+            parameters={
+                    @Parameter(name="deviceType", description="the device type"),
+                    @Parameter(name="type", description="the certificate type")
+            },
+            responses={@ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success, response body is certificate")}
+    )
     public Response getCaCert(@Context Request req,
                               @Context ContainerRequest ctx,
                               @QueryParam("deviceType") BubbleDeviceType deviceType,
@@ -867,6 +924,13 @@ public class AuthResource {
     }
 
     @GET @Path(EP_KEY)
+    @Operation(tags={API_TAG_UTILITY},
+            summary="Get the Node Key for this Bubble",
+            description="Get the Node Key for this Bubble",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success")
+            }
+    )
     public Response getNodeKey(@Context Request req,
                                @Context ContainerRequest ctx) {
         final BubbleNode thisNode = configuration.getThisNode();
@@ -886,7 +950,16 @@ public class AuthResource {
     }
 
     @GET @Path(EP_LOGOUT)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_AUTH},
+            summary="Logout",
+            description="Logout of the current session, or logout of all sessions everywhere if the `all` parameter is true.",
+            parameters={@Parameter(name="all", description="logout of all sessions everywhere")},
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="If there is no current session to log out of")
+            }
+    )
     public Response logout(@Context ContainerRequest ctx,
                            @QueryParam("all") Boolean all) {
         final Account account = optionalUserPrincipal(ctx);
@@ -900,7 +973,16 @@ public class AuthResource {
     }
 
     @POST @Path(EP_LOGOUT+"/{id}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_AUTH},
+            summary="Logout a user everywhere",
+            description="Logout of the current session, or logout of all sessions everywhere if the `all` parameter is true.",
+            parameters={@Parameter(name="id", description="UUID or email of user to logout")},
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="If there is no current session to log out of")
+            }
+    )
     public Response logoutUserEverywhere(@Context ContainerRequest ctx,
                                          @PathParam("id") String id) {
         final Account caller = optionalUserPrincipal(ctx);
@@ -916,11 +998,27 @@ public class AuthResource {
         return ok_empty();
     }
 
-    @GET @Path(EP_TIME) public Response serverTime() { return ok(now()); }
+    @GET @Path(EP_TIME)
+    @Operation(tags={API_TAG_UTILITY},
+            summary="Get current system time",
+            description="Get current system time. Returns current time as epoch time in milliseconds",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="Returns current time as epoch time in milliseconds",
+                            content={@Content(mediaType=APPLICATION_JSON, examples={@ExampleObject(name="time in milliseconds", value="1606858589683")})})
+            }
+    )
+    public Response serverTime() { return ok(now()); }
 
     @Autowired private GeoService geoService;
 
     @GET @Path(EP_SUPPORT)
+    @Operation(tags={API_TAG_UTILITY},
+            summary="Get support information",
+            description="Get support information for the user's current locale, if available. Use the default locale otherwise.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="SupportInfo object")
+            }
+    )
     public Response getSupportInfo (@Context Request req,
                                     @Context ContainerRequest ctx) {
         final List<String> locales = geoService.getSupportedLocales(optionalUserPrincipal(ctx), getRemoteHost(req), normalizeLangHeader(req));
@@ -928,6 +1026,14 @@ public class AuthResource {
     }
 
     @GET @Path(EP_SUPPORT+"/{locale}")
+    @Operation(tags={API_TAG_UTILITY},
+            summary="Get support information",
+            description="Get support information for the given locale, if available. Use the default locale otherwise.",
+            parameters={@Parameter(name="locale", description="locale to find support for")},
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="SupportInfo object")
+            }
+    )
     public Response getSupportInfo (@Context Request req,
                                     @Context ContainerRequest ctx,
                                     @PathParam("locale") String locale) {
@@ -935,6 +1041,13 @@ public class AuthResource {
     }
 
     @GET @Path(EP_APP_LINKS)
+    @Operation(tags={API_TAG_UTILITY},
+            summary="Get links to native applications",
+            description="Get links to native applications for the current user's locale, if available. Use the default locale otherwise.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="AppLinks object")
+            }
+    )
     public Response getAppLinks (@Context Request req,
                                  @Context ContainerRequest ctx) {
         final List<String> locales = geoService.getSupportedLocales(optionalUserPrincipal(ctx), getRemoteHost(req), normalizeLangHeader(req));
@@ -942,6 +1055,14 @@ public class AuthResource {
     }
 
     @GET @Path(EP_APP_LINKS+"/{locale}")
+    @Operation(tags={API_TAG_UTILITY},
+            summary="Get links to native applications",
+            description="Get links to native applications for the given locale, if available. Use the default locale otherwise.",
+            parameters={@Parameter(name="locale", description="locale to find app links for")},
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="AppLinks object")
+            }
+    )
     public Response getAppLinks (@Context Request req,
                                  @Context ContainerRequest ctx,
                                  @PathParam("locale") String locale) {
@@ -950,6 +1071,15 @@ public class AuthResource {
 
     @GET @Path(EP_PATCH+"/{token}")
     @Produces(APPLICATION_OCTET_STREAM)
+    @Operation(tags={API_TAG_NODE_MANAGER},
+            summary="Find a node-manager patch file",
+            description="Find a node-manager patch file. The file must previously have been registered, yielding a token",
+            parameters={@Parameter(name="token", description="token of the patch file to retrieve")},
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="raw file data", content={@Content(mediaType=APPLICATION_OCTET_STREAM)}),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="token not valid")
+            }
+    )
     public Response getPatchFile(@Context ContainerRequest ctx,
                                  @PathParam("token") String token) {
         final File patch = nodeManagerService.findPatch(token);
@@ -961,6 +1091,19 @@ public class AuthResource {
 
     @GET @Path(EP_UPGRADE+"/{node}/{key}")
     @Produces(APPLICATION_OCTET_STREAM)
+    @Operation(tags={API_TAG_NODE},
+            summary="Return bubble jar",
+            description="Return bubble jar file for upgrading other nodes to our version.",
+            parameters={
+                    @Parameter(name="node", description="UUID of the calling node"),
+                    @Parameter(name="key", description="UUID of the calling node's BubbleNodeKey")
+            },
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="raw jar file data", content={@Content(mediaType=APPLICATION_OCTET_STREAM)}),
+                    @ApiResponse(responseCode=SC_UNAUTHORIZED, description="calling node is not authorized"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="token not valid")
+            }
+    )
     public Response getUpgrade(@Context Request req,
                                @Context ContainerRequest ctx,
                                @PathParam("node") String nodeUuid,

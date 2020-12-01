@@ -17,6 +17,7 @@ openApi:
   licenseUrl: https://getbubblenow.com/bubble-license/
   additionalPackages:
   - org.cobbzilla.wizard.model.search
+  - org.cobbzilla.wizard.model.support
 
 defaultLocale: {{#exists BUBBLE_DEFAULT_LOCALE}}{{BUBBLE_DEFAULT_LOCALE}}{{else}}en_US{{/exists}}
 testMode: {{#exists BUBBLE_TEST_MODE}}{{BUBBLE_TEST_MODE}}{{else}}false{{/exists}}

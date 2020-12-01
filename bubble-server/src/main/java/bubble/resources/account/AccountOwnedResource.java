@@ -29,8 +29,7 @@ import java.util.List;
 
 import static bubble.ApiConstants.API_TAG_ACCOUNT_OBJECTS;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
-import static org.cobbzilla.util.http.HttpStatusCodes.SC_NOT_FOUND;
-import static org.cobbzilla.util.http.HttpStatusCodes.SC_PRECONDITION_FAILED;
+import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.util.reflect.ReflectionUtil.getFirstTypeParam;
 import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -69,7 +68,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
             tags={API_TAG_ACCOUNT_OBJECTS},
             summary="List objects",
             description="List objects",
-            responses={@ApiResponse(description="an array of objects")}
+            responses={@ApiResponse(responseCode=SC_OK, description="an array of objects")}
     )
     public Response listEntities(@Context Request req,
                                  @Context ContainerRequest ctx) {
@@ -141,7 +140,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
             summary="Find by identifier",
             description="Find by identifier",
             responses={
-                    @ApiResponse(description="the object, if found"),
+                    @ApiResponse(responseCode=SC_OK, description="the object, if found"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="if the object does not exist")
             }
     )
@@ -174,7 +173,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
             summary="Create a new object",
             description="Create a new object. If validation errors occur, status "+SC_PRECONDITION_FAILED+" is returned and the response will contain an array of errors. Within each error, the `messageTemplate` field refers to messages that can be localized using the /messages resource",
             responses={
-                    @ApiResponse(description="the object that was created"),
+                    @ApiResponse(responseCode=SC_OK, description="the object that was created"),
                     @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred",
                     content={@Content(mediaType=APPLICATION_JSON, examples={
                             @ExampleObject(name="validation errors", value="[{\"messageTemplate\": \"some.symbolic.error\", \"message\": \"some default English message\"}]")
@@ -216,7 +215,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
             description="Update an new object. For many types, the object will be created if it does not exist. If validation errors occur, status "+SC_PRECONDITION_FAILED+" is returned and the response will contain an array of errors. Within each error, the `messageTemplate` field refers to messages that can be localized using the /messages resource",
             parameters={@Parameter(name="id", description="the UUID (or name, if allowed) of the object to update")},
             responses={
-                    @ApiResponse(description="the object that was updated"),
+                    @ApiResponse(responseCode=SC_OK, description="the object that was updated"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="no object exists with the given id"),
                     @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred",
                             content={@Content(mediaType=APPLICATION_JSON, examples={
@@ -253,7 +252,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
             description="Delete an existing object",
             parameters={@Parameter(name="id", description="the UUID (or name, if allowed) of the object to delete")},
             responses={
-                    @ApiResponse(description="the object that was deleted"),
+                    @ApiResponse(responseCode=SC_OK, description="the object that was deleted"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="no object exists with the given id")
             }
     )

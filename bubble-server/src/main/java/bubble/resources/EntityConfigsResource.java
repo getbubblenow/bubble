@@ -35,6 +35,7 @@ import static bubble.ApiConstants.ENTITY_CONFIGS_ENDPOINT;
 import static java.lang.Boolean.TRUE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.string.StringUtil.packagePath;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -57,7 +58,7 @@ public class EntityConfigsResource extends AbstractEntityConfigsResource {
             description="Set a configuration parameter to `true`",
             parameters={@Parameter(name="param", description="the name of the parameter to set")},
             responses={
-                    @ApiResponse(description="the value that was set",
+                    @ApiResponse(responseCode=SC_OK, description="the value that was set",
                             content={@Content(mediaType=APPLICATION_JSON, examples={
                                     @ExampleObject(name="should always return true", value="true")
                             }
@@ -79,7 +80,7 @@ public class EntityConfigsResource extends AbstractEntityConfigsResource {
                     @Parameter(name="value", description="the value to set the parameter to")
             },
             responses={
-                    @ApiResponse(description="the value that was set",
+                    @ApiResponse(responseCode=SC_OK, description="the value that was set",
                             content={@Content(mediaType=APPLICATION_JSON, examples={
                                     @ExampleObject(name="if the value was the String 'foo'", value="\"foo\"")
                             }

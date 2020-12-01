@@ -22,6 +22,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
@@ -46,7 +47,7 @@ public class TagsResource {
             summary="Set a tag",
             description="Set a tag",
             parameters={@Parameter(name="name", description="name of the tag")},
-            responses={@ApiResponse(description="a BubbleTags object representing the current list of tags")}
+            responses={@ApiResponse(responseCode=SC_OK, description="a BubbleTags object representing the current list of tags")}
     )
     public Response set(@Context ContainerRequest ctx,
                         @PathParam("name") String name,

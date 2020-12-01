@@ -19,6 +19,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
@@ -36,7 +37,7 @@ public class AccountPromotionsResource {
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             summary="List promotions for account",
             description="List promotions for account",
-            responses={@ApiResponse(description="an array of Promotion objects owned by the Account")}
+            responses={@ApiResponse(responseCode=SC_OK, description="an array of Promotion objects owned by the Account")}
     )
     public Response listPromotions(@Context Request req,
                                    @Context ContainerRequest ctx) {
@@ -49,7 +50,7 @@ public class AccountPromotionsResource {
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             summary="Add a promotion to an account. Must be admin.",
             description="Add a promotion to an account. Must be admin.",
-            responses={@ApiResponse(description="an array of Promotion objects owned by the Account")}
+            responses={@ApiResponse(responseCode=SC_OK, description="an array of Promotion objects owned by the Account")}
     )
     public Response adminAddPromotion(@Context Request req,
                                       @Context ContainerRequest ctx,
@@ -63,7 +64,7 @@ public class AccountPromotionsResource {
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             summary="Remove a promotion from an account. Must be admin.",
             description="Remove a promotion from an account. Must be admin.",
-            responses={@ApiResponse(description="an array of Promotion objects owned by the Account")}
+            responses={@ApiResponse(responseCode=SC_OK, description="an array of Promotion objects owned by the Account")}
     )
     public Response adminRemovePromotion(@Context Request req,
                                          @Context ContainerRequest ctx,

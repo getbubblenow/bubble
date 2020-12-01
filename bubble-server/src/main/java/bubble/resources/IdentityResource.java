@@ -30,6 +30,7 @@ import java.util.Map;
 
 import static bubble.ApiConstants.ID_ENDPOINT;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
@@ -53,7 +54,7 @@ public class IdentityResource {
             description="Searches all model objects by ID. The id parameter is typically a UUID or name",
             parameters={@Parameter(name="id", description="an identifier (typically UUID or name) to search for")},
             responses={
-                    @ApiResponse(description="a JSON object where the property names are entity types, and a property's corresponding value is the object of that type found with the given ID",
+                    @ApiResponse(responseCode=SC_OK, description="a JSON object where the property names are entity types, and a property's corresponding value is the object of that type found with the given ID",
                             content={@Content(mediaType=APPLICATION_JSON, examples={
                                     @ExampleObject(name="usually a UUID only matches one object", value="{\"CloudService\": {\"uuid\": \"the-ID-you-searched-for\", \"other-cloud-service-fields\": \"would-be-shown\"}}"),
                                     @ExampleObject(name="a UUID for an Account also matches the AccountPolicy", value="{\"Account\": {\"uuid\": \"the-ID-you-searched-for\", \"other-account-fields\": \"would-be-shown\"}, \"AccountPolicy\": {\"uuid\": \"the-ID-you-searched-for\", \"other-policy-fields\": \"would-be-shown\"}}"),

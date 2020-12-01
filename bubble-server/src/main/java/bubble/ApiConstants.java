@@ -300,6 +300,7 @@ public class ApiConstants {
     public static final String API_TAG_SEARCH = "search";
     public static final String API_TAG_BACKUP_RESTORE = "backup and restore";
     public static final String API_TAG_NODE = "node";
+    public static final String API_TAG_NODE_MANAGER = "node manager";
 
     public static String getToken(String json) {
         if (json == null) return null;

@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response;
 
 import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.ok;
 import static org.cobbzilla.wizard.resources.ResourceUtil.userPrincipal;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
@@ -50,7 +51,7 @@ public class SearchResource {
                     @Parameter(name=Q_SORT, description="sort field. prefix with + or - to indicate ascending/descending")
             },
             responses={
-                    @ApiResponse(description="a SearchResults object, or if meta was true then a SqlViewField[] array")
+                    @ApiResponse(responseCode=SC_OK, description="a SearchResults object, or if meta was true then a SqlViewField[] array")
             }
     )
     public Response search(@Context Request req,
@@ -80,7 +81,7 @@ public class SearchResource {
                     @Parameter(name=Q_SORT, description="sort field. prefix with + or - to indicate ascending/descending")
             },
             responses={
-                    @ApiResponse(description="a SearchResults object, or if meta was true then a SqlViewField[] array")
+                    @ApiResponse(responseCode=SC_OK, description="a SearchResults object, or if meta was true then a SqlViewField[] array")
             }
     )
     public Response search(@Context Request req,
