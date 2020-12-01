@@ -35,6 +35,9 @@ import bubble.service.cloud.NodeLaunchMonitor;
 import bubble.service.upgrade.BubbleJarUpgradeService;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Cleanup;
 import lombok.Getter;
@@ -75,9 +78,12 @@ import static bubble.resources.account.AuthResource.forgotPasswordMessage;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.*;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_INVALID;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.RestServerBase.reportError;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
@@ -95,7 +101,14 @@ public class MeResource {
     @Autowired private AccountMessageDAO messageDAO;
 
     @GET
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Get account record for current session",
+            description="Get account record for current session",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="Account object")
+            }
+    )
     public Response me(@Context ContainerRequest ctx) {
         try {
             final Account account = userPrincipal(ctx);
@@ -113,14 +126,28 @@ public class MeResource {
     }
 
     @GET @Path(EP_LOCALE)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Get the account locale",
+            description="Get the account locale",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="Locale string", content=@Content(mediaType=APPLICATION_JSON, examples={@ExampleObject(name="default locale", value="en_US")}))
+            }
+    )
     public Response getLocale(@Context ContainerRequest ctx) {
         final Account account = userPrincipal(ctx);
         return ok(account.getLocale());
     }
 
     @POST @Path(EP_LOCALE+"/{locale}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Set the account locale",
+            description="Set the account locale",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="updated Account object")
+            }
+    )
     public Response setLocale(@Context ContainerRequest ctx,
                               @PathParam("locale") String locale) {
         final Account account = userPrincipal(ctx);
@@ -150,10 +177,25 @@ public class MeResource {
     }
 
     @GET @Path(EP_ERROR_API)
+    @Operation(tags={API_TAG_UTILITY},
+            summary="Get error API information",
+            description="Get error API information",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a Map of API information")
+            }
+    )
     public Response errorApi(@Context Request req) { return ok(getErrorApi()); }
 
     @POST @Path(EP_CHANGE_PASSWORD)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Request account password change",
+            description="Request account password change. A message will be sent to the user with a token to approve the change and set a new password. If the password can be changed directly, this returns the updated Account object. If approvals are required for a password change, an Account object will be returned and the `multifactorAuth` property will indicate what auth methods are required to approve the change.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="an Account object"),
+                    @ApiResponse(responseCode=SC_INVALID, description="current password was incorrect, or a TOTP token is required")
+            }
+    )
     public Response changePassword(@Context Request req,
                                    @Context ContainerRequest ctx,
                                    ChangePasswordRequest request) {

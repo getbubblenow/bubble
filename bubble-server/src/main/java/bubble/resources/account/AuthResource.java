@@ -40,6 +40,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Cleanup;
@@ -147,7 +148,7 @@ public class AuthResource {
             description="Determine if the API is running and ready for login",
             responses={
                     @ApiResponse(responseCode=SC_OK, description="empty response with status 200 if API is ready"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="error with status 422 if API is NOT ready")
+                    @ApiResponse(responseCode=SC_INVALID, description="error with status 422 if API is NOT ready")
             }
     )
     public Response getNodeIsReady(@Context ContainerRequest ctx) {
@@ -200,7 +201,7 @@ public class AuthResource {
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the Account object for the initial admin account, with a new session token"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and activation has already been completed"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred: activation has already been completed, or there were errors processing the ActivationRequest object")
+                    @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred: activation has already been completed, or there were errors processing the ActivationRequest object")
             }
     )
     public Response activate(@Context Request req,
@@ -266,7 +267,7 @@ public class AuthResource {
             parameters={@Parameter(name="restoreKey", description="the restore key")},
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the NotificationReceipt from a successful request to retrieve the backup"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+                    @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred")
             }
     )
     public Response restore(@NonNull @Context final Request req,
@@ -299,7 +300,7 @@ public class AuthResource {
             parameters={@Parameter(name="restoreKey", description="the restore key")},
             responses={
                     @ApiResponse(responseCode=SC_OK, description="upon success a 200 HTTP status with an empty response is returned"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+                    @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred")
             }
     )
     @NonNull public Response restoreFromPackage(@NonNull @Context final Request req,
@@ -326,8 +327,8 @@ public class AuthResource {
             summary="Register a new Account, starts a new API session.",
             description="Register a new Account, starts a new API session.",
             responses={
-                    @ApiResponse(responseCode=SC_OK, description="the Account object that was registered, `token` property holds session token"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+                    @ApiResponse(responseCode=SC_OK, description="the Account object that was registered, `token` property holds session token", content=@Content(mediaType=APPLICATION_JSON, schema=@Schema(ref="#/components/schema/Account"))),
+                    @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred")
             }
     )
     public Response register(@Context Request req,
@@ -444,7 +445,7 @@ public class AuthResource {
             parameters={@Parameter(name="k", description="for a new Bubble that was launched with the lock enabled, the unlock key is required for the first login")},
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the Account object that was logged in"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+                    @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred")
             }
     )
     public Response login(@Context Request req,
@@ -525,7 +526,7 @@ public class AuthResource {
             parameters={@Parameter(name="session", description="the session token to use for logging in")},
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the Account object that was logged in"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+                    @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred")
             }
     )
     public Response appLogin(@Context Request req,
@@ -656,7 +657,7 @@ public class AuthResource {
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the NodeKey that was created"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+                    @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred")
             }
     )
     public Response rekeyNode(@Context Request req,
@@ -701,7 +702,7 @@ public class AuthResource {
             description="Send a reset password message",
             responses={
                     @ApiResponse(responseCode=SC_OK, description="an empty response with HTTP status 200 indicates success"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="if no email address was supplied in the request body")
+                    @ApiResponse(responseCode=SC_INVALID, description="if no email address was supplied in the request body")
             }
     )
     public Response forgotPassword(@Context Request req,
@@ -737,7 +738,7 @@ public class AuthResource {
                                     @ExampleObject(name="if no login requested, returns an empty response", value=""),
                                     @ExampleObject(name="if login requested, returns an Account object with either a valid session token ('token' property) or additional auth factors required (check 'multifactorAuth' property)")
                             })}),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="a validation error occurred, for example the token might be invalid")
+                    @ApiResponse(responseCode=SC_INVALID, description="a validation error occurred, for example the token might be invalid")
             }
     )
     public Response approve(@Context Request req,
@@ -786,7 +787,7 @@ public class AuthResource {
                                     @ExampleObject(name="if no login requested, returns an empty response", value=""),
                                     @ExampleObject(name="if login requested, returns an Account object with either a valid session token ('token' property) or additional auth factors required (check 'multifactorAuth' property)")
                             })}),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="a validation error occurred, for example the token might be invalid")
+                    @ApiResponse(responseCode=SC_INVALID, description="a validation error occurred, for example the token might be invalid")
             }
     )
     public Response authenticator(@Context Request req,
@@ -850,7 +851,7 @@ public class AuthResource {
                             content={@Content(mediaType=APPLICATION_JSON, examples={
                                     @ExampleObject(name="returns an empty JSON object", value="{}")
                             })}),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="a validation error occurred, for example the token might be invalid")
+                    @ApiResponse(responseCode=SC_INVALID, description="a validation error occurred, for example the token might be invalid")
             }
     )
     public Response flushAuthenticatorTokens(@Context Request req,
@@ -870,7 +871,7 @@ public class AuthResource {
                             content={@Content(mediaType=APPLICATION_JSON, examples={
                                     @ExampleObject(name="returns the denial AccountMessage")
                             })}),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="a validation error occurred, for example the token might be invalid")
+                    @ApiResponse(responseCode=SC_INVALID, description="a validation error occurred, for example the token might be invalid")
             }
     )
     public Response deny(@Context Request req,
@@ -957,7 +958,7 @@ public class AuthResource {
             parameters={@Parameter(name="all", description="logout of all sessions everywhere")},
             responses={
                     @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="If there is no current session to log out of")
+                    @ApiResponse(responseCode=SC_INVALID, description="If there is no current session to log out of")
             }
     )
     public Response logout(@Context ContainerRequest ctx,
@@ -980,7 +981,7 @@ public class AuthResource {
             parameters={@Parameter(name="id", description="UUID or email of user to logout")},
             responses={
                     @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="If there is no current session to log out of")
+                    @ApiResponse(responseCode=SC_INVALID, description="If there is no current session to log out of")
             }
     )
     public Response logoutUserEverywhere(@Context ContainerRequest ctx,

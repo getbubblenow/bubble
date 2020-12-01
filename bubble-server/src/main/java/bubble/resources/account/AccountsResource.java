@@ -203,7 +203,7 @@ public class AccountsResource {
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the Account object that was updated"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is updating any account Account other than themselves"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+                    @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred")
             }
     )
     public Response updateUser(@Context ContainerRequest ctx,
@@ -282,7 +282,7 @@ public class AccountsResource {
             responses={
                     @ApiResponse(responseCode=SC_OK, description="an AccountPolicy object"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+                    @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred")
             }
     )
     public Response updatePolicy(@Context ContainerRequest ctx,
@@ -312,7 +312,7 @@ public class AccountsResource {
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the AccountContact object that was created or updated"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+                    @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred")
             }
     )
     public Response setContact(@Context Request req,
@@ -518,7 +518,7 @@ public class AccountsResource {
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the Account object that was updated"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+                    @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred")
             }
     )
     public Response rootChangePassword(@Context Request req,
@@ -640,7 +640,7 @@ public class AccountsResource {
                                     @ExampleObject(name="mitmproxy is disabled", value="false")
                             })}),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="if mitmproxy not installed")
+                    @ApiResponse(responseCode=SC_INVALID, description="if mitmproxy not installed")
             }
     )
     public Response mitmStatus(@Context ContainerRequest ctx,
@@ -663,7 +663,7 @@ public class AccountsResource {
                                     @ExampleObject(name="mitmproxy is disabled", value="false")
                             })}),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="if mitmproxy is not installed or an error occurred enabling it")
+                    @ApiResponse(responseCode=SC_INVALID, description="if mitmproxy is not installed or an error occurred enabling it")
             }
     )
     public Response mitmOn(@Context ContainerRequest ctx,
@@ -686,7 +686,7 @@ public class AccountsResource {
                                     @ExampleObject(name="mitmproxy is disabled", value="false")
                             })}),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin"),
-                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="if mitmproxy is not installed or an error occurred disabling it")
+                    @ApiResponse(responseCode=SC_INVALID, description="if mitmproxy is not installed or an error occurred disabling it")
             }
     )
     public Response mitmOff(@Context ContainerRequest ctx,
