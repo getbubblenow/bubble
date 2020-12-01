@@ -32,10 +32,16 @@ import bubble.service.bill.PromotionService;
 import bubble.service.boot.ActivationService;
 import bubble.service.boot.NodeManagerService;
 import bubble.service.boot.SageHelloService;
-import bubble.service.device.DeviceService;
 import bubble.service.cloud.GeoService;
+import bubble.service.device.DeviceService;
 import bubble.service.notify.NotificationService;
 import bubble.service.upgrade.BubbleJarUpgradeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Cleanup;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -75,11 +81,13 @@ import static bubble.server.BubbleServer.getRestoreKey;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.*;
+import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.LocaleUtil.currencyForLocale;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -122,12 +130,23 @@ public class AuthResource {
                 .setFirstAdmin(accountDAO.isFirstAdmin(account));
     }
 
-    @GET @Path(EP_CONFIGS)
+    @GET @Path(EP_CONFIGS) @Operation(tags={API_TAG_UTILITY},
+            summary="Read public system configuration",
+            description="Read public system configuration",
+            responses={@ApiResponse(description="a Map<String, Object> of public system configuration settings")}
+    )
     public Response getPublicSystemConfigs(@Context ContainerRequest ctx) {
         return ok(configuration.getPublicSystemConfigs());
     }
 
-    @GET @Path(EP_READY)
+    @GET @Path(EP_READY) @Operation(tags={API_TAG_UTILITY},
+            summary="Determine if the API is running and ready for login",
+            description="Determine if the API is running and ready for login",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="empty response with status 200 if API is ready"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="error with status 422 if API is NOT ready")
+            }
+    )
     public Response getNodeIsReady(@Context ContainerRequest ctx) {
         try {
             final BubbleNetwork thisNetwork = configuration.getThisNetwork();
@@ -144,10 +163,24 @@ public class AuthResource {
         return invalid("err.node.notReady");
     }
 
-    @GET @Path(EP_ACTIVATE)
+    @GET @Path(EP_ACTIVATE) @Operation(tags={API_TAG_ACTIVATION},
+            summary="Determine if the API has been activated",
+            description="Determine if the API has been activated",
+            responses={
+                    @ApiResponse(description="returns true if API is activated, false otherwise",
+                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                                    @ExampleObject(name="Bubble is activated", value="true"),
+                                    @ExampleObject(name="Bubble has not been activated", value="false")
+                            })})
+            }
+    )
     public Response isActivated(@Context ContainerRequest ctx) { return ok(accountDAO.activated()); }
 
-    @GET @Path(EP_ACTIVATE+EP_CONFIGS)
+    @GET @Path(EP_ACTIVATE+EP_CONFIGS) @Operation(tags={API_TAG_ACTIVATION},
+            summary="Get activation default configuration",
+            description="Get activation default configuration",
+            responses={@ApiResponse(description="returns an array of CloudService[] representing the default CloudServices and their settings")}
+    )
     public Response getActivationConfigs(@Context ContainerRequest ctx) {
         final Account caller = optionalUserPrincipal(ctx);
         if (accountDAO.activated() && (caller == null || !caller.admin())) return ok();
@@ -155,7 +188,15 @@ public class AuthResource {
     }
 
     @Transactional
-    @PUT @Path(EP_ACTIVATE)
+    @PUT @Path(EP_ACTIVATE) @Operation(tags={API_TAG_ACTIVATION},
+            summary="Perform one-time activation",
+            description="Perform one-time activation",
+            responses={
+                    @ApiResponse(description="the Account object for the initial admin account, with a new session token"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and activation has already been completed"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred: activation has already been completed, or there were errors processing the ActivationRequest object")
+            }
+    )
     public Response activate(@Context Request req,
                              @Context ContainerRequest ctx,
                              @Valid ActivationRequest request) {
@@ -212,7 +253,15 @@ public class AuthResource {
         return sageNode;
     }
 
-    @POST @Path(EP_RESTORE+"/{restoreKey}")
+    @POST @Path(EP_RESTORE+"/{restoreKey}") @Operation(tags={API_TAG_BACKUP_RESTORE},
+            summary="Restore a Bubble from a backup stored by sage.",
+            description="Restore a Bubble from a backup stored by sage.",
+            parameters={@Parameter(name="restoreKey", description="the restore key")},
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="the NotificationReceipt from a successful request to retrieve the backup"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+            }
+    )
     public Response restore(@NonNull @Context final Request req,
                             @NonNull @Context final ContainerRequest ctx,
                             @Nullable @PathParam("restoreKey") final String restoreKey,
@@ -237,6 +286,15 @@ public class AuthResource {
 
     @POST @Path(EP_RESTORE + EP_APPLY + "/{restoreKey}")
     @Consumes(MULTIPART_FORM_DATA)
+    @Operation(tags={API_TAG_BACKUP_RESTORE},
+            summary="Restore a Bubble from a backup uploaded by user.",
+            description="Restore a Bubble from a backup uploaded by user.",
+            parameters={@Parameter(name="restoreKey", description="the restore key")},
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="upon success a 200 HTTP status with an empty response is returned"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+            }
+    )
     @NonNull public Response restoreFromPackage(@NonNull @Context final Request req,
                                                 @NonNull @Context final ContainerRequest ctx,
                                                 @NonNull @PathParam("restoreKey") final String restoreKey,
@@ -257,6 +315,14 @@ public class AuthResource {
     }
 
     @POST @Path(EP_REGISTER)
+    @Operation(tags={API_TAG_AUTH},
+            summary="Register a new Account, starts a new API session.",
+            description="Register a new Account, starts a new API session.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="the Account object that was registered", ref="#/components/schemas/Account"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+            }
+    )
     public Response register(@Context Request req,
                              @Context ContainerRequest ctx,
                              AccountRegistration request) {
@@ -365,6 +431,15 @@ public class AuthResource {
     }
 
     @POST @Path(EP_LOGIN)
+    @Operation(tags={API_TAG_AUTH},
+            summary="Login an Account, starts a new API session.",
+            description="Login an Account, starts a new API session.",
+            parameters={@Parameter(name="k", description="for a new Bubble that was launched with the lock enabled, the unlock key is required for the first login")},
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="the Account object that was logged in", ref="#/components/schemas/Account"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+            }
+    )
     public Response login(@Context Request req,
                           @Context ContainerRequest ctx,
                           AccountLoginRequest request,
@@ -550,6 +625,7 @@ public class AuthResource {
     }
 
     @POST @Path(EP_REKEY)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response rekeyNode(@Context Request req,
                               @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
@@ -561,6 +637,7 @@ public class AuthResource {
     }
 
     @POST @Path("/sage_hello")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response sageHello (@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();
@@ -689,6 +766,7 @@ public class AuthResource {
     }
 
     @DELETE @Path(EP_AUTHENTICATOR)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response flushAuthenticatorTokens(@Context Request req,
                                   @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
@@ -758,6 +836,7 @@ public class AuthResource {
     }
 
     @GET @Path(EP_LOGOUT)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response logout(@Context ContainerRequest ctx,
                            @QueryParam("all") Boolean all) {
         final Account account = optionalUserPrincipal(ctx);
@@ -771,6 +850,7 @@ public class AuthResource {
     }
 
     @POST @Path(EP_LOGOUT+"/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response logoutUserEverywhere(@Context ContainerRequest ctx,
                                          @PathParam("id") String id) {
         final Account caller = optionalUserPrincipal(ctx);

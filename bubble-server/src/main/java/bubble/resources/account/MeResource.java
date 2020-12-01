@@ -282,140 +282,120 @@ public class MeResource {
     }
 
     @Path(EP_APPS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public AppsResource getApps(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(AppsResource.class, caller);
     }
 
     @Path(EP_DRIVERS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public DriversResource getDrivers(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(DriversResource.class, caller);
     }
 
     @Path(EP_NODES)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public NodesResource getNodes(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(NodesResource.class, caller);
     }
 
     @Path(EP_CLOUDS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public CloudServicesResource getClouds(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(CloudServicesResource.class, caller);
     }
 
     @Path(EP_REGIONS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public CloudServiceRegionsResource getCloudRegions(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(CloudServiceRegionsResource.class, caller);
     }
 
     @Path(EP_DOMAINS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public DomainsResource getDomains(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(DomainsResource.class, caller);
     }
 
     @Path(EP_NETWORKS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public NetworksResource getNetworks(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(NetworksResource.class, caller);
     }
 
     @Path(EP_SENT_NOTIFICATIONS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public SentNotificationsResource getSentNotificationsResource(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(SentNotificationsResource.class, caller);
     }
 
     @Path(EP_RECEIVED_NOTIFICATIONS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public ReceivedNotificationsResource getReceivedNotificationsResource(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(ReceivedNotificationsResource.class, caller);
     }
 
     @Path(EP_PLANS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public AccountPlansResource getAllPlans(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(AccountPlansResource.class, caller);
     }
 
     @Path(EP_CURRENT_PLANS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public CurrentAccountPlansResource getCurrentPlans(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(CurrentAccountPlansResource.class, caller);
     }
 
     @Path(EP_KEYS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public AccountSshKeysResource getSshKeys(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(AccountSshKeysResource.class, caller);
     }
 
     @Path(EP_PAYMENT_METHODS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public AccountPaymentMethodsResource getAccountPaymentMethods(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(AccountPaymentMethodsResource.class, caller);
     }
 
     @Path(EP_BILLS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public BillsResource getBills(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(BillsResource.class, caller);
     }
 
     @Path(EP_PAYMENTS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public AccountPaymentsResource getPayments(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(AccountPaymentsResource.class, caller);
     }
 
     @Path(EP_FOOTPRINTS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public FootprintsResource getFootprints(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(FootprintsResource.class, caller);
     }
 
     @Path(EP_DEVICES)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public DevicesResource getDevices(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(DevicesResource.class, caller);
     }
 
     @Path(EP_DEVICE_TYPES)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public DeviceTypesResource getDeviceTypes(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(DeviceTypesResource.class, caller);
     }
 
     @Path(EP_FLEX_ROUTERS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public FlexRoutersResource getFlexRouters(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(FlexRoutersResource.class, caller);
     }
 
     @Path(EP_REFERRAL_CODES)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public ReferralCodesResource getReferralCodes(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(ReferralCodesResource.class, caller);
@@ -432,7 +412,6 @@ public class MeResource {
     }
 
     @Path(EP_PACKER)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public PackerResource getPackerResource(@Context Request req,
                                             @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
@@ -440,7 +419,6 @@ public class MeResource {
     }
 
     @Path(EP_PROMOTIONS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public AccountPromotionsResource getPromotionsResource(@Context Request req,
                                                            @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);

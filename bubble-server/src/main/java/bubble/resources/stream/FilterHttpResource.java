@@ -32,6 +32,8 @@ import bubble.service.message.MessageService;
 import bubble.service.stream.ConnectionCheckResponse;
 import bubble.service.stream.StandardRuleEngineService;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -77,6 +79,7 @@ import static org.cobbzilla.util.string.StringUtil.trimQuotes;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 import static org.cobbzilla.wizard.model.NamedEntity.names;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Path(FILTER_HTTP_ENDPOINT)
 @Service @Slf4j
@@ -443,6 +446,7 @@ public class FilterHttpResource {
 
     @DELETE
     @Produces(APPLICATION_JSON)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response flushCaches(@Context ContainerRequest request) {
         final Account caller = userPrincipal(request);
         if (!caller.admin()) return forbidden();
@@ -461,6 +465,7 @@ public class FilterHttpResource {
 
     @DELETE @Path(EP_MATCHERS)
     @Produces(APPLICATION_JSON)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response flushMatchers(@Context ContainerRequest request) {
         final Account caller = userPrincipal(request);
         if (!caller.admin()) return forbidden();

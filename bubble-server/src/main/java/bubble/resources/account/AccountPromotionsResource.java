@@ -7,6 +7,9 @@ package bubble.resources.account;
 import bubble.model.account.Account;
 import bubble.model.bill.Promotion;
 import bubble.service.bill.PromotionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,7 @@ import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -29,6 +33,11 @@ public class AccountPromotionsResource {
     public AccountPromotionsResource (Account account) { this.account = account; }
 
     @GET
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            summary="List promotions for account",
+            description="List promotions for account",
+            responses={@ApiResponse(description="an array of Promotion objects owned by the Account")}
+    )
     public Response listPromotions(@Context Request req,
                                    @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
@@ -37,6 +46,11 @@ public class AccountPromotionsResource {
     }
 
     @PUT
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            summary="Add a promotion to an account. Must be admin.",
+            description="Add a promotion to an account. Must be admin.",
+            responses={@ApiResponse(description="an array of Promotion objects owned by the Account")}
+    )
     public Response adminAddPromotion(@Context Request req,
                                       @Context ContainerRequest ctx,
                                       Promotion request) {
@@ -46,6 +60,11 @@ public class AccountPromotionsResource {
     }
 
     @DELETE @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            summary="Remove a promotion from an account. Must be admin.",
+            description="Remove a promotion from an account. Must be admin.",
+            responses={@ApiResponse(description="an array of Promotion objects owned by the Account")}
+    )
     public Response adminRemovePromotion(@Context Request req,
                                          @Context ContainerRequest ctx,
                                          @PathParam("id") String id) {

@@ -10,6 +10,12 @@ import bubble.model.account.Account;
 import bubble.model.account.HasAccount;
 import bubble.model.account.HasAccountNoName;
 import bubble.server.BubbleConfiguration;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
@@ -21,10 +27,14 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
+import static bubble.ApiConstants.API_TAG_ACCOUNT_OBJECTS;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_NOT_FOUND;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_PRECONDITION_FAILED;
 import static org.cobbzilla.util.reflect.ReflectionUtil.getFirstTypeParam;
 import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -55,6 +65,12 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     }
 
     @GET
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT_OBJECTS},
+            summary="List objects",
+            description="List objects",
+            responses={@ApiResponse(description="an array of objects")}
+    )
     public Response listEntities(@Context Request req,
                                  @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
@@ -120,6 +136,15 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     protected E populate(ContainerRequest ctx, E entity) { return entity; }
 
     @GET @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT_OBJECTS},
+            summary="Find by identifier",
+            description="Find by identifier",
+            responses={
+                    @ApiResponse(description="the object, if found"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="if the object does not exist")
+            }
+    )
     public Response view(@Context Request req,
                          @Context ContainerRequest ctx,
                          @PathParam("id") String id) {
@@ -144,6 +169,18 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     }
 
     @PUT
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT_OBJECTS},
+            summary="Create a new object",
+            description="Create a new object. If validation errors occur, status "+SC_PRECONDITION_FAILED+" is returned and the response will contain an array of errors. Within each error, the `messageTemplate` field refers to messages that can be localized using the /messages resource",
+            responses={
+                    @ApiResponse(description="the object that was created"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred",
+                    content={@Content(mediaType=APPLICATION_JSON, examples={
+                            @ExampleObject(name="validation errors", value="[{\"messageTemplate\": \"some.symbolic.error\", \"message\": \"some default English message\"}]")
+                    })})
+            }
+    )
     public Response create(@Context Request req,
                            @Context ContainerRequest ctx,
                            E request) {
@@ -173,6 +210,20 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     protected E setReferences(ContainerRequest ctx, Request req, Account caller, E e) { return setReferences(ctx, caller, e); }
 
     @POST @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT_OBJECTS},
+            summary="Update an existing object",
+            description="Update an new object. For many types, the object will be created if it does not exist. If validation errors occur, status "+SC_PRECONDITION_FAILED+" is returned and the response will contain an array of errors. Within each error, the `messageTemplate` field refers to messages that can be localized using the /messages resource",
+            parameters={@Parameter(name="id", description="the UUID (or name, if allowed) of the object to update")},
+            responses={
+                    @ApiResponse(description="the object that was updated"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="no object exists with the given id"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred",
+                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                                    @ExampleObject(name="validation errors", value="[{\"messageTemplate\": \"some.symbolic.error\", \"message\": \"some default English message\"}]")
+                            })})
+            }
+    )
     public Response update(@Context Request req,
                            @Context ContainerRequest ctx,
                            @PathParam("id") String id,
@@ -196,6 +247,16 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
     protected boolean canChangeName() { return false; }
 
     @DELETE @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT_OBJECTS},
+            summary="Delete an existing object",
+            description="Delete an new object. For many types, the object will be created if it does not exist. If validation errors occur, status "+SC_PRECONDITION_FAILED+" is returned and the response will contain an array of errors. Within each error, the `messageTemplate` field refers to messages that can be localized using the /messages resource",
+            parameters={@Parameter(name="id", description="the UUID (or name, if allowed) of the object to delete")},
+            responses={
+                    @ApiResponse(description="the object that was deleted"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="no object exists with the given id")
+            }
+    )
     public Response delete(@Context Request req,
                            @Context ContainerRequest ctx,
                            @PathParam("id") String id) {

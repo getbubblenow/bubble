@@ -12,6 +12,8 @@ import bubble.model.bill.PaymentMethodType;
 import bubble.model.cloud.CloudService;
 import bubble.model.cloud.PaymentService;
 import bubble.server.BubbleConfiguration;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,7 @@ import static bubble.ApiConstants.PAYMENT_METHODS_ENDPOINT;
 import static org.cobbzilla.util.collection.HasPriority.SORT_PRIORITY;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -60,6 +63,7 @@ public class AllPaymentMethodsResource {
     }
 
     @GET @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response findPaymentMethod(@Context ContainerRequest ctx,
                                       @PathParam("id") String id) {
         final Account account = userPrincipal(ctx);

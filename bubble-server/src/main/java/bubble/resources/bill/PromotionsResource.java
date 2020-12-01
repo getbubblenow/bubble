@@ -11,6 +11,8 @@ import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.bill.Promotion;
 import bubble.model.cloud.CloudService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -27,6 +29,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.string.LocaleUtil.currencyForLocale;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -53,6 +56,7 @@ public class PromotionsResource {
     }
 
     @GET @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response findPromo(@Context ContainerRequest ctx,
                               @PathParam("id") String id) {
         final Account caller = userPrincipal(ctx);
@@ -64,6 +68,7 @@ public class PromotionsResource {
     }
 
     @PUT
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response createPromo(@Context ContainerRequest ctx,
                                 Promotion request) {
 
@@ -82,6 +87,7 @@ public class PromotionsResource {
     }
 
     @POST @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response updatePromo(@Context ContainerRequest ctx,
                                  @PathParam("id") String id,
                                  Promotion request) {
@@ -96,6 +102,7 @@ public class PromotionsResource {
     }
 
     @DELETE @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response deletePromo(@Context ContainerRequest ctx,
                                  @PathParam("id") String id) {
 

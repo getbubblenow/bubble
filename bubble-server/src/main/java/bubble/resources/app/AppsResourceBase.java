@@ -16,6 +16,8 @@ import bubble.model.app.config.AppDataPresentation;
 import bubble.resources.account.AccountOwnedTemplateResource;
 import bubble.resources.stream.AppAssetsResource;
 import bubble.server.BubbleConfiguration;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,7 @@ import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -63,6 +66,7 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
     }
 
     @DELETE @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     @Override public Response delete(@Context Request req,
                                      @Context ContainerRequest ctx,
                                      @PathParam("id") String id) {
@@ -77,6 +81,7 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
     }
 
     @POST @Path("/{id}"+EP_ENABLE)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response enable(@Context ContainerRequest ctx,
                            @PathParam("id") String id) {
         if (isReadOnly(ctx)) return forbidden();
@@ -86,6 +91,7 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
     }
 
     @POST @Path("/{id}"+EP_DISABLE)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response disable(@Context ContainerRequest ctx,
                             @PathParam("id") String id) {
         if (isReadOnly(ctx)) return forbidden();

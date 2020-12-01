@@ -6,6 +6,8 @@ package bubble.resources.cloud;
 
 import bubble.model.account.Account;
 import bubble.service.packer.PackerService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.MapBuilder;
 import org.glassfish.grizzly.http.server.Request;
@@ -21,6 +23,7 @@ import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
@@ -37,6 +40,7 @@ public class PackerResource {
     @Autowired private PackerService packerService;
 
     @GET
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response listAllStatus(@Context Request req,
                                   @Context ContainerRequest ctx) {
         if (packerNotAllowedForUser(ctx)) return forbidden();
@@ -47,6 +51,7 @@ public class PackerResource {
     }
 
     @GET @Path(STATUS_RUNNING)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response listRunningBuilds(@Context Request req,
                                       @Context ContainerRequest ctx) {
         if (packerNotAllowedForUser(ctx)) return forbidden();
@@ -54,6 +59,7 @@ public class PackerResource {
     }
 
     @GET @Path(STATUS_COMPLETED)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response listCompletedBuilds(@Context Request req,
                                         @Context ContainerRequest ctx) {
         if (packerNotAllowedForUser(ctx)) return forbidden();

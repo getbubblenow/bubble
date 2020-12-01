@@ -13,6 +13,8 @@ import bubble.model.account.*;
 import bubble.model.account.message.ActionTarget;
 import bubble.model.device.Device;
 import bubble.service.account.StandardAuthenticatorService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.cache.redis.RedisService;
@@ -32,6 +34,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.cache.redis.RedisService.PX;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -51,6 +54,7 @@ public class TrustedAuthResource {
     @Getter(lazy=true) private final RedisService trustHashCache = redis.prefixNamespace("loginTrustedClient");
 
     @PUT
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response trustClient(@Context ContainerRequest ctx,
                                 AccountLoginRequest request) {
         final Account caller = userPrincipal(ctx);
@@ -88,6 +92,7 @@ public class TrustedAuthResource {
     }
 
     @DELETE @Path(EP_DELETE+"/{device}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response removeTrustedClient(@Context ContainerRequest ctx,
                                         @PathParam("device") String deviceId) {
         final Account caller = userPrincipal(ctx);

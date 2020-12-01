@@ -19,6 +19,8 @@ import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.cloud.NodeLaunchMonitor;
 import bubble.service.cloud.NodeProgressMeterTick;
 import bubble.service.cloud.StandardNetworkService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.validation.ValidationResult;
@@ -35,6 +37,7 @@ import static bubble.ApiConstants.*;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -60,6 +63,7 @@ public class NetworkActionsResource {
     }
 
     @POST @Path(EP_START)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response startNetwork(@Context Request req,
                                  @Context ContainerRequest ctx,
                                  @QueryParam("cloud") String cloud,
@@ -84,6 +88,7 @@ public class NetworkActionsResource {
     }
 
     @GET @Path(EP_STATUS)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response listLaunchStatuses(@Context Request req,
                                        @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
@@ -92,6 +97,7 @@ public class NetworkActionsResource {
     }
 
     @GET @Path(EP_STATUS+"/{uuid}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response requestLaunchStatus(@Context Request req,
                                         @Context ContainerRequest ctx,
                                         @PathParam("uuid") String uuid) {
@@ -122,6 +128,7 @@ public class NetworkActionsResource {
     }
 
     @POST @Path(EP_STOP)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response stopNetwork(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!authAccount(caller)) return forbidden();
@@ -136,6 +143,7 @@ public class NetworkActionsResource {
     }
 
     @POST @Path(EP_RESTORE)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response restoreNetwork(@Context Request req,
                                    @Context ContainerRequest ctx,
                                    @QueryParam("cloud") String cloud,
@@ -150,6 +158,7 @@ public class NetworkActionsResource {
     }
 
     @PUT @Path(EP_FORK)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response fork(@Context Request req,
                          @Context ContainerRequest ctx,
                          ForkRequest forkRequest) {

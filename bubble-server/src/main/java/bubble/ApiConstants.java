@@ -293,6 +293,14 @@ public class ApiConstants {
     public static final int ERROR_MAXLEN = 20000;
     public static final int ERROR_MAX_BEFORE_ELLIPSES = 19900;
 
+    public static final String API_TAG_ACTIVATION = "activation";
+    public static final String API_TAG_AUTH = "auth";
+    public static final String API_TAG_ACCOUNT = "account";
+    public static final String API_TAG_ACCOUNT_OBJECTS = "account-owned objects";
+    public static final String API_TAG_SEARCH = "search";
+    public static final String API_TAG_BACKUP_RESTORE = "backup and restore";
+    public static final String API_TAG_UTILITY = "utility";
+
     public static String getToken(String json) {
         if (json == null) return null;
         final JsonNode val = json(json, JsonNode.class).get("token");

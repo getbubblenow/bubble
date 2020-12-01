@@ -163,4 +163,6 @@ if [[ -z "${BUBBLE_PASS}" ]] ; then
 fi
 
 # Run!
-BUBBLE_JAR="${BUBBLE_JAR}" java ${LOG_CONFIG} ${BUBBLE_JVM_OPTS} ${debug} -server -cp "${BUBBLE_CP}" ${CLASS} ${command} "${@}"
+BUBBLE_JAR="${BUBBLE_JAR}" java ${LOG_CONFIG} ${BUBBLE_JVM_OPTS} \
+  -Xlog:class+load=info:/tmp/bubble_classes_$(date +%s).txt \
+  ${debug} -server -cp "${BUBBLE_CP}" ${CLASS} ${command} "${@}"

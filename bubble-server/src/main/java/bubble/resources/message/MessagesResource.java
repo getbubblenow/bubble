@@ -9,6 +9,8 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.message.AppMessageService;
 import bubble.service.message.MessageResourceFormat;
 import bubble.service.message.MessageService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.ArrayUtils;
 import org.cobbzilla.util.string.StringUtil;
@@ -26,6 +28,7 @@ import static bubble.ApiConstants.*;
 import static bubble.service.message.MessageService.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Path(MESSAGES_ENDPOINT)
 @Consumes(APPLICATION_JSON)
@@ -40,6 +43,7 @@ public class MessagesResource {
     private final Map<String, Map<String, String>> messageCache = new ConcurrentHashMap<>();
 
     @DELETE
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response flushMessageCache (@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();

@@ -11,6 +11,8 @@ import bubble.model.cloud.CloudService;
 import bubble.model.cloud.RekeyRequest;
 import bubble.model.cloud.StorageMetadata;
 import bubble.server.BubbleConfiguration;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -30,6 +32,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.*;
 import static org.cobbzilla.util.io.FileUtil.basename;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Slf4j
 public class StorageResource {
@@ -52,6 +55,7 @@ public class StorageResource {
 
     @GET @Path(EP_READ_METADATA+"/{key : .+}")
     @Produces(APPLICATION_JSON)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response meta(@Context ContainerRequest ctx,
                          @PathParam("key") String key) {
         final Account caller = getCaller(ctx);
@@ -61,6 +65,7 @@ public class StorageResource {
 
     @GET @Path(EP_READ+"/{key : .+}")
     @Produces(CONTENT_TYPE_ANY)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response read(@Context ContainerRequest ctx,
                          @PathParam("key") String key) {
         final Account caller = getCaller(ctx);
@@ -82,6 +87,7 @@ public class StorageResource {
 
     @GET @Path(EP_LIST+"/{key : .+}")
     @Produces(APPLICATION_JSON)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response list(@Context ContainerRequest ctx,
                          @PathParam("key") String key) {
         final Account caller = getCaller(ctx);
@@ -95,6 +101,7 @@ public class StorageResource {
 
     @GET @Path(EP_LIST_NEXT+"/{id}")
     @Produces(APPLICATION_JSON)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response listNext(@Context ContainerRequest ctx,
                              @PathParam("id") String id) {
         final Account caller = getCaller(ctx);
@@ -109,6 +116,7 @@ public class StorageResource {
     @POST @Path(EP_WRITE+"/{key : .+}")
     @Consumes(MULTIPART_FORM_DATA)
     @Produces(APPLICATION_JSON)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response write(@Context ContainerRequest ctx,
                           @PathParam("key") String key,
                           @QueryParam("sha256") String sha256,
@@ -126,6 +134,7 @@ public class StorageResource {
 
     @DELETE @Path(EP_DELETE+"/{key : .+}")
     @Produces(APPLICATION_JSON)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response delete(@Context ContainerRequest ctx,
                            @PathParam("key") String key) {
         final Account caller = getCaller(ctx);
@@ -140,6 +149,7 @@ public class StorageResource {
     @POST @Path(EP_REKEY)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response rekey(@Context ContainerRequest ctx,
                           RekeyRequest request) {
         final Account caller = getCaller(ctx);

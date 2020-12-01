@@ -10,6 +10,8 @@ import bubble.model.app.config.AppConfigDriver;
 import bubble.model.app.config.AppConfigView;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -26,14 +28,15 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.URIUtil.queryParams;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Slf4j
 public class AppConfigResource {
 
-    private Account account;
-    private BubbleApp app;
+    private final Account account;
+    private final BubbleApp app;
 
     public AppConfigResource (Account account, BubbleApp app) {
         this.account = account;
@@ -45,6 +48,7 @@ public class AppConfigResource {
     private AppConfigDriver getConfigDriver() { return app.getDataConfig().getConfigDriver(configuration); }
 
     @GET
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response getConfigView(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin() && !caller.getUuid().equals(account.getUuid())) return forbidden();
@@ -52,6 +56,7 @@ public class AppConfigResource {
     }
 
     @GET @Path("/{view}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response getConfigView(@Context Request req,
                                   @Context ContainerRequest ctx,
                                   @PathParam("view") String view) {
@@ -69,6 +74,7 @@ public class AppConfigResource {
     }
 
     @PUT @Path("/{view}"+EP_ACTIONS+"/{action}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response takeConfigAppAction(@Context Request req,
                                          @Context ContainerRequest ctx,
                                          @PathParam("view") String view,
@@ -90,6 +96,7 @@ public class AppConfigResource {
     }
 
     @POST @Path("/{view}"+EP_ACTIONS+"/{action}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response takeConfigItemAction(@Context Request req,
                                          @Context ContainerRequest ctx,
                                          @PathParam("view") String view,

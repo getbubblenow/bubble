@@ -6,6 +6,8 @@ package bubble.resources.account;
 
 import bubble.model.account.Account;
 import bubble.model.device.Device;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.string.Base64;
@@ -24,6 +26,7 @@ import java.io.IOException;
 import static org.cobbzilla.util.http.HttpContentTypes.*;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Slf4j
@@ -55,6 +58,7 @@ public class VpnConfigResource {
 
     @GET @Path("/QR.png")
     @Produces(IMAGE_PNG)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response qrCode(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin() && !caller.getUuid().equals(device.getAccount())) return forbidden();
@@ -63,6 +67,7 @@ public class VpnConfigResource {
 
     @GET @Path("/QR.png.base64")
     @Produces(TEXT_PLAIN)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response qrCodeBase64(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin() && !caller.getUuid().equals(device.getAccount())) return forbidden();
@@ -77,6 +82,7 @@ public class VpnConfigResource {
 
     @GET @Path("/vpn.conf")
     @Produces(APPLICATION_OCTET_STREAM)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response confFile(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin() && !caller.getUuid().equals(device.getAccount())) return forbidden();
@@ -89,6 +95,7 @@ public class VpnConfigResource {
 
     @GET @Path("/vpn.conf.base64")
     @Produces(TEXT_PLAIN)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response confFileBase64(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin() && !caller.getUuid().equals(device.getAccount())) return forbidden();

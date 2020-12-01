@@ -20,6 +20,8 @@ import bubble.resources.TagsResource;
 import bubble.resources.account.AccountOwnedResource;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.GeoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
@@ -37,6 +39,7 @@ import static bubble.ApiConstants.*;
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
 import static org.cobbzilla.util.daemon.ZillaRuntime.big;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @SuppressWarnings({"SpringJavaAutowiredMembersInspection", "RSReferenceInspection"}) @Slf4j
 public class NetworksResource extends AccountOwnedResource<BubbleNetwork, BubbleNetworkDAO> {
@@ -120,6 +123,7 @@ public class NetworksResource extends AccountOwnedResource<BubbleNetwork, Bubble
     }
 
     @GET @Path("/{id}"+EP_CLOSEST)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response findClosest(@Context Request req,
                                 @Context ContainerRequest ctx,
                                 @PathParam("id") String id,

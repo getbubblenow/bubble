@@ -92,7 +92,7 @@ public class StandardSearchService implements SearchService {
 
         final SearchResults results = search(nocache, caller, dao, q);
         if (results.hasNextPage(q)) {
-            results.setNextPage(requestURI +"?"+ ApiConstants.Q_PAGE+"="+(q.getPageNumber()+1)+"&"+ ApiConstants.Q_SIZE+"="+q.getPageSize());
+            results.setNextPage(requestURI+"?"+ApiConstants.Q_PAGE+"="+(q.getPageNumber()+1)+"&"+ ApiConstants.Q_SIZE+"="+q.getPageSize());
         }
         return results;
     }

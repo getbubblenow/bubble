@@ -8,6 +8,8 @@ import bubble.model.account.Account;
 import bubble.model.device.BubbleDeviceType;
 import bubble.model.device.DeviceSecurityLevel;
 import bubble.service.device.DeviceService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,7 @@ import java.util.Map;
 import static bubble.ApiConstants.EP_DEFAULT_SECURITY_LEVEL;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
@@ -52,6 +55,7 @@ public class DeviceTypesResource {
     }
 
     @POST @Path(EP_DEFAULT_SECURITY_LEVEL+"/{deviceType}/{level}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response setDefaultSecurityLevel (@Context ContainerRequest ctx,
                                              @PathParam("deviceType") BubbleDeviceType type,
                                              @PathParam("level") DeviceSecurityLevel level) {

@@ -11,6 +11,8 @@ import bubble.model.cloud.notify.NotificationReceipt;
 import bubble.service.boot.NodeManagerService;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.notify.NotificationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.http.*;
 import org.cobbzilla.util.io.ByteLimitedInputStream;
@@ -41,6 +43,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.system.CommandShell.execScript;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -67,6 +70,7 @@ public class NodeManagerResource {
     @Autowired private NotificationService notificationService;
 
     @POST @Path("/set_password")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response setPassword (@Context ContainerRequest ctx,
                                  LoginRequest request,
                                  @QueryParam("notify") Boolean notify) {
@@ -104,6 +108,7 @@ public class NodeManagerResource {
     }
 
     @POST @Path("/disable")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response disable (@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();
@@ -156,6 +161,7 @@ public class NodeManagerResource {
     }
 
     @GET @Path("/stats/{stat}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response getStats (@Context ContainerRequest ctx,
                               @PathParam("stat") String stat) {
         final HttpRequestBean request = validateNodeManagerRequest(ctx, "stats/"+stat);
@@ -163,6 +169,7 @@ public class NodeManagerResource {
     }
 
     @POST @Path("/cmd/{command}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response runCommand (@Context ContainerRequest ctx,
                                 @PathParam("command") String command) {
         final HttpRequestBean request = validateNodeManagerRequest(ctx, "cmd/"+command)
@@ -171,6 +178,7 @@ public class NodeManagerResource {
     }
 
     @POST @Path("/service/{service}/{action}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response service (@Context ContainerRequest ctx,
                              @PathParam("service") String service,
                              @PathParam("action") String action) {
@@ -180,6 +188,7 @@ public class NodeManagerResource {
     }
 
     @POST @Path("/redis/{key}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response readRedisKey (@Context ContainerRequest ctx,
                                   @PathParam("key") String key) {
         final HttpRequestBean request = validateNodeManagerRequest(ctx, "redis/"+key);
@@ -188,6 +197,7 @@ public class NodeManagerResource {
 
     @POST @Path("/patch/file/{component}/{path : .+}")
     @Consumes(MULTIPART_FORM_DATA)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response patchFile (@Context ContainerRequest ctx,
                                @PathParam("component") String component,
                                @PathParam("path") String path,

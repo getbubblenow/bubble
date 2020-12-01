@@ -7,6 +7,12 @@ package bubble.resources;
 import bubble.dao.account.AccountDAO;
 import bubble.model.account.Account;
 import bubble.server.BubbleConfiguration;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,12 +31,15 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static bubble.ApiConstants.API_TAG_UTILITY;
 import static bubble.ApiConstants.ENTITY_CONFIGS_ENDPOINT;
 import static java.lang.Boolean.TRUE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.string.StringUtil.packagePath;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Path(ENTITY_CONFIGS_ENDPOINT)
 @Service @Slf4j
@@ -39,15 +48,44 @@ public class EntityConfigsResource extends AbstractEntityConfigsResource {
     @Autowired private AccountDAO accountDAO;
     @Getter(AccessLevel.PROTECTED) @Autowired private BubbleConfiguration configuration;
 
-    @Getter private AtomicBoolean allowPublic = new AtomicBoolean(false);
+    @Getter private final AtomicBoolean allowPublic = new AtomicBoolean(false);
 
     @POST @Path("/set/{param}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_UTILITY},
+            summary="Set a configuration parameter to `true`",
+            description="Set a configuration parameter to `true`",
+            parameters={@Parameter(name="param", description="the name of the parameter to set")},
+            responses={
+                    @ApiResponse(description="the value that was set",
+                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                                    @ExampleObject(name="should always return true", value="true")
+                            }
+                            )})
+            }
+    )
     public Response setConfig (@Context ContainerRequest ctx,
                                @PathParam("param") String param) {
         return setConfig(ctx, param, TRUE.toString());
     }
 
     @POST @Path("/set/{param}/{value}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_UTILITY},
+            summary="Set a configuration parameter to a value",
+            description="Set a configuration parameter to a value",
+            parameters={
+                    @Parameter(name="param", description="the name of the parameter to set"),
+                    @Parameter(name="value", description="the value to set the parameter to")
+            },
+            responses={
+                    @ApiResponse(description="the value that was set",
+                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                                    @ExampleObject(name="if the value was the String 'foo'", value="\"foo\"")
+                            }
+                            )})
+            }
+    )
     public Response setConfig (@Context ContainerRequest ctx,
                                @PathParam("param") String param,
                                @PathParam("value") String value) {

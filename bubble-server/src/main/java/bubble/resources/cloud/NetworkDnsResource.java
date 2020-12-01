@@ -11,6 +11,8 @@ import bubble.model.cloud.BubbleDomain;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.cobbzilla.util.dns.DnsRecord;
 import org.cobbzilla.util.dns.DnsRecordMatch;
 import org.cobbzilla.util.dns.DnsType;
@@ -25,6 +27,7 @@ import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.dns.DnsType.A;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -44,12 +47,14 @@ public class NetworkDnsResource {
     }
 
     @GET
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response listDns(@Context ContainerRequest ctx) {
         final DnsContext context = new DnsContext(ctx);
         return ok(context.dnsDriver.list());
     }
 
     @GET @Path(EP_FIND_DNS)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response findDns(@Context ContainerRequest ctx,
                             @QueryParam("type") DnsType type,
                             @QueryParam("name") String name) {
@@ -64,6 +69,7 @@ public class NetworkDnsResource {
     }
 
     @GET @Path(EP_DIG_DNS)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response digDns(@Context ContainerRequest ctx,
                            @QueryParam("type") DnsType type,
                            @QueryParam("name") String name) {
@@ -78,6 +84,7 @@ public class NetworkDnsResource {
     }
 
     @POST @Path(EP_UPDATE_DNS)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response updateDns(@Context ContainerRequest ctx,
                               DnsRecord record) {
         final DnsContext context = new DnsContext(ctx, record);
@@ -85,6 +92,7 @@ public class NetworkDnsResource {
     }
 
     @POST @Path(EP_DELETE_DNS)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response removeDns(@Context ContainerRequest ctx,
                               DnsRecord record) {
         final DnsContext context = new DnsContext(ctx, record);

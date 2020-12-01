@@ -29,6 +29,12 @@ import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.account.download.AccountDownloadService;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.NodeLaunchMonitor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.auth.ChangePasswordRequest;
 import org.cobbzilla.wizard.model.HashedPassword;
@@ -50,7 +56,9 @@ import static bubble.ApiConstants.*;
 import static bubble.model.account.Account.*;
 import static bubble.resources.account.AuthResource.forgotPasswordMessage;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @SuppressWarnings("RSReferenceInspection")
 @Consumes(APPLICATION_JSON)
@@ -69,12 +77,30 @@ public class AccountsResource {
     @Autowired private SessionDAO sessionDAO;
 
     @GET
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="List all accounts. Must be admin.",
+            description="List all accounts. Must be admin.",
+            responses={
+                    @ApiResponse(description="an array of Account objects"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if not admin")
+            }
+    )
     public Response list(@Context ContainerRequest ctx) {
         final AccountContext c = new AccountContext(ctx);
         return ok(accountDAO.findAll());
     }
 
     @GET @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Find account by UUID or email. Non-admins can only find themselves.",
+            description="Find account by UUID or email. Non-admins can only find themselves.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="the Account object that was found", ref="#/components/schemas/Account"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if not admin")
+            }
+    )
     public Response findUser(@Context ContainerRequest ctx,
                              @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
@@ -82,6 +108,15 @@ public class AccountsResource {
     }
 
     @PUT
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Create a new Account. Must be admin.",
+            description="Create a new Account. Must be admin.",
+            responses={
+                    @ApiResponse(description="the Account object that was just created", ref="#/components/schemas/Account"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if not admin")
+            }
+    )
     public Response createUser(@Context Request req,
                                @Context ContainerRequest ctx,
                                AccountRegistration request) {
@@ -136,6 +171,16 @@ public class AccountsResource {
     }
 
     @POST @Path("/{id}"+EP_DOWNLOAD)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Download all data for user. Must be admin.",
+            description="Download all data for user. Must be admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(description="a Map<String, List<String>> of all user data"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if not admin")
+            }
+    )
     public Response downloadAllUserData(@Context Request req,
                                         @Context ContainerRequest ctx,
                                         @PathParam("id") String id) {
@@ -149,6 +194,17 @@ public class AccountsResource {
     }
 
     @POST @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Update an Account. Caller must be the same account, or must be admin.",
+            description="Update an Account. Caller must be the same account, or must be admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="the Account object that was updated", ref="#/components/schemas/Account"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is updating any account Account other than themselves"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+            }
+    )
     public Response updateUser(@Context ContainerRequest ctx,
                                @PathParam("id") String id,
                                Account request) {
@@ -172,6 +228,16 @@ public class AccountsResource {
     @Autowired private NodeLaunchMonitor launchMonitor;
 
     @GET @Path("/{id}"+EP_STATUS)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="List all launch statuses for account. Caller must be the same account, or must be admin.",
+            description="List all launch statuses for account. Caller must be the same account, or must be admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(description="a List<NodeProgressMeterTick> representing the status of active launch operations"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
+            }
+    )
     public Response listLaunchStatuses(@Context Request req,
                                        @Context ContainerRequest ctx,
                                        @PathParam("id") String id) {
@@ -188,6 +254,16 @@ public class AccountsResource {
     }
 
     @GET @Path("/{id}"+EP_POLICY)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="View the AccountPolicy for an Account. Caller must be the same account, or must be admin.",
+            description="View the AccountPolicy for an Account. Caller must be the same account, or must be admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(description="an AccountPolicy object", ref="#/components/schemas/AccountPolicy"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
+            }
+    )
     public Response viewPolicy(@Context ContainerRequest ctx,
                                @PathParam("id") String id) {
         final AccountsResource.AccountContext c = new AccountsResource.AccountContext(ctx, id);
@@ -197,6 +273,17 @@ public class AccountsResource {
     }
 
     @POST @Path("/{id}"+EP_POLICY)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Update the AccountPolicy for an Account. Caller must be the same account, or must be admin.",
+            description="Update the AccountPolicy for an Account. Caller must be the same account, or must be admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(description="an AccountPolicy object", ref="#/components/schemas/AccountPolicy"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+            }
+    )
     public Response updatePolicy(@Context ContainerRequest ctx,
                                  @PathParam("id") String id,
                                  AccountPolicy request) {
@@ -216,6 +303,17 @@ public class AccountsResource {
     }
 
     @POST @Path("/{id}"+EP_POLICY+EP_CONTACTS)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Create or update an AccountContact in the AccountPolicy. Caller must be the same account, or must be admin.",
+            description="Create or update an AccountContact in the AccountPolicy. Caller must be the same account, or must be admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(description="the AccountContact object that was created or updated", ref="#/components/schemas/AccountPolicy"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+            }
+    )
     public Response setContact(@Context Request req,
                                @Context ContainerRequest ctx,
                                @PathParam("id") String id,
@@ -246,6 +344,16 @@ public class AccountsResource {
     }
 
     @POST @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/verify")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Send verification message for an AccountContact. Caller must be the same account, or must be admin.",
+            description="Send verification message for an AccountContact. Caller must be the same account, or must be admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(description="the AccountContact object that was created or updated", ref="#/components/schemas/AccountContact"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
+            }
+    )
     public Response sendVerification(@Context Request req,
                                      @Context ContainerRequest ctx,
                                      @PathParam("id") String id,
@@ -263,6 +371,21 @@ public class AccountsResource {
     }
 
     @GET @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/{type}/{info}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Find an AccountContact within an AccountPolicy. Caller must be the same account, or must be admin.",
+            description="Find an AccountContact within an AccountPolicy. Caller must be the same account, or must be admin.",
+            parameters={
+                    @Parameter(name="id", description="UUID or email of the Account"),
+                    @Parameter(name="type", description="the type of contact"),
+                    @Parameter(name="info", description="the contact information, for example an email address or phone number")
+            },
+            responses={
+                    @ApiResponse(description="the AccountContact object", ref="#/components/schemas/AccountContact"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="no AccountContact exists with the given type and info")
+            }
+    )
     public Response findContact(@Context ContainerRequest ctx,
                                 @PathParam("id") String id,
                                 @PathParam("type") CloudServiceType type,
@@ -275,6 +398,20 @@ public class AccountsResource {
     }
 
     @DELETE @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/{type}/{info}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Delete an AccountContact within an AccountPolicy. Caller must be the same account, or must be admin.",
+            description="Delete an AccountContact within an AccountPolicy. Caller must be the same account, or must be admin.",
+            parameters={
+                    @Parameter(name="id", description="UUID or email of the Account"),
+                    @Parameter(name="type", description="the type of contact"),
+                    @Parameter(name="info", description="the contact information, for example an email address or phone number")
+            },
+            responses={
+                    @ApiResponse(description="the AccountContact object that was deleted", ref="#/components/schemas/AccountContact"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
+            }
+    )
     public Response removeContact(@Context ContainerRequest ctx,
                                   @PathParam("id") String id,
                                   @PathParam("type") CloudServiceType type,
@@ -289,6 +426,16 @@ public class AccountsResource {
     }
 
     @DELETE @Path("/{id}"+EP_POLICY+EP_CONTACTS+EP_AUTHENTICATOR)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Delete TOTP authenticator AccountContact from an AccountPolicy. Caller must be the same account, or must be admin.",
+            description="Delete TOTP authenticator AccountContact from an AccountPolicy. Caller must be the same account, or must be admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(description="the AccountPolicy object that was updated", ref="#/components/schemas/AccountPolicy"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
+            }
+    )
     public Response removeAuthenticator(@Context ContainerRequest ctx,
                                         @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
@@ -306,6 +453,19 @@ public class AccountsResource {
     }
 
     @DELETE @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/{uuid}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Delete AccountContact from an AccountPolicy by UUID. Caller must be the same account, or must be admin.",
+            description="Delete AccountContact from an AccountPolicy by UUID. Caller must be the same account, or must be admin.",
+            parameters={
+                    @Parameter(name="id", description="UUID or email of the Account"),
+                    @Parameter(name="uuid", description="UUID of the AccountContact")
+            },
+            responses={
+                    @ApiResponse(description="the AccountPolicy object that was updated", ref="#/components/schemas/AccountPolicy"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
+            }
+    )
     public Response removeContactByUuid(@Context ContainerRequest ctx,
                                         @PathParam("id") String id,
                                         @PathParam("uuid") String uuid) {
@@ -319,6 +479,16 @@ public class AccountsResource {
     }
 
     @DELETE @Path("/{id}"+EP_REQUEST)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Request deletion of an Account. Caller must be the same account, or must be admin.",
+            description="Request deletion of an Account. Caller must be the same account, or must be admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(description="the AccountMessage object that was sent", ref="#/components/schemas/AccountMessage"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
+            }
+    )
     public Response requestDeleteUser(@Context Request req,
                                       @Context ContainerRequest ctx,
                                       @PathParam("id") String id) {
@@ -339,6 +509,17 @@ public class AccountsResource {
 
 
     @POST @Path("/{id}"+EP_CHANGE_PASSWORD)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Change password for an Account. Caller must admin.",
+            description="Change password for an Account. Caller must admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(description="the Account object that was updated", ref="#/components/schemas/Account"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="validation errors occurred")
+            }
+    )
     public Response rootChangePassword(@Context Request req,
                                        @Context ContainerRequest ctx,
                                        @PathParam("id") String id,
@@ -407,6 +588,16 @@ public class AccountsResource {
     }
 
     @DELETE @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Delete an Account. Caller must admin.",
+            description="Delete an Account. Caller must admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(description="the Account object that was deleted", ref="#/components/schemas/Account"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
+            }
+    )
     public Response rootDeleteUser(@Context ContainerRequest ctx,
                                    @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
@@ -436,6 +627,21 @@ public class AccountsResource {
     @Autowired private MitmControlService mitmControlService;
 
     @GET @Path("/{id}"+EP_MITM)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Get status of mitmproxy. Caller must admin.",
+            description="Get status of mitmproxy. Caller must admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(description="returns true if mitmproxy is enabled, false otherwise",
+                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                                    @ExampleObject(name="mitmproxy is enabled", value="true"),
+                                    @ExampleObject(name="mitmproxy is disabled", value="false")
+                            })}),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="if mitmproxy not installed")
+            }
+    )
     public Response mitmStatus(@Context ContainerRequest ctx,
                                @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
@@ -444,6 +650,21 @@ public class AccountsResource {
     }
 
     @POST @Path("/{id}"+EP_MITM+EP_ENABLE)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Enable mitmproxy. Caller must admin.",
+            description="Enable mitmproxy. Caller must admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(description="returns true if mitmproxy is enabled, false otherwise",
+                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                                    @ExampleObject(name="mitmproxy is enabled", value="true"),
+                                    @ExampleObject(name="mitmproxy is disabled", value="false")
+                            })}),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="if mitmproxy is not installed or an error occurred enabling it")
+            }
+    )
     public Response mitmOn(@Context ContainerRequest ctx,
                            @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
@@ -452,6 +673,21 @@ public class AccountsResource {
     }
 
     @POST @Path("/{id}"+EP_MITM+EP_DISABLE)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_ACCOUNT},
+            summary="Disable mitmproxy. Caller must admin.",
+            description="Disable mitmproxy. Caller must admin.",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={
+                    @ApiResponse(description="returns true if mitmproxy is enabled, false otherwise",
+                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                                    @ExampleObject(name="mitmproxy is enabled", value="true"),
+                                    @ExampleObject(name="mitmproxy is disabled", value="false")
+                            })}),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin"),
+                    @ApiResponse(responseCode=SC_PRECONDITION_FAILED, description="if mitmproxy is not installed or an error occurred disabling it")
+            }
+    )
     public Response mitmOff(@Context ContainerRequest ctx,
                             @PathParam("id") String id) {
         final AccountContext c = new AccountContext(ctx, id);
@@ -516,6 +752,13 @@ public class AccountsResource {
     }
 
     @GET @Path("/{id}"+EP_DEVICE_TYPES)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_UTILITY},
+            summary="List all device types",
+            description="List all device types",
+            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            responses={@ApiResponse(description="returns an array of Strings, each a BubbleDeviceType enum value")}
+    )
     public Response getDeviceTypes(@Context ContainerRequest ctx) {
         return ok(BubbleDeviceType.getSelectableTypes());
     }

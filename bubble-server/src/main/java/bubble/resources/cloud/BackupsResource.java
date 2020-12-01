@@ -12,6 +12,8 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.server.BubbleConfiguration;
 import bubble.service.backup.BackupCleanerService;
 import bubble.service.backup.BackupService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -24,6 +26,7 @@ import static bubble.cloud.storage.StorageServiceDriver.STORAGE_PREFIX;
 import static bubble.cloud.storage.StorageServiceDriver.STORAGE_PREFIX_TRUNCATED;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -43,12 +46,14 @@ public class BackupsResource {
     @Autowired private BackupCleanerService backupCleanerService;
 
     @GET
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response listBackups(@Context ContainerRequest ctx) {
         final Account account = getAccount(ctx);
         return ok(backupDAO.findByNetwork(network.getUuid()));
     }
 
     @GET @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response viewBackup(@Context ContainerRequest ctx,
                                @PathParam("id") String id,
                                @QueryParam("status") BackupStatus status) {
@@ -60,6 +65,7 @@ public class BackupsResource {
     }
 
     @PUT @Path("/{label}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response addLabeledBackup(@Context ContainerRequest ctx,
                                      @PathParam("label") String label) {
         final Account account = getAccount(ctx);
@@ -67,12 +73,14 @@ public class BackupsResource {
     }
 
     @POST @Path(EP_CLEAN_BACKUPS)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response cleanBackups(@Context ContainerRequest ctx) {
         final Account account = getAccount(ctx);
         return ok(backupCleanerService.cleanNow());
     }
 
     @DELETE @Path("/{id : .+}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response deleteBackup(@Context ContainerRequest ctx,
                                  @PathParam("id") String id) {
         if (id.startsWith(STORAGE_PREFIX_TRUNCATED) && !id.startsWith(STORAGE_PREFIX)) {

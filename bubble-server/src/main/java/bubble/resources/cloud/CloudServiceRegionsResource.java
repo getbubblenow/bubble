@@ -14,6 +14,8 @@ import bubble.model.cloud.BubbleFootprint;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.GeoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -32,6 +34,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -48,6 +51,7 @@ public class CloudServiceRegionsResource {
     @Autowired private GeoService geoService;
 
     @GET
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response listRegions(@Context Request req,
                                 @Context ContainerRequest ctx,
                                 @QueryParam("footprint") String footprintId) {
@@ -65,6 +69,7 @@ public class CloudServiceRegionsResource {
     }
 
     @GET @Path(EP_CLOSEST)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response listClosestRegions(@Context Request req,
                                        @Context ContainerRequest ctx,
                                        @QueryParam("footprint") String footprintId) {

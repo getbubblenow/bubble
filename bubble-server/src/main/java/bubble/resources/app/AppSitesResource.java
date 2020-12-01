@@ -13,6 +13,8 @@ import bubble.model.app.config.AppDataView;
 import bubble.model.device.Device;
 import bubble.resources.account.AccountOwnedTemplateResource;
 import bubble.service.device.DeviceService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.cobbzilla.wizard.model.search.SearchQuery;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -27,6 +29,7 @@ import java.util.List;
 
 import static bubble.ApiConstants.*;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppSiteDAO> {
 
@@ -53,6 +56,7 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
     }
 
     @POST @Path("/{id}"+EP_ENABLE)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response enable(@Context ContainerRequest ctx,
                            @PathParam("id") String id) {
         if (isReadOnly(ctx)) return forbidden();
@@ -62,6 +66,7 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
     }
 
     @POST @Path("/{id}"+EP_DISABLE)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response disable(@Context ContainerRequest ctx,
                             @PathParam("id") String id) {
         if (isReadOnly(ctx)) return forbidden();
@@ -87,6 +92,7 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
     }
 
     @POST @Path("/{id}"+EP_VIEW+"/{view}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response search(@Context Request req,
                            @Context ContainerRequest ctx,
                            @PathParam("id") String id,

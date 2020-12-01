@@ -7,6 +7,10 @@ package bubble.resources;
 import bubble.model.HasBubbleTags;
 import bubble.model.account.Account;
 import bubble.server.BubbleConfiguration;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.wizard.dao.DAO;
@@ -19,12 +23,13 @@ import javax.ws.rs.core.Response;
 
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 public class TagsResource {
 
-    private HasBubbleTags taggable;
+    private final HasBubbleTags taggable;
 
     @Autowired private BubbleConfiguration configuration;
 
@@ -37,6 +42,12 @@ public class TagsResource {
     @GET public Response list(@Context ContainerRequest ctx) { return ok(taggable.getTags()); }
 
     @POST @Path("/{name}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            summary="Set a tag",
+            description="Set a tag",
+            parameters={@Parameter(name="name", description="name of the tag")},
+            responses={@ApiResponse(description="a BubbleTags object representing the current list of tags")}
+    )
     public Response set(@Context ContainerRequest ctx,
                         @PathParam("name") String name,
                         NameAndValue nameAndValue) {

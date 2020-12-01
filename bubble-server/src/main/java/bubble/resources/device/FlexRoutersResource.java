@@ -12,6 +12,8 @@ import bubble.resources.account.AccountOwnedResource;
 import bubble.service.device.DeviceService;
 import bubble.service.device.FlexRouterStatus;
 import bubble.service.device.StandardFlexRouterService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.network.PortPicker;
 import org.glassfish.grizzly.http.server.Request;
@@ -31,6 +33,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.network.PortPicker.portIsAvailable;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Slf4j
 public class FlexRoutersResource extends AccountOwnedResource<FlexRouter, FlexRouterDAO> {
@@ -50,6 +53,7 @@ public class FlexRoutersResource extends AccountOwnedResource<FlexRouter, FlexRo
     }
 
     @GET @Path("/{id}"+EP_STATUS)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public Response getStatus(@Context Request req,
                               @Context ContainerRequest ctx,
                               @PathParam("id") String id) {
