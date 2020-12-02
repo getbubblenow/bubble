@@ -40,7 +40,6 @@ popd
 UTIL_REPOS="
 cobbzilla-parent
 cobbzilla-utils
-restex
 templated-mail-sender
 cobbzilla-wizard
 abp-parser

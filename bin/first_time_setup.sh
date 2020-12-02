@@ -44,7 +44,6 @@ popd || die "Error popping back from utils/cobbzilla-parent"
 UTIL_REPOS="
 cobbzilla-parent
 cobbzilla-utils
-restex
 templated-mail-sender
 cobbzilla-wizard
 abp-parser
