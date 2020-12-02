@@ -39,7 +39,7 @@
     "comment": "read self",
     "request": { "uri": "me" },
     "response": {
-      "check": [ {"condition":  "json.getEmail() == 'root'"} ]
+      "check": [ {"condition":  "json.getEmail() == 'root@local.local'"} ]
     }
   },
 
