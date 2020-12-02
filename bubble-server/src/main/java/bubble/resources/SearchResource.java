@@ -38,7 +38,7 @@ public class SearchResource {
 
     @GET @Path("/{type}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_SEARCH},
+            tags=API_TAG_SEARCH,
             summary="Search model objects",
             description="Search model objects",
             parameters={
@@ -50,9 +50,7 @@ public class SearchResource {
                     @Parameter(name=Q_SIZE, description="page size. default is 10, max is 50"),
                     @Parameter(name=Q_SORT, description="sort field. prefix with + or - to indicate ascending/descending")
             },
-            responses={
-                    @ApiResponse(responseCode=SC_OK, description="a SearchResults object, or if meta was true then a SqlViewField[] array")
-            }
+            responses=@ApiResponse(responseCode=SC_OK, description="a SearchResults object, or if meta was true then a SqlViewField[] array")
     )
     public Response search(@Context Request req,
                            @Context ContainerRequest ctx,
@@ -68,7 +66,7 @@ public class SearchResource {
 
     @POST @Path("/{type}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_SEARCH},
+            tags=API_TAG_SEARCH,
             summary="Search model objects",
             description="Search model objects",
             parameters={
@@ -80,9 +78,7 @@ public class SearchResource {
                     @Parameter(name=Q_SIZE, description="page size. default is 10, max is 50"),
                     @Parameter(name=Q_SORT, description="sort field. prefix with + or - to indicate ascending/descending")
             },
-            responses={
-                    @ApiResponse(responseCode=SC_OK, description="a SearchResults object, or if meta was true then a SqlViewField[] array")
-            }
+            responses=@ApiResponse(responseCode=SC_OK, description="a SearchResults object, or if meta was true then a SqlViewField[] array")
     )
     public Response search(@Context Request req,
                            @Context ContainerRequest ctx,

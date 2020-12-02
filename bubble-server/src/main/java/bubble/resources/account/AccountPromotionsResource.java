@@ -18,6 +18,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import static bubble.ApiConstants.API_TAG_PAYMENT;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -35,9 +36,10 @@ public class AccountPromotionsResource {
 
     @GET
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_PAYMENT,
             summary="List promotions for account",
             description="List promotions for account",
-            responses={@ApiResponse(responseCode=SC_OK, description="an array of Promotion objects owned by the Account")}
+            responses=@ApiResponse(responseCode=SC_OK, description="an array of Promotion objects owned by the Account")
     )
     public Response listPromotions(@Context Request req,
                                    @Context ContainerRequest ctx) {
@@ -48,9 +50,10 @@ public class AccountPromotionsResource {
 
     @PUT
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_PAYMENT,
             summary="Add a promotion to an account. Must be admin.",
             description="Add a promotion to an account. Must be admin.",
-            responses={@ApiResponse(responseCode=SC_OK, description="an array of Promotion objects owned by the Account")}
+            responses=@ApiResponse(responseCode=SC_OK, description="an array of Promotion objects owned by the Account")
     )
     public Response adminAddPromotion(@Context Request req,
                                       @Context ContainerRequest ctx,
@@ -62,9 +65,10 @@ public class AccountPromotionsResource {
 
     @DELETE @Path("/{id}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_PAYMENT,
             summary="Remove a promotion from an account. Must be admin.",
             description="Remove a promotion from an account. Must be admin.",
-            responses={@ApiResponse(responseCode=SC_OK, description="an array of Promotion objects owned by the Account")}
+            responses=@ApiResponse(responseCode=SC_OK, description="an array of Promotion objects owned by the Account")
     )
     public Response adminRemovePromotion(@Context Request req,
                                          @Context ContainerRequest ctx,

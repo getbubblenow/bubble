@@ -10,16 +10,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.wizard.model.OpenApiSchema;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECField;
 
 import javax.persistence.Transient;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.big;
 
-@NoArgsConstructor @AllArgsConstructor @Accessors(chain=true)
+@NoArgsConstructor @AllArgsConstructor @Accessors(chain=true) @OpenApiSchema
 public class GeoCodeResult {
 
-    @Getter @Setter private String lat;
-    @Getter @Setter private String lon;
+    @ECField(type=EntityFieldType.decimal) @Getter @Setter private String lat;
+    @ECField(type=EntityFieldType.decimal) @Getter @Setter private String lon;
 
     @JsonIgnore @Transient public double getLatitude () { return big(lat).doubleValue(); }
     @JsonIgnore @Transient public double getLongitude () { return big(lon).doubleValue(); }

@@ -79,7 +79,7 @@ public class AccountsResource {
 
     @GET
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="List all accounts",
             description="List all accounts. Must be admin.",
             responses={
@@ -94,7 +94,7 @@ public class AccountsResource {
 
     @GET @Path("/{id}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Find account by UUID or email. Non-admins can only find themselves.",
             description="Find account by UUID or email. Non-admins can only find themselves.",
             responses={
@@ -110,7 +110,7 @@ public class AccountsResource {
 
     @PUT
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Create a new account",
             description="Create a new account. Must be admin.",
             responses={
@@ -173,10 +173,10 @@ public class AccountsResource {
 
     @POST @Path("/{id}"+EP_DOWNLOAD)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Download all data for an account",
             description="Download all data for user. Must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a Map<String, List<String>> of all user data"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if not admin")
@@ -196,10 +196,10 @@ public class AccountsResource {
 
     @POST @Path("/{id}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Update an account",
             description="Update an account. Caller must be the same account, or must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the Account object that was updated"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is updating any account Account other than themselves"),
@@ -230,10 +230,10 @@ public class AccountsResource {
 
     @GET @Path("/{id}"+EP_STATUS)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="List all launch statuses for an account",
             description="List all launch statuses for an account. Caller must be the same account, or must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a List<NodeProgressMeterTick> representing the status of active launch operations"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
@@ -256,10 +256,10 @@ public class AccountsResource {
 
     @GET @Path("/{id}"+EP_POLICY)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="View the AccountPolicy for an account",
             description="View the AccountPolicy for an account. Caller must be the same account, or must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="an AccountPolicy object"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
@@ -275,10 +275,10 @@ public class AccountsResource {
 
     @POST @Path("/{id}"+EP_POLICY)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Update the AccountPolicy for an account",
             description="Update the AccountPolicy for an account. Caller must be the same account, or must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="an AccountPolicy object"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
@@ -305,10 +305,10 @@ public class AccountsResource {
 
     @POST @Path("/{id}"+EP_POLICY+EP_CONTACTS)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Create or update an AccountContact in the AccountPolicy",
             description="Create or update an AccountContact in the AccountPolicy. Caller must be the same account, or must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the AccountContact object that was created or updated"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
@@ -346,10 +346,10 @@ public class AccountsResource {
 
     @POST @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/verify")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Send verification message for an AccountContact",
             description="Send verification message for an AccountContact. Caller must be the same account, or must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the AccountContact object that was created or updated"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
@@ -373,7 +373,7 @@ public class AccountsResource {
 
     @GET @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/{type}/{info}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Find an AccountContact within an AccountPolicy",
             description="Find an AccountContact within an AccountPolicy. Caller must be the same account, or must be admin.",
             parameters={
@@ -400,7 +400,7 @@ public class AccountsResource {
 
     @DELETE @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/{type}/{info}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Delete an AccountContact within an AccountPolicy",
             description="Delete an AccountContact within an AccountPolicy. Caller must be the same account, or must be admin.",
             parameters={
@@ -428,10 +428,10 @@ public class AccountsResource {
 
     @DELETE @Path("/{id}"+EP_POLICY+EP_CONTACTS+EP_AUTHENTICATOR)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Delete TOTP authenticator AccountContact from an AccountPolicy",
             description="Delete TOTP authenticator AccountContact from an AccountPolicy. Caller must be the same account, or must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the AccountPolicy object that was updated"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
@@ -455,7 +455,7 @@ public class AccountsResource {
 
     @DELETE @Path("/{id}"+EP_POLICY+EP_CONTACTS+"/{uuid}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Delete AccountContact from an AccountPolicy by UUID",
             description="Delete AccountContact from an AccountPolicy by UUID. Caller must be the same account, or must be admin.",
             parameters={
@@ -481,10 +481,10 @@ public class AccountsResource {
 
     @DELETE @Path("/{id}"+EP_REQUEST)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Request deletion of an Account",
             description="Request deletion of an Account. Caller must be the same account, or must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the AccountMessage object that was sent"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
@@ -511,10 +511,10 @@ public class AccountsResource {
 
     @POST @Path("/{id}"+EP_CHANGE_PASSWORD)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Change password for an account",
             description="Change password for an account. Caller must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the Account object that was updated"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
@@ -590,10 +590,10 @@ public class AccountsResource {
 
     @DELETE @Path("/{id}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Delete an Account",
             description="Delete an Account. Caller must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the Account object that was deleted"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
@@ -629,16 +629,16 @@ public class AccountsResource {
 
     @GET @Path("/{id}"+EP_MITM)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_UTILITY},
+            tags=API_TAG_UTILITY,
             summary="Get status of mitmproxy",
             description="Get status of mitmproxy. Caller must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="returns true if mitmproxy is enabled, false otherwise",
-                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                            content=@Content(mediaType=APPLICATION_JSON, examples={
                                     @ExampleObject(name="mitmproxy is enabled", value="true"),
                                     @ExampleObject(name="mitmproxy is disabled", value="false")
-                            })}),
+                            })),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin"),
                     @ApiResponse(responseCode=SC_INVALID, description="if mitmproxy not installed")
             }
@@ -652,16 +652,16 @@ public class AccountsResource {
 
     @POST @Path("/{id}"+EP_MITM+EP_ENABLE)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_UTILITY},
+            tags=API_TAG_UTILITY,
             summary="Enable mitmproxy",
             description="Enable mitmproxy. Caller must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="returns true if mitmproxy is enabled, false otherwise",
-                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                            content=@Content(mediaType=APPLICATION_JSON, examples={
                                     @ExampleObject(name="mitmproxy is enabled", value="true"),
                                     @ExampleObject(name="mitmproxy is disabled", value="false")
-                            })}),
+                            })),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin"),
                     @ApiResponse(responseCode=SC_INVALID, description="if mitmproxy is not installed or an error occurred enabling it")
             }
@@ -675,16 +675,16 @@ public class AccountsResource {
 
     @POST @Path("/{id}"+EP_MITM+EP_DISABLE)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_UTILITY},
+            tags=API_TAG_UTILITY,
             summary="Disable mitmproxy",
             description="Disable mitmproxy. Caller must be admin.",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="returns true if mitmproxy is enabled, false otherwise",
-                            content={@Content(mediaType=APPLICATION_JSON, examples={
+                            content=@Content(mediaType=APPLICATION_JSON, examples={
                                     @ExampleObject(name="mitmproxy is enabled", value="true"),
                                     @ExampleObject(name="mitmproxy is disabled", value="false")
-                            })}),
+                            })),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin"),
                     @ApiResponse(responseCode=SC_INVALID, description="if mitmproxy is not installed or an error occurred disabling it")
             }
@@ -754,11 +754,11 @@ public class AccountsResource {
 
     @GET @Path("/{id}"+EP_DEVICE_TYPES)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_UTILITY},
+            tags=API_TAG_UTILITY,
             summary="List all device types",
             description="List all device types",
-            parameters={@Parameter(name="id", description="UUID or email of the Account")},
-            responses={@ApiResponse(responseCode=SC_OK, description="returns an array of Strings, each a BubbleDeviceType enum value")}
+            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            responses=@ApiResponse(responseCode=SC_OK, description="returns an array of Strings, each a BubbleDeviceType enum value")
     )
     public Response getDeviceTypes(@Context ContainerRequest ctx) {
         return ok(BubbleDeviceType.getSelectableTypes());

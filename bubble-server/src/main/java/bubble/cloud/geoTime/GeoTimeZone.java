@@ -9,8 +9,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.wizard.model.OpenApiSchema;
 
-@NoArgsConstructor @AllArgsConstructor @Accessors(chain=true)
+@NoArgsConstructor @AllArgsConstructor @Accessors(chain=true) @OpenApiSchema
 public class GeoTimeZone {
 
     public static final GeoTimeZone UTC = new GeoTimeZone("Etc/UTC", "UTC", 0L);

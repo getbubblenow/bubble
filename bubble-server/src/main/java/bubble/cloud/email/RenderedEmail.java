@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.mail.SimpleEmailMessage;
+import org.cobbzilla.wizard.model.OpenApiSchema;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECField;
 
 import java.util.Map;
 
@@ -17,11 +19,11 @@ import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
-@NoArgsConstructor @Accessors(chain=true)
+@NoArgsConstructor @Accessors(chain=true) @OpenApiSchema
 public class RenderedEmail extends SimpleEmailMessage implements RenderedMessage {
 
-    @Getter private final long ctime = now();
-    @Getter private final String uuid = randomUUID().toString();
+    @ECField @Getter private final long ctime = now();
+    @ECField @Getter private final String uuid = randomUUID().toString();
     @Getter @Setter private Map<String, Object> ctx;
 
     public RenderedEmail (Map<String, Object> ctx) { this.ctx = ctx; }

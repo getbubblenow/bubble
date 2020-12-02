@@ -53,17 +53,12 @@ public class EntityConfigsResource extends AbstractEntityConfigsResource {
 
     @POST @Path("/set/{param}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_UTILITY},
+            tags=API_TAG_UTILITY,
             summary="Set a configuration parameter to `true`",
             description="Set a configuration parameter to `true`",
-            parameters={@Parameter(name="param", description="the name of the parameter to set")},
-            responses={
-                    @ApiResponse(responseCode=SC_OK, description="the value that was set",
-                            content={@Content(mediaType=APPLICATION_JSON, examples={
-                                    @ExampleObject(name="should always return true", value="true")
-                            }
-                            )})
-            }
+            parameters=@Parameter(name="param", description="the name of the parameter to set"),
+            responses=@ApiResponse(responseCode=SC_OK, description="the value that was set",
+                    content=@Content(mediaType=APPLICATION_JSON, examples=@ExampleObject(name="should always return true", value="true")))
     )
     public Response setConfig (@Context ContainerRequest ctx,
                                @PathParam("param") String param) {
@@ -72,7 +67,7 @@ public class EntityConfigsResource extends AbstractEntityConfigsResource {
 
     @POST @Path("/set/{param}/{value}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_UTILITY},
+            tags=API_TAG_UTILITY,
             summary="Set a configuration parameter to a value",
             description="Set a configuration parameter to a value",
             parameters={
@@ -81,10 +76,7 @@ public class EntityConfigsResource extends AbstractEntityConfigsResource {
             },
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the value that was set",
-                            content={@Content(mediaType=APPLICATION_JSON, examples={
-                                    @ExampleObject(name="if the value was the String 'foo'", value="\"foo\"")
-                            }
-                            )})
+                            content=@Content(mediaType=APPLICATION_JSON, examples=@ExampleObject(name="if the value was the String 'foo'", value="\"foo\"")))
             }
     )
     public Response setConfig (@Context ContainerRequest ctx,

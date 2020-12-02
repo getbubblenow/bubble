@@ -46,8 +46,8 @@ public class TagsResource {
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             summary="Set a tag",
             description="Set a tag",
-            parameters={@Parameter(name="name", description="name of the tag")},
-            responses={@ApiResponse(responseCode=SC_OK, description="a BubbleTags object representing the current list of tags")}
+            parameters=@Parameter(name="name", description="name of the tag"),
+            responses=@ApiResponse(responseCode=SC_OK, description="a BubbleTags object representing the current list of tags")
     )
     public Response set(@Context ContainerRequest ctx,
                         @PathParam("name") String name,

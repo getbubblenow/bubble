@@ -5,14 +5,14 @@
 package bubble.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+import org.cobbzilla.wizard.model.OpenApiSchema;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Schema
+@OpenApiSchema
 public class AppLinks extends BasicAppLinks {
 
     @JsonIgnore @Getter @Setter private Map<String, BasicAppLinks> locale = new HashMap<>();

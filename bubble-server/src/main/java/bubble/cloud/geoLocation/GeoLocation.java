@@ -12,12 +12,15 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.math.Haversine;
+import org.cobbzilla.wizard.model.OpenApiSchema;
+import org.cobbzilla.wizard.model.entityconfig.EntityFieldType;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECField;
 
 import javax.persistence.Transient;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 
-@NoArgsConstructor @Accessors(chain=true) @ToString(of={"lat", "lon"})
+@NoArgsConstructor @Accessors(chain=true) @ToString(of={"lat", "lon"}) @OpenApiSchema
 public class GeoLocation {
 
     public static final GeoLocation NULL_LOCATION = new GeoLocation().setLat("-1.0").setLon("-1.0");
@@ -27,8 +30,8 @@ public class GeoLocation {
 
     @Getter @Setter private String region;
     @Getter @Setter private String city;
-    @Getter @Setter private String lat;
-    @Getter @Setter private String lon;
+    @ECField(type=EntityFieldType.decimal) @Getter @Setter private String lat;
+    @ECField(type=EntityFieldType.decimal) @Getter @Setter private String lon;
 
     @JsonIgnore @Transient public double getLatitude () { return big(lat).doubleValue(); }
     @JsonIgnore @Transient public double getLongitude () { return big(lon).doubleValue(); }

@@ -65,10 +65,10 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
 
     @GET
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT_OBJECTS},
+            tags=API_TAG_ACCOUNT_OBJECTS,
             summary="List objects",
             description="List objects",
-            responses={@ApiResponse(responseCode=SC_OK, description="an array of objects")}
+            responses=@ApiResponse(responseCode=SC_OK, description="an array of objects")
     )
     public Response listEntities(@Context Request req,
                                  @Context ContainerRequest ctx) {
@@ -136,7 +136,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
 
     @GET @Path("/{id}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT_OBJECTS},
+            tags=API_TAG_ACCOUNT_OBJECTS,
             summary="Find by identifier",
             description="Find by identifier",
             responses={
@@ -169,15 +169,13 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
 
     @PUT
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT_OBJECTS},
+            tags=API_TAG_ACCOUNT_OBJECTS,
             summary="Create a new object",
             description="Create a new object. If validation errors occur, status "+SC_INVALID+" is returned and the response will contain an array of errors. Within each error, the `messageTemplate` field refers to messages that can be localized using the /messages resource",
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the object that was created"),
                     @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred",
-                    content={@Content(mediaType=APPLICATION_JSON, examples={
-                            @ExampleObject(name="validation errors", value="[{\"messageTemplate\": \"some.symbolic.error\", \"message\": \"some default English message\"}]")
-                    })})
+                            content=@Content(mediaType=APPLICATION_JSON, examples=@ExampleObject(name="validation errors", value="[{\"messageTemplate\": \"some.symbolic.error\", \"message\": \"some default English message\"}]")))
             }
     )
     public Response create(@Context Request req,
@@ -210,17 +208,15 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
 
     @POST @Path("/{id}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT_OBJECTS},
+            tags=API_TAG_ACCOUNT_OBJECTS,
             summary="Update an existing object",
             description="Update an new object. For many types, the object will be created if it does not exist. If validation errors occur, status "+SC_INVALID+" is returned and the response will contain an array of errors. Within each error, the `messageTemplate` field refers to messages that can be localized using the /messages resource",
-            parameters={@Parameter(name="id", description="the UUID (or name, if allowed) of the object to update")},
+            parameters=@Parameter(name="id", description="the UUID (or name, if allowed) of the object to update"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the object that was updated"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="no object exists with the given id"),
                     @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred",
-                            content={@Content(mediaType=APPLICATION_JSON, examples={
-                                    @ExampleObject(name="validation errors", value="[{\"messageTemplate\": \"some.symbolic.error\", \"message\": \"some default English message\"}]")
-                            })})
+                            content=@Content(mediaType=APPLICATION_JSON, examples=@ExampleObject(name="validation errors", value="[{\"messageTemplate\": \"some.symbolic.error\", \"message\": \"some default English message\"}]")))
             }
     )
     public Response update(@Context Request req,
@@ -247,10 +243,10 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
 
     @DELETE @Path("/{id}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT_OBJECTS},
+            tags=API_TAG_ACCOUNT_OBJECTS,
             summary="Delete an existing object",
             description="Delete an existing object",
-            parameters={@Parameter(name="id", description="the UUID (or name, if allowed) of the object to delete")},
+            parameters=@Parameter(name="id", description="the UUID (or name, if allowed) of the object to delete"),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the object that was deleted"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="no object exists with the given id")

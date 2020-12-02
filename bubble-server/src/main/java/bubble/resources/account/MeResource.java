@@ -35,6 +35,7 @@ import bubble.service.cloud.NodeLaunchMonitor;
 import bubble.service.upgrade.BubbleJarUpgradeService;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -78,8 +79,7 @@ import static bubble.resources.account.AuthResource.forgotPasswordMessage;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.*;
-import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
-import static org.cobbzilla.util.http.HttpStatusCodes.SC_INVALID;
+import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.RestServerBase.reportError;
@@ -102,12 +102,10 @@ public class MeResource {
 
     @GET
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Get account record for current session",
             description="Get account record for current session",
-            responses={
-                    @ApiResponse(responseCode=SC_OK, description="Account object")
-            }
+            responses=@ApiResponse(responseCode=SC_OK, description="Account object")
     )
     public Response me(@Context ContainerRequest ctx) {
         try {
@@ -127,12 +125,10 @@ public class MeResource {
 
     @GET @Path(EP_LOCALE)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Get the account locale",
             description="Get the account locale",
-            responses={
-                    @ApiResponse(responseCode=SC_OK, description="Locale string", content=@Content(mediaType=APPLICATION_JSON, examples={@ExampleObject(name="default locale", value="en_US")}))
-            }
+            responses=@ApiResponse(responseCode=SC_OK, description="Locale string", content=@Content(mediaType=APPLICATION_JSON, examples=@ExampleObject(name="default locale", value="en_US")))
     )
     public Response getLocale(@Context ContainerRequest ctx) {
         final Account account = userPrincipal(ctx);
@@ -141,12 +137,10 @@ public class MeResource {
 
     @POST @Path(EP_LOCALE+"/{locale}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Set the account locale",
             description="Set the account locale",
-            responses={
-                    @ApiResponse(responseCode=SC_OK, description="updated Account object")
-            }
+            responses=@ApiResponse(responseCode=SC_OK, description="updated Account object")
     )
     public Response setLocale(@Context ContainerRequest ctx,
                               @PathParam("locale") String locale) {
@@ -177,18 +171,16 @@ public class MeResource {
     }
 
     @GET @Path(EP_ERROR_API)
-    @Operation(tags={API_TAG_UTILITY},
+    @Operation(tags=API_TAG_UTILITY,
             summary="Get error API information",
             description="Get error API information",
-            responses={
-                    @ApiResponse(responseCode=SC_OK, description="a Map of API information")
-            }
+            responses=@ApiResponse(responseCode=SC_OK, description="a Map of API information")
     )
     public Response errorApi(@Context Request req) { return ok(getErrorApi()); }
 
     @POST @Path(EP_CHANGE_PASSWORD)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_ACCOUNT},
+            tags=API_TAG_ACCOUNT,
             summary="Request account password change",
             description="Request account password change. A message will be sent to the user with a token to approve the change and set a new password. If the password can be changed directly, this returns the updated Account object. If approvals are required for a password change, an Account object will be returned and the `multifactorAuth` property will indicate what auth methods are required to approve the change.",
             responses={
@@ -248,7 +240,20 @@ public class MeResource {
     @Autowired private StandardAccountMessageService messageService;
 
     @POST @Path(EP_APPROVE+"/{token}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_AUTH,
+            summary="Approve a request",
+            description="Approve a request. The token comes from an email or SMS message sent to the user.",
+            parameters=@Parameter(name="token", description="the confirmation token"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success",
+                            content=@Content(mediaType=APPLICATION_JSON, examples={
+                                    @ExampleObject(name="if no login requested, returns an empty response", value=""),
+                                    @ExampleObject(name="if login requested, returns an Account object with either a valid session token ('token' property) or additional auth factors required (check 'multifactorAuth' property)")
+                            })),
+                    @ApiResponse(responseCode=SC_INVALID, description="a validation error occurred, for example the token might be invalid")
+            }
+    )
     public Response approve(@Context Request req,
                             @Context ContainerRequest ctx,
                             @PathParam("token") String token) {
@@ -265,7 +270,20 @@ public class MeResource {
     }
 
     @POST @Path(EP_DENY+"/{token}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_AUTH,
+            summary="Deny a request",
+            description="Deny a request. The token comes from an email or SMS message sent to the user.",
+            parameters=@Parameter(name="token", description="the confirmation token"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success",
+                            content=@Content(mediaType=APPLICATION_JSON, examples={
+                                    @ExampleObject(name="returns the denial AccountMessage")
+                            })),
+                    @ApiResponse(responseCode=SC_INVALID, description="a validation error occurred, for example the token might be invalid"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="the token might be invalid")
+            }
+    )
     public Response deny(@Context Request req,
                          @Context ContainerRequest ctx,
                          @PathParam("token") String token) {
@@ -276,7 +294,15 @@ public class MeResource {
     }
 
     @POST @Path(EP_DOWNLOAD)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_ACCOUNT,
+            summary="Request account data download",
+            description="Request account data download. This begins the process of collecting the account data.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success"),
+                    @ApiResponse(responseCode=SC_INVALID, description="a validation error occurred, for example the account has no verified contacts")
+            }
+    )
     public Response requestDownloadAccountData(@Context Request req,
                                                @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
@@ -290,7 +316,16 @@ public class MeResource {
     }
 
     @POST @Path(EP_DOWNLOAD+"/{uuid}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_ACCOUNT,
+            summary="Download account data",
+            description="Download account data.",
+            parameters=@Parameter(name="uuid", description="the uuid of the download to retrieve"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="Account data as JSON"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="uuid was invalid")
+            }
+    )
     public Response downloadAccountData(@Context Request req,
                                         @Context ContainerRequest ctx,
                                         @PathParam("uuid") String uuid) {
@@ -301,7 +336,12 @@ public class MeResource {
     }
 
     @POST @Path(EP_SCRIPT) @Produces(TEXT_PLAIN)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_UTILITY,
+            summary="Run an API script",
+            description="Run an API script",
+            responses=@ApiResponse(responseCode=SC_OK, description="Script output")
+    )
     public Response runScript(@Context ContainerRequest ctx,
                               JsonNode script) {
         final Account caller = userPrincipal(ctx);
@@ -309,6 +349,8 @@ public class MeResource {
         final StringWriter writer = new StringWriter();
         final ApiRunnerListener listener = new ApiRunnerListenerStreamLogger("runScript", writer);
         @Cleanup final ApiClientBase api = configuration.newApiClient();
+        api.setToken(caller.getToken());
+
         final ApiRunner runner = new ApiRunner(api, listener);
         try {
             if (script.isArray()) {
@@ -446,7 +488,12 @@ public class MeResource {
     @Autowired private NodeLaunchMonitor launchMonitor;
 
     @GET @Path(EP_STATUS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_ACCOUNT,
+            summary="List all launch statuses for an account",
+            description="List all launch statuses for an account. Caller must be the same account, or must be admin.",
+            responses=@ApiResponse(responseCode=SC_OK, description="a List<NodeProgressMeterTick> representing the status of active launch operations")
+    )
     public Response listLaunchStatuses(@Context Request req,
                                        @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
@@ -471,7 +518,16 @@ public class MeResource {
 
     @POST @Path(EP_MODEL)
     @Consumes(MULTIPART_FORM_DATA)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_UTILITY,
+            summary="Load model objects",
+            description="Load model objects",
+            parameters={
+                    @Parameter(name="file", description="model JSON"),
+                    @Parameter(name="name", description="name of model")
+            },
+            responses=@ApiResponse(responseCode=SC_OK, description="the model that was loaded")
+    )
     public Response uploadModel(@Context Request req,
                                 @Context ContainerRequest ctx,
                                 @FormDataParam("file") InputStream in,
@@ -497,7 +553,12 @@ public class MeResource {
     private static final long UPGRADE_CHECK_INTERVAL = MINUTES.toMillis(5);
 
     @GET @Path(EP_UPGRADE)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_UTILITY,
+            summary="Check for upgrade",
+            description="Check for upgrade. Must be admin. The check runs in the background, this returns an empty JSON object",
+            responses=@ApiResponse(responseCode=SC_OK, description="the upgrade check has been started", content=@Content(mediaType=APPLICATION_JSON, examples=@ExampleObject(name="empty JSON object", value="{}")))
+    )
     public Response checkForUpgrade(@Context Request req,
                                     @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);

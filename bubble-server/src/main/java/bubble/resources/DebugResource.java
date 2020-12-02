@@ -14,6 +14,8 @@ import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
 import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -37,10 +39,12 @@ import static bubble.cloud.auth.RenderedMessage.filteredInbox;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.util.json.JsonUtil.*;
 import static org.cobbzilla.util.reflect.ReflectionUtil.forName;
 import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -51,6 +55,11 @@ public class DebugResource {
     @Autowired private BubbleConfiguration configuration;
 
     @GET @Path("/inbox/{type}/{recipient}")
+    @Operation(tags=API_TAG_UTILITY,
+            summary="Read debug mailboxes",
+            description="Read debug mailboxes. Must be admin. These are only used in testing.",
+            responses=@ApiResponse(responseCode=SC_OK, description="a JSON array of RenderedMessage")
+    )
     public Response inbox(@Context ContainerRequest ctx,
                           @PathParam("type") CloudServiceType type,
                           @PathParam("recipient") String recipient,
