@@ -256,7 +256,7 @@
         "vars": [{"name": "DIGITALOCEAN_API_KEY", "value": "[[credentials.apiKey]]"}],
         "builder": {
           "type": "digitalocean",
-          "ssh_username": "root",
+          "ssh_username": "root@local.local",
           "api_token": "[[user `DIGITALOCEAN_API_KEY`]]",
           "image": "ubuntu-18-04-x64",
           "region": "<<buildRegion.internalName>>",

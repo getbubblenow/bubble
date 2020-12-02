@@ -294,8 +294,8 @@ public class ApiConstants {
     public static final int ERROR_MAX_BEFORE_ELLIPSES = 19900;
 
     public static final String API_TAG_ACTIVATION = "activation";
-    public static final String API_TAG_AUTH = "auth";
-    public static final String API_TAG_ACCOUNT = "account";
+    public static final String API_TAG_AUTH = "authentication / authorization";
+    public static final String API_TAG_ACCOUNT = "account management";
     public static final String API_TAG_ACCOUNT_OBJECTS = "account-owned objects";
     public static final String API_TAG_APPS = "bubble apps";
     public static final String API_TAG_DEVICES = "devices";

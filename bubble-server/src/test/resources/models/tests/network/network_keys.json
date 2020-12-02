@@ -3,7 +3,7 @@
     "comment": "add email contact for root user",
     "include": "add_approved_contact",
     "params": {
-      "username": "root",
+      "username": "root@local.local",
       "userSession": "rootSession",
       "contactInfo": "root@example.com",
       "contactLookup": "root@example.com"
@@ -127,7 +127,7 @@
     "comment": "add sms as required for node operations",
     "include": "add_approved_contact",
     "params": {
-      "username": "root",
+      "username": "root@local.local",
       "userSession": "rootSession",
       "contactType": "sms",
       "contactInfo": "US:800-555-1212",

@@ -845,7 +845,6 @@ public class AccountsResource {
             this.caller = userPrincipal(ctx);
             this.id = id;
             if (id != null) {
-                if (id.equals(ROOT_EMAIL)) id = ROOT_USERNAME;
                 account = accountDAO.findById(id);
                 if (account == null) {
                     if (okNotFound) return;

@@ -3,7 +3,7 @@
     "comment": "add email contact for root user",
     "include": "add_approved_contact",
     "params": {
-      "username": "root",
+      "username": "root@local.local",
       "userSession": "rootSession",
       "contactInfo": "root@example.com",
       "contactLookup": "root@example.com"
@@ -14,7 +14,7 @@
     "comment": "add authenticator as required auth factor",
     "include": "add_authenticator",
     "params": {
-      "userId": "root",
+      "userId": "root@local.local",
       "authFactor": "required"
     }
   },
@@ -58,7 +58,7 @@
     "request": {
       "uri": "auth/authenticator",
       "entity": {
-        "account": "root",
+        "account": "root@local.local",
         "token": "{{authenticator_token authenticator.totpKey}}",
         "authenticate": true
       }
@@ -132,7 +132,7 @@
     "request": {
       "uri": "auth/authenticator",
       "entity": {
-        "account": "root",
+        "account": "root@local.local",
         "token": "{{authenticator_token authenticator.totpKey}}",
         "authenticate": true
       }

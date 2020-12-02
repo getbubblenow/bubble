@@ -1,6 +1,6 @@
 [
   {
-    "email": "root",
+    "uuid": "root@local.local",
     "children": {
       "Device": [ {"name": "test", "deviceType": "other"} ]
     }

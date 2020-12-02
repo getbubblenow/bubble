@@ -18,7 +18,10 @@ import bubble.dao.device.DeviceDAO;
 import bubble.model.account.*;
 import bubble.model.app.*;
 import bubble.model.bill.BubblePlan;
-import bubble.model.cloud.*;
+import bubble.model.cloud.BubbleDomain;
+import bubble.model.cloud.BubbleNetwork;
+import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.SearchService;
 import bubble.service.account.SyncAccountService;
@@ -46,8 +49,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static bubble.ApiConstants.getRemoteHost;
-import static bubble.model.account.Account.ROOT_EMAIL;
-import static bubble.model.account.Account.ROOT_USERNAME;
 import static bubble.model.account.AccountTemplate.copyTemplateObjects;
 import static bubble.model.account.AutoUpdatePolicy.EMPTY_AUTO_UPDATE_POLICY;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
@@ -99,7 +100,6 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     }
 
     public Account findByEmail(String email) {
-        if (email.equals(ROOT_EMAIL)) email = ROOT_USERNAME;
         return findByUniqueField("email", email.trim());
     }
 

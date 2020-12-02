@@ -3,7 +3,7 @@
     "comment": "declare default parameters for fork test part",
     "include": "_defaults",
     "params": {
-      "rootUsername": "root",
+      "rootUsername": "root@local.local",
       "rootPassword": "password1!",
       "email": "user-<<rand 5>>@example.com",
       "planVar": "plan",
@@ -25,7 +25,7 @@
     "comment": "add email contact for root user",
     "include": "add_approved_contact",
     "params": {
-      "username": "root",
+      "username": "root@local.local",
       "userSession": "rootSession",
       "contactInfo": "<<email>>",
       "contactLookup": "<<email>>"

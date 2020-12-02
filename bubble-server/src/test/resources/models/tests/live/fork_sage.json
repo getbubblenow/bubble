@@ -22,7 +22,7 @@
       "session": "new",
       "uri": "auth/login",
       "entity": {
-        "name": "root",
+        "name": "root@local.local",
         "password": "{{sageRootPass}}"
       }
     },

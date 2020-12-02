@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
 import static bubble.model.account.Account.ROOT_EMAIL;
-import static bubble.model.account.Account.ROOT_USERNAME;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.handlebars.HandlebarsUtil.applyReflectively;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
@@ -80,7 +79,7 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
 
     @Override protected @NonNull Map<String, Object> modelTest(final String name, ApiRunner apiRunner) throws Exception {
         getApi().logout();
-        final Account root = getApi().post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_USERNAME, ROOT_PASSWORD), Account.class);
+        final Account root = getApi().post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_EMAIL, ROOT_PASSWORD), Account.class);
         if (empty(root.getToken())) die("modelTest: error logging in root user (was MFA configured in a previous test?): "+json(root));
         getApi().pushToken(root.getToken());
         apiRunner.addNamedSession(ROOT_SESSION, root.getToken());
@@ -133,7 +132,7 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
             } catch (ValidationException e) {
                 if (e.hasViolations() && e.getViolations().containsKey("err.activation.alreadyDone")) {
                     log.warn("onStart: activation already done, trying to login: " + shortError(e));
-                    admin = client.post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_USERNAME, ROOT_PASSWORD), Account.class);
+                    admin = client.post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_EMAIL, ROOT_PASSWORD), Account.class);
                 } else {
                     throw e;
                 }

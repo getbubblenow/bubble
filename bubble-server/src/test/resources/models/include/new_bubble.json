@@ -3,7 +3,7 @@
     "comment": "declare default parameters for new_bubble test part",
     "include": "_defaults",
     "params": {
-      "rootUsername": "root",
+      "rootUsername": "root@local.local",
       "rootPassword": "password1!",
       "sageFqdn": "_required",
       "sageConnectionVar": "sageConnection",

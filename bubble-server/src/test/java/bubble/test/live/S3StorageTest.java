@@ -31,7 +31,7 @@ import java.util.List;
 import static bubble.ApiConstants.*;
 import static bubble.cloud.storage.StorageCryptStream.MIN_DISTINCT_LENGTH;
 import static bubble.cloud.storage.StorageCryptStream.MIN_KEY_LENGTH;
-import static bubble.model.account.Account.ROOT_USERNAME;
+import static bubble.model.account.Account.ROOT_EMAIL;
 import static bubble.model.cloud.CloudCredentials.PARAM_KEY;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
@@ -73,7 +73,7 @@ public class S3StorageTest extends NetworkTestBase {
         cloudDAO.update(s3cloud.setDriverConfigJson(json(config.setListFetchSize(LIST_FETCH_SIZE))));
 
         comment = "login, start api session";
-        final Account root = getApi().post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_USERNAME, ROOT_PASSWORD), Account.class);
+        final Account root = getApi().post(AUTH_ENDPOINT + EP_LOGIN, new LoginRequest(ROOT_EMAIL, ROOT_PASSWORD), Account.class);
         if (empty(root.getToken())) die("modelTest: error logging in root user (was MFA configured in a previous test?): "+json(root));
         getApi().pushToken(root.getToken());
 
