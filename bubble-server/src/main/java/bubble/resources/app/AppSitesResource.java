@@ -14,6 +14,8 @@ import bubble.model.device.Device;
 import bubble.resources.account.AccountOwnedTemplateResource;
 import bubble.service.device.DeviceService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.cobbzilla.wizard.model.search.SearchQuery;
 import org.glassfish.grizzly.http.server.Request;
@@ -28,6 +30,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 import static bubble.ApiConstants.*;
+import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
@@ -56,7 +59,13 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
     }
 
     @POST @Path("/{id}"+EP_ENABLE)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_APPS,
+            summary="Enable site",
+            description="Enable site",
+            parameters=@Parameter(name="id", description="UUID or name of site"),
+            responses=@ApiResponse(responseCode=SC_OK, description="Site successfully enabled")
+    )
     public Response enable(@Context ContainerRequest ctx,
                            @PathParam("id") String id) {
         if (isReadOnly(ctx)) return forbidden();
@@ -66,7 +75,13 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
     }
 
     @POST @Path("/{id}"+EP_DISABLE)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_APPS,
+            summary="Disable site",
+            description="Disable site",
+            parameters=@Parameter(name="id", description="UUID or name of site"),
+            responses=@ApiResponse(responseCode=SC_OK, description="Site successfully disabled")
+    )
     public Response disable(@Context ContainerRequest ctx,
                             @PathParam("id") String id) {
         if (isReadOnly(ctx)) return forbidden();
@@ -92,7 +107,16 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
     }
 
     @POST @Path("/{id}"+EP_VIEW+"/{view}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_APPS,
+            summary="Search data view for site data",
+            description="Search data view for site data. This uses the AppDataDriver.",
+            parameters={
+                    @Parameter(name="id", description="UUID or name of site"),
+                    @Parameter(name="view", description="name of AppDataView to use")
+            },
+            responses=@ApiResponse(responseCode=SC_OK, description="SearchResults object with results")
+    )
     public Response search(@Context Request req,
                            @Context ContainerRequest ctx,
                            @PathParam("id") String id,

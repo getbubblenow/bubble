@@ -5,6 +5,7 @@
 package bubble.model.cloud;
 
 import bubble.model.bill.PaymentMethodType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,7 +13,7 @@ import lombok.experimental.Accessors;
 
 import javax.persistence.Transient;
 
-@NoArgsConstructor @Accessors(chain=true)
+@NoArgsConstructor @Accessors(chain=true) @Schema
 public class PaymentService extends CloudService {
 
     public PaymentService (CloudService other, PaymentMethodType type) {

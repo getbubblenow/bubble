@@ -58,7 +58,7 @@ public class TrustedAuthResource {
 
     @PUT
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags=API_TAG_DEVICE,
+            tags=API_TAG_DEVICES,
             summary="Establish trust with a device",
             description="Establish trust with a device. Returns a TrustedClientResponse with an id that can be used for future logins",
             responses={
@@ -91,7 +91,7 @@ public class TrustedAuthResource {
 
     @POST
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags=API_TAG_DEVICE,
+            tags=API_TAG_DEVICES,
             summary="Login as a trusted client",
             description="Login as a trusted client. Starts a new API session",
             responses={
@@ -115,7 +115,7 @@ public class TrustedAuthResource {
 
     @DELETE @Path(EP_DELETE+"/{device}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags=API_TAG_DEVICE,
+            tags=API_TAG_DEVICES,
             summary="Remove trust from a trusted client",
             description="Remove trust from a trusted client",
             parameters=@Parameter(name="device", description="uuid of the device"),

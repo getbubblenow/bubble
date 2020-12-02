@@ -12,6 +12,8 @@ import bubble.model.account.Account;
 import bubble.model.bill.Promotion;
 import bubble.model.cloud.CloudService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -23,10 +25,13 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import static bubble.ApiConstants.API_TAG_PAYMENT;
 import static bubble.ApiConstants.PROMOTIONS_ENDPOINT;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_NOT_FOUND;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.util.string.LocaleUtil.currencyForLocale;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
@@ -44,6 +49,12 @@ public class PromotionsResource {
     @Getter(lazy=true) private final Account firstAdmin = accountDAO.getFirstAdmin();
 
     @GET
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_PAYMENT,
+            summary="List all promotions",
+            description="List all promotions",
+            responses=@ApiResponse(responseCode=SC_OK, description="a JSON array of Promotion objects")
+    )
     public Response listPromos(@Context ContainerRequest ctx,
                                @QueryParam("currency") String currency,
                                @QueryParam("code") String code) {
@@ -56,7 +67,16 @@ public class PromotionsResource {
     }
 
     @GET @Path("/{id}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_PAYMENT,
+            summary="Find a promotion by ID",
+            description="Find a promotion by ID",
+            parameters=@Parameter(name="id", description="UUID or name of promotion"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a Promotion object"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="no promotion found for ID given")
+            }
+    )
     public Response findPromo(@Context ContainerRequest ctx,
                               @PathParam("id") String id) {
         final Account caller = userPrincipal(ctx);
@@ -68,7 +88,14 @@ public class PromotionsResource {
     }
 
     @PUT
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_PAYMENT,
+            summary="Create a promotion",
+            description="Create a promotion. Must be admin.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="the Promotion that was created")
+            }
+    )
     public Response createPromo(@Context ContainerRequest ctx,
                                 Promotion request) {
 
@@ -87,7 +114,16 @@ public class PromotionsResource {
     }
 
     @POST @Path("/{id}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_PAYMENT,
+            summary="Update a promotion by ID",
+            description="Update a promotion by ID",
+            parameters=@Parameter(name="id", description="UUID or name of promotion"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="the updated Promotion object"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="no promotion found for ID given")
+            }
+    )
     public Response updatePromo(@Context ContainerRequest ctx,
                                  @PathParam("id") String id,
                                  Promotion request) {
@@ -102,7 +138,16 @@ public class PromotionsResource {
     }
 
     @DELETE @Path("/{id}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_PAYMENT,
+            summary="Delete a promotion by ID",
+            description="Delete a promotion by ID",
+            parameters=@Parameter(name="id", description="UUID or name of promotion"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="an empty JSON object is returned upon successful deletion"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="no promotion found for ID given")
+            }
+    )
     public Response deletePromo(@Context ContainerRequest ctx,
                                  @PathParam("id") String id) {
 

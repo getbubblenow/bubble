@@ -847,9 +847,7 @@ public class AuthResource {
             description="Flush authenticator tokens. The next operation that requires TOTP auth will require the user to re-authenticate.",
             responses={
                     @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success",
-                            content=@Content(mediaType=APPLICATION_JSON, examples={
-                                    @ExampleObject(name="returns an empty JSON object", value="{}")
-                            })),
+                            content=@Content(mediaType=APPLICATION_JSON, examples=@ExampleObject(name="returns an empty JSON object", value="{}"))),
                     @ApiResponse(responseCode=SC_INVALID, description="a validation error occurred, for example the token might be invalid")
             }
     )

@@ -17,6 +17,10 @@ import bubble.resources.account.AccountOwnedTemplateResource;
 import bubble.resources.stream.AppAssetsResource;
 import bubble.server.BubbleConfiguration;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -29,6 +33,7 @@ import javax.ws.rs.core.Response;
 import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
@@ -66,7 +71,17 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
     }
 
     @DELETE @Path("/{id}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_AUTH,
+            summary="Delete Bubble app",
+            description="Delete Bubble app",
+            parameters=@Parameter(name="id", description="UUID or name of the app"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success",
+                            content=@Content(mediaType=APPLICATION_JSON, examples=@ExampleObject(name="returns an empty JSON object", value="{}"))),
+                    @ApiResponse(responseCode=SC_INVALID, description="a validation error occurred, for example the token might be invalid")
+            }
+    )
     @Override public Response delete(@Context Request req,
                                      @Context ContainerRequest ctx,
                                      @PathParam("id") String id) {
@@ -81,7 +96,13 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
     }
 
     @POST @Path("/{id}"+EP_ENABLE)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_AUTH,
+            summary="Enable Bubble app",
+            description="Enable Bubble app",
+            parameters=@Parameter(name="id", description="UUID or name of the app"),
+            responses=@ApiResponse(responseCode=SC_OK, description="App successfully enabled")
+    )
     public Response enable(@Context ContainerRequest ctx,
                            @PathParam("id") String id) {
         if (isReadOnly(ctx)) return forbidden();
@@ -91,7 +112,13 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
     }
 
     @POST @Path("/{id}"+EP_DISABLE)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_AUTH,
+            summary="Disable Bubble app",
+            description="Disable Bubble app",
+            parameters=@Parameter(name="id", description="UUID or name of the app"),
+            responses=@ApiResponse(responseCode=SC_OK, description="App successfully disabled")
+    )
     public Response disable(@Context ContainerRequest ctx,
                             @PathParam("id") String id) {
         if (isReadOnly(ctx)) return forbidden();
