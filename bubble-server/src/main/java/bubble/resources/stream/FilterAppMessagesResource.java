@@ -8,6 +8,9 @@ import bubble.dao.app.AppMessageDAO;
 import bubble.model.account.Account;
 import bubble.model.app.AppMessage;
 import bubble.model.app.BubbleApp;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
@@ -22,10 +25,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import static bubble.ApiConstants.API_TAG_APP_RUNTIME;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.cobbzilla.util.http.HttpContentTypes.*;
+import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpContentTypes.CONTENT_TYPE_ANY;
 import static org.cobbzilla.util.http.HttpSchemes.isHttpOrHttps;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_NOT_FOUND;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -49,6 +56,18 @@ public class FilterAppMessagesResource {
 
     @GET @Path("/{locale}/find/{filter}")
     @Produces(APPLICATION_JSON)
+    @Operation(tags=API_TAG_APP_RUNTIME,
+            summary="Find matching message for an app",
+            description="Find messages for an app that match a filter. The `filter` param can be a comma-separated list of keys to return messages for, or can start with \"prefix:\" to indicate to return all messages whose keys have this prefix. Return an AppMessage object with the `messages` field containing the matched messages",
+            parameters={
+                @Parameter(name="locale", description="desired locale"),
+                @Parameter(name="filter", description="only return messages matching this filter")
+            },
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="an AppMessage object with the `messages` field containing the matched messages"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="device not found")
+            }
+    )
     public AppMessage find(@Context ContainerRequest ctx,
                            @PathParam("locale") String locale,
                            @PathParam("filter") String filter) {
@@ -66,6 +85,17 @@ public class FilterAppMessagesResource {
 
     @GET @Path("/{locale}/link/{link}")
     @Produces(CONTENT_TYPE_ANY)
+    @Operation(tags=API_TAG_APP_RUNTIME,
+            summary="Load a link and return the data",
+            description="Load a link (from a message) and return the data. You cannot use this to load any link, only links specified by message keys for the app",
+            parameters={
+                    @Parameter(name="locale", description="desired locale"),
+                    @Parameter(name="link", description="the name of the message key containing the link")
+            },
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="the data contained by the link")
+            }
+    )
     public Response loadLink(@Context ContainerRequest ctx,
                              @PathParam("locale") String locale,
                              @PathParam("link") String link) {
