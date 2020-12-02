@@ -12,6 +12,9 @@ import bubble.model.account.Account;
 import bubble.model.app.*;
 import bubble.model.device.Device;
 import bubble.rule.AppRuleDriver;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
@@ -28,6 +31,8 @@ import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_NOT_FOUND;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -62,6 +67,12 @@ public class FilterDataResource {
     }
 
     @GET @Path(EP_READ)
+    @Operation(tags=API_TAG_APP_RUNTIME,
+            summary="app runtime: read data",
+            description="Read app-specific data. If `value` is specified, only return data that matches that value. Otherwise return all data. The `format` param determines what to return. Formats are: `key` (array of key names), `value` (array of values), `key_value` (map of key->value), or `full` (array of AppData objects). The default format is `key`",
+            parameters=@Parameter(name="format", description="what to return. Formats are: `key` (default, array of key names), `value` (array of values), `key_value` (map of key->value), or `full` (array of AppData objects)"),
+            responses=@ApiResponse(responseCode=SC_OK, description="type depends on `format`")
+    )
     public Response readData(@Context Request req,
                              @Context ContainerRequest ctx,
                              @QueryParam("format") AppDataFormat format,
@@ -81,6 +92,11 @@ public class FilterDataResource {
     }
 
     @POST @Path(EP_WRITE)
+    @Operation(tags=API_TAG_APP_RUNTIME,
+            summary="app runtime: write data",
+            description="Write app-specific data.",
+            responses=@ApiResponse(responseCode=SC_OK, description="the AppData object that was written")
+    )
     public Response writeData(@Context Request req,
                               @Context ContainerRequest ctx,
                               AppData data) {
@@ -89,6 +105,15 @@ public class FilterDataResource {
     }
 
     @GET @Path(EP_WRITE)
+    @Operation(tags=API_TAG_APP_RUNTIME,
+            summary="app runtime: write data then redirect",
+            description="Write app-specific data. If `redirectLocation` param is set, return an HTTP redirect to that URL",
+            parameters={
+                    @Parameter(name=Q_DATA, description="the AppData object in JSON format", required=true),
+                    @Parameter(name=Q_REDIRECT, description="the URL to redirect to")
+            },
+            responses=@ApiResponse(responseCode=SC_OK, description="the AppData object that was written, or an HTTP redirect")
+    )
     public Response writeData(@Context Request req,
                               @Context ContainerRequest ctx,
                               @QueryParam(Q_DATA) String dataJson,
@@ -132,6 +157,15 @@ public class FilterDataResource {
     }
 
     @GET @Path(EP_READ+"/rule/{id}")
+    @Operation(tags=API_TAG_APP_RUNTIME,
+            summary="app runtime: read rule data",
+            description="Read rule data. ",
+            parameters=@Parameter(name="id", description="the ID of the data to read", required=true),
+            responses={
+                @ApiResponse(responseCode=SC_OK, description="some object that was read"),
+                @ApiResponse(responseCode=SC_NOT_FOUND, description="no object found with the given id")
+            }
+    )
     public Response readRuleData(@Context Request req,
                                  @Context ContainerRequest ctx,
                                  @PathParam("id") String id) {

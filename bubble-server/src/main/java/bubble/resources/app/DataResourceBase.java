@@ -15,6 +15,9 @@ import bubble.model.app.BubbleApp;
 import bubble.model.device.Device;
 import bubble.resources.account.AccountOwnedTemplateResource;
 import bubble.server.BubbleConfiguration;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -28,6 +31,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 import static bubble.ApiConstants.*;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 
@@ -65,6 +69,12 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
     }
 
     @POST @Path("/{id}"+EP_ENABLE)
+    @Operation(tags=API_TAG_APPS,
+            summary="enable AppData",
+            description="Mark AppData as enabled",
+            parameters=@Parameter(name="id", description="The key of the data to enable", required=true),
+            responses=@ApiResponse(responseCode=SC_OK, description="the updated AppData")
+    )
     public Response enable(@Context ContainerRequest ctx,
                            @PathParam("id") String key) {
         if (isReadOnly(ctx)) return forbidden();
@@ -76,6 +86,12 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
     }
 
     @POST @Path("/{id}"+EP_DISABLE)
+    @Operation(tags=API_TAG_APPS,
+            summary="disable AppData",
+            description="Mark AppData as disabled",
+            parameters=@Parameter(name="id", description="The key of the data to disable", required=true),
+            responses=@ApiResponse(responseCode=SC_OK, description="the updated AppData")
+    )
     public Response disable(@Context ContainerRequest ctx,
                             @PathParam("id") String key) {
         if (isReadOnly(ctx)) return forbidden();
@@ -87,6 +103,15 @@ public abstract class DataResourceBase extends AccountOwnedTemplateResource<AppD
     }
 
     @POST @Path("/{id}"+EP_ACTIONS+"/{action}")
+    @Operation(tags=API_TAG_APPS,
+            summary="invoke AppData action",
+            description="Invoke AppData action. Standard actions are: `enable`, `disable, `delete`",
+            parameters={
+                    @Parameter(name="id", description="The key of the data to disable", required=true),
+                    @Parameter(name="action", description="The action to take. Standard actions are: `enable`, `disable, `delete`", required=true),
+            },
+            responses=@ApiResponse(responseCode=SC_OK, description="the updated AppData")
+    )
     public Response takeAction(@Context Request req,
                                @Context ContainerRequest ctx,
                                @PathParam("id") String id,

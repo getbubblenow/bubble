@@ -33,6 +33,8 @@ import bubble.service.stream.ConnectionCheckResponse;
 import bubble.service.stream.StandardRuleEngineService;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -70,6 +72,7 @@ import static org.cobbzilla.util.collection.ArrayUtil.arrayToString;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpContentTypes.TEXT_PLAIN;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.util.http.HttpUtil.applyRegexToUrl;
 import static org.cobbzilla.util.http.HttpUtil.chaseRedirects;
 import static org.cobbzilla.util.json.JsonUtil.*;
@@ -157,6 +160,11 @@ public class FilterHttpResource {
     @POST @Path(EP_CHECK)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
+    @Operation(tags=API_TAG_MITMPROXY,
+            summary="mitmproxy: Check a connection",
+            description="Called by mitmproxy at the start of the TLS handshake, determines how Bubble will handle the connection. Caller must be from localhost.",
+            responses=@ApiResponse(responseCode=SC_OK, description="a ConnectionCheckResponse value")
+    )
     public Response checkConnection(@Context Request req,
                                     @Context ContainerRequest request,
                                     FilterConnCheckRequest connCheckRequest) {
@@ -274,6 +282,12 @@ public class FilterHttpResource {
     @POST @Path(EP_MATCHERS+"/{requestId}")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
+    @Operation(tags=API_TAG_MITMPROXY,
+            summary="mitmproxy: Determine matchers",
+            description="Called by mitmproxy after the request has been received but before the response. The matchers will determine which rules (from which apps) will apply to the request.",
+            parameters=@Parameter(name="requestId", description="A unique identifier for this request", required=true),
+            responses=@ApiResponse(responseCode=SC_OK, description="a FilterMatchersResponse object")
+    )
     public Response selectMatchers(@Context Request req,
                                    @Context ContainerRequest request,
                                    @PathParam("requestId") String requestId,
@@ -446,7 +460,12 @@ public class FilterHttpResource {
 
     @DELETE
     @Produces(APPLICATION_JSON)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_MITMPROXY, API_TAG_DEVICES},
+            summary="Flush caches",
+            description="Flushes caches of: connection decisions, matchers and rules",
+            responses=@ApiResponse(responseCode=SC_OK, description="a JSON object showing what was flushed")
+    )
     public Response flushCaches(@Context ContainerRequest request) {
         final Account caller = userPrincipal(request);
         if (!caller.admin()) return forbidden();
@@ -465,7 +484,12 @@ public class FilterHttpResource {
 
     @DELETE @Path(EP_MATCHERS)
     @Produces(APPLICATION_JSON)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_MITMPROXY, API_TAG_DEVICES},
+            summary="Flush matchers",
+            description="Flushes matchers only",
+            responses=@ApiResponse(responseCode=SC_OK, description="an integer representing how many cache entries were flushed")
+    )
     public Response flushMatchers(@Context ContainerRequest request) {
         final Account caller = userPrincipal(request);
         if (!caller.admin()) return forbidden();
@@ -475,6 +499,18 @@ public class FilterHttpResource {
     @POST @Path(EP_APPLY+"/{requestId}")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.WILDCARD)
+    @Operation(tags=API_TAG_MITMPROXY,
+            summary="mitmproxy: Filter response",
+            description="Called by mitmproxy while reading the response. As mitmproxy reads chunks of the response, it sends the bytes here for filtering, then relays the response to the device. The `encoding`, `type`, and `length` params are optional and are only used on the first call. When mitmproxy reaches the end of the response, it sends the `last` param with a value of `true` to indicate that no more data is coming. This allows Bubble to flush any caches and return any response data that might still be waiting.",
+            parameters={
+                @Parameter(name="requestId", description="the unique identifier for the request", required=true),
+                @Parameter(name="encoding", description="the Content-Encoding of the data"),
+                @Parameter(name="type", description="the Content-Type of the data"),
+                @Parameter(name="length", description="the Content-Length of the data"),
+                @Parameter(name="last", description="true if this is the last chunk of bytes mitmproxy will be sending, false if there are more chunks still to send"),
+            },
+            responses=@ApiResponse(responseCode=SC_OK, description="bytes of the response")
+    )
     public Response filterHttp(@Context Request req,
                                @Context ContainerRequest request,
                                @PathParam("requestId") String requestId,
@@ -654,6 +690,12 @@ public class FilterHttpResource {
 
     @GET @Path(EP_STATUS+"/{requestId}")
     @Produces(APPLICATION_JSON)
+    @Operation(tags=API_TAG_APP_RUNTIME,
+            summary="app runtime: Get a BlockStatsSummary for the current request",
+            description="Get a BlockStatsSummary for the current request",
+            parameters=@Parameter(name="requestId", description="The unique `requestId` for the request", required=true),
+            responses=@ApiResponse(responseCode=SC_OK, description="a BlockStatsSummary object")
+    )
     public Response getRequestStatus(@Context Request req,
                                      @Context ContainerRequest ctx,
                                      @PathParam("requestId") String requestId) {
@@ -665,6 +707,12 @@ public class FilterHttpResource {
 
     @GET @Path(EP_FLEX_ROUTERS+"/{fqdn}")
     @Produces(APPLICATION_JSON)
+    @Operation(tags=API_TAG_MITMPROXY,
+            summary="mitmproxy: Get a flex router",
+            description="Called by mitmproxty when a flex router is required. May return a FlexRouter object or, if no routers are available, a FlexRouterInfo object whose `errorHtml` property contains instructions on what to do next.",
+            parameters=@Parameter(name="fqdn", description="The hostname that requires a flex router", required=true),
+            responses=@ApiResponse(responseCode=SC_OK, description="a FlexRouter object or a FlexRouterInfo object whose `errorHtml` property contains instructions on what to do next.")
+    )
     public Response getFlexRouter(@Context Request req,
                                   @Context ContainerRequest ctx,
                                   @PathParam("fqdn") String fqdn) {
@@ -695,6 +743,12 @@ public class FilterHttpResource {
 
     @POST @Path(EP_LOGS+"/{requestId}")
     @Produces(APPLICATION_JSON)
+    @Operation(tags=API_TAG_APP_RUNTIME,
+            summary="app runtime: write to log file",
+            description="Useful when developing and debugging apps, your app can write to the server logfile using this API call",
+            parameters=@Parameter(name="requestId", description="The unique `requestId` for the request", required=true),
+            responses=@ApiResponse(responseCode=SC_OK, description="empty JSON object indicates success")
+    )
     public Response requestLog(@Context Request req,
                                @Context ContainerRequest ctx,
                                @PathParam("requestId") String requestId,
@@ -710,6 +764,12 @@ public class FilterHttpResource {
     @POST @Path(EP_FOLLOW+"/{requestId}")
     @Consumes(APPLICATION_JSON)
     @Produces(TEXT_PLAIN)
+    @Operation(tags=API_TAG_APP_RUNTIME,
+            summary="app runtime: chase redirects",
+            description="Apps can request that the Bubble server chase down redirects to find the real link. Bubble can then cache these so we avoid chasing the same link more than once.",
+            parameters=@Parameter(name="requestId", description="The unique `requestId` for the request", required=true),
+            responses=@ApiResponse(responseCode=SC_OK, description="a String representing the real URL to use")
+    )
     public Response followLink(@Context Request req,
                                @Context ContainerRequest ctx,
                                @PathParam("requestId") String requestId,
@@ -737,6 +797,12 @@ public class FilterHttpResource {
     @POST @Path(EP_FOLLOW_AND_APPLY_REGEX+"/{requestId}")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
+    @Operation(tags=API_TAG_APP_RUNTIME,
+            summary="app runtime: chase redirect then apply regex",
+            description="Some redirects land us on a page whose URL is not what we want (it is ugly in some way), but whose nicer URL is within the page itself. This method can follow redirects and apply a regex and determined by the FollowThenApplyRegex object in the request",
+            parameters=@Parameter(name="requestId", description="The unique `requestId` for the request", required=true),
+            responses=@ApiResponse(responseCode=SC_OK, description="a String representing the real URL to use")
+    )
     public Response followLinkThenApplyRegex(@Context Request req,
                                              @Context ContainerRequest ctx,
                                              @PathParam("requestId") String requestId,

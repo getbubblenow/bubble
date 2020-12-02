@@ -63,7 +63,7 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
             tags=API_TAG_APPS,
             summary="Enable site",
             description="Enable site",
-            parameters=@Parameter(name="id", description="UUID or name of site"),
+            parameters=@Parameter(name="id", description="UUID or name of site", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="Site successfully enabled")
     )
     public Response enable(@Context ContainerRequest ctx,
@@ -79,7 +79,7 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
             tags=API_TAG_APPS,
             summary="Disable site",
             description="Disable site",
-            parameters=@Parameter(name="id", description="UUID or name of site"),
+            parameters=@Parameter(name="id", description="UUID or name of site", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="Site successfully disabled")
     )
     public Response disable(@Context ContainerRequest ctx,
@@ -112,8 +112,8 @@ public class AppSitesResource extends AccountOwnedTemplateResource<AppSite, AppS
             summary="Search data view for site data",
             description="Search data view for site data. This uses the AppDataDriver.",
             parameters={
-                    @Parameter(name="id", description="UUID or name of site"),
-                    @Parameter(name="view", description="name of AppDataView to use")
+                    @Parameter(name="id", description="UUID or name of site", required=true),
+                    @Parameter(name="view", description="name of AppDataView to use", required=true)
             },
             responses=@ApiResponse(responseCode=SC_OK, description="SearchResults object with results")
     )

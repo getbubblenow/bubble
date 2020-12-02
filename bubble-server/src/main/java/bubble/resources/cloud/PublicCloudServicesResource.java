@@ -9,8 +9,6 @@ import bubble.dao.cloud.CloudServiceDAO;
 import bubble.model.account.Account;
 import bubble.model.cloud.CloudService;
 import bubble.resources.account.AccountOwnedTemplateResource;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.stereotype.Service;
@@ -25,7 +23,6 @@ import java.util.List;
 import static bubble.ApiConstants.CLOUDS_ENDPOINT;
 import static bubble.ApiConstants.EP_DATA;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
-import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Path(CLOUDS_ENDPOINT)
 @Service @Slf4j
@@ -34,7 +31,6 @@ public class PublicCloudServicesResource extends AccountOwnedTemplateResource<Cl
     public PublicCloudServicesResource() { super(null); }
 
     @Path("/{id}"+EP_DATA)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
     public CloudServiceDataResource getData(@Context ContainerRequest ctx,
                                             @PathParam("id") String id) {
         final Account caller = userPrincipal(ctx);

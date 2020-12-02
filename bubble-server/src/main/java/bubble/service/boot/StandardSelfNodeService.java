@@ -73,9 +73,12 @@ public class StandardSelfNodeService implements SelfNodeService {
     public static final File SAGE_KEY_FILE = new File(HOME_DIR, SAGE_KEY_JSON);
     public static final long MIN_SAGE_KEY_TTL = MINUTES.toMillis(5);
 
-    private static final String REDIS_LOG_FLAG_KEY = "bubble_server_logs_enabled";
-    private static final int TTL_LOG_FLAG_NODE = (int) DAYS.toSeconds(7);
-    private static final int TTL_LOG_FLAG_SAGE = (int) DAYS.toSeconds(30);
+    public static final String REDIS_LOG_FLAG_KEY = "bubble_server_logs_enabled";
+    public static final int TTL_LOG_FLAG_NODE = (int) DAYS.toSeconds(7);
+
+    public static final int MAX_LOG_TTL_DAYS  = 30;
+    public static final int MAX_LOG_TTL       = (int) DAYS.toSeconds(MAX_LOG_TTL_DAYS);
+    public static final int TTL_LOG_FLAG_SAGE = MAX_LOG_TTL;
 
     @Autowired private BubbleNodeDAO nodeDAO;
     @Autowired private BubbleNodeKeyDAO nodeKeyDAO;
@@ -466,8 +469,8 @@ public class StandardSelfNodeService implements SelfNodeService {
 
     @Override public void setLogFlag(final boolean logFlag, @NonNull final Optional<Integer> ttlInSeconds) {
         if (logFlag) {
-            getNodeConfig().set_plaintext(REDIS_LOG_FLAG_KEY, "true", EX,
-                                          ttlInSeconds.orElse(isSelfSage() ? TTL_LOG_FLAG_SAGE : TTL_LOG_FLAG_NODE));
+            final int ttl = Math.min(ttlInSeconds.orElse(isSelfSage() ? TTL_LOG_FLAG_SAGE : TTL_LOG_FLAG_NODE), MAX_LOG_TTL);
+            getNodeConfig().set_plaintext(REDIS_LOG_FLAG_KEY, "true", EX, ttl);
         } else {
             // just (try to) remove the flag
             getNodeConfig().del(REDIS_LOG_FLAG_KEY);

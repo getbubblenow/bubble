@@ -23,6 +23,8 @@ import static org.cobbzilla.util.io.FileUtil.toFileOrDie;
 @Service @Slf4j
 public class NodeManagerService {
 
+    public static final int NODEMANAGER_PASSWORD_MIN_LENGTH = 10;
+
     public static final File NODEMANAGER_PASSWORD_FILE = new File("/home/bubble/.nodemanager_pass");
 
     @Autowired private BubbleConfiguration configuration;

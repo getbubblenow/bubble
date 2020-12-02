@@ -8,8 +8,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.reflect.OpenApiSchema;
 
-@NoArgsConstructor @Accessors(chain=true)
+@NoArgsConstructor @Accessors(chain=true) @OpenApiSchema
 public class StorageListing {
 
     @Getter @Setter private String[] keys;

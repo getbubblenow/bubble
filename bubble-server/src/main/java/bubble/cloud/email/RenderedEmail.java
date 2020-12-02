@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.mail.SimpleEmailMessage;
-import org.cobbzilla.wizard.model.OpenApiSchema;
+import org.cobbzilla.util.reflect.OpenApiSchema;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECField;
 
 import java.util.Map;

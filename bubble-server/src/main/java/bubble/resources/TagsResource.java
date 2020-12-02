@@ -24,6 +24,7 @@ import javax.ws.rs.core.Response;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
@@ -44,6 +45,7 @@ public class TagsResource {
 
     @POST @Path("/{name}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_UTILITY,
             summary="Set a tag",
             description="Set a tag",
             parameters=@Parameter(name="name", description="name of the tag"),

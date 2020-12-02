@@ -7,6 +7,7 @@ package bubble.resources.cloud;
 import bubble.model.account.Account;
 import bubble.service.packer.PackerService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.MapBuilder;
@@ -21,7 +22,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import static bubble.ApiConstants.API_TAG_ACTIVATION;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
@@ -40,7 +43,15 @@ public class PackerResource {
     @Autowired private PackerService packerService;
 
     @GET
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_ACTIVATION,
+            summary="List status for all packer jobs",
+            description="List status for all packer jobs. Must be admin. Returns a JSON object with two properties: `"+STATUS_RUNNING+"` is an array of PackerJobSummary objects. `"+STATUS_COMPLETED+"`, is JSON object whose properties are compute clouds, the value of each being an array of PackerImages.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="status JSON object"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not admin")
+            }
+    )
     public Response listAllStatus(@Context Request req,
                                   @Context ContainerRequest ctx) {
         if (packerNotAllowedForUser(ctx)) return forbidden();
@@ -51,7 +62,15 @@ public class PackerResource {
     }
 
     @GET @Path(STATUS_RUNNING)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_ACTIVATION,
+            summary="List status for running packer jobs",
+            description="List status for running packer jobs. Must be admin. Returns an array of PackerJobSummary objects",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="PackerJobSummary object"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not admin")
+            }
+    )
     public Response listRunningBuilds(@Context Request req,
                                       @Context ContainerRequest ctx) {
         if (packerNotAllowedForUser(ctx)) return forbidden();
@@ -59,7 +78,15 @@ public class PackerResource {
     }
 
     @GET @Path(STATUS_COMPLETED)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_ACTIVATION,
+            summary="List completed packer jobs",
+            description="List completed packer jobs. Must be admin. Returns a JSON object whose properties are compute clouds, the value of each being an array of PackerImages.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="Map of Cloud -> PackerImage[]"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not admin")
+            }
+    )
     public Response listCompletedBuilds(@Context Request req,
                                         @Context ContainerRequest ctx) {
         if (packerNotAllowedForUser(ctx)) return forbidden();

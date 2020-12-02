@@ -301,6 +301,9 @@ public class ApiConstants {
     public static final String API_TAG_DEVICES = "devices";
     public static final String API_TAG_SEARCH = "search";
     public static final String API_TAG_BACKUP_RESTORE = "backup and restore";
+    public static final String API_TAG_CLOUDS = "clouds";
+    public static final String API_TAG_MITMPROXY = "mitmproxy";
+    public static final String API_TAG_APP_RUNTIME = "bubble app runtime";
     public static final String API_TAG_NODE = "node";
     public static final String API_TAG_NODE_MANAGER = "node manager";
     public static final String API_TAG_PAYMENT = "payment";

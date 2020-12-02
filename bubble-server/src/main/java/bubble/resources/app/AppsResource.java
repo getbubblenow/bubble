@@ -32,6 +32,8 @@ import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KE
 @Slf4j
 public class AppsResource extends AppsResourceBase {
 
+    public static final int DEFAULT_PAGE_SIZE = 10;
+
     public AppsResource(Account account) { super(account); }
 
     @Autowired private DeviceService deviceService;
@@ -42,8 +44,10 @@ public class AppsResource extends AppsResourceBase {
             summary="Search data view for app data",
             description="Search data view for app data",
             parameters={
-                    @Parameter(name="id", description="UUID or name of the app"),
-                    @Parameter(name="view", description="name of AppDataView to use")
+                    @Parameter(name="id", description="UUID or name of the app", required=true),
+                    @Parameter(name="view", description="name of AppDataView to use", required=true),
+                    @Parameter(name="n", description="page number of results to return, default is first page"),
+                    @Parameter(name="sz", description="number of results per page, default is "+DEFAULT_PAGE_SIZE)
             },
             responses={
                     @ApiResponse(responseCode=SC_OK, description="SearchResults object with results")
@@ -55,7 +59,7 @@ public class AppsResource extends AppsResourceBase {
                            @PathParam("view") String viewName,
                            @QueryParam("n") Integer pageNumber,
                            @QueryParam("sz") Integer pageSize) {
-        final SearchQuery query = new SearchQuery(pageNumber == null ? 1 : pageNumber, pageSize == null ? 10 : pageSize);
+        final SearchQuery query = new SearchQuery(pageNumber == null ? 1 : pageNumber, pageSize == null ? DEFAULT_PAGE_SIZE : pageSize);
         return search(req, ctx, id, viewName, query);
     }
 
@@ -65,8 +69,8 @@ public class AppsResource extends AppsResourceBase {
             summary="Search data view for app data",
             description="Search data view for app data. This uses the AppDataDriver.",
             parameters={
-                    @Parameter(name="id", description="UUID or name of the app"),
-                    @Parameter(name="view", description="name of AppDataView to use")
+                    @Parameter(name="id", description="UUID or name of the app", required=true),
+                    @Parameter(name="view", description="name of AppDataView to use", required=true)
             },
             responses={
                     @ApiResponse(responseCode=SC_OK, description="SearchResults object with results")

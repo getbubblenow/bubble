@@ -11,6 +11,10 @@ import bubble.model.account.Account;
 import bubble.model.bill.*;
 import bubble.model.cloud.CloudService;
 import bubble.resources.account.ReadOnlyAccountOwnedResource;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationEvictionPolicy;
 import org.cobbzilla.util.collection.ExpirationMap;
@@ -27,11 +31,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static bubble.ApiConstants.EP_PAY;
-import static bubble.ApiConstants.EP_PAYMENTS;
+import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.util.http.URIUtil.queryParams;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Slf4j
 public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
@@ -100,6 +105,16 @@ public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
     }
 
     @POST @Path("/{id}"+EP_PAY)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_PAYMENT,
+            summary="Pay a bill",
+            description="Pay a bill",
+            parameters=@Parameter(name="id", description="uuid of the Bill to pay"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="true"),
+                    @ApiResponse(responseCode=SC_INVALID, description="validation error, for example if the Bill has already been paid")
+            }
+    )
     public Response payBill(@Context ContainerRequest ctx,
                             @PathParam("id") String id,
                             AccountPaymentMethod paymentMethod) {

@@ -30,8 +30,7 @@ import static bubble.ApiConstants.PROMOTIONS_ENDPOINT;
 import static bubble.server.BubbleConfiguration.getDEFAULT_LOCALE;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
-import static org.cobbzilla.util.http.HttpStatusCodes.SC_NOT_FOUND;
-import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
+import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.util.string.LocaleUtil.currencyForLocale;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
@@ -52,7 +51,7 @@ public class PromotionsResource {
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             tags=API_TAG_PAYMENT,
             summary="List all promotions",
-            description="List all promotions",
+            description="List all promotions. If caller is admin, every defined promotion is returned. If caller is non-admin, then only promotions visible to the caller are returned",
             responses=@ApiResponse(responseCode=SC_OK, description="a JSON array of Promotion objects")
     )
     public Response listPromos(@Context ContainerRequest ctx,
@@ -71,10 +70,11 @@ public class PromotionsResource {
             tags=API_TAG_PAYMENT,
             summary="Find a promotion by ID",
             description="Find a promotion by ID",
-            parameters=@Parameter(name="id", description="UUID or name of promotion"),
+            parameters=@Parameter(name="id", description="UUID or name of promotion", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a Promotion object"),
-                    @ApiResponse(responseCode=SC_NOT_FOUND, description="no promotion found for ID given")
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="no promotion found for ID given"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not an admin")
             }
     )
     public Response findPromo(@Context ContainerRequest ctx,
@@ -93,7 +93,8 @@ public class PromotionsResource {
             summary="Create a promotion",
             description="Create a promotion. Must be admin.",
             responses={
-                    @ApiResponse(responseCode=SC_OK, description="the Promotion that was created")
+                    @ApiResponse(responseCode=SC_OK, description="the Promotion that was created"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not an admin")
             }
     )
     public Response createPromo(@Context ContainerRequest ctx,
@@ -118,10 +119,11 @@ public class PromotionsResource {
             tags=API_TAG_PAYMENT,
             summary="Update a promotion by ID",
             description="Update a promotion by ID",
-            parameters=@Parameter(name="id", description="UUID or name of promotion"),
+            parameters=@Parameter(name="id", description="UUID or name of promotion", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the updated Promotion object"),
-                    @ApiResponse(responseCode=SC_NOT_FOUND, description="no promotion found for ID given")
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="no promotion found for ID given"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not an admin")
             }
     )
     public Response updatePromo(@Context ContainerRequest ctx,
@@ -141,11 +143,12 @@ public class PromotionsResource {
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             tags=API_TAG_PAYMENT,
             summary="Delete a promotion by ID",
-            description="Delete a promotion by ID",
-            parameters=@Parameter(name="id", description="UUID or name of promotion"),
+            description="Delete a promotion by ID. Must be admin.",
+            parameters=@Parameter(name="id", description="UUID or name of promotion", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="an empty JSON object is returned upon successful deletion"),
-                    @ApiResponse(responseCode=SC_NOT_FOUND, description="no promotion found for ID given")
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="no promotion found for ID given"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not an admin")
             }
     )
     public Response deletePromo(@Context ContainerRequest ctx,

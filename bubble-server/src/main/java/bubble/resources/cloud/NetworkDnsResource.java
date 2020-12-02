@@ -12,6 +12,8 @@ import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.cobbzilla.util.dns.DnsRecord;
 import org.cobbzilla.util.dns.DnsRecordMatch;
@@ -26,6 +28,7 @@ import javax.ws.rs.core.Response;
 import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.dns.DnsType.A;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
@@ -36,9 +39,9 @@ public class NetworkDnsResource {
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleConfiguration configuration;
 
-    private Account account;
-    private BubbleDomain domain;
-    private BubbleNetwork network;
+    private final Account account;
+    private final BubbleDomain domain;
+    private final BubbleNetwork network;
 
     public NetworkDnsResource (Account account, BubbleDomain domain, BubbleNetwork network) {
         this.account = account;
@@ -47,14 +50,28 @@ public class NetworkDnsResource {
     }
 
     @GET
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="List DNS records",
+            description="List DNS records visible to the Bubble's DNS driver.",
+            responses=@ApiResponse(responseCode=SC_OK, description="array of DnsRecord objects")
+    )
     public Response listDns(@Context ContainerRequest ctx) {
         final DnsContext context = new DnsContext(ctx);
         return ok(context.dnsDriver.list());
     }
 
     @GET @Path(EP_FIND_DNS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Find DNS records",
+            description="Find DNS records that match the given type and/or name (which is a regex)",
+            parameters={
+                    @Parameter(name="type", description="Only return records with this DNS type"),
+                    @Parameter(name="name", description="Only return records whose name matches this regex")
+            },
+            responses=@ApiResponse(responseCode=SC_OK, description="array of DnsRecord objects")
+    )
     public Response findDns(@Context ContainerRequest ctx,
                             @QueryParam("type") DnsType type,
                             @QueryParam("name") String name) {
@@ -69,7 +86,16 @@ public class NetworkDnsResource {
     }
 
     @GET @Path(EP_DIG_DNS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Dig DNS records",
+            description="Use dig to find DNS records that match name (which is a regex) and type (optional). This is used for verification - when we publish new records to our DNS provider, we want to check another (neutral, system) DNS provider to see that they are visible there too. Then we can feel more comfortable handing out that hostname to other people, who should be able to resolve it.",
+            parameters={
+                    @Parameter(name="type", description="Only return records with this DNS type"),
+                    @Parameter(name="name", description="Only return records whose name matches this regex", required=true)
+            },
+            responses=@ApiResponse(responseCode=SC_OK, description="array of DnsRecord objects")
+    )
     public Response digDns(@Context ContainerRequest ctx,
                            @QueryParam("type") DnsType type,
                            @QueryParam("name") String name) {
@@ -84,7 +110,12 @@ public class NetworkDnsResource {
     }
 
     @POST @Path(EP_UPDATE_DNS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Update a DNS record",
+            description="Update a DNS record",
+            responses=@ApiResponse(responseCode=SC_OK, description="the updated DnsRecord object")
+    )
     public Response updateDns(@Context ContainerRequest ctx,
                               DnsRecord record) {
         final DnsContext context = new DnsContext(ctx, record);
@@ -92,7 +123,12 @@ public class NetworkDnsResource {
     }
 
     @POST @Path(EP_DELETE_DNS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Delete a DNS record",
+            description="Delete a DNS record",
+            responses=@ApiResponse(responseCode=SC_OK, description="the deleted DnsRecord object")
+    )
     public Response removeDns(@Context ContainerRequest ctx,
                               DnsRecord record) {
         final DnsContext context = new DnsContext(ctx, record);

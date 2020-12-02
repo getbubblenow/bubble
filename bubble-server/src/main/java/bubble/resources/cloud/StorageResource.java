@@ -12,6 +12,8 @@ import bubble.model.cloud.RekeyRequest;
 import bubble.model.cloud.StorageMetadata;
 import bubble.server.BubbleConfiguration;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ import static bubble.ApiConstants.*;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpContentTypes.*;
+import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.util.io.FileUtil.basename;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
@@ -37,8 +40,8 @@ import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KE
 @Slf4j
 public class StorageResource {
 
-    private Account account;
-    @Getter private CloudService cloud;
+    private final Account account;
+    @Getter private final CloudService cloud;
 
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleConfiguration configuration;
@@ -55,7 +58,17 @@ public class StorageResource {
 
     @GET @Path(EP_READ_METADATA+"/{key : .+}")
     @Produces(APPLICATION_JSON)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Read metadata for key from storage",
+            description="Read metadata for key from storage. Caller must own the underlying storage.",
+            parameters=@Parameter(name="key", description="key to read metadata from"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a StorageMetadata object"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller does not own the storage"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="key not found")
+            }
+    )
     public Response meta(@Context ContainerRequest ctx,
                          @PathParam("key") String key) {
         final Account caller = getCaller(ctx);
@@ -65,7 +78,17 @@ public class StorageResource {
 
     @GET @Path(EP_READ+"/{key : .+}")
     @Produces(CONTENT_TYPE_ANY)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Read from storage",
+            description="Read from storage. Caller must own the underlying storage.",
+            parameters=@Parameter(name="key", description="key to read from"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="response will be a stream of data. Content-Type is set based on the key suffix"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller does not own the storage"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="key not found")
+            }
+    )
     public Response read(@Context ContainerRequest ctx,
                          @PathParam("key") String key) {
         final Account caller = getCaller(ctx);
@@ -87,7 +110,17 @@ public class StorageResource {
 
     @GET @Path(EP_LIST+"/{key : .+}")
     @Produces(APPLICATION_JSON)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="List keys in storage matching a prefix",
+            description="List keys in storage matching a prefix. Caller must own the underlying storage. Returns a StorageListing object which contains the first page of results and an listingId that can be used to get more pages of results",
+            parameters=@Parameter(name="key", description="list keys with this prefix"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a StorageListing object"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller does not own the storage"),
+                    @ApiResponse(responseCode=SC_INVALID, description="an error occurred listing keys")
+            }
+    )
     public Response list(@Context ContainerRequest ctx,
                          @PathParam("key") String key) {
         final Account caller = getCaller(ctx);
@@ -101,7 +134,17 @@ public class StorageResource {
 
     @GET @Path(EP_LIST_NEXT+"/{id}")
     @Produces(APPLICATION_JSON)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="List more keys in storage matching a prefix",
+            description="List more keys in storage matching a prefix. Caller must own the underlying storage. Returns a StorageListing object which contains the first page of results and an listingId that can be used to get more pages of results",
+            parameters=@Parameter(name="id", description="the `listingId` from a `StorageListing` object from an initial listing"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a StorageListing object"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller does not own the storage"),
+                    @ApiResponse(responseCode=SC_INVALID, description="an error occurred listing keys")
+            }
+    )
     public Response listNext(@Context ContainerRequest ctx,
                              @PathParam("id") String id) {
         final Account caller = getCaller(ctx);
@@ -116,7 +159,21 @@ public class StorageResource {
     @POST @Path(EP_WRITE+"/{key : .+}")
     @Consumes(MULTIPART_FORM_DATA)
     @Produces(APPLICATION_JSON)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Write to storage",
+            description="Write to storage. Caller must own the underlying storage. Returns a StorageMetadata object for the data written.",
+            parameters={
+                @Parameter(name="key", description="write to this key", required=true),
+                @Parameter(name="sha256", description="SHA-256 sum of the data"),
+                @Parameter(name="file", description="stream of bytes to write to storage")
+            },
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a StorageMetadata object"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller does not own the storage"),
+                    @ApiResponse(responseCode=SC_INVALID, description="an error occurred writing to storage")
+            }
+    )
     public Response write(@Context ContainerRequest ctx,
                           @PathParam("key") String key,
                           @QueryParam("sha256") String sha256,
@@ -134,7 +191,17 @@ public class StorageResource {
 
     @DELETE @Path(EP_DELETE+"/{key : .+}")
     @Produces(APPLICATION_JSON)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Delete from storage",
+            description="Delete from storage. Caller must own the underlying storage. Returns a true upon successful deletion.",
+            parameters=@Parameter(name="key", description="delete this key and its data", required=true),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="true"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller does not own the storage"),
+                    @ApiResponse(responseCode=SC_INVALID, description="an error occurred deleting from storage")
+            }
+    )
     public Response delete(@Context ContainerRequest ctx,
                            @PathParam("key") String key) {
         final Account caller = getCaller(ctx);
@@ -149,7 +216,15 @@ public class StorageResource {
     @POST @Path(EP_REKEY)
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Re-key storage",
+            description="Re-key storage. Generates a new encryption key and re-encrypts all data stored with the new key. Caller must own the underlying storage. Returns a true upon successful re-key.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="true"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller does not own the storage")
+            }
+    )
     public Response rekey(@Context ContainerRequest ctx,
                           RekeyRequest request) {
         final Account caller = getCaller(ctx);

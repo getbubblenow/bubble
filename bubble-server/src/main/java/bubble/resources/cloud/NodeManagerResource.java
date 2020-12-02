@@ -12,6 +12,8 @@ import bubble.service.boot.NodeManagerService;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.notify.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.http.*;
@@ -36,10 +38,14 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import static bubble.ApiConstants.API_TAG_NODE_MANAGER;
+import static bubble.ApiConstants.EP_DISABLE;
 import static bubble.model.cloud.notify.NotificationType.hello_to_sage;
+import static bubble.service.boot.NodeManagerService.NODEMANAGER_PASSWORD_MIN_LENGTH;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.system.CommandShell.execScript;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -70,7 +76,17 @@ public class NodeManagerResource {
     @Autowired private NotificationService notificationService;
 
     @POST @Path("/set_password")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_NODE_MANAGER,
+            summary="Set nodemanager password",
+            description="Set nodemanager password. Must be admin. Can only be performed on the current node.",
+            parameters=@Parameter(name="notify", description="If true, notify the sage of the name change. Default is true"),
+            responses={
+                @ApiResponse(responseCode=SC_OK, description="an empty JSON object indicates success"),
+                @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not admin"),
+                @ApiResponse(responseCode=SC_INVALID, description="validation failure. password may have been empty or too short (min "+NODEMANAGER_PASSWORD_MIN_LENGTH+" chars), or node specified is not the current node")
+            }
+    )
     public Response setPassword (@Context ContainerRequest ctx,
                                  LoginRequest request,
                                  @QueryParam("notify") Boolean notify) {
@@ -79,7 +95,7 @@ public class NodeManagerResource {
 
         final String password = request.getPassword();
         if (empty(password)) return invalid("err.password.required");
-        if (password.length() < 10) return invalid("err.password.tooShort");
+        if (password.length() < NODEMANAGER_PASSWORD_MIN_LENGTH) return invalid("err.password.tooShort");
 
         if (!node.getUuid().equals(selfNodeService.getThisNode().getUuid())) {
             return invalid("err.nodemanager.nodeNotLocal");
@@ -107,8 +123,17 @@ public class NodeManagerResource {
         return ok_empty();
     }
 
-    @POST @Path("/disable")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @POST @Path(EP_DISABLE)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_NODE_MANAGER,
+            summary="Disable nodemanager",
+            description="Disable nodemanager. Must be admin. Can only be performed on the current node.",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="an empty JSON object indicates success"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not admin"),
+                    @ApiResponse(responseCode=SC_INVALID, description="node specified is not the current node")
+            }
+    )
     public Response disable (@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();
@@ -161,7 +186,17 @@ public class NodeManagerResource {
     }
 
     @GET @Path("/stats/{stat}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_NODE_MANAGER,
+            summary="Get stat from nodemanager",
+            description="Get stat from nodemanager. Must be admin or owner of node. Valid stats are: `uptime`, `mem`, `net`, `disk`",
+            parameters=@Parameter(name="stat", description="name of the stat. can be `uptime`, `mem`, `net` or `disk`"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a string representing the stat"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not admin or owner of node"),
+                    @ApiResponse(responseCode=SC_INVALID, description="error occurred calling nodemanager")
+            }
+    )
     public Response getStats (@Context ContainerRequest ctx,
                               @PathParam("stat") String stat) {
         final HttpRequestBean request = validateNodeManagerRequest(ctx, "stats/"+stat);
@@ -169,7 +204,17 @@ public class NodeManagerResource {
     }
 
     @POST @Path("/cmd/{command}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_NODE_MANAGER,
+            summary="Send command to nodemanager",
+            description="Send command to nodemanager. Must be admin or owner of node. The only valid command is `reboot`",
+            parameters=@Parameter(name="command", description="name of the command to send. only `reboot` is supported."),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a string representing the stat"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not admin or owner of node"),
+                    @ApiResponse(responseCode=SC_INVALID, description="error occurred calling nodemanager")
+            }
+    )
     public Response runCommand (@Context ContainerRequest ctx,
                                 @PathParam("command") String command) {
         final HttpRequestBean request = validateNodeManagerRequest(ctx, "cmd/"+command)
@@ -178,7 +223,20 @@ public class NodeManagerResource {
     }
 
     @POST @Path("/service/{service}/{action}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_NODE_MANAGER,
+            summary="Send service action to nodemanager",
+            description="Send service action to nodemanager. Must be admin or owner of node. Services are: `supervisor`, `bubble`, `mitm`, `nginx`, `postgresql`, `nodemanager`. Actions are dependent on the service: `supervisor` supports `reload` and `status` actions. `nodemanager` supports `start`, `restart` and `status`. All other services support `start`, `stop`, `restart` and `status`.",
+            parameters={
+                @Parameter(name="service", description="Name of the service. Service are: `supervisor`, `bubble`, `mitm`, `nginx`, `postgresql`, `nodemanager`"),
+                @Parameter(name="action", description="Action to perform. Actions are dependent on the service: `supervisor` supports `reload` and `status` actions. `nodemanager` supports `start`, `restart` and `status`. All other services support `start`, `stop`, `restart` and `status`.")
+            },
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a string representing the stat"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not admin or owner of node"),
+                    @ApiResponse(responseCode=SC_INVALID, description="error occurred calling nodemanager")
+            }
+    )
     public Response service (@Context ContainerRequest ctx,
                              @PathParam("service") String service,
                              @PathParam("action") String action) {
@@ -187,17 +245,24 @@ public class NodeManagerResource {
         return callNodeManager(request, "service");
     }
 
-    @POST @Path("/redis/{key}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
-    public Response readRedisKey (@Context ContainerRequest ctx,
-                                  @PathParam("key") String key) {
-        final HttpRequestBean request = validateNodeManagerRequest(ctx, "redis/"+key);
-        return callNodeManager(request, "redis");
-    }
-
     @POST @Path("/patch/file/{component}/{path : .+}")
     @Consumes(MULTIPART_FORM_DATA)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_NODE_MANAGER,
+            summary="Send a patch file to nodemanager",
+            description="Send a patch file to nodemanager. Must be admin or owner of node. The patch file is actually hosted here in the API, and the nodemanager is sent a URL where it can download it. `component` specifies where to apply the patch. Components are: `root`, `bubble`, `mitmproxy`. `path` specified where to apply the patch within the component.",
+            parameters={
+                    @Parameter(name="component", description="Name of the component to patch. Components are: `root`, `bubble`, `mitmproxy`"),
+                    @Parameter(name="path", description="Where to apply the patch within the component"),
+                    @Parameter(name="file", description="stream of bytes representing the patch"),
+                    @Parameter(name="name", description="name of the patch file. ignored, can be anything.")
+            },
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a string representing the stat"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not admin or owner of node"),
+                    @ApiResponse(responseCode=SC_INVALID, description="error occurred calling nodemanager")
+            }
+    )
     public Response patchFile (@Context ContainerRequest ctx,
                                @PathParam("component") String component,
                                @PathParam("path") String path,

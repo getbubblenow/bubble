@@ -138,7 +138,7 @@ public class StandardFlexRouterService extends SimpleDaemon implements FlexRoute
     private final Map<String, FlexRouterStatus> statusMap = new ConcurrentHashMap<>(DEFAULT_MAX_TUNNELS);
     private final Map<String, FlexRouterInfo> activeRouters = new ConcurrentHashMap<>(DEFAULT_MAX_TUNNELS);
 
-    private final int MAX_POLL_FAILURES = 3;
+    private static final int MAX_POLL_FAILURES = 3;
     private final Map<String, AtomicInteger> pollFailures = new ConcurrentHashMap<>(DEFAULT_MAX_TUNNELS);
 
     public FlexRouterStatus status(String uuid) {

@@ -72,10 +72,10 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
 
     @DELETE @Path("/{id}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags=API_TAG_AUTH,
+            tags=API_TAG_APPS,
             summary="Delete Bubble app",
             description="Delete Bubble app",
-            parameters=@Parameter(name="id", description="UUID or name of the app"),
+            parameters=@Parameter(name="id", description="UUID or name of the app", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success",
                             content=@Content(mediaType=APPLICATION_JSON, examples=@ExampleObject(name="returns an empty JSON object", value="{}"))),
@@ -97,10 +97,10 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
 
     @POST @Path("/{id}"+EP_ENABLE)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags=API_TAG_AUTH,
+            tags=API_TAG_APPS,
             summary="Enable Bubble app",
             description="Enable Bubble app",
-            parameters=@Parameter(name="id", description="UUID or name of the app"),
+            parameters=@Parameter(name="id", description="UUID or name of the app", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="App successfully enabled")
     )
     public Response enable(@Context ContainerRequest ctx,
@@ -113,10 +113,10 @@ public abstract class AppsResourceBase extends AccountOwnedTemplateResource<Bubb
 
     @POST @Path("/{id}"+EP_DISABLE)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags=API_TAG_AUTH,
+            tags=API_TAG_APPS,
             summary="Disable Bubble app",
             description="Disable Bubble app",
-            parameters=@Parameter(name="id", description="UUID or name of the app"),
+            parameters=@Parameter(name="id", description="UUID or name of the app", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="App successfully disabled")
     )
     public Response disable(@Context ContainerRequest ctx,

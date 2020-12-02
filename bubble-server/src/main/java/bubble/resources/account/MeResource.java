@@ -576,7 +576,12 @@ public class MeResource {
     }
 
     @POST @Path(EP_UPGRADE)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_UTILITY,
+            summary="Upgrade Bubble",
+            description="Upgrade Bubble. Must be admin. Starts the upgrade process.",
+            responses=@ApiResponse(responseCode=SC_OK, description="the current public system configs")
+    )
     public Response upgrade(@Context Request req,
                             @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);

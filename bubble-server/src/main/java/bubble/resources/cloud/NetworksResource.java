@@ -21,6 +21,8 @@ import bubble.resources.account.AccountOwnedResource;
 import bubble.service.boot.SelfNodeService;
 import bubble.service.cloud.GeoService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +40,7 @@ import java.util.stream.Collectors;
 import static bubble.ApiConstants.*;
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
 import static org.cobbzilla.util.daemon.ZillaRuntime.big;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
@@ -123,7 +126,18 @@ public class NetworksResource extends AccountOwnedResource<BubbleNetwork, Bubble
     }
 
     @GET @Path("/{id}"+EP_CLOSEST)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Find nearest regions for a given cloud service type",
+            description="Find nearest regions. If lat/lon are specified, we find the nearest regions to that lat/lon, otherwise attempt to discern caller's location using geo-location.",
+            parameters={
+                    @Parameter(name="id", description="UUID or name of the network"),
+                    @Parameter(name="type", description="the CloudServiceType to search for. usually `compute`"),
+                    @Parameter(name="lat", description="latitude. if specified, `lon` must also be provided"),
+                    @Parameter(name="lon", description="longitude. if specified, `lat` must also be provided")
+            },
+            responses=@ApiResponse(responseCode=SC_OK, description="the updated DnsRecord object")
+    )
     public Response findClosest(@Context Request req,
                                 @Context ContainerRequest ctx,
                                 @PathParam("id") String id,

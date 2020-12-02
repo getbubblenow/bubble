@@ -12,6 +12,7 @@ import bubble.service.cloud.StorageStreamService;
 import bubble.service.notify.InboundNotification;
 import bubble.service.notify.NotificationReceiverService;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.security.RsaMessage;
@@ -50,6 +51,10 @@ public class InboundNotifyResource {
     @Getter(lazy=true) private final Set<String> localIps = configuredIpsAndExternalIp();
 
     @POST
+    @Operation(tags=API_TAG_NODE,
+            summary="Receive notification",
+            description="Receive a notification from another node"
+    )
     public Response receiveNotification(@Context Request req,
                                         @Context ContainerRequest ctx,
                                         JsonNode jsonNode) {
@@ -117,6 +122,10 @@ public class InboundNotifyResource {
     }
 
     @GET @Path(EP_READ+"/{token}")
+    @Operation(tags=API_TAG_NODE,
+            summary="Read from storage",
+            description="Read from storage. Requires a read token."
+    )
     public Response readStorage(@Context Request req,
                                 @Context ContainerRequest ctx,
                                 @PathParam("token") String token) {

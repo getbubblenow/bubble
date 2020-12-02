@@ -7,6 +7,9 @@ package bubble.resources.stream;
 import bubble.dao.app.AppMessageDAO;
 import bubble.model.app.AppMessage;
 import bubble.model.app.BubbleApp;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.string.Base64;
 import org.cobbzilla.wizard.stream.DataUrlSendableResource;
@@ -23,12 +26,14 @@ import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+import static bubble.ApiConstants.API_TAG_APP_RUNTIME;
 import static org.cobbzilla.util.daemon.ZillaRuntime.CLASSPATH_PREFIX;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.TEXT_PLAIN;
 import static org.cobbzilla.util.http.HttpContentTypes.contentType;
 import static org.cobbzilla.util.http.HttpSchemes.isHttpOrHttps;
 import static org.cobbzilla.util.http.HttpStatusCodes.OK;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsBytesOrDie;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -50,6 +55,16 @@ public class AppAssetsResource {
 
     @GET @Path("/{assetId}")
     @Produces(MediaType.WILDCARD)
+    @Operation(tags=API_TAG_APP_RUNTIME,
+            summary="app runtime: read app resource",
+            description="Reads an app resource, for example a PNG image or something. Regarding the `raw` param: If true, bytes will be returned as-is. If false, bytes will be Base64-encoded",
+            parameters={
+                    @Parameter(name="assetId", description="The ID of the asset to read", required=true),
+                    @Parameter(name="locale", description="The desired locale", required=true),
+                    @Parameter(name="raw", description="If true, bytes will be returned as-is. If false, bytes will be Base64-encoded"),
+            },
+            responses=@ApiResponse(responseCode=SC_OK, description="asset data, raw bytes or Base64-encoded")
+    )
     public Response findAsset(@Context Request req,
                               @Context ContainerRequest request,
                               @PathParam("assetId") String assetId,

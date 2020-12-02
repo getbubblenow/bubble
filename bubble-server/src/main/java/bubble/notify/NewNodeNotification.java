@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.reflect.OpenApiSchema;
 
 import javax.persistence.Transient;
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ import static bubble.model.account.AccountContact.mask;
 import static java.util.UUID.randomUUID;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
-@NoArgsConstructor @Accessors(chain=true)
+@NoArgsConstructor @Accessors(chain=true) @OpenApiSchema
 public class NewNodeNotification {
 
     @Getter @Setter private String uuid = randomUUID().toString();

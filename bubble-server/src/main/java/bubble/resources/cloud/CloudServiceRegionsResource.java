@@ -15,6 +15,8 @@ import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.service.cloud.GeoService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
@@ -27,12 +29,13 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 
-import static bubble.ApiConstants.EP_CLOSEST;
-import static bubble.ApiConstants.getRemoteHost;
+import static bubble.ApiConstants.*;
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_NOT_FOUND;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
@@ -41,7 +44,7 @@ import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KE
 @Slf4j
 public class CloudServiceRegionsResource {
 
-    private Account account;
+    private final Account account;
 
     public CloudServiceRegionsResource(Account account) { this.account = account; }
 
@@ -51,7 +54,16 @@ public class CloudServiceRegionsResource {
     @Autowired private GeoService geoService;
 
     @GET
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="List cloud regions",
+            description="List cloud regions. If the `footprint` param is provided, then only regions within that footprint will be returned",
+            parameters=@Parameter(name="footprint", description="UUID or name of a BubbleFootprint to match"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a JSON array of CloudRegion objects"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="if footprint param was present and does not refer to a valid BubbleFootprint")
+            }
+    )
     public Response listRegions(@Context Request req,
                                 @Context ContainerRequest ctx,
                                 @QueryParam("footprint") String footprintId) {
@@ -69,7 +81,16 @@ public class CloudServiceRegionsResource {
     }
 
     @GET @Path(EP_CLOSEST)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="List nearest cloud regions",
+            description="List nearest cloud regions, using geo-location services. If the `footprint` param is provided, then only regions within that footprint will be returned",
+            parameters=@Parameter(name="footprint", description="UUID or name of a BubbleFootprint to match"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a JSON array of CloudRegionRelative objects, sorted by nearest first"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="if footprint param was present and does not refer to a valid BubbleFootprint")
+            }
+    )
     public Response listClosestRegions(@Context Request req,
                                        @Context ContainerRequest ctx,
                                        @QueryParam("footprint") String footprintId) {

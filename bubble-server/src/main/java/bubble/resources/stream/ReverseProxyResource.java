@@ -13,6 +13,7 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.device.DeviceService;
 import bubble.service.stream.StandardRuleEngineService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,7 @@ import static org.cobbzilla.util.http.HttpContentTypes.CONTENT_TYPE_ANY;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.userPrincipal;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Path(PROXY_ENDPOINT)
@@ -55,7 +57,12 @@ public class ReverseProxyResource {
     @GET @Path("/{path: .*}")
     @Consumes(CONTENT_TYPE_ANY)
     @Produces(CONTENT_TYPE_ANY)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_UTILITY,
+            summary="Reverse proxy",
+            description="Reverse proxy a URL, applying matchers/rules",
+            parameters=@Parameter(name="path", description="the URL to reverse proxy")
+    )
     public Response get(@Context Request req,
                         @Context ContainerRequest request,
                         @Context ContainerResponse response,

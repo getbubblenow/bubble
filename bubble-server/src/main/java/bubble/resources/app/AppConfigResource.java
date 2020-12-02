@@ -68,7 +68,7 @@ public class AppConfigResource {
             tags=API_TAG_APPS,
             summary="Get a specific config view for Bubble app",
             description="Get a specific config view for Bubble app. Returns a JSON object corresponding to the view",
-            parameters=@Parameter(name="view", description="config view name"),
+            parameters=@Parameter(name="view", description="config view name", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="a JSON object")
     )
     public Response getConfigView(@Context Request req,
@@ -124,9 +124,9 @@ public class AppConfigResource {
             summary="Take a config item action",
             description="Take a config item action",
             parameters={
-                    @Parameter(name="view", description="config view name"),
-                    @Parameter(name="action", description="action name"),
-                    @Parameter(name="id", description="item id")
+                    @Parameter(name="view", description="config view name", required=true),
+                    @Parameter(name="action", description="action name", required=true),
+                    @Parameter(name="id", description="item id", required=true)
             },
             responses=@ApiResponse(responseCode=SC_OK, description="a JSON object")
     )

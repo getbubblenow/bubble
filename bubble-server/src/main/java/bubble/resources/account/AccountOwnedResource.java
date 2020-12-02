@@ -211,7 +211,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
             tags=API_TAG_ACCOUNT_OBJECTS,
             summary="Update an existing object",
             description="Update an new object. For many types, the object will be created if it does not exist. If validation errors occur, status "+SC_INVALID+" is returned and the response will contain an array of errors. Within each error, the `messageTemplate` field refers to messages that can be localized using the /messages resource",
-            parameters=@Parameter(name="id", description="the UUID (or name, if allowed) of the object to update"),
+            parameters=@Parameter(name="id", description="the UUID (or name, if allowed) of the object to update", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the object that was updated"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="no object exists with the given id"),
@@ -246,7 +246,7 @@ public class AccountOwnedResource<E extends HasAccount, DAO extends AccountOwned
             tags=API_TAG_ACCOUNT_OBJECTS,
             summary="Delete an existing object",
             description="Delete an existing object",
-            parameters=@Parameter(name="id", description="the UUID (or name, if allowed) of the object to delete"),
+            parameters=@Parameter(name="id", description="the UUID (or name, if allowed) of the object to delete", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the object that was deleted"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="no object exists with the given id")

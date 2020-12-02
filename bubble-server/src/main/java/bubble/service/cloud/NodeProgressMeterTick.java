@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.reflect.OpenApiSchema;
 
 import java.util.regex.Pattern;
 
@@ -16,7 +17,7 @@ import static bubble.ApiConstants.enumFromString;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 
-@Accessors(chain=true)
+@Accessors(chain=true) @OpenApiSchema
 public class NodeProgressMeterTick {
 
     public enum TickMatchType {

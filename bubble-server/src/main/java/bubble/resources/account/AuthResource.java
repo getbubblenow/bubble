@@ -973,7 +973,7 @@ public class AuthResource {
             tags=API_TAG_AUTH,
             summary="Logout a user everywhere",
             description="Logout of the current session, or logout of all sessions everywhere if the `all` parameter is true.",
-            parameters=@Parameter(name="id", description="UUID or email of user to logout"),
+            parameters=@Parameter(name="id", description="UUID or email of user to logout", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success"),
                     @ApiResponse(responseCode=SC_INVALID, description="If there is no current session to log out of")

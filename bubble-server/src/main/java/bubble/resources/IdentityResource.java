@@ -43,7 +43,7 @@ public class IdentityResource {
 
     @Autowired private BubbleConfiguration configuration;
 
-    @GET
+    @GET @Operation(hidden=true)
     public Response identifyNothing(@Context Request req,
                                     @Context ContainerRequest ctx) { return ok_empty(); }
 
@@ -52,7 +52,7 @@ public class IdentityResource {
             tags=API_TAG_UTILITY,
             summary="Find what object(s) an ID belongs to. Useful when you have a UUID but don't know what kind of thing it refers to, if any.",
             description="Searches all model objects by ID. The id parameter is typically a UUID or name",
-            parameters=@Parameter(name="id", description="an identifier (typically UUID or name) to search for"),
+            parameters=@Parameter(name="id", description="an identifier (typically UUID or name) to search for", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="a JSON object where the property names are entity types, and a property's corresponding value is the object of that type found with the given ID",
                     content=@Content(mediaType=APPLICATION_JSON, examples={
                             @ExampleObject(name="usually a UUID only matches one object", value="{\"CloudService\": {\"uuid\": \"the-ID-you-searched-for\", \"other-cloud-service-fields\": \"would-be-shown\"}}"),

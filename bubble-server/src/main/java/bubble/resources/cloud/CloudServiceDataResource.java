@@ -15,7 +15,7 @@ import java.util.List;
 
 public class CloudServiceDataResource extends AccountOwnedResource<CloudServiceData, CloudServiceDataDAO> {
 
-    private CloudService cloud;
+    private final CloudService cloud;
 
     public CloudServiceDataResource(Account account, CloudService cloud) {
         super(account);

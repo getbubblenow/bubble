@@ -9,12 +9,13 @@ import bubble.model.cloud.CloudService;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.reflect.OpenApiSchema;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 
-@NoArgsConstructor @Accessors(chain=true)
+@NoArgsConstructor @Accessors(chain=true) @OpenApiSchema
 public class PackerJobSummary {
 
     @Getter private CloudService cloud;

@@ -20,6 +20,8 @@ import bubble.service.cloud.NodeLaunchMonitor;
 import bubble.service.cloud.NodeProgressMeterTick;
 import bubble.service.cloud.StandardNetworkService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,8 @@ import java.util.List;
 import static bubble.ApiConstants.*;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_FORBIDDEN;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
@@ -54,8 +58,8 @@ public class NetworkActionsResource {
     @Autowired private BubbleConfiguration configuration;
     @Autowired private StandardAuthenticatorService authenticatorService;
 
-    private Account account;
-    private BubbleNetwork network;
+    private final Account account;
+    private final BubbleNetwork network;
 
     public NetworkActionsResource (Account account, BubbleNetwork network) {
         this.account = account;
@@ -63,7 +67,17 @@ public class NetworkActionsResource {
     }
 
     @POST @Path(EP_START)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Launch a Bubble",
+            description="Launch a Bubble. If cloud and region are provided, then the Bubble will be launched in that region of that cloud. If neither are provided, then we'll try to select the nearest region. Returns a NewNodeNotification containing info that can be used to track launch status.",
+            parameters={
+                    @Parameter(name="cloud", description="UUID or name of a CloudService whose type is `compute`. Optional, but if specified then `region` must also be supplied."),
+                    @Parameter(name="region", description="Name of a region within the cloud. Optional, but if specified then `cloud` must also be supplied."),
+                    @Parameter(name="exactRegion", description="If true and cloud and region are also supplied, then fail if the Bubble cannot be launched in the specified region. Otherwise, a relaunch in the next-closest region will be attempted")
+            },
+            responses=@ApiResponse(responseCode=SC_OK, description="a NewNodeNotification object")
+    )
     public Response startNetwork(@Context Request req,
                                  @Context ContainerRequest ctx,
                                  @QueryParam("cloud") String cloud,
@@ -88,7 +102,12 @@ public class NetworkActionsResource {
     }
 
     @GET @Path(EP_STATUS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="List launch statuses",
+            description="List launch statuses. Returns an array of NodeProgressMeterTick objects, each representing the latest status update from a launching Bubble. Normally only one Bubble is launching at a time, so there will only be one element in the array.",
+            responses=@ApiResponse(responseCode=SC_OK, description="array of NodeProgressMeterTick objects")
+    )
     public Response listLaunchStatuses(@Context Request req,
                                        @Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
@@ -97,7 +116,13 @@ public class NetworkActionsResource {
     }
 
     @GET @Path(EP_STATUS+"/{uuid}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Get launch status for a specific launch",
+            description="Get launch status for a specific launch. Returns a NodeProgressMeterTick object representing the latest status update from the launching Bubble.",
+            parameters=@Parameter(name="uuid", description="UUID of the NewNodeNotification returned when the Bubble was launched"),
+            responses=@ApiResponse(responseCode=SC_OK, description="a NodeProgressMeterTick object")
+    )
     public Response requestLaunchStatus(@Context Request req,
                                         @Context ContainerRequest ctx,
                                         @PathParam("uuid") String uuid) {
@@ -128,7 +153,15 @@ public class NetworkActionsResource {
     }
 
     @POST @Path(EP_STOP)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Stop a Bubble",
+            description="Stop a Bubble. The caller must own the Bubble or be an admin. Returns true",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="true"),
+                    @ApiResponse(responseCode=SC_FORBIDDEN, description="the caller is not authorized to stop the Bubble")
+            }
+    )
     public Response stopNetwork(@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!authAccount(caller)) return forbidden();
@@ -143,7 +176,17 @@ public class NetworkActionsResource {
     }
 
     @POST @Path(EP_RESTORE)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags={API_TAG_CLOUDS, API_TAG_BACKUP_RESTORE},
+            summary="Launch a Bubble in restore mode",
+            description="Launch a Bubble in restore mode. If cloud and region are provided, then the Bubble will be launched in that region of that cloud. If neither are provided, then we'll try to select the nearest region. Returns a NewNodeNotification containing info that can be used to track launch status.",
+            parameters={
+                    @Parameter(name="cloud", description="UUID or name of a CloudService whose type is `compute`. Optional, but if specified then `region` must also be supplied."),
+                    @Parameter(name="region", description="Name of a region within the cloud. Optional, but if specified then `cloud` must also be supplied."),
+                    @Parameter(name="exactRegion", description="If true and cloud and region are also supplied, then fail if the Bubble cannot be launched in the specified region. Otherwise, a relaunch in the next-closest region will be attempted")
+            },
+            responses=@ApiResponse(responseCode=SC_OK, description="a NewNodeNotification object")
+    )
     public Response restoreNetwork(@Context Request req,
                                    @Context ContainerRequest ctx,
                                    @QueryParam("cloud") String cloud,
@@ -158,7 +201,12 @@ public class NetworkActionsResource {
     }
 
     @PUT @Path(EP_FORK)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_CLOUDS,
+            summary="Fork a Bubble",
+            description="Fork a Bubble. Must be admin. Clones this Bubble's data onto another system, can be configured as either a sage or a node",
+            responses=@ApiResponse(responseCode=SC_OK, description="a NewNodeNotification object")
+    )
     public Response fork(@Context Request req,
                          @Context ContainerRequest ctx,
                          ForkRequest forkRequest) {

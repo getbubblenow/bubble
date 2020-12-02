@@ -176,7 +176,7 @@ public class AccountsResource {
             tags=API_TAG_ACCOUNT,
             summary="Download all data for an account",
             description="Download all data for user. Must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a Map<String, List<String>> of all user data"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if not admin")
@@ -199,7 +199,7 @@ public class AccountsResource {
             tags=API_TAG_ACCOUNT,
             summary="Update an account",
             description="Update an account. Caller must be the same account, or must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the Account object that was updated"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is updating any account Account other than themselves"),
@@ -233,7 +233,7 @@ public class AccountsResource {
             tags=API_TAG_ACCOUNT,
             summary="List all launch statuses for an account",
             description="List all launch statuses for an account. Caller must be the same account, or must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a List<NodeProgressMeterTick> representing the status of active launch operations"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
@@ -259,7 +259,7 @@ public class AccountsResource {
             tags=API_TAG_ACCOUNT,
             summary="View the AccountPolicy for an account",
             description="View the AccountPolicy for an account. Caller must be the same account, or must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="an AccountPolicy object"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
@@ -278,7 +278,7 @@ public class AccountsResource {
             tags=API_TAG_ACCOUNT,
             summary="Update the AccountPolicy for an account",
             description="Update the AccountPolicy for an account. Caller must be the same account, or must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="an AccountPolicy object"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
@@ -308,7 +308,7 @@ public class AccountsResource {
             tags=API_TAG_ACCOUNT,
             summary="Create or update an AccountContact in the AccountPolicy",
             description="Create or update an AccountContact in the AccountPolicy. Caller must be the same account, or must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the AccountContact object that was created or updated"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
@@ -349,7 +349,7 @@ public class AccountsResource {
             tags=API_TAG_ACCOUNT,
             summary="Send verification message for an AccountContact",
             description="Send verification message for an AccountContact. Caller must be the same account, or must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the AccountContact object that was created or updated"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
@@ -377,9 +377,9 @@ public class AccountsResource {
             summary="Find an AccountContact within an AccountPolicy",
             description="Find an AccountContact within an AccountPolicy. Caller must be the same account, or must be admin.",
             parameters={
-                    @Parameter(name="id", description="UUID or email of the Account"),
-                    @Parameter(name="type", description="the type of contact"),
-                    @Parameter(name="info", description="the contact information, for example an email address or phone number")
+                    @Parameter(name="id", description="UUID or email of the Account", required=true),
+                    @Parameter(name="type", description="the type of contact", required=true),
+                    @Parameter(name="info", description="the contact information, for example an email address or phone number", required=true)
             },
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the AccountContact object"),
@@ -404,9 +404,9 @@ public class AccountsResource {
             summary="Delete an AccountContact within an AccountPolicy",
             description="Delete an AccountContact within an AccountPolicy. Caller must be the same account, or must be admin.",
             parameters={
-                    @Parameter(name="id", description="UUID or email of the Account"),
-                    @Parameter(name="type", description="the type of contact"),
-                    @Parameter(name="info", description="the contact information, for example an email address or phone number")
+                    @Parameter(name="id", description="UUID or email of the Account", required=true),
+                    @Parameter(name="type", description="the type of contact", required=true),
+                    @Parameter(name="info", description="the contact information, for example an email address or phone number", required=true)
             },
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the AccountContact object that was deleted"),
@@ -431,7 +431,7 @@ public class AccountsResource {
             tags=API_TAG_ACCOUNT,
             summary="Delete TOTP authenticator AccountContact from an AccountPolicy",
             description="Delete TOTP authenticator AccountContact from an AccountPolicy. Caller must be the same account, or must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the AccountPolicy object that was updated"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
@@ -459,8 +459,8 @@ public class AccountsResource {
             summary="Delete AccountContact from an AccountPolicy by UUID",
             description="Delete AccountContact from an AccountPolicy by UUID. Caller must be the same account, or must be admin.",
             parameters={
-                    @Parameter(name="id", description="UUID or email of the Account"),
-                    @Parameter(name="uuid", description="UUID of the AccountContact")
+                    @Parameter(name="id", description="UUID or email of the Account", required=true),
+                    @Parameter(name="uuid", description="UUID of the AccountContact", required=true)
             },
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the AccountPolicy object that was updated"),
@@ -484,7 +484,7 @@ public class AccountsResource {
             tags=API_TAG_ACCOUNT,
             summary="Request deletion of an Account",
             description="Request deletion of an Account. Caller must be the same account, or must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the AccountMessage object that was sent"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
@@ -514,7 +514,7 @@ public class AccountsResource {
             tags=API_TAG_ACCOUNT,
             summary="Change password for an account",
             description="Change password for an account. Caller must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the Account object that was updated"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves"),
@@ -593,7 +593,7 @@ public class AccountsResource {
             tags=API_TAG_ACCOUNT,
             summary="Delete an Account",
             description="Delete an Account. Caller must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the Account object that was deleted"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="forbidden if caller is not admin and is accessing any account Account other than themselves")
@@ -632,7 +632,7 @@ public class AccountsResource {
             tags=API_TAG_UTILITY,
             summary="Get status of mitmproxy",
             description="Get status of mitmproxy. Caller must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="returns true if mitmproxy is enabled, false otherwise",
                             content=@Content(mediaType=APPLICATION_JSON, examples={
@@ -655,7 +655,7 @@ public class AccountsResource {
             tags=API_TAG_UTILITY,
             summary="Enable mitmproxy",
             description="Enable mitmproxy. Caller must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="returns true if mitmproxy is enabled, false otherwise",
                             content=@Content(mediaType=APPLICATION_JSON, examples={
@@ -678,7 +678,7 @@ public class AccountsResource {
             tags=API_TAG_UTILITY,
             summary="Disable mitmproxy",
             description="Disable mitmproxy. Caller must be admin.",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="returns true if mitmproxy is enabled, false otherwise",
                             content=@Content(mediaType=APPLICATION_JSON, examples={
@@ -755,9 +755,9 @@ public class AccountsResource {
     @GET @Path("/{id}"+EP_DEVICE_TYPES)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             tags=API_TAG_UTILITY,
-            summary="List all device types",
-            description="List all device types",
-            parameters=@Parameter(name="id", description="UUID or email of the Account"),
+            summary="List selectable device types",
+            description="List selectable device types. This excludes pseudo-devices like Firefox and web-clients.",
+            parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="returns an array of Strings, each a BubbleDeviceType enum value")
     )
     public Response getDeviceTypes(@Context ContainerRequest ctx) {

@@ -10,6 +10,8 @@ import bubble.service.message.AppMessageService;
 import bubble.service.message.MessageResourceFormat;
 import bubble.service.message.MessageService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.ArrayUtils;
@@ -27,7 +29,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import static bubble.ApiConstants.*;
 import static bubble.service.message.MessageService.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Path(MESSAGES_ENDPOINT)
@@ -43,7 +47,12 @@ public class MessagesResource {
     private final Map<String, Map<String, String>> messageCache = new ConcurrentHashMap<>();
 
     @DELETE
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_UTILITY,
+            summary="Flush message cache",
+            description="Flush message cache",
+            responses=@ApiResponse(responseCode=SC_OK, description="empty JSON object indicates success")
+    )
     public Response flushMessageCache (@Context ContainerRequest ctx) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) return forbidden();
@@ -52,6 +61,16 @@ public class MessagesResource {
     }
 
     @GET @Path("/{locale}/{group}")
+    @Operation(tags=API_TAG_UTILITY,
+            summary="Get localized messages",
+            description="Get localized messages by group. `locale` specifies the desired locale. If the locale is not supported, another similar locale or the default locale will be used. `The `group` param is the message group to retrieve. Groups are: `pre_auth`, `post_auth`, `countries`, `timezones`, `apps`. Requesting the `post_auth` or `apps` groups requires a valid API session. `format` is an optional format for the messages. Format can be `raw` or `underscore` (which converts dots to underscores). Default is `underscore`.",
+            parameters={
+                @Parameter(name="locale", description="The desired locale. If the locale is not supported, another similar locale or the default locale will be used", required=true),
+                @Parameter(name="group", description="Message group to retrieve. Groups are: `pre_auth`, `post_auth`, `countries`, `timezones`, `apps`. Requesting the `post_auth` or `apps` groups requires a valid API session.", required=true),
+                @Parameter(name="format", description="Format for the messages. Format can be `raw` or `underscore` (which converts dots to underscores). Default is `underscore`.")
+            },
+            responses=@ApiResponse(responseCode=SC_OK, description="status of the router, which can be one of: `none`, `active`, `unreachable`, `deleted`")
+    )
     public Response loadMessagesByGroup(@Context ContainerRequest ctx,
                                         @PathParam("locale") String locale,
                                         @PathParam("group") String group,
@@ -67,7 +86,7 @@ public class MessagesResource {
         final Account caller = optionalUserPrincipal(ctx);
         if (caller == null && !ArrayUtils.contains(PRE_AUTH_MESSAGE_GROUPS, group)) return forbidden();
 
-        if (!ArrayUtils.contains(MessageService.ALL_MESSAGE_GROUPS, group)) return notFound(group);
+        if (!ArrayUtils.contains(ALL_MESSAGE_GROUPS, group)) return notFound(group);
         if (format == null) format = MessageResourceFormat.underscore;
 
         if (log.isDebugEnabled()) log.debug("loadMessagesByGroup: finding messages for group="+group+" among locales: "+StringUtil.toString(locales));

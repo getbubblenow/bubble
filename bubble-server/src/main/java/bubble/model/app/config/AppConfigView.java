@@ -6,7 +6,7 @@ package bubble.model.app.config;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.cobbzilla.wizard.model.OpenApiSchema;
+import org.cobbzilla.util.reflect.OpenApiSchema;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 

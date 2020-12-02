@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.cobbzilla.wizard.model.OpenApiSchema;
+import org.cobbzilla.util.reflect.OpenApiSchema;
 
 @NoArgsConstructor @AllArgsConstructor @Accessors(chain=true) @OpenApiSchema
 public class GeoTimeZone {

@@ -10,10 +10,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.reflect.OpenApiSchema;
 
 import static java.util.UUID.randomUUID;
 
-@Accessors(chain=true)
+@Accessors(chain=true) @OpenApiSchema
 @EqualsAndHashCode(of={"cloud", "internalName"})
 @ToString(of={"cloud", "name", "internalName"})
 public class CloudRegion {

@@ -80,7 +80,7 @@ public class AllPaymentMethodsResource {
             tags=API_TAG_PAYMENT,
             summary="Find a payment method",
             description="Find a payment method",
-            parameters=@Parameter(name="id", description="UUID or name of CloudService, or name of driver class"),
+            parameters=@Parameter(name="id", description="UUID or name of CloudService, or name of driver class", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a PaymentService object"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="no payment method found with the given id")

@@ -25,6 +25,10 @@ import bubble.resources.account.AccountOwnedResource;
 import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAuthenticatorService;
 import bubble.service.cloud.GeoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.glassfish.grizzly.http.server.Request;
@@ -44,9 +48,11 @@ import static bubble.ApiConstants.*;
 import static bubble.model.account.Account.ROOT_EMAIL;
 import static bubble.model.cloud.BubbleNetwork.validateHostname;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.util.string.ValidationRegexes.*;
 import static org.cobbzilla.wizard.model.NamedEntity.NAME_MAXLEN;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Slf4j
 public class AccountPlansResource extends AccountOwnedResource<AccountPlan, AccountPlanDAO> {
@@ -318,6 +324,13 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
 
     // If the accountPlan is not found, look for an orphaned network
     @DELETE @Path("/{id}")
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_ACCOUNT,
+            summary="Delete AccountPlan",
+            description="Delete AccountPlan. If a Bubble is running on the plan, it will be stopped.",
+            parameters=@Parameter(name="id", description="uuid of the AccountPlan to delete"),
+            responses=@ApiResponse(responseCode=SC_OK, description="the deleted AccountPlan")
+    )
     @Override public Response delete(@Context Request req,
                                      @Context ContainerRequest ctx,
                                      @PathParam("id") String id) {

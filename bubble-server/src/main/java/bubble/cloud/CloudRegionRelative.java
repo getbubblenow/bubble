@@ -8,10 +8,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.reflect.OpenApiSchema;
 
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
-@NoArgsConstructor @Accessors(chain=true)
+@NoArgsConstructor @Accessors(chain=true) @OpenApiSchema
 public class CloudRegionRelative extends CloudRegion {
 
     public CloudRegionRelative(CloudRegion region) { copy(this, region); }

@@ -13,6 +13,8 @@ import bubble.service.device.DeviceService;
 import bubble.service.device.FlexRouterStatus;
 import bubble.service.device.StandardFlexRouterService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.network.PortPicker;
@@ -28,8 +30,10 @@ import javax.ws.rs.core.Response;
 import java.math.BigInteger;
 import java.net.InetAddress;
 
+import static bubble.ApiConstants.API_TAG_DEVICES;
 import static bubble.ApiConstants.EP_STATUS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.util.network.PortPicker.portIsAvailable;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
@@ -53,7 +57,13 @@ public class FlexRoutersResource extends AccountOwnedResource<FlexRouter, FlexRo
     }
 
     @GET @Path("/{id}"+EP_STATUS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_DEVICES,
+            summary="Get flex router status",
+            description="Get flex router status. The `id` param can be the UUID or IP address of the flex router. Returns the status of the router, which can be one of: `none`, `active`, `unreachable`, `deleted`",
+            parameters=@Parameter(name="id", description="The UUID or IP address of the flex router"),
+            responses=@ApiResponse(responseCode=SC_OK, description="status of the router, which can be one of: `none`, `active`, `unreachable`, `deleted`")
+    )
     public Response getStatus(@Context Request req,
                               @Context ContainerRequest ctx,
                               @PathParam("id") String id) {
