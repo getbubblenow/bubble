@@ -14,6 +14,8 @@ import bubble.model.account.message.ActionTarget;
 import bubble.model.device.Device;
 import bubble.service.account.StandardAuthenticatorService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -26,12 +28,13 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import static bubble.ApiConstants.EP_DELETE;
+import static bubble.ApiConstants.*;
 import static bubble.resources.account.AuthResource.newLoginSession;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.http.HttpStatusCodes.*;
 import static org.cobbzilla.wizard.cache.redis.RedisService.PX;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
@@ -54,7 +57,16 @@ public class TrustedAuthResource {
     @Getter(lazy=true) private final RedisService trustHashCache = redis.prefixNamespace("loginTrustedClient");
 
     @PUT
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_DEVICE,
+            summary="Establish trust with a device",
+            description="Establish trust with a device. Returns a TrustedClientResponse with an id that can be used for future logins",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="TrustedClientResponse object"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="if the email/password login was incorrect"),
+                    @ApiResponse(responseCode=SC_INVALID, description="validation error. for example: TOTP required, or the device is already trusted")
+            }
+    )
     public Response trustClient(@Context ContainerRequest ctx,
                                 AccountLoginRequest request) {
         final Account caller = userPrincipal(ctx);
@@ -78,6 +90,16 @@ public class TrustedAuthResource {
     }
 
     @POST
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_DEVICE,
+            summary="Login as a trusted client",
+            description="Login as a trusted client. Starts a new API session",
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="Account object with session token"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="if the email/password login was incorrect"),
+                    @ApiResponse(responseCode=SC_INVALID, description="validation error. for example: TOTP required, or the device is already trusted")
+            }
+    )
     public Response loginTrustedClient(@Context ContainerRequest ctx,
                                        @Valid TrustedClientLoginRequest request) {
         final Account account = validateTrustedCall(request);
@@ -92,7 +114,17 @@ public class TrustedAuthResource {
     }
 
     @DELETE @Path(EP_DELETE+"/{device}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_DEVICE,
+            summary="Remove trust from a trusted client",
+            description="Remove trust from a trusted client",
+            parameters=@Parameter(name="device", description="uuid of the device"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="Account object with session token"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="if the email/password login was incorrect"),
+                    @ApiResponse(responseCode=SC_INVALID, description="validation error. for example: TOTP required, or the device is already trusted")
+            }
+    )
     public Response removeTrustedClient(@Context ContainerRequest ctx,
                                         @PathParam("device") String deviceId) {
         final Account caller = userPrincipal(ctx);

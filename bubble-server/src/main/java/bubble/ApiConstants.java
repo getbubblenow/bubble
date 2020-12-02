@@ -297,6 +297,7 @@ public class ApiConstants {
     public static final String API_TAG_AUTH = "auth";
     public static final String API_TAG_ACCOUNT = "account";
     public static final String API_TAG_ACCOUNT_OBJECTS = "account-owned objects";
+    public static final String API_TAG_DEVICE = "device";
     public static final String API_TAG_SEARCH = "search";
     public static final String API_TAG_BACKUP_RESTORE = "backup and restore";
     public static final String API_TAG_NODE = "node";

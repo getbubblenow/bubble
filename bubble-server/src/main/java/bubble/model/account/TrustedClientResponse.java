@@ -8,8 +8,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.cobbzilla.wizard.model.OpenApiSchema;
 
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor @AllArgsConstructor @OpenApiSchema
 public class TrustedClientResponse {
 
     @Getter @Setter private String id;

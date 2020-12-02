@@ -143,8 +143,8 @@ public class AuthResource {
 
     @GET @Path(EP_READY)
     @Operation(tags=API_TAG_UTILITY,
-            summary="Determine if the API is running and ready for login",
-            description="Determine if the API is running and ready for login",
+            summary="Determine if Bubble is running and ready for login",
+            description="Determine if Bubble is running and ready for login",
             responses={
                     @ApiResponse(responseCode=SC_OK, description="empty response with status 200 if API is ready"),
                     @ApiResponse(responseCode=SC_INVALID, description="error with status 422 if API is NOT ready")
@@ -168,8 +168,8 @@ public class AuthResource {
 
     @GET @Path(EP_ACTIVATE)
     @Operation(tags=API_TAG_ACTIVATION,
-            summary="Determine if the API has been activated",
-            description="Determine if the API has been activated",
+            summary="Determine if Bubble has been activated",
+            description="Determine if Bubble has been activated",
             responses={
                     @ApiResponse(responseCode=SC_OK, description="returns true if API is activated, false otherwise",
                             content=@Content(mediaType=APPLICATION_JSON, examples={
@@ -1021,7 +1021,7 @@ public class AuthResource {
 
     @GET @Path(EP_SUPPORT+"/{locale}")
     @Operation(tags=API_TAG_UTILITY,
-            summary="Get support information",
+            summary="Get support information for a locale",
             description="Get support information for the given locale, if available. Use the default locale otherwise.",
             parameters=@Parameter(name="locale", description="locale to find support for"),
             responses=@ApiResponse(responseCode=SC_OK, description="SupportInfo object")
@@ -1046,7 +1046,7 @@ public class AuthResource {
 
     @GET @Path(EP_APP_LINKS+"/{locale}")
     @Operation(tags=API_TAG_UTILITY,
-            summary="Get links to native applications",
+            summary="Get links to native applications for a locale",
             description="Get links to native applications for the given locale, if available. Use the default locale otherwise.",
             parameters=@Parameter(name="locale", description="locale to find app links for"),
             responses=@ApiResponse(responseCode=SC_OK, description="AppLinks object")

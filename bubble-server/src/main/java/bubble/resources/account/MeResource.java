@@ -126,8 +126,8 @@ public class MeResource {
     @GET @Path(EP_LOCALE)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             tags=API_TAG_ACCOUNT,
-            summary="Get the account locale",
-            description="Get the account locale",
+            summary="Get the locale for the current user",
+            description="Get the locale for the current user",
             responses=@ApiResponse(responseCode=SC_OK, description="Locale string", content=@Content(mediaType=APPLICATION_JSON, examples=@ExampleObject(name="default locale", value="en_US")))
     )
     public Response getLocale(@Context ContainerRequest ctx) {
@@ -138,8 +138,8 @@ public class MeResource {
     @POST @Path(EP_LOCALE+"/{locale}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             tags=API_TAG_ACCOUNT,
-            summary="Set the account locale",
-            description="Set the account locale",
+            summary="Set the locale for the current user",
+            description="Set the locale for the current user",
             responses=@ApiResponse(responseCode=SC_OK, description="updated Account object")
     )
     public Response setLocale(@Context ContainerRequest ctx,
