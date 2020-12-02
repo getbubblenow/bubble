@@ -13,6 +13,8 @@ import bubble.resources.account.VpnConfigResource;
 import bubble.server.BubbleConfiguration;
 import bubble.service.device.DeviceService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.Request;
@@ -31,6 +33,8 @@ import java.util.stream.Collectors;
 import static bubble.ApiConstants.*;
 import static bubble.model.device.DeviceStatusFirstComparator.DEVICE_WITH_STATUS_FIRST;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_NOT_FOUND;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
@@ -98,10 +102,22 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
     }
 
     @POST @Path("/{id}"+EP_SECURITY_LEVEL+"/{level}")
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
-    public Response getIps(@Context ContainerRequest ctx,
-                           @PathParam("id") String id,
-                           @PathParam("level") DeviceSecurityLevel level) {
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_DEVICES,
+            summary="Set security level",
+            description="Set security level for device. Levels are: `maximum`, `strict`, `standard`, `basic`, `disabled`",
+            parameters={
+                @Parameter(name="id", description="device UUID or name"),
+                @Parameter(name="level", description="security level. Levels are: `maximum`, `strict`, `standard`, `basic`, `disabled`")
+            },
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="array of IP addresses for device"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="device not found")
+            }
+    )
+    public Response setSecurityLevel(@Context ContainerRequest ctx,
+                                     @PathParam("id") String id,
+                                     @PathParam("level") DeviceSecurityLevel level) {
         final Device device = getDao().findByAccountAndId(getAccountUuid(ctx), id);
         if (device == null) return notFound(id);
         return ok(getDao().update(device.setSecurityLevel(level)));
@@ -117,7 +133,16 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
     @Autowired private DeviceService deviceService;
 
     @GET @Path("/{id}"+EP_IPS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_DEVICES,
+            summary="Get IP addresses for device",
+            description="Get IP addresses for device",
+            parameters=@Parameter(name="id", description="device UUID or name"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="array of IP addresses for device"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="device not found")
+            }
+    )
     public Response getIps(@Context ContainerRequest ctx,
                            @PathParam("id") String id) {
         final Device device = getDao().findByAccountAndId(getAccountUuid(ctx), id);
@@ -126,8 +151,17 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
     }
 
     @GET @Path("/{id}"+EP_STATUS)
-    @Operation(security=@SecurityRequirement(name=SEC_API_KEY))
-        public Response getStatus(@Context ContainerRequest ctx,
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_DEVICES,
+            summary="Get device status",
+            description="Get device status",
+            parameters=@Parameter(name="id", description="device UUID or name"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a DeviceStatus object"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="device not found")
+            }
+    )
+    public Response getStatus(@Context ContainerRequest ctx,
                               @PathParam("id") String id) {
         final Device device = getDao().findByAccountAndId(getAccountUuid(ctx), id);
         if (device == null) return notFound(id);

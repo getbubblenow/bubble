@@ -30,21 +30,25 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static bubble.ApiConstants.API_TAG_DEBUG;
 import static bubble.ApiConstants.DEBUG_ENDPOINT;
 import static bubble.cloud.auth.RenderedMessage.filteredInbox;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_SERVER_ERROR;
 import static org.cobbzilla.util.json.JsonUtil.*;
 import static org.cobbzilla.util.reflect.ReflectionUtil.forName;
 import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
-import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -55,7 +59,7 @@ public class DebugResource {
     @Autowired private BubbleConfiguration configuration;
 
     @GET @Path("/inbox/{type}/{recipient}")
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_DEBUG,
             summary="Read debug mailboxes",
             description="Read debug mailboxes. Must be admin. These are only used in testing.",
             responses=@ApiResponse(responseCode=SC_OK, description="a JSON array of RenderedMessage")
@@ -100,6 +104,11 @@ public class DebugResource {
     }
 
     @GET @Path("/error")
+    @Operation(tags=API_TAG_DEBUG,
+            summary="Generate an error",
+            description="Generate an error",
+            responses=@ApiResponse(responseCode=SC_SERVER_ERROR, description="an error")
+    )
     public Response testError(@Context ContainerRequest ctx,
                               @QueryParam("type") String type,
                               @QueryParam("message") String message) {
@@ -115,6 +124,11 @@ public class DebugResource {
     }
 
     @GET @Path("/beans")
+    @Operation(tags=API_TAG_DEBUG,
+            summary="List Spring beans",
+            description="List Spring beans",
+            responses=@ApiResponse(responseCode=SC_OK, description="array of bean names")
+    )
     public Response springBeans(@Context ContainerRequest ctx,
                                 @QueryParam("type") String type) {
         final ApplicationContext spring = configuration.getApplicationContext();
@@ -132,6 +146,11 @@ public class DebugResource {
     }
 
     @POST @Path("/echo")
+    @Operation(tags=API_TAG_DEBUG,
+            summary="Echo JSON to log",
+            description="Echo JSON to log",
+            responses=@ApiResponse(responseCode=SC_OK, description="some JSON")
+    )
     public Response echoJsonInLog(@Context ContainerRequest ctx,
                                   @Valid @NonNull final JsonNode input,
                                   @QueryParam("respondWith") @Nullable final String respondWith) throws IOException {

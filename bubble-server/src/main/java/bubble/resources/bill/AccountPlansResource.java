@@ -48,6 +48,7 @@ import static bubble.ApiConstants.*;
 import static bubble.model.account.Account.ROOT_EMAIL;
 import static bubble.model.cloud.BubbleNetwork.validateHostname;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.http.HttpStatusCodes.SC_NOT_FOUND;
 import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.util.string.ValidationRegexes.*;
 import static org.cobbzilla.wizard.model.NamedEntity.NAME_MAXLEN;
@@ -374,6 +375,16 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     }
 
     @GET @Path("/{id}"+EP_PAYMENT_METHOD)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_PAYMENT,
+            summary="Get payment method for plan",
+            description="Get the AccountPaymentMethod associated with the Account Plan",
+            parameters=@Parameter(name="id", description="UUID or name of AccountPlan"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="an AccountPaymentMethod object"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="account plan not found")
+            }
+    )
     public Response getPaymentMethod(@Context ContainerRequest ctx,
                                      @PathParam("id") String id) {
         final AccountPlan accountPlan = find(ctx, id);
@@ -384,6 +395,16 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     }
 
     @GET @Path("/{id}"+EP_PLAN)
+    @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
+            tags=API_TAG_ACCOUNT,
+            summary="Get Bubble Plan",
+            description="Get Bubble Plan for Account Plan",
+            parameters=@Parameter(name="id", description="UUID or name of AccountPlan"),
+            responses={
+                    @ApiResponse(responseCode=SC_OK, description="a BubblePlan object"),
+                    @ApiResponse(responseCode=SC_NOT_FOUND, description="account plan not found")
+            }
+    )
     public Response getBubblePlan(@Context ContainerRequest ctx,
                                   @PathParam("id") String id) {
         final AccountPlan accountPlan = find(ctx, id);

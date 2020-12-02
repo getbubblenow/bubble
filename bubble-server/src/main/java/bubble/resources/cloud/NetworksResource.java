@@ -182,6 +182,7 @@ public class NetworksResource extends AccountOwnedResource<BubbleNetwork, Bubble
 
 
     @Path("/{id}"+EP_TAGS)
+    @Operation(hidden=true)
     public TagsResource getTags(@Context ContainerRequest ctx,
                                 @PathParam("id") String id) {
         final BubbleNetwork network = find(ctx, id);
