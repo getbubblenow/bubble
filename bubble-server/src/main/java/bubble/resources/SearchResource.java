@@ -42,7 +42,7 @@ public class SearchResource {
             summary="Search model objects",
             description="Search model objects",
             parameters={
-                    @Parameter(name="type", description="entity type to search"),
+                    @Parameter(name="type", description="entity type to search", required=true),
                     @Parameter(name=Q_META, description="meta flag. if true, do not search, instead return metadata about how searches can be performed, which fields can be filtered and so on"),
                     @Parameter(name=Q_NOCACHE, description="nocache flag. if true, skip the cache and always run a real search"),
                     @Parameter(name=Q_FILTER, description="a filter string. if present, only entities matching this filter will be returned"),
@@ -70,7 +70,7 @@ public class SearchResource {
             summary="Search model objects",
             description="Search model objects",
             parameters={
-                    @Parameter(name="type", description="entity type to search"),
+                    @Parameter(name="type", description="entity type to search", required=true),
                     @Parameter(name=Q_META, description="meta flag. if true, do not search, instead return metadata about how searches can be performed, which fields can be filtered and so on"),
                     @Parameter(name=Q_NOCACHE, description="nocache flag. if true, skip the cache and always run a real search"),
                     @Parameter(name=Q_FILTER, description="a filter string. if present, only entities matching this filter will be returned"),

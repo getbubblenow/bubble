@@ -70,7 +70,10 @@ public class FilterDataResource {
     @Operation(tags=API_TAG_APP_RUNTIME,
             summary="app runtime: read data",
             description="Read app-specific data. If `value` is specified, only return data that matches that value. Otherwise return all data. The `format` param determines what to return. Formats are: `key` (array of key names), `value` (array of values), `key_value` (map of key->value), or `full` (array of AppData objects). The default format is `key`",
-            parameters=@Parameter(name="format", description="what to return. Formats are: `key` (default, array of key names), `value` (array of values), `key_value` (map of key->value), or `full` (array of AppData objects)"),
+            parameters={
+                    @Parameter(name="format", description="what to return. Formats are: `key` (default, array of key names), `value` (array of values), `key_value` (map of key->value), or `full` (array of AppData objects)"),
+                    @Parameter(name="value", description="only return data that matches this value"),
+            },
             responses=@ApiResponse(responseCode=SC_OK, description="type depends on `format`")
     )
     public Response readData(@Context Request req,

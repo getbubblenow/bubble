@@ -61,7 +61,7 @@ public class FlexRoutersResource extends AccountOwnedResource<FlexRouter, FlexRo
             tags=API_TAG_DEVICES,
             summary="Get flex router status",
             description="Get flex router status. The `id` param can be the UUID or IP address of the flex router. Returns the status of the router, which can be one of: `none`, `active`, `unreachable`, `deleted`",
-            parameters=@Parameter(name="id", description="The UUID or IP address of the flex router"),
+            parameters=@Parameter(name="id", description="The UUID or IP address of the flex router", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="status of the router, which can be one of: `none`, `active`, `unreachable`, `deleted`")
     )
     public Response getStatus(@Context Request req,

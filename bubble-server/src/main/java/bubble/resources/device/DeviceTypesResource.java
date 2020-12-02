@@ -76,8 +76,8 @@ public class DeviceTypesResource {
             summary="Set default security level",
             description="Set default security level for a device type. Device types are: `ios`, `android`, `windows`, `macos`, `linux`. Levels are `maximum`, `strict`, `standard`, `basic` and `disabled`",
             parameters={
-                @Parameter(name="deviceType", description="The BubbleDeviceType to set the default security level. Device types are: `ios`, `android`, `windows`, `macos`, `linux`."),
-                @Parameter(name="level", description="The DeviceSecurityLevel to set for the device type. Levels are `maximum`, `strict`, `standard`, `basic` and `disabled`")
+                @Parameter(name="deviceType", description="The BubbleDeviceType to set the default security level. Device types are: `ios`, `android`, `windows`, `macos`, `linux`", required=true),
+                @Parameter(name="level", description="The DeviceSecurityLevel to set for the device type. Levels are `maximum`, `strict`, `standard`, `basic` and `disabled`", required=true)
             },
             responses=@ApiResponse(responseCode=SC_OK, description="Map of BubbleDeviceType -> DeviceSecurityLevel")
     )

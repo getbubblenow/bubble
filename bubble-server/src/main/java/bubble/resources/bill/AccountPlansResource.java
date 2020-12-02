@@ -329,7 +329,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             tags=API_TAG_ACCOUNT,
             summary="Delete AccountPlan",
             description="Delete AccountPlan. If a Bubble is running on the plan, it will be stopped.",
-            parameters=@Parameter(name="id", description="uuid of the AccountPlan to delete"),
+            parameters=@Parameter(name="id", description="uuid of the AccountPlan to delete", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="the deleted AccountPlan")
     )
     @Override public Response delete(@Context Request req,
@@ -379,7 +379,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             tags=API_TAG_PAYMENT,
             summary="Get payment method for plan",
             description="Get the AccountPaymentMethod associated with the Account Plan",
-            parameters=@Parameter(name="id", description="UUID or name of AccountPlan"),
+            parameters=@Parameter(name="id", description="UUID or name of AccountPlan", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="an AccountPaymentMethod object"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="account plan not found")
@@ -399,7 +399,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             tags=API_TAG_ACCOUNT,
             summary="Get Bubble Plan",
             description="Get Bubble Plan for Account Plan",
-            parameters=@Parameter(name="id", description="UUID or name of AccountPlan"),
+            parameters=@Parameter(name="id", description="UUID or name of AccountPlan", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a BubblePlan object"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="account plan not found")

@@ -128,10 +128,10 @@ public class NetworksResource extends AccountOwnedResource<BubbleNetwork, Bubble
     @GET @Path("/{id}"+EP_CLOSEST)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             tags=API_TAG_CLOUDS,
-            summary="Find nearest regions for a given cloud service type",
+            summary="Find nearest regions for cloud service",
             description="Find nearest regions. If lat/lon are specified, we find the nearest regions to that lat/lon, otherwise attempt to discern caller's location using geo-location.",
             parameters={
-                    @Parameter(name="id", description="UUID or name of the network"),
+                    @Parameter(name="id", description="UUID or name of the network", required=true),
                     @Parameter(name="type", description="the CloudServiceType to search for. usually `compute`"),
                     @Parameter(name="lat", description="latitude. if specified, `lon` must also be provided"),
                     @Parameter(name="lon", description="longitude. if specified, `lat` must also be provided")

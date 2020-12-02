@@ -56,7 +56,7 @@ public class EntityConfigsResource extends AbstractEntityConfigsResource {
             tags=API_TAG_UTILITY,
             summary="Set a configuration parameter to `true`",
             description="Set a configuration parameter to `true`",
-            parameters=@Parameter(name="param", description="the name of the parameter to set"),
+            parameters=@Parameter(name="param", description="the name of the parameter to set", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="the value that was set",
                     content=@Content(mediaType=APPLICATION_JSON, examples=@ExampleObject(name="should always return true", value="true")))
     )
@@ -71,8 +71,8 @@ public class EntityConfigsResource extends AbstractEntityConfigsResource {
             summary="Set a configuration parameter to a value",
             description="Set a configuration parameter to a value",
             parameters={
-                    @Parameter(name="param", description="the name of the parameter to set"),
-                    @Parameter(name="value", description="the value to set the parameter to")
+                    @Parameter(name="param", description="the name of the parameter to set", required=true),
+                    @Parameter(name="value", description="the value to set the parameter to", required=true)
             },
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the value that was set",

@@ -244,7 +244,7 @@ public class MeResource {
             tags=API_TAG_AUTH,
             summary="Approve a request",
             description="Approve a request. The token comes from an email or SMS message sent to the user.",
-            parameters=@Parameter(name="token", description="the confirmation token"),
+            parameters=@Parameter(name="token", description="the confirmation token", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success",
                             content=@Content(mediaType=APPLICATION_JSON, examples={
@@ -274,7 +274,7 @@ public class MeResource {
             tags=API_TAG_AUTH,
             summary="Deny a request",
             description="Deny a request. The token comes from an email or SMS message sent to the user.",
-            parameters=@Parameter(name="token", description="the confirmation token"),
+            parameters=@Parameter(name="token", description="the confirmation token", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success",
                             content=@Content(mediaType=APPLICATION_JSON, examples={
@@ -320,7 +320,7 @@ public class MeResource {
             tags=API_TAG_ACCOUNT,
             summary="Download account data",
             description="Download account data.",
-            parameters=@Parameter(name="uuid", description="the uuid of the download to retrieve"),
+            parameters=@Parameter(name="uuid", description="the uuid of the download to retrieve", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="Account data as JSON"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="uuid was invalid")
@@ -523,8 +523,8 @@ public class MeResource {
             summary="Load model objects",
             description="Load model objects",
             parameters={
-                    @Parameter(name="file", description="model JSON"),
-                    @Parameter(name="name", description="name of model")
+                    @Parameter(name="file", description="model JSON", required=true),
+                    @Parameter(name="name", description="name of model", required=true)
             },
             responses=@ApiResponse(responseCode=SC_OK, description="the model that was loaded")
     )

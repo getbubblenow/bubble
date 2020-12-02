@@ -190,7 +190,7 @@ public class NodeManagerResource {
             tags=API_TAG_NODE_MANAGER,
             summary="Get stat from nodemanager",
             description="Get stat from nodemanager. Must be admin or owner of node. Valid stats are: `uptime`, `mem`, `net`, `disk`",
-            parameters=@Parameter(name="stat", description="name of the stat. can be `uptime`, `mem`, `net` or `disk`"),
+            parameters=@Parameter(name="stat", description="name of the stat. can be `uptime`, `mem`, `net` or `disk`", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a string representing the stat"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not admin or owner of node"),
@@ -208,7 +208,7 @@ public class NodeManagerResource {
             tags=API_TAG_NODE_MANAGER,
             summary="Send command to nodemanager",
             description="Send command to nodemanager. Must be admin or owner of node. The only valid command is `reboot`",
-            parameters=@Parameter(name="command", description="name of the command to send. only `reboot` is supported."),
+            parameters=@Parameter(name="command", description="name of the command to send. only `reboot` is supported.", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a string representing the stat"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="caller is not admin or owner of node"),
@@ -228,8 +228,8 @@ public class NodeManagerResource {
             summary="Send service action to nodemanager",
             description="Send service action to nodemanager. Must be admin or owner of node. Services are: `supervisor`, `bubble`, `mitm`, `nginx`, `postgresql`, `nodemanager`. Actions are dependent on the service: `supervisor` supports `reload` and `status` actions. `nodemanager` supports `start`, `restart` and `status`. All other services support `start`, `stop`, `restart` and `status`.",
             parameters={
-                @Parameter(name="service", description="Name of the service. Service are: `supervisor`, `bubble`, `mitm`, `nginx`, `postgresql`, `nodemanager`"),
-                @Parameter(name="action", description="Action to perform. Actions are dependent on the service: `supervisor` supports `reload` and `status` actions. `nodemanager` supports `start`, `restart` and `status`. All other services support `start`, `stop`, `restart` and `status`.")
+                @Parameter(name="service", description="Name of the service. Service are: `supervisor`, `bubble`, `mitm`, `nginx`, `postgresql`, `nodemanager`", required=true),
+                @Parameter(name="action", description="Action to perform. Actions are dependent on the service: `supervisor` supports `reload` and `status` actions. `nodemanager` supports `start`, `restart` and `status`. All other services support `start`, `stop`, `restart` and `status`.", required=true)
             },
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a string representing the stat"),
@@ -252,10 +252,10 @@ public class NodeManagerResource {
             summary="Send a patch file to nodemanager",
             description="Send a patch file to nodemanager. Must be admin or owner of node. The patch file is actually hosted here in the API, and the nodemanager is sent a URL where it can download it. `component` specifies where to apply the patch. Components are: `root`, `bubble`, `mitmproxy`. `path` specified where to apply the patch within the component.",
             parameters={
-                    @Parameter(name="component", description="Name of the component to patch. Components are: `root`, `bubble`, `mitmproxy`"),
-                    @Parameter(name="path", description="Where to apply the patch within the component"),
-                    @Parameter(name="file", description="stream of bytes representing the patch"),
-                    @Parameter(name="name", description="name of the patch file. ignored, can be anything.")
+                    @Parameter(name="component", description="Name of the component to patch. Components are: `root`, `bubble`, `mitmproxy`", required=true),
+                    @Parameter(name="path", description="Where to apply the patch within the component", required=true),
+                    @Parameter(name="file", description="stream of bytes representing the patch", required=true),
+                    @Parameter(name="name", description="name of the patch file. ignored, can be anything.", required=true)
             },
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a string representing the stat"),

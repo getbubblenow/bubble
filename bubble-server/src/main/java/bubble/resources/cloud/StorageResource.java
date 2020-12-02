@@ -62,7 +62,7 @@ public class StorageResource {
             tags=API_TAG_CLOUDS,
             summary="Read metadata for key from storage",
             description="Read metadata for key from storage. Caller must own the underlying storage.",
-            parameters=@Parameter(name="key", description="key to read metadata from"),
+            parameters=@Parameter(name="key", description="key to read metadata from", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a StorageMetadata object"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="caller does not own the storage"),
@@ -82,7 +82,7 @@ public class StorageResource {
             tags=API_TAG_CLOUDS,
             summary="Read from storage",
             description="Read from storage. Caller must own the underlying storage.",
-            parameters=@Parameter(name="key", description="key to read from"),
+            parameters=@Parameter(name="key", description="key to read from", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="response will be a stream of data. Content-Type is set based on the key suffix"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="caller does not own the storage"),
@@ -114,7 +114,7 @@ public class StorageResource {
             tags=API_TAG_CLOUDS,
             summary="List keys in storage matching a prefix",
             description="List keys in storage matching a prefix. Caller must own the underlying storage. Returns a StorageListing object which contains the first page of results and an listingId that can be used to get more pages of results",
-            parameters=@Parameter(name="key", description="list keys with this prefix"),
+            parameters=@Parameter(name="key", description="list keys with this prefix", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a StorageListing object"),
                     @ApiResponse(responseCode=SC_FORBIDDEN, description="caller does not own the storage"),
@@ -166,7 +166,7 @@ public class StorageResource {
             parameters={
                 @Parameter(name="key", description="write to this key", required=true),
                 @Parameter(name="sha256", description="SHA-256 sum of the data"),
-                @Parameter(name="file", description="stream of bytes to write to storage")
+                @Parameter(name="file", description="stream of bytes to write to storage", required=true)
             },
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a StorageMetadata object"),

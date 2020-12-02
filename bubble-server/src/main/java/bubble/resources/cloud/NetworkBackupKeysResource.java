@@ -107,8 +107,8 @@ public class NetworkBackupKeysResource {
             summary="Start downloading a backup",
             description="Start downloading a backup",
             parameters={
-                    @Parameter(name="keysCode", description="a code to associate with this download"),
-                    @Parameter(name="backupId", description="the backup to download")
+                    @Parameter(name="keysCode", description="a code to associate with this download", required=true),
+                    @Parameter(name="backupId", description="the backup to download", required=true)
             },
             responses=@ApiResponse(responseCode=SC_OK, description="empty response indicates success")
     )
@@ -132,7 +132,7 @@ public class NetworkBackupKeysResource {
             tags=API_TAG_BACKUP_RESTORE,
             summary="Check backup download status",
             description="Check backup download status",
-            parameters=@Parameter(name="keysCode", description="the code supplied when the backup download was started"),
+            parameters=@Parameter(name="keysCode", description="the code supplied when the backup download was started", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="a BackupPackagingStatus object")
     )
     @NonNull public Response backupDownloadStatus(@NonNull @Context final ContainerRequest ctx,
@@ -148,7 +148,7 @@ public class NetworkBackupKeysResource {
             tags=API_TAG_BACKUP_RESTORE,
             summary="Download a backup",
             description="Once a backup has fully downloaded to the Bubble, use this API call to retrieve the download.",
-            parameters=@Parameter(name="keysCode", description="the code supplied when the backup download was started"),
+            parameters=@Parameter(name="keysCode", description="the code supplied when the backup download was started", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="the backup file")
     )
     @NonNull public Response backupDownload(@NonNull @Context final ContainerRequest ctx,

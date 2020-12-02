@@ -263,7 +263,7 @@ public class AuthResource {
     @Operation(tags=API_TAG_BACKUP_RESTORE,
             summary="Restore a Bubble from a backup stored by sage.",
             description="Restore a Bubble from a backup stored by sage.",
-            parameters=@Parameter(name="restoreKey", description="the restore key"),
+            parameters=@Parameter(name="restoreKey", description="the restore key", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the NotificationReceipt from a successful request to retrieve the backup"),
                     @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred")
@@ -296,7 +296,7 @@ public class AuthResource {
     @Operation(tags=API_TAG_BACKUP_RESTORE,
             summary="Restore a Bubble from a backup uploaded by user.",
             description="Restore a Bubble from a backup uploaded by user.",
-            parameters=@Parameter(name="restoreKey", description="the restore key"),
+            parameters=@Parameter(name="restoreKey", description="the restore key", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="upon success a 200 HTTP status with an empty response is returned"),
                     @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred")
@@ -522,7 +522,7 @@ public class AuthResource {
     @Operation(tags=API_TAG_AUTH,
             summary="Login an Account using an existing session token, starts a new API session. If an existing session exists, it is invalidated",
             description="Login an Account using an existing session token, starts a new API session. If an existing session exists, it is invalidated",
-            parameters=@Parameter(name="session", description="the session token to use for logging in"),
+            parameters=@Parameter(name="session", description="the session token to use for logging in", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="the Account object that was logged in"),
                     @ApiResponse(responseCode=SC_INVALID, description="validation errors occurred")
@@ -730,7 +730,7 @@ public class AuthResource {
     @Operation(tags=API_TAG_AUTH,
             summary="Approve a request",
             description="Approve a request. The token comes from an email or SMS message sent to the user.",
-            parameters=@Parameter(name="token", description="the confirmation token"),
+            parameters=@Parameter(name="token", description="the confirmation token", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success",
                             content=@Content(mediaType=APPLICATION_JSON, examples={
@@ -862,7 +862,7 @@ public class AuthResource {
     @Operation(tags=API_TAG_AUTH,
             summary="Deny a request",
             description="Deny a request. The token comes from an email or SMS message sent to the user.",
-            parameters=@Parameter(name="token", description="the confirmation token"),
+            parameters=@Parameter(name="token", description="the confirmation token", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success",
                             content=@Content(mediaType=APPLICATION_JSON, examples={
@@ -886,10 +886,10 @@ public class AuthResource {
     @Produces(CONTENT_TYPE_ANY)
     @Operation(tags=API_TAG_UTILITY,
             summary="Get the CA Certificate for this Bubble",
-            description="Get the CA Certificate for this Bubble. Response body is the certificate itself, in a format determined by deviceType or type",
+            description="Get the CA Certificate for this Bubble. Response body is the certificate itself, in a format determined by deviceType or type. Either deviceType or type can be supplied but not both. Device types are: `ios`, `android`, `windows`, `macos` and `linux`. Cert types are: `pem`, `p12`, `cer`, `crt`",
             parameters={
-                    @Parameter(name="deviceType", description="the device type"),
-                    @Parameter(name="type", description="the certificate type")
+                    @Parameter(name="deviceType", description="the device type. Device types are: `ios`, `android`, `windows`, `macos` and `linux`"),
+                    @Parameter(name="type", description="the certificate type. Cert types are: `pem`, `p12`, `cer`, `crt`")
             },
             responses=@ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success, response body is certificate")
     )
@@ -1021,7 +1021,7 @@ public class AuthResource {
     @Operation(tags=API_TAG_UTILITY,
             summary="Get support information for a locale",
             description="Get support information for the given locale, if available. Use the default locale otherwise.",
-            parameters=@Parameter(name="locale", description="locale to find support for"),
+            parameters=@Parameter(name="locale", description="locale to find support for", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="SupportInfo object")
     )
     public Response getSupportInfo (@Context Request req,
@@ -1046,7 +1046,7 @@ public class AuthResource {
     @Operation(tags=API_TAG_UTILITY,
             summary="Get links to native applications for a locale",
             description="Get links to native applications for the given locale, if available. Use the default locale otherwise.",
-            parameters=@Parameter(name="locale", description="locale to find app links for"),
+            parameters=@Parameter(name="locale", description="locale to find app links for", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="AppLinks object")
     )
     public Response getAppLinks (@Context Request req,
@@ -1060,7 +1060,7 @@ public class AuthResource {
     @Operation(tags=API_TAG_NODE_MANAGER,
             summary="Find a node-manager patch file",
             description="Find a node-manager patch file. The file must previously have been registered, yielding a token",
-            parameters=@Parameter(name="token", description="token of the patch file to retrieve"),
+            parameters=@Parameter(name="token", description="token of the patch file to retrieve", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="raw file data", content=@Content(mediaType=APPLICATION_OCTET_STREAM)),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="token not valid")
@@ -1081,8 +1081,8 @@ public class AuthResource {
             summary="Return bubble jar",
             description="Return bubble jar file for upgrading other nodes to our version.",
             parameters={
-                    @Parameter(name="node", description="UUID of the calling node"),
-                    @Parameter(name="key", description="UUID of the calling node's BubbleNodeKey")
+                    @Parameter(name="node", description="UUID of the calling node", required=true),
+                    @Parameter(name="key", description="UUID of the calling node's BubbleNodeKey", required=true)
             },
             responses={
                     @ApiResponse(responseCode=SC_OK, description="raw jar file data", content=@Content(mediaType=APPLICATION_OCTET_STREAM)),

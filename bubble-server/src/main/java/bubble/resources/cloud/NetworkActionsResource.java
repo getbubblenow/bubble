@@ -120,7 +120,7 @@ public class NetworkActionsResource {
             tags=API_TAG_CLOUDS,
             summary="Get launch status for a specific launch",
             description="Get launch status for a specific launch. Returns a NodeProgressMeterTick object representing the latest status update from the launching Bubble.",
-            parameters=@Parameter(name="uuid", description="UUID of the NewNodeNotification returned when the Bubble was launched"),
+            parameters=@Parameter(name="uuid", description="UUID of the NewNodeNotification returned when the Bubble was launched", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="a NodeProgressMeterTick object")
     )
     public Response requestLaunchStatus(@Context Request req,

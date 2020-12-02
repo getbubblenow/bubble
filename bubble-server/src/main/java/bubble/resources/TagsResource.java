@@ -48,7 +48,7 @@ public class TagsResource {
             tags=API_TAG_UTILITY,
             summary="Set a tag",
             description="Set a tag",
-            parameters=@Parameter(name="name", description="name of the tag"),
+            parameters=@Parameter(name="name", description="name of the tag", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="a BubbleTags object representing the current list of tags")
     )
     public Response set(@Context ContainerRequest ctx,

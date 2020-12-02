@@ -109,7 +109,7 @@ public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
             tags=API_TAG_PAYMENT,
             summary="Pay a bill",
             description="Pay a bill",
-            parameters=@Parameter(name="id", description="uuid of the Bill to pay"),
+            parameters=@Parameter(name="id", description="uuid of the Bill to pay", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="true"),
                     @ApiResponse(responseCode=SC_INVALID, description="validation error, for example if the Bill has already been paid")

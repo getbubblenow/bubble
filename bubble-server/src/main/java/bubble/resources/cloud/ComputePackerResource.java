@@ -64,7 +64,7 @@ public class ComputePackerResource {
             tags=API_TAG_ACTIVATION,
             summary="Create a packer image",
             description="Create a packer image on this compute cloud. The packer image will be created if it does not already exist. This call will return immediately and the image will be created in the background.",
-            parameters=@Parameter(name="type", description="The type of image to create, either `sage` or `node`"),
+            parameters=@Parameter(name="type", description="The type of image to create, either `sage` or `node`", required=true),
             responses=@ApiResponse(responseCode=SC_OK, description="an empty response means the request was accepted")
     )
     public Response writeImages(@Context Request req,

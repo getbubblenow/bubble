@@ -61,7 +61,7 @@ public class ReverseProxyResource {
             tags=API_TAG_UTILITY,
             summary="Reverse proxy",
             description="Reverse proxy a URL, applying matchers/rules",
-            parameters=@Parameter(name="path", description="the URL to reverse proxy")
+            parameters=@Parameter(name="path", description="the URL to reverse proxy", required=true)
     )
     public Response get(@Context Request req,
                         @Context ContainerRequest request,

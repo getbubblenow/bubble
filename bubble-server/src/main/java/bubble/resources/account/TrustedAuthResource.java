@@ -118,7 +118,7 @@ public class TrustedAuthResource {
             tags=API_TAG_DEVICES,
             summary="Remove trust from a trusted client",
             description="Remove trust from a trusted client",
-            parameters=@Parameter(name="device", description="uuid of the device"),
+            parameters=@Parameter(name="device", description="uuid of the device", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="Account object with session token"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="if the email/password login was incorrect"),

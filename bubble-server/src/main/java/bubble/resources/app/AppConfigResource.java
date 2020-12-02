@@ -93,8 +93,8 @@ public class AppConfigResource {
             summary="Take a config action",
             description="Take a config action",
             parameters={
-                    @Parameter(name="view", description="config view name"),
-                    @Parameter(name="action", description="action name")
+                    @Parameter(name="view", description="config view name", required=true),
+                    @Parameter(name="action", description="action name", required=true)
             },
             responses=@ApiResponse(responseCode=SC_OK, description="a JSON object")
     )

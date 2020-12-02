@@ -107,8 +107,8 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
             summary="Set security level",
             description="Set security level for device. Levels are: `maximum`, `strict`, `standard`, `basic`, `disabled`",
             parameters={
-                @Parameter(name="id", description="device UUID or name"),
-                @Parameter(name="level", description="security level. Levels are: `maximum`, `strict`, `standard`, `basic`, `disabled`")
+                @Parameter(name="id", description="device UUID or name", required=true),
+                @Parameter(name="level", description="security level. Levels are: `maximum`, `strict`, `standard`, `basic`, `disabled`", required=true)
             },
             responses={
                     @ApiResponse(responseCode=SC_OK, description="array of IP addresses for device"),
@@ -137,7 +137,7 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
             tags=API_TAG_DEVICES,
             summary="Get IP addresses for device",
             description="Get IP addresses for device",
-            parameters=@Parameter(name="id", description="device UUID or name"),
+            parameters=@Parameter(name="id", description="device UUID or name", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="array of IP addresses for device"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="device not found")
@@ -155,7 +155,7 @@ public class DevicesResource extends AccountOwnedResource<Device, DeviceDAO> {
             tags=API_TAG_DEVICES,
             summary="Get device status",
             description="Get device status",
-            parameters=@Parameter(name="id", description="device UUID or name"),
+            parameters=@Parameter(name="id", description="device UUID or name", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="a DeviceStatus object"),
                     @ApiResponse(responseCode=SC_NOT_FOUND, description="device not found")
