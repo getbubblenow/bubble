@@ -26,13 +26,12 @@ import javax.ws.rs.core.Response;
 
 import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.http.HttpStatusCodes.*;
+import static org.cobbzilla.wizard.model.search.SearchQuery.DEFAULT_PAGE_SIZE;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Slf4j
 public class AppsResource extends AppsResourceBase {
-
-    public static final int DEFAULT_PAGE_SIZE = 10;
 
     public AppsResource(Account account) { super(account); }
 
@@ -47,7 +46,7 @@ public class AppsResource extends AppsResourceBase {
                     @Parameter(name="id", description="UUID or name of the app", required=true),
                     @Parameter(name="view", description="name of AppDataView to use", required=true),
                     @Parameter(name="n", description="page number of results to return, default is first page"),
-                    @Parameter(name="sz", description="number of results per page, default is "+DEFAULT_PAGE_SIZE)
+                    @Parameter(name="sz", description="number of results per page, default is "+DEFAULT_PAGE_SIZE+", max is "+MAX_SEARCH_PAGE)
             },
             responses={
                     @ApiResponse(responseCode=SC_OK, description="SearchResults object with results")

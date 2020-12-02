@@ -24,6 +24,7 @@ import javax.ws.rs.core.Response;
 import static bubble.ApiConstants.*;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
+import static org.cobbzilla.wizard.model.search.SearchQuery.DEFAULT_PAGE_SIZE;
 import static org.cobbzilla.wizard.resources.ResourceUtil.ok;
 import static org.cobbzilla.wizard.resources.ResourceUtil.userPrincipal;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
@@ -74,8 +75,8 @@ public class SearchResource {
                     @Parameter(name=Q_META, description="meta flag. if true, do not search, instead return metadata about how searches can be performed, which fields can be filtered and so on"),
                     @Parameter(name=Q_NOCACHE, description="nocache flag. if true, skip the cache and always run a real search"),
                     @Parameter(name=Q_FILTER, description="a filter string. if present, only entities matching this filter will be returned"),
-                    @Parameter(name=Q_PAGE, description="page number. default is page 1"),
-                    @Parameter(name=Q_SIZE, description="page size. default is 10, max is 50"),
+                    @Parameter(name=Q_PAGE, description="page number. default is first page"),
+                    @Parameter(name=Q_SIZE, description="page size. default is "+DEFAULT_PAGE_SIZE+", max is "+MAX_SEARCH_PAGE),
                     @Parameter(name=Q_SORT, description="sort field. prefix with + or - to indicate ascending/descending")
             },
             responses=@ApiResponse(responseCode=SC_OK, description="a SearchResults object, or if meta was true then a SqlViewField[] array")
