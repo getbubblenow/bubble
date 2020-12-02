@@ -10,6 +10,7 @@ import bubble.dao.account.message.AccountMessageDAO;
 import bubble.dao.app.*;
 import bubble.dao.bill.AccountPaymentArchivedDAO;
 import bubble.dao.bill.BillDAO;
+import bubble.dao.bill.BubblePlanDAO;
 import bubble.dao.cloud.BubbleDomainDAO;
 import bubble.dao.cloud.BubbleFootprintDAO;
 import bubble.dao.cloud.BubbleNetworkDAO;
@@ -71,6 +72,7 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
     @Autowired private AppDataDAO dataDAO;
     @Autowired private AppMessageDAO appMessageDAO;
     @Autowired private RuleDriverDAO driverDAO;
+    @Autowired private BubblePlanDAO planDAO;
     @Autowired private BubbleDomainDAO domainDAO;
     @Autowired private CloudServiceDAO cloudDAO;
     @Autowired private BubbleFootprintDAO footprintDAO;
@@ -112,6 +114,13 @@ public class AccountDAO extends AbstractCRUDDAO<Account> implements SqlViewSearc
         if (!account.hasLocale()) account.setLocale(getDEFAULT_LOCALE());
         account.setShowBlockStats(account.showBlockStats());  // ensure non-null
         account.setSync(account.sync());                      // ensure non-null
+
+        // ensure the preferred plan exists, if set
+        if (account.hasPreferredPlan()) {
+            final BubblePlan prefPlan = planDAO.findById(account.getPreferredPlan());
+            if (prefPlan == null) throw invalidEx("err.preferredPlan.notFound", "Preferred plan not found: "+account.getPreferredPlan(), account.getPreferredPlan());
+            account.setPreferredPlan(prefPlan.getUuid());
+        }
 
         // check account limit for plan, if there is a plan
         final BubblePlan plan = selfNodeService.getThisPlan();
