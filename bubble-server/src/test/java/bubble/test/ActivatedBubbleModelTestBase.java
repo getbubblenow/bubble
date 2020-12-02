@@ -35,6 +35,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static bubble.ApiConstants.*;
+import static bubble.model.account.Account.ROOT_EMAIL;
 import static bubble.model.account.Account.ROOT_USERNAME;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.handlebars.HandlebarsUtil.applyReflectively;
@@ -122,7 +123,7 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
             // if DB already exists, server has already been activated
             try {
                 admin = client.put(AUTH_ENDPOINT + EP_ACTIVATE, new ActivationRequest()
-                        .setEmail(ROOT_USERNAME)
+                        .setEmail(ROOT_EMAIL)
                         .setPassword(ROOT_PASSWORD)
                         .setNetworkName(hostname_short())
                         .addCloudConfig(dns)
