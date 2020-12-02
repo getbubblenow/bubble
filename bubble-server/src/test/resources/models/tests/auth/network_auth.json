@@ -113,7 +113,7 @@
   {
     "comment": "update policy, do not require authenticator for network operations. fails because we need a new TOTP token",
     "request": {
-      "uri": "users/root/policy/contacts",
+      "uri": "users/root@local.local/policy/contacts",
       "entity": {
         "type": "authenticator",
         "requiredForNetworkOperations": false
@@ -142,7 +142,7 @@
   {
     "comment": "update policy, do not require authenticator for network operations. succeeds",
     "request": {
-      "uri": "users/root/policy/contacts",
+      "uri": "users/root@local.local/policy/contacts",
       "entity": {
         "type": "authenticator",
         "requiredForNetworkOperations": false
