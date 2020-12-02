@@ -4,6 +4,7 @@
  */
 package bubble.test.system;
 
+import bubble.auth.PromoCodePolicy;
 import bubble.dao.account.AccountDAO;
 import bubble.model.account.Account;
 import bubble.test.ActivatedBubbleModelTestBase;
@@ -27,7 +28,10 @@ public class AuthTest extends ActivatedBubbleModelTestBase {
     @Test public void testBasicAuth           () throws Exception { modelTest("auth/basic_auth"); }
     @Test public void testAccountCrud         () throws Exception { modelTest("auth/account_crud"); }
     @Test public void testDeviceCrud          () throws Exception { modelTest("auth/device_crud"); }
-    @Test public void testRegistration        () throws Exception { modelTest("auth/account_registration"); }
+    @Test public void testRegistration        () throws Exception {
+        getConfiguration().setPromoCodePolicy(PromoCodePolicy.disabled); // ensure promos are disabled
+        modelTest("auth/account_registration");
+    }
     @Test public void testForgotPassword      () throws Exception { modelTest("auth/forgot_password"); }
     @Test public void testChangePassword      () throws Exception { modelTest("auth/change_password"); }
     @Test public void testChangeAdminPassword () throws Exception { modelTest("auth/change_admin_password"); }
