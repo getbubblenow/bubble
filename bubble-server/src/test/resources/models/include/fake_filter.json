@@ -25,7 +25,7 @@
       }
     },
     "response": {
-      "check": [ {"condition": "<<jsCheck>>"} ]
+      "check": [ {"condition": "<<<jsCheck>>>"} ]
     }
   }
 ]
