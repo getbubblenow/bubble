@@ -336,6 +336,20 @@
             <version>16.2.0</version>
         </dependency>
 
+        <!-- import xalan and tidy for testing, used by 'response.xpath(...)' expressions -->
+        <dependency>
+            <groupId>xalan</groupId>
+            <artifactId>xalan</artifactId>
+            <version>${xalan.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>jtidy</groupId>
+            <artifactId>jtidy</artifactId>
+            <version>${jtidy.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.cobbzilla</groupId>
             <artifactId>wizard-server-test</artifactId>
@@ -434,6 +448,7 @@
                                         <!-- we can ALMOST exclude all of poi, we need the ZipSecureFile utility class -->
                                         <exclude>META-INF/services/org.apache.xmlbeans**</exclude>
                                         <exclude>com/microsoft/schemas/**</exclude>
+                                        <exclude>com/opencsv/**</exclude>
                                         <exclude>org/apache/poi/*.class</exclude>
                                         <exclude>org/apache/poi/common/**</exclude>
                                         <exclude>org/apache/poi/ddf/**</exclude>
@@ -453,21 +468,28 @@
                                         <exclude>org/apache/poi/xslf/**</exclude>
                                         <exclude>org/apache/poi/xssf/**</exclude>
                                         <exclude>org/apache/poi/xwpf/**</exclude>
-                                        <exclude>org/etsi/**</exclude>
-                                        <exclude>org/w3/**</exclude>
 
                                         <!-- exclude other stuff that is never used -->
-                                        <exclude>org/cobbzilla/wizard/server/RestWebappServerBase.class</exclude>
                                         <exclude>org/apache/tools/ant/**</exclude>
                                         <exclude>org/apache/velocity/**</exclude>
                                         <exclude>org/apache/xalan/**</exclude>
                                         <exclude>org/apache/xmlbeans/**</exclude>
+                                        <exclude>org/aspectj/weaver/**</exclude>
+                                        <exclude>org/cobbzilla/wizard/server/RestWebappServerBase.class</exclude>
+                                        <exclude>org/cobbzilla/wizard/**/ldap/**</exclude>
+                                        <exclude>org/cobbzilla/wizard/**/shard/**</exclude>
+                                        <exclude>org/etsi/**</exclude>
+                                        <exclude>org/glassfish/pfl/**</exclude>
                                         <exclude>org/hibernate/internal/jaxb/**</exclude>
+                                        <exclude>org/objectweb/asm/tree/**</exclude>
+                                        <exclude>org/objectweb/asm/commons/**</exclude>
+                                        <exclude>org/objectweb/asm/util/**</exclude>
                                         <exclude>org/openqa/selenium/**</exclude>
                                         <exclude>org/openxmlformats/**</exclude>
                                         <exclude>org/springframework/orm/hibernate3/**</exclude>
                                         <exclude>org/springframework/orm/hibernate5/**</exclude>
                                         <exclude>org/springframework/orm/jdo/**</exclude>
+                                        <exclude>org/w3/**</exclude>
                                         <exclude>schemaorg_apache_xmlbeans/**</exclude>
                                         <exclude>schemasMicrosoftComOfficeExcel/**</exclude>
                                         <exclude>schemasMicrosoftComOfficeOffice/**</exclude>
