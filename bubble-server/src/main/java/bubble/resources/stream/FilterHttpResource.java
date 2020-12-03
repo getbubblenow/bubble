@@ -488,7 +488,7 @@ public class FilterHttpResource {
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             tags={API_TAG_MITMPROXY, API_TAG_DEVICES, API_TAG_UTILITY},
             summary="Flush matchers",
-            description="Flushes matchers only",
+            description="Flushes matchers cache only",
             responses=@ApiResponse(responseCode=SC_OK, description="an integer representing how many cache entries were flushed")
     )
     public Response flushMatchers(@Context ContainerRequest request) {
