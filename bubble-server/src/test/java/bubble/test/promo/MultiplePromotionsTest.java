@@ -15,8 +15,6 @@ public class MultiplePromotionsTest extends PaymentTestBase {
 
     @Override protected String getManifest() { return "promo/multi/manifest_multi"; }
 
-    @Before public void ensurePromoCodeOptional() { getConfiguration().setPromoCodePolicy(PromoCodePolicy.optional); }
-
     @Test public void testMultiplePromotions() throws Exception { modelTest("promo/multi_promo"); }
 
 }

@@ -650,7 +650,7 @@ public class AuthResource {
 
     @POST @Path(EP_REKEY)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags=API_TAG_NODE,
+            tags=API_TAG_UTILITY,
             summary="Re-key a node. Must be admin. Creates a new NodeKey that, being newest, will be the one the node starts using",
             description="Re-key a node. Must be admin. Creates a new NodeKey that, being newest, will be the one the node starts using",
             responses={

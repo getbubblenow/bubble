@@ -4,6 +4,7 @@
  */
 package bubble.test;
 
+import bubble.auth.PromoCodePolicy;
 import bubble.cloud.CloudServiceDriver;
 import bubble.cloud.CloudServiceType;
 import bubble.cloud.dns.mock.MockDnsDriver;
@@ -26,6 +27,7 @@ import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.client.script.ApiRunner;
 import org.cobbzilla.wizard.model.entityconfig.ModelSetupListener;
 import org.cobbzilla.wizard.server.RestServer;
+import org.junit.Before;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +56,8 @@ public abstract class ActivatedBubbleModelTestBase extends BubbleModelTestBase {
     protected Account admin;
 
     @Override public boolean doTruncateDb() { return false; }
+
+    @Before public void ensurePromoCodeOptional() { getConfiguration().setPromoCodePolicy(PromoCodePolicy.optional); }
 
     @Override public void beforeStart(RestServer<BubbleConfiguration> server) {
         final BubbleConfiguration configuration = server.getConfiguration();

@@ -1,0 +1,74 @@
+[
+  {
+    "name": "activation",
+    "description": "When first starting a Bubble from scratch, it needs to be activated. Packer images are also needed to launch new Bubbles.",
+    "externalDocs": {
+      "description": "More information about activation is available in the Bubble Launch Guide",
+      "url": "https://git.bubblev.org/bubblev/bubble/src/branch/master/docs/activation.md"
+    }
+  },
+  {
+    "name": "auth",
+    "description": "These API endpoints are all about registration, login, and logout. Various actions in Bubble also require approval from a verified contact, those API calls are described here as well.",
+    "externalDocs": {
+      "description": "More information about authentication is available in the Bubble API Guide",
+      "url": "https://github.com/getbubblenow/bubble-docs/blob/master/api/auth.md"
+    }
+  },
+  {
+    "name": "account",
+    "description": "Manage account settings and policies, download or delete an account, and more."
+  },
+  {
+    "name": "account_objects",
+    "description": "Most objects in the Bubble world are owned by an account. These are the CRUD APIs used to manage them."
+  },
+  {
+    "name": "apps",
+    "description": "These APIs are about managing your Bubble apps from your Bubble."
+  },
+  {
+    "name": "app_runtime",
+    "description": "These APIs are called by apps that your Bubble has activated for various requests."
+  },
+  {
+    "name": "backup_restore",
+    "description": "APIs used during backup and restore operations."
+  },
+  {
+    "name": "clouds",
+    "description": "APIs for launching Bubbles and accessing cloud services."
+  },
+  {
+    "name": "debug",
+    "description": "APIs for debugging."
+  },
+  {
+    "name": "devices",
+    "description": "Device management. Add, connect, and remove devices. View device status and more.",
+    "externalDocs": {
+      "description": "More information about devices is available in the Bubble API Guide",
+      "url": "https://github.com/getbubblenow/bubble-docs/blob/master/api/devices.md"
+    }
+  },
+  {
+    "name": "mitmproxy",
+    "description": "mitmproxy uses these APIs to coordinate with Bubble and enhance your internet experience."
+  },
+  {
+    "name": "node",
+    "description": "Bubbles communicate with each other using these APIs."
+  },
+  {
+    "name": "node_manager",
+    "description": "The nodemanager is a low-level service that helps monitor CPU, memory and disk usage, and in recovery situations."
+  },
+  {
+    "name": "payment",
+    "description": "Payment APIs are disabled by default. For more information about using Bubble with payments enabled, contact licensing@getbubblenow.com"
+  },
+  {
+    "name": "search",
+    "description": "Search objects in the Bubble database."
+  }
+]

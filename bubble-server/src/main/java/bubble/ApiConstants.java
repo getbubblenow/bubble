@@ -293,17 +293,18 @@ public class ApiConstants {
     public static final int ERROR_MAXLEN = 20000;
     public static final int ERROR_MAX_BEFORE_ELLIPSES = 19900;
 
+    // the name FOO in `API_TAG_FOO` is the name of the tag in META-INF/bubble/openapi-tags.json
     public static final String API_TAG_ACTIVATION = "activation";
     public static final String API_TAG_AUTH = "authentication / authorization";
     public static final String API_TAG_ACCOUNT = "account management";
     public static final String API_TAG_ACCOUNT_OBJECTS = "account-owned objects";
     public static final String API_TAG_APPS = "bubble apps";
+    public static final String API_TAG_APP_RUNTIME = "bubble app runtime";
     public static final String API_TAG_DEVICES = "devices";
     public static final String API_TAG_BACKUP_RESTORE = "backup and restore";
     public static final String API_TAG_CLOUDS = "clouds";
     public static final String API_TAG_DEBUG = "debug";
     public static final String API_TAG_MITMPROXY = "mitmproxy";
-    public static final String API_TAG_APP_RUNTIME = "bubble app runtime";
     public static final String API_TAG_NODE = "node";
     public static final String API_TAG_NODE_MANAGER = "node manager";
     public static final String API_TAG_PAYMENT = "payment";
