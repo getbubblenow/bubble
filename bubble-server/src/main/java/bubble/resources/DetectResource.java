@@ -25,7 +25,6 @@ import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.ok;
 import static org.cobbzilla.wizard.resources.ResourceUtil.optionalUserPrincipal;
-import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -36,7 +35,7 @@ public class DetectResource {
     @Autowired private GeoService geoService;
 
     @GET @Path(EP_LOCALE)
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Detect the caller's locale",
             description="Detect the caller's locale",
             responses=@ApiResponse(responseCode=SC_OK, description="an array of locale strings in priority order")
@@ -47,7 +46,7 @@ public class DetectResource {
     }
 
     @GET @Path(EP_TIMEZONE)
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Detect the caller's time zone",
             description="Detect the caller's time zone",
             responses=@ApiResponse(responseCode=SC_OK, description="the TimeZone ")

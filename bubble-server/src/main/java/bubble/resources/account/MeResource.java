@@ -171,7 +171,7 @@ public class MeResource {
     }
 
     @GET @Path(EP_ERROR_API)
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Get error API information",
             description="Get error API information",
             responses=@ApiResponse(responseCode=SC_OK, description="a Map of API information")
@@ -554,7 +554,7 @@ public class MeResource {
 
     @GET @Path(EP_UPGRADE)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags=API_TAG_UTILITY,
+            tags=API_TAG_UPGRADE,
             summary="Check for upgrade",
             description="Check for upgrade. Must be admin. The check runs in the background, this returns an empty JSON object",
             responses=@ApiResponse(responseCode=SC_OK, description="the upgrade check has been started", content=@Content(mediaType=APPLICATION_JSON, examples=@ExampleObject(name="empty JSON object", value="{}")))
@@ -577,7 +577,7 @@ public class MeResource {
 
     @POST @Path(EP_UPGRADE)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags=API_TAG_UTILITY,
+            tags=API_TAG_UPGRADE,
             summary="Upgrade Bubble",
             description="Upgrade Bubble. Must be admin. Starts the upgrade process.",
             responses=@ApiResponse(responseCode=SC_OK, description="the current public system configs")

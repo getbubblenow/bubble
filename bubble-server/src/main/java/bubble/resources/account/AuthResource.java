@@ -132,7 +132,7 @@ public class AuthResource {
     }
 
     @GET @Path(EP_CONFIGS)
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Read public system configuration",
             description="Read public system configuration",
             responses=@ApiResponse(responseCode=SC_OK, description="a Map<String, Object> of public system configuration settings")
@@ -142,7 +142,7 @@ public class AuthResource {
     }
 
     @GET @Path(EP_READY)
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Determine if Bubble is running and ready for login",
             description="Determine if Bubble is running and ready for login",
             responses={
@@ -884,7 +884,7 @@ public class AuthResource {
 
     @GET @Path(EP_CA_CERT)
     @Produces(CONTENT_TYPE_ANY)
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Get the CA Certificate for this Bubble",
             description="Get the CA Certificate for this Bubble. Response body is the certificate itself, in a format determined by deviceType or type. Either deviceType or type can be supplied but not both. Device types are: `ios`, `android`, `windows`, `macos` and `linux`. Cert types are: `pem`, `p12`, `cer`, `crt`",
             parameters={
@@ -922,7 +922,7 @@ public class AuthResource {
     }
 
     @GET @Path(EP_KEY)
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Get the Node Key for this Bubble",
             description="Get the Node Key for this Bubble",
             responses=@ApiResponse(responseCode=SC_OK, description="HTTP status 200 indicates success")
@@ -995,7 +995,7 @@ public class AuthResource {
     }
 
     @GET @Path(EP_TIME)
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Get current system time",
             description="Get current system time. Returns current time as epoch time in milliseconds",
             responses=@ApiResponse(responseCode=SC_OK, description="Returns current time as epoch time in milliseconds",
@@ -1006,7 +1006,7 @@ public class AuthResource {
     @Autowired private GeoService geoService;
 
     @GET @Path(EP_SUPPORT)
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Get support information",
             description="Get support information for the user's current locale, if available. Use the default locale otherwise.",
             responses=@ApiResponse(responseCode=SC_OK, description="SupportInfo object")
@@ -1018,7 +1018,7 @@ public class AuthResource {
     }
 
     @GET @Path(EP_SUPPORT+"/{locale}")
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Get support information for a locale",
             description="Get support information for the given locale, if available. Use the default locale otherwise.",
             parameters=@Parameter(name="locale", description="locale to find support for", required=true),
@@ -1031,7 +1031,7 @@ public class AuthResource {
     }
 
     @GET @Path(EP_APP_LINKS)
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Get links to native applications",
             description="Get links to native applications for the current user's locale, if available. Use the default locale otherwise.",
             responses=@ApiResponse(responseCode=SC_OK, description="AppLinks object")
@@ -1043,7 +1043,7 @@ public class AuthResource {
     }
 
     @GET @Path(EP_APP_LINKS+"/{locale}")
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Get links to native applications for a locale",
             description="Get links to native applications for the given locale, if available. Use the default locale otherwise.",
             parameters=@Parameter(name="locale", description="locale to find app links for", required=true),
@@ -1079,7 +1079,7 @@ public class AuthResource {
     @Produces(APPLICATION_OCTET_STREAM)
     @Operation(tags=API_TAG_NODE,
             summary="Return bubble jar",
-            description="Return bubble jar file for upgrading other nodes to our version.",
+            description="Called by another node to fetch our bubble jar for upgrade purposes.",
             parameters={
                     @Parameter(name="node", description="UUID of the calling node", required=true),
                     @Parameter(name="key", description="UUID of the calling node's BubbleNodeKey", required=true)

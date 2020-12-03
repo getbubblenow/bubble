@@ -17,11 +17,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import static bubble.ApiConstants.API_TAG_BUBBLE_INFO;
 import static bubble.ApiConstants.BUBBLE_MAGIC_ENDPOINT;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.ok;
-import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -30,7 +30,7 @@ import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UT
 public class BubbleMagicResource {
 
     @GET
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Simple health check",
             description="Returns a static string, verifies that API can communicate over the network",
             responses=@ApiResponse(responseCode=SC_OK, description="fixed response")

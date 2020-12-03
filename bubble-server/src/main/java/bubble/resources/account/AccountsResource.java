@@ -629,7 +629,7 @@ public class AccountsResource {
 
     @GET @Path("/{id}"+EP_MITM)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags=API_TAG_UTILITY,
+            tags={API_TAG_BUBBLE_INFO, API_TAG_UTILITY},
             summary="Get status of mitmproxy",
             description="Get status of mitmproxy. Caller must be admin.",
             parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
@@ -754,7 +754,7 @@ public class AccountsResource {
 
     @GET @Path("/{id}"+EP_DEVICE_TYPES)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags=API_TAG_UTILITY,
+            tags=API_TAG_BUBBLE_INFO,
             summary="List selectable device types",
             description="List selectable device types. This excludes pseudo-devices like Firefox and web-clients.",
             parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),

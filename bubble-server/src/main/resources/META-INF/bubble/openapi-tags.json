@@ -68,7 +68,19 @@
     "description": "Payment APIs are disabled by default.\n\nFor more information about using Bubble with payments enabled, contact [licensing@getbubblenow.com](mailto:licensing@getbubblenow.com)"
   },
   {
+    "name": "bubble_info",
+    "description": "Information about this Bubble and about the caller. Locales, timezones, models and more."
+  },
+  {
     "name": "search",
     "description": "Search objects in the Bubble database."
+  },
+  {
+    "name": "upgrades",
+    "description": "Check for upgrades. Upgrade your Bubble."
+  },
+  {
+    "name": "utility",
+    "description": "A veritable grab-bag of random utilities, from time zone tools to enabling/disabling the mitmproxy service."
   }
 ]

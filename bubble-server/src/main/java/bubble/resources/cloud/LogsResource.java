@@ -45,7 +45,7 @@ public class LogsResource {
 
     @GET @Path(EP_STATUS)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags=API_TAG_UTILITY,
+            tags={API_TAG_BUBBLE_INFO, API_TAG_UTILITY},
             summary="Get logging status",
             description="Get logging status. Must be admin. Returns a JSON object with keys `"+K_FLAG+"` (boolean, indicates if logging is enabled) and `"+K_EXPIRE_AT+"` (epoch time in milliseconds when logging will automatically be turned off)",
             responses=@ApiResponse(responseCode=SC_OK, description="true if logs enabled, false otherwise")

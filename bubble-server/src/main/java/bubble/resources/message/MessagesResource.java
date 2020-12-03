@@ -61,7 +61,7 @@ public class MessagesResource {
     }
 
     @GET @Path("/{locale}/{group}")
-    @Operation(tags=API_TAG_UTILITY,
+    @Operation(tags=API_TAG_BUBBLE_INFO,
             summary="Get localized messages",
             description="Get localized messages by group. `locale` specifies the desired locale. If the locale is not supported, another similar locale or the default locale will be used. `The `group` param is the message group to retrieve. Groups are: `pre_auth`, `post_auth`, `countries`, `timezones`, `apps`. Requesting the `post_auth` or `apps` groups requires a valid API session. `format` is an optional format for the messages. Format can be `raw` or `underscore` (which converts dots to underscores). Default is `underscore`.",
             parameters={
