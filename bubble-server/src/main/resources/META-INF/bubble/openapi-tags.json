@@ -9,7 +9,7 @@
   },
   {
     "name": "auth",
-    "description": "These API endpoints are all about registration, login, and logout. Various actions in Bubble also require approval from a verified contact, those API calls are described here as well.\n\nMore information about authentication is available in the [Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/auth.md)",
+    "description": "Registration, login, logout, and approvals.\n\nMore information about authentication is available in the [Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/auth.md)",
     "externalDocs": {
       "description": "",
       "url": ""
@@ -37,7 +37,7 @@
   },
   {
     "name": "clouds",
-    "description": "Launching Bubbles and accessing cloud services."
+    "description": "Launch Bubbles and access cloud services."
   },
   {
     "name": "debug",
@@ -61,7 +61,7 @@
   },
   {
     "name": "node_manager",
-    "description": "The nodemanager is a low-level service that helps monitor CPU, memory and disk usage, and in recovery situations."
+    "description": "The nodemanager is a low-level service that helps monitor CPU, memory and disk usage. It is also useful in disaster recovery situations."
   },
   {
     "name": "payment",

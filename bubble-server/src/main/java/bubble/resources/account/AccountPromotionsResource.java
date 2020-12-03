@@ -51,7 +51,7 @@ public class AccountPromotionsResource {
     @PUT
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             tags=API_TAG_PAYMENT,
-            summary="Add a promotion to an account. Must be admin.",
+            summary="Add a promotion to an account",
             description="Add a promotion to an account. Must be admin.",
             responses=@ApiResponse(responseCode=SC_OK, description="an array of Promotion objects owned by the Account")
     )
@@ -66,7 +66,7 @@ public class AccountPromotionsResource {
     @DELETE @Path("/{id}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             tags=API_TAG_PAYMENT,
-            summary="Remove a promotion from an account. Must be admin.",
+            summary="Remove a promotion from an account",
             description="Remove a promotion from an account. Must be admin.",
             responses=@ApiResponse(responseCode=SC_OK, description="an array of Promotion objects owned by the Account")
     )
