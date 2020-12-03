@@ -1,18 +1,18 @@
 [
   {
     "name": "activation",
-    "description": "When first starting a Bubble from scratch, it needs to be activated. Packer images are also needed to launch new Bubbles.",
+    "description": "When first starting a Bubble from scratch, it needs to be activated. Packer images are also needed to launch new Bubbles.\n\nMore information about activation is available in the [Bubble Launch Guide](https://git.bubblev.org/bubblev/bubble/src/branch/master/docs/activation.md)",
     "externalDocs": {
-      "description": "More information about activation is available in the Bubble Launch Guide",
-      "url": "https://git.bubblev.org/bubblev/bubble/src/branch/master/docs/activation.md"
+      "description": "",
+      "url": ""
     }
   },
   {
     "name": "auth",
-    "description": "These API endpoints are all about registration, login, and logout. Various actions in Bubble also require approval from a verified contact, those API calls are described here as well.",
+    "description": "These API endpoints are all about registration, login, and logout. Various actions in Bubble also require approval from a verified contact, those API calls are described here as well.\n\nMore information about authentication is available in the [Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/auth.md)",
     "externalDocs": {
-      "description": "More information about authentication is available in the Bubble API Guide",
-      "url": "https://github.com/getbubblenow/bubble-docs/blob/master/api/auth.md"
+      "description": "",
+      "url": ""
     }
   },
   {
@@ -25,30 +25,30 @@
   },
   {
     "name": "apps",
-    "description": "These APIs are about managing your Bubble apps from your Bubble."
+    "description": "View and manage Bubble apps on your Bubble."
   },
   {
     "name": "app_runtime",
-    "description": "These APIs are called by apps that your Bubble has activated for various requests."
+    "description": "Bubble apps call these APIs when they are running on a client device."
   },
   {
     "name": "backup_restore",
-    "description": "APIs used during backup and restore operations."
+    "description": "Backup and restore operations."
   },
   {
     "name": "clouds",
-    "description": "APIs for launching Bubbles and accessing cloud services."
+    "description": "Launching Bubbles and accessing cloud services."
   },
   {
     "name": "debug",
-    "description": "APIs for debugging."
+    "description": "Useful for debugging during development and testing. Debug APIs are disabled (or return no data) when running outside of a development environment."
   },
   {
     "name": "devices",
-    "description": "Device management. Add, connect, and remove devices. View device status and more.",
+    "description": "Device management. Add, connect, and remove devices. View device status and more.\n\nMore information about devices is available in the [Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/devices.md)",
     "externalDocs": {
-      "description": "More information about devices is available in the Bubble API Guide",
-      "url": "https://github.com/getbubblenow/bubble-docs/blob/master/api/devices.md"
+      "description": "",
+      "url": ""
     }
   },
   {
@@ -57,7 +57,7 @@
   },
   {
     "name": "node",
-    "description": "Bubbles communicate with each other using these APIs."
+    "description": "Bubble nodes communicate with each other using these APIs."
   },
   {
     "name": "node_manager",
@@ -65,7 +65,7 @@
   },
   {
     "name": "payment",
-    "description": "Payment APIs are disabled by default. For more information about using Bubble with payments enabled, contact licensing@getbubblenow.com"
+    "description": "Payment APIs are disabled by default.\n\nFor more information about using Bubble with payments enabled, contact [licensing@getbubblenow.com](mailto:licensing@getbubblenow.com)"
   },
   {
     "name": "search",

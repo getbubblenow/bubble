@@ -73,6 +73,7 @@ import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.reflect.ReflectionUtil.constValue;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static org.cobbzilla.util.security.ShaUtil.sha256_file;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
@@ -116,7 +117,9 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public BubbleConfiguration (BubbleConfiguration other) { copy(this, other); }
 
     @Override protected List<Tag> initOpenApiTags () {
-        return Arrays.asList(json(stream2string("META-INF/bubble/openapi-tags.json"), Tag[].class));
+        return Arrays.stream(json(stream2string("META-INF/bubble/openapi-tags.json"), Tag[].class))
+                .map(t -> t.name(constValue(ApiConstants.class, "API_TAG_"+t.getName().toUpperCase())))
+                .collect(Collectors.toList());
     }
 
     @Getter @Setter private int defaultSslPort = 1443;
