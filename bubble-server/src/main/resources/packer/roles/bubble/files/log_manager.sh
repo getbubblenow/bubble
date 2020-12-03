@@ -8,6 +8,16 @@ function log {
   echo "$(date): ${1}" >> ${LOG}
 }
 
+function set_group() {
+    LOG_FILE="${1}"
+    if [[ "$(basename "${LOG_FILE}")" == "mitmproxy_bubble.log" ]] ; then
+      chgrp mitmproxy "${LOG_FILE}" && chmod g+w "${LOG_FILE}"
+
+    elif [[ "$(basename "${LOG_FILE}")" == "mitmproxy_bubble.log" ]] ; then
+      chgrp mitmproxy "${LOG_FILE}" && chmod g+w "${LOG_FILE}"
+    fi
+}
+
 BUBBLE_LOGS_FOLDER=/var/log/bubble
 POSTGRES_LOGS_FOLDER=$(readlink -f "${BUBBLE_LOGS_FOLDER}"/postgresql)
 REDIS_LOG_FLAG_KEY="bubble.StandardSelfNodeService.bubble_server_logs_enabled"
@@ -23,6 +33,7 @@ if [[ ${REDIS_LOG_FLAG_VALUE} == true ]]; then
     log "recreating real bubble log file: ${logFile}"
     rm "${logFile}"
     touch "${logFile}"
+    set_group "${logFile}"
     if [[ "${logFile}" == "${LOG}" ]]; then
       log "...starting fresh log after activation..."
     fi
