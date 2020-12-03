@@ -30,8 +30,8 @@ import bubble.server.BubbleConfiguration;
 import bubble.service.account.StandardAccountMessageService;
 import bubble.service.message.MessageService;
 import com.github.jknack.handlebars.Handlebars;
-import org.apache.commons.collections4.map.SingletonMap;
 import org.apache.commons.lang3.ArrayUtils;
+import org.cobbzilla.util.collection.MapBuilder;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -209,7 +209,7 @@ public interface AuthenticationDriver extends CloudServiceDriver {
     static String localePath(final String locale, String templatePath, Handlebars hbs) {
         final String key = locale+":"+templatePath;
         return _localePaths.computeIfAbsent(key,
-                k -> HandlebarsUtil.apply(hbs, templatePath, new SingletonMap<>(CTX_LOCALE, locale), '[', ']'));
+                k -> HandlebarsUtil.apply(hbs, templatePath, MapBuilder.build(CTX_LOCALE, locale), '[', ']'));
     }
 
     String HTML_MESSAGE_HBS = "htmlMessage.hbs";

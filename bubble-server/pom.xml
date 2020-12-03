@@ -327,16 +327,126 @@
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
-                            <!-- Exclude signed jars to avoid errors
-                            see: http://stackoverflow.com/a/6743609/1251543
-                            -->
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
                                     <excludes>
+                                        <!-- Exclude signed jars to avoid errors, see: http://stackoverflow.com/a/6743609/1251543 -->
                                         <exclude>META-INF/*.SF</exclude>
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
+
+                                        <!-- We don't use these whole dependencies, brought in by other dependencies -->
+                                        <exclude>org.mongodb:*</exclude>
+                                        <exclude>com.github.jmkgreen.morphia:*</exclude>
+                                        <exclude>org.elasticsearch:*</exclude>
+                                        <exclude>fr.opensagres.xdocreport:*</exclude>
+                                        <exclude>com.codeborne:*</exclude>
+                                        <exclude>jtidy:*</exclude>
+                                        <exclude>xalan:*</exclude>
+                                        <exclude>net.sf.saxon:*</exclude>
+                                        <exclude>org.apache.ant:*</exclude>
+
+                                        <!-- Exclude other stuff by path -->
+                                        <exclude>META-INF/maven/**</exclude>
+                                        <exclude>META-INF/services/fr.opensagres**</exclude>
+                                        <exclude>aj/org/objectweb/**</exclude>
+                                        <exclude>com/ctc/wstx/api/EmptyElementHandler.class</exclude>
+                                        <exclude>com/ctc/wstx/api/InvalidCharHandler.class</exclude>
+                                        <exclude>com/ctc/wstx/api/ValidatorConfig.class</exclude>
+                                        <exclude>com/ctc/wstx/api/WstxOutputProperties.class</exclude>
+                                        <exclude>com/ctc/wstx/cfg/ErrorConsts.class</exclude>
+                                        <exclude>com/ctc/wstx/cfg/XmlConsts.class</exclude>
+                                        <exclude>com/ctc/wstx/compat/QNameCreator.class</exclude>
+                                        <exclude>com/ctc/wstx/dom/**</exclude>
+                                        <exclude>com/ctc/wstx/dtd/**</exclude>
+                                        <exclude>com/ctc/wstx/msv/**</exclude>
+                                        <exclude>com/ctc/wstx/osgi/**</exclude>
+                                        <exclude>com/ctc/wstx/sax/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv/org_isorelax/catalog/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv/org_isorelax/dispatcher/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv/org_isorelax/jaxp/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv/org_isorelax/verifier/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv/org_jp_gr_xml/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv/relaxng_datatype/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv/xsd_util/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv_core/datatype/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv_core/driver/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv_core/grammar/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv_core/reader/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv_core/reader/trex/classic/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv_core/relaxns/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv_core/scanner/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv_core/util/xml/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv_core/verifier/**</exclude>
+                                        <exclude>com/ctc/wstx/shaded/msv_core/writer/**</exclude>
+                                        <exclude>com/github/jmkgreen/**</exclude>
+                                        <exclude>com/google/common/collect/**</exclude>
+                                        <exclude>com/mongodb/**</exclude>
+                                        <exclude>com/opencsv/**</exclude>
+                                        <exclude>com/twilio/rest/**</exclude>
+                                        <exclude>fr/opensagres/**</exclude>
+                                        <exclude>io/jsonwebtoken/**</exclude>
+                                        <exclude>javax/servlet/descriptor/**</exclude>
+                                        <exclude>javax/servlet/http/**</exclude>
+                                        <exclude>lib/README.txt/**</exclude>
+                                        <exclude>lib/darwin-x86-amd64/**</exclude>
+                                        <exclude>lombok/bytecode/**</exclude>
+                                        <exclude>lombok/core/**</exclude>
+                                        <exclude>lombok/delombok/**</exclude>
+                                        <exclude>lombok/eclipse/**</exclude>
+                                        <exclude>lombok/experimental/**</exclude>
+                                        <exclude>lombok/extern/**</exclude>
+                                        <exclude>lombok/installer/**</exclude>
+                                        <exclude>lombok/javac/**</exclude>
+                                        <exclude>lombok/launch/**</exclude>
+                                        <exclude>net/fortuna/**</exclude>
+                                        <exclude>net/sf/saxon/**</exclude>
+                                        <exclude>org/apache/commons/math3/**</exclude>
+                                        <exclude>org/apache/fontbox/**</exclude>
+                                        <exclude>org/apache/pdfbox/**</exclude>
+                                        <exclude>org/apache/poi/**</exclude>
+                                        <exclude>org/apache/tools/ant/**</exclude>
+                                        <exclude>org/apache/velocity/**</exclude>
+                                        <exclude>org/apache/xalan/**</exclude>
+                                        <exclude>org/apache/xmlbeans/**</exclude>
+                                        <exclude>org/eclipse/jetty/client/**</exclude>
+                                        <exclude>org/eclipse/jetty/favicon.ico/**</exclude>
+                                        <exclude>org/eclipse/jetty/http/**</exclude>
+                                        <exclude>org/eclipse/jetty/io/**</exclude>
+                                        <exclude>org/eclipse/jetty/proxy/**</exclude>
+                                        <exclude>org/eclipse/jetty/security/**</exclude>
+                                        <exclude>org/eclipse/jetty/server/handler/**</exclude>
+                                        <exclude>org/eclipse/jetty/server/jmx/**</exclude>
+                                        <exclude>org/eclipse/jetty/server/nio/**</exclude>
+                                        <exclude>org/eclipse/jetty/server/resource/**</exclude>
+                                        <exclude>org/eclipse/jetty/server/session/**</exclude>
+                                        <exclude>org/eclipse/jetty/servlet/**</exclude>
+                                        <exclude>org/eclipse/jetty/util/annotation/**</exclude>
+                                        <exclude>org/eclipse/jetty/util/compression/**</exclude>
+                                        <exclude>org/eclipse/jetty/util/log/**</exclude>
+                                        <exclude>org/eclipse/jetty/util/preventers/**</exclude>
+                                        <exclude>org/eclipse/jetty/util/resource/**</exclude>
+                                        <exclude>org/eclipse/jetty/util/security/**</exclude>
+                                        <exclude>org/eclipse/jetty/util/ssl/**</exclude>
+                                        <exclude>org/eclipse/jetty/util/statistic/**</exclude>
+                                        <exclude>org/eclipse/jetty/util/thread/**</exclude>
+                                        <exclude>org/eclipse/jetty/version/**</exclude>
+                                        <exclude>org/eclipse/jetty/webapp/**</exclude>
+                                        <exclude>org/eclipse/jetty/xml/**</exclude>
+                                        <exclude>org/hibernate/internal/jaxb/**</exclude>
+                                        <exclude>org/openqa/selenium/**</exclude>
+                                        <exclude>org/openxmlformats/**</exclude>
+                                        <exclude>org/springframework/orm/hibernate3/**</exclude>
+                                        <exclude>org/springframework/orm/hibernate5/**</exclude>
+                                        <exclude>org/springframework/orm/jdo/**</exclude>
+                                        <exclude>schemaorg_apache_xmlbeans/**</exclude>
+                                        <exclude>schemasMicrosoftComOfficeExcel/**</exclude>
+                                        <exclude>schemasMicrosoftComOfficeOffice/**</exclude>
+                                        <exclude>schemasMicrosoftComOfficePowerpoint/**</exclude>
+                                        <exclude>schemasMicrosoftComOfficeWord/**</exclude>
+                                        <exclude>schemasMicrosoftComVml/**</exclude>
+                                        <exclude>w3c/mathml/**</exclude>
                                     </excludes>
                                 </filter>
                             </filters>

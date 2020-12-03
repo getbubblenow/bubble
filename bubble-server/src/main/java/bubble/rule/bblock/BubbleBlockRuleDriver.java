@@ -22,8 +22,8 @@ import bubble.service.stream.AppRuleHarness;
 import bubble.service.stream.ConnectionCheckResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.map.SingletonMap;
 import org.cobbzilla.util.collection.ExpirationMap;
+import org.cobbzilla.util.collection.MapBuilder;
 import org.cobbzilla.util.http.URIUtil;
 import org.cobbzilla.util.string.StringUtil;
 import org.glassfish.grizzly.http.server.Request;
@@ -407,7 +407,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
         // Now that we know the content type, re-check the BlockList
         final String contentType = filterRequest.getContentType();
         final BlockDecision decision = getBlockList().getDecision(request.getFqdn(), request.getUri(), contentType, request.getReferer(), true);
-        final Map<String, Object> filterCtx = new SingletonMap<>(FILTER_CTX_DECISION, decision);
+        final Map<String, Object> filterCtx = MapBuilder.build(FILTER_CTX_DECISION, decision);
         if (log.isDebugEnabled()) log.debug(prefix+"preprocess decision was "+decision+", but now we know contentType="+contentType);
         switch (decision.getDecisionType()) {
             case block:
