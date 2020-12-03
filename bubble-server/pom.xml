@@ -469,15 +469,23 @@
                                         <exclude>org/apache/poi/xssf/**</exclude>
                                         <exclude>org/apache/poi/xwpf/**</exclude>
 
+                                        <!-- if/when we need DB sharding, remove these exclusions -->
+                                        <exclude>org/cobbzilla/wizard/**/shard/**</exclude>
+                                        <exclude>org/cobbzilla/wizard/resource/AbstractShardsResource.class</exclude>
+                                        <exclude>org/cobbzilla/wizard/server/config/DatabaseShardConfiguration.class</exclude>
+                                        <exclude>org/cobbzilla/wizard/server/config/ShardSetConfiguration.class</exclude>
+                                        <exclude>org/cobbzilla/wizard/server/listener/FlywayShardMigrationListener.class</exclude>
+
                                         <!-- exclude other stuff that is never used -->
                                         <exclude>org/apache/tools/ant/**</exclude>
                                         <exclude>org/apache/velocity/**</exclude>
                                         <exclude>org/apache/xalan/**</exclude>
                                         <exclude>org/apache/xmlbeans/**</exclude>
                                         <exclude>org/aspectj/weaver/**</exclude>
+                                        <exclude>org/cobbzilla/util/io/main/**</exclude>
+                                        <exclude>org/cobbzilla/util/collection/mappy/**</exclude>
                                         <exclude>org/cobbzilla/wizard/server/RestWebappServerBase.class</exclude>
                                         <exclude>org/cobbzilla/wizard/**/ldap/**</exclude>
-                                        <exclude>org/cobbzilla/wizard/**/shard/**</exclude>
                                         <exclude>org/etsi/**</exclude>
                                         <exclude>org/glassfish/pfl/**</exclude>
                                         <exclude>org/hibernate/internal/jaxb/**</exclude>
