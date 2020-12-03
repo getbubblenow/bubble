@@ -61,7 +61,7 @@
   },
   {
     "name": "node_manager",
-    "description": "The nodemanager is a low-level service that helps monitor CPU, memory and disk usage. It is also useful in disaster recovery situations."
+    "description": "The nodemanager is a low-level service that can monitor CPU, memory and disk usage. It is also useful in disaster recovery situations."
   },
   {
     "name": "payment",

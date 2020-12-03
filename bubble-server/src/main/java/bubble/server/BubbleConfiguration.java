@@ -118,7 +118,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
 
     @Override protected List<Tag> initOpenApiTags () {
         return Arrays.stream(json(stream2string("META-INF/bubble/openapi-tags.json"), Tag[].class))
-                .map(t -> t.name(constValue(ApiConstants.class, "API_TAG_"+t.getName().toUpperCase())))
+                .map(t -> t.name(t.getName().equalsIgnoreCase("utility") ? "Utilities" :  constValue(ApiConstants.class, "API_TAG_"+t.getName().toUpperCase())))
                 .collect(Collectors.toList());
     }
 
