@@ -310,7 +310,7 @@ public class ApiConstants {
     public static final String API_TAG_NODE_MANAGER = "Node Manager";
     public static final String API_TAG_PAYMENT = "Payment";
     public static final String API_TAG_SEARCH = "Search";
-    public static final String API_TAG_UPGRADE = "Upgrades";
+    public static final String API_TAG_UPGRADE_BUBBLE = "Upgrades";
 
     public static String getToken(String json) {
         if (json == null) return null;
