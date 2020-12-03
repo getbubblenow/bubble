@@ -631,7 +631,7 @@ public class AccountsResource {
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             tags={API_TAG_BUBBLE_INFO, API_TAG_UTILITY},
             summary="Get status of mitmproxy",
-            description="Get status of mitmproxy. Caller must be admin.",
+            description="Get status of mitmproxy. Must be admin. This is a system-wide setting.",
             parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="returns true if mitmproxy is enabled, false otherwise",
@@ -654,7 +654,7 @@ public class AccountsResource {
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             tags=API_TAG_UTILITY,
             summary="Enable mitmproxy",
-            description="Enable mitmproxy. Caller must be admin.",
+            description="Enable mitmproxy. Must be admin. This is a system-wide setting. When enabled, selective SSL interception enables Bubble apps to do their thing",
             parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="returns true if mitmproxy is enabled, false otherwise",
@@ -677,7 +677,7 @@ public class AccountsResource {
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
             tags=API_TAG_UTILITY,
             summary="Disable mitmproxy",
-            description="Disable mitmproxy. Caller must be admin.",
+            description="Disable mitmproxy. Must be admin. This is a system-wide setting. When disabled, no SSL interception is performed and Bubble apps do not run.",
             parameters=@Parameter(name="id", description="UUID or email of the Account", required=true),
             responses={
                     @ApiResponse(responseCode=SC_OK, description="returns true if mitmproxy is enabled, false otherwise",
