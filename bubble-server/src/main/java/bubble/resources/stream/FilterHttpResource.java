@@ -82,6 +82,7 @@ import static org.cobbzilla.util.string.StringUtil.trimQuotes;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 import static org.cobbzilla.wizard.model.NamedEntity.names;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Path(FILTER_HTTP_ENDPOINT)
@@ -461,7 +462,7 @@ public class FilterHttpResource {
     @DELETE
     @Produces(APPLICATION_JSON)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_MITMPROXY, API_TAG_DEVICES},
+            tags={API_TAG_MITMPROXY, API_TAG_DEVICES, API_TAG_UTILITY},
             summary="Flush caches",
             description="Flushes caches of: connection decisions, matchers and rules",
             responses=@ApiResponse(responseCode=SC_OK, description="a JSON object showing what was flushed")
@@ -485,7 +486,7 @@ public class FilterHttpResource {
     @DELETE @Path(EP_MATCHERS)
     @Produces(APPLICATION_JSON)
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags={API_TAG_MITMPROXY, API_TAG_DEVICES},
+            tags={API_TAG_MITMPROXY, API_TAG_DEVICES, API_TAG_UTILITY},
             summary="Flush matchers",
             description="Flushes matchers only",
             responses=@ApiResponse(responseCode=SC_OK, description="an integer representing how many cache entries were flushed")
