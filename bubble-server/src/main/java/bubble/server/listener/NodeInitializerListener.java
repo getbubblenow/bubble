@@ -17,6 +17,7 @@ import bubble.service.device.DeviceService;
 import bubble.service.device.StandardFlexRouterService;
 import bubble.service.stream.AppDataCleaner;
 import bubble.service.stream.AppPrimerService;
+import bubble.service.upgrade.BubbleJarUpgradeService;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.wizard.server.RestServer;
@@ -141,6 +142,7 @@ public class NodeInitializerListener extends RestServerLifecycleListenerBase<Bub
                 c.getBean(StandardFlexRouterService.class).start();
                 c.getBean(DeviceService.class).initDeviceSecurityLevels();
                 c.getBean(AppDataCleaner.class).start();
+                c.getBean(BubbleJarUpgradeService.class).start();
             }
         }
 
