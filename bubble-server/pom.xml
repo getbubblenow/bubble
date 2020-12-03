@@ -25,13 +25,80 @@
     <dependencies>
         <dependency>
             <groupId>org.cobbzilla</groupId>
+            <artifactId>cobbzilla-utils</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>fr.opensagres.xdocreport</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.codeborne</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>jtidy</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>xalan</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.sf.saxon</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.ant</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.opencsv</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.poi</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.quartz-scheduler</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.pdfbox</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.atteo</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.github.bonigarcia</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.cobbzilla</groupId>
             <artifactId>wizard-server</artifactId>
             <version>1.0.0-SNAPSHOT</version>
             <exclusions>
-                <!-- need to bump version to latest, then refactor AbstractElasticSearchDAO -->
                 <exclusion>
                     <groupId>org.elasticsearch</groupId>
                     <artifactId>elasticsearch</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.mongodb</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.jmkgreen.morphia</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <!-- we imported cobbzilla-utils above ourselves, with our own exclusions -->
+                <exclusion>
+                    <groupId>org.cobbzilla</groupId>
+                    <artifactId>cobbzilla-utils</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -336,28 +403,9 @@
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
 
-                                        <!-- We don't use these whole dependencies, brought in by other dependencies -->
-                                        <exclude>org.mongodb:*</exclude>
-                                        <exclude>com.github.jmkgreen.morphia:*</exclude>
-                                        <exclude>org.elasticsearch:*</exclude>
-                                        <exclude>fr.opensagres.xdocreport:*</exclude>
-                                        <exclude>com.codeborne:*</exclude>
-                                        <exclude>jtidy:*</exclude>
-                                        <exclude>xalan:*</exclude>
-                                        <exclude>net.sf.saxon:*</exclude>
-                                        <exclude>org.apache.ant:*</exclude>
-
                                         <!-- Exclude other stuff by path -->
                                         <exclude>META-INF/maven/**</exclude>
-                                        <exclude>META-INF/services/fr.opensagres**</exclude>
                                         <exclude>aj/org/objectweb/**</exclude>
-                                        <exclude>com/ctc/wstx/api/EmptyElementHandler.class</exclude>
-                                        <exclude>com/ctc/wstx/api/InvalidCharHandler.class</exclude>
-                                        <exclude>com/ctc/wstx/api/ValidatorConfig.class</exclude>
-                                        <exclude>com/ctc/wstx/api/WstxOutputProperties.class</exclude>
-                                        <exclude>com/ctc/wstx/cfg/ErrorConsts.class</exclude>
-                                        <exclude>com/ctc/wstx/cfg/XmlConsts.class</exclude>
-                                        <exclude>com/ctc/wstx/compat/QNameCreator.class</exclude>
                                         <exclude>com/ctc/wstx/dom/**</exclude>
                                         <exclude>com/ctc/wstx/dtd/**</exclude>
                                         <exclude>com/ctc/wstx/msv/**</exclude>
@@ -381,11 +429,8 @@
                                         <exclude>com/ctc/wstx/shaded/msv_core/verifier/**</exclude>
                                         <exclude>com/ctc/wstx/shaded/msv_core/writer/**</exclude>
                                         <exclude>com/github/jmkgreen/**</exclude>
-                                        <exclude>com/google/common/collect/**</exclude>
-                                        <exclude>com/mongodb/**</exclude>
-                                        <exclude>com/opencsv/**</exclude>
+                                        <!-- <exclude>com/google/common/collect/**</exclude> needed during activation -->
                                         <exclude>com/twilio/rest/**</exclude>
-                                        <exclude>fr/opensagres/**</exclude>
                                         <exclude>io/jsonwebtoken/**</exclude>
                                         <exclude>javax/servlet/descriptor/**</exclude>
                                         <exclude>javax/servlet/http/**</exclude>

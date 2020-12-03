@@ -6,7 +6,7 @@ package bubble.cloud.storage;
 
 import bubble.cloud.CloudServiceDriverBase;
 import bubble.model.cloud.StorageMetadata;
-import fr.opensagres.xdocreport.core.io.IOUtils;
+import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.io.TempDir;
 
 import java.io.*;

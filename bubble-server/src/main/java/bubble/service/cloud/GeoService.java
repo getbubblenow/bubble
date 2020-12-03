@@ -23,7 +23,7 @@ import bubble.model.cloud.NetLocation;
 import bubble.server.BubbleConfiguration;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.cobbzilla.util.cache.CacheLookupException;
 import org.cobbzilla.util.collection.ExpirationMap;
 import org.cobbzilla.wizard.cache.redis.RedisService;

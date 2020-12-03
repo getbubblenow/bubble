@@ -6,7 +6,7 @@ package bubble.resources.stream;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
