@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!-- Copyright (c) 2020 Bubble, Inc. All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/ -->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -23,11 +24,39 @@
     </repositories>
 
     <dependencies>
+        <!-- import poi manually and exclude all dependencies -->
+        <!-- we only need poi for the ZipSecureFile utility -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>4.1.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-collections4</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-math3</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.zaxxer</groupId>
+                    <artifactId>SparseBitSet</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- import cobbzilla-utils manually and exclude unneeded dependencies -->
         <dependency>
             <groupId>org.cobbzilla</groupId>
             <artifactId>cobbzilla-utils</artifactId>
             <version>1.0.0-SNAPSHOT</version>
             <exclusions>
+                <!-- we imported poi above ourselves, with our own exclusions -->
+                <exclusion>
+                    <groupId>org.apache.poi</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
                 <exclusion>
                     <groupId>fr.opensagres.xdocreport</groupId>
                     <artifactId>*</artifactId>
@@ -57,10 +86,6 @@
                     <artifactId>*</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.apache.poi</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-                <exclusion>
                     <groupId>org.quartz-scheduler</groupId>
                     <artifactId>*</artifactId>
                 </exclusion>
@@ -78,11 +103,17 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!-- exclude unused jetty/elastic/mongo libraries -->
         <dependency>
             <groupId>org.cobbzilla</groupId>
             <artifactId>wizard-server</artifactId>
             <version>1.0.0-SNAPSHOT</version>
             <exclusions>
+                <exclusion>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
                 <exclusion>
                     <groupId>org.elasticsearch</groupId>
                     <artifactId>elasticsearch</artifactId>
@@ -154,61 +185,10 @@
         </dependency>
 
         <dependency>
-            <groupId>org.glassfish.grizzly</groupId>
-            <artifactId>grizzly-framework-monitoring</artifactId>
-            <version>${grizzly.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.grizzly</groupId>
-            <artifactId>grizzly-http-monitoring</artifactId>
-            <version>${grizzly.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.grizzly</groupId>
-            <artifactId>grizzly-http-server-monitoring</artifactId>
-            <version>${grizzly.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-proxy</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-ec2</artifactId>
-            <version>1.11.800</version>
+            <version>${aws.sdk.version}</version>
         </dependency>
-
-        <!--&lt;!&ndash; https://mvnrepository.com/artifact/org.atmosphere/atmosphere-jersey &ndash;&gt;-->
-        <!--<dependency>-->
-            <!--<groupId>org.atmosphere</groupId>-->
-            <!--<artifactId>atmosphere-jersey</artifactId>-->
-            <!--<version>2.5.4</version>-->
-        <!--</dependency>-->
-
-        <!--<dependency>-->
-            <!--<groupId>org.atmosphere</groupId>-->
-            <!--<artifactId>atmosphere-runtime</artifactId>-->
-            <!--<version>2.5.4</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.glassfish.jersey.containers</groupId>-->
-            <!--<artifactId>jersey-container-servlet</artifactId>-->
-            <!--<version>2.29</version>-->
-        <!--</dependency>-->
-        <!--&lt;!&ndash; https://mvnrepository.com/artifact/org.apache.geronimo.specs/geronimo-servlet_3.0_spec &ndash;&gt;-->
-        <!--<dependency>-->
-            <!--<groupId>org.apache.geronimo.specs</groupId>-->
-            <!--<artifactId>geronimo-servlet_3.0_spec</artifactId>-->
-            <!--<version>1.0</version>-->
-            <!--<scope>provided</scope>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.atmosphere.client</groupId>-->
-            <!--<artifactId>javascript</artifactId>-->
-            <!--<version>2.3.9</version>-->
-            <!--<type>war</type>-->
-        <!--</dependency>-->
 
         <dependency>
             <groupId>commons-codec</groupId>
@@ -225,7 +205,7 @@
         <dependency>
             <groupId>com.maxmind.geoip2</groupId>
             <artifactId>geoip2</artifactId>
-            <version>2.12.0</version>
+            <version>2.15.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.httpcomponents</groupId>
@@ -265,7 +245,7 @@
         <dependency>
             <groupId>com.twilio.sdk</groupId>
             <artifactId>twilio</artifactId>
-            <version>7.44.0</version>
+            <version>7.55.3</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.httpcomponents</groupId>
@@ -298,7 +278,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
-            <version>1.11.659</version>
+            <version>${aws.sdk.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.fasterxml.jackson.dataformat</groupId>
@@ -309,7 +289,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-route53</artifactId>
-            <version>1.11.699</version>
+            <version>${aws.sdk.version}</version>
         </dependency>
 
         <!-- mailgun driver user this library -->
@@ -353,7 +333,7 @@
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
-            <version>16.2.0</version>
+            <version>20.30.0</version>
         </dependency>
 
         <dependency>
@@ -450,35 +430,38 @@
                                         <exclude>org/apache/commons/math3/**</exclude>
                                         <exclude>org/apache/fontbox/**</exclude>
                                         <exclude>org/apache/pdfbox/**</exclude>
-                                        <exclude>org/apache/poi/**</exclude>
+
+                                        <!-- we can ALMOST exclude all of poi, we need the ZipSecureFile utility class -->
+                                        <exclude>META-INF/services/org.apache.xmlbeans**</exclude>
+                                        <exclude>com/microsoft/schemas/**</exclude>
+                                        <exclude>org/apache/poi/*.class</exclude>
+                                        <exclude>org/apache/poi/common/**</exclude>
+                                        <exclude>org/apache/poi/ddf/**</exclude>
+                                        <exclude>org/apache/poi/extractor/**</exclude>
+                                        <exclude>org/apache/poi/hpsf/**</exclude>
+                                        <exclude>org/apache/poi/hssf/**</exclude>
+                                        <exclude>org/apache/poi/ooxml/**</exclude>
+                                        <exclude>org/apache/poi/openxml4j/exceptions/**</exclude>
+                                        <exclude>org/apache/poi/openxml4j/opc/**</exclude>
+                                        <exclude>org/apache/poi/poifs/**</exclude>
+                                        <exclude>org/apache/poi/sl/**</exclude>
+                                        <exclude>org/apache/poi/ss/**</exclude>
+                                        <exclude>org/apache/poi/util/**</exclude>
+                                        <exclude>org/apache/poi/wp/**</exclude>
+                                        <exclude>org/apache/poi/xddf/**</exclude>
+                                        <exclude>org/apache/poi/xdgf/**</exclude>
+                                        <exclude>org/apache/poi/xslf/**</exclude>
+                                        <exclude>org/apache/poi/xssf/**</exclude>
+                                        <exclude>org/apache/poi/xwpf/**</exclude>
+                                        <exclude>org/etsi/**</exclude>
+                                        <exclude>org/w3/**</exclude>
+
+                                        <!-- exclude other stuff that is never used -->
+                                        <exclude>org/cobbzilla/wizard/server/RestWebappServerBase.class</exclude>
                                         <exclude>org/apache/tools/ant/**</exclude>
                                         <exclude>org/apache/velocity/**</exclude>
                                         <exclude>org/apache/xalan/**</exclude>
                                         <exclude>org/apache/xmlbeans/**</exclude>
-                                        <exclude>org/eclipse/jetty/client/**</exclude>
-                                        <exclude>org/eclipse/jetty/favicon.ico/**</exclude>
-                                        <exclude>org/eclipse/jetty/http/**</exclude>
-                                        <exclude>org/eclipse/jetty/io/**</exclude>
-                                        <exclude>org/eclipse/jetty/proxy/**</exclude>
-                                        <exclude>org/eclipse/jetty/security/**</exclude>
-                                        <exclude>org/eclipse/jetty/server/handler/**</exclude>
-                                        <exclude>org/eclipse/jetty/server/jmx/**</exclude>
-                                        <exclude>org/eclipse/jetty/server/nio/**</exclude>
-                                        <exclude>org/eclipse/jetty/server/resource/**</exclude>
-                                        <exclude>org/eclipse/jetty/server/session/**</exclude>
-                                        <exclude>org/eclipse/jetty/servlet/**</exclude>
-                                        <exclude>org/eclipse/jetty/util/annotation/**</exclude>
-                                        <exclude>org/eclipse/jetty/util/compression/**</exclude>
-                                        <exclude>org/eclipse/jetty/util/log/**</exclude>
-                                        <exclude>org/eclipse/jetty/util/preventers/**</exclude>
-                                        <exclude>org/eclipse/jetty/util/resource/**</exclude>
-                                        <exclude>org/eclipse/jetty/util/security/**</exclude>
-                                        <exclude>org/eclipse/jetty/util/ssl/**</exclude>
-                                        <exclude>org/eclipse/jetty/util/statistic/**</exclude>
-                                        <exclude>org/eclipse/jetty/util/thread/**</exclude>
-                                        <exclude>org/eclipse/jetty/version/**</exclude>
-                                        <exclude>org/eclipse/jetty/webapp/**</exclude>
-                                        <exclude>org/eclipse/jetty/xml/**</exclude>
                                         <exclude>org/hibernate/internal/jaxb/**</exclude>
                                         <exclude>org/openqa/selenium/**</exclude>
                                         <exclude>org/openxmlformats/**</exclude>
