@@ -23,7 +23,7 @@ If the image is still being built or needs to be built, that will add some time 
 
 The [Bubble packer documentation](packer.md) has more details on this process. 
 
-## Install Bubble Apps
+## Install Bubble Native Apps
 While your Bubble is launching, take a moment to
 [install the Bubble Native app](https://support.getbubblenow.com/hc/en-us/articles/360050801634-Connect-a-device-to-your-Bubble)
 on each device you plan on connecting to your Bubble.
