@@ -1,19 +1,11 @@
 [
   {
     "name": "activation",
-    "description": "When first starting a Bubble from scratch, it needs to be activated. Packer images are also needed to launch new Bubbles.\n\nMore information about activation is available in the [Bubble Launch Guide](https://git.bubblev.org/bubblev/bubble/src/branch/master/docs/activation.md)",
-    "externalDocs": {
-      "description": "",
-      "url": ""
-    }
+    "description": "When first starting a Bubble from scratch, it needs to be activated. Packer images are also needed to launch new Bubbles.\n\nMore information about activation is available in the [Bubble Launch Guide](https://git.bubblev.org/bubblev/bubble/src/branch/master/docs/activation.md)"
   },
   {
     "name": "auth",
-    "description": "Registration, login, logout, and approvals.\n\nMore information about authentication is available in the [Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/auth.md)",
-    "externalDocs": {
-      "description": "",
-      "url": ""
-    }
+    "description": "Registration, login, logout, and approvals.\n\nMore information about authentication is available in the [Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/auth.md)"
   },
   {
     "name": "account",
@@ -45,11 +37,7 @@
   },
   {
     "name": "devices",
-    "description": "Device management. Add, connect, and remove devices. View device status and more.\n\nMore information about devices is available in the [Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/devices.md)",
-    "externalDocs": {
-      "description": "",
-      "url": ""
-    }
+    "description": "Device management. Add, connect, and remove devices. View device status and more.\n\nMore information about devices is available in the [Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/devices.md)"
   },
   {
     "name": "mitmproxy",
