@@ -48,30 +48,40 @@ set +x
 THISDIR="$(cd "$(dirname "${0}")" && pwd)"
 BUBBLE_DIR="$(cd "${THISDIR}/../.." && pwd)"
 
-echo "Logging in to docker ..."
+echo ">>> Logging in to docker ..."
 echo -n "${BUBBLE_DOCKER_PASS}" | docker login -u "${BUBBLE_DOCKER_USER}" --password-stdin || die "Error logging in to docker"
 
-echo "Determining Bubble version ..."
+echo ">>> Determining Bubble version ..."
 META_FILE="${BUBBLE_DIR}/bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
 VERSION="$(cat "${META_FILE}" | grep bubble.version | awk -F '=' '{print $2}' | awk -F ' ' '{print $NF}' | awk '{$1=$1};1')"
 if [[ -z "${VERSION}" ]] ; then
   die "Error determining version from: ${META_FILE}"
 fi
-echo "Found Bubble version ${VERSION}"
+echo ">>> Found Bubble version ${VERSION}"
 
-echo "Building docker bubble version ${VERSION} ..."
+echo ">>> Building docker bubble version ${VERSION} ..."
 BUBBLE_DOCKER="${BUBBLE_DIR}/docker/bubble.sh"
 ${BUBBLE_DOCKER} build || die "Error building docker image"
 
-echo "Checking to see if version ${VERSION} already exists on dockerhub..."
 ensure_docker_experimental_enabled
-if docker manifest inspect "getbubble/launcher:${VERSION}" > /dev/null 2> /dev/null ; then
-  echo "Version ${VERSION} already exists on dockerhub, not re-publishing"
-  exit 0
+BUBBLE_TAG="getbubble/launcher:${VERSION}"
+BUBBLE_SLIM_TAG="getbubble/slim-launcher:${VERSION}"
+
+echo ">>> Checking to see if ${BUBBLE_TAG} already exists on dockerhub..."
+if docker manifest inspect "${BUBBLE_TAG}" > /dev/null 2> /dev/null ; then
+  echo ">>> ${BUBBLE_TAG} already exists on dockerhub, not re-publishing"
+else
+  echo ">>> ${BUBBLE_TAG} does not exist on dockerhub, pushing it ..."
+  ${BUBBLE_DOCKER} push "${BUBBLE_TAG}" || die "Error pushing ${BUBBLE_TAG}"
+  echo ">>> Successfully pushed to dockerhub: ${BUBBLE_TAG}"
 fi
 
-echo "Version ${VERSION} does not exist on dockerhub, pushing it ..."
-
-${BUBBLE_DOCKER} push || die "Error pushing docker image"
-
-echo "Successfully pushed to dockerhub: ${VERSION}"
+echo ">>> Checking to see if ${BUBBLE_SLIM_TAG} already exists on dockerhub..."
+if docker manifest inspect "${BUBBLE_SLIM_TAG}" > /dev/null 2> /dev/null ; then
+  echo ">>> ${BUBBLE_SLIM_TAG} already exists on dockerhub, not re-publishing"
+  exit 0
+else
+  echo ">>> ${BUBBLE_SLIM_TAG} does not exist on dockerhub, pushing it ..."
+  ${BUBBLE_DOCKER} push "${BUBBLE_SLIM_TAG}" || die "Error pushing docker ${BUBBLE_SLIM_TAG}"
+  echo ">>> Successfully pushed to dockerhub: slim ${VERSION}"
+fi

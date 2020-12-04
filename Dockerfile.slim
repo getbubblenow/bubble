@@ -3,12 +3,12 @@
 #
 # Creates a Docker image that runs the Bubble Launcher. You shouldn't have to use this file directly.
 #
-# For Linux and Mac OS, you can try the easier way, using a prebuilt image from DockerHub:
+# This is the "slim" version, which is about 200MB smaller than the full version.
 #
-#   /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/docker/launcher.sh)"
-#
-# See docs/docker-launcher.md for more information
-# Full URL for more info: https://git.bubblev.org/bubblev/bubble/src/branch/master/docs/docker-launcher.md
+# Slim means:
+#  - We don't run `apt upgrade` and continue on with default packages (slightly risky)
+#  - We don't install packer. it gets installed the first time the image is run
+#  - We don't install the Bubble jar. it gets downloaded and installed the first time the image is run
 #
 FROM phusion/baseimage:focal-1.0.0alpha1-amd64
 MAINTAINER jonathan@getbubblenow.com
@@ -17,7 +17,7 @@ LABEL license="https://getbubblenow.com/license"
 
 # Install packages
 RUN apt update -y
-RUN DEBIAN_FRONTEND=noninteractive apt upgrade -y --no-install-recommends
+#RUN DEBIAN_FRONTEND=noninteractive apt upgrade -y --no-install-recommends
 RUN DEBIAN_FRONTEND=noninteractive apt install openjdk-11-jre-headless postgresql redis-server jq python3 python3-pip curl unzip -y --no-install-recommends
 RUN pip3 install setuptools psycopg2-binary
 
@@ -52,15 +52,15 @@ COPY docker/run_postgresql.sh /etc/service/postgresql/run
 # Install packer
 RUN mkdir /bubble
 COPY bin/install_packer.sh /usr/local/bin/
-RUN /usr/local/bin/install_packer.sh
+#RUN /usr/local/bin/install_packer.sh
 
 # Install API jar and env file
-COPY bubble-server/target/bubble-server-*.jar /bubble/bubble.jar
+#COPY bubble-server/target/bubble-server-*.jar /bubble/bubble.jar
 COPY docker/bubble.env /bubble/bubble.env
 
 # Setup Bubble service
 RUN mkdir /etc/service/bubble
-COPY docker/run_bubble.sh /etc/service/bubble/run
+COPY docker/run_bubble_slim.sh /etc/service/bubble/run
 
 #################
 ### Main stuff

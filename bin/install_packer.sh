@@ -42,7 +42,7 @@ if [[ ! -f ${HOME}/.packer.d/plugins/packer-builder-vultr ]] ; then
   fi
   PACKER_VULTR_URL=https://github.com/vultr/packer-builder-vultr/releases/download/v${PACKER_VULTR_VERSION}/${PACKER_VULTR_FILE}
   mkdir -p ${HOME}/.packer.d/plugins && cd ${HOME}/.packer.d/plugins && curl -L ${PACKER_VULTR_URL} -o ${PACKER_VULTR_FILE} && tar xzf ${PACKER_VULTR_FILE}  || die "Error installing packer vultr plugin"
-  echo "Packer Vult plugin successfully installed"
+  echo "Packer Vultr plugin successfully installed"
 else
   echo "Packer vultr plugin already installed"
 fi
