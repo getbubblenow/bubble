@@ -17,7 +17,12 @@ If you're interested in developing on Bubble, see the [**Bubble Developer Guide*
 [**Bubble API Guide**](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md).
 
 ## Operating System Support
-Once your Bubble is running, any device can connect to it: Windows, Linux, Mac, iOS, Android;
+Once your Bubble is running, any device can connect to it:
+[Windows](https://support.getbubblenow.com/hc/en-us/articles/360051349493-Connect-a-Windows-system-to-your-Bubble),
+[Linux](https://support.getbubblenow.com/hc/en-us/articles/360050799434-Connect-a-Linux-system-to-your-Bubble),
+[Mac](https://support.getbubblenow.com/hc/en-us/articles/360051573753-Connect-an-Apple-Mac-OS-X-system-to-your-Bubble),
+[iOS](https://support.getbubblenow.com/hc/en-us/articles/360051573613-Connect-an-Apple-iOS-device-to-your-Bubble),
+[Android](https://support.getbubblenow.com/hc/en-us/articles/360050800074-Connect-an-Android-device-to-your-Bubble);
 if it supports VPN connections, it will probably work just fine.
 
 The Bubble itself runs Ubuntu 20.04 and can be launched in a variety of ways.
