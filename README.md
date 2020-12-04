@@ -29,7 +29,7 @@ The Bubble itself runs Ubuntu 20.04 and can be launched in a variety of ways.
 
 To launch your own Bubble using this software, you will need either:
  * A system with Docker installed, to run the [Bubble Docker Launcher](docs/docker-launcher.md)
- * A Mac or Linux system, to run the launcher and/or build from source
+ * A Mac or Linux system, to run the launcher or build from source
 
 ## The Easy Path
 If you'd like to enjoy all the benefits of Bubble without going through all this hassle,
