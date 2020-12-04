@@ -456,7 +456,11 @@
                                         <exclude>org/apache/poi/hpsf/**</exclude>
                                         <exclude>org/apache/poi/hssf/**</exclude>
                                         <exclude>org/apache/poi/ooxml/**</exclude>
-                                        <exclude>org/apache/poi/openxml4j/exceptions/**</exclude>
+
+                                        <!-- these two packages are needed for ZipSecurefile, do not exclude them -->
+                                        <!-- <exclude>org/apache/poi/openxml4j/util/**</exclude> -->
+                                        <!-- <exclude>org/apache/poi/openxml4j/exceptions/**</exclude> -->
+
                                         <exclude>org/apache/poi/openxml4j/opc/**</exclude>
                                         <exclude>org/apache/poi/poifs/**</exclude>
                                         <exclude>org/apache/poi/sl/**</exclude>
