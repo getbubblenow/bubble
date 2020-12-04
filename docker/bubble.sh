@@ -60,8 +60,8 @@ if [[ "${MODE}" == "build" ]] ; then
   if [[ $(find bubble-server/target -type f -name "bubble-server-*.jar" | wc -l | tr -d ' ') -eq 0 ]] ; then
     die "No bubble jar found in $(pwd)/bubble-server/target"
   fi
-  docker build -t "${BUBBLE_TAG}" . || die "Error building docker image"
-  docker build -f Dockerfile.slim -t "${BUBBLE_SLIM_TAG}" . || die "Error building slim docker image"
+  docker build --no-cache -t "${BUBBLE_TAG}" . || die "Error building docker image"
+  docker build --no-cache -f Dockerfile.slim -t "${BUBBLE_SLIM_TAG}" . || die "Error building slim docker image"
 
 elif [[ "${MODE}" == "run" ]] ; then
   if [[ $(cat "${BUBBLE_ENV}" | grep -v '^#' | grep -c LETSENCRYPT_EMAIL) -eq 0 ]] ; then
