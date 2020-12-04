@@ -61,27 +61,16 @@ echo ">>> Found Bubble version ${VERSION}"
 
 echo ">>> Building docker bubble version ${VERSION} ..."
 BUBBLE_DOCKER="${BUBBLE_DIR}/docker/bubble.sh"
-${BUBBLE_DOCKER} build || die "Error building docker image"
+${BUBBLE_DOCKER} build "${VERSION}" || die "Error building docker image"
 
 ensure_docker_experimental_enabled
 BUBBLE_TAG="getbubble/launcher:${VERSION}"
-BUBBLE_SLIM_TAG="getbubble/slim-launcher:${VERSION}"
 
 echo ">>> Checking to see if ${BUBBLE_TAG} already exists on dockerhub..."
 if docker manifest inspect "${BUBBLE_TAG}" > /dev/null 2> /dev/null ; then
   echo ">>> ${BUBBLE_TAG} already exists on dockerhub, not re-publishing"
 else
   echo ">>> ${BUBBLE_TAG} does not exist on dockerhub, pushing it ..."
-  ${BUBBLE_DOCKER} push "${BUBBLE_TAG}" || die "Error pushing ${BUBBLE_TAG}"
+  ${BUBBLE_DOCKER} push "${VERSION}" || die "Error pushing ${BUBBLE_TAG}"
   echo ">>> Successfully pushed to dockerhub: ${BUBBLE_TAG}"
-fi
-
-echo ">>> Checking to see if ${BUBBLE_SLIM_TAG} already exists on dockerhub..."
-if docker manifest inspect "${BUBBLE_SLIM_TAG}" > /dev/null 2> /dev/null ; then
-  echo ">>> ${BUBBLE_SLIM_TAG} already exists on dockerhub, not re-publishing"
-  exit 0
-else
-  echo ">>> ${BUBBLE_SLIM_TAG} does not exist on dockerhub, pushing it ..."
-  ${BUBBLE_DOCKER} push "${BUBBLE_SLIM_TAG}" || die "Error pushing docker ${BUBBLE_SLIM_TAG}"
-  echo ">>> Successfully pushed to dockerhub: slim ${VERSION}"
 fi
