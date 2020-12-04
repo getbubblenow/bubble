@@ -10,7 +10,7 @@ publicUriBase: {{PUBLIC_BASE_URI}}
 
 openApi:
   title: Bubble API Reference
-  description: This is the Bubble API. It is used by the Bubble web UI, native apps, and CLI tools.
+  description: This is the Bubble API. It is used by the Bubble web UI, native apps, and CLI tools.\n\n[Learn more about Bubble](https://getbubblenow.com/)\n\n[Bubble Git Server](https://git.bubblev.org/)\n\n[Bubble on Github](https://github.com/GetBubbleNow/)
   contactEmail: {{OPENAPI_CONTACT_EMAIL}}
   terms: https://getbubblenow.com/terms/
   licenseName: Bubble License

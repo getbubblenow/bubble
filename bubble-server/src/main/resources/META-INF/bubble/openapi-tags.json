@@ -41,7 +41,7 @@
   },
   {
     "name": "mitmproxy",
-    "description": "mitmproxy uses these APIs to coordinate with Bubble and enhance your internet experience."
+    "description": "[mitmproxy](https://mitmproxy.org/) uses these APIs to coordinate with Bubble and enhance your internet experience through selective blocking and modification of your traffic, according to how you've set up your Bubble apps."
   },
   {
     "name": "node",
@@ -49,7 +49,7 @@
   },
   {
     "name": "node_manager",
-    "description": "The nodemanager is a low-level service that can monitor CPU, memory and disk usage. It is also useful in disaster recovery situations."
+    "description": "The [nodemanager](https://git.bubblev.org/bubblev/bubble-nodemanager) is a low-level service that can monitor CPU, memory and disk usage. It is also useful in disaster recovery situations."
   },
   {
     "name": "payment",
