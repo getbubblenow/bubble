@@ -81,7 +81,7 @@ public class BubbleJarUpgradeService extends SimpleDaemon {
     @Getter private final long sleepTime = MINUTES.toMillis(2);
 
     // todo: make this configurable
-    public static final int UPGRADE_HOUR_OF_DAY = 4;
+    public static final int UPGRADE_HOUR_OF_DAY = 6;
 
     @Override protected void process() {
         log.info("process: starting upgrade check");
