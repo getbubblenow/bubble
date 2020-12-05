@@ -18,6 +18,7 @@ import bubble.service.upgrade.AppUpgradeService;
 import bubble.service.boot.StandardSelfNodeService;
 import bubble.service.cloud.StandardNetworkService;
 import bubble.service.notify.NotificationService;
+import bubble.service.upgrade.BubbleJarUpgradeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -35,6 +36,7 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
     @Autowired private BubbleNetworkDAO networkDAO;
     @Autowired private StandardNetworkService networkService;
     @Autowired private StandardSelfNodeService selfNodeService;
+    @Autowired private BubbleJarUpgradeService jarUpgradeService;
     @Autowired private AppUpgradeService appUpgradeService;
 
     @Override public void handleNotification(ReceivedNotification n) {
@@ -44,10 +46,13 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
         // First check to see if the sage reported a new jar version available
         if (payloadNode.hasSageVersion()) {
             log.info("handleNotification: payload node has sage version: "+payloadNode.getSageVersion());
-            configuration.setSageVersion(payloadNode.getSageVersion());
-
-            // start the app upgrade service, if not running
-            if (!appUpgradeService.getIsAlive() && appUpgradeService.shouldRun()) appUpgradeService.start();
+            if (configuration.setSageVersion(payloadNode.getSageVersion())) {
+                // run the jar upgrade service
+                if (!jarUpgradeService.getIsAlive() && jarUpgradeService.shouldRun()) jarUpgradeService.startOrInterrupt();
+            } else {
+                // start the app upgrade service, if not running
+                if (!appUpgradeService.getIsAlive() && appUpgradeService.shouldRun()) appUpgradeService.startOrInterrupt();
+            }
         }
 
         final BubbleNode thisNode = configuration.getThisNode();

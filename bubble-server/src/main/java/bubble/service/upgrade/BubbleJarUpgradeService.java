@@ -19,10 +19,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.daemon.SimpleDaemon;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static bubble.ApiConstants.HOME_DIR;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -48,6 +50,16 @@ public class BubbleJarUpgradeService extends SimpleDaemon {
     @Autowired private RedisService redis;
     @Autowired private StandardSelfNodeService selfNodeService;
 
+    private final AtomicBoolean enabled = new AtomicBoolean(true);
+    public void enable() { enabled.set(true); }
+    public void disable() { enabled.set(false); }
+    public boolean pause() {
+        boolean b = enabled.get();
+        enabled.set(false);
+        return b;
+    }
+    public void restore(boolean b) { enabled.set(b); }
+
     @Getter(lazy=true) private final RedisService nodeUpgradeRequests = redis.prefixNamespace(getClass().getName());
 
     public String registerNodeUpgrade(String nodeUuid) {
@@ -58,35 +70,71 @@ public class BubbleJarUpgradeService extends SimpleDaemon {
 
     public String getNodeForKey(String key) { return getNodeUpgradeRequests().get(key); }
 
-    @Getter private final long sleepTime = MINUTES.toMillis(59);
+    // For a node, when to run:
+    // - delayed start
+    // - sleep just less than one hour
+    // - only run during one hour of the day, as measured by the local time
+
+    @Override protected long getStartupDelay() { return MINUTES.toMillis(1); }
+    @Override protected boolean canInterruptSleep() { return true; }
+
+    @Getter private final long sleepTime = MINUTES.toMillis(2);
 
     // todo: make this configurable
     public static final int UPGRADE_HOUR_OF_DAY = 4;
 
     @Override protected void process() {
-        final DateTime dateTime = new DateTime(now());
-        if (dateTime.hourOfDay().get() != UPGRADE_HOUR_OF_DAY) return;
-        final Account account = accountDAO.getFirstAdmin();
-        if (account == null) return;
+        log.info("process: starting upgrade check");
+        if (!shouldRun()) return;
 
-        if (account.getAutoUpdatePolicy().jarUpdates()) {
-            log.info("process: automatic-upgrading bubble jar...");
-            try {
-                upgrade();
-            } catch (Exception e) {
-                reportError("upgrade error: " + shortError(e), e);
-                log.error("process: upgrade error: " + shortError(e));
-            }
+        log.info("process: checking/upgrading bubble jar...");
+        try {
+            upgrade();
+        } catch (Exception e) {
+            reportError("upgrade error: " + shortError(e), e);
+            log.error("process: upgrade error: " + shortError(e));
         }
+    }
+
+    public boolean shouldRun() {
+        if (!enabled.get()) {
+            log.warn("shouldRun: upgrades not currently enabled, returning");
+            return false;
+        }
+
+        if (!configuration.getJarUpgradeAvailable()) {
+            log.warn("shouldRun: no upgrade available, returning");
+            return false;
+        }
+
+        // we shouldn't really need to adjust for the timezone here, because the Bubble
+        // should have set the operating system timezone to be the same during ansible setup.
+        // but just to be safe, use the bubble's time zone here. we have it handy.
+        final DateTimeZone dtz = DateTimeZone.forID(configuration.getThisNetwork().getTimezone());
+        final DateTime dateTime = new DateTime(now(), dtz);
+        final int hour = dateTime.hourOfDay().get();
+        if (hour != UPGRADE_HOUR_OF_DAY) {
+            log.warn("shouldRun: hour of day ("+hour+") != UPGRADE_HOUR_OF_DAY ("+UPGRADE_HOUR_OF_DAY+"), returning");
+            return false;
+        }
+
+        // OK, it's that special hour of the day. does the admin even want updates?
+        final Account account = accountDAO.getFirstAdmin();
+        if (account == null || !account.getAutoUpdatePolicy().jarUpdates()) {
+            log.warn("shouldRun: account is null or auto-update policy does not allow jar updates");
+            return false;
+        }
+        log.info("shouldRun: returning true");
+        return true;
     }
 
     // set to 'false' for faster debugging of upgrade process
     private static final boolean BACKUP_BEFORE_UPGRADE = true;
 
-    public synchronized void upgrade() {
+    public synchronized boolean upgrade() {
         if (!configuration.getJarUpgradeAvailable()) {
-            log.warn("upgrade: No upgrade available, returning");
-            return;
+            log.warn("upgrade: no upgrade available, returning");
+            return false;
         }
 
         final BubbleVersionInfo sageVersion = configuration.getSageVersion();
@@ -104,17 +152,18 @@ public class BubbleJarUpgradeService extends SimpleDaemon {
             }
             if (bubbleBackup.getStatus() != BackupStatus.backup_completed) {
                 log.warn("upgrade: timeout waiting for backup to complete, status=" + bubbleBackup.getStatus());
-                return;
+                return false;
             }
         }
 
         final File upgradeJar = new File(HOME_DIR, "upgrade.jar");
         if (upgradeJar.exists()) {
             log.error("upgrade: jar already exists, not upgrading: "+abs(upgradeJar));
-            return;
+            return false;
         }
 
         final JarUpgradeMonitor jarUpgradeMonitor = selfNodeService.getJarUpgradeMonitorBean();
         jarUpgradeMonitor.downloadJar(upgradeJar, sageVersion);
+        return true;
     }
 }

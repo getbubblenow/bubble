@@ -49,6 +49,7 @@ public class AppUpgradeService extends SimpleDaemon {
     @Autowired private BubbleAppDAO appDAO;
     @Autowired private RuleDriverDAO driverDAO;
     @Autowired private StandardRuleEngineService ruleEngine;
+    @Autowired private BubbleJarUpgradeService jarUpgradeService;
 
     public boolean shouldRun () {
         final BubbleNetwork thisNetwork = configuration.getThisNetwork();
@@ -139,7 +140,13 @@ public class AppUpgradeService extends SimpleDaemon {
             return;
         }
 
-        handleAdminUpgrades(admin, sageNode);
+        Boolean enabled = null;
+        try {
+            enabled = jarUpgradeService.pause();
+            handleAdminUpgrades(admin, sageNode);
+        } finally {
+            if (enabled != null) jarUpgradeService.restore(enabled);
+        }
     }
 
     private void handleAdminUpgrades(Account admin, BubbleNode sageNode) {

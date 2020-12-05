@@ -293,7 +293,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     // For a Bubble node with a sage, this will be set in the hello_from_sage notification handler
     // For a Bubble without a sage, this will be set in NodeInitializerListener
     @Getter private BubbleVersionInfo sageVersion;
-    public void setSageVersion(BubbleVersionInfo version) {
+    public boolean setSageVersion(BubbleVersionInfo version) {
         sageVersion = version;
         final boolean isNewer = version == null ? false : isNewerVersion(getVersionInfo().getVersion(), sageVersion.getVersion());
         if (!jarUpgradeAvailable && isNewer) {
@@ -302,9 +302,10 @@ public class BubbleConfiguration extends PgRestServerConfiguration
             jarUpgradeAvailable = false;
         }
         refreshPublicSystemConfigs();
+        return jarUpgradeAvailable;
     }
     public boolean hasSageVersion () { return sageVersion != null; }
-    @Getter private Boolean jarUpgradeAvailable = false;
+    @Getter private volatile Boolean jarUpgradeAvailable = false;
 
     public boolean sameVersionAsSage () {
         return hasSageVersion() && getSageVersion().getVersion().equals(getVersionInfo().getVersion());
