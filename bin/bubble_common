@@ -106,6 +106,13 @@ if [[ -z "${BUBBLE_JAR}" ]] ; then
     BUBBLE_JAR="${BUBBLE_SCRIPTS}/../bubble.jar"
   else
     BUBBLE_JAR="$(find "${BUBBLE_SCRIPTS}/../bubble-server/target" -type f -name "bubble*.jar" | head -1)"
+    if [[ ! -z "${BUBBLE_JAR}" ]] ; then
+      # Use full jar if available. Client libraries like to have the JS engine for example. This is stripped from the server.
+      BUBBLE_FULL_JAR="$(find "${BUBBLE_SCRIPTS}/../bubble-server/target" -type f -name "bubble*-full.jar" | head -1)"
+      if [[ ! -z "${BUBBLE_FULL_JAR}" ]] ; then
+        BUBBLE_JAR="${BUBBLE_FULL_JAR}"
+      fi
+    fi
   fi
 fi
 if [[ -z "${BUBBLE_JAR}" ]] ; then

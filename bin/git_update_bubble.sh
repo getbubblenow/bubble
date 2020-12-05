@@ -57,5 +57,6 @@ popd
 if [[ ${FAST} -eq 1 ]] ; then
   mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error building bubble jar"
 else
-  INSTALL_WEB=web mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error building bubble jar"
+  BUBBLE_PRODUCTION=1 mvn -DskipTests=true -Dcheckstyle.skip=true -Pproduction clean package || die "Error building bubble jar"
+  BUBBLE_PRODUCTION=1 mvn -DskipTests=true -Dcheckstyle.skip=true -Pproduction-full package || die "Error building bubble full jar"
 fi

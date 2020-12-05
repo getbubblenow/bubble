@@ -61,7 +61,8 @@ elif [[ "${BUBBLE_SETUP_MODE}" == "debug" ]] ; then
   DEBUG_BUILD=debug mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error building bubble jar"
 
 elif [[ "${BUBBLE_SETUP_MODE}" == "production" ]] ; then
-  BUBBLE_PRODUCTION=1 mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error building bubble jar"
+  BUBBLE_PRODUCTION=1 mvn -DskipTests=true -Dcheckstyle.skip=true -Pproduction clean package || die "Error building bubble jar"
+  BUBBLE_PRODUCTION=1 mvn -DskipTests=true -Dcheckstyle.skip=true -Pproduction-full package || die "Error building bubble full jar"
 
 else
   die "env var BUBBLE_SETUP_MODE was invalid: ${BUBBLE_SETUP_MODE}"
