@@ -4,6 +4,7 @@ bubble
 bget
 bgetn
 bgeti
+bpatch
 bpost
 bposte
 bput
