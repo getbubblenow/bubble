@@ -443,15 +443,19 @@
                                         <exclude>com/opencsv/**</exclude>
                                         <exclude>com/sun/mail/imap/**</exclude>
 
-                                        <!-- JNSI: only keep the linux-x86-64 version -->
-                                        <exclude>com/sun/jna/openbsd-x86*/libjnidispatch.so</exclude>
-                                        <exclude>com/sun/jna/freebsd-x86*/libjnidispatch.so</exclude>
-                                        <exclude>com/sun/jna/linux-x86/libjnidispatch.so</exclude>
-                                        <exclude>com/sun/jna/linux-a*/libjnidispatch.so</exclude>
-                                        <exclude>com/sun/jna/linux-p*/libjnidispatch.so</exclude>
-                                        <exclude>com/sun/jna/linux-m*/libjnidispatch.so</exclude>
-                                        <exclude>com/sun/jna/linux-s*/libjnidispatch.so</exclude>
-                                        <exclude>com/sun/jna/s*/libjnidispatch.so</exclude>
+                                        <!-- JNA: only keep the linux-x86-64 stuff -->
+                                        <exclude>com/sun/jna/win32*/**</exclude>
+                                        <exclude>com/sun/jna/platform/mac/**</exclude>
+                                        <exclude>com/sun/jna/platform/win32/**</exclude>
+                                        <exclude>com/sun/jna/platform/wince/**</exclude>
+                                        <exclude>com/sun/jna/openbsd-x86*/**</exclude>
+                                        <exclude>com/sun/jna/freebsd-x86*/**</exclude>
+                                        <exclude>com/sun/jna/linux-x86/**</exclude>
+                                        <exclude>com/sun/jna/linux-a*/**</exclude>
+                                        <exclude>com/sun/jna/linux-p*/**</exclude>
+                                        <exclude>com/sun/jna/linux-m*/**</exclude>
+                                        <exclude>com/sun/jna/linux-s*/**</exclude>
+                                        <exclude>com/sun/jna/s*/**</exclude>
 
                                         <exclude>com/twilio/rest/**</exclude>
                                         <exclude>io/jsonwebtoken/**</exclude>
