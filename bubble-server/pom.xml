@@ -450,7 +450,7 @@
 
 <!-- JNA: only keep the linux-x86-64 stuff -->
 <exclude>com/sun/jna/win32*/**</exclude>
-<exclude>com/sun/jna/platform/mac/**</exclude>
+<!--<exclude>com/sun/jna/platform/mac/**</exclude> comment this out to run a production build in a mac dev environment -->
 <exclude>com/sun/jna/platform/win32/**</exclude>
 <exclude>com/sun/jna/platform/wince/**</exclude>
 <exclude>com/sun/jna/openbsd-x86*/**</exclude>
@@ -613,6 +613,83 @@ The exclusions below were generated with:
 <exclude>schemasMicrosoftComVml/**</exclude>
 <exclude>w3c/mathml/**</exclude>
 
+                                            </excludes>
+                                        </filter>
+                                    </filters>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- copy scripts and web ui into jar -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.5.0</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${project.basedir}/../bin/prep_bubble_jar</executable>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                </plugins>
+
+            </build>
+
+        </profile>
+
+        <profile>
+            <!-- same as production but virtually no excludes -->
+            <id>production-full</id>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                    </resource>
+                </resources>
+
+                <plugins>
+                    <!-- Building the executable uberjar -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <version>2.1</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals><goal>shade</goal></goals>
+                                <configuration>
+                                    <outputFile>${project.basedir}/target/bubble-server-1.0.0-SNAPSHOT-full.jar</outputFile>
+                                    <transformers>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                            <mainClass>bubble.server.BubbleServer</mainClass>
+                                        </transformer>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                            <resource>META-INF/spring.handlers</resource>
+                                        </transformer>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                            <resource>META-INF/spring.schemas</resource>
+                                        </transformer>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                    </transformers>
+                                    <filters>
+                                        <filter>
+                                            <artifact>*:*</artifact>
+                                            <excludes>
+
+                                                <!-- Exclude signed jars to avoid errors, see: http://stackoverflow.com/a/6743609/1251543 -->
+                                                <exclude>META-INF/*.SF</exclude>
+                                                <exclude>META-INF/*.DSA</exclude>
+                                                <exclude>META-INF/*.RSA</exclude>
+                                                <exclude>META-INF/maven/**</exclude>
+                                                <exclude>changelog.txt</exclude> <!-- lombok changelog, really. it's in the top 100 largest files. -->
                                             </excludes>
                                         </filter>
                                     </filters>
