@@ -12,6 +12,7 @@ import bubble.model.bill.AccountPlan;
 import bubble.model.bill.BubblePlan;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
+import bubble.model.cloud.BubbleVersionInfo;
 import bubble.model.cloud.NetLocation;
 import bubble.model.cloud.notify.ReceivedNotification;
 import bubble.service.upgrade.AppUpgradeService;
@@ -45,12 +46,15 @@ public class NotificationHandler_hello_from_sage extends ReceivedNotificationHan
 
         // First check to see if the sage reported a new jar version available
         if (payloadNode.hasSageVersion()) {
-            log.info("handleNotification: payload node has sage version: "+payloadNode.getSageVersion());
-            if (configuration.setSageVersion(payloadNode.getSageVersion())) {
+            final BubbleVersionInfo sageVersion = payloadNode.getSageVersion();
+            log.info("handleNotification: sage version: "+sageVersion);
+            if (configuration.setSageVersion(sageVersion)) {
                 // run the jar upgrade service
+                log.info("handleNotification: notifying jarUpgradeService: "+sageVersion);
                 if (!jarUpgradeService.getIsAlive() && jarUpgradeService.shouldRun()) jarUpgradeService.startOrInterrupt();
             } else {
                 // start the app upgrade service, if not running
+                log.info("handleNotification: notifying appUpgradeService: "+sageVersion);
                 if (!appUpgradeService.getIsAlive() && appUpgradeService.shouldRun()) appUpgradeService.startOrInterrupt();
             }
         }
