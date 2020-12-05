@@ -75,13 +75,13 @@ public class BubbleJarUpgradeService extends SimpleDaemon {
     // - sleep just less than one hour
     // - only run during one hour of the day, as measured by the local time
 
-    @Override protected long getStartupDelay() { return MINUTES.toMillis(1); }
+    @Override protected long getStartupDelay() { return MINUTES.toMillis(10); }
     @Override protected boolean canInterruptSleep() { return true; }
 
-    @Getter private final long sleepTime = MINUTES.toMillis(2);
+    @Getter private final long sleepTime = MINUTES.toMillis(58);
 
     // todo: make this configurable
-    public static final int UPGRADE_HOUR_OF_DAY = 9;
+    public static final int UPGRADE_HOUR_OF_DAY = 4;
 
     @Override protected void process() {
         log.info("process: starting upgrade check");
