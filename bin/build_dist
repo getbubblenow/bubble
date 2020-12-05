@@ -35,9 +35,13 @@ rm -rf "${DIST_BASE}" || die "Error removing "${DIST_BASE}" directory"
 mkdir -p "${DIST_BASE}" || die "Error creating "${DIST_BASE}" directory"
 
 JAR_DIR="${BASE}/bubble-server/target"
-JAR="$(find "${JAR_DIR}" -type f -name "bubble-server-*.jar" | head -1)"
+FULL_JAR="$(find "${JAR_DIR}" -type f -name "bubble-server-*-full.jar" | head -1)"
+if [[ -z "${FULL_JAR}" ]] ; then
+  die "No full bubble jar found in ${JAR_DIR}"
+fi
+JAR="$(find "${JAR_DIR}" -type f -name "bubble-server-*.jar" | grep -v full | head -1)"
 if [[ -z "${JAR}" ]] ; then
-  die "No bubble jar found in ${JAR_DIR}"
+  die "No regular bubble jar found in ${JAR_DIR}"
 fi
 
 VERSION_FILE="${BASE}/bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
@@ -50,6 +54,7 @@ DIST="${DIST_BASE}/bubble-${VERSION}"
 ZIP="${DIST_BASE}/bubble-${VERSION}.zip"
 mkdir -p "${DIST}" || die "Error creating distribution directory: ${DIST}"
 cp "${JAR}" "${DIST}/bubble.jar" || die "Error copying ${JAR} to ${DIST}/bubble.jar"
+cp "${FULL_JAR}" "${DIST}/bubble-full.jar" || die "Error copying ${FULL_JAR} to ${DIST}/bubble-full.jar"
 cp "${BASE}/README.md" "${DIST}/README.md" || die "Error copying README.md to ${DIST}/README.md"
 cp "${BASE}/LICENSE.md" "${DIST}/LICENSE.md" || die "Error copying LICENSE.md to ${DIST}/LICENSE.md"
 cp -R "${BASE}/docs" "${DIST}" || die "Error copying docs directory to ${DIST}"
@@ -69,15 +74,21 @@ if [[ ! -z "${BUBBLE_DIST_HOME}" ]] ; then
 
   BUBBLE_DIST_TOP=${BUBBLE_DIST_HOME}/releases/bubble
   BUBBLE_DIST=${BUBBLE_DIST_TOP}/${BUBBLE_VERSION}/$(basename ${ZIP})
+  BUBBLE_JAR_DIST=${BUBBLE_DIST_TOP}/${BUBBLE_VERSION}/bubble.jar
+  BUBBLE_FULL_JAR_DIST=${BUBBLE_DIST_TOP}/${BUBBLE_VERSION}/bubble-full.jar
   BUBBLE_DIST_DIR="$(dirname ${BUBBLE_DIST})"
   if [[ ! -d "${BUBBLE_DIST_DIR}" ]] ; then
     mkdir -p ${BUBBLE_DIST_DIR}
   fi
-  cp "${ZIP}" "${BUBBLE_DIST}" && cat "${ZIP}" | sha256sum | cut -f1 -d' ' | tr -d '\n' > "${BUBBLE_DIST}.sha256"
+  cp "${ZIP}" "${BUBBLE_DIST}" && cat "${ZIP}" | sha256sum | cut -f1 -d' ' | tr -d '\n' > "${BUBBLE_DIST}.sha256" || die "Error copying bubble zip distribution ${ZIP} to dist or creating shasum"
+  cp "${JAR}" "${BUBBLE_JAR_DIST}" && cat "${JAR}" | sha256sum | cut -f1 -d' ' | tr -d '\n' > "${BUBBLE_JAR_DIST}.sha256" || die "Error copying bubble jar ${JAR} to dist or creating shasum"
+  cp "${FULL_JAR}" "${BUBBLE_FULL_JAR_DIST}" && cat "${FULL_JAR}" | sha256sum | cut -f1 -d' ' | tr -d '\n' > "${BUBBLE_FULL_JAR_DIST}.sha256" || die "Error copying full bubble jar ${FULL_JAR} to dist or creating shasum"
   if [[ ${IS_DEV} -eq 0 ]] ; then
     cd ${BUBBLE_DIST_TOP} && rm -f latest && ln -sf ${BUBBLE_VERSION} latest
     echo "${BUBBLE_VERSION}" > latest.txt
     cd ${BUBBLE_DIST_DIR} && ln -s "$(basename ${BUBBLE_DIST})" bubble.zip && ln -s "$(basename ${BUBBLE_DIST}).sha256" bubble.zip.sha256
+    cd ${BUBBLE_DIST_DIR} && ln -s "$(basename ${BUBBLE_JAR_DIST})" bubble.jar && ln -s "$(basename ${BUBBLE_JAR_DIST}).sha256" bubble.jar.sha256
+    cd ${BUBBLE_DIST_DIR} && ln -s "$(basename ${BUBBLE_FULL_JAR_DIST})" bubble-full.jar && ln -s "$(basename ${BUBBLE_FULL_JAR_DIST}).sha256" bubble-full.jar.sha256
   fi
   echo "Published release: ${BUBBLE_DIST}"
 fi
