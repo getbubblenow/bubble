@@ -435,7 +435,6 @@
                                         <!-- <exclude>com/google/graph/**</exclude> something needs SuccessorsFunction -->
 
                                         <exclude>com/opencsv/**</exclude>
-                                        <exclude>com/stripe/param/issuing/**</exclude>
                                         <exclude>com/sun/mail/imap/**</exclude>
                                         <exclude>com/twilio/rest/**</exclude>
                                         <exclude>io/jsonwebtoken/**</exclude>
@@ -528,6 +527,7 @@
                                         <exclude>org/etsi/**</exclude>
                                         <exclude>org/glassfish/pfl/**</exclude>
                                         <exclude>org/hibernate/internal/jaxb/**</exclude>
+                                        <exclude>org/hibernate/metamodel/source/annotations/**</exclude>
                                         <exclude>org/objectweb/asm/tree/**</exclude>
                                         <exclude>org/objectweb/asm/commons/**</exclude>
                                         <exclude>org/objectweb/asm/util/**</exclude>
