@@ -442,13 +442,17 @@
                                         <exclude>com/ibm/icu/**</exclude>
                                         <exclude>com/opencsv/**</exclude>
                                         <exclude>com/sun/mail/imap/**</exclude>
+
+                                        <!-- JNSI: only keep the linux-x86-64 version -->
                                         <exclude>com/sun/jna/openbsd-x86*/libjnidispatch.so</exclude>
                                         <exclude>com/sun/jna/freebsd-x86*/libjnidispatch.so</exclude>
+                                        <exclude>com/sun/jna/linux-x86/libjnidispatch.so</exclude>
                                         <exclude>com/sun/jna/linux-a*/libjnidispatch.so</exclude>
                                         <exclude>com/sun/jna/linux-p*/libjnidispatch.so</exclude>
                                         <exclude>com/sun/jna/linux-m*/libjnidispatch.so</exclude>
                                         <exclude>com/sun/jna/linux-s*/libjnidispatch.so</exclude>
                                         <exclude>com/sun/jna/s*/libjnidispatch.so</exclude>
+
                                         <exclude>com/twilio/rest/**</exclude>
                                         <exclude>io/jsonwebtoken/**</exclude>
                                         <exclude>javax/servlet/descriptor/**</exclude>
