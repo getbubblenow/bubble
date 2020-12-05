@@ -15,11 +15,17 @@ import org.cobbzilla.util.handlebars.HasHandlebars;
 import org.cobbzilla.util.io.regex.RegexChunkConfig;
 import org.cobbzilla.util.javascript.StandardJsEngine;
 
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.cobbzilla.util.daemon.ZillaRuntime.lazyGet;
 import static org.cobbzilla.util.reflect.ReflectionUtil.instantiate;
 
 public class UserBlockerConfig extends RegexChunkConfig implements RuleConfig {
 
-    public static final StandardJsEngine STANDARD_JS_ENGINE = new StandardJsEngine();
+    private static final AtomicReference<StandardJsEngine> standardJsEngine = new AtomicReference<>();
+    public static StandardJsEngine getStandardJsEngine () {
+        return lazyGet(standardJsEngine, StandardJsEngine::new, () -> null);
+    }
 
     @Getter @Setter private String blockedCommentCheck;
     @Getter @Setter private String blockedCommentReplacement;

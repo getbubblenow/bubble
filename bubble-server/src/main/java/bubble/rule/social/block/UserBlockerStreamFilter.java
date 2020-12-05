@@ -26,7 +26,7 @@ import java.util.regex.Matcher;
 
 import static bubble.ApiConstants.*;
 import static bubble.rule.AbstractAppRuleDriver.getDataId;
-import static bubble.rule.social.block.UserBlockerConfig.STANDARD_JS_ENGINE;
+import static bubble.rule.social.block.UserBlockerConfig.getStandardJsEngine;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -41,10 +41,10 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
     public static final String PROP_UNBLOCK_URL = "unblockUrl";
     public static final String PROP_CHUNK_START_REGEX = "chunkStartRegex";
 
-    private String requestId;
-    private AppMatcher matcher;
-    private AppRule rule;
-    private String apiBase;
+    private final String requestId;
+    private final AppMatcher matcher;
+    private final AppRule rule;
+    private final String apiBase;
     @Setter private AppDataDAO dataDAO;
 
     public UserBlockerStreamFilter(String requestId, AppMatcher matcher, AppRule rule, String apiBase) {
@@ -151,7 +151,7 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
         return HandlebarsUtil.apply(config.getHandlebars(), config.getBlockedCommentReplacement(), ctx);
     }
 
-    private Map<String, Boolean> blockCache = new ExpirationMap<>(MINUTES.toMillis(1), ExpirationEvictionPolicy.atime);
+    private final Map<String, Boolean> blockCache = new ExpirationMap<>(MINUTES.toMillis(1), ExpirationEvictionPolicy.atime);
     protected boolean isUserBlocked(String requestId, String userId) {
         return blockCache.computeIfAbsent(requestId+":"+userId, k -> {
             if (userId == null) return false;
@@ -171,7 +171,7 @@ public class UserBlockerStreamFilter implements RegexStreamFilter {
         ctx.put("blocked", blockedComment.getProperties());
         ctx.put("current", candidateComment.getProperties());
         try {
-            return STANDARD_JS_ENGINE.evaluateBoolean(config.getBlockedCommentCheck(), ctx);
+            return getStandardJsEngine().evaluateBoolean(config.getBlockedCommentCheck(), ctx);
         } catch (Exception e) {
             log.error("isCommentBlocked: error evaluating "+config.getBlockedCommentCheck()+" with ctx="+ctx+": "+e);
             return false;
