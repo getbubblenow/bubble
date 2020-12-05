@@ -40,7 +40,7 @@ for script in $(cat ${BUBBLE_SERVER}/src/main/resources/ansible/bubble_scripts.t
   cp "${SCRIPT_DIR}/${script}" "${CLASSES_DIR}/scripts" || die "Error copying ${SCRIPT_DIR}/${script} -> ${CLASSES_DIR}/scripts"
 done
 
-cd "${CLASSES_DIR}" && jar uvf "${BUBBLE_JAR}" scripts || die "Error updating ${BUBBLE_JAR} with scripts"
+cd "${CLASSES_DIR}" && zip -u -r "${BUBBLE_JAR}" scripts || die "Error updating ${BUBBLE_JAR} with scripts"
 
 if [[ ! -z "${BUBBLE_PRODUCTION}" || ( ! -z "${INSTALL_WEB}" && "${INSTALL_WEB}" == "web" ) ]] ; then
   mkdir -p "${CLASSES_DIR}/site"
@@ -52,6 +52,6 @@ if [[ ! -z "${BUBBLE_PRODUCTION}" || ( ! -z "${INSTALL_WEB}" && "${INSTALL_WEB}"
   fi
   cd "${BUBBLE_WEB}" && npm install && rm -rf dist/ && webpack "${WEBPACK_OPTIONS}" || die "Error building bubble-web"
   cp -R "${BUBBLE_WEB}/dist"/* "${CLASSES_DIR}/site"/ || die "Error copying ${BUBBLE_WEB}/dist/* -> ${CLASSES_DIR}/site/"
-  cd "${CLASSES_DIR}" && jar uvf "${BUBBLE_JAR}" site || die "Error updating ${BUBBLE_JAR} with site"
+  cd "${CLASSES_DIR}" && zip -u -r "${BUBBLE_JAR}" site || die "Error updating ${BUBBLE_JAR} with site"
   echo "Installed bubble-web to ${CLASSES_DIR}/site/"
 fi
