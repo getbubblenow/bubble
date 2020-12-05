@@ -405,6 +405,7 @@
                                         <!-- after META we go alphabetically, noting exceptions along the way -->
                                         <exclude>META-INF/maven/**</exclude>
                                         <exclude>aj/org/objectweb/**</exclude>
+                                        <exclude>changelog.txt</exclude> <!-- lombok changelog, really. it's in the top 100 largest files. -->
                                         <exclude>com/ctc/wstx/dom/**</exclude>
                                         <exclude>com/ctc/wstx/dtd/**</exclude>
                                         <exclude>com/ctc/wstx/msv/**</exclude>
@@ -441,6 +442,9 @@
                                         <exclude>com/ibm/icu/**</exclude>
                                         <exclude>com/opencsv/**</exclude>
                                         <exclude>com/sun/mail/imap/**</exclude>
+                                        <exclude>com/sun/jna/openbsd-x86*/libjnidispatch.so</exclude>
+                                        <exclude>com/sun/jna/freebsd-x86*/libjnidispatch.so</exclude>
+                                        <exclude>com/sun/jna/linux-a*/libjnidispatch.so</exclude>
                                         <exclude>com/twilio/rest/**</exclude>
                                         <exclude>io/jsonwebtoken/**</exclude>
                                         <exclude>javax/servlet/descriptor/**</exclude>
