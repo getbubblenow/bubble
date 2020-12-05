@@ -424,6 +424,7 @@
                                         <exclude>com/ctc/wstx/shaded/msv_core/writer/**</exclude>
                                         <exclude>com/github/jmkgreen/**</exclude>
                                         <!-- <exclude>com/google/common/collect/**</exclude> needed during activation -->
+                                        <exclude>com/opencsv/**</exclude>
                                         <exclude>com/twilio/rest/**</exclude>
                                         <exclude>io/jsonwebtoken/**</exclude>
                                         <exclude>javax/servlet/descriptor/**</exclude>
@@ -448,19 +449,39 @@
                                         <!-- we can ALMOST exclude all of poi, we need the ZipSecureFile utility class -->
                                         <exclude>META-INF/services/org.apache.xmlbeans**</exclude>
                                         <exclude>com/microsoft/schemas/**</exclude>
-                                        <exclude>com/opencsv/**</exclude>
-                                        <exclude>org/apache/poi/*.class</exclude>
+
+                                        <!-- Retain packages and classes requires for ZipSecureFile -->
+                                        <!-- Note: to use ".skip" on a ZipSecureFile (we currently don't), you'd also need to retain org.apache.poi.util.IOUtils.class -->
+                                        <!-- <exclude>org/apache/poi/openxml4j/util/**</exclude> all required -->
+                                        <!-- <exclude>org/apache/poi/**</exclude> UnsupportedFileFormatException required -->
+                                        <!-- <exclude>org/apache/poi/openxml4j/exceptions/**</exclude> NotOfficeXmlFileException required -->
+
+                                        <!-- Within org/apache/poi only UnsupportedFileFormatException is needed, exclude other classes -->
+                                        <!-- <exclude>org/apache/poi/UnsupportedFileFormatException.class</exclude> -->
+                                        <exclude>org/apache/poi/EmptyFileException.class</exclude>
+                                        <exclude>org/apache/poi/EncryptedDocumentException.class</exclude>
+                                        <exclude>org/apache/poi/OldFileFormatException.class</exclude>
+                                        <exclude>org/apache/poi/POIDocument.class</exclude>
+                                        <exclude>org/apache/poi/POIReadOnlyDocument.class</exclude>
+                                        <exclude>org/apache/poi/Version.class</exclude>
+
+                                        <!-- Within org/apache/poi/openxml4j/exceptions only NotOfficeXmlFileException is needed, exclude other classes -->
+                                        <!-- <exclude>org/apache/poi/openxml4j/exceptions/NotOfficeXmlFileException.class</exclude> -->
+                                        <exclude>org/apache/poi/openxml4j/exceptions/InvalidFormatException.class</exclude>
+                                        <exclude>org/apache/poi/openxml4j/exceptions/InvalidOperationException.class</exclude>
+                                        <exclude>org/apache/poi/openxml4j/exceptions/ODFNotOfficeXmlFileException.class</exclude>
+                                        <exclude>org/apache/poi/openxml4j/exceptions/OLE2NotOfficeXmlFileException.class</exclude>
+                                        <exclude>org/apache/poi/openxml4j/exceptions/OpenXML4JException.class</exclude>
+                                        <exclude>org/apache/poi/openxml4j/exceptions/OpenXML4JRuntimeException.class</exclude>
+                                        <exclude>org/apache/poi/openxml4j/exceptions/PartAlreadyExistsException.class</exclude>
+
+                                        <!-- other poi packages that can be wholly excluded -->
                                         <exclude>org/apache/poi/common/**</exclude>
                                         <exclude>org/apache/poi/ddf/**</exclude>
                                         <exclude>org/apache/poi/extractor/**</exclude>
                                         <exclude>org/apache/poi/hpsf/**</exclude>
                                         <exclude>org/apache/poi/hssf/**</exclude>
                                         <exclude>org/apache/poi/ooxml/**</exclude>
-
-                                        <!-- these two packages are needed for ZipSecurefile, do not exclude them -->
-                                        <!-- <exclude>org/apache/poi/openxml4j/util/**</exclude> -->
-                                        <!-- <exclude>org/apache/poi/openxml4j/exceptions/**</exclude> -->
-
                                         <exclude>org/apache/poi/openxml4j/opc/**</exclude>
                                         <exclude>org/apache/poi/poifs/**</exclude>
                                         <exclude>org/apache/poi/sl/**</exclude>
