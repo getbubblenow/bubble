@@ -435,6 +435,7 @@
                                         <!-- <exclude>com/google/graph/**</exclude> something needs SuccessorsFunction -->
 
                                         <exclude>com/opencsv/**</exclude>
+                                        <exclude>com/stripe/param/issuing/**</exclude>
                                         <exclude>com/sun/mail/imap/**</exclude>
                                         <exclude>com/twilio/rest/**</exclude>
                                         <exclude>io/jsonwebtoken/**</exclude>
