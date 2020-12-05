@@ -135,7 +135,7 @@ public class BackupService extends SimpleDaemon {
                         final String home = HOME_DIR;
 
                         final File jarFile = configuration.getBubbleJar();;
-                        if (!jarFile.exists() || jarFile.length() < 10*Bytes.MB) {
+                        if (!jarFile.exists() || (jarFile.length() < 10*Bytes.MB && !configuration.testMode())) {
                             return die("backup: jarFile not found or too small: "+abs(jarFile));
                         }
 
