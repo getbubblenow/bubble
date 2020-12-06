@@ -59,10 +59,10 @@ public interface RegionalServiceDriver {
                     }
                     final CloudRegionRelative r = new CloudRegionRelative(region);
                     r.setCloud(c.getUuid());
-                    if (latLonIsValid) {
+                    if (latLonIsValid && latitude >= 0 && longitude >= 0) {
                         r.setDistance(latitude, longitude);
                     } else {
-                        r.setDistance(-1);
+                        r.setDistance(0);
                     }
                     allRegions.add(r);
                 }

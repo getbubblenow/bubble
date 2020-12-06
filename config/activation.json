@@ -70,6 +70,21 @@
       }
     },
 
+    // Docker can be used for testing or for advanced use cases
+    "DockerCompute": {
+      "config": {},
+      "credentials": {
+        // these are the default settings, change as needed
+        "host": "unix:///var/run/docker.sock",
+        "tlsVerify": "false",   // if tlsVerify is "true" then certPath must be set
+        "certPath": null,
+        "registryUrl": null,
+        "registryUsername": null,
+        "registryEmail": null,
+        "registryPassword": null
+      }
+    },
+
     ///////////////////////
     // Storage
     ///////////////////////

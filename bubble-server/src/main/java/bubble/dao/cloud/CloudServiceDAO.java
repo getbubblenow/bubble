@@ -19,7 +19,6 @@ import org.hibernate.criterion.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import javax.annotation.Nullable;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -161,7 +160,7 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
         return !findPublicTemplatesByType(admin.getUuid(), CloudServiceType.payment).isEmpty();
     }
 
-    @Override public int bulkDeleteWhere(@NonNull String whereClause, @Nullable Map<String, Object> parameters) {
+    @Override public int bulkDeleteWhere(@NonNull String whereClause, Map<String, Object> parameters) {
         // TODO for these maybe an outside cron would be better solution. BulkDelete is used here to be fast.
         // For now this postServiceDelete is called within a single place where this method is used - Account Deletion.
         log.warn("Not calling postServiceDelete for services deleted in this way");

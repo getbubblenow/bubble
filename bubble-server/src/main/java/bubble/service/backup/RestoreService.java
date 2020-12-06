@@ -22,7 +22,6 @@ import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -117,7 +116,7 @@ public class RestoreService {
         }
     }
 
-    @Nullable private String checkAndGetKeyJson(@NonNull final String restoreKey) {
+    private String checkAndGetKeyJson(@NonNull final String restoreKey) {
         final String keyJson = getRestoreKeys().get(restoreKey);
         if (keyJson == null) {
             log.error("restore: restoreKey not found: " + restoreKey);
@@ -126,7 +125,7 @@ public class RestoreService {
         return keyJson;
     }
 
-    @Nullable private String checkAndGetRestoreDirPath() {
+    private String checkAndGetRestoreDirPath() {
         final var existingFiles = RESTORE_DIR.list();
         final var restoreDirAbs = abs(RESTORE_DIR);
 

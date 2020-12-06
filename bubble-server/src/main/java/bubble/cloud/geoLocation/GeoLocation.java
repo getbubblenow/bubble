@@ -49,10 +49,14 @@ public class GeoLocation {
     }
 
     public double distance(double lat, double lon) {
+        if (lat < 0 || lon < 0) return -1.0;
+        double thisLat = big(getLat()).doubleValue();
+        double thisLon = big(getLon()).doubleValue();
+        if (thisLat < 0 || thisLon < 0) return -1.0;
         return Haversine.distance(
-                big(getLat()).doubleValue(),
+                thisLat,
                 lat,
-                big(getLon()).doubleValue(),
+                thisLon,
                 lon);
     }
 

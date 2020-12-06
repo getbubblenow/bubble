@@ -58,7 +58,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -238,7 +237,7 @@ public class AuthResource {
     @Autowired private SageHelloService sageHelloService;
     @Autowired private RestoreService restoreService;
 
-    @NonNull private BubbleNode checkRestoreRequest(@Nullable final String restoreKey) {
+    @NonNull private BubbleNode checkRestoreRequest(final String restoreKey) {
         if (restoreKey == null) throw invalidEx("err.restoreKey.required");
 
         // ensure we have been initialized
@@ -271,7 +270,7 @@ public class AuthResource {
     )
     public Response restore(@NonNull @Context final Request req,
                             @NonNull @Context final ContainerRequest ctx,
-                            @Nullable @PathParam("restoreKey") final String restoreKey,
+                            @PathParam("restoreKey") final String restoreKey,
                             @NonNull @Valid final NetworkKeys.EncryptedNetworkKeys encryptedKeys) {
 
         final var sageNode = checkRestoreRequest(restoreKey);

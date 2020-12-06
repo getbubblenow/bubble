@@ -26,7 +26,6 @@ import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.annotation.Nullable;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -78,7 +77,7 @@ public class NetworkBackupKeysResource {
         return ok();
     }
 
-    @NonNull private String fetchAndCheckEncryptionKey(@Nullable final NameAndValue enc) {
+    @NonNull private String fetchAndCheckEncryptionKey(final NameAndValue enc) {
         final String encryptionKey = enc == null ? null : enc.getValue();
         final ConstraintViolationBean error = validatePassword(encryptionKey);
         if (error != null) throw new SimpleViolationException(error);
@@ -95,7 +94,7 @@ public class NetworkBackupKeysResource {
     @NonNull public Response retrieveNetworkKeys(@NonNull @Context final Request req,
                                                  @NonNull @Context final ContainerRequest ctx,
                                                  @NonNull @PathParam("keysCode") final String keysCode,
-                                                 @Nullable final NameAndValue enc) {
+                                                 final NameAndValue enc) {
         final var encryptionKey = fetchAndCheckEncryptionKey(enc);
         final var networkKeys = keysService.retrieveKeys(keysCode);
         return ok(networkKeys.encrypt(encryptionKey));
@@ -115,7 +114,7 @@ public class NetworkBackupKeysResource {
     @NonNull public Response backupDownloadStart(@NonNull @Context final ContainerRequest ctx,
                                                  @NonNull @PathParam("keysCode") final String keysCode,
                                                  @NonNull @QueryParam("backupId") final String backupId,
-                                                 @Nullable final NameAndValue enc) {
+                                                 final NameAndValue enc) {
         final var passphrase = fetchAndCheckEncryptionKey(enc);
         keysService.retrieveKeys(keysCode);
 

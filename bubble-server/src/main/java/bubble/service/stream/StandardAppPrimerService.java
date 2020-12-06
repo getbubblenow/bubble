@@ -22,7 +22,6 @@ import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Nullable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -115,7 +114,7 @@ public class StandardAppPrimerService implements AppPrimerService {
         getPrimerThread().submit(() -> _prime(account, singleApp));
     }
 
-    private synchronized void _prime(@NonNull final Account account, @Nullable final BubbleApp singleApp) {
+    private synchronized void _prime(@NonNull final Account account, final BubbleApp singleApp) {
         try {
             final List<Device> devices = deviceDAO.findByAccount(account.getUuid());
             if (devices.isEmpty()) return;

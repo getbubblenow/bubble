@@ -152,79 +152,116 @@
   },
 
   {
+    "name": "DockerCompute",
+    "type": "compute",
+    "driverClass": "bubble.cloud.compute.docker.DockerComputeDriver",
+    "driverConfig": {
+      "regions": [{"name": "local", "internalName": "local"}],
+      "sizes": [{"name": "local", "type": "local", "internalName": "local"}],
+      "os": "ubuntu:20.04",
+      "packer": {
+        "vars": [],
+        "sudo": false,
+        "builder": {
+          "type": "docker",
+          "image": "<<os.name>>",
+          "export_path": "<<packerImageName>>.tar",
+          "changes": [
+            "LABEL bubble_image=<<packerImageName>>",
+            "EXPOSE 80 443 1202"
+          ]
+        },
+        "post": {
+          "type": "docker-import",
+          "repository": "local/bubble",
+          "tag": "<<packerImageName>>"
+        }
+      }
+    },
+    "credentials": {
+      "params": [
+        {"name": "host", "value": "unix:///var/run/docker.sock"}
+      ]
+    },
+    "template": false
+  },
+
+  {
     "name": "VultrCompute",
     "type": "compute",
     "driverClass": "bubble.cloud.compute.vultr.VultrDriver",
     "driverConfig": {
-      "regions": [{
-        "name": "Vultr - Dallas",
-        "internalName": "Dallas",
-        "location": {"city": "Dallas", "country": "US", "region": "TX", "lat": "32.779167", "lon": "-96.808889"}
-      }, {
-        "name": "Vultr - Los Angeles",
-        "internalName": "Los Angeles",
-        "location": {"city": "Los Angeles", "country": "US", "region": "CA", "lat": "34.05", "lon": "-118.25"}
-      }, {
-        "name": "Vultr - Miami",
-        "internalName": "Miami",
-        "location": {"city": "Miami", "country": "US", "region": "FL", "lat": "25.775278", "lon": "-80.208889"}
-      }, {
-        "name": "Vultr - Seattle",
-        "internalName": "Seattle",
-        "location": {"city": "Seattle", "country": "US", "region": "WA", "lat": "47.609722", "lon": "-122.333056"}
-      }, {
-        "name": "Vultr - New Jersey",
-        "internalName": "New Jersey",
-        "location": {"city": "Newark", "country": "US", "region": "NJ", "lat": "40.72", "lon": "-74.17"}
-      }, {
-        "name": "Vultr - Atlanta",
-        "internalName": "Atlanta",
-        "location": {"city": "Atlanta", "country": "US", "region": "GA", "lat": "33.755", "lon": "-84.39"}
-      }, {
-        "name": "Vultr - Chicago",
-        "internalName": "Chicago",
-        "location": {"city": "Chicago", "country": "US", "region": "IL", "lat": "41.881944", "lon": "-87.627778"}
-      }, {
-        "name": "Vultr - San Jose",
-        "internalName": "Silicon Valley",
-        "location": {"city": "San Jose", "country": "US", "region": "CA", "lat": "37.333333", "lon": "-121.9"}
-      }, {
-        "name": "Vultr - Toronto",
-        "internalName": "Toronto",
-        "location": {"city": "Toronto", "country": "CA", "region": "ON", "lat": "43.741667", "lon": "-79.373333"}
-      }, {
-        "name": "Vultr - London",
-        "internalName": "London",
-        "location": {"city": "London", "country": "GB", "region": "London", "lat": "51.507222", "lon": "-0.1275"}
-      }, {
-        "name": "Vultr - Paris",
-        "internalName": "Paris",
-        "location": {"city": "Paris", "country": "FR", "region": "Ile-de-Paris", "lat": "48.8567", "lon": "2.3508"}
-      }, {
-        "name": "Vultr - Frankfurt",
-        "internalName": "Frankfurt",
-        "location": {"city": "Frankfurt", "country": "DE", "region": "Hesse", "lat": "50.116667", "lon": "8.683333"}
-      }, {
-        "name": "Vultr - Singapore",
-        "internalName": "Singapore",
-        "location": {"city": "Singapore", "country": "SG", "region": "Singapore", "lat": "1.283333", "lon": "103.833333"}
-      }, {
-        "name": "Vultr - Tokyo",
-        "internalName": "Tokyo",
-        "location": {"city": "Tokyo", "country": "JP", "region": "Kantō", "lat": "35.689722", "lon": "139.692222"}
-      }, {
-        "name": "Vultr - Seoul",
-        "internalName": "Seoul",
-        "location": {"city": "Seoul", "country": "KR", "region": "Sudogwon", "lat": "37.566667", "lon": "126.966667"}
-      }, {
-        "name": "Vultr - Sydney",
-        "internalName": "Sydney",
-        "location": {"city": "Sydney", "country": "AU", "region": "NSW", "lat": "-33.865", "lon": "151.209444"}
-      }, {
-        "name": "Vultr - Amsterdam",
-        "internalName": "ams3",
-        "location": {"city": "Amsterdam", "country": "NL", "region": "North Holland", "lat": "52.366667", "lon": "4.9"}
-      }],
+      "regions": [
+        {
+          "name": "Vultr - Dallas",
+          "internalName": "Dallas",
+          "location": {"city": "Dallas", "country": "US", "region": "TX", "lat": "32.779167", "lon": "-96.808889"}
+        }, {
+          "name": "Vultr - Los Angeles",
+          "internalName": "Los Angeles",
+          "location": {"city": "Los Angeles", "country": "US", "region": "CA", "lat": "34.05", "lon": "-118.25"}
+        }, {
+          "name": "Vultr - Miami",
+          "internalName": "Miami",
+          "location": {"city": "Miami", "country": "US", "region": "FL", "lat": "25.775278", "lon": "-80.208889"}
+        }, {
+          "name": "Vultr - Seattle",
+          "internalName": "Seattle",
+          "location": {"city": "Seattle", "country": "US", "region": "WA", "lat": "47.609722", "lon": "-122.333056"}
+        }, {
+          "name": "Vultr - New Jersey",
+          "internalName": "New Jersey",
+          "location": {"city": "Newark", "country": "US", "region": "NJ", "lat": "40.72", "lon": "-74.17"}
+        }, {
+          "name": "Vultr - Atlanta",
+          "internalName": "Atlanta",
+          "location": {"city": "Atlanta", "country": "US", "region": "GA", "lat": "33.755", "lon": "-84.39"}
+        }, {
+          "name": "Vultr - Chicago",
+          "internalName": "Chicago",
+          "location": {"city": "Chicago", "country": "US", "region": "IL", "lat": "41.881944", "lon": "-87.627778"}
+        }, {
+          "name": "Vultr - San Jose",
+          "internalName": "Silicon Valley",
+          "location": {"city": "San Jose", "country": "US", "region": "CA", "lat": "37.333333", "lon": "-121.9"}
+        }, {
+          "name": "Vultr - Toronto",
+          "internalName": "Toronto",
+          "location": {"city": "Toronto", "country": "CA", "region": "ON", "lat": "43.741667", "lon": "-79.373333"}
+        }, {
+          "name": "Vultr - London",
+          "internalName": "London",
+          "location": {"city": "London", "country": "GB", "region": "London", "lat": "51.507222", "lon": "-0.1275"}
+        }, {
+          "name": "Vultr - Paris",
+          "internalName": "Paris",
+          "location": {"city": "Paris", "country": "FR", "region": "Ile-de-Paris", "lat": "48.8567", "lon": "2.3508"}
+        }, {
+          "name": "Vultr - Frankfurt",
+          "internalName": "Frankfurt",
+          "location": {"city": "Frankfurt", "country": "DE", "region": "Hesse", "lat": "50.116667", "lon": "8.683333"}
+        }, {
+          "name": "Vultr - Singapore",
+          "internalName": "Singapore",
+          "location": {"city": "Singapore", "country": "SG", "region": "Singapore", "lat": "1.283333", "lon": "103.833333"}
+        }, {
+          "name": "Vultr - Tokyo",
+          "internalName": "Tokyo",
+          "location": {"city": "Tokyo", "country": "JP", "region": "Kantō", "lat": "35.689722", "lon": "139.692222"}
+        }, {
+          "name": "Vultr - Seoul",
+          "internalName": "Seoul",
+          "location": {"city": "Seoul", "country": "KR", "region": "Sudogwon", "lat": "37.566667", "lon": "126.966667"}
+        }, {
+          "name": "Vultr - Sydney",
+          "internalName": "Sydney",
+          "location": {"city": "Sydney", "country": "AU", "region": "NSW", "lat": "-33.865", "lon": "151.209444"}
+        }, {
+          "name": "Vultr - Amsterdam",
+          "internalName": "ams3",
+          "location": {"city": "Amsterdam", "country": "NL", "region": "North Holland", "lat": "52.366667", "lon": "4.9"}
+        }
+      ],
       "sizes": [
         {"name": "small", "type": "small", "internalName": "1024 MB RAM,25 GB SSD,1.00 TB BW", "vcpu": 1, "memoryMB": 1024, "diskGB": 25},
         {"name": "medium", "type": "medium", "internalName": "2048 MB RAM,55 GB SSD,2.00 TB BW", "vcpu": 1, "memoryMB": 2048, "diskGB": 55},
@@ -331,55 +368,57 @@
     "type": "compute",
     "driverClass": "bubble.cloud.compute.ec2.AmazonEC2Driver",
     "driverConfig": {
-      "regions": [{
-        "name": "Amazon - N. Virginia", "description": "US East 1 (N. Virginia)", "internalName": "us-east-1",
-        "location": {"city": "Arlington", "region": "VA", "country": "US", "lat": "38.880278", "lon": "-77.108333"}
-      }, {
-        "name": "Amazon - Ohio", "description": "US East 2 (Ohio)", "internalName": "us-east-2",
-        "location": {"region": "OH", "country": "US", "lat": "40.3416167", "lon": "-84.9180579"}
-      }, {
-        "name": "Amazon - N. California", "description": "US West 1 (N. California)", "internalName": "us-west-1",
-        "location": {"city": "San Jose", "country": "US", "region": "CA", "lat": "37.333333", "lon": "-121.9"}
-      }, {
-        "name": "Amazon - Oregon", "description": "US West 2 (Oregon)", "internalName": "us-west-2",
-        "location": {"city": "Hermiston", "region": "OR", "country": "US", "lat": "45.841111", "lon": "-119.291667"}
-      }, {
-        "name": "Amazon - Canada", "description": "Canada (Central)", "internalName": "ca-central-1",
-        "location": {"region": "QC", "country": "CA", "lat": "46.813889", "lon": "-71.208056"}
-      }, {
-        "name": "Amazon - Stockholm", "description": "EU (Stockholm)", "internalName": "eu-north-1",
-        "location": {"city": "Stockholm", "region": "Södermanland", "country": "SE", "lat": "59.329444", "lon": "18.068611"}
-      }, {
-        "name": "Amazon - Ireland", "description": "EU (Ireland)", "internalName": "eu-west-1",
-        "location": {"city": "Dublin", "region": "Leinster", "country": "IE", "lat": "53.35", "lon": "-6.266667"}
-      }, {
-        "name": "Amazon - London", "description": "EU (London)", "internalName": "eu-west-2",
-        "location": {"city": "London", "country": "GB", "region": "London", "lat": "51.507222", "lon": "-0.1275"}
-      }, {
-        "name": "Amazon - Milan", "description": "EU (Milan)", "internalName": "eu-west-3",
-        "location": {"city": "Milan", "country": "IT", "region": "Lombardy", "lat": "45.466944", "lon": "9.19"}
-      }, {
-        "name": "Amazon - Frankfurt", "description": "EU (Frankfurt)", "internalName": "eu-central-1",
-        "location": {"city": "Frankfurt", "country": "DE", "region": "Hesse", "lat": "50.116667", "lon": "8.683333"}
-      }, {
-        "name": "Amazon - Tokyo", "description": "Asia Pacific (Tokyo)", "internalName": "ap-northeast-1",
-        "location": {"city": "Tokyo", "country": "JP", "region": "Kantō", "lat": "35.689722", "lon": "139.692222"}
-      }, {
-        "name": "Amazon - Seoul", "description": "Asia Pacific (Seoul)", "internalName": "ap-northeast-2",
-        "location": {"city": "Seoul", "country": "KR", "region": "Sudogwon", "lat": "37.566667", "lon": "126.966667"}
-      }, {
-        "name": "Amazon - Singapore", "description": "Asia Pacific (Singapore)", "internalName": "ap-southeast-1",
-        "location": {"city": "Singapore", "country": "SG", "region": "Singapore", "lat": "1.283333", "lon": "103.833333"}
-      }, {
-        "name": "Amazon - Sydney", "description": "Asia Pacific (Sydney)", "internalName": "ap-southeast-2",
-        "location": {"city": "Sydney", "country": "AU", "region": "NSW", "lat": "-33.865", "lon": "151.209444"}
-      }, {
-        "name": "Amazon - Mumbai", "description": "Asia Pacific (Mumbai)", "internalName": "ap-south-1",
-        "location": {"city": "Mumbai", "country": "IN", "region": "Konkan", "lat": "18.975", "lon": "72.825833"}
-      }, {
-        "name": "Amazon - São Paulo", "description": "South America (São Paulo)", "internalName": "sa-east-1",
-        "location": {"city": "São Paulo", "country": "BR", "region": "São Paulo", "lat": "-23.55", "lon": "-46.633333"}
-      }],
+      "regions": [
+        {
+          "name": "Amazon - N. Virginia", "description": "US East 1 (N. Virginia)", "internalName": "us-east-1",
+          "location": {"city": "Arlington", "region": "VA", "country": "US", "lat": "38.880278", "lon": "-77.108333"}
+        }, {
+          "name": "Amazon - Ohio", "description": "US East 2 (Ohio)", "internalName": "us-east-2",
+          "location": {"region": "OH", "country": "US", "lat": "40.3416167", "lon": "-84.9180579"}
+        }, {
+          "name": "Amazon - N. California", "description": "US West 1 (N. California)", "internalName": "us-west-1",
+          "location": {"city": "San Jose", "country": "US", "region": "CA", "lat": "37.333333", "lon": "-121.9"}
+        }, {
+          "name": "Amazon - Oregon", "description": "US West 2 (Oregon)", "internalName": "us-west-2",
+          "location": {"city": "Hermiston", "region": "OR", "country": "US", "lat": "45.841111", "lon": "-119.291667"}
+        }, {
+          "name": "Amazon - Canada", "description": "Canada (Central)", "internalName": "ca-central-1",
+          "location": {"region": "QC", "country": "CA", "lat": "46.813889", "lon": "-71.208056"}
+        }, {
+          "name": "Amazon - Stockholm", "description": "EU (Stockholm)", "internalName": "eu-north-1",
+          "location": {"city": "Stockholm", "region": "Södermanland", "country": "SE", "lat": "59.329444", "lon": "18.068611"}
+        }, {
+          "name": "Amazon - Ireland", "description": "EU (Ireland)", "internalName": "eu-west-1",
+          "location": {"city": "Dublin", "region": "Leinster", "country": "IE", "lat": "53.35", "lon": "-6.266667"}
+        }, {
+          "name": "Amazon - London", "description": "EU (London)", "internalName": "eu-west-2",
+          "location": {"city": "London", "country": "GB", "region": "London", "lat": "51.507222", "lon": "-0.1275"}
+        }, {
+          "name": "Amazon - Milan", "description": "EU (Milan)", "internalName": "eu-west-3",
+          "location": {"city": "Milan", "country": "IT", "region": "Lombardy", "lat": "45.466944", "lon": "9.19"}
+        }, {
+          "name": "Amazon - Frankfurt", "description": "EU (Frankfurt)", "internalName": "eu-central-1",
+          "location": {"city": "Frankfurt", "country": "DE", "region": "Hesse", "lat": "50.116667", "lon": "8.683333"}
+        }, {
+          "name": "Amazon - Tokyo", "description": "Asia Pacific (Tokyo)", "internalName": "ap-northeast-1",
+          "location": {"city": "Tokyo", "country": "JP", "region": "Kantō", "lat": "35.689722", "lon": "139.692222"}
+        }, {
+          "name": "Amazon - Seoul", "description": "Asia Pacific (Seoul)", "internalName": "ap-northeast-2",
+          "location": {"city": "Seoul", "country": "KR", "region": "Sudogwon", "lat": "37.566667", "lon": "126.966667"}
+        }, {
+          "name": "Amazon - Singapore", "description": "Asia Pacific (Singapore)", "internalName": "ap-southeast-1",
+          "location": {"city": "Singapore", "country": "SG", "region": "Singapore", "lat": "1.283333", "lon": "103.833333"}
+        }, {
+          "name": "Amazon - Sydney", "description": "Asia Pacific (Sydney)", "internalName": "ap-southeast-2",
+          "location": {"city": "Sydney", "country": "AU", "region": "NSW", "lat": "-33.865", "lon": "151.209444"}
+        }, {
+          "name": "Amazon - Mumbai", "description": "Asia Pacific (Mumbai)", "internalName": "ap-south-1",
+          "location": {"city": "Mumbai", "country": "IN", "region": "Konkan", "lat": "18.975", "lon": "72.825833"}
+        }, {
+          "name": "Amazon - São Paulo", "description": "South America (São Paulo)", "internalName": "sa-east-1",
+          "location": {"city": "São Paulo", "country": "BR", "region": "São Paulo", "lat": "-23.55", "lon": "-46.633333"}
+        }
+      ],
       "sizes": [
         {"name": "small", "type": "small", "internalName": "t2.micro", "vcpu": 1, "memoryMB": 1024, "diskGB": 10, "diskType": "ebs_magnetic"},
         {"name": "medium", "type": "medium", "internalName": "t2.small", "vcpu": 1, "memoryMB": 2048, "diskGB": 20, "diskType": "ebs_magnetic"},

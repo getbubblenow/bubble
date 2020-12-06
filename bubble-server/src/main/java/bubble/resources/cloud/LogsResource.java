@@ -14,7 +14,6 @@ import lombok.NonNull;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.annotation.Nullable;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -69,7 +68,7 @@ public class LogsResource {
             responses=@ApiResponse(responseCode=SC_OK, description="empty response indicates success")
     )
     @NonNull public Response startLogging(@NonNull @Context final ContainerRequest ctx,
-                                          @Nullable @QueryParam("ttlDays") final Byte ttlDays) {
+                                          @QueryParam("ttlDays") final Byte ttlDays) {
         final Account caller = userPrincipal(ctx);
         if (!caller.admin()) throw forbiddenEx();
         return setLogFlag(true, Optional.ofNullable(ttlDays));

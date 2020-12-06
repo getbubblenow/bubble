@@ -24,7 +24,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -153,7 +152,7 @@ public class DebugResource {
     )
     public Response echoJsonInLog(@Context ContainerRequest ctx,
                                   @Valid @NonNull final JsonNode input,
-                                  @QueryParam("respondWith") @Nullable final String respondWith) throws IOException {
+                                  @QueryParam("respondWith") final String respondWith) throws IOException {
         final var output = "ECHO: \n" + toJsonOrDie(input);
         log.info(output);
 

@@ -119,6 +119,41 @@
   },
 
   {
+    "name": "DockerCompute",
+    "type": "compute",
+    "driverClass": "bubble.cloud.compute.docker.DockerComputeDriver",
+    "driverConfig": {
+      "regions": [{"name": "local", "internalName": "local"}],
+      "sizes": [{"name": "local", "type": "local", "internalName": "local"}],
+      "os": "ubuntu:20.04",
+      "packer": {
+        "vars": [],
+        "sudo": false,
+        "builder": {
+          "type": "docker",
+          "image": "<<os.name>>",
+          "export_path": "<<packerImageName>>.tar",
+          "changes": [
+            "LABEL bubble_image=<<packerImageName>>",
+            "EXPOSE 80 443 1202"
+          ]
+        },
+        "post": {
+          "type": "docker-import",
+          "repository": "local/bubble",
+          "tag": "<<packerImageName>>"
+        }
+      }
+    },
+    "credentials": {
+      "params": [
+        {"name": "host", "value": "unix:///var/run/docker.sock"}
+      ]
+    },
+    "template": false
+  },
+
+  {
     "_subst": true,
     "name": "VultrCompute",
     "type": "compute",
@@ -196,7 +231,7 @@
       ],
       "config": [{"name": "os", "value": "Ubuntu 18.04 x64"}]
     },
-    "credentials": {
+      "credentials": {
       "params": [
         {"name": "API-Key", "value": "{{VULTR_API_KEY}}"}
       ]

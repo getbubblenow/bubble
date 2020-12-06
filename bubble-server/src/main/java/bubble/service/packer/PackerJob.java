@@ -14,10 +14,12 @@ import bubble.cloud.geoLocation.GeoLocation;
 import bubble.dao.account.AccountDAO;
 import bubble.model.account.Account;
 import bubble.model.cloud.AnsibleInstallType;
+import bubble.model.cloud.CloudCredentials;
 import bubble.model.cloud.CloudService;
 import bubble.server.BubbleConfiguration;
 import bubble.server.SoftwareVersions;
 import bubble.service.cloud.GeoService;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Cleanup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -79,6 +81,8 @@ public class PackerJob implements Callable<List<PackerImage>> {
     public static final String BUILD_REGION_VAR = "buildRegion";
     public static final String IMAGE_REGIONS_VAR = "imageRegions";
     public static final String BUILDERS_VAR = "builders";
+    public static final String POST_PROCESSOR_VAR = "postProcessor";
+    public static final String SUDO_VAR = "sudo";
     public static final String PACKER_PLAYBOOK_TEMPLATE = "packer-playbook.yml.hbs";
     public static final String PACKER_PLAYBOOK = "packer-playbook.yml";
     public static final String PACKER_BINARY = System.getProperty("user.home")+"/packer/packer";
@@ -146,7 +150,8 @@ public class PackerJob implements Callable<List<PackerImage>> {
 
         // create handlebars context
         final Map<String, Object> ctx = new HashMap<>();
-        ctx.put("credentials", NameAndValue.toMap(cloud.getCredentials().getParams()));
+        final CloudCredentials creds = cloud.getCredentials();
+        ctx.put("credentials", creds == null ? Collections.emptyMap() : NameAndValue.toMap(creds.getParams()));
         ctx.put("compute", computeDriver);
         ctx.put("sizes", computeDriver.getSizesMap());
         ctx.put("os", computeDriver.getOs());
@@ -167,6 +172,15 @@ public class PackerJob implements Callable<List<PackerImage>> {
             env.put(variable.getName(), HandlebarsUtil.apply(configuration.getHandlebars(), variable.getValue(), ctx, '[', ']'));
         }
         if (!env.containsKey("HOME")) env.put("HOME", HOME_DIR);
+
+        // Docker builder requires "docker" command to be on our path
+        // It is usually in /usr/local/bin
+        // May need to make this more flexible if docker is elsewhere, or other tools/paths are needed
+        if (env.containsKey("PATH")) {
+            env.put("PATH", "${PATH}:/usr/local/bin");
+        } else {
+            env.put("PATH", "/usr/local/bin");
+        }
         ctx.put(VARIABLES_VAR, packerConfig.getVars());
 
         // copy ansible and other packer files to temp dir
@@ -254,6 +268,9 @@ public class PackerJob implements Callable<List<PackerImage>> {
             builderJsons.add(generateBuilder(packerConfig, ctx));
         }
         ctx.put(BUILDERS_VAR, builderJsons);
+        ctx.put(SUDO_VAR, packerConfig.sudo());
+
+        if (packerConfig.hasPost()) ctx.put(POST_PROCESSOR_VAR, generatePostProcessor(packerConfig, ctx));
 
         // write playbook file
         final String playbookTemplate = FileUtil.toString(abs(tempDir)+ "/" + PACKER_PLAYBOOK_TEMPLATE);
@@ -333,7 +350,15 @@ public class PackerJob implements Callable<List<PackerImage>> {
     }
 
     public String generateBuilder(PackerConfig packerConfig, Map<String, Object> ctx) {
-        return HandlebarsUtil.apply(configuration.getHandlebars(), json(packerConfig.getBuilder()), ctx, '<', '>')
+        return appyHandlebars(ctx, packerConfig.getBuilder());
+    }
+
+    public String generatePostProcessor(PackerConfig packerConfig, Map<String, Object> ctx) {
+        return packerConfig.hasPost() ? appyHandlebars(ctx, packerConfig.getPost()) : null;
+    }
+
+    private String appyHandlebars(Map<String, Object> ctx, JsonNode thing) {
+        return HandlebarsUtil.apply(configuration.getHandlebars(), json(thing), ctx, '<', '>')
                 .replace("[[", "{{")
                 .replace("]]", "}}");
     }

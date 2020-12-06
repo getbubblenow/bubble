@@ -27,6 +27,14 @@
     src: dot-screenrc
     dest: /root/.screenrc
 
+- name: Ensure /root/.ssh exists
+  file:
+    path: /root/.ssh
+    owner: root
+    group: root
+    mode: 0700
+    state: directory
+
 - name: Install packer key as only authorized key
   copy:
     src: packer_rsa
@@ -50,13 +58,6 @@
     owner: root
     group: root
     mode: 0500
-
-- name: Start common services
-  service:
-    name: '{{ item }}'
-    state: restarted
-  with_items:
-    - fail2ban
 
 - name: Create bubble-log group
   group:

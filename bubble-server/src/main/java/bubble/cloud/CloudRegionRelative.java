@@ -20,7 +20,7 @@ public class CloudRegionRelative extends CloudRegion {
     @Getter @Setter private double distance;
 
     public void setDistance(double latitude, double longitude) {
-        distance = getLocation().distance(latitude, longitude);
+        if (getLocation() != null) distance = getLocation().distance(latitude, longitude);
     }
 
 }
