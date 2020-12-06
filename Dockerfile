@@ -18,7 +18,7 @@ LABEL license="https://getbubblenow.com/license"
 # Install packages
 RUN apt update -y
 RUN DEBIAN_FRONTEND=noninteractive apt upgrade -y --no-install-recommends
-RUN DEBIAN_FRONTEND=noninteractive apt install openjdk-11-jre-headless postgresql redis-server jq python3 python3-pip curl unzip -y --no-install-recommends
+RUN DEBIAN_FRONTEND=noninteractive apt install openjdk-11-jre-headless postgresql redis-server jq python3 python3-pip curl zip unzip -y --no-install-recommends
 RUN pip3 install setuptools psycopg2-binary
 
 #################
