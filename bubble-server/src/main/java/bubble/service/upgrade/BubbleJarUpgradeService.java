@@ -84,10 +84,10 @@ public class BubbleJarUpgradeService extends SimpleDaemon {
     public static final int UPGRADE_HOUR_OF_DAY = 4;
 
     @Override protected void process() {
-        log.info("process: starting upgrade check");
+        log.debug("process: starting upgrade check");
         if (!shouldRun()) return;
 
-        log.info("process: checking/upgrading bubble jar...");
+        log.debug("process: checking/upgrading bubble jar...");
         try {
             upgrade();
         } catch (Exception e) {
@@ -98,12 +98,12 @@ public class BubbleJarUpgradeService extends SimpleDaemon {
 
     public boolean shouldRun() {
         if (!enabled.get()) {
-            log.warn("shouldRun: upgrades not currently enabled, returning");
+            log.info("shouldRun: upgrades not currently enabled, returning");
             return false;
         }
 
         if (!configuration.getJarUpgradeAvailable()) {
-            log.warn("shouldRun: no upgrade available, returning");
+            log.info("shouldRun: no upgrade available, returning");
             return false;
         }
 
@@ -114,17 +114,17 @@ public class BubbleJarUpgradeService extends SimpleDaemon {
         final DateTime dateTime = new DateTime(now(), dtz);
         final int hour = dateTime.hourOfDay().get();
         if (hour != UPGRADE_HOUR_OF_DAY) {
-            log.warn("shouldRun: hour of day ("+hour+") != UPGRADE_HOUR_OF_DAY ("+UPGRADE_HOUR_OF_DAY+"), returning");
+            log.info("shouldRun: hour of day ("+hour+") != UPGRADE_HOUR_OF_DAY ("+UPGRADE_HOUR_OF_DAY+"), returning");
             return false;
         }
 
         // OK, it's that special hour of the day. does the admin even want updates?
         final Account account = accountDAO.getFirstAdmin();
         if (account == null || !account.getAutoUpdatePolicy().jarUpdates()) {
-            log.warn("shouldRun: account is null or auto-update policy does not allow jar updates");
+            log.info("shouldRun: account is null or auto-update policy does not allow jar updates");
             return false;
         }
-        log.info("shouldRun: returning true");
+        log.debug("shouldRun: returning true");
         return true;
     }
 
