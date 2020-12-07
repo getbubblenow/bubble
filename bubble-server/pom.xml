@@ -386,6 +386,7 @@
         <profile>
             <id>production</id>
             <build>
+                <finalName>bubble-server-${project.version}-prod.jar</finalName>
                 <resources>
                     <resource>
                         <directory>src/main/resources</directory>

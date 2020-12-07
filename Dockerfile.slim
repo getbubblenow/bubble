@@ -54,9 +54,9 @@ RUN mkdir /bubble
 COPY bin/install_packer.sh /usr/local/bin/
 #RUN /usr/local/bin/install_packer.sh
 
-# Install env file only
-#COPY bubble-server/target/bubble-server-*-SNAPSHOT.jar /bubble/bubble.jar
-COPY docker/bubble.env /bubble/bubble.env
+# Touch env file only
+#COPY bubble-server/target/bubble-server-*-prod.jar /bubble/bubble.jar
+RUN touch /bubble/bubble.env
 
 # Setup Bubble service
 RUN mkdir /etc/service/bubble

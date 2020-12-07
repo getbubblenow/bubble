@@ -4,7 +4,7 @@
 #
 # Build, run or push a docker container for a Bubble launcher. Intended for developer use.
 #
-#      bubble.sh [mode] [version]
+#      bdocker [mode] [version]
 #
 #  mode : build, run or push
 #      build - build the docker images

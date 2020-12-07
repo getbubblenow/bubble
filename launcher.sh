@@ -4,7 +4,9 @@
 #
 # Run bubble launcher in a docker container. Works on Linux or Mac OS.
 #
-#   /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/docker/launcher.sh)"
+# Intended to be "run from anywhere" like this:
+#
+#   /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/launcher.sh)"
 #
 # This command will:
 #   - install docker if no "docker" command found

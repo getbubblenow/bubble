@@ -6,7 +6,7 @@ The Bubble Docker Launcher makes it easy to run a Bubble launcher.
 If you're running Linux or Mac OS X, try the automatic setup script first.
 This script will automatically install docker, pull the Bubble docker image and run it.
 
-    /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/docker/launcher.sh)"
+    /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/launcher.sh)"
 
 ## Docker Installation
 If you're running Windows, or if the above script has problems installing Docker,
