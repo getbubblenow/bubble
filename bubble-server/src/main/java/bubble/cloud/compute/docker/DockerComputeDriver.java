@@ -20,16 +20,13 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
-import edu.emory.mathcs.backport.java.util.Arrays;
-import edu.emory.mathcs.backport.java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.MapBuilder;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -185,8 +182,18 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
 
     @Override public List<PackerImage> getAllPackerImages() {
         final DockerClient dc = getDockerClient();
-        final List<Image> images = dc.listImagesCmd().exec().stream()
-                .filter(i -> i.getLabels().containsKey(LABEL_IMAGE) && i.getLabels().get(LABEL_IMAGE).startsWith(PACKER_IMAGE_PREFIX))
+        final List<Image> list1 = dc.listImagesCmd().exec();
+        final String repository;
+        try {
+            repository = getConfig().getPacker().getPost().get("repository").asText();
+            if (empty(repository)) die("repository value was empty");
+        } catch (Exception e) {
+            log.error("getAllPackerImages: no repository found in packer.post config (returning empty list): "+shortError(e));
+            return emptyList();
+        }
+        final String prefix = repository + ":" + PACKER_IMAGE_PREFIX;
+        final List<Image> images = list1.stream()
+                .filter(i -> i.getRepoTags() != null && Arrays.stream(i.getRepoTags()).anyMatch(t -> t.startsWith(prefix)))
                 .collect(Collectors.toList());
         final List<PackerImage> packerImages = new ArrayList<>();
         for (Image i : images) {
