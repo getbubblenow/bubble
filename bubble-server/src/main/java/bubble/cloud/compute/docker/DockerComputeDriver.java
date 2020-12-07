@@ -78,8 +78,10 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
 
     @Override public ComputeNodeSize getSize(ComputeNodeSizeType type) { return LOCAL_SIZE; }
 
+    public static final String BASE_IMAGE = "phusion/baseimage:focal-1.0.0alpha1-amd64";
+
     public static final List<OsImage> CLOUD_OS_IMAGES = Arrays.asList(new OsImage[]{
-            new OsImage().setName("ubuntu:20.04").setId("ubuntu:20.04").setRegion(LOCAL)
+            new OsImage().setName(BASE_IMAGE).setId(BASE_IMAGE).setRegion(LOCAL)
     });
 
     public static final long START_TIMEOUT = SECONDS.toMillis(120);
