@@ -33,6 +33,7 @@ import static bubble.ApiConstants.ID_ENDPOINT;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpStatusCodes.SC_OK;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
+import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
 
 @Consumes(APPLICATION_JSON)
@@ -49,7 +50,7 @@ public class IdentityResource {
 
     @GET @Path("/{id}")
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
-            tags=API_TAG_BUBBLE_INFO,
+            tags={API_TAG_BUBBLE_INFO, API_TAG_UTILITY},
             summary="Find what object(s) an ID belongs to. Useful when you have a UUID but don't know what kind of thing it refers to, if any.",
             description="Searches all model objects by ID. The id parameter is typically a UUID or name",
             parameters=@Parameter(name="id", description="an identifier (typically UUID or name) to search for", required=true),
