@@ -309,7 +309,7 @@ public class AccountPolicy extends IdentifiableBase implements HasAccount {
             for (AccountContact c : getAccountContacts()) {
                 scrubbed.add(c.mask());
             }
-            setAccountContacts(scrubbed.toArray(new AccountContact[0]));
+            setAccountContacts(scrubbed.toArray(AccountContact[]::new));
         }
         return this;
     }

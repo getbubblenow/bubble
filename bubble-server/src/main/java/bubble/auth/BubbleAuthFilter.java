@@ -41,7 +41,7 @@ public class BubbleAuthFilter extends AuthFilter<Account> {
             AUTH_ENDPOINT + EP_RESTORE + "/", AUTH_ENDPOINT + EP_CONFIGS, AUTH_ENDPOINT + EP_READY,
             BUBBLE_MAGIC_ENDPOINT, NOTIFY_ENDPOINT, MESSAGES_ENDPOINT
     }));
-    public static final Set<String> SKIP_AUTH_TEST = new HashSet<>(Arrays.asList(ArrayUtil.append(SKIP_AUTH_PREFIXES.toArray(new String[0]),
+    public static final Set<String> SKIP_AUTH_TEST = new HashSet<>(Arrays.asList(ArrayUtil.append(SKIP_AUTH_PREFIXES.toArray(String[]::new),
             DEBUG_ENDPOINT
     )));
 

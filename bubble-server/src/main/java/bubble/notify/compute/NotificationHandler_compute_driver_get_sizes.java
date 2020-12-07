@@ -13,7 +13,7 @@ public class NotificationHandler_compute_driver_get_sizes extends NotificationHa
     @Override protected ComputeNodeSize[] handle(ReceivedNotification n,
                                                  ComputeDriverNotification notification,
                                                  ComputeServiceDriver compute) {
-        return compute.getSizes().toArray(new ComputeNodeSize[0]);
+        return compute.getSizes().toArray(ComputeNodeSize[]::new);
     }
 
 }

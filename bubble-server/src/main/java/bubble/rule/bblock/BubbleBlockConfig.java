@@ -67,7 +67,7 @@ public class BubbleBlockConfig extends RequestModifierConfig {
         }
 
         if (retained.size() < blockLists.length) {
-            blockLists = retained.toArray(new BubbleBlockList[0]);
+            blockLists = retained.toArray(BubbleBlockList[]::new);
         } else {
             log.warn("removeList: list not found, not removed: "+list.id());
         }

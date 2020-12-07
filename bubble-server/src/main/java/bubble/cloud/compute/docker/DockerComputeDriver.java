@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import static bubble.service.packer.PackerJob.PACKER_IMAGE_PREFIX;
 import static java.lang.Boolean.parseBoolean;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -51,9 +52,14 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
     };
     public static final List<CloudRegion> CLOUD_REGIONS = Arrays.asList(CLOUD_REGIONS_ARRAY);
 
-    public static final List<ComputeNodeSize> CLOUD_SIZES = Arrays.asList(new ComputeNodeSize[]{
-            new ComputeNodeSize().setName(LOCAL).setInternalName(LOCAL).setType(ComputeNodeSizeType.local)
-    });
+    public static final ComputeNodeSize LOCAL_SIZE = new ComputeNodeSize().setName(LOCAL).setInternalName(LOCAL).setType(ComputeNodeSizeType.local);
+    public static final List<ComputeNodeSize> CLOUD_SIZES = singletonList(LOCAL_SIZE);
+    public static final Map<String, ComputeNodeSize> NODE_SIZE_MAP = MapBuilder.build(LOCAL, LOCAL_SIZE);
+
+    @Override public Map<String, ComputeNodeSize> getSizesMap() { return NODE_SIZE_MAP; }
+
+    @Override public ComputeNodeSize getSize(ComputeNodeSizeType type) { return LOCAL_SIZE; }
+
     public static final List<OsImage> CLOUD_OS_IMAGES = Arrays.asList(new OsImage[]{
             new OsImage().setName("ubuntu:20.04").setId("ubuntu:20.04").setRegion(LOCAL)
     });

@@ -109,7 +109,7 @@ public class BubbleFootprint extends IdentifiableBase implements AccountTemplate
     public void addDisallowedCountries(String[] countries) {
         final Set<String> disallowed = hasDisallowedCountries() ? new HashSet<>(Arrays.asList(getDisallowedCountries())) : new HashSet<>();
         disallowed.addAll(Arrays.asList(countries));
-        setDisallowedCountries(new ArrayList<>(disallowed).toArray(new String[0]));
+        setDisallowedCountries(new ArrayList<>(disallowed).toArray(String[]::new));
     }
 
     public boolean isAllowedCountry (String country) {

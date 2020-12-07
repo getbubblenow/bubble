@@ -13,7 +13,7 @@ public class NotificationHandler_compute_driver_get_regions extends Notification
     @Override protected CloudRegion[] handle(ReceivedNotification n,
                                              ComputeDriverNotification notification,
                                              ComputeServiceDriver compute) {
-        return compute.getRegions().toArray(new CloudRegion[0]);
+        return compute.getRegions().toArray(CloudRegion[]::new);
     }
 
 }

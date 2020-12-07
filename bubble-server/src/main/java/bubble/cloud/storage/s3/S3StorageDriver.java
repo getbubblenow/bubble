@@ -243,7 +243,7 @@ public class S3StorageDriver extends StorageServiceDriverBase<S3StorageConfig> {
 
         return new StorageListing()
                 .setListingId(listRequestId)
-                .setKeys(keys.toArray(new String[0]))
+                .setKeys(keys.toArray(String[]::new))
                 .setTruncated(listing.isTruncated());
     }
 
@@ -263,7 +263,7 @@ public class S3StorageDriver extends StorageServiceDriverBase<S3StorageConfig> {
 
         return new StorageListing()
                 .setListingId(listingId)
-                .setKeys(keys.toArray(new String[0]))
+                .setKeys(keys.toArray(String[]::new))
                 .setTruncated(listingRequest.objectListing.isTruncated());
     }
 
