@@ -201,10 +201,11 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
             if (empty(i.getRepoTags())) {
                 name = i.getId();
             } else if (i.getRepoTags().length == 1) {
-                if (i.getRepoTags()[0].contains(":")) {
-                    name = i.getRepoTags()[0].substring(repository.indexOf(":")+1);
+                final String repoTag = i.getRepoTags()[0];
+                if (repoTag.contains(":")) {
+                    name = repoTag.substring(repoTag.indexOf(":") + 1);
                 } else {
-                    name = i.getRepoTags()[0];
+                    name = repoTag;
                 }
             } else {
                 name = json(i.getRepoTags());
