@@ -11,7 +11,7 @@
     group: root
     mode: 0755
     state: directory
-  with_items: [ 'redis', 'postgresql', 'supervisor' ]
+  with_items: [ 'redis', 'postgresql', 'supervisor', 'cron' ]
 
 - name: Create /service/redis/run
   copy:
@@ -39,6 +39,14 @@
   copy:
     src: run_supervisor.sh
     dest: /service/supervisor/run
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Create /service/cron/run
+  copy:
+    src: run_cron.sh
+    dest: /service/cron/run
     owner: root
     group: root
     mode: 0755
