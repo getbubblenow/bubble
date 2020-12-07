@@ -32,6 +32,7 @@
   service:
     name: nginx
     state: stopped
+  when: packer_builder_type != 'docker'
 
 - name: Install helper scripts
   copy:

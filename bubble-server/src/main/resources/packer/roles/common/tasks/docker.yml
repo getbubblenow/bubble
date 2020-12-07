@@ -1,6 +1,6 @@
 - name: Install packages missing on docker ubuntu
   apt:
-    name: [ 'curl', 'cron', 'iptables', 'openssh-server', 'redis', 'postgresql', 'supervisor' ]
+    name: [ 'curl', 'nginx', 'cron', 'iptables', 'openssh-server', 'redis', 'postgresql', 'supervisor' ]
     state: present
     update_cache: yes
 
@@ -39,6 +39,14 @@
   copy:
     src: run_supervisor.sh
     dest: /service/supervisor/run
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Create /service/nginx/run
+  copy:
+    src: run_nginx.sh
+    dest: /service/nginx/run
     owner: root
     group: root
     mode: 0755

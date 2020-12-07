@@ -139,7 +139,9 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
         return DockerClientImpl.getInstance(dockerConfig, client);
     }
 
-    private static final String[] PACKER_FILES = {"run_redis.sh", "run_postgresql.sh", "run_supervisor.sh"};
+    private static final String[] PACKER_FILES = {
+            "run_redis.sh", "run_postgresql.sh", "run_supervisor.sh", "run_cron.sh", "run_nginx.sh"
+    };
 
     @Override public void prepPackerDir(TempDir tempDir) {
         try {
