@@ -795,6 +795,7 @@ public class AccountsResource {
     @Path("/{id}"+EP_PAYMENT_METHODS)
     public AccountPaymentMethodsResource getAccountPaymentMethods(@Context ContainerRequest ctx,
                                                                   @PathParam("id") String id) {
+        configuration.requiresPaymentsEnabled();
         final AccountContext c = new AccountContext(ctx, id);
         return configuration.subResource(AccountPaymentMethodsResource.class, c.account);
     }
@@ -802,6 +803,7 @@ public class AccountsResource {
     @Path("/{id}"+EP_BILLS)
     public BillsResource getBills(@Context ContainerRequest ctx,
                                   @PathParam("id") String id) {
+        configuration.requiresPaymentsEnabled();
         final AccountContext c = new AccountContext(ctx, id);
         return configuration.subResource(BillsResource.class, c.account);
     }
@@ -809,6 +811,7 @@ public class AccountsResource {
     @Path("/{id}"+EP_PAYMENTS)
     public AccountPaymentsResource getPayments(@Context ContainerRequest ctx,
                                                @PathParam("id") String id) {
+        configuration.requiresPaymentsEnabled();
         final AccountContext c = new AccountContext(ctx, id);
         return configuration.subResource(AccountPaymentsResource.class, c.account);
     }

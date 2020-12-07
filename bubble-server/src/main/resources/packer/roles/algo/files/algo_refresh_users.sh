@@ -55,7 +55,7 @@ log "Regenerating algo config..."
 java -cp /home/bubble/api/bubble.jar bubble.main.BubbleMain generate-algo-conf --algo-config ${ALGO_CONFIG}.hbs || die "Error writing algo config.cfg"
 NEW_ALGO_CONFIG_SHA="$(sha256sum ${ALGO_CONFIG} | cut -f1 -d' ')"
 
-if [[ ! -z "${ALGO_CONFIG_SHA}" && "${ALGO_CONFIG_SHA}" == "${NEW_ALGO_CONFIG_SHA}" ]] ; then
+if [[ -n "${ALGO_CONFIG_SHA}" && "${ALGO_CONFIG_SHA}" == "${NEW_ALGO_CONFIG_SHA}" ]] ; then
   log "Algo configuration is unchanged, not refreshing: ${ALGO_CONFIG}"
 
 else

@@ -197,11 +197,6 @@ public class NoopCloud implements
         return null;
     }
 
-    @Override public Collection<DnsRecord> setNetwork(BubbleNetwork network) {
-        if (log.isDebugEnabled()) log.debug("setNetwork(network=" + network + ")");
-        return null;
-    }
-
     @Override public Collection<DnsRecord> setNode(BubbleNode node) {
         if (log.isDebugEnabled()) log.debug("setNode(node=" + node + ")");
         return null;

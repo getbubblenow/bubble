@@ -34,7 +34,7 @@ for key in $(echo "${CURRENT_KEYS_SQL}" | PGPASSWORD="$(cat /home/bubble/.BUBBLE
     continue
   fi
   KEY="$(bdecrypt "${key}" 2> /dev/null)"
-  if [[ ! -z "${KEY}" && "${KEY}" == ssh-rsa* ]] ; then
+  if [[ -n "${KEY}" && "${KEY}" == ssh-rsa* ]] ; then
     log "Adding authorized key: $(echo "${KEY}" | tr -d '\n')"
     echo "${KEY}" >> ${NEW_KEYS}
     KEY_COUNT=$(expr ${KEY_COUNT} + 1)

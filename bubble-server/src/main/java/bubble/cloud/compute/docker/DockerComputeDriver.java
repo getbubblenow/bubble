@@ -2,13 +2,18 @@ package bubble.cloud.compute.docker;
 
 import bubble.cloud.CloudRegion;
 import bubble.cloud.compute.*;
+import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeState;
 import bubble.model.cloud.CloudCredentials;
+import bubble.service.packer.PackerBuild;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
@@ -16,6 +21,7 @@ import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 import edu.emory.mathcs.backport.java.util.Arrays;
+import edu.emory.mathcs.backport.java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.MapBuilder;
@@ -23,20 +29,26 @@ import org.cobbzilla.util.collection.MapBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
 
 import static bubble.service.packer.PackerJob.PACKER_IMAGE_PREFIX;
 import static java.lang.Boolean.parseBoolean;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.system.OsType.CURRENT_OS;
+import static org.cobbzilla.util.system.OsType.linux;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
 @Slf4j
 public class DockerComputeDriver extends ComputeServiceDriverBase {
 
-    public static final List<CloudRegion> CLOUD_REGIONS = Arrays.asList(new CloudRegion[]{
+    public static final CloudRegion[] CLOUD_REGIONS_ARRAY = new CloudRegion[]{
             new CloudRegion().setName("local").setInternalName("local")
-    });
+    };
+    public static final List<CloudRegion> CLOUD_REGIONS = Arrays.asList(CLOUD_REGIONS_ARRAY);
+
     public static final List<ComputeNodeSize> CLOUD_SIZES = Arrays.asList(new ComputeNodeSize[]{
             new ComputeNodeSize().setName("local").setInternalName("local").setType(ComputeNodeSizeType.local)
     });
@@ -54,6 +66,24 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
     @Getter private final List<CloudRegion> cloudRegions = CLOUD_REGIONS;
     @Getter private final List<ComputeNodeSize> cloudSizes = CLOUD_SIZES;
     @Getter private final List<OsImage> cloudOsImages = CLOUD_OS_IMAGES;
+
+    @Override public boolean supportsPacker(AnsibleInstallType installType) {
+        boolean supported = installType == AnsibleInstallType.sage || CURRENT_OS == linux;
+        if (!supported) log.warn("supportsPacker: installType "+installType+" not supported (no images will be created) for platform: "+CURRENT_OS);
+        return supported;
+    }
+
+    @Override public boolean supportsDns() { return false; }
+
+    @Override public CloudRegion[] getRegions(PackerBuild packerBuild) { return CLOUD_REGIONS_ARRAY; }
+
+    @Override public String getPackerImageId(String name, PackerBuild packerBuild) { return name; }
+
+    private final Map<String, Map<Integer, Integer>> portMappings = new ConcurrentHashMap();
+
+    @Override public int getSshPort(BubbleNode node) {
+        return portMappings.get(node.getUuid()).get(1202);
+    }
 
     @Getter(lazy=true) private final DockerClient dockerClient = initDockerClient();
     private DockerClient initDockerClient() {
@@ -88,20 +118,31 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
 
         final PackerImage packerImage = getOrCreatePackerImage(node);
 
-        final CreateContainerResponse ccr = dc.createContainerCmd(packerImage.getId())
+        final CreateContainerCmd ccr = dc.createContainerCmd(packerImage.getId())
                 .withLabels(MapBuilder.build(new String[][] {
                         {LABEL_CLOUD, cloud.getUuid()},
                         {LABEL_NODE, node.getUuid()}
                 }))
-                .exec();
+                .withHostConfig(HostConfig.newHostConfig()
+                        .withCapAdd(Capability.NET_ADMIN)
+                        .withCapAdd(Capability.SYS_ADMIN));
+        final CreateContainerResponse response = ccr.exec();
         final long start = now();
-        while (listNodes().stream().noneMatch(n -> n.isRunning() && n.getUuid().equals(node.getUuid()))) {
+        final Predicate<? super BubbleNode> nodeFilter = filterForNode(node);
+        while (listNodes().stream().noneMatch(nodeFilter)) {
             if (now() - start > START_TIMEOUT) {
                 return die("start("+node.id()+"): timeout");
             }
             sleep(SECONDS.toMillis(5), "waiting for docker container to be running");
         }
-        return node;
+        final String containerId = lookupContainer(node);
+        final InspectContainerResponse status = dc.inspectContainerCmd(containerId).exec();
+
+        return node.setIp4("127.0.0.1").setIp6("fd00::1");
+    }
+
+    private Predicate<? super BubbleNode> filterForNode(BubbleNode node) {
+        return n -> n.isRunning() && n.getUuid().equals(node.getUuid());
     }
 
     private String lookupContainer(BubbleNode node) {

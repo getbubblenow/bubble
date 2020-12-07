@@ -45,7 +45,7 @@ function verify_api_ok {
     done
 
     log "verify_api_ok: while loop ended, CURL_STATUS=${CURL_STATUS}, (date - start)=$(expr $(date +%s) - ${START_VERIFY}), VERIFY_TIMEOUT=${VERIFY_TIMEOUT}"
-    if [[ ! -z "${CURL_STATUS}" && ${CURL_STATUS} -eq 200 ]] ; then
+    if [[ -n "${CURL_STATUS}" && ${CURL_STATUS} -eq 200 ]] ; then
       echo "ok"
     else
       echo "error"

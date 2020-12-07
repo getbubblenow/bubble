@@ -361,6 +361,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     @Path("/{id}"+EP_BILLS)
     public BillsResource getBills(@Context ContainerRequest ctx,
                                   @PathParam("id") String id) {
+        configuration.requiresPaymentsEnabled();
         final AccountPlan plan = find(ctx, id);
         if (plan == null) throw notFoundEx(id);
         return configuration.subResource(BillsResource.class, account, plan);
@@ -369,6 +370,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     @Path("/{id}"+EP_PAYMENTS)
     public AccountPaymentsResource getPayments(@Context ContainerRequest ctx,
                                                @PathParam("id") String id) {
+        configuration.requiresPaymentsEnabled();
         final AccountPlan plan = find(ctx, id);
         if (plan == null) throw notFoundEx(id);
         return configuration.subResource(AccountPaymentsResource.class, account, plan);
@@ -387,6 +389,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     )
     public Response getPaymentMethod(@Context ContainerRequest ctx,
                                      @PathParam("id") String id) {
+        configuration.requiresPaymentsEnabled();
         final AccountPlan accountPlan = find(ctx, id);
         if (accountPlan == null) return notFound(id);
 

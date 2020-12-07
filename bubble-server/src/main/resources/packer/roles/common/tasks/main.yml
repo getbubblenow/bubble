@@ -94,3 +94,6 @@
     system: yes
     home: /home/bubble-flex
   when: install_type == 'node'
+
+- include: docker.yml
+  when: packer_builder_type == 'docker'

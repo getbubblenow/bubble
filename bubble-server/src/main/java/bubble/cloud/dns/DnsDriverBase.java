@@ -23,7 +23,6 @@ import java.util.List;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.network.NetworkUtil.IPv4_ALL_ADDRS;
 
 public abstract class DnsDriverBase<T> extends CloudServiceDriverBase<T> implements DnsServiceDriver {
 
@@ -77,22 +76,6 @@ public abstract class DnsDriverBase<T> extends CloudServiceDriverBase<T> impleme
         }
         log.warn("getDomain("+matcher+"): fqdn/subdomain could not be resolved to a domain");
         return null;
-    }
-
-    @Override public Collection<DnsRecord> setNetwork(BubbleNetwork network) {
-        final DnsServiceDriver dns = cloud.getDnsDriver(configuration);
-        final Collection<DnsRecord> records = new ArrayList<>();
-        if (dns.requireSubnetNS()) {
-            final BubbleDomain domain = domainDAO.findByUuid(network.getDomain());
-            for (String ns : dns.resolveNS(domain)) {
-                records.add(dns.update((DnsRecord) new DnsRecord()
-                        .setOption(DnsRecord.OPT_NS_NAME, ns)
-                        .setType(DnsType.NS)
-                        .setValue(IPv4_ALL_ADDRS)
-                        .setFqdn(network.getNetworkDomain())));
-            }
-        }
-        return records;
     }
 
     @Override public Collection<DnsRecord> setNode(BubbleNode node) {

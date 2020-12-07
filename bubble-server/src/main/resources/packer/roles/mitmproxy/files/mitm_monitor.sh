@@ -86,7 +86,7 @@ function healthCheck {
   while [[ $(expr $(date +%s) - ${START}) -le ${HEALTH_CHECK_TIMEOUT} ]] ; do
     # log "Performing health check on mitm${MITM_PORT} via ${HC_URL} ..."
     CURL_OUT="$(curl --silent --connect-timeout 2 --max-time 2 ${HC_URL} 2>> ${LOG})"
-    if [[ ! -z ${CURL_OUT} && ${CURL_OUT} == "OK" ]] ; then
+    if [[ -n ${CURL_OUT} && ${CURL_OUT} == "OK" ]] ; then
       # log "Health check on mitm${MITM_PORT} via ${HC_URL} : OK"
       echo -n "OK"
       return

@@ -7,7 +7,6 @@ package bubble.cloud.dns.delegate;
 import bubble.cloud.DelegatedCloudServiceDriverBase;
 import bubble.cloud.dns.DnsServiceDriver;
 import bubble.model.cloud.BubbleDomain;
-import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.CloudService;
 import bubble.notify.dns.DnsDriverNotification;
@@ -26,12 +25,6 @@ public class DelegatedDnsDriver extends DelegatedCloudServiceDriverBase implemen
     @Override public Collection<DnsRecord> create(BubbleDomain domain) {
         final BubbleNode delegate = getDelegateNode();
         final DnsRecord[] records = notificationService.notifySync(delegate, dns_driver_create, notification(new DnsDriverNotification(domain)));
-        return Arrays.asList(records);
-    }
-
-    @Override public Collection<DnsRecord> setNetwork(BubbleNetwork network) {
-        final BubbleNode delegate = getDelegateNode();
-        final DnsRecord[] records = notificationService.notifySync(delegate, dns_driver_set_network, notification(new DnsDriverNotification(network)));
         return Arrays.asList(records);
     }
 

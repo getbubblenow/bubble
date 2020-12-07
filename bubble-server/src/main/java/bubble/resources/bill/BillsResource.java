@@ -99,6 +99,7 @@ public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
     @Path("/{id}"+EP_PAYMENTS)
     public AccountPaymentsResource getPayments(@Context ContainerRequest ctx,
                                                @PathParam("id") String id) {
+        configuration.requiresPaymentsEnabled();
         final Bill bill = super.find(ctx, id);
         if (bill == null) throw notFoundEx(id);
         return configuration.subResource(AccountPaymentsResource.class, account, bill);
@@ -118,6 +119,7 @@ public class BillsResource extends ReadOnlyAccountOwnedResource<Bill, BillDAO> {
     public Response payBill(@Context ContainerRequest ctx,
                             @PathParam("id") String id,
                             AccountPaymentMethod paymentMethod) {
+        configuration.requiresPaymentsEnabled();
         final Bill bill = super.find(ctx, id);
         if (bill == null) return notFound(id);
         if (bill.paid()) return invalid("err.bill.alreadyPaid");

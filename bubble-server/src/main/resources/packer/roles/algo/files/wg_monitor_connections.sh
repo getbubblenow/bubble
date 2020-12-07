@@ -28,7 +28,7 @@ while : ; do
   transfer=""
   IFS=$'\n'
   for line in $(wg show all) ; do
-    if [[ ! -z "${peer}" ]] ; then
+    if [[ -n "${peer}" ]] ; then
       if [[ $(echo "${line}" | tr -d ' ') == endpoint* ]] ; then
         endpoint="$(echo "${line}" | cut -d: -f2- | awk '{$1=$1};1')"
 
@@ -71,16 +71,16 @@ while : ; do
     fi
 
     if [[ ${line} == peer* ]] ; then
-      if [[ ! -z "${peer}" ]] ; then
-        if [[ ! -z "${device}" ]] ; then
+      if [[ -n "${peer}" ]] ; then
+        if [[ -n "${device}" ]] ; then
           echo "in-loop, setting stats for peer ${peer} device ${device}"
-          if [[ ! -z "${endpoint}" ]] ; then
+          if [[ -n "${endpoint}" ]] ; then
             echo "set wg_device_status_${device}_endpoint \"${endpoint}\"" | redis-cli
           fi
-          if [[ ! -z "${latest_handshake}" ]] ; then
+          if [[ -n "${latest_handshake}" ]] ; then
             echo "set wg_device_status_${device}_latestHandshake \"${latest_handshake}\"" | redis-cli
           fi
-          if [[ ! -z "${transfer}" ]] ; then
+          if [[ -n "${transfer}" ]] ; then
             echo "set wg_device_status_${device}_transfer \"${transfer}\"" | redis-cli
           fi
         fi
@@ -93,16 +93,16 @@ while : ; do
       echo "in-loop, set peer: ${peer}"
     fi
   done
-  if [[ ! -z "${peer}" ]] ; then
+  if [[ -n "${peer}" ]] ; then
     echo "end-of-loop, setting stats for peer ${peer} device ${device}"
-    if [[ ! -z "${device}" ]] ; then
-      if [[ ! -z "${endpoint}" ]] ; then
+    if [[ -n "${device}" ]] ; then
+      if [[ -n "${endpoint}" ]] ; then
         echo "set wg_device_status_${device}_endpoint \"${endpoint}\"" | redis-cli
       fi
-      if [[ ! -z "${latest_handshake}" ]] ; then
+      if [[ -n "${latest_handshake}" ]] ; then
         echo "set wg_device_status_${device}_latestHandshake \"${latest_handshake}\"" | redis-cli
       fi
-      if [[ ! -z "${transfer}" ]] ; then
+      if [[ -n "${transfer}" ]] ; then
         echo "set wg_device_status_${device}_transfer \"${transfer}\"" | redis-cli
       fi
     fi

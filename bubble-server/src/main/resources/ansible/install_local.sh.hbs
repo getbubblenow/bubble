@@ -28,7 +28,7 @@ function kill_bg_jobs {
     kill %${j}
   done
 {{#if isNode}}
-  if [[ ! -z "${ALGO_LOG}" && -f "${ALGO_LOG}" ]] ; then
+  if [[ -n "${ALGO_LOG}" && -f "${ALGO_LOG}" ]] ; then
     rm -f ${ALGO_LOG}
   fi
 {{/if}}

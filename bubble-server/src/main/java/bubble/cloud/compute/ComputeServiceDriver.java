@@ -10,6 +10,7 @@ import bubble.cloud.CloudServiceType;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.RegionalServiceDriver;
+import bubble.service.packer.PackerBuild;
 import org.cobbzilla.util.system.CommandResult;
 
 import java.util.List;
@@ -43,5 +44,26 @@ public interface ComputeServiceDriver extends CloudServiceDriver, RegionalServic
     default Map<String, Object> getPackerRegionContext(CloudRegion region) { return null; }
 
     default int getPackerParallelBuilds() { return 1; }
+
+    default boolean supportsPacker(AnsibleInstallType installType) { return true; }
+
+    default CloudRegion[] getRegions(PackerBuild packerBuild) {
+        final String[] parts = packerBuild.getArtifact_id().split(":");
+        final String[] regionNames = parts[0].split(",");
+        final CloudRegion[] regions = new CloudRegion[regionNames.length];
+        for (int i=0; i<regionNames.length; i++) {
+            regions[i] = new CloudRegion().setInternalName(regionNames[i]);
+        }
+        return regions;
+    }
+
+    default String getPackerImageId(String name, PackerBuild packerBuild) {
+        final String[] parts = packerBuild.getArtifact_id().split(":");
+        return parts[1];
+    }
+
+    default boolean supportsDns() { return true; }
+
+    default int getSshPort(BubbleNode node) { return 1202; }
 
 }

@@ -48,7 +48,7 @@ if [[ -z "${VERSION}" ]] ; then
   die "Error determining version from: ${META_FILE}"
 fi
 DOCKER_REPO="getbubble"
-if [[ ! -z "${BUBBLE_DOCKER_REPO}" ]] ; then
+if [[ -n "${BUBBLE_DOCKER_REPO}" ]] ; then
   DOCKER_REPO="${BUBBLE_DOCKER_REPO}"
 fi
 BUBBLE_TAG="${DOCKER_REPO}/launcher:${VERSION}"
@@ -73,7 +73,7 @@ elif [[ "${MODE}" == "run" ]] ; then
 export LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
 " >> "${BUBBLE_ENV}"
   fi
-  if [[ ! -z "${BUBBLE_RUN_SLIM}" && "${BUBBLE_RUN_SLIM}" == "true" ]] ; then
+  if [[ -n "${BUBBLE_RUN_SLIM}" && "${BUBBLE_RUN_SLIM}" == "true" ]] ; then
     RUN_TAG="${BUBBLE_SLIM_TAG}"
   else
     RUN_TAG="${BUBBLE_TAG}"

@@ -24,7 +24,7 @@ if [[ -f ${MITM_PORT_FILE} ]] ; then
   done
   if [[ -s ${MITM_PORT_FILE} ]] ; then
     MITM_PORT="$(cat ${MITM_PORT_FILE})"
-    if [[ ! -z "${MITM_PORT}" && ${MITM_PORT} -ne ${PORT} ]] ; then
+    if [[ -n "${MITM_PORT}" && ${MITM_PORT} -ne ${PORT} ]] ; then
       log "Our port (${PORT}) is not the primary mitm port (${MITM_PORT}), delaying startup by 30 seconds"
       sleep 30s
     fi

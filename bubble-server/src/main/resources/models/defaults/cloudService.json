@@ -166,9 +166,10 @@
           "type": "docker",
           "image": "<<os.name>>",
           "export_path": "<<packerImageName>>.tar",
+          "cap_add": ["NET_ADMIN", "SYS_ADMIN", "SYS_MODULE"],
           "changes": [
             "LABEL bubble_image=<<packerImageName>>",
-            "EXPOSE 80 443 1202"
+            "EXPOSE 22 80 443 1080 1202 1443 8888 9999 53/udp 500/udp 4500/udp 51820/udp"
           ]
         },
         "post": {

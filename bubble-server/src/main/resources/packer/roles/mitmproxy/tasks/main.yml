@@ -7,18 +7,30 @@
     state: present
     update_cache: yes
 
-- sysctl:
-    name: net.ipv4.ip_forward
+- name: Set sysctl networking settings to allow IP forwarding
+  sysctl:
+    name: "{{ item }}"
     value: 1
     sysctl_set: yes
-- sysctl:
-    name: net.ipv6.conf.all.forwarding
-    value: 1
-    sysctl_set: yes
-- sysctl:
+  with_items: [ 'net.ipv4.ip_forward', 'net.ipv4.conf.all.forwarding', 'net.ipv6.conf.all.forwarding' ]
+  when: packer_builder_type != 'docker'
+
+- name: Verify sysctl networking settings are enabled in host to allow IP forwarding
+  shell: "if [[ $(sysctl -n {{ item }}) -ne 1 ]] ; then echo 'sysctl validation failed: {{ item }} = 1'; exit 1 ; fi"
+  with_items: [ 'net.ipv4.ip_forward', 'net.ipv4.conf.all.forwarding', 'net.ipv6.conf.all.forwarding' ]
+  when: packer_builder_type == 'docker'
+
+- name: Set sysctl setting net.ipv4.conf.all.send_redirects = 0
+  sysctl:
     name: net.ipv4.conf.all.send_redirects
     value: 0
     sysctl_set: yes
+  when: packer_builder_type != 'docker'
+
+- name: Verify sysctl networking settings are disabled in host to allow IP forwarding
+  shell: "if [[ $(sysctl -n {{ item }}) -ne 0 ]] ; then echo 'sysctl validation failed: {{ item }} = 0'; exit 1 ; fi"
+  with_items: [ 'net.ipv4.conf.all.send_redirects' ]
+  when: packer_builder_type == 'docker'
 
 - name: Create mitm user
   user:

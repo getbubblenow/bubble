@@ -7,7 +7,6 @@ package bubble.cloud.dns;
 import bubble.cloud.CloudServiceDriver;
 import bubble.cloud.CloudServiceType;
 import bubble.model.cloud.BubbleDomain;
-import bubble.model.cloud.BubbleNetwork;
 import bubble.model.cloud.BubbleNode;
 import org.cobbzilla.util.dns.DnsRecord;
 import org.cobbzilla.util.dns.DnsRecordBase;
@@ -42,7 +41,6 @@ public interface DnsServiceDriver extends CloudServiceDriver {
 
     Collection<DnsRecord> create(BubbleDomain domain);
 
-    Collection<DnsRecord> setNetwork(BubbleNetwork network);
     Collection<DnsRecord> setNode(BubbleNode node);
     Collection<DnsRecord> deleteNode(BubbleNode node);
 
@@ -213,5 +211,4 @@ public interface DnsServiceDriver extends CloudServiceDriver {
         return true;
     }
 
-    default boolean requireSubnetNS() { return false; }
 }

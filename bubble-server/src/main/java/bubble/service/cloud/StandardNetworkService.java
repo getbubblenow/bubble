@@ -252,8 +252,10 @@ public class StandardNetworkService implements NetworkService {
             jobFutures.add(backgroundJobs.submit(startJob));
 
             // Create DNS records for node
-            final NodeDnsJob dnsJob = new NodeDnsJob(cloudDAO, domain, network, node, configuration);
-            jobFutures.add(backgroundJobs.submit(dnsJob));
+            if (computeDriver.supportsDns()) {
+                final NodeDnsJob dnsJob = new NodeDnsJob(cloudDAO, domain, network, node, configuration);
+                jobFutures.add(backgroundJobs.submit(dnsJob));
+            }
 
             // Prepare ansible roles
             // We must wait until after server is started, because some roles require ip4 in vars
@@ -291,7 +293,7 @@ public class StandardNetworkService implements NetworkService {
 
             // run ansible
             final String sshArgs
-                    = "-p 1202 "
+                    = "-p " + computeDriver.getSshPort(node) + " "
                     + "-o UserKnownHostsFile=/dev/null "
                     + "-o StrictHostKeyChecking=no "
                     + "-o PreferredAuthentications=publickey "
@@ -722,11 +724,6 @@ public class StandardNetworkService implements NetworkService {
             network.setState(BubbleNetworkState.starting);
             networkDAO.update(network);
 
-            // ensure NS records for network are in DNS
-            final BubbleDomain domain = domainDAO.findByUuid(network.getDomain());
-            final CloudService dns = cloudDAO.findByUuid(domain.getPublicDns());
-            dns.getDnsDriver(configuration).setNetwork(network);
-
             final NewNodeNotification newNodeRequest = new NewNodeNotification()
                     .setFork(network.fork())
                     .setLaunchType(network.getLaunchType())
@@ -786,11 +783,6 @@ public class StandardNetworkService implements NetworkService {
             }
             network.setState(BubbleNetworkState.starting);
             networkDAO.update(network);
-
-            // ensure NS records for network are in DNS
-            final BubbleDomain domain = domainDAO.findByUuid(network.getDomain());
-            final CloudService dns = cloudDAO.findByUuid(domain.getPublicDns());
-            dns.getDnsDriver(configuration).setNetwork(network);
 
             final CloudAndRegion cloudAndRegion = geoService.selectCloudAndRegion(network, netLocation);
             final String restoreKey = randomAlphanumeric(RESTORE_KEY_LEN).toUpperCase();

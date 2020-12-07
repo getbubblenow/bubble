@@ -47,7 +47,6 @@ public enum NotificationType {
     // driver-level notifications
 
     // delegated dns driver notifications
-    dns_driver_set_network (DnsRecord[].class),
     dns_driver_set_node (DnsRecord[].class),
     dns_driver_delete_node (DnsRecord[].class),
     dns_driver_create (DnsRecord[].class),

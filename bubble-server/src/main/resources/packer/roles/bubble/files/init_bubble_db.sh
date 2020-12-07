@@ -87,7 +87,7 @@ if [[ "${3}" == "INIT" ]] ; then
   exit 0
 fi
 
-if [[ ! -z "${DROP_AND_RECREATE}" && "${DROP_AND_RECREATE}" == "drop" ]] ; then
+if [[ -n "${DROP_AND_RECREATE}" && "${DROP_AND_RECREATE}" == "drop" ]] ; then
   dropdb ${DB_NAME} || echo "error dropping DB ${DB_NAME} (will continue)"
   dropuser ${DB_USER} || echo "error dropping DB user ${DB_USER} (will continue)"
   uuid > ${BUBBLE_HOME}/.BUBBLE_PG_PASSWORD

@@ -10,11 +10,13 @@
     <parent>
         <groupId>bubble</groupId>
         <artifactId>bubble</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <!-- @@BUBBLE_VERSION@@ this comment must remain above the version tag so that _set_version can update it -->
+        <version>1.5.1</version>
     </parent>
 
     <artifactId>bubble-server</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <!-- @@BUBBLE_VERSION@@ this comment must remain above the version tag so that _set_version can update it -->
+    <version>1.5.1</version>
 
     <repositories>
         <repository>
@@ -57,7 +59,7 @@
         <dependency>
             <groupId>org.cobbzilla</groupId>
             <artifactId>cobbzilla-utils</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.1</version>
             <exclusions>
                 <!-- we imported poi above ourselves, with our own exclusions -->
                 <exclusion>
@@ -115,7 +117,7 @@
         <dependency>
             <groupId>org.cobbzilla</groupId>
             <artifactId>wizard-server</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.eclipse.jetty</groupId>
@@ -144,7 +146,7 @@
         <dependency>
             <groupId>bubble</groupId>
             <artifactId>abp-parser</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.1</version>
         </dependency>
 
         <!-- RDBMS persistence -->
@@ -172,7 +174,7 @@
         <dependency>
             <groupId>org.cobbzilla</groupId>
             <artifactId>templated-mail-sender</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.1</version>
         </dependency>
 
         <dependency>
@@ -375,7 +377,7 @@
         <dependency>
             <groupId>org.cobbzilla</groupId>
             <artifactId>wizard-server-test</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -687,7 +689,7 @@ The exclusions below were generated with:
                                 <phase>package</phase>
                                 <goals><goal>shade</goal></goals>
                                 <configuration>
-                                    <outputFile>${project.basedir}/target/bubble-server-1.0.0-SNAPSHOT-full.jar</outputFile>
+                                    <outputFile>${project.basedir}/target/bubble-server-${project.version}-full.jar</outputFile>
                                     <transformers>
                                         <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                             <mainClass>bubble.server.BubbleServer</mainClass>

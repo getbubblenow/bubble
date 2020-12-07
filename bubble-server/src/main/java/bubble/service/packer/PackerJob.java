@@ -148,6 +148,11 @@ public class PackerJob implements Callable<List<PackerImage>> {
         final ComputeServiceDriver computeDriver = cloud.getComputeDriver(configuration);
         final PackerConfig packerConfig = computeConfig.getPacker();
 
+        if (!computeDriver.supportsPacker(installType)) {
+            setImagesRefs();
+            return Collections.emptyList();
+        }
+
         // create handlebars context
         final Map<String, Object> ctx = new HashMap<>();
         final CloudCredentials creds = cloud.getCredentials();
@@ -174,12 +179,12 @@ public class PackerJob implements Callable<List<PackerImage>> {
         if (!env.containsKey("HOME")) env.put("HOME", HOME_DIR);
 
         // Docker builder requires "docker" command to be on our path
-        // It is usually in /usr/local/bin
+        // It is usually /usr/local/bin on macosx and /usr/bin on linux
         // May need to make this more flexible if docker is elsewhere, or other tools/paths are needed
         if (env.containsKey("PATH")) {
-            env.put("PATH", "${PATH}:/usr/local/bin");
+            env.put("PATH", "${PATH}:/usr/local/bin:/usr/bin");
         } else {
-            env.put("PATH", "/usr/local/bin");
+            env.put("PATH", "/usr/local/bin:/usr/bin");
         }
         ctx.put(VARIABLES_VAR, packerConfig.getVars());
 
@@ -304,7 +309,7 @@ public class PackerJob implements Callable<List<PackerImage>> {
             if (empty(builds)) {
                 return die("Error executing packer: no builds found");
             }
-            images.addAll(Arrays.stream(builds).map(b -> b.toPackerImage(imageName)).collect(Collectors.toList()));
+            images.addAll(Arrays.stream(builds).map(b -> b.toPackerImage(imageName, computeDriver)).collect(Collectors.toList()));
 
         } else {
             final List<PackerImage> finalizedImages = computeDriver.finalizeIncompletePackerRun(commandResult, installType);

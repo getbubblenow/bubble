@@ -77,6 +77,7 @@ import static org.cobbzilla.util.security.ShaUtil.sha256_file;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
 import static org.cobbzilla.util.system.CommandShell.totalSystemMemory;
 import static org.cobbzilla.wizard.model.SemanticVersion.isNewerVersion;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Configuration @NoArgsConstructor @Slf4j
 public class BubbleConfiguration extends PgRestServerConfiguration
@@ -418,6 +419,10 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     public boolean paymentsEnabled () {
         final Object peValue = getPublicSystemConfigs().get(TAG_PAYMENTS_ENABLED);
         return peValue != null && Boolean.parseBoolean(peValue.toString());
+    }
+
+    public void requiresPaymentsEnabled () {
+        if (!paymentsEnabled()) throw invalidEx("err_noPaymentMethods");
     }
 
     @Getter @Setter private Boolean requireSendMetrics;

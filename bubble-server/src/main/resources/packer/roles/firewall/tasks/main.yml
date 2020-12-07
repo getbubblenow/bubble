@@ -109,6 +109,7 @@
     owner: root
     group: root
     mode: 0400
+  when: fw_enable_ssh
 
 - name: Install SSH fail2ban settings
   copy:
@@ -117,10 +118,6 @@
     owner: root
     group: root
     mode: 0400
+  when: fw_enable_ssh
 
 - include: rules.yml
-
-- supervisorctl:
-    name: bubble_peer_manager
-    state: restarted
-  when: fw_enable_admin

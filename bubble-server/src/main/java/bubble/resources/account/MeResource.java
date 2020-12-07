@@ -439,18 +439,21 @@ public class MeResource {
 
     @Path(EP_PAYMENT_METHODS)
     public AccountPaymentMethodsResource getAccountPaymentMethods(@Context ContainerRequest ctx) {
+        configuration.requiresPaymentsEnabled();
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(AccountPaymentMethodsResource.class, caller);
     }
 
     @Path(EP_BILLS)
     public BillsResource getBills(@Context ContainerRequest ctx) {
+        configuration.requiresPaymentsEnabled();
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(BillsResource.class, caller);
     }
 
     @Path(EP_PAYMENTS)
     public AccountPaymentsResource getPayments(@Context ContainerRequest ctx) {
+        configuration.requiresPaymentsEnabled();
         final Account caller = userPrincipal(ctx);
         return configuration.subResource(AccountPaymentsResource.class, caller);
     }

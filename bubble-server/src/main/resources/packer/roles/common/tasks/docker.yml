@@ -1,0 +1,5 @@
+- name: Install packages missing on docker ubuntu
+  apt:
+    name: [ 'curl', 'cron', 'iptables', 'openssh-server' ]
+    state: present
+    update_cache: yes

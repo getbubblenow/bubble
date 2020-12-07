@@ -4,7 +4,7 @@
  */
 package bubble.service.packer;
 
-import bubble.cloud.CloudRegion;
+import bubble.cloud.compute.ComputeServiceDriver;
 import bubble.cloud.compute.PackerImage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -21,17 +21,11 @@ public class PackerBuild {
     @Getter @Setter private String packer_run_uuid;
     @Getter @Setter private JsonNode custom_data;
 
-    public PackerImage toPackerImage(String name) {
-        final String[] parts = artifact_id.split(":");
-        final String[] regionNames = parts[0].split(",");
-        final CloudRegion[] regions = new CloudRegion[regionNames.length];
-        for (int i=0; i<regionNames.length; i++) {
-            regions[i] = new CloudRegion().setInternalName(regionNames[i]);
-        }
-        final String id = parts[1];
+    public PackerImage toPackerImage(String name, ComputeServiceDriver computeDriver) {
         return new PackerImage()
-                .setId(id)
+                .setId(computeDriver.getPackerImageId(name, this))
                 .setName(name)
-                .setRegions(regions);
+                .setRegions(computeDriver.getRegions(this));
     }
+
 }
