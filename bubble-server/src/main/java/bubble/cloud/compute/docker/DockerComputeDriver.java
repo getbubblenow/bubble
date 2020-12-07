@@ -122,6 +122,12 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
     @Override public BubbleNode cleanupStart(BubbleNode node) throws Exception { return node; }
 
     @Override public BubbleNode start(BubbleNode node) throws Exception {
+
+        final AnsibleInstallType installType = node.getInstallType();
+        if (!supportsPacker(installType)) {
+            return die("start("+node.id()+"): packer for "+installType+" not supported on "+CURRENT_OS);
+        }
+
         final DockerClient dc = getDockerClient();
 
         final PackerImage packerImage = getOrCreatePackerImage(node);
@@ -144,6 +150,7 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
             sleep(SECONDS.toMillis(5), "waiting for docker container to be running");
         }
         final String containerId = lookupContainer(node);
+        if (containerId == null) return die("start("+node.id()+"): not not found after starting");
         final InspectContainerResponse status = dc.inspectContainerCmd(containerId).exec();
 
         return node.setIp4("127.0.0.1").setIp6("fd00::1");
@@ -158,14 +165,24 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
         final List<Container> containers = dc.listContainersCmd()
                 .withLabelFilter(MapBuilder.build(LABEL_NODE, node.getUuid()))
                 .exec();
-        if (empty(containers)) return die("lookupContainer: node not found: "+node.getUuid());
-        if (containers.size() > 1) return die("lookupContainer: multiple containers found for node: "+node.getUuid());
+        if (empty(containers)) {
+            log.warn("lookupContainer: node not found: " + node.getUuid());
+            return null;
+        }
+        if (containers.size() > 1) {
+            log.warn("lookupContainer: multiple containers found for node: " + node.getUuid());
+            return null;
+        }
         return containers.get(0).getId();
     }
 
     @Override public BubbleNode stop(BubbleNode node) throws Exception {
         final DockerClient dc = getDockerClient();
         final String containerId = lookupContainer(node);
+        if (containerId == null) {
+            log.warn("stop("+node.id()+") node not found");
+            return node;
+        }
         dc.stopContainerCmd(containerId).exec();
         return node;
     }
@@ -173,6 +190,10 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
     @Override public BubbleNode status(BubbleNode node) throws Exception {
         final DockerClient dc = getDockerClient();
         final String containerId = lookupContainer(node);
+        if (containerId == null) {
+            log.warn("status("+node.id()+"): node not found, returning 'stopped'");
+            return node.setState(BubbleNodeState.stopped);
+        }
         final InspectContainerResponse status = dc.inspectContainerCmd(containerId).exec();
         log.info("status("+node.id()+"): "+json(status));
 
