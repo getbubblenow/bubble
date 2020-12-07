@@ -1,0 +1,53 @@
+#!/bin/bash
+#
+# Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
+#
+# Sets the Bubble version number in various source files.
+#
+# Usage:
+#
+#     _set_version [ReleaseName x.y.z]
+#
+#   ReleaseName  : a Bubble release, like Adventure
+#   x.y.z        : the version number, like 1.5.2
+#
+SCRIPT="${0}"
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
+. "${SCRIPT_DIR}"/bubble_common
+
+V_NAME="${1:?no release specified}"
+V_NUMBER="${2:?no version specified}"
+
+if [[ -n "$(echo "${V_NAME}" | awk -F ' ' '{print $2}')" ]] ; then
+  die "ReleaseName cannot contain spaces"
+fi
+if [[ "$(echo "${V_NUMBER}" | tr -cd '[[:digit:]].')" != "${V_NUMBER}" ]] ; then
+  die "Invalid version number: ${V_NUMBER}"
+fi
+
+function process_pom () {
+  V_NUMBER="${1}"
+  POM="${2}"
+
+  T_FILE=$(mktemp "/tmp/$(basename "${POM}").XXXXXXX")
+  FOUND_VERSION=0
+  cat pom.xml | while read -r line ; do
+    if [[ ${FOUND_VERSION} -eq 1 ]] ; then
+      echo "${line}" | tr -d '[:digit:].' | sed -e "s/></>${V_NUMBER}</" >> "${T_FILE}"
+      FOUND_VERSION=0
+    elif [[ -n "$(echo "${line}" | grep "@@BUBBLE_VERSION@@")" ]] ; then
+      FOUND_VERSION=1
+    fi
+    echo "${line}" >> "${T_FILE}"
+  done
+  mv "${T_FILE}" "${POM}" || die "Error moving ${T_FILE} -> ${POM}"
+}
+
+cd "${SCRIPT_DIR}/.." || die "Error changing to Bubble main directory"
+process_pom "${V_NUMBER}" pom.xml
+process_pom "${V_NUMBER}" bubble-server/pom.xml
+
+VERSION_PROP_FILE="bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
+P_TEMP=$(mktemp /tmp/bubble.properties.XXXXXXX)
+cat "${VERSION_PROP_FILE}" | sed -e "s/bubble.version=.*/bubble.version=${V_NAME} ${V_NUMBER}/" > "${P_TEMP}"
+mv "${P_TEMP}" ${VERSION_PROP_FILE} || die "Error moving ${P_TEMP} -> ${VERSION_PROP_FILE}"
