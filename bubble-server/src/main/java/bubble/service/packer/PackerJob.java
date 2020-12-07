@@ -73,10 +73,10 @@ public class PackerJob implements Callable<List<PackerImage>> {
     public static final String BUBBLE_VERSION_VAR = "@@BUBBLE_VERSION@@";
     public static final String TIMESTAMP_VAR = "@@TIMESTAMP@@";
     public static final String PACKER_IMAGE_NAME_TEMPLATE = PACKER_IMAGE_PREFIX + INSTALL_TYPE_VAR
-            + "_" + SAGE_NET_VAR
             + "_" + PACKER_VERSION_HASH_VAR
             + "_" + BUBBLE_VERSION_VAR
-            + "_" + TIMESTAMP_VAR;
+            + "_" + SAGE_NET_VAR
+            + "-" + TIMESTAMP_VAR;
 
     public static final String VARIABLES_VAR = "packerVariables";
     public static final String BUILD_REGION_VAR = "buildRegion";
@@ -217,11 +217,22 @@ public class PackerJob implements Callable<List<PackerImage>> {
         copyFile(jar, new File(abs(bubbleFilesDir)+"/bubble.jar"));
         copyScripts(bubbleFilesDir);
 
+        final String imageName = PACKER_IMAGE_NAME_TEMPLATE
+                .replace(INSTALL_TYPE_VAR, installType.name())
+                .replace(SAGE_NET_VAR, truncate(domainname(), 19))
+                .replace(PACKER_VERSION_HASH_VAR, packerService.getPackerVersionHash())
+                .replace(BUBBLE_VERSION_VAR, configuration.getShortVersion())
+                .replace(TIMESTAMP_VAR, TimeUtil.format(now(), DATE_FORMAT_YYYYMMDDHHMMSS));
+        if (imageName.length() > 128) return die("imageName.length > 128: "+imageName); // sanity check
+        ctx.put(PACKER_IMAGE_NAME_VAR, imageName);
+
         // check to see if we have packer images for all regions
         final List<PackerImage> existingImages = computeDriver.getAllPackerImages();
         if (!empty(existingImages)) {
+            // drop sage net and timestamp -- if all other fields match, then this is a match
+            final String packerImageNamePrefix = imageName.substring(0, imageName.lastIndexOf("_"));
             final List<PackerImage> existingForInstallType = existingImages.stream()
-                    .filter(i -> i.getName().startsWith(PACKER_IMAGE_PREFIX+installType.name()))
+                    .filter(i -> i.getName().startsWith(packerImageNamePrefix))
                     .collect(Collectors.toList());
             if (!empty(existingForInstallType)) {
                 if (existingForInstallType.size() == 1 && existingForInstallType.get(0).getRegions() == null) {
@@ -240,8 +251,8 @@ public class PackerJob implements Callable<List<PackerImage>> {
                     final List<String> existingRegionNames = existingRegions.stream().map(CloudRegion::getInternalName).collect(Collectors.toList());;
                     // only create packer images for regions that are missing
                     final List<String> imagesToCreate = computeDriver.getRegions().stream()
-                            .filter(r -> !existingRegionNames.contains(r.getInternalName()))
                             .map(CloudRegion::getInternalName)
+                            .filter(internalName -> !existingRegionNames.contains(internalName))
                             .collect(Collectors.toList());
                     if (empty(imagesToCreate)) {
                         log.info("packer image already exists for "+installType+" for all regions");
@@ -259,15 +270,6 @@ public class PackerJob implements Callable<List<PackerImage>> {
             // create list of all regions, without leading/trailing double-quote, which should already be in the template
             addAllRegions(computeDriver, ctx);
         }
-
-        final String imageName = PACKER_IMAGE_NAME_TEMPLATE
-                .replace(INSTALL_TYPE_VAR, installType.name())
-                .replace(SAGE_NET_VAR, truncate(domainname(), 19))
-                .replace(PACKER_VERSION_HASH_VAR, packerService.getPackerVersionHash())
-                .replace(BUBBLE_VERSION_VAR, configuration.getShortVersion())
-                .replace(TIMESTAMP_VAR, TimeUtil.format(now(), DATE_FORMAT_YYYYMMDDHHMMSS));
-        if (imageName.length() > 128) return die("imageName.length > 128: "+imageName); // sanity check
-        ctx.put(PACKER_IMAGE_NAME_VAR, imageName);
 
         final String packerConfigTemplate = stream2string(PACKER_TEMPLATE);
         ctx.put("installType", installType.name());
