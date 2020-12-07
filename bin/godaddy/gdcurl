@@ -17,7 +17,7 @@ HTTP_METHOD=${3}
 
 API_BASE=https://api.godaddy.com/v1/domains/
 
-if [[ ! -z "${POST_FILE}" ]] ; then
+if [[ -n "${POST_FILE}" ]] ; then
   if [[ -z "${HTTP_METHOD}" ]] ; then
     curl -d @${POST_FILE} -s -H 'Content-Type: application/json' -H "Authorization: sso-key ${GODADDY_API_KEY}:${GODADDY_API_SECRET}" ${API_BASE}${URI}
   else

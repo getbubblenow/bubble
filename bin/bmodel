@@ -21,7 +21,7 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/bubble_common
 
 UPDATE_OPT=""
-if [[ ! -z "${1}" && ( "${1}" == "-u" || "${1}" == "--update-all" ) ]] ; then
+if [[ -n "${1}" && ( "${1}" == "-u" || "${1}" == "--update-all" ) ]] ; then
   UPDATE_OPT="--update-all"
   shift
 fi

@@ -54,7 +54,7 @@ fi
 # always send help commands through
 last_arg="$(echo "${@}" | awk '{print $NF}')"
 is_help=0
-if [[ ! -z "${last_arg}" && ( "${last_arg}" == "-h" || "${last_arg}" == "--help" ) ]] ; then
+if [[ -n "${last_arg}" && ( "${last_arg}" == "-h" || "${last_arg}" == "--help" ) ]] ; then
   is_help=1
 fi
 

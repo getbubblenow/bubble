@@ -20,7 +20,7 @@ function die {
 }
 
 FAST=${1}
-if [[ ! -z "${FAST}" && "${FAST}" == "fast" ]] ; then
+if [[ -n "${FAST}" && "${FAST}" == "fast" ]] ; then
   FAST=1
 else
   FAST=0

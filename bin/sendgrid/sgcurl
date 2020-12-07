@@ -13,7 +13,7 @@ URI="${1:?no uri}"
 POST_FILE="${2}"
 HTTP_METHOD=${3}
 
-if [[ ! -z "${POST_FILE}" ]] ; then
+if [[ -n "${POST_FILE}" ]] ; then
   if [[ -z "${HTTP_METHOD}" ]] ; then
     curl -d @${POST_FILE} -s -H 'Content-Type: application/json' -H "Authorization: Bearer ${BUBBLE_SMTP_PASS}" ${API_BASE}${URI}
   else

@@ -46,7 +46,7 @@ fi
 
 # save explicitly set key, if we have one
 SAVED_DB_KEY=""
-if [[ ! -z "${BUBBLE_DB_ENCRYPTION_KEY}" ]] ; then
+if [[ -n "${BUBBLE_DB_ENCRYPTION_KEY}" ]] ; then
   SAVED_DB_KEY="${BUBBLE_DB_ENCRYPTION_KEY}"
 fi
 
@@ -63,7 +63,7 @@ if [[ -f ${BUBBLE_ENV} ]] ; then
   . ${BUBBLE_ENV}
 fi
 
-if [[ ! -z "${SAVED_DB_KEY}" ]] ; then
+if [[ -n "${SAVED_DB_KEY}" ]] ; then
   export BUBBLE_DB_ENCRYPTION_KEY="${SAVED_DB_KEY}"
 fi
 
@@ -72,7 +72,7 @@ if [[ "x${debug}" == "xdebug" ]] ; then
   shift
   ARG_LEN=$(echo -n "${1}" | wc -c)
   ARG_NUMERIC_LEN=$(echo -n "${1}" | tr -dc [:digit:] | wc -c)  # strip all non-digits
-  if [[ ! -z "${ARG_NUMERIC_LEN}" && ${ARG_LEN} -eq ${ARG_NUMERIC_LEN} ]] ; then
+  if [[ -n "${ARG_NUMERIC_LEN}" && ${ARG_LEN} -eq ${ARG_NUMERIC_LEN} ]] ; then
     # Second arg is the debug port
     DEBUG_PORT="${1}"
     shift || :
@@ -126,7 +126,7 @@ fi
 
 # Default user if none set
 if [[ -z "${BUBBLE_USER}" ]] ; then
-  if [[ ! -z "${REQUIRE_BUBBLE_USER}" ]] ; then
+  if [[ -n "${REQUIRE_BUBBLE_USER}" ]] ; then
     die "No BUBBLE_USER env var defined"
   fi
   BUBBLE_USER=root@local.local
@@ -137,13 +137,13 @@ if [[ -z "${BUBBLE_PASS}" ]] ; then
 
   # If BUBBLE_API is defined, we may have cached credentials
   BUBBLE_AUTH="${HOME}/.bubble_auth"
-  if [[ ! -z "${BUBBLE_API}" && -d "${BUBBLE_AUTH}" ]] ; then
+  if [[ -n "${BUBBLE_API}" && -d "${BUBBLE_AUTH}" ]] ; then
     if [[ -z "${BUBBLE_DISABLE_AUTH_CACHE}" || "${BUBBLE_DISABLE_AUTH_CACHE}" == "false" ]] ; then
       API_HOST="$(echo -n "${BUBBLE_API}" | awk -F '/' '{print $3}')"
       AUTH_DIR="${BUBBLE_AUTH}/${API_HOST}"
       PASS_FILE="${AUTH_DIR}/${BUBBLE_USER}"
 
-      if [[ ! -z "${BUBBLE_USER}" && -f "${PASS_FILE}" ]] ; then
+      if [[ -n "${BUBBLE_USER}" && -f "${PASS_FILE}" ]] ; then
         if [[ -z "${BUBBLE_QUIET_AUTH_CACHE}" || "${BUBBLE_QUIET_AUTH_CACHE}" != "true" ]] ; then
           echo 1>&2 "Using cached password for user ${BUBBLE_USER} from ${AUTH_DIR}/${BUBBLE_USER}
   - Set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior
@@ -155,7 +155,7 @@ if [[ -z "${BUBBLE_PASS}" ]] ; then
     fi
   fi
 
-  if [[ ! -z "${REQUIRE_BUBBLE_PASS}" ]] ; then
+  if [[ -n "${REQUIRE_BUBBLE_PASS}" ]] ; then
     die "No BUBBLE_PASS env var defined"
   fi
   echo 1>&2 "*** Warning: BUBBLE_PASS env var was not defined, using default password (probable authentication failure)"

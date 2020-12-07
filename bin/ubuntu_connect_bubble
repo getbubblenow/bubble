@@ -82,7 +82,7 @@ if [[ -z "$(which resolvconf)" ]] ; then
   INSTALL_PACKAGES="${INSTALL_PACKAGES} resolvconf"
 fi
 
-if [[ ! -z "${INSTALL_PACKAGES}" ]] ; then
+if [[ -n "${INSTALL_PACKAGES}" ]] ; then
   echo "
 The following apt packages will be installed:
 
@@ -141,7 +141,7 @@ export BUBBLE_SKIP_PATH_WARNING=true
 bget me | jq .email > /dev/null || die "Error logging into Bubble with API: ${BUBBLE_API}"
 
 # Ensure WireGuard is not running
-if [[ ! -z "$(sudo wg show)" ]] ; then
+if [[ -n "$(sudo wg show)" ]] ; then
   echo "Stopping WireGuard VPN ..."
   sudo wg-quick down wg0
 fi
@@ -334,7 +334,7 @@ VPN Config  : ${WG_CONF}
 Public IP   : $(curl -s http://checkip.amazonaws.com/)
 "
 
-if [[ ! -z "$(which firefox)" ]] ; then
+if [[ -n "$(which firefox)" ]] ; then
   echo "
 ===========================================================
 ===================== Firefox Warning =====================

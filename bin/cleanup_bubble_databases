@@ -37,7 +37,7 @@ if [[ ${DATABASE_COUNT} -gt 0 ]] ; then
   echo "Cleaning up ${DATABASE_COUNT} databases..."
 
   DATABASES="$(echo "select datname from pg_database" | psql -qt -U ${DB_USER} template1 | grep ${DB_MATCH} | tr -d ' ')"
-  if [[ ! -z "${DATABASES}" ]] ; then
+  if [[ -n "${DATABASES}" ]] ; then
     for db in ${DATABASES} ; do
       if [[ "${db}" == "bubble" ]] ; then
         echo "Not dropping bubble default database"

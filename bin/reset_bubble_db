@@ -13,7 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
 . "${SCRIPT_DIR}/bubble_common"
 
 DEBUG=${1}
-if [[ ! -z "${DEBUG}" && "${DEBUG}" == "debug" ]] ; then
+if [[ -n "${DEBUG}" && "${DEBUG}" == "debug" ]] ; then
   DEBUG=1
 else
   DEBUG=0

@@ -64,7 +64,7 @@ cd "${DIST}/.." && zip -r "${ZIP}" "$(basename ${DIST})"
 echo "Distribution created: "
 ls -lh "${ZIP}"
 
-if [[ ! -z "${BUBBLE_DIST_HOME}" ]] ; then
+if [[ -n "${BUBBLE_DIST_HOME}" ]] ; then
   IS_DEV=0
   if [[ -z ${BUILD_NUMBER} ]] ; then
     BUILD_NUMBER="dev"

@@ -23,7 +23,7 @@ SCRIPT="${0}"
 SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
 . "${SCRIPT_DIR}/bubble_common"
 
-if [[ ! -z "${DEBUG_BUILD}" && "${DEBUG_BUILD}" == "debug" ]] ; then
+if [[ -n "${DEBUG_BUILD}" && "${DEBUG_BUILD}" == "debug" ]] ; then
   echo "DEBUG_BUILD is set, not doing anything further"
   exit 0
 fi
@@ -42,10 +42,10 @@ done
 
 cd "${CLASSES_DIR}" && zip -u -r "${BUBBLE_JAR}" scripts || die "Error updating ${BUBBLE_JAR} with scripts"
 
-if [[ ! -z "${BUBBLE_PRODUCTION}" || ( ! -z "${INSTALL_WEB}" && "${INSTALL_WEB}" == "web" ) ]] ; then
+if [[ -n "${BUBBLE_PRODUCTION}" || ( -n "${INSTALL_WEB}" && "${INSTALL_WEB}" == "web" ) ]] ; then
   mkdir -p "${CLASSES_DIR}/site"
   BUBBLE_WEB="$(cd "${SCRIPT_DIR}/../bubble-web" && pwd)"
-  if [[ ! -z "${BUBBLE_PRODUCTION}" ]] ; then
+  if [[ -n "${BUBBLE_PRODUCTION}" ]] ; then
     WEBPACK_OPTIONS="--mode=production"
   else
     WEBPACK_OPTIONS=""

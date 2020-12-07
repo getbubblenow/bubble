@@ -54,7 +54,7 @@ else
   scp -P ${BUBBLE_SSH_PORT} "$(find "./target" -type f -name "bubble*.jar" | grep -v full | head -1)" ${HOST}:/tmp/bubble.jar || die "Error copying file to remote host ${HOST}"
 fi
 
-if [[ ! -z "${NO_RESTART}" && "${NO_RESTART}" == "norestart" ]] ; then
+if [[ -n "${NO_RESTART}" && "${NO_RESTART}" == "norestart" ]] ; then
   echo "Patching but not restarting: ${HOST} ..."
   ssh -p ${BUBBLE_SSH_PORT} ${HOST} "cat /tmp/bubble.jar > ~bubble/api/bubble.jar"
 else

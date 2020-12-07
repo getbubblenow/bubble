@@ -31,7 +31,7 @@ function die() {
 
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 DO_DELETE=0
-if [[ ! -z "${1}" ]] ; then
+if [[ -n "${1}" ]] ; then
   if [[ "${1}" == "delete" ]] ; then
     DO_DELETE=1
   else
@@ -47,7 +47,7 @@ if [[ -z "$(which wg-quick)" ]] ; then
 fi
 
 # Ensure WireGuard is not running
-if [[ ! -z "$(sudo wg show)" ]] ; then
+if [[ -n "$(sudo wg show)" ]] ; then
   echo "Stopping WireGuard VPN ..."
   sudo wg-quick down wg0
 else
@@ -162,7 +162,7 @@ Bubble Host : ${BUBBLE_HOST}
 Public IP   : $(curl -s http://checkip.amazonaws.com/)
 "
 
-if [[ ! -z "$(which firefox)" ]] ; then
+if [[ -n "$(which firefox)" ]] ; then
   echo "
 ===========================================================
 ===================== Firefox Warning =====================

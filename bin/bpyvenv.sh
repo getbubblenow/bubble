@@ -19,7 +19,7 @@ fi
 . ${BUBBLE_HOME}/.venv/bin/activate || die "Error activating bubble venv"
 python3 -m pip install requests || die "Error installing pip packages"
 
-if [[ ! -z "${1}" ]] ; then
+if [[ -n "${1}" ]] ; then
   script=${1}
   shift
   echo python3 "${script}" "${@}"

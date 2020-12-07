@@ -40,7 +40,7 @@ if [[ -z "${BUBBLE_INCLUDE}" ]] ; then
     fi
   done
 fi
-if [[ ! -z "${BUBBLE_INCLUDE}" ]] ; then
+if [[ -n "${BUBBLE_INCLUDE}" ]] ; then
   BUBBLE_INCLUDE="-I ${BUBBLE_INCLUDE}"
 fi
 

@@ -13,6 +13,15 @@ function die {
 
 PLATFORM="$(uname -s)"
 
+CURL=""
+if [[ -z "$(which curl)" ]] ; then
+  if [[ -f /usr/bin/curl ]] ; then
+    CURL=/usr/bin/curl
+  fi
+else
+  CURL="$(which curl)"
+fi
+
 # Install packer
 if [[ ! -f ${HOME}/packer/packer ]] ; then
   PACKER_VERSION=1.6.5
@@ -24,7 +33,7 @@ if [[ ! -f ${HOME}/packer/packer ]] ; then
     die "Add packer support to script ${0} for platform ${PLATFORM}"
   fi
   PACKER_URL=https://releases.hashicorp.com/packer/${PACKER_VERSION}/${PACKER_FILE}
-  mkdir -p ${HOME}/packer && cd ${HOME}/packer && curl -L ${PACKER_URL} -o ${PACKER_FILE} && unzip ${PACKER_FILE} || die "Error installing packer"
+  mkdir -p ${HOME}/packer && cd ${HOME}/packer && "${CURL}" -L ${PACKER_URL} -o ${PACKER_FILE} && unzip ${PACKER_FILE} || die "Error installing packer"
   echo "Packer successfully installed"
 else
   echo "Packer already installed"
@@ -41,7 +50,7 @@ if [[ ! -f ${HOME}/.packer.d/plugins/packer-builder-vultr ]] ; then
     die "Add packer vultr support to script ${0} for platform ${PLATFORM}"
   fi
   PACKER_VULTR_URL=https://github.com/vultr/packer-builder-vultr/releases/download/v${PACKER_VULTR_VERSION}/${PACKER_VULTR_FILE}
-  mkdir -p ${HOME}/.packer.d/plugins && cd ${HOME}/.packer.d/plugins && curl -L ${PACKER_VULTR_URL} -o ${PACKER_VULTR_FILE} && tar xzf ${PACKER_VULTR_FILE}  || die "Error installing packer vultr plugin"
+  mkdir -p ${HOME}/.packer.d/plugins && cd ${HOME}/.packer.d/plugins && "${CURL}" -L ${PACKER_VULTR_URL} -o ${PACKER_VULTR_FILE} && tar xzf ${PACKER_VULTR_FILE}  || die "Error installing packer vultr plugin"
   echo "Packer Vultr plugin successfully installed"
 else
   echo "Packer vultr plugin already installed"
