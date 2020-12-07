@@ -24,6 +24,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 public class GeoLocation {
 
     public static final GeoLocation NULL_LOCATION = new GeoLocation().setLat("-1.0").setLon("-1.0");
+    public static final double INVALID_LOCATION = -1.0;
 
     @Getter @Setter private String country;
     public boolean hasCountry() { return !empty(country); }
@@ -49,10 +50,10 @@ public class GeoLocation {
     }
 
     public double distance(double lat, double lon) {
-        if (lat < 0 || lon < 0) return -1.0;
+        if (lat < 0 || lon < 0) return INVALID_LOCATION;
         double thisLat = big(getLat()).doubleValue();
         double thisLon = big(getLon()).doubleValue();
-        if (thisLat < 0 || thisLon < 0) return -1.0;
+        if (thisLat < 0 || thisLon < 0) return INVALID_LOCATION;
         return Haversine.distance(
                 thisLat,
                 lat,

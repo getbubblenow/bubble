@@ -108,6 +108,16 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         return super.canDelete(ctx, caller, found);
     }
 
+    @Override protected Object daoCreate(AccountPlan toCreate) {
+        if (!configuration.paymentsEnabled()) toCreate.setEnabled(true);
+        return super.daoCreate(toCreate);
+    }
+
+    @Override protected Object daoUpdate(AccountPlan toUpdate) {
+        if (!configuration.paymentsEnabled()) toUpdate.setEnabled(true);
+        return super.daoUpdate(toUpdate);
+    }
+
     @Override protected AccountPlan setReferences(ContainerRequest ctx, Request req, Account caller, AccountPlan request) {
 
         // ensure we have latest account settings (preferredPlan/etc)

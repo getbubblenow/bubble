@@ -2,6 +2,7 @@ package bubble.cloud.compute.docker;
 
 import bubble.cloud.CloudRegion;
 import bubble.cloud.compute.*;
+import bubble.cloud.geoLocation.GeoLocation;
 import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.BubbleNodeState;
@@ -46,7 +47,7 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
     public static final String LOCAL = "local";
 
     public static final CloudRegion[] CLOUD_REGIONS_ARRAY = new CloudRegion[]{
-            new CloudRegion().setName(LOCAL).setInternalName(LOCAL)
+            new CloudRegion().setName(LOCAL).setInternalName(LOCAL).setLocation(GeoLocation.NULL_LOCATION)
     };
     public static final List<CloudRegion> CLOUD_REGIONS = Arrays.asList(CLOUD_REGIONS_ARRAY);
 

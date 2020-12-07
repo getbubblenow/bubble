@@ -8,6 +8,7 @@ import bubble.cloud.CloudAndRegion;
 import bubble.cloud.CloudRegion;
 import bubble.cloud.CloudRegionRelative;
 import bubble.cloud.CloudServiceType;
+import bubble.cloud.compute.ComputeServiceDriver;
 import bubble.cloud.geoCode.GeoCodeResult;
 import bubble.cloud.geoCode.GeoCodeServiceDriver;
 import bubble.cloud.geoLocation.GeoLocation;
@@ -38,6 +39,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static bubble.cloud.geoLocation.GeoLocation.NULL_LOCATION;
 import static bubble.model.cloud.RegionalServiceDriver.findClosestRegions;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -81,7 +83,7 @@ public class GeoService {
     public GeoLocation locate (String accountUuid, String ip, boolean cacheOnly) {
         if (!supportsGeoLocation()) {
             log.warn("locate: no geoLocation cloud services defined, returning null location");
-            return GeoLocation.NULL_LOCATION;
+            return NULL_LOCATION;
         }
         final String cacheKey = hashOf(accountUuid, ip);
         return locateCache.computeIfAbsent(cacheKey, k -> {
@@ -106,7 +108,7 @@ public class GeoService {
     private GeoLocation getLocation(String accountUuid, String ip, String cacheKey) {
         if (!supportsGeoLocation()) {
             log.warn("getLocation: no geoLocation cloud services defined, returning null location");
-            return GeoLocation.NULL_LOCATION;
+            return NULL_LOCATION;
         }
         List<CloudService> geoLocationServices = null;
         if (accountUuid != null) {
@@ -310,10 +312,11 @@ public class GeoService {
                 log.error("selectCloudAndRegion (network="+network.getUuid()+"): netLocation.cloud="+netLocation.getCloud()+" not found under account="+network.getAccount());
                 throw notFoundEx(netLocation.getCloud());
             }
-            final CloudRegion desiredRegion = cloud.getComputeDriver(configuration).getRegion(netLocation.getRegion());
+            final ComputeServiceDriver computeDriver = cloud.getComputeDriver(configuration);
+            final CloudRegion desiredRegion = computeDriver.getRegion(netLocation.getRegion());
             if (desiredRegion == null) throw notFoundEx(netLocation.getRegion());
 
-            final GeoLocation desiredLocation = desiredRegion.getLocation();
+            final GeoLocation desiredLocation = desiredRegion.hasLocation() ? desiredRegion.getLocation() : NULL_LOCATION;
             final List<CloudRegionRelative> candidateRegions = getCloudRegionRelatives(network, desiredLocation.getLatitude(), desiredLocation.getLongitude(), exclude);
 
             if (candidateRegions.isEmpty()) return die("selectCloudAndRegion: no candidate regions found, desiredRegion="+desiredRegion);

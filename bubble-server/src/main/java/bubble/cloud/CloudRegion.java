@@ -33,5 +33,6 @@ public class CloudRegion {
     @Getter @Setter private String description;
 
     @Getter @Setter private GeoLocation location;
+    public boolean hasLocation () { return location != null; }
 
 }

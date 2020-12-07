@@ -16,6 +16,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static bubble.cloud.geoLocation.GeoLocation.INVALID_LOCATION;
+import static bubble.cloud.geoLocation.GeoLocation.NULL_LOCATION;
 import static java.util.Comparator.comparingDouble;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 
@@ -50,7 +52,18 @@ public interface RegionalServiceDriver {
             }
             if (regions != null) {
                 for (CloudRegion region : regions) {
-                    if (footprint != null && !footprint.isAllowedCountry(region.getLocation().getCountry())) {
+                    if (!region.hasLocation() || region.getLocation() == NULL_LOCATION) {
+                        // region has no location, it will always match with a distance of zero
+                        final CloudRegionRelative r = new CloudRegionRelative(region);
+                        r.setDistance(0).setCloud(c.getUuid());
+                        allRegions.add(r);
+                        continue;
+                    }
+                    if (latitude == INVALID_LOCATION && longitude == INVALID_LOCATION) {
+                        // region has a location, we can never match with invalid coordinates
+                        continue;
+                    }
+                    if (footprint != null && region.hasLocation() && !footprint.isAllowedCountry(region.getLocation().getCountry())) {
                         continue;
                     }
                     if (exclude != null && exclude.contains(new CloudAndRegion(c, region))) {

@@ -21,7 +21,7 @@
   },
   {
     "name": "app_runtime",
-    "description": "Bubble apps call these APIs when they are running on a client device."
+    "description": "Bubble apps call these APIs when they are running on one of your devices."
   },
   {
     "name": "backup_restore",

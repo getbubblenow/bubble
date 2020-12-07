@@ -4,6 +4,7 @@
  */
 package bubble.resources;
 
+import bubble.dao.SessionDAO;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountOwnedEntityDAO;
 import bubble.model.account.Account;
@@ -43,6 +44,7 @@ import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KE
 public class IdentityResource {
 
     @Autowired private BubbleConfiguration configuration;
+    @Autowired private SessionDAO sessionDAO;
 
     @GET @Operation(hidden=true)
     public Response identifyNothing(@Context Request req,
@@ -93,6 +95,10 @@ public class IdentityResource {
                 found = null;
             }
             if (found != null) entities.put(type.getName(), found);
+        }
+        final Account sessionAccount = sessionDAO.find(id);
+        if (sessionAccount != null && (sessionAccount.getUuid().equals(caller.getUuid()) || caller.admin())) {
+            entities.put(SessionDAO.class.getName(), sessionAccount);
         }
         return ok(entities);
     }
