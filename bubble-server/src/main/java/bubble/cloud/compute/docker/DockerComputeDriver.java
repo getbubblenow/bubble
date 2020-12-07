@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static bubble.service.packer.PackerJob.PACKER_IMAGE_PREFIX;
 import static java.lang.Boolean.parseBoolean;
@@ -184,7 +185,9 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
 
     @Override public List<PackerImage> getAllPackerImages() {
         final DockerClient dc = getDockerClient();
-        final List<Image> images = dc.listImagesCmd().withImageNameFilter(PACKER_IMAGE_PREFIX).withLabelFilter(MapBuilder.build(LABEL_IMAGE, PACKER_IMAGE_PREFIX)).exec();
+        final List<Image> images = dc.listImagesCmd().exec().stream()
+                .filter(i -> i.getLabels().containsKey(LABEL_IMAGE) && i.getLabels().get(LABEL_IMAGE).startsWith(PACKER_IMAGE_PREFIX))
+                .collect(Collectors.toList());
         final List<PackerImage> packerImages = new ArrayList<>();
         for (Image i : images) {
             final PackerImage p = new PackerImage();
