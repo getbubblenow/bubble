@@ -31,10 +31,12 @@ function process_pom () {
 
   T_FILE=$(mktemp "/tmp/$(basename "${POM}").XXXXXXX")
   FOUND_VERSION=0
+  IFS=''
   cat pom.xml | while read -r line ; do
     if [[ ${FOUND_VERSION} -eq 1 ]] ; then
       echo "${line}" | tr -d '[:digit:].' | sed -e "s/></>${V_NUMBER}</" >> "${T_FILE}"
       FOUND_VERSION=0
+      continue
     elif [[ -n "$(echo "${line}" | grep "@@BUBBLE_VERSION@@")" ]] ; then
       FOUND_VERSION=1
     fi
