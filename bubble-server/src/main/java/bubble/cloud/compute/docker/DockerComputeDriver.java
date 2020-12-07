@@ -198,7 +198,7 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
         for (Image i : images) {
             final PackerImage p = new PackerImage();
             p.setId(i.getId());
-            p.setName(empty(i.getLabels()) ? i.getId() : i.getLabels().size() == 1 ? i.getLabels().values().iterator().next() : json(i.getLabels()));
+            p.setName(empty(i.getRepoTags()) ? i.getId() : i.getRepoTags().length == 1 ? i.getRepoTags()[0] : json(i.getRepoTags()));
             p.setRegions(null);
             packerImages.add(p);
         }
