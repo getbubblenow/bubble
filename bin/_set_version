@@ -48,6 +48,7 @@ function process_pom () {
 cd "${SCRIPT_DIR}/.." || die "Error changing to Bubble main directory"
 process_pom "${V_NUMBER}" pom.xml
 process_pom "${V_NUMBER}" bubble-server/pom.xml
+process_pom "${V_NUMBER}" utils/pom.xml
 
 VERSION_PROP_FILE="bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
 P_TEMP=$(mktemp /tmp/bubble.properties.XXXXXXX)
