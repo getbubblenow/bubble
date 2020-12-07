@@ -197,9 +197,21 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
         final List<PackerImage> packerImages = new ArrayList<>();
         for (Image i : images) {
             final PackerImage p = new PackerImage();
+            final String name;
+            if (empty(i.getRepoTags())) {
+                name = i.getId();
+            } else if (i.getRepoTags().length == 1) {
+                if (i.getRepoTags()[0].contains(":")) {
+                    name = i.getRepoTags()[0].substring(repository.indexOf(":")+1);
+                } else {
+                    name = i.getRepoTags()[0];
+                }
+            } else {
+                name = json(i.getRepoTags());
+            }
             p.setId(i.getId());
-            p.setName(empty(i.getRepoTags()) ? i.getId() : i.getRepoTags().length == 1 ? i.getRepoTags()[0] : json(i.getRepoTags()));
-            p.setRegions(null);
+            p.setName(name);
+            p.setRegions(CLOUD_REGIONS_ARRAY);
             packerImages.add(p);
         }
         return packerImages;
