@@ -34,6 +34,7 @@ import java.util.function.Predicate;
 
 import static bubble.service.packer.PackerJob.PACKER_IMAGE_PREFIX;
 import static java.lang.Boolean.parseBoolean;
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -44,16 +45,18 @@ import static org.cobbzilla.util.system.Sleep.sleep;
 @Slf4j
 public class DockerComputeDriver extends ComputeServiceDriverBase {
 
+    public static final String LOCAL = "local";
+
     public static final CloudRegion[] CLOUD_REGIONS_ARRAY = new CloudRegion[]{
-            new CloudRegion().setName("local").setInternalName("local")
+            new CloudRegion().setName(LOCAL).setInternalName(LOCAL)
     };
     public static final List<CloudRegion> CLOUD_REGIONS = Arrays.asList(CLOUD_REGIONS_ARRAY);
 
     public static final List<ComputeNodeSize> CLOUD_SIZES = Arrays.asList(new ComputeNodeSize[]{
-            new ComputeNodeSize().setName("local").setInternalName("local").setType(ComputeNodeSizeType.local)
+            new ComputeNodeSize().setName(LOCAL).setInternalName(LOCAL).setType(ComputeNodeSizeType.local)
     });
     public static final List<OsImage> CLOUD_OS_IMAGES = Arrays.asList(new OsImage[]{
-            new OsImage().setName("ubuntu:20.04").setId("ubuntu:20.04").setRegion("local")
+            new OsImage().setName("ubuntu:20.04").setId("ubuntu:20.04").setRegion(LOCAL)
     });
 
     public static final long START_TIMEOUT = SECONDS.toMillis(120);
@@ -193,7 +196,9 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
         return packerImages;
     }
 
-    @Override public List<PackerImage> getPackerImagesForRegion(String region) { return getAllPackerImages(); }
+    @Override public List<PackerImage> getPackerImagesForRegion(String region) {
+        return region == null || region.equals(LOCAL) ? getAllPackerImages() : emptyList();
+    }
 
     @Override public List<BubbleNode> listNodes() throws IOException {
         final DockerClient dc = getDockerClient();
