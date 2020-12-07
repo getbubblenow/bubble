@@ -162,26 +162,32 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             if (existingNetwork != null) errors.addViolation("err.name.networkNameAlreadyExists");
         }
 
-        if (request.hasForkHost()) {
+        if (request.getLaunchType().fork()) {
             if (!configuration.isSageLauncher()) {
                 errors.addViolation("err.forkHost.notAllowed");
             } else {
                 final String forkHost = request.getForkHost();
-                if (!validateRegexMatches(HOST_PATTERN, forkHost)) {
-                    errors.addViolation("err.forkHost.invalid");
-                } else if (domain != null && !forkHost.endsWith("."+domain.getName())) {
-                    final BubbleDomain foundDomain = domainDAO.findByAccount(caller.getUuid()).stream()
-                            .filter(d -> forkHost.equals("." + d.getName()))
-                            .findFirst().orElse(null);
-                    if (foundDomain == null) {
-                        errors.addViolation("err.forkHost.domainNotFound");
-                    } else {
-                        request.setDomain(foundDomain.getUuid());
-                    }
+                if (empty(forkHost)) {
+                    request.setName(newNodeHostname()+"."+newNetworkName()+"."+domain.getName());
+                    request.setDomain(domain.getUuid());
 
-                } else if (domain != null) {
-                    request.setName(domain.networkFromFqdn(forkHost, errors));
-                    validateName(request, errors);
+                } else {
+                    if (!validateRegexMatches(HOST_PATTERN, forkHost)) {
+                        errors.addViolation("err.forkHost.invalid");
+                    } else if (domain != null && !forkHost.endsWith("." + domain.getName())) {
+                        final BubbleDomain foundDomain = domainDAO.findByAccount(caller.getUuid()).stream()
+                                .filter(d -> forkHost.equals("." + d.getName()))
+                                .findFirst().orElse(null);
+                        if (foundDomain == null) {
+                            errors.addViolation("err.forkHost.domainNotFound");
+                        } else {
+                            request.setDomain(foundDomain.getUuid());
+                        }
+
+                    } else if (domain != null) {
+                        request.setName(domain.networkFromFqdn(forkHost, errors));
+                        validateName(request, errors);
+                    }
                 }
             }
             final String adminEmail = request.getAdminEmail();
