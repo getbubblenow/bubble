@@ -56,6 +56,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.getExternalIp;
 import static org.cobbzilla.util.string.StringUtil.truncate;
 import static org.cobbzilla.util.system.CommandShell.domainname;
+import static org.cobbzilla.util.system.CommandShell.execScript;
 import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYYMMDDHHMMSS;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 
@@ -86,6 +87,17 @@ public class PackerJob implements Callable<List<PackerImage>> {
     public static final String PACKER_PLAYBOOK_TEMPLATE = "packer-playbook.yml.hbs";
     public static final String PACKER_PLAYBOOK = "packer-playbook.yml";
     public static final String PACKER_BINARY = System.getProperty("user.home")+"/packer/packer";
+    static {
+        final File f = new File(PACKER_BINARY);
+        if (!f.exists()) {
+            try {
+                execScript(stream2string("scripts/install_packer.sh"));
+            } catch (Exception e) {
+                throw new ExceptionInInitializerError("Packer binary not found ("+PACKER_BINARY+") and error installing packer: "+shortError(e));
+            }
+            if (!f.exists()) throw new ExceptionInInitializerError("Packer binary not found ("+PACKER_BINARY+") after running install_packer.sh");
+        }
+    }
 
     @Autowired private BubbleConfiguration configuration;
     @Autowired private AccountDAO accountDAO;
