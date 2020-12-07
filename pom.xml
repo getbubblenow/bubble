@@ -14,7 +14,7 @@
     <groupId>bubble</groupId>
     <artifactId>bubble</artifactId>
     <!-- @@BUBBLE_VERSION@@ this comment must remain above the version tag so that _set_version can update it -->
-    <version>1.4.51</version>
+    <version>1.4.52</version>
     <packaging>pom</packaging>
 
     <licenses>

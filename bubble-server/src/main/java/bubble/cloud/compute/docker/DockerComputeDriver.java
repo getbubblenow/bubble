@@ -12,10 +12,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.model.Capability;
-import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -23,20 +20,30 @@ import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.MapBuilder;
+import org.cobbzilla.util.io.TempDir;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static bubble.service.packer.PackerJob.PACKER_IMAGE_PREFIX;
+import static com.github.dockerjava.api.model.InternetProtocol.UDP;
 import static java.lang.Boolean.parseBoolean;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.io.FileUtil.abs;
+import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
+import static org.cobbzilla.util.io.StreamUtil.stream2file;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.system.OsType.CURRENT_OS;
 import static org.cobbzilla.util.system.OsType.linux;
@@ -55,6 +62,17 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
     public static final ComputeNodeSize LOCAL_SIZE = new ComputeNodeSize().setName(LOCAL).setInternalName(LOCAL).setType(ComputeNodeSizeType.local);
     public static final List<ComputeNodeSize> CLOUD_SIZES = singletonList(LOCAL_SIZE);
     public static final Map<String, ComputeNodeSize> NODE_SIZE_MAP = MapBuilder.build(LOCAL, LOCAL_SIZE);
+
+    public static final ExposedPort[] SAGE_EXPOSED_PORTS = {
+            new ExposedPort(22), new ExposedPort(80), new ExposedPort(443), new ExposedPort(1202)
+    };
+    public static final ExposedPort[] NODE_EXPOSED_PORTS = ArrayUtil.append(SAGE_EXPOSED_PORTS,
+            new ExposedPort(1080), new ExposedPort(1443),
+            new ExposedPort(8888), new ExposedPort(9999),
+            new ExposedPort(53, UDP),
+            new ExposedPort(500, UDP), new ExposedPort(4500, UDP),
+            new ExposedPort(51820, UDP)
+    );
 
     @Override public Map<String, ComputeNodeSize> getSizesMap() { return NODE_SIZE_MAP; }
 
@@ -119,6 +137,20 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
         return DockerClientImpl.getInstance(dockerConfig, client);
     }
 
+    private static final String[] PACKER_FILES = {"run_redis.sh", "run_postgresql.sh", "run_supervisor.sh"};
+
+    @Override public void prepPackerDir(TempDir tempDir) {
+        try {
+            for (String p : PACKER_FILES) {
+                final File destFile = new File(abs(tempDir) + "/roles/common/files/" + p);
+                if (!destFile.getParentFile().exists()) die("prepPackerDir: parent dir does not exist: "+abs(destFile.getParentFile()));
+                stream2file(loadResourceAsStream("docker/" + p), destFile);
+            }
+        } catch (Exception e) {
+            die("prepPackerDir: "+shortError(e), e);
+        }
+    }
+
     @Override public BubbleNode cleanupStart(BubbleNode node) throws Exception { return node; }
 
     @Override public BubbleNode start(BubbleNode node) throws Exception {
@@ -133,12 +165,14 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
         final PackerImage packerImage = getOrCreatePackerImage(node);
 
         final CreateContainerCmd ccr = dc.createContainerCmd(packerImage.getId())
+                .withExposedPorts(node.getInstallType() == AnsibleInstallType.sage ? SAGE_EXPOSED_PORTS : NODE_EXPOSED_PORTS)
                 .withLabels(MapBuilder.build(new String[][] {
                         {LABEL_CLOUD, cloud.getUuid()},
                         {LABEL_NODE, node.getUuid()}
                 }))
                 .withHostConfig(HostConfig.newHostConfig()
                         .withCapAdd(Capability.NET_ADMIN)
+                        .withCapAdd(Capability.SYS_MODULE)
                         .withCapAdd(Capability.SYS_ADMIN));
         final CreateContainerResponse response = ccr.exec();
         final long start = now();

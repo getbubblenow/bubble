@@ -125,7 +125,7 @@
     "driverConfig": {
       "regions": [{"name": "local", "internalName": "local"}],
       "sizes": [{"name": "local", "type": "local", "internalName": "local"}],
-      "os": "ubuntu:20.04",
+      "os": "phusion/baseimage:focal-1.0.0alpha1-amd64",
       "packer": {
         "vars": [],
         "sudo": false,

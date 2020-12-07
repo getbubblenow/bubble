@@ -3,3 +3,42 @@
     name: [ 'curl', 'cron', 'iptables', 'openssh-server' ]
     state: present
     update_cache: yes
+
+- name: Ensure /service/ dirs exists
+  file:
+    path: "/service/{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+    state: directory
+  with_items: [ 'redis', 'postgresql', 'supervisor' ]
+
+- name: Create /service/redis/run
+  copy:
+    src: run_redis.sh
+    dest: /service/redis/run
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Ensure redis runs in foreground
+  shell: bash -c "sed -i -e 's/daemonize yes/daemonize no/g' /etc/redis/redis.conf"
+
+- name: Create /service/postgresql/run
+  copy:
+    src: run_postgresql.sh
+    dest: /service/postgresql/run
+    owner: root
+    group: root
+    mode: 0755
+
+- name: trust local postgresql users
+  shell: bash -c "sed -i -e 's/  md5/  trust/g' $(find /etc/postgresql -mindepth 1 -maxdepth 1 -type d | sort | tail -1)/main/pg_hba.conf"
+
+- name: Create /service/supervisor/run
+  copy:
+    src: run_supervisor.sh
+    dest: /service/supervisor/run
+    owner: root
+    group: root
+    mode: 0755

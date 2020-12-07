@@ -11,6 +11,7 @@ import bubble.model.cloud.AnsibleInstallType;
 import bubble.model.cloud.BubbleNode;
 import bubble.model.cloud.RegionalServiceDriver;
 import bubble.service.packer.PackerBuild;
+import org.cobbzilla.util.io.TempDir;
 import org.cobbzilla.util.system.CommandResult;
 
 import java.util.List;
@@ -65,5 +66,7 @@ public interface ComputeServiceDriver extends CloudServiceDriver, RegionalServic
     default boolean supportsDns() { return true; }
 
     default int getSshPort(BubbleNode node) { return 1202; }
+
+    default void prepPackerDir(TempDir tempDir) {}
 
 }

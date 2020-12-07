@@ -202,7 +202,7 @@ public class AccountPlan extends IdentifiableBase implements HasNetwork {
                 .setFootprint(getFootprint())
                 .setComputeSizeType(plan.getComputeSizeType())
                 .setStorage(storage.getUuid())
-                .setLaunchType(hasForkHost() && hasLaunchType() ? getLaunchType() : LaunchType.node)
+                .setLaunchType(hasLaunchType() ? getLaunchType() : LaunchType.node)
                 .setForkHost(hasForkHost() ? getForkHost() : null)
                 .setAdminEmail(hasAdminEmail() ? getAdminEmail() : null);
     }

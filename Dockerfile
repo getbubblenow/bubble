@@ -29,7 +29,7 @@ RUN bash -c "sed -i -e 's/daemonize yes/daemonize no/g' /etc/redis/redis.conf"
 
 # Setup redis service
 RUN mkdir /etc/service/redis
-COPY docker/run_redis.sh /etc/service/redis/run
+COPY bubble-server/src/main/resources/docker/run_redis.sh /etc/service/redis/run
 
 #################
 ### PostgreSQL
@@ -44,7 +44,7 @@ RUN bash -c "service postgresql start && sleep 5s && service postgresql status &
 
 # Setup PostgreSQL service
 RUN mkdir /etc/service/postgresql
-COPY docker/run_postgresql.sh /etc/service/postgresql/run
+COPY bubble-server/src/main/resources/docker/run_postgresql.sh /etc/service/postgresql/run
 
 #################
 ### Bubble
@@ -60,7 +60,7 @@ COPY docker/bubble.env /bubble/bubble.env
 
 # Setup Bubble service
 RUN mkdir /etc/service/bubble
-COPY docker/run_bubble.sh /etc/service/bubble/run
+COPY bubble-server/src/main/resources/docker/run_bubble.sh /etc/service/bubble/run
 
 #################
 ### Main stuff

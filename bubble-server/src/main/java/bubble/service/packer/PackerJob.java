@@ -217,6 +217,9 @@ public class PackerJob implements Callable<List<PackerImage>> {
         copyFile(jar, new File(abs(bubbleFilesDir)+"/bubble.jar"));
         copyScripts(bubbleFilesDir);
 
+        // copy assets required by compute driver
+        computeDriver.prepPackerDir(tempDir);
+
         final String imageName = PACKER_IMAGE_NAME_TEMPLATE
                 .replace(INSTALL_TYPE_VAR, installType.name())
                 .replace(SAGE_NET_VAR, truncate(domainname(), 19))

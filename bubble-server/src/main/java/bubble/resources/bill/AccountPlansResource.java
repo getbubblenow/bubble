@@ -168,7 +168,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             } else {
                 final String forkHost = request.getForkHost();
                 if (empty(forkHost)) {
-                    request.setName(newNodeHostname()+"."+newNetworkName()+"."+domain.getName());
+                    request.setName(newNetworkName());
                     request.setDomain(domain.getUuid());
 
                 } else {
