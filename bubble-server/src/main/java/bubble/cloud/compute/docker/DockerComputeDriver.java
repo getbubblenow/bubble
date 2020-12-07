@@ -182,7 +182,6 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
 
     @Override public List<PackerImage> getAllPackerImages() {
         final DockerClient dc = getDockerClient();
-        final List<Image> list1 = dc.listImagesCmd().exec();
         final String repository;
         try {
             repository = getConfig().getPacker().getPost().get("repository").asText();
@@ -192,7 +191,7 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
             return emptyList();
         }
         final String prefix = repository + ":" + PACKER_IMAGE_PREFIX;
-        final List<Image> images = list1.stream()
+        final List<Image> images = dc.listImagesCmd().exec().stream()
                 .filter(i -> i.getRepoTags() != null && Arrays.stream(i.getRepoTags()).anyMatch(t -> t.startsWith(prefix)))
                 .collect(Collectors.toList());
         final List<PackerImage> packerImages = new ArrayList<>();
