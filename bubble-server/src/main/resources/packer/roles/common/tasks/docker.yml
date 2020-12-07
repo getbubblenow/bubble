@@ -1,6 +1,6 @@
 - name: Install packages missing on docker ubuntu
   apt:
-    name: [ 'curl', 'nginx', 'cron', 'iptables', 'openssh-server', 'redis', 'postgresql', 'supervisor' ]
+    name: [ 'curl', 'nginx', 'cron', 'iptables', 'redis', 'postgresql', 'supervisor' ]
     state: present
     update_cache: yes
 
@@ -11,7 +11,7 @@
     group: root
     mode: 0755
     state: directory
-  with_items: [ 'redis', 'postgresql', 'supervisor', 'cron' ]
+  with_items: [ 'redis', 'postgresql', 'supervisor', 'cron', 'nginx' ]
 
 - name: Create /service/redis/run
   copy:

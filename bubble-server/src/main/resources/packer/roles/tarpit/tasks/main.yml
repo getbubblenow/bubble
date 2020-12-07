@@ -9,6 +9,7 @@
     system: yes
     home: /home/tarpit
     groups: bubble-log
+  when: packer_builder_type != 'docker'
 
 - name: Copy bubble_ssh_tarpit script
   copy:
@@ -17,6 +18,7 @@
     owner: tarpit
     group: tarpit
     mode: 0500
+  when: packer_builder_type != 'docker'
 
 - name: Copy bubble_http_tarpit script
   copy:
@@ -25,6 +27,7 @@
     owner: tarpit
     group: tarpit
     mode: 0500
+  when: packer_builder_type != 'docker'
 
 - name: Install ssh tarpit supervisor conf file
   copy:
@@ -33,6 +36,7 @@
     owner: root
     group: root
     mode: 0400
+  when: packer_builder_type != 'docker'
 
 - name: Install http tarpit supervisor conf file
   copy:
@@ -41,6 +45,7 @@
     owner: root
     group: root
     mode: 0400
+  when: packer_builder_type != 'docker'
 
 - name: Allow HTTP tarpit port
   iptables:
@@ -52,3 +57,4 @@
     jump: ACCEPT
     comment: Accept new connections on HTTP tarpit port
   become: yes
+  when: packer_builder_type != 'docker'

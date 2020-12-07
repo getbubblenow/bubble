@@ -139,16 +139,17 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
         return DockerClientImpl.getInstance(dockerConfig, client);
     }
 
-    private static final String[] PACKER_FILES = {
-            "run_redis.sh", "run_postgresql.sh", "run_supervisor.sh", "run_cron.sh", "run_nginx.sh"
+    private static final String[] PACKER_SERVICES = {
+            "redis", "postgresql", "supervisor", "cron", "nginx"
     };
 
     @Override public void prepPackerDir(TempDir tempDir) {
         try {
-            for (String p : PACKER_FILES) {
-                final File destFile = new File(abs(tempDir) + "/roles/common/files/" + p);
+            for (String p : PACKER_SERVICES) {
+                final String runScript = "run_" + p + ".sh";
+                final File destFile = new File(abs(tempDir) + "/roles/common/files/" + runScript);
                 if (!destFile.getParentFile().exists()) die("prepPackerDir: parent dir does not exist: "+abs(destFile.getParentFile()));
-                stream2file(loadResourceAsStream("docker/" + p), destFile);
+                stream2file(loadResourceAsStream("docker/" + runScript), destFile);
             }
         } catch (Exception e) {
             die("prepPackerDir: "+shortError(e), e);

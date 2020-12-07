@@ -30,7 +30,7 @@
     - 22
     - 1202
   become: yes
-  when: fw_enable_ssh
+  when: packer_builder_type != 'docker' and fw_enable_ssh
 
 - name: "Allow HTTP on port {{ item }}"
   iptables:

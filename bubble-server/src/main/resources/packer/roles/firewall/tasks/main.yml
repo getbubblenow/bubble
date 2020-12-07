@@ -109,7 +109,7 @@
     owner: root
     group: root
     mode: 0400
-  when: fw_enable_ssh
+  when: packer_builder_type != 'docker' and fw_enable_ssh
 
 - name: Install SSH fail2ban settings
   copy:
@@ -118,6 +118,6 @@
     owner: root
     group: root
     mode: 0400
-  when: fw_enable_ssh
+  when: packer_builder_type != 'docker' and fw_enable_ssh
 
 - include: rules.yml
