@@ -128,6 +128,10 @@ public abstract class ComputeServiceDriverBase
                 .findAny().orElse(null);
     }
 
+    @Override public boolean supportsPacker(AnsibleInstallType installType) {
+        return installType == AnsibleInstallType.sage || getConfig().getDeployment().isNginx();
+    }
+
     @Override public void addLaunchContext(Map<String, Object> ctx, String prefix) {
         ctx.putAll(toMap(getConfig().getDeployment(), prefix));
     }

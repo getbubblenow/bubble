@@ -7,7 +7,9 @@
     state: stopped
 
 - name: Create dhparam nginx conf
-  template: src=stronger_dhparams.conf dest=/etc/nginx/conf.d/stronger_dhparams.conf
+  template:
+    src: stronger_dhparams.conf
+    dest: /etc/nginx/conf.d/stronger_dhparams.conf
 
 - include: site.yml
 

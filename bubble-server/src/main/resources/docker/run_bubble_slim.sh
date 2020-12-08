@@ -15,7 +15,7 @@ if [[ ! -f ${BUBBLE_JAR} ]] ; then
   mv "$(find /bubble -type f -name bubble.jar)" ${BUBBLE_JAR} || (echo "Error moving bubble.jar into place" ; exit 1)
 fi
 
-/usr/bin/java \
+exec /usr/bin/java \
   -Dfile.encoding=UTF-8 -Djava.net.preferIPv4Stack=true -Dbubble.listenAll=true \
   -XX:+UseG1GC -XX:MaxGCPauseMillis=400 \
   -cp /bubble/bubble.jar \

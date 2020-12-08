@@ -207,6 +207,12 @@ public class StandardNetworkService implements NetworkService {
             final CloudService cloud = findServiceOrDelegate(cloudAndRegion.getCloud().getUuid());
             computeDriver = cloud.getComputeDriver(configuration);
 
+            final AnsibleInstallType installType = network.getInstallType();
+            if (!computeDriver.supportsPacker(installType)) {
+                progressMeter.error(METER_ERROR_INSTALL_TYPE_NOT_SUPPORTED);
+                return fatalLaunchFailure("newNode: computeDriver "+computeDriver.getClass().getSimpleName()+" does not support installType "+installType);
+            }
+
             final CloudService nodeCloud = cloudDAO.findByAccountAndName(network.getAccount(), cloud.getName());
             if (nodeCloud == null) {
                 progressMeter.error(METER_ERROR_NODE_CLOUD_NOT_FOUND);
@@ -221,7 +227,7 @@ public class StandardNetworkService implements NetworkService {
                     .setSslPort(network.getSslPort())
                     .setNetwork(network.getUuid())
                     .setDomain(network.getDomain())
-                    .setInstallType(network.getInstallType())
+                    .setInstallType(installType)
                     .setAccount(network.getAccount())
                     .setSizeType(network.getComputeSizeType())
                     .setSize(computeDriver.getSize(network.getComputeSizeType()).getInternalName())

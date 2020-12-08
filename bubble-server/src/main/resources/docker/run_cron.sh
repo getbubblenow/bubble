@@ -1,2 +1,2 @@
 #!/bin/bash
-cron -f
+exec cron -f

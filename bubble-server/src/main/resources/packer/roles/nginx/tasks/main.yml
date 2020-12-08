@@ -6,6 +6,7 @@
     name: [ 'openssl', 'nginx', 'software-properties-common' ]
     state: present
     update_cache: yes
+  when: enable_nginx
 
 - name: Enable Ubuntu universe repositories
   apt_repository:
@@ -15,24 +16,27 @@
     - "deb http://archive.ubuntu.com/ubuntu/ focal universe"
     - "deb http://archive.ubuntu.com/ubuntu/ focal-updates universe"
     - "deb http://security.ubuntu.com/ubuntu/ focal-security universe"
+  when: enable_nginx
 
 - name: Install certbot
   apt:
     name: [ 'certbot', 'python3-certbot-nginx' ]
     state: present
     update_cache: yes
+  when: enable_nginx
 
 - name: Ensure nginx can read cert files
   file:
     dest: /etc/letsencrypt
     group: www-data
     recurse: yes
+  when: enable_nginx
 
 - name: Ensure nginx is stopped
   service:
     name: nginx
     state: stopped
-  when: packer_builder_type != 'docker'
+  when: enable_nginx and packer_builder_type != 'docker'
 
 - name: Install helper scripts
   copy:
@@ -44,6 +48,7 @@
   with_items:
     - init_dhparams.sh
     - init_certbot.sh
+  when: enable_nginx
 
 # File in cron.weekly must NOT have a .sh extension, or crond will not run it
 - name: Install certbot_renew.sh weekly cron job
@@ -53,3 +58,10 @@
     owner: root
     group: root
     mode: 0755
+  when: enable_nginx
+
+- name: Install init_dhparams supervisor conf file
+  copy:
+    src: supervisor_init_dhparams.conf
+    dest: /etc/supervisor/conf.d/init_dhparams.conf
+  when: enable_nginx

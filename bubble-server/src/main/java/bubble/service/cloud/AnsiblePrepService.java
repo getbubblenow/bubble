@@ -154,8 +154,14 @@ public class AnsiblePrepService {
                         }
                         final boolean quote = value.contains(" ") && !value.trim().startsWith("[") && !value.trim().startsWith("{");
                         final String cfgValue = quote ? "\"" + value + "\"" : value;
-                        log.debug("prepAnsible["+roleName+"]: setting "+rawVal+" => "+cfgName+": "+cfgValue);
-                        w.write(cfgName +": "+ cfgValue +"\n");
+
+                        // config values cannot contain certain chars to avoid shell injection attacks
+                        if (cfgValue.contains(";") || cfgValue.contains("&") || cfgValue.contains("$") ) {
+                            errors.addViolation("err.role.config."+cfgName+".invalid", "Invalid character in config value for param "+cfgName+": "+cfgValue, cfgValue);
+                        } else {
+                            log.debug("prepAnsible[" + roleName + "]: setting " + rawVal + " => " + cfgName + ": " + cfgValue);
+                            w.write(cfgName + ": " + cfgValue + "\n");
+                        }
                     }
                 }
             }

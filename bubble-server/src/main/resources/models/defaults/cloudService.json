@@ -162,6 +162,7 @@
       "deployment": {
         "sudo": false,
         "hostname": false,
+        "nginx": false,
         "timezoneScript": true
       },
       "packer": {

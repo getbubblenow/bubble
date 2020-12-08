@@ -19,7 +19,6 @@ import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.MapBuilder;
 import org.cobbzilla.util.io.TempDir;
 
@@ -30,7 +29,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static bubble.service.packer.PackerJob.PACKER_IMAGE_PREFIX;
-import static com.github.dockerjava.api.model.InternetProtocol.UDP;
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.Integer.parseInt;
 import static java.util.Collections.emptyList;
@@ -41,8 +39,6 @@ import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
 import static org.cobbzilla.util.io.StreamUtil.stream2file;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.system.OsType.CURRENT_OS;
-import static org.cobbzilla.util.system.OsType.linux;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
 @Slf4j
@@ -59,16 +55,7 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
     public static final List<ComputeNodeSize> CLOUD_SIZES = singletonList(LOCAL_SIZE);
     public static final Map<String, ComputeNodeSize> NODE_SIZE_MAP = MapBuilder.build(LOCAL, LOCAL_SIZE);
 
-    public static final ExposedPort[] SAGE_EXPOSED_PORTS = {
-            new ExposedPort(22), new ExposedPort(80), new ExposedPort(443)
-    };
-    public static final ExposedPort[] NODE_EXPOSED_PORTS = ArrayUtil.append(SAGE_EXPOSED_PORTS,
-            new ExposedPort(1080), new ExposedPort(1443),
-            new ExposedPort(8888), new ExposedPort(9999),
-            new ExposedPort(53, UDP),
-            new ExposedPort(500, UDP), new ExposedPort(4500, UDP),
-            new ExposedPort(51820, UDP)
-    );
+    public static final ExposedPort[] SAGE_EXPOSED_PORTS = {new ExposedPort(22), new ExposedPort(8090)};
 
     @Override public Map<String, ComputeNodeSize> getSizesMap() { return NODE_SIZE_MAP; }
 
@@ -91,17 +78,15 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
     @Getter private final List<ComputeNodeSize> cloudSizes = CLOUD_SIZES;
     @Getter private final List<OsImage> cloudOsImages = CLOUD_OS_IMAGES;
 
-    @Override public boolean supportsPacker(AnsibleInstallType installType) {
-        boolean supported = installType == AnsibleInstallType.sage || CURRENT_OS == linux;
-        if (!supported) log.warn("supportsPacker: installType "+installType+" not supported (no images will be created) for platform: "+CURRENT_OS);
-        return supported;
-    }
-
     @Override public boolean supportsDns() { return false; }
 
     @Override public CloudRegion[] getRegions(PackerBuild packerBuild) { return CLOUD_REGIONS_ARRAY; }
 
     @Override public String getPackerImageId(String name, PackerBuild packerBuild) { return name; }
+
+    @Override public boolean supportsPacker(AnsibleInstallType installType) {
+        return installType == AnsibleInstallType.sage && super.supportsPacker(installType);
+    }
 
     private final Map<String, Map<Integer, Integer>> portMappings = new ConcurrentHashMap<>();
 
@@ -156,18 +141,11 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
 
     @Override public BubbleNode start(BubbleNode node) throws Exception {
 
-        final AnsibleInstallType installType = node.getInstallType();
-        if (!supportsPacker(installType)) {
-            return die("start("+node.id()+"): packer for "+installType+" not supported on "+CURRENT_OS);
-        }
-
-        final DockerClient dc = getDockerClient();
-
         final PackerImage packerImage = getOrCreatePackerImage(node);
-
+        final DockerClient dc = getDockerClient();
         final CreateContainerCmd ccr = dc.createContainerCmd(packerImage.getId())
                 .withCmd("/sbin/my_init")
-                .withExposedPorts(node.getInstallType() == AnsibleInstallType.sage ? SAGE_EXPOSED_PORTS : NODE_EXPOSED_PORTS)
+                .withExposedPorts(SAGE_EXPOSED_PORTS)
                 .withLabels(MapBuilder.build(new String[][] {
                         {LABEL_CLOUD, cloud.getUuid()},
                         {LABEL_NODE, node.getUuid()}
@@ -202,7 +180,14 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
                                 portMap.put(exp.getPort(), parseInt(b[0].getHostPortSpec()));
                             }
                             portMappings.put(node.getUuid(), portMap);
-                            return node.setState(BubbleNodeState.running).setIp4("127.0.0.1").setIp6("fd00::1");
+
+                            final Integer adminPort = portMap.get(8090);
+                            if (adminPort == null) return die("start("+node.id()+"): admin port mapping not found in port map: "+json(portMap));
+
+                            return node.setState(BubbleNodeState.running)
+                                    .setAdminPort(adminPort)
+                                    .setIp4(nodeDAO.randomLocalhostIp4())
+                                    .setFqdn(node.getIp4());
                         }
                     }
                 }

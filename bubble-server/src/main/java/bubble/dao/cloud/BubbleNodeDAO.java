@@ -11,6 +11,7 @@ import bubble.model.cloud.BubbleNodeState;
 import bubble.service.cloud.NetworkService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -19,6 +20,7 @@ import java.util.List;
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.ApiConstants.newNodeHostname;
 import static bubble.model.cloud.BubbleNodeState.running;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.hibernate.criterion.Restrictions.isNotNull;
@@ -109,5 +111,22 @@ public class BubbleNodeDAO extends AccountOwnedEntityDAO<BubbleNode> {
     public List<BubbleNode> findWithIp4() { return list(criteria().add(isNotNull("ip4"))); }
 
     public BubbleNode findByIp4(String ip4) { return isLocalIpv4(ip4) ? null : findByUniqueField("ip4", ip4); }
+
+    public String randomLocalhostIp4 () {
+        // first try a random number in the last slot
+        int x = RandomUtils.nextInt(1, 255);
+        String testIp = "127.0.0." + x;
+        if (findByIp4(testIp) == null) return testIp;
+
+        // keep trying random numbers, incrementing the other octets
+        for (int i=0; i<254; i++) {
+            for (int j=0; j<254; j++) {
+                x = RandomUtils.nextInt(1, 255);
+                testIp = "127."+i+"."+j+"."+x;
+                if (findByIp4(testIp) == null) return testIp;
+            }
+        }
+        return die("randomLocalhostIp4: ran out of tries!");
+    }
 
 }

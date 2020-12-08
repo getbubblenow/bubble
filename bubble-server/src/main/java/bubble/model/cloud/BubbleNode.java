@@ -101,8 +101,8 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     @JsonIgnore @Transient @Override public String getName() { return getFqdn(); }
 
     @ECSearchable(filter=true) @ECField(index=10)
-    @ECIndex(unique=true) @Column(nullable=false, updatable=false, length=1000)
-    @Getter private String fqdn;
+    @ECIndex(unique=true) @Column(nullable=false, length=1000)
+    @Getter private volatile String fqdn;
     public BubbleNode setFqdn (String fqdn) { this.fqdn = fqdn == null ? null : fqdn.toLowerCase(); return this; }
 
     @ECSearchable @ECField(index=20)
@@ -173,7 +173,7 @@ public class BubbleNode extends IdentifiableBase implements HasNetwork, HasBubbl
     @Getter @Setter private int costUnits;
 
     @Column(nullable=false)
-    @Getter @Setter private int adminPort = RandomUtils.nextInt(6000, 19000);
+    @Getter @Setter private volatile int adminPort = RandomUtils.nextInt(6000, 19000);
 
     @Column(nullable=false) @ECField(index=120)
     @Getter @Setter private Integer sslPort;

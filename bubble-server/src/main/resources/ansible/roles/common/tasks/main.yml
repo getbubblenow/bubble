@@ -10,8 +10,8 @@
   shell: timedatectl set-timezone {{ time_zone }} || echo "bubble_set_timezone_script was {{ bubble_set_timezone_script }}" >> /tmp/WTF.txt
   when: not bubble_set_timezone_script
 
-- name: Set system timezone via script
-  shell: bash -c "function set_tz () { TZ=${1:?no timezone} ; ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone ; } ; set_tz {{ time_zone }}"
+- name: Set system timezone via script - {{ time_zone }}
+  shell: bash -c "TZ={{ time_zone }} ; ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone"
   when: bubble_set_timezone_script
 
 - name: Set log flag to true with EX of 7 days for non-sage nodes

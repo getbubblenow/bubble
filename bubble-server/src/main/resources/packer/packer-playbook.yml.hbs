@@ -6,6 +6,7 @@
   become: yes
   vars:
     install_type: [[installType]]
+    enable_nginx: [[nginx]]
   roles:
 [[#each roles]]    - [[this]]
 [[/each]]
