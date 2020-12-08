@@ -27,6 +27,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.reflect.ReflectionUtil.toMap;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
 @Slf4j
@@ -125,6 +126,10 @@ public abstract class ComputeServiceDriverBase
         return getSizes().stream()
                 .filter(s -> s.getType() == type)
                 .findAny().orElse(null);
+    }
+
+    @Override public void addLaunchContext(Map<String, Object> ctx, String prefix) {
+        ctx.putAll(toMap(getConfig().getDeployment(), prefix));
     }
 
     public PackerImage getOrCreatePackerImage(BubbleNode node) {

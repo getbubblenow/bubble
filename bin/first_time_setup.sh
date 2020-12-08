@@ -38,7 +38,7 @@ fi
 git submodule update --init --recursive || die "Error in git submodule update"
 
 pushd utils/cobbzilla-parent || die "Error pushing utils/cobbzilla-parent directory"
-mvn install || die "Error installing cobbzilla-parent"
+mvn -q install || die "Error installing cobbzilla-parent"
 popd || die "Error popping back from utils/cobbzilla-parent"
 
 UTIL_REPOS="
@@ -49,20 +49,21 @@ cobbzilla-wizard
 abp-parser
 "
 pushd utils || die "Error pushing utils directory"
+MVN_QUIET="-q -DskipTests=true -Dcheckstyle.skip=true"
 for repo in ${UTIL_REPOS}; do
-  pushd "${repo}" && mvn -DskipTests=true -Dcheckstyle.skip=true clean install && popd || die "Error installing ${repo}"
+  pushd "${repo}" && mvn ${MVN_QUIET} clean install && popd || die "Error installing ${repo}"
 done
 popd || die "Error popping back from utils directory"
 
 if [[ -z "${BUBBLE_SETUP_MODE}" || "${BUBBLE_SETUP_MODE}" == "web" ]] ; then
-  INSTALL_WEB=web mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error building bubble jar"
+  INSTALL_WEB=web mvn ${MVN_QUIET} -Pproduction clean package || die "Error building bubble jar"
 
 elif [[ "${BUBBLE_SETUP_MODE}" == "debug" ]] ; then
-  DEBUG_BUILD=debug mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error building bubble jar"
+  DEBUG_BUILD=debug mvn ${MVN_QUIET} -Pproduction clean package || die "Error building bubble jar"
 
 elif [[ "${BUBBLE_SETUP_MODE}" == "production" ]] ; then
-  BUBBLE_PRODUCTION=1 mvn -DskipTests=true -Dcheckstyle.skip=true -Pproduction clean package || die "Error building bubble jar"
-  BUBBLE_PRODUCTION=1 mvn -DskipTests=true -Dcheckstyle.skip=true -Pproduction-full package || die "Error building bubble full jar"
+  BUBBLE_PRODUCTION=1 mvn ${MVN_QUIET} -Pproduction clean package || die "Error building bubble jar"
+  BUBBLE_PRODUCTION=1 mvn ${MVN_QUIET} -Pproduction-full package || die "Error building bubble full jar"
 
 else
   die "env var BUBBLE_SETUP_MODE was invalid: ${BUBBLE_SETUP_MODE}"

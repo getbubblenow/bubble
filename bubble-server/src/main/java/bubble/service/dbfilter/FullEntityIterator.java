@@ -21,18 +21,18 @@ import static org.cobbzilla.wizard.dao.AbstractCRUDDAO.ORDER_CTIME_ASC;
 @Slf4j
 public class FullEntityIterator extends EntityIterator {
 
-    private final BubbleConfiguration config;
+    private final BubbleConfiguration configuration;
     private final Account account;
     private final BubbleNetwork network;
     private final LaunchType launchType;
 
-    public FullEntityIterator (BubbleConfiguration config,
+    public FullEntityIterator (BubbleConfiguration configuration,
                                Account account,
                                BubbleNetwork network,
                                LaunchType launchType,
                                AtomicReference<Exception> error) {
-        super(error);
-        this.config = config;
+        super(error, configuration.paymentsEnabled());
+        this.configuration = configuration;
         this.network = network;
         this.account = account;
         this.launchType = launchType;
@@ -41,15 +41,15 @@ public class FullEntityIterator extends EntityIterator {
     protected void iterate() {
         final String prefix = "iterate(" + (network == null ? "no-network" : network.getUuid()) + "): ";
         try {
-            config.getEntityClasses()
-                    .forEach(c -> addEntities(true, c, config.getDaoForEntityClass(c).findAll(ORDER_CTIME_ASC),
+            configuration.getEntityClasses()
+                    .forEach(c -> addEntities(true, c, configuration.getDaoForEntityClass(c).findAll(ORDER_CTIME_ASC),
                             network, null, null));
             if (account != null && network != null && launchType != null && launchType == LaunchType.fork_node) {
                 // add an initial device so that algo starts properly the first time
                 // name and totp key will be overwritten when the device is initialized for use
                 log.info(prefix+"creating a single dummy device for algo to start properly");
                 final var initDevice = newUninitializedDevice(network.getUuid(), account.getUuid());
-                add(config.getBean(DeviceDAO.class).create(initDevice));
+                add(configuration.getBean(DeviceDAO.class).create(initDevice));
             }
             log.debug(prefix+"completed");
 

@@ -46,14 +46,16 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
 
     @Getter private final Thread thread;
     @Getter private final AtomicReference<Exception> error;
+    @Getter private final boolean paymentsEnabled;
     private List<BubbleApp> userApps;
     private final Map<CloudServiceType, CloudService> noopClouds = new HashMap<>();
 
     private final AtomicBoolean iterating = new AtomicBoolean(false);
     public boolean iterating () { return iterating.get(); }
 
-    public EntityIterator(AtomicReference<Exception> error) {
+    public EntityIterator(AtomicReference<Exception> error, boolean paymentsEnabled) {
         this.error = error;
+        this.paymentsEnabled = paymentsEnabled;
         this.thread = background(this::_iterate, "EntityIterator", this.error::set);
     }
 
@@ -184,7 +186,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
             // clear out payment information, set driver to noop
             final CloudService noopCloud = noopClouds.get(CloudServiceType.payment);
             if (noopCloud == null) {
-                die("addEntities: "+NOOP_CLOUD+" for payment cloud type not found");
+                if (paymentsEnabled) die("addEntities: "+NOOP_CLOUD+" for payment cloud type not found");
             } else {
                 entities.forEach(e -> {
                     final AccountPaymentMethod apm = (AccountPaymentMethod) e;

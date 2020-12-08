@@ -83,7 +83,6 @@ public class PackerJob implements Callable<List<PackerImage>> {
     public static final String IMAGE_REGIONS_VAR = "imageRegions";
     public static final String BUILDERS_VAR = "builders";
     public static final String POST_PROCESSOR_VAR = "postProcessor";
-    public static final String SUDO_VAR = "sudo";
     public static final String PACKER_PLAYBOOK_TEMPLATE = "packer-playbook.yml.hbs";
     public static final String PACKER_PLAYBOOK = "packer-playbook.yml";
     public static final String PACKER_BINARY = System.getProperty("user.home")+"/packer/packer";
@@ -290,7 +289,9 @@ public class PackerJob implements Callable<List<PackerImage>> {
             builderJsons.add(generateBuilder(packerConfig, ctx));
         }
         ctx.put(BUILDERS_VAR, builderJsons);
-        ctx.put(SUDO_VAR, packerConfig.sudo());
+
+        // allow compute driver to add config deployment context vars
+        computeDriver.addLaunchContext(ctx);
 
         if (packerConfig.hasPost()) ctx.put(POST_PROCESSOR_VAR, generatePostProcessor(packerConfig, ctx));
 

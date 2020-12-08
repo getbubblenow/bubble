@@ -45,18 +45,19 @@ cobbzilla-wizard
 abp-parser
 "
 pushd utils
+MVN_QUIET="-q -DskipTests=true -Dcheckstyle.skip=true"
 for repo in ${UTIL_REPOS} ; do
   if [[ ${FAST} -eq 1 ]] ; then
-    pushd ${repo} && mvn -DskipTests=true -Dcheckstyle.skip=true install && popd || die "Error installing ${repo}"
+    pushd ${repo} && mvn ${MVN_QUIET} install && popd || die "Error installing ${repo}"
   else
-    pushd ${repo} && mvn -DskipTests=true -Dcheckstyle.skip=true clean install && popd || die "Error installing ${repo}"
+    pushd ${repo} && mvn ${MVN_QUIET} clean install && popd || die "Error installing ${repo}"
   fi
 done
 popd
 
 if [[ ${FAST} -eq 1 ]] ; then
-  mvn -DskipTests=true -Dcheckstyle.skip=true clean package || die "Error building bubble jar"
+  mvn ${MVN_QUIET} clean package || die "Error building bubble jar"
 else
-  BUBBLE_PRODUCTION=1 mvn -DskipTests=true -Dcheckstyle.skip=true -Pproduction clean package || die "Error building bubble jar"
-  BUBBLE_PRODUCTION=1 mvn -DskipTests=true -Dcheckstyle.skip=true -Pproduction-full package || die "Error building bubble full jar"
+  BUBBLE_PRODUCTION=1 mvn ${MVN_QUIET} -Pproduction clean package || die "Error building bubble jar"
+  BUBBLE_PRODUCTION=1 mvn ${MVN_QUIET} -Pproduction-full package || die "Error building bubble full jar"
 fi

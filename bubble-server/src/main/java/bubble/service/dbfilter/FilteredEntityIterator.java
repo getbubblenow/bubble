@@ -62,7 +62,7 @@ public class FilteredEntityIterator extends EntityIterator {
                                   BubbleNode node,
                                   List<BubblePlanApp> planApps,
                                   AtomicReference<Exception> error) {
-        super(error);
+        super(error, configuration.paymentsEnabled());
         this.configuration = configuration;
         this.account = account;
         this.network = network;

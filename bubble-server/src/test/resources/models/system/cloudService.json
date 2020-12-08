@@ -126,9 +126,12 @@
       "regions": [{"name": "local", "internalName": "local"}],
       "sizes": [{"name": "local", "type": "local", "internalName": "local"}],
       "os": "phusion/baseimage:focal-1.0.0alpha1-amd64",
+      "deployment": {
+        "sudo": false,
+        "hostname": false
+      },
       "packer": {
         "vars": [],
-        "sudo": false,
         "builder": {
           "type": "docker",
           "image": "<<os.name>>",

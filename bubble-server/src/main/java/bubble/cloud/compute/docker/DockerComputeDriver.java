@@ -25,17 +25,14 @@ import org.cobbzilla.util.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static bubble.service.packer.PackerJob.PACKER_IMAGE_PREFIX;
 import static com.github.dockerjava.api.model.InternetProtocol.UDP;
 import static java.lang.Boolean.parseBoolean;
+import static java.lang.Integer.parseInt;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -63,7 +60,7 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
     public static final Map<String, ComputeNodeSize> NODE_SIZE_MAP = MapBuilder.build(LOCAL, LOCAL_SIZE);
 
     public static final ExposedPort[] SAGE_EXPOSED_PORTS = {
-            new ExposedPort(22), new ExposedPort(80), new ExposedPort(443), new ExposedPort(1202)
+            new ExposedPort(22), new ExposedPort(80), new ExposedPort(443)
     };
     public static final ExposedPort[] NODE_EXPOSED_PORTS = ArrayUtil.append(SAGE_EXPOSED_PORTS,
             new ExposedPort(1080), new ExposedPort(1443),
@@ -79,9 +76,9 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
 
     public static final String BASE_IMAGE = "phusion/baseimage:focal-1.0.0alpha1-amd64";
 
-    public static final List<OsImage> CLOUD_OS_IMAGES = Arrays.asList(new OsImage[]{
+    public static final List<OsImage> CLOUD_OS_IMAGES = singletonList(
             new OsImage().setName(BASE_IMAGE).setId(BASE_IMAGE).setRegion(LOCAL)
-    });
+    );
 
     public static final long START_TIMEOUT = SECONDS.toMillis(120);
     public static final String DEFAULT_HOST = "unix:///var/run/docker.sock";
@@ -106,10 +103,10 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
 
     @Override public String getPackerImageId(String name, PackerBuild packerBuild) { return name; }
 
-    private final Map<String, Map<Integer, Integer>> portMappings = new ConcurrentHashMap();
+    private final Map<String, Map<Integer, Integer>> portMappings = new ConcurrentHashMap<>();
 
     @Override public int getSshPort(BubbleNode node) {
-        return portMappings.get(node.getUuid()).get(1202);
+        return portMappings.get(node.getUuid()).get(22);
     }
 
     @Getter(lazy=true) private final DockerClient dockerClient = initDockerClient();
@@ -176,27 +173,43 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
                         {LABEL_NODE, node.getUuid()}
                 }))
                 .withHostConfig(HostConfig.newHostConfig()
+                        .withPublishAllPorts(true)
                         .withCapAdd(Capability.NET_ADMIN)
                         .withCapAdd(Capability.SYS_MODULE)
                         .withCapAdd(Capability.SYS_ADMIN));
         dc.startContainerCmd(ccr.exec().getId()).exec();
         final long start = now();
-        final Predicate<? super BubbleNode> nodeFilter = filterForNode(node);
-        while (listNodes().stream().noneMatch(nodeFilter)) {
-            if (now() - start > START_TIMEOUT) {
-                return die("start("+node.id()+"): timeout");
+        String containerId = null;
+        while (now() - start <= START_TIMEOUT) {
+            if (containerId == null) {
+                containerId = lookupContainer(node);
+            } else {
+                final InspectContainerResponse status = dc.inspectContainerCmd(containerId).exec();
+
+                final Boolean running = status.getState().getRunning();
+                if (running == null || !running) return die("start(" + node.id() + "): not found but not running");
+
+                final NetworkSettings networkSettings = status.getNetworkSettings();
+                if (networkSettings != null) {
+                    final Ports ports = networkSettings.getPorts();
+                    if (ports != null) {
+                        final Map<ExposedPort, Ports.Binding[]> bindings = ports.getBindings();
+                        if (bindings != null) {
+                            final Map<Integer, Integer> portMap = new HashMap<>();
+                            for (Map.Entry<ExposedPort, Ports.Binding[]> entry : bindings.entrySet()) {
+                                final ExposedPort exp = entry.getKey();
+                                final Ports.Binding[] b = entry.getValue();
+                                portMap.put(exp.getPort(), parseInt(b[0].getHostPortSpec()));
+                            }
+                            portMappings.put(node.getUuid(), portMap);
+                            return node.setState(BubbleNodeState.running).setIp4("127.0.0.1").setIp6("fd00::1");
+                        }
+                    }
+                }
             }
             sleep(SECONDS.toMillis(5), "waiting for docker container to be running");
         }
-        final String containerId = lookupContainer(node);
-        if (containerId == null) return die("start("+node.id()+"): not not found after starting");
-        final InspectContainerResponse status = dc.inspectContainerCmd(containerId).exec();
-
-        return node.setIp4("127.0.0.1").setIp6("fd00::1");
-    }
-
-    private Predicate<? super BubbleNode> filterForNode(BubbleNode node) {
-        return n -> n.isRunning() && n.getUuid().equals(node.getUuid());
+        return die("start("+node.id()+"): timeout");
     }
 
     private String lookupContainer(BubbleNode node) {
@@ -223,6 +236,7 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
             return node;
         }
         dc.stopContainerCmd(containerId).exec();
+        portMappings.remove(node.getUuid());
         return node;
     }
 

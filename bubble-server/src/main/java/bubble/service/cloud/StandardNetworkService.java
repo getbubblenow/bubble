@@ -331,7 +331,7 @@ public class StandardNetworkService implements NetworkService {
 
             log.info("newNode: running script:\n"+script);
             for (int i=0; i<MAX_ANSIBLE_TRIES; i++) {
-                sleep((i+1) * SECONDS.toMillis(5), "waiting to try ansible setup");
+                sleep((i+1) * SECONDS.toMillis(3), "waiting to try ansible setup");
                 // Use .uncloseable() because it the command fails due to connection timeout/refused,
                 // the output stream is closed; if a retry succeeds, there's no output to the progressMeter
                 final CommandResult result = ansibleSetup(script, progressMeter.uncloseable());

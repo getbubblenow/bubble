@@ -1,9 +1,10 @@
 - name: Install packages missing on docker ubuntu
   apt:
-    name: [ 'curl', 'nginx', 'cron', 'iptables', 'redis', 'postgresql', 'supervisor' ]
+    name: [ 'curl', 'rsync', 'nginx', 'cron', 'iptables', 'redis', 'postgresql', 'supervisor' ]
     state: present
     update_cache: yes
 
+# phusion daemon documentation: https://github.com/phusion/baseimage-docker#adding-additional-daemons
 - name: Ensure /service/ dirs exists
   file:
     path: "/service/{{ item }}"
@@ -58,3 +59,7 @@
     owner: root
     group: root
     mode: 0755
+
+# documented here: https://github.com/phusion/baseimage-docker#enabling-ssh
+- name: Enable sshd
+  shell: rm -f /etc/service/sshd/down

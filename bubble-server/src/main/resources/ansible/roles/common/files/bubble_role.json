@@ -1,6 +1,7 @@
 {
   "name": "common",
   "config": [
-    {"name": "hostname", "value": "[[node.fqdn]]"}
+    {"name": "hostname", "value": "[[node.fqdn]]"},
+    {"name": "bubble_set_hostname", "value": "[[bubble_deploy_hostname]]"}
   ]
 }

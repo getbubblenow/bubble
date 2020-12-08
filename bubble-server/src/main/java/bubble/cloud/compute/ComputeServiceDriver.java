@@ -69,4 +69,7 @@ public interface ComputeServiceDriver extends CloudServiceDriver, RegionalServic
 
     default void prepPackerDir(TempDir tempDir) {}
 
+    default void addLaunchContext(Map<String, Object> ctx) { addLaunchContext(ctx, ""); }
+    default void addLaunchContext(Map<String, Object> ctx, String prefix) {}
+
 }

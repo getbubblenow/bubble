@@ -94,6 +94,7 @@ public class AnsiblePrepService {
         ctx.put("publicBaseUri", network.getPublicUri());
         ctx.put("support", configuration.getSupport());
         ctx.put("appLinks", configuration.getAppLinks());
+        computeDriver.addLaunchContext(ctx, "bubble_deploy_");
 
         if (shouldEnableOpenApi(installType, nodeSize)) {
             ctx.put("openapi_contact_email", configuration.getOpenApi().getContactEmail());
@@ -114,14 +115,9 @@ public class AnsiblePrepService {
         ctx.put("testMode", !fork && configuration.testMode());
 
         // Determine which apps should be copied based on plan
-        final List<BubblePlanApp> planApps;
-        if (configuration.paymentsEnabled()) {
-            final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(account.getUuid(), network.getUuid());
-            if (accountPlan == null) return die("prepAnsible: no AccountPlan found for network: "+network.getUuid());
-            planApps = planAppDAO.findByPlan(accountPlan.getPlan());
-        } else {
-            planApps = null;
-        }
+        final AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(account.getUuid(), network.getUuid());
+        if (accountPlan == null) return die("prepAnsible: no AccountPlan found for network: "+network.getUuid());
+        final List<BubblePlanApp> planApps = planAppDAO.findByPlan(accountPlan.getPlan());
 
         // Copy database with new encryption key
         final String key = dbFilter.copyDatabase(fork, launchType, network, node, account, planApps, new File(bubbleFilesDir, "bubble.sql.gz"));

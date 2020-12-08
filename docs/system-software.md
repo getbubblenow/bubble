@@ -28,11 +28,11 @@ For Mac OS X systems, run:
 The important things to install:
   * Java 11
   * Maven 3
-  * PostgreSQL 12
+  * PostgreSQL 10+ (12+ preferred)
   * Redis
-  * Python 3
-  * Packer
-  * Required tools: curl, jq, uuid, sha256sum, openssl, ssh, scp, rsync, npm, webpack, unzip
+  * Python 3.8+
+  * Packer (try `bin/install_packer.sh` first, it might work fine)
+  * Required tools: curl, jq, uuid, sha256sum, openssl, ssh, scp, rsync, npm, webpack, zip, unzip
 
 Look at the `first_time_ubuntu.sh` script and ensure you've basically done all that it does,
 including creating PostgreSQL users/databases.

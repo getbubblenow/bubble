@@ -4,6 +4,7 @@
 - name: Set hostname to {{ hostname }}
   hostname:
     name: '{{ hostname }}'
+  when: bubble_set_hostname == 'true'
 
 - name: Set log flag to true with EX of 7 days for non-sage nodes
   shell: echo 'set bubble.StandardSelfNodeService.bubble_server_logs_enabled "true" EX 604800' | redis-cli

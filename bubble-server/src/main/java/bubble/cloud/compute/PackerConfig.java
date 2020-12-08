@@ -23,7 +23,4 @@ public class PackerConfig {
     @Getter @Setter private JsonNode post;
     public boolean hasPost () { return post != null; }
 
-    @Getter @Setter private Boolean sudo;
-    public boolean sudo () { return sudo == null || sudo; }
-
 }
