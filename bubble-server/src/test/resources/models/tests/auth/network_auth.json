@@ -5,8 +5,8 @@
     "params": {
       "username": "root@local.local",
       "userSession": "rootSession",
-      "contactInfo": "root@example.com",
-      "contactLookup": "root@example.com"
+      "contactInfo": "root@local.local",
+      "contactLookup": "root@local.local"
     }
   },
 

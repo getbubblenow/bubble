@@ -162,7 +162,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             if (existingNetwork != null) errors.addViolation("err.name.networkNameAlreadyExists");
         }
 
-        if (request.getLaunchType().fork()) {
+        if (request.hasLaunchType() && request.getLaunchType().fork()) {
             if (!configuration.isSageLauncher()) {
                 errors.addViolation("err.forkHost.notAllowed");
             } else {
