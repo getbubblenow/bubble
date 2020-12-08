@@ -9,5 +9,6 @@ public class ComputeDeploymentConfig {
 
     @Getter @Setter private boolean sudo = true;
     @Getter @Setter private boolean hostname = true;
+    @Getter @Setter private boolean timezoneScript = false;
 
 }

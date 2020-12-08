@@ -109,7 +109,7 @@ public class AccountDownloadService {
 
     @AllArgsConstructor
     private static class AccountDownloadRequest {
-        private Thread t;
-        private AtomicReference<Map<String, List<String>>> ref;
+        private final Thread t;
+        private final AtomicReference<Map<String, List<String>>> ref;
     }
 }

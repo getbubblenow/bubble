@@ -128,7 +128,8 @@
       "os": "phusion/baseimage:focal-1.0.0alpha1-amd64",
       "deployment": {
         "sudo": false,
-        "hostname": false
+        "hostname": false,
+        "timezoneScript": true
       },
       "packer": {
         "vars": [],

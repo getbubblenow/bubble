@@ -1,9 +1,6 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-- name: Set system timezone
-  shell: timedatectl set-timezone {{ time_zone }}
-
 - name: Install helper template scripts
   template:
     src: "{{ item.src }}"

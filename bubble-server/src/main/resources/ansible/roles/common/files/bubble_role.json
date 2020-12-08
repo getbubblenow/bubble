@@ -2,6 +2,8 @@
   "name": "common",
   "config": [
     {"name": "hostname", "value": "[[node.fqdn]]"},
-    {"name": "bubble_set_hostname", "value": "[[bubble_deploy_hostname]]"}
+    {"name": "time_zone", "value": "[[network.timezone]]"},
+    {"name": "bubble_set_hostname", "value": "[[bubble_deploy_hostname]]"},
+    {"name": "bubble_set_timezone_script", "value": "[[bubble_deploy_timezoneScript]]"}
   ]
 }

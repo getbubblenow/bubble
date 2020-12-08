@@ -29,15 +29,16 @@ import static org.cobbzilla.util.system.Sleep.sleep;
 @Accessors(chain=true) @Slf4j
 public class AccountDownloadCollector implements Runnable {
 
-    private BubbleConfiguration configuration;
-    private String accountUuid;
-    private String networkUuid;
-    private AtomicReference<Map<String, List<String>>> ref;
-    private String remoteHost;
+    private final BubbleConfiguration configuration;
+    private final String accountUuid;
+    private final String networkUuid;
+    private final AtomicReference<Map<String, List<String>>> ref;
+    private final String remoteHost;
+    private final AccountMessageDAO messageDAO;
+    private final boolean sendMessage;
+    private final AccountDownloadService downloadService;
+
     @Setter private Thread thread;
-    private AccountMessageDAO messageDAO;
-    private boolean sendMessage;
-    private AccountDownloadService downloadService;
 
     public AccountDownloadCollector(BubbleConfiguration configuration,
                                     String accountUuid,
@@ -60,6 +61,7 @@ public class AccountDownloadCollector implements Runnable {
         try {
             AbstractCRUDDAO.getRawMode().set(true);
             final Map<String, List<String>> data = new HashMap<>();
+            data.put("BUBBLE-VERSION", List.of(configuration.getShortVersion(), configuration.getVersion()));
             configuration.getEntityClasses().forEach(clazz -> collectEntities(data, clazz, configuration, accountUuid));
             ref.set(data);
             if (sendMessage) {

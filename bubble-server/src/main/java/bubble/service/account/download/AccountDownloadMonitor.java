@@ -25,13 +25,13 @@ import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
 @AllArgsConstructor @Slf4j
 public class AccountDownloadMonitor implements Runnable {
 
-    private AccountDownloadService downloadService;
-    private Thread t;
-    private AtomicReference<Map<String, List<String>>> ref;
-    private String accountUuid;
-    private String networkUuid;
-    private AccountMessageDAO messageDAO;
-    private String remoteHost;
+    private final AccountDownloadService downloadService;
+    private final Thread t;
+    private final AtomicReference<Map<String, List<String>>> ref;
+    private final String accountUuid;
+    private final String networkUuid;
+    private final AccountMessageDAO messageDAO;
+    private final String remoteHost;
 
     @Override public void run() {
         try {
