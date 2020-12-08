@@ -10,7 +10,6 @@ import bubble.model.cloud.CloudCredentials;
 import bubble.service.packer.PackerBuild;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -170,6 +169,7 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
         final PackerImage packerImage = getOrCreatePackerImage(node);
 
         final CreateContainerCmd ccr = dc.createContainerCmd(packerImage.getId())
+                .withCmd("/sbin/my_init")
                 .withExposedPorts(node.getInstallType() == AnsibleInstallType.sage ? SAGE_EXPOSED_PORTS : NODE_EXPOSED_PORTS)
                 .withLabels(MapBuilder.build(new String[][] {
                         {LABEL_CLOUD, cloud.getUuid()},
@@ -179,7 +179,7 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
                         .withCapAdd(Capability.NET_ADMIN)
                         .withCapAdd(Capability.SYS_MODULE)
                         .withCapAdd(Capability.SYS_ADMIN));
-        final CreateContainerResponse response = ccr.exec();
+        dc.startContainerCmd(ccr.exec().getId()).exec();
         final long start = now();
         final Predicate<? super BubbleNode> nodeFilter = filterForNode(node);
         while (listNodes().stream().noneMatch(nodeFilter)) {
