@@ -60,7 +60,7 @@ fi
 echo ">>> Found Bubble version ${VERSION}"
 
 echo ">>> Building docker bubble version ${VERSION} ..."
-BUBBLE_DOCKER="${BUBBLE_DIR}/docker/bubble.sh"
+BUBBLE_DOCKER="${BUBBLE_DIR}/bin/bdocker"
 ${BUBBLE_DOCKER} build "${VERSION}" || die "Error building docker image"
 
 ensure_docker_experimental_enabled

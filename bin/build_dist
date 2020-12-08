@@ -86,9 +86,18 @@ if [[ -n "${BUBBLE_DIST_HOME}" ]] ; then
   if [[ ${IS_DEV} -eq 0 ]] ; then
     cd ${BUBBLE_DIST_TOP} && rm -f latest && ln -sf ${BUBBLE_VERSION} latest
     echo "${BUBBLE_VERSION}" > latest.txt
-    cd ${BUBBLE_DIST_DIR} && ln -s "$(basename ${BUBBLE_DIST})" bubble.zip && ln -s "$(basename ${BUBBLE_DIST}).sha256" bubble.zip.sha256
-    cd ${BUBBLE_DIST_DIR} && ln -s "$(basename ${BUBBLE_JAR_DIST})" bubble.jar && ln -s "$(basename ${BUBBLE_JAR_DIST}).sha256" bubble.jar.sha256
-    cd ${BUBBLE_DIST_DIR} && ln -s "$(basename ${BUBBLE_FULL_JAR_DIST})" bubble-full.jar && ln -s "$(basename ${BUBBLE_FULL_JAR_DIST}).sha256" bubble-full.jar.sha256
+
+    cd ${BUBBLE_DIST_DIR} && rm -f bubble.zip* && \
+      ln -s "$(basename ${BUBBLE_DIST})" bubble.zip && \
+      ln -s "$(basename ${BUBBLE_DIST}).sha256" bubble.zip.sha256
+
+    cd ${BUBBLE_DIST_DIR} && rm -f bubble.jar* && \
+      ln -s "$(basename ${BUBBLE_JAR_DIST})" bubble.jar && \
+      ln -s "$(basename ${BUBBLE_JAR_DIST}).sha256" bubble.jar.sha256
+
+    cd ${BUBBLE_DIST_DIR} && rm -f bubble-full.jar* && \
+      ln -s "$(basename ${BUBBLE_FULL_JAR_DIST})" bubble-full.jar && \
+      ln -s "$(basename ${BUBBLE_FULL_JAR_DIST}).sha256" bubble-full.jar.sha256
   fi
   echo "Published release: ${BUBBLE_DIST}"
 fi
