@@ -19,6 +19,7 @@ import java.util.List;
 import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.ApiConstants.newNodeHostname;
 import static bubble.model.cloud.BubbleNodeState.running;
+import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.hibernate.criterion.Restrictions.isNotNull;
 
@@ -107,6 +108,6 @@ public class BubbleNodeDAO extends AccountOwnedEntityDAO<BubbleNode> {
 
     public List<BubbleNode> findWithIp4() { return list(criteria().add(isNotNull("ip4"))); }
 
-    public BubbleNode findByIp4(String ip4) { return findByUniqueField("ip4", ip4); }
+    public BubbleNode findByIp4(String ip4) { return isLocalIpv4(ip4) ? null : findByUniqueField("ip4", ip4); }
 
 }
