@@ -4,15 +4,15 @@
 - name: Set hostname to {{ hostname }}
   hostname:
     name: '{{ hostname }}'
-  when: bubble_set_hostname == 'true'
+  when: bubble_set_hostname
 
 - name: Set system timezone via timedatectl
-  shell: timedatectl set-timezone {{ time_zone }}
-  when: bubble_set_timezone_script != 'true'
+  shell: timedatectl set-timezone {{ time_zone }} || echo "bubble_set_timezone_script was {{ bubble_set_timezone_script }}" >> /tmp/WTF.txt
+  when: not bubble_set_timezone_script
 
 - name: Set system timezone via script
   shell: bash -c "function set_tz () { TZ=${1:?no timezone} ; ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone ; } ; set_tz {{ time_zone }}"
-  when: bubble_set_timezone_script == 'true'
+  when: bubble_set_timezone_script
 
 - name: Set log flag to true with EX of 7 days for non-sage nodes
   shell: echo 'set bubble.StandardSelfNodeService.bubble_server_logs_enabled "true" EX 604800' | redis-cli

@@ -2,6 +2,6 @@
 [program:mitm{{ port }}]
 stdout_logfile = /var/log/bubble/mitm{{ port }}-out.log
 stderr_logfile = /var/log/bubble/mitm{{ port }}-err.log
-command=sudo -H -u mitmproxy bash -c "/home/mitmproxy/mitmproxy/run_mitm.sh {{ port }}"
+command=su - mitmproxy bash -c "/home/mitmproxy/mitmproxy/run_mitm.sh {{ port }}"
 stopasgroup=true
 stopsignal=QUIT

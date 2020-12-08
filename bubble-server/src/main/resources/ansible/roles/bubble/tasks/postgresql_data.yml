@@ -12,4 +12,4 @@
     - "bubble.sql.gz"
 
 - name: Populate database
-  shell: sudo -H -u postgres bash -c "cd && full_reset_db.sh"
+  shell: su - postgres bash -c "full_reset_db.sh"

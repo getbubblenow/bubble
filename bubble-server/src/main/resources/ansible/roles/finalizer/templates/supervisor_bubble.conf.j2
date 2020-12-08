@@ -5,7 +5,7 @@ stderr_logfile = /var/log/bubble/api-server-err.log
 command=bash -c 'chmod 0666 /dev/null && \
   rm -rf /var/log/bubble/postgresql/* && \
   service postgresql restart && \
-  sudo -u bubble bash -c "/usr/bin/java \
+  su - bubble bash -c "/usr/bin/java \
     -Dfile.encoding=UTF-8 -Djava.net.preferIPv4Stack=true \
     -XX:+UseG1GC -XX:MaxGCPauseMillis=400 {{ bubble_java_opts }} \
     -cp /home/bubble/api/bubble.jar \

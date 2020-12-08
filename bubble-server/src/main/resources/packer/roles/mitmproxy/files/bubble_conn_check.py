@@ -89,11 +89,11 @@ def show_block_stats(client_addr, fqdns):
         for fqdn in fqdns:
             show = REDIS.get(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS+client_addr+':'+fqdn)
             if show is not None:
-                return show.decode() == 'true'
+                return show.decode().lower() == 'true'
     show = REDIS.get(REDIS_KEY_DEVICE_SHOW_BLOCK_STATS+client_addr)
     if show is None:
         return False
-    return show.decode() == 'true'
+    return show.decode().lower() == 'true'
 
 
 def conn_check_cache_prefix(client_addr, server_addr):
