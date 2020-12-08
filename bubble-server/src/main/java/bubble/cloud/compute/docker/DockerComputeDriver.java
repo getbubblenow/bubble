@@ -122,10 +122,10 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
                 .withDockerHost(host)
                 .withDockerTlsVerify(tlsVerify)
                 .withDockerCertPath(certPath)
-                .withRegistryUsername(creds.getParam("registryUsername"))
-                .withRegistryPassword(creds.getParam("registryPassword"))
-                .withRegistryEmail(creds.getParam("registryEmail"))
                 .withRegistryUrl(creds.getParam("registryUrl"))
+                .withRegistryUsername(creds.getParam("registryUsername"))
+                .withRegistryEmail(creds.getParam("registryEmail"))
+                .withRegistryPassword(creds.getParam("registryPassword"))
                 .build();
 
         final DockerHttpClient client = new ZerodepDockerHttpClient.Builder()

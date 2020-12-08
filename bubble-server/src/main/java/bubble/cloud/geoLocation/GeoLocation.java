@@ -23,6 +23,14 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 @NoArgsConstructor @Accessors(chain=true) @ToString(of={"lat", "lon"}) @OpenApiSchema
 public class GeoLocation {
 
+    public static final GeoLocation GEO_NEW_YORK = new GeoLocation().setLat("40.661").setLon("-73.944");
+    public static final GeoLocation GEO_SINGAPORE = new GeoLocation().setLat("1.283333").setLon("103.833333");
+    public static final GeoLocation GEO_LONDON = new GeoLocation().setLat("51.507222").setLon("-0.1275");
+    public static final GeoLocation GEO_ATLANTA = new GeoLocation().setLat("33.755").setLon("-84.39");
+    public static final GeoLocation GEO_CHICAGO = new GeoLocation().setLat("41.881944").setLon("-87.627778");
+
+    public static final GeoLocation DEFAULT_GEO_LOCATION = GEO_ATLANTA;
+
     public static final GeoLocation NULL_LOCATION = new GeoLocation().setLat("-1.0").setLon("-1.0");
     public static final double INVALID_LOCATION = -1.0;
 

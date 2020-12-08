@@ -13,16 +13,12 @@ import org.junit.Test;
 
 import java.util.*;
 
+import static bubble.cloud.geoLocation.GeoLocation.*;
 import static org.junit.Assert.assertEquals;
 
 public class FlexRouterProximityComparatorTest {
 
     public static final GeoLocation GEO_NULL = new GeoLocation().setLat(null).setLon(null);
-    public static final GeoLocation GEO_NEW_YORK = new GeoLocation().setLat("40.661").setLon("-73.944");
-    public static final GeoLocation GEO_SINGAPORE = new GeoLocation().setLat("1.283333").setLon("103.833333");
-    public static final GeoLocation GEO_LONDON = new GeoLocation().setLat("51.507222").setLon("-0.1275");
-    public static final GeoLocation GEO_ATLANTA = new GeoLocation().setLat("33.755").setLon("-84.39");
-    public static final GeoLocation GEO_CHICAGO = new GeoLocation().setLat("41.881944").setLon("-87.627778");
 
     private static FlexRouter router(int port) {
         return new FlexRouter().setPort(port).setIp("127.0.0."+port);

@@ -16,8 +16,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static bubble.cloud.geoLocation.GeoLocation.INVALID_LOCATION;
-import static bubble.cloud.geoLocation.GeoLocation.NULL_LOCATION;
+import static bubble.cloud.geoLocation.GeoLocation.*;
 import static java.util.Comparator.comparingDouble;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 
@@ -75,7 +74,7 @@ public interface RegionalServiceDriver {
                     if (latLonIsValid && latitude >= 0 && longitude >= 0) {
                         r.setDistance(latitude, longitude);
                     } else {
-                        r.setDistance(0);
+                        r.setDistance(DEFAULT_GEO_LOCATION.getLatitude(), DEFAULT_GEO_LOCATION.getLongitude());
                     }
                     allRegions.add(r);
                 }
