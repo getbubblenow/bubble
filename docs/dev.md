@@ -28,6 +28,6 @@ Would you like more guidance on starting the [Local Launcher](local-launcher.md)
 If all you want to do is launch your own Bubble, starting with
 the [Bubble Docker Launcher](docker-launcher.md) is probably faster and easier.
 
-Or perhaps you are interested interacting with Bubble programmatically? Explore the
+Or perhaps you want to interact with Bubble programmatically? Explore the
 [Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md) and
 [Bubble API Reference](https://app.getbubblenow.com/apidocs/).
