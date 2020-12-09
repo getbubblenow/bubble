@@ -5,46 +5,27 @@ This guide is intended for developers who would like to work directly with the B
 For API-level details, see the [Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md)
 and the [Bubble API Reference](https://app.getbubblenow.com/apidocs/)
 
-# Development Setup
-These instructions presume you are running a newly setup Ubuntu 20.04 or Mac OS X system.
-
-For Ubuntu, either the Server or Desktop distribution will work.
-
-Other Debian-based systems will probably also work fine.
-
-See below for other Linux distributions and other operating systems.
-
-## One-Time System Setup
-You'll need to install some software for Bubble to work correctly.
-
-Follow the instructions in [System Software Setup](system-software.md) to install the required software. 
-
-## First-Time Dev Setup
-After running the system setup above, run:
-```shell script
-./bin/first_time_setup.sh
-```
-
-This will grab all the submodules and perform an initial build of all components.
-
-This will take a while to complete, please be patient.
-
-## Bubble environment file
-You will need a file named `${HOME}/.bubble.env` which contains various environment variables
-required to run the server. At the least, it should contain:
-```shell script
-export LETSENCRYPT_EMAIL=user@example.com
-```
-
-This defines what email address is used with LetsEncrypt when creating new SSL certificates.
-
-If you will be running any tests, create a symlink called `${HOME}/.bubble-test.env`
+# Vagrant Setup
+The easiest way to get started with Bubble is to install [Vagrant](https://www.vagrantup.com/) and use
+the Bubble [Vagrantfile](../Vagrantfile):
 
 ```shell script
-cd ${HOME} && ln -s .bubble.env .bubble-test.env
+vagrant up
 ```
 
-The `.bubble-test.env` file is used by the test suite.
+This will take a long time to complete. When it is done, you'll have a Vagrant box with
+the Bubble source code and all dependencies fully built and ready to run a local launcher.
+
+When your Vagrant box is ready, you can login to it and start the local launcher:
+
+```shell script
+vagrant ssh
+./bubble/bin/run.sh
+```
+
+# Manual Development Setup
+If you'd prefer not to use Vagrant or want to build things locally, follow
+the [Bubble Manual Development Setup](dev_manual.md) instructions.
 
 ## Subsequent Updates
 If you want to grab the latest code, and ensure that all git submodules are properly in sync with the main repository, run:
