@@ -22,8 +22,8 @@ to activate your Bubble Launcher.
 If you installed Bubble from a [binary distribution](run-binary.md) or built it [from source](dev.md),
 you can also perform activation using the Bubble command line tools.
 
-Make a copy of the file [config/activation.json](https://git.bubblev.org/bubblev/bubble/raw/branch/master/config/activation.json)
-and edit the copy. There are comments in the file to guide you.
+Make a copy of the [config/activation.json](https://git.bubblev.org/bubblev/bubble/raw/branch/master/config/activation.json)
+file and edit the copy. There are comments in the file to guide you.
 
 To activate your Local Launcher Bubble, run this command:
 
