@@ -4,7 +4,7 @@ Bubble Vagrant Developer Setup
 like VirtualBox and VMware.
 
 # Requirements
-Before starting a Vagrant box, you'll need install some software if you don't already have it:
+Before starting a Bubble Vagrant box, you'll need install some software if you don't already have it:
 
  * [VirtualBox](https://www.virtualbox.org/)
  * [Vagrant](https://www.vagrantup.com/)
