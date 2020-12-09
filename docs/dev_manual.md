@@ -30,7 +30,8 @@ required to run the server. At the least, it should contain:
 export LETSENCRYPT_EMAIL=user@example.com
 ```
 
-This defines what email address is used with LetsEncrypt when creating new SSL certificates.
+This defines what email address is used with [LetsEncrypt](https://letsencrypt.org/)
+when creating new SSL certificates.
 
 If you will be running any tests, create a symlink called `${HOME}/.bubble-test.env`
 

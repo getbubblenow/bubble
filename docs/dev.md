@@ -9,23 +9,6 @@ and the [Bubble API Reference](https://app.getbubblenow.com/apidocs/)
 The easiest way to get started with Bubble is to install [Vagrant](https://www.vagrantup.com/) and use
 the Bubble [Vagrantfile](../Vagrantfile).
 
-There are a few environment variables you can use to configure how the Vagrant box is initialized.
-Read the Bubble [Vagrantfile](../Vagrantfile) to find out more about these settings.
-
-```shell script
-vagrant up
-```
-
-This will take a long time to complete. When it is done, you'll have a Vagrant box with
-the Bubble source code and all dependencies fully built and ready to run a local launcher.
-
-When your Vagrant box is ready, you can login to it and start the local launcher:
-
-```shell script
-vagrant ssh
-./bubble/bin/run.sh
-```
-
 # Manual Development Setup
 If you'd prefer not to use Vagrant or want to build things locally, follow
 the [Bubble Manual Development Setup](dev_manual.md) instructions.
