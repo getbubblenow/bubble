@@ -17,7 +17,7 @@ Do you have anything already listening on port 8090? If so, set the `BUBBLE_PORT
 variable to some free port where the Bubble API can listen. Otherwise, it defaults to 8090.
 
 ## Local Launcher and SSL Certificates
-Do you want to use this setup as a local launcher to start new Bubbles? If so, define
+Do you want to use this setup as a local launcher to start new Bubbles? If so, set
 the `LETSENCRYPT_EMAIL` environment variable to an email address that will be registered with
 [LetsEncrypt](https://letsencrypt.org/) when your Bubbles need to install SSL certificates.
 
