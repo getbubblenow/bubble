@@ -4,6 +4,9 @@
 #
 # Run bubble launcher in a docker container. Works on Linux or Mac OS.
 #
+# Does not require root privileges if you already have Docker installed and your
+# user account has permissions to pull docker images and run docker containers.
+#
 # Intended to be "run from anywhere" like this:
 #
 #   /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/launcher)"
