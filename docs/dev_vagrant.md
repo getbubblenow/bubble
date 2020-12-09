@@ -68,9 +68,11 @@ vagrant ssh
 ```
 
 ## Developing
-You can develop directly on the source files in the `${HOME}/bubble` folder, and
-recompile and build things there, OR you can develop locally on the host and periodically
-synchronize your source and/or build assets to the Vagrant box.
+You can develop directly on the Vagrant box by editing the source files in `${HOME}/bubble`, then
+building and running from there.
+
+Alternatively, you can develop locally on the host and periodically synchronize your source
+and/or build assets to the Vagrant box, where you then (maybe build and) run the Bubble API.
 
 The `/vagrant` directory on the Vagrant guest box is a shared folder. On the host side, it 
 is the directory that the `Vagrantfile` is in (the top-level of the bubble repository).
