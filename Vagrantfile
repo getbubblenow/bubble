@@ -9,6 +9,11 @@
 # dependencies, and build all the code and website. You'll be ready to run a local
 # launcher or do dev work on the Bubble codebase.
 #
+# After a box is launched, use `vagrant ssh` to log in.
+#   - the code is in ${HOME}/bubble
+#   - API environment file is ${HOME}/.bubble.env
+#   - start the API server (local launcher) with `run.sh`
+#
 # There are a few environment variables that determine how the box is initialized,
 # described below.
 #
@@ -85,6 +90,25 @@ Vagrant.configure("2") do |config|
 
          # Create env file symlink for running tests
          cd ~ && ln -s .bubble.env .bubble-test.env
+
+         # Done!
+         echo "
+         ==================================================================
+         Bubble Vagrant Setup Complete
+         ==================================================================
+
+         Log in to this box using:
+
+           vagrant ssh
+
+         Once logged in:
+          - the code is in ${HOME}/bubble
+          - API environment file is ${HOME}/.bubble.env
+          - start the API server (local launcher) with `run.sh`
+
+         Enjoy!
+         ==================================================================
+         "
       SHELL
     end
 end
