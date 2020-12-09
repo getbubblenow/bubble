@@ -104,7 +104,7 @@ Vagrant.configure("2") do |config|
          Once logged in:
           - the code is in ${HOME}/bubble
           - API environment file is ${HOME}/.bubble.env
-          - start the API server (local launcher) with `run.sh`
+          - start the API server (local launcher) with \`run.sh\`
 
          Enjoy!
          ==================================================================
