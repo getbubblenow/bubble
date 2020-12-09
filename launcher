@@ -161,9 +161,9 @@ function run_launcher() {
   if [[ -z "$(which docker)" ]]; then
     setup_docker
     if [[ -z "$(which docker)" ]]; then
-      die "Error installing docker
+      die "***** Error installing docker
 Install docker manually from https://docs.docker.com/engine/install/
-Then re-run this script
+Then re-run this script.
 "
     fi
   fi
@@ -181,7 +181,9 @@ Then re-run this script
   if [[ "${CALLER}" == "root" ]] ; then
     docker pull "${DOCKER_TAG}" || die "Error pulling docker image: ${DOCKER_TAG}"
   else
-    sudo su - "${CALLER}" -c "docker pull ${DOCKER_TAG}" || die "Error pulling docker image: ${DOCKER_TAG}"
+    docker pull "${DOCKER_TAG}" || \
+      echo "***** error running 'docker pull' as ${CALLER}, trying via sudo ..." && \
+      sudo su - "${CALLER}" -c "docker pull ${DOCKER_TAG}" || die "Error pulling docker image: ${DOCKER_TAG}"
   fi
 
   # Determine email for LetsEncrypt certs
@@ -203,10 +205,15 @@ Then re-run this script
       -e LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL}" \
       -t "${DOCKER_TAG}"
   else
-    sudo su - "${CALLER}" -c "docker run \
+    docker run \
       -p ${BUBBLE_PORT}:${BUBBLE_PORT} \
-      -e LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL} \
-      -t ${DOCKER_TAG}"
+      -e LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL}" \
+      -t "${DOCKER_TAG}" || \
+      echo "***** error running 'docker run' as ${CALLER}, trying via sudo ..." && \
+      sudo su - "${CALLER}" -c "docker run \
+        -p ${BUBBLE_PORT}:${BUBBLE_PORT} \
+        -e LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL} \
+        -t ${DOCKER_TAG}"
   fi
 }
 
