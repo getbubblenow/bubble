@@ -7,7 +7,10 @@ and the [Bubble API Reference](https://app.getbubblenow.com/apidocs/)
 
 # Vagrant Setup
 The easiest way to get started with Bubble is to install [Vagrant](https://www.vagrantup.com/) and use
-the Bubble [Vagrantfile](../Vagrantfile):
+the Bubble [Vagrantfile](../Vagrantfile).
+
+There are a few environment variables you can use to configure how the Vagrant box is initialized.
+Read the Bubble [Vagrantfile](../Vagrantfile) to find out more about these settings.
 
 ```shell script
 vagrant up
