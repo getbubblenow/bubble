@@ -50,7 +50,8 @@ if [[ -n "${BUBBLE_PRODUCTION}" || ( -n "${INSTALL_WEB}" && "${INSTALL_WEB}" == 
   else
     WEBPACK_OPTIONS=""
   fi
-  cd "${BUBBLE_WEB}" && npm install && rm -rf dist/ && webpack "${WEBPACK_OPTIONS}" || die "Error building bubble-web"
+  # Try webpack twice
+  cd "${BUBBLE_WEB}" && npm install && rm -rf dist/ && webpack "${WEBPACK_OPTIONS}" || webpack "${WEBPACK_OPTIONS}" || die "Error building bubble-web"
   cp -R "${BUBBLE_WEB}/dist"/* "${CLASSES_DIR}/site"/ || die "Error copying ${BUBBLE_WEB}/dist/* -> ${CLASSES_DIR}/site/"
   cd "${CLASSES_DIR}" && zip -u -r "${BUBBLE_JAR}" site || die "Error updating ${BUBBLE_JAR} with site"
   echo "Installed bubble-web to ${CLASSES_DIR}/site/"
