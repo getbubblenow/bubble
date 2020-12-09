@@ -15,7 +15,7 @@ the [Bubble Manual Development Setup](dev_manual.md) instructions.
 # Development Tasks
 Whether you choose to use Vagrant or set things up manually,
 read [Bubble Developer Tasks](dev_tasks.md) to understand how to keep the code
-up to date, run the API server, and reset the database.
+up to date, run the API server, rebuild the jar, and more.
 
 ## Next
 What to do next depends on what you want to do with Bubble.
