@@ -16,8 +16,8 @@
 #  prop-name : a property name
 #
 SCRIPT="${0}"
-SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
-. ${SCRIPT_DIR}/bubble_common
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
+. "${SCRIPT_DIR}"/bubble_common
 
-ARG=${1:?no property provided}
+ARG="${1:?no property provided}"
 jq -r 'getpath(path(.. | select(.'"${ARG}"' != null))) | .'"${ARG}"'' 2> /dev/null

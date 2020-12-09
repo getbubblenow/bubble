@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.TreeSet;
 
 import static org.cobbzilla.util.collection.ArrayUtil.shift;
+import static org.cobbzilla.util.main.BaseMainOptions.LONGOPT_HELP;
+import static org.cobbzilla.util.main.BaseMainOptions.OPT_HELP;
 
 public class BubbleMain {
 
@@ -43,7 +45,11 @@ public class BubbleMain {
 
     public static void main(String[] args) throws Exception {
 
-        if (args.length == 0) die(noCommandProvided());
+        if (args.length == 0 || (
+                args.length == 1 && ( args[0].equals(OPT_HELP) || args[0].equals(LONGOPT_HELP) )
+        )) {
+            die(noCommandProvided());
+        }
 
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();

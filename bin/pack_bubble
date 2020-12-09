@@ -13,8 +13,8 @@
 #   cloud CloudName  : only pack for CloudName compute cloud, do not pack for all clouds
 #
 SCRIPT="${0}"
-SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
-. ${SCRIPT_DIR}/bubble_common
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
+. "${SCRIPT_DIR}"/bubble_common
 
 if [[ -z "${1}" ]] ; then
   IMAGES="node sage"

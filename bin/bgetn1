@@ -20,8 +20,8 @@
 #                      bubble repo, bubble-models repo, or bubble-client and use include files from minimal model.
 #
 SCRIPT="${0}"
-SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
-. ${SCRIPT_DIR}/bubble_common
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
+. "${SCRIPT_DIR}"/bubble_common
 
 URL="${1:?no URL provided}"
 shift

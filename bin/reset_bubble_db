@@ -10,7 +10,7 @@
 #
 SCRIPT="${0}"
 SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
-. "${SCRIPT_DIR}/bubble_common"
+. "${SCRIPT_DIR}"/bubble_common
 
 DEBUG=${1}
 if [[ -n "${DEBUG}" && "${DEBUG}" == "debug" ]] ; then

@@ -36,8 +36,8 @@
 # If you pass the 'completed' argument, only the map of cloud->image[] will be printed
 #
 SCRIPT="${0}"
-SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
-. ${SCRIPT_DIR}/bubble_common
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
+. "${SCRIPT_DIR}"/bubble_common
 
 if [[ -z "${1}" ]] ; then
   bget me/packer

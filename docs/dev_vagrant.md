@@ -38,8 +38,10 @@ LETSENCRYPT_EMAIL=someone@example.com BUBBLE_PORT=8080 vagrant up
 ```
 
 The first time `vagrant up` runs it will take a long time to complete, since it needs to
-download and build a lot of stuff. For future runs of `vagrant up`, startup times will be
-much faster.
+download and build a lot of stuff. Depending on the speed of your computer and internet,
+it could take anywhere from 5 to 20 or more minutes.
+
+For future runs of `vagrant up`, startup times will be much faster.
 
 When the command completes, you'll have a Vagrant box with the Bubble source code and all
 dependencies fully built and ready to run a local launcher.
@@ -94,5 +96,8 @@ rsync -avzc /vagrant/* /vagrant/.* ${HOME}/bubble/
 ```
 
 ## What's Next
-Continue reading the [Bubble Developer Guide](dev.md) for information
-on how to update the source code, reset the database, and more.
+Read [Bubble Developer Tasks](dev_tasks.md) to understand how to keep the code
+up to date, run the API server, rebuild the jar, and more.
+
+If you've started the Bubble API already using `run.sh`, and want to launch a Bubble,
+continue with [activation](activation.md).

@@ -21,10 +21,10 @@
 #                      bubble repo, bubble-models repo, or bubble-client and use include files from minimal model.
 #
 SCRIPT="${0}"
-SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
-. ${SCRIPT_DIR}/bubble_common
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
+. "${SCRIPT_DIR}"/bubble_common
 
-BUBBLE_SERVER=$(cd $(dirname ${0})/.. && pwd)
+BUBBLE_SERVER="$(cd "$(dirname "${0}")"/.. && pwd)"
 
 CANDIDATE_INCLUDES="
 ${BUBBLE_SERVER}/src/test/resources/models/minimal/tests

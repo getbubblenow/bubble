@@ -8,7 +8,7 @@
 #
 SCRIPT="${0}"
 SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
-. "${SCRIPT_DIR}/bubble_common"
+. "${SCRIPT_DIR}"/bubble_common
 
 SELF_NODE_JSON="${HOME}/self_node.json"
 BUBBLE_VERSIONS_FILE="${HOME}/bubble_versions.properties"

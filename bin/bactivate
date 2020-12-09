@@ -16,12 +16,12 @@
 #   BUBBLE_PASS    : password for account. Default is password
 #
 SCRIPT="${0}"
-SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
-. ${SCRIPT_DIR}/bubble_common
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
+. "${SCRIPT_DIR}"/bubble_common
 
 if [[ -z "${BUBBLE_JAR}" ]] ; then
   die "BUBBLE_JAR env var not set and no jar file found"
 fi
 
 ACTIVATION_JSON="${1:?no activation json file provided}"
-${SCRIPT_DIR}/bput <"${ACTIVATION_JSON}" auth/activate - --no-login
+"${SCRIPT_DIR}"/bput <"${ACTIVATION_JSON}" auth/activate - --no-login

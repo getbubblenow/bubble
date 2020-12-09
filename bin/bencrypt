@@ -5,8 +5,8 @@
 # Encrypt data using the Bubble database's encryption key
 #
 SCRIPT="${0}"
-SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
-. ${SCRIPT_DIR}/bubble_common
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
+. "${SCRIPT_DIR}"/bubble_common
 
 if [[ -z "${BUBBLE_DB_ENCRYPTION_KEY}" ]] ; then
   if [[ -f "${HOME}/.BUBBLE_DB_ENCRYPTION_KEY" ]] ; then

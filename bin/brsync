@@ -9,16 +9,13 @@
 #
 #    BUBBLE_SSH_PORT  : If set, this port will be used instead of 1202
 #
+SCRIPT="${0}"
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
+. "${SCRIPT_DIR}"/bubble_common
 
 if [[ -z "${BUBBLE_SSH_PORT}" ]] ; then
   BUBBLE_SSH_PORT="1202"
 fi
-
-function die() {
-  echo 1>&2 "${1}"
-  exit 1
-}
-
 
 if [[ $(echo "${@}" | grep -c -- "-e ") -gt 0 || $(echo "${@}" | grep -c -- "--rsh") -gt 0 ]] ; then
   die "$0 does not work correctly when -e or --rsh is used, since it sets its own: ${@}"

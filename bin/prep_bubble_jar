@@ -21,7 +21,7 @@
 #
 SCRIPT="${0}"
 SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
-. "${SCRIPT_DIR}/bubble_common"
+. "${SCRIPT_DIR}"/bubble_common
 
 if [[ -n "${DEBUG_BUILD}" && "${DEBUG_BUILD}" == "debug" ]] ; then
   echo "DEBUG_BUILD is set, not doing anything further"

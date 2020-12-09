@@ -17,16 +17,16 @@
 #   BUBBLE_PASS    : password for account. Default is password
 #
 SCRIPT="${0}"
-SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
 
-REQUIRE_BUBBLE_USER=1
-REQUIRE_BUBBLE_PASS=1
-. ${SCRIPT_DIR}/bubble_common
+export REQUIRE_BUBBLE_USER=1
+export REQUIRE_BUBBLE_PASS=1
+. "${SCRIPT_DIR}"/bubble_common
 
 if [[ -z "${BUBBLE_API}" ]] ; then
   die "No BUBBLE_API env var defined"
 fi
-UNLOCK_KEY=${1:?no unlock-key provided}
+UNLOCK_KEY="${1:?no unlock-key provided}"
 
 echo "{\"name\":\"${BUBBLE_USER}\",\"password\":\"${BUBBLE_PASS}\"}" | \
-  ${SCRIPT_DIR}/bpost 'auth/login?k='"${UNLOCK_KEY}"'' - --no-login
+  "${SCRIPT_DIR}"/bpost 'auth/login?k='"${UNLOCK_KEY}"'' - --no-login

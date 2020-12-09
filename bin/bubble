@@ -24,8 +24,8 @@
 #   BUBBLE_SCRIPTS : location of run.sh script. Default is to assume it is in the same directory containing this script
 #
 SCRIPT="${0}"
-SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
-. ${SCRIPT_DIR}/bubble_common
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
+. "${SCRIPT_DIR}"/bubble_common
 
 function is_api_command {
   case "${1}" in

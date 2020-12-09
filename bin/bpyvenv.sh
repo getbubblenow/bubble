@@ -9,14 +9,14 @@ function die {
   exit 1
 }
 
-BUBBLE_HOME="$(cd $(dirname ${0})/.. && pwd)"
+BUBBLE_HOME="$(cd "$(dirname "${0}")"/.. && pwd)"
 
-cd ${BUBBLE_HOME} || die "Error changing to ${BUBBLE_HOME} dir"
+cd "${BUBBLE_HOME}" || die "Error changing to ${BUBBLE_HOME} dir"
 
 if [[ ! -d "${BUBBLE_HOME}/.venv" ]] ; then
   python3 -m venv ./.venv || die "Error creating venv"
 fi
-. ${BUBBLE_HOME}/.venv/bin/activate || die "Error activating bubble venv"
+. "${BUBBLE_HOME}"/.venv/bin/activate || die "Error activating bubble venv"
 python3 -m pip install requests || die "Error installing pip packages"
 
 if [[ -n "${1}" ]] ; then

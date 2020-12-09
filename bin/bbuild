@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+# Build the bubble jar
+#
+# Usage:
+#
+#    bbuild [no-clean] [debug|full|prod]
+#
+#  no-clean : if present, do not clean the `target` directory before building
+#
+#  debug    : a debug build, does not include anything else in the jar
+#  full     : a production build, creates a fat jar in `bubble-server/target/bubble-server-VERSION-full.jar`
+#  prod     : a production build, creates a slimmer jar in `bubble-server/target/bubble-server-VERSION-prod.jar`
+#
+# If debug/full/prod is not specified, the default is prod.
+#
+SCRIPT="${0}"
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
+. "${SCRIPT_DIR}"/bubble_common
+
+CLEAN="clean"
+PROFILE=""
+if [[ -n "${1}" ]] ; then
+  if [[ "${1}" == "no-clean" ]] ; then
+    CLEAN=""
+    shift
+  fi
+  if [[ "${1}" == "debug" ]] ; then
+    PROFILE=""
+  elif [[ "${1}" == "full" ]] ; then
+    PROFILE="-Pproduction-full"
+  elif [[ "${1}" == "prod" ]] ; then
+    PROFILE="-Pproduction"
+  else
+    die "Invalid argument: ${1}"
+  fi
+else
+  # default
+  PROFILE="-Pproduction"
+fi
+
+mvn -DskipTests=true -Dcheckstyle.skip=true ${PROFILE} ${CLEAN} package
