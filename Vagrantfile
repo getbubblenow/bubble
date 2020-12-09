@@ -59,7 +59,10 @@ Vagrant.configure("2") do |config|
 
   # Get dependencies and build everything
   config.vm.provision :shell do |s|
-      s.env = { LETSENCRYPT_EMAIL: ENV['LETSENCRYPT_EMAIL'] }
+      s.env = {
+        BUBBLE_PORT: ENV['BUBBLE_PORT'],
+        LETSENCRYPT_EMAIL: ENV['LETSENCRYPT_EMAIL']
+      }
       s.privileged = false
       s.inline = <<-SHELL
          # Copy shared bubble dir to ${HOME}
