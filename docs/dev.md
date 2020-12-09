@@ -6,33 +6,16 @@ For API-level details, see the [Bubble API Guide](https://github.com/getbubbleno
 and the [Bubble API Reference](https://app.getbubblenow.com/apidocs/)
 
 # Vagrant Setup
-The easiest way to get started with Bubble is to install [Vagrant](https://www.vagrantup.com/) and use
-the Bubble [Vagrantfile](../Vagrantfile).
+The easiest way to get started with Bubble is to use the [Vagrant Developer Setup](dev_vagrant.md).
 
 # Manual Development Setup
 If you'd prefer not to use Vagrant or want to build things locally, follow
 the [Bubble Manual Development Setup](dev_manual.md) instructions.
 
-## Subsequent Updates
-If you want to grab the latest code, and ensure that all git submodules are properly in sync with the main repository, run:
-```shell script
-./bin/git_update_bubble.sh
-```
-
-This will update and rebuild all submodules, and the main bubble jar file.
-
-## Running in development
-Run the `bin/run.sh` script to start the Bubble server.
-
-## Resetting everything
-If you want to "start over", run:
-```shell script
-./bin/reset_bubble_full
-```
-
-This will remove local files stored by Bubble, and drop the bubble database.
-
-If you run `./bin/run.sh` again, it will be like running it for the first time.
+# Development Tasks
+Whether you choose to use Vagrant or set things up manually,
+read [Bubble Developer Tasks](dev_tasks.md) to understand how to keep the code
+up to date, run the API server, and reset the database.
 
 ## Next
 What to do next depends on what you want to do with Bubble.
@@ -45,6 +28,6 @@ Would you like more guidance on starting the [Local Launcher](local-launcher.md)
 If all you want to do is launch your own Bubble, starting with
 the [Bubble Docker Launcher](docker-launcher.md) is probably faster and easier.
 
-Or perhaps you are interested in exploring the
-[Bubble API](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md) and
-interacting with Bubble programmatically.
+Or perhaps you are interested interacting with Bubble programmatically? You should explore the
+[Bubble API Guide](https://github.com/getbubblenow/bubble-docs/blob/master/api/README.md) and
+[Bubble API Reference](https://app.getbubblenow.com/apidocs/).
