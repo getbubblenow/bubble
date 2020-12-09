@@ -5,7 +5,7 @@
 #
 # For Linux and Mac OS, you can try the easier way, using a prebuilt image from DockerHub:
 #
-#   /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/docker/launcher.sh)"
+#   /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/docker/launcher)"
 #
 # See docs/docker-launcher.md for more information
 # Full URL for more info: https://git.bubblev.org/bubblev/bubble/src/branch/master/docs/docker-launcher.md

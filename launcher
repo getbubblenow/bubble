@@ -6,7 +6,7 @@
 #
 # Intended to be "run from anywhere" like this:
 #
-#   /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/launcher.sh)"
+#   /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/launcher)"
 #
 # This command will:
 #   - install docker if no "docker" command found
@@ -18,8 +18,14 @@
 # If you want to run this unattended, set the LETSENCRYPT_EMAIL environment variable.
 #
 # Upon successful startup, the bubble launcher will be listening on port 8090
+# If you'd prefer to use a different port, set the BUBBLE_PORT environment variable.
 #
-# Open http://127.0.0.1:8090/ in a web browser to continue with activation.
+# Open http://127.0.0.1:8090/ (or http://127.0.0.1:BUBBLE_PORT/) in a web browser
+# to continue with activation.
+#
+# By default this will grab the latest Bubble release. If you want a specific version,
+# set the BUBBLE_TAG environment variable to the release tag you'd like to run,
+# usually a semantic version number. For example: BUBBLE_TAG=1.5.2
 #
 
 function die() {
@@ -31,10 +37,14 @@ function die() {
 }
 
 function get_bubble_tag() {
-  BUBBLE_RELEASE_URL="https://jenkins.bubblev.org/public/releases/bubble/latest.txt"
-  VERSION="$(curl -s ${BUBBLE_RELEASE_URL} | awk -F '_' '{print $2}' | awk -F '.' '{print $1"."$2"."$3}')"
-  if [[ -z "${VERSION}" ]]; then
-    die "Error determining version from URL: ${BUBBLE_RELEASE_URL}"
+  if [[ -n "${BUBBLE_TAG}" ]] ; then
+    VERSION="${BUBBLE_TAG}"
+  else
+    BUBBLE_RELEASE_URL="https://jenkins.bubblev.org/public/releases/bubble/latest.txt"
+    VERSION="$(curl -s ${BUBBLE_RELEASE_URL} | awk -F '_' '{print $2}' | awk -F '.' '{print $1"."$2"."$3}')"
+    if [[ -z "${VERSION}" ]]; then
+      die "Error determining version from URL: ${BUBBLE_RELEASE_URL}"
+    fi
   fi
   echo -n "getbubble/launcher:${VERSION}"
 }
@@ -162,16 +172,16 @@ Then re-run this script
   fi
 
   # Determine bubble docker tag
-  BUBBLE_TAG=$(get_bubble_tag)
+  DOCKER_TAG=$(get_bubble_tag)
 
   # Determine OS user
   CALLER="$(whoami)"
 
   # Pull bubble docker image
   if [[ "${CALLER}" == "root" ]] ; then
-    docker pull "${BUBBLE_TAG}" || die "Error pulling docker image: ${BUBBLE_TAG}"
+    docker pull "${DOCKER_TAG}" || die "Error pulling docker image: ${DOCKER_TAG}"
   else
-    sudo su - "${CALLER}" -c "docker pull ${BUBBLE_TAG}" || die "Error pulling docker image: ${BUBBLE_TAG}"
+    sudo su - "${CALLER}" -c "docker pull ${DOCKER_TAG}" || die "Error pulling docker image: ${DOCKER_TAG}"
   fi
 
   # Determine email for LetsEncrypt certs
@@ -181,17 +191,22 @@ Then re-run this script
     read -r LETSENCRYPT_EMAIL
   fi
 
+  # Determine port
+  if [[ -z "${BUBBLE_PORT}" ]] ; then
+    BUBBLE_PORT=8090
+  fi
+
   # Run bubble docker image
   if [[ "${CALLER}" == "root" ]] ; then
     docker run \
-      -p 8090:8090 \
+      -p ${BUBBLE_PORT}:${BUBBLE_PORT} \
       -e LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL}" \
-      -t "${BUBBLE_TAG}"
+      -t "${DOCKER_TAG}"
   else
     sudo su - "${CALLER}" -c "docker run \
-      -p 8090:8090 \
+      -p ${BUBBLE_PORT}:${BUBBLE_PORT} \
       -e LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL} \
-      -t ${BUBBLE_TAG}"
+      -t ${DOCKER_TAG}"
   fi
 }
 
