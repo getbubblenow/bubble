@@ -18,7 +18,7 @@ variable to some free port where the Bubble API can listen. Otherwise, it defaul
 
 ## Local Launcher and SSL Certificates
 Do you want to use this setup as a local launcher to start new Bubbles? If so, define
-the `LETSENCRYPT_EMAIL` to an email address that will be registered with
+the `LETSENCRYPT_EMAIL` environment variable to an email address that will be registered with
 [LetsEncrypt](https://letsencrypt.org/) when your Bubbles need to install SSL certificates.
 
 ## Other Settings
