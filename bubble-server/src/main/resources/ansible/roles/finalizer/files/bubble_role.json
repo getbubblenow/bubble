@@ -7,7 +7,8 @@
     {"name": "install_type", "value": "[[installType]]"},
     {"name": "bubble_java_opts", "value": "-XX:MaxRAM=[[jvmMaxRamMB]]m"},
     {"name": "total_memory", "value": "[[nodeSize.memoryMB]]"},
-    {"name": "cert_name", "value": "bubble-[[network.shortId]]"}
+    {"name": "cert_name", "value": "bubble-[[network.shortId]]"},
+    {"name": "enable_nginx", "value": "[[bubble_deploy_nginx]]"}
   ],
   "optionalConfigNames": ["restore_key"]
 }

@@ -5,13 +5,17 @@
   service:
     name: nginx
     state: stopped
+  when: enable_nginx
 
 - name: Create dhparam nginx conf
   template:
     src: stronger_dhparams.conf
     dest: /etc/nginx/conf.d/stronger_dhparams.conf
+  when: enable_nginx
 
 - include: site.yml
+  when: enable_nginx
 
 - name: Init certbot
   shell: init_certbot.sh {{ letsencrypt_email }} {{ server_name }} {{ server_alias }}
+  when: enable_nginx

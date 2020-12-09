@@ -3321,7 +3321,6 @@ exude
 exuls
 exult
 exurb
-eyass
 eyers
 eying
 eyots
@@ -3348,7 +3347,6 @@ faery
 faffs
 fagin
 faiks
-fails
 faine
 fains
 faint
@@ -3369,7 +3367,6 @@ fanga
 fango
 fangs
 fanks
-fanny
 fanon
 fanos
 fanum
@@ -3425,7 +3422,6 @@ feces
 fecht
 fecit
 fecks
-fedex
 feebs
 feeds
 feels
@@ -3513,7 +3509,6 @@ fifth
 fifty
 fight
 figos
-fiked
 filar
 filed
 filer
@@ -3526,9 +3521,7 @@ fills
 filly
 filmi
 films
-filmy
 filos
-filth
 filum
 final
 finca
@@ -3554,10 +3547,8 @@ firns
 firry
 first
 firth
-fiscs
 fishy
 fisks
-fists
 fisty
 fitch
 fitly
@@ -3820,7 +3811,6 @@ fuffs
 fuffy
 fugal
 fugle
-fugly
 fugus
 fujis
 fulls
@@ -3861,9 +3851,6 @@ fuzee
 fuzes
 fuzil
 fuzzy
-fyces
-fyked
-fykes
 fyles
 fyrds
 fytte

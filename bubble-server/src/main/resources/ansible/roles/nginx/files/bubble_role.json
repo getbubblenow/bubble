@@ -6,6 +6,7 @@
     {"name": "letsencrypt_email", "value": "[[configuration.letsencryptEmail]]"},
     {"name": "ssl_port", "value": "[[node.sslPort]]"},
     {"name": "admin_port", "value": "[[node.adminPort]]"},
-    {"name": "install_type", "value": "[[installType]]"}
+    {"name": "install_type", "value": "[[installType]]"},
+    {"name": "enable_nginx", "value": "[[bubble_deploy_nginx]]"}
   ]
 }

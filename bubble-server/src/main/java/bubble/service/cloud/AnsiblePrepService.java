@@ -171,12 +171,17 @@ public class AnsiblePrepService {
 
     private int jvmMaxRam(ComputeNodeSize nodeSize, AnsibleInstallType installType) {
         final int memoryMB = nodeSize.getMemoryMB();
-        if (installType == AnsibleInstallType.sage) return (int) (((double) memoryMB) * 0.6d);
+        if (installType == AnsibleInstallType.sage) {
+            // at least 256MB, up to 60% of system memory
+            return Math.max(256, (int) (((double) memoryMB) * 0.6d));
+        }
         if (memoryMB >= 4096) return (int) (((double) memoryMB) * 0.6d);
         if (memoryMB >= 2048) return (int) (((double) memoryMB) * 0.5d);
         if (memoryMB >= 1024) return (int) (((double) memoryMB) * 0.24d);
+
         // no nodes are this small, API probably would not start, not enough memory
-        return (int) (((double) memoryMB) * 0.19d);
+        // set floor at 200MB, might be able to go lower.
+        return Math.max(200, (int) (((double) memoryMB) * 0.19d));
     }
 
     private boolean shouldEnableOpenApi(AnsibleInstallType installType, ComputeNodeSize nodeSize) {

@@ -45,21 +45,30 @@
 
 - name: Ensure nginx dhparams.pem file exists and is valid
   shell: /usr/local/bin/init_dhparams.sh wait
+  when: enable_nginx
 
 - name: Ensure nginx required files exist
   shell: /usr/local/bin/ensure_file_exists.sh {{ item }} 300
   with_items:
     - /etc/letsencrypt/live/{{ server_alias }}/fullchain.pem
     - /etc/letsencrypt/live/{{ server_name }}/fullchain.pem
+  when: enable_nginx
 
 - name: Ensure nginx is restarted
   service:
     name: nginx
     state: restarted
+  when: enable_nginx
+
+- name: stat /usr/share/unattended-upgrades/20auto-upgrades-disabled
+  stat:
+    path: /usr/share/unattended-upgrades/20auto-upgrades-disabled
+  register: upgrades_disabled_file
 
 - name: Enable unattended upgrades
   shell: systemctl start unattended-upgrades
   become: yes
+  when: upgrades_disabled_file.stat.exists
 
 - name: Ensure authorized SSH keys are up-to-date
   shell: su - bubble bash -c "touch /home/bubble/.refresh_ssh_keys"

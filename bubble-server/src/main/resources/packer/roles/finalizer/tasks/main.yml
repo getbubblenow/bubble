@@ -1,10 +1,6 @@
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
 #
-- name: Touch first-time setup file
-  shell: su - bubble bash -c "if [[ ! -f /home/bubble/first_time_marker ]] ; then echo -n install > /home/bubble/first_time_marker ; fi"
-  when: restore_key is not defined
-
 - name: Install copy_certs_to_bubble.sh helper
   copy:
     src: copy_certs_to_bubble.sh

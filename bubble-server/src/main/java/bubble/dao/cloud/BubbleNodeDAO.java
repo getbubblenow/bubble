@@ -21,7 +21,7 @@ import static bubble.ApiConstants.ROOT_NETWORK_UUID;
 import static bubble.ApiConstants.newNodeHostname;
 import static bubble.model.cloud.BubbleNodeState.running;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.network.NetworkUtil.isLocalIpv4;
+import static org.cobbzilla.util.network.NetworkUtil.*;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.hibernate.criterion.Restrictions.isNotNull;
 
@@ -110,23 +110,31 @@ public class BubbleNodeDAO extends AccountOwnedEntityDAO<BubbleNode> {
 
     public List<BubbleNode> findWithIp4() { return list(criteria().add(isNotNull("ip4"))); }
 
-    public BubbleNode findByIp4(String ip4) { return isLocalIpv4(ip4) ? null : findByUniqueField("ip4", ip4); }
+    public BubbleNode findByIp4(String ip4) { return isLocalIpv4(ip4) ? null : _findByIp4(ip4); }
+
+    public BubbleNode _findByIp4(String ip4) { return findByUniqueField("ip4", ip4); }
+    public BubbleNode _findByIp6(String ip6) { return findByUniqueField("ip6", ip6); }
 
     public String randomLocalhostIp4 () {
         // first try a random number in the last slot
         int x = RandomUtils.nextInt(1, 255);
         String testIp = "127.0.0." + x;
-        if (findByIp4(testIp) == null) return testIp;
+        if (_findByIp4(testIp) == null) return testIp;
 
-        // keep trying random numbers, incrementing the other octets
-        for (int i=0; i<254; i++) {
-            for (int j=0; j<254; j++) {
-                x = RandomUtils.nextInt(1, 255);
-                testIp = "127."+i+"."+j+"."+x;
-                if (findByIp4(testIp) == null) return testIp;
-            }
+        // keep trying random numbers
+        for (int i=0; i<100; i++) {
+            testIp = randomLocalIp4();
+            if (_findByIp4(testIp) == null) return testIp;
         }
         return die("randomLocalhostIp4: ran out of tries!");
+    }
+
+    public String randomLocalhostIp6 () {
+        for (int i=0; i<100; i++) {
+            final String testIp = randomLocalIp6();
+            if (_findByIp6(testIp) == null) return testIp;
+        }
+        return die("randomLocalhostIp6: ran out of tries!");
     }
 
 }

@@ -304,7 +304,7 @@ public class StandardNetworkService implements NetworkService {
                     + "-o StrictHostKeyChecking=no "
                     + "-o PreferredAuthentications=publickey "
                     + "-i " + abs(sshKeyFile);
-            final String sshTarget = node.getUser() + "@" + node.getIp4();
+            final String sshTarget = node.getUser() + "@" + computeDriver.getNodeIp4(node);
 
             boolean setupOk = false;
             final String nodeUser = node.getUser();

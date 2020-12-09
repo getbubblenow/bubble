@@ -55,11 +55,11 @@ public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<Bub
         redis.set(configuration.getBean(RedisService.class));
 
         final AccountDAO accountDAO = configuration.getBean(AccountDAO.class);
-        final var network = configuration.getThisNetwork();
+        final BubbleNetwork network = configuration.getThisNetwork();
         if (FIRST_TIME_FILE.exists()) {
             try {
                 try {
-                    final var firstTimeType = FirstTimeType.fromString(toStringOrDie(FIRST_TIME_FILE));
+                    final FirstTimeType firstTimeType = FirstTimeType.fromString(toStringOrDie(FIRST_TIME_FILE));
                     updateNetworkState(configuration, network, firstTimeType);
                 } catch (Exception e) {
                     log.warn("Cannot open and/or read/parse first time file " + FIRST_TIME_FILE.getAbsolutePath());
@@ -112,7 +112,8 @@ public class BubbleFirstTimeListener extends RestServerLifecycleListenerBase<Bub
         }
     }
 
-    private void updateNetworkState(@NonNull final BubbleConfiguration config, @NonNull final BubbleNetwork network,
+    private void updateNetworkState(@NonNull final BubbleConfiguration config,
+                                    @NonNull final BubbleNetwork network,
                                     @NonNull final FirstTimeType firstTimeType) {
         if (network.getState() == BubbleNetworkState.starting) {
             network.setState(firstTimeType == FirstTimeType.restore ? BubbleNetworkState.restoring

@@ -72,4 +72,7 @@ public interface ComputeServiceDriver extends CloudServiceDriver, RegionalServic
     default void addLaunchContext(Map<String, Object> ctx) { addLaunchContext(ctx, ""); }
     default void addLaunchContext(Map<String, Object> ctx, String prefix) {}
 
+    default String getNodeIp4(BubbleNode node) { return node.getIp4(); }
+    default String getNodeIp6(BubbleNode node) { return node.getIp6(); }
+
 }

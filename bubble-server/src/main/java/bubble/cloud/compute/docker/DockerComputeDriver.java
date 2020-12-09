@@ -39,6 +39,8 @@ import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStream;
 import static org.cobbzilla.util.io.StreamUtil.stream2file;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.network.NetworkUtil.IPv4_LOCALHOST;
+import static org.cobbzilla.util.network.NetworkUtil.IPv6_LOCALHOST;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
 @Slf4j
@@ -90,9 +92,10 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
 
     private final Map<String, Map<Integer, Integer>> portMappings = new ConcurrentHashMap<>();
 
-    @Override public int getSshPort(BubbleNode node) {
-        return portMappings.get(node.getUuid()).get(22);
-    }
+    @Override public int getSshPort(BubbleNode node) { return portMappings.get(node.getUuid()).get(22); }
+
+    @Override public String getNodeIp4(BubbleNode node) { return IPv4_LOCALHOST; }
+    @Override public String getNodeIp6(BubbleNode node) { return IPv6_LOCALHOST; }
 
     @Getter(lazy=true) private final DockerClient dockerClient = initDockerClient();
     private DockerClient initDockerClient() {
@@ -182,9 +185,12 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
                             final Integer adminPort = portMap.get(8090);
                             if (adminPort == null) return die("start("+node.id()+"): admin port mapping not found in port map: "+json(portMap));
 
+                            final String ip4 = nodeDAO.randomLocalhostIp4();
+                            final String ip6 = nodeDAO.randomLocalhostIp6();
                             return node.setState(BubbleNodeState.running)
                                     .setAdminPort(adminPort)
-                                    .setIp4(nodeDAO.randomLocalhostIp4())
+                                    .setIp4(ip4)
+                                    .setIp6(ip6)
                                     .setFqdn(node.getIp4());
                         }
                     }

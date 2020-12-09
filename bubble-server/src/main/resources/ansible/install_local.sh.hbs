@@ -87,7 +87,7 @@ cd "${ANSIBLE_DIR}" && \
   . ./venv/bin/activate && \
   pip3 install ansible && \
   ansible-playbook ${SKIP_TAGS} --inventory ./hosts ./playbook.yml 2>&1 | tee ${LOG} \
-|| die "Error running ansible. journalctl -xe = $(journalctl -xe | tail -n 50) ___dhparams=$(cat /etc/nginx/dhparams.pem)"
+|| die "Error running ansible. journalctl -xe = $(journalctl -xe | tail -n 50) ___dhparams=$(if [[ -f /etc/nginx/dhparams.pem ]] ; then cat /etc/nginx/dhparams.pem ; else echo "(does not exist)" ; fi)"
 
 # lockout the node that started us
 cat /dev/null > "${AUTH_KEYS}" || die "Error truncating ${AUTH_KEYS} file"
