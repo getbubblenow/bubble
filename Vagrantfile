@@ -37,7 +37,7 @@ Vagrant.configure("2") do |config|
 
   # You can access the launcher on port 8090 (or BUBBLE_PORT) but only on 127.0.0.1
   # If you want to allow outside access to port 8090 (listen on 0.0.0.0), use the version below
-  if not ENV.include? 'BUBBLE_PUBLIC_PORT' or ENV['BUBBLE_PUBLIC_PORT'] == 'false' do
+  if not ENV.include? 'BUBBLE_PUBLIC_PORT' or ENV['BUBBLE_PUBLIC_PORT'] == 'false' then
       config.vm.network "forwarded_port", guest: 8090, host: ENV['BUBBLE_PORT'] || 8090, host_ip: "127.0.0.1"
   else
       # Anyone who can reach port 8090 on this system will be able to access the launcher
