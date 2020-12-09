@@ -57,7 +57,7 @@ BUBBLE_SLIM_TAG="${DOCKER_REPO}/slim-launcher:${VERSION}"
 BUBBLE_ENV="${HOME}/.bubble.env"
 
 if [[ "${MODE}" == "build" ]] ; then
-  if [[ $(find bubble-server/target -type f -name "bubble-server-*.jar" | wc -l | tr -d ' ') -eq 0 ]] ; then
+  if [[ $(find bubble-server/target -type f -name "bubble-server-*-prod.jar" | wc -l | tr -d ' ') -eq 0 ]] ; then
     die "No bubble jar found in $(pwd)/bubble-server/target"
   fi
   docker build --no-cache -t "${BUBBLE_TAG}" . || die "Error building docker image"

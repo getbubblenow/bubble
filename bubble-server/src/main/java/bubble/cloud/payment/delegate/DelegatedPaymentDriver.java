@@ -30,7 +30,7 @@ public class DelegatedPaymentDriver extends DelegatedCloudServiceDriverBase impl
             log.warn("getPaymentMethodType: delegated driver has non-delegated cloud: "+cloud.getUuid());
             return cloud.getPaymentDriver(configuration).getPaymentMethodType();
         }
-        if (!configuration.paymentsEnabled()) {
+        if (!configuration.getPaymentsEnabled()) {
             log.warn("getPaymentMethodType: payments not enabled, returning null");
             return null;
         };

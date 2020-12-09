@@ -102,7 +102,7 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
         if (cloud.getType() == CloudServiceType.payment
                 && cloud.template()
                 && cloud.enabled()
-                && !configuration.paymentsEnabled()) {
+                && !configuration.getPaymentsEnabled()) {
             // a public template for a payment cloud has been added, and payments were not enabled -- now they are
             configuration.refreshPublicSystemConfigs();
         }

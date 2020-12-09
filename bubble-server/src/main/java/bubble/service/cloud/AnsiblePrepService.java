@@ -50,7 +50,9 @@ import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.OPENAPI_DI
 @Service @Slf4j
 public class AnsiblePrepService {
 
-    private static final int MIN_OPEN_API_MEMORY = 4096;
+    public static final int OPEN_API_MIN_MEMORY = 4096;
+    public static final int SAGE_MIN_MEMORY = 256;
+    public static final int NODE_MIN_MEMORY = 200; // todo: can probably go lower, need to test
 
     @Autowired private DatabaseFilterService dbFilter;
     @Autowired private BubbleConfiguration configuration;
@@ -172,16 +174,16 @@ public class AnsiblePrepService {
     private int jvmMaxRam(ComputeNodeSize nodeSize, AnsibleInstallType installType) {
         final int memoryMB = nodeSize.getMemoryMB();
         if (installType == AnsibleInstallType.sage) {
-            // at least 256MB, up to 60% of system memory
-            return Math.max(256, (int) (((double) memoryMB) * 0.6d));
+            // at least a minimum of SAGE_MIN_MEMORY, up to 60% of system memory
+            return Math.max(SAGE_MIN_MEMORY, (int) (((double) memoryMB) * 0.6d));
         }
         if (memoryMB >= 4096) return (int) (((double) memoryMB) * 0.6d);
         if (memoryMB >= 2048) return (int) (((double) memoryMB) * 0.5d);
         if (memoryMB >= 1024) return (int) (((double) memoryMB) * 0.24d);
 
-        // no nodes are this small, API probably would not start, not enough memory
-        // set floor at 200MB, might be able to go lower.
-        return Math.max(200, (int) (((double) memoryMB) * 0.19d));
+        // API will probably not start, system will likely run out of memory
+        // Why are you trying to run Bubble on less than 1GB RAM?
+        return Math.max(NODE_MIN_MEMORY, (int) (((double) memoryMB) * 0.22d));
     }
 
     private boolean shouldEnableOpenApi(AnsibleInstallType installType, ComputeNodeSize nodeSize) {
@@ -189,7 +191,7 @@ public class AnsiblePrepService {
         // - it must already be enabled on the current bubble
         // - the bubble being launched must be a sage or have 4GB+ memory
         return configuration.hasOpenApi() &&
-                (installType == AnsibleInstallType.sage || nodeSize.getMemoryMB() >= MIN_OPEN_API_MEMORY);
+                (installType == AnsibleInstallType.sage || nodeSize.getMemoryMB() >= OPEN_API_MIN_MEMORY);
     }
 
 }

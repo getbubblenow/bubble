@@ -367,7 +367,7 @@ public class AuthResource {
         }
 
         String currency = null;
-        if (configuration.paymentsEnabled()) {
+        if (configuration.getPaymentsEnabled()) {
             currency = currencyForLocale(request.getLocale(), getDEFAULT_LOCALE());
             // do we have any plans with this currency?
             if (!planDAO.getSupportedCurrencies().contains(currency)) {
@@ -393,7 +393,7 @@ public class AuthResource {
 
         final Account account = accountDAO.newAccount(req, null, request, parent);
         SimpleViolationException promoEx = null;
-        if (configuration.paymentsEnabled()) {
+        if (configuration.getPaymentsEnabled()) {
             if (request.hasPaymentMethod()) {
                 final AccountPaymentMethod paymentMethodObject = request.getPaymentMethodObject();
                 log.info("register: found AccountPaymentMethod at registration-time: " + json(paymentMethodObject, COMPACT_MAPPER));

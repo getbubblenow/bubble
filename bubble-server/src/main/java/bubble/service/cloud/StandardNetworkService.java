@@ -454,7 +454,7 @@ public class StandardNetworkService implements NetworkService {
             }
 
             if (progressMeter != null) {
-                if (!progressMeter.success() && configuration.paymentsEnabled()) {
+                if (!progressMeter.success() && configuration.getPaymentsEnabled()) {
                     final AccountPlan accountPlan = accountPlanDAO.findByNetwork(nn.getNetwork());
                     if (accountPlan != null) {
                         final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
@@ -691,7 +691,7 @@ public class StandardNetworkService implements NetworkService {
     public NewNodeNotification startNetwork(BubbleNetwork network, NetLocation netLocation) {
 
         final String accountUuid = network.getAccount();
-        if (configuration.paymentsEnabled()) {
+        if (configuration.getPaymentsEnabled()) {
             AccountPlan accountPlan = accountPlanDAO.findByAccountAndNetwork(accountUuid, network.getUuid());
             if (accountPlan == null) throw invalidEx("err.accountPlan.notFound");
             final long start = now();

@@ -20,6 +20,8 @@ public class DbFilterSelfNodeService implements SelfNodeService {
 
     @Override public boolean initThisNode(BubbleNode thisNode) { return notSupported("initThisNode"); }
 
+    @Override public BubbleNode getSageNode() { return notSupported("getSageNode"); }
+
     @Override public BubbleNode getThisNode() { return notSupported("getThisNode"); }
 
     @Override public BubbleNetwork getThisNetwork() { return notSupported("getThisNetwork"); }

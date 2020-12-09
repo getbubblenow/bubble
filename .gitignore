@@ -16,3 +16,4 @@ configs
 dist
 .m2
 .venv
+.vagrant

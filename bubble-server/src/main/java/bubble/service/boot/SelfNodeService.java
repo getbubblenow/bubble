@@ -15,6 +15,8 @@ public interface SelfNodeService {
 
     boolean initThisNode(BubbleNode thisNode);
 
+    BubbleNode getSageNode();
+
     BubbleNode getThisNode ();
 
     BubbleNetwork getThisNetwork();
@@ -36,4 +38,5 @@ public interface SelfNodeService {
      */
     @NonNull Optional<Long> getLogFlagExpirationTime();
     void setLogFlag(final boolean logFlag, @NonNull final Optional<Integer> ttlInSeconds);
+
 }

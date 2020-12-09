@@ -31,7 +31,7 @@ public class FullEntityIterator extends EntityIterator {
                                BubbleNetwork network,
                                LaunchType launchType,
                                AtomicReference<Exception> error) {
-        super(error, configuration.paymentsEnabled());
+        super(error, configuration.getPaymentsEnabled());
         this.configuration = configuration;
         this.network = network;
         this.account = account;

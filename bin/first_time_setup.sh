@@ -18,6 +18,15 @@
 # If you prefer to checkout git submodules using SSH instead of HTTPS, set the BUBBLE_SSH_SUBMODULES
 # environment variable to 'true'
 #
+# Environment Variables
+#
+#   SKIP_BUBBLE_BUILD  : if set to 1, then everything will be built except for the bubble jar
+#
+#   BUBBLE_SETUP_MODE  : only used if SKIP_BUBBLE_BUILD is not set. values are:
+#      debug      - build the bubble jar without including the website
+#      web        - build the bubble jar, including the website
+#      production - build the bubble jar and the bubble full jar, both including the website
+#
 
 function die() {
   if [[ -z "${SCRIPT}" ]] ; then
@@ -54,6 +63,10 @@ for repo in ${UTIL_REPOS}; do
   pushd "${repo}" && mvn ${MVN_QUIET} clean install && popd || die "Error installing ${repo}"
 done
 popd || die "Error popping back from utils directory"
+
+if [[ -n "${SKIP_BUBBLE_BUILD}" && "${SKIP_BUBBLE_BUILD}" == "1" ]] ; then
+  exit 0
+fi
 
 if [[ -z "${BUBBLE_SETUP_MODE}" || "${BUBBLE_SETUP_MODE}" == "web" ]] ; then
   INSTALL_WEB=web mvn ${MVN_QUIET} -Pproduction clean package || die "Error building bubble jar"

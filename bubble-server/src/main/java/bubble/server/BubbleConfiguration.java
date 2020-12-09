@@ -24,7 +24,7 @@ import bubble.model.device.DeviceSecurityLevel;
 import bubble.server.listener.BubbleFirstTimeListener;
 import bubble.service.backup.RestoreService;
 import bubble.service.boot.ActivationService;
-import bubble.service.boot.StandardSelfNodeService;
+import bubble.service.boot.SelfNodeService;
 import bubble.service.notify.LocalNotificationStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.jknack.handlebars.Handlebars;
@@ -145,7 +145,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     }
 
     @JsonIgnore @Transient public synchronized BubbleNode getThisNode () {
-        return getBean(StandardSelfNodeService.class).getThisNode();
+        return getBean(SelfNodeService.class).getThisNode();
     }
     @JsonIgnore @Transient public boolean isSelfSage () {
         final BubbleNode selfNode = getThisNode();
@@ -162,7 +162,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     }
 
     @JsonIgnore @Transient public synchronized BubbleNetwork getThisNetwork () {
-        return getBean(StandardSelfNodeService.class).getThisNetwork();
+        return getBean(SelfNodeService.class).getThisNetwork();
     }
 
     @JsonIgnore @Transient public boolean isRootNetwork () {
@@ -171,7 +171,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
     }
 
     @JsonIgnore @Transient public synchronized BubbleNode getSageNode () {
-        return getBean(StandardSelfNodeService.class).getSageNode();
+        return getBean(SelfNodeService.class).getSageNode();
     }
     public boolean hasSageNode () { return getSageNode() != null; }
 
@@ -378,7 +378,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_NETWORK_UUID, thisNetwork == null ? null : thisNetwork.getUuid()},
                         {TAG_SAGE_LAUNCHER, thisNetwork == null || isSageLauncher()},
                         {TAG_BUBBLE_NODE, isSageLauncher() || thisNetwork == null ? null : thisNetwork.node()},
-                        {TAG_PAYMENTS_ENABLED, cloudDAO.paymentsEnabled()},
+                        {TAG_PAYMENTS_ENABLED, getPaymentsEnabled()},
                         {TAG_LOCAL_NETWORK, thisNetwork == null || thisNetwork.local()},
                         {TAG_PROMO_CODE_POLICY, getPromoCodePolicy().name()},
                         {TAG_REQUIRE_SEND_METRICS, requireSendMetrics()},
@@ -416,13 +416,11 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         background(this::getPublicSystemConfigs, "BubbleConfiguration.refreshPublicSystemConfigs");
     }
 
-    public boolean paymentsEnabled () {
-        final Object peValue = getPublicSystemConfigs().get(TAG_PAYMENTS_ENABLED);
-        return peValue != null && Boolean.parseBoolean(peValue.toString());
-    }
+    @Getter(lazy=true) private final Boolean paymentsEnabled = initPaymentsEnabled();
+    private boolean initPaymentsEnabled () { return getBean(CloudServiceDAO.class).paymentsEnabled(); }
 
     public void requiresPaymentsEnabled () {
-        if (!paymentsEnabled()) throw invalidEx("err_noPaymentMethods");
+        if (!getPaymentsEnabled()) throw invalidEx("err_noPaymentMethods");
     }
 
     @Getter @Setter private Boolean requireSendMetrics;

@@ -39,7 +39,7 @@ FULL_JAR="$(find "${JAR_DIR}" -type f -name "bubble-server-*-full.jar" | head -1
 if [[ -z "${FULL_JAR}" ]] ; then
   die "No full bubble jar found in ${JAR_DIR}"
 fi
-JAR="$(find "${JAR_DIR}" -type f -name "bubble-server-*.jar" | grep -v full | head -1)"
+JAR="$(find "${JAR_DIR}" -type f -name "bubble-server-*-prod.jar" | head -1)"
 if [[ -z "${JAR}" ]] ; then
   die "No regular bubble jar found in ${JAR_DIR}"
 fi
