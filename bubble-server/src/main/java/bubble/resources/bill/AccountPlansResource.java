@@ -109,12 +109,12 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
     }
 
     @Override protected Object daoCreate(AccountPlan toCreate) {
-        if (!configuration.getPaymentsEnabled()) toCreate.setEnabled(true);
+        if (!configuration.paymentsEnabled()) toCreate.setEnabled(true);
         return super.daoCreate(toCreate);
     }
 
     @Override protected Object daoUpdate(AccountPlan toUpdate) {
-        if (!configuration.getPaymentsEnabled()) toUpdate.setEnabled(true);
+        if (!configuration.paymentsEnabled()) toUpdate.setEnabled(true);
         return super.daoUpdate(toUpdate);
     }
 
@@ -258,7 +258,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
         }
 
         AccountPaymentMethod paymentMethod = null;
-        if (configuration.getPaymentsEnabled()) {
+        if (configuration.paymentsEnabled()) {
             if (!request.hasPaymentMethodObject()) {
                 final List<AccountPaymentMethod> paymentMethods = paymentMethodDAO.findByAccountAndNotPromoAndNotDeleted(caller.getUuid());
                 if (empty(paymentMethods)) {
@@ -296,7 +296,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
             request.setNetwork(newNetwork.getUuid());
         }
 
-        if (configuration.getPaymentsEnabled()) {
+        if (configuration.paymentsEnabled()) {
             if (paymentMethod != null && !paymentMethod.hasUuid()) {
                 final AccountPaymentMethod paymentMethodToCreate = new AccountPaymentMethod(request.getPaymentMethodObject()).setAccount(request.getAccount());
                 final AccountPaymentMethod paymentMethodCreated = paymentMethodDAO.create(paymentMethodToCreate);

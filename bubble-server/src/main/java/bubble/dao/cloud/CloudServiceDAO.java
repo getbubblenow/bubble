@@ -95,6 +95,9 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
     }
 
     @Override public CloudService postCreate(CloudService cloud, Object context) {
+        if (cloud.getType() == CloudServiceType.payment && !configuration.paymentsEnabled()) {
+            configuration.resetPaymentsEnabled();
+        }
         if (!cloud.delegated() && !configuration.testMode()) {
             final ValidationResult errors = testDriver(cloud, configuration);
             if (errors.isInvalid()) throw invalidEx(errors);
@@ -102,7 +105,7 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
         if (cloud.getType() == CloudServiceType.payment
                 && cloud.template()
                 && cloud.enabled()
-                && !configuration.getPaymentsEnabled()) {
+                && !configuration.paymentsEnabled()) {
             // a public template for a payment cloud has been added, and payments were not enabled -- now they are
             configuration.refreshPublicSystemConfigs();
         }
@@ -164,7 +167,9 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
         // TODO for these maybe an outside cron would be better solution. BulkDelete is used here to be fast.
         // For now this postServiceDelete is called within a single place where this method is used - Account Deletion.
         log.warn("Not calling postServiceDelete for services deleted in this way");
-        return super.bulkDeleteWhere(whereClause, parameters);
+        int count = super.bulkDeleteWhere(whereClause, parameters);
+        configuration.resetPaymentsEnabled();
+        return count;
     }
 
     @Transactional @Override public void delete(String uuid) {
@@ -175,6 +180,7 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
         cs.getDriver().postServiceDelete(this, cs);
 
         super.delete(uuid);
+        configuration.resetPaymentsEnabled();
     }
 
     @Override public void delete(Collection<CloudService> entities) {
@@ -185,5 +191,6 @@ public class CloudServiceDAO extends AccountOwnedTemplateDAO<CloudService> {
         }
 
         super.delete(entities);
+        configuration.resetPaymentsEnabled();
     }
 }

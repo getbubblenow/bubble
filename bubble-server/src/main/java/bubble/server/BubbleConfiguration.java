@@ -378,7 +378,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                         {TAG_NETWORK_UUID, thisNetwork == null ? null : thisNetwork.getUuid()},
                         {TAG_SAGE_LAUNCHER, thisNetwork == null || isSageLauncher()},
                         {TAG_BUBBLE_NODE, isSageLauncher() || thisNetwork == null ? null : thisNetwork.node()},
-                        {TAG_PAYMENTS_ENABLED, getPaymentsEnabled()},
+                        {TAG_PAYMENTS_ENABLED, paymentsEnabled()},
                         {TAG_LOCAL_NETWORK, thisNetwork == null || thisNetwork.local()},
                         {TAG_PROMO_CODE_POLICY, getPromoCodePolicy().name()},
                         {TAG_REQUIRE_SEND_METRICS, requireSendMetrics()},
@@ -416,11 +416,31 @@ public class BubbleConfiguration extends PgRestServerConfiguration
         background(this::getPublicSystemConfigs, "BubbleConfiguration.refreshPublicSystemConfigs");
     }
 
-    @Getter(lazy=true) private final Boolean paymentsEnabled = initPaymentsEnabled();
-    private boolean initPaymentsEnabled () { return getBean(CloudServiceDAO.class).paymentsEnabled(); }
+    private final AtomicReference<Boolean> paymentsEnabled = new AtomicReference<>(null);
+    public boolean paymentsEnabled() {
+        Boolean enabled = paymentsEnabled.get();
+        if (enabled == null) {
+            synchronized (paymentsEnabled) {
+                enabled = paymentsEnabled.get();
+                if (enabled == null) {
+                    enabled = getBean(CloudServiceDAO.class).paymentsEnabled();
+                    paymentsEnabled.set(enabled);
+                }
+            }
+        }
+        return enabled;
+    }
+    public boolean resetPaymentsEnabled () {
+        synchronized (paymentsEnabled) {
+            paymentsEnabled.set(null);
+        }
+        return paymentsEnabled();
+    }
 
     public void requiresPaymentsEnabled () {
-        if (!getPaymentsEnabled()) throw invalidEx("err_noPaymentMethods");
+        if (!paymentsEnabled()) {
+            throw invalidEx("err_noPaymentMethods");
+        }
     }
 
     @Getter @Setter private Boolean requireSendMetrics;

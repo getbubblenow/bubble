@@ -58,7 +58,7 @@ Vagrant.configure("2") do |config|
       s.privileged = false
       s.inline = <<-SHELL
          # Copy shared bubble dir to ${HOME}
-         rsync -a /vagrant ${HOME}/bubble
+         cd ${HOME} && rsync -azc --exclude="**/target/**" /vagrant . && mv vagrant bubble
 
          # Initialize the system
          cd ${HOME}/bubble && ./bin/first_time_ubuntu.sh

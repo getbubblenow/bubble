@@ -115,7 +115,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
         if (errors.isInvalid()) throw invalidEx(errors);
         if (errors.hasSuggestedName()) accountPlan.setName(errors.getSuggestedName());
 
-        if (configuration.getPaymentsEnabled()) {
+        if (configuration.paymentsEnabled()) {
             if (!accountPlan.hasPaymentMethodObject()) throw invalidEx("err.paymentMethod.required");
             if (!accountPlan.getPaymentMethodObject().hasUuid()) throw invalidEx("err.paymentMethod.required");
 
@@ -149,7 +149,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
     }
 
     @Override public AccountPlan postCreate(AccountPlan accountPlan, Object context) {
-        if (configuration.getPaymentsEnabled()) {
+        if (configuration.paymentsEnabled()) {
             final String accountPlanUuid = accountPlan.getUuid();
             final String paymentMethodUuid = accountPlan.getPaymentMethodObject().getUuid();
             final BubblePlan plan = planDAO.findByUuid(accountPlan.getPlan());
@@ -191,7 +191,7 @@ public class AccountPlanDAO extends AccountOwnedEntityDAO<AccountPlan> {
             networkDAO.delete(accountPlan.getDeletedNetwork());
         } else {
             networkDAO.delete(accountPlan.getNetwork());
-            if (configuration.getPaymentsEnabled()) {
+            if (configuration.paymentsEnabled()) {
                 refundService.processRefunds();
             }
         }
