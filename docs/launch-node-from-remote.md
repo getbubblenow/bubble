@@ -3,6 +3,10 @@ Launching a Bubble from a Remote Launcher
 These instructions assume you have already set up a [Remote Launcher](remote-launcher.md).
 
 ## Create a user
+Open a browser window to your Remote Launcher. You should see a screen like this one:
+
+  <a href="img/sign_in.png"><img src="img/sign_in.png" alt="screenshot of Sign In page" height="500"/></a>
+
 Click the "Sign Up" button in the header to create a new user account.
 
 Note: You *could* sign in using the root account and launch a Bubble from there, but this is discouraged for security reasons.
@@ -14,7 +18,16 @@ After you create a user, the Remote Launcher will send an email with a verificat
 Click the link in the email to verify your new account.
 
 ## Launch Bubble
-After you click the verification link, you should see a "Launch Bubble" screen.
+After you click the verification link, you should see a "Launch Bubble" screen, like the one below:
+
+  <a href="img/launch_bubble.png"><img src="img/launch_bubble.png" alt="screenshot of Launch Bubble page" height="500"/></a>
+
+If you don't want to customize anything, just click or tap the `LAUNCH BUBBLE` button, and you're off and running!
+
+If you like to tweak settings, click the "Launch with Advanced Settings" link below the `LAUNCH BUBBLE` button.
+You should now see the advanced launch settings screen, like the one below:
+
+  <a href="img/launch_settings.png"><img src="img/launch_settings.png" alt="screenshot of Launch Settings" height="500"/></a>
 
 Choose your configuration options, then click the "Launch Your Bubble!" button kick things off.
 

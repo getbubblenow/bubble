@@ -7,16 +7,30 @@ If your Bubble is not already running on your local system, start it by running 
 
 ## Log In
 When your local Bubble finishes launching, it should open a web page. If you see a page with the title "Activation",
-then your Bubble still needs to be activated. Read about activation in the [Local Launcher Mode](local-launcher.md) instructions.
+like the one shown below, then your Bubble still needs to be activated.
 
-If you see a login screen, you should be able to log in as the admin user using the email
+Read about activation in the [Local Launcher Mode](local-launcher.md) instructions.
+
+  <a href="img/activation.png"><img src="img/activation.png" alt="screenshot of Activation page" height="500"/></a>
+
+If you see a login screen (like the one shown below), you should be able to log in as the admin user using the email
 address and the password used during activation.
 
-## Fork a Remote Launcher
-After you log in, you should see a "Launch Bubble" screen.
-If you don't see this screen, click the "My Bubble" link in the header.
+  <a href="img/sign_in.png"><img src="img/sign_in.png" alt="screenshot of Sign In page" height="500"/></a>
 
-In the "Bubble Type" drop-down box, choose "Fork Launcher".
+## Fork a Remote Launcher
+After you log in, you should see a "Launch Bubble" screen, like the one below:
+
+  <a href="img/launch_bubble.png"><img src="img/launch_bubble.png" alt="screenshot of Launch Bubble page" height="500"/></a>
+
+If you don't see this screen, click the "My Bubble" link in the left sidebar.
+
+Click the "Launch with Advanced Settings" link below the `LAUNCH BUBBLE` button.
+You should now see the advanced launch settings screen, like the one below:
+
+   <a href="img/launch_settings.png"><img src="img/launch_settings.png" alt="screenshot of Launch Settings" height="500"/></a>
+
+In the "Bubble Type" drop-down box, ensure "Fork Launcher" is selected.
 
 In the "Fork Host" field, enter the fully-qualified domain name (FQDN) that the Bubble will be known as.
 

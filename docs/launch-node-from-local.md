@@ -4,14 +4,25 @@ These instructions assume you have already set up a [Local Launcher](local-launc
 or are running the [Bubble Docker Launcher](docker-launcher.md).
 
 ## Login
+Open a browser window to your Local Launcher. You should see a screen like this one:
+
+  <a href="img/sign_in.png"><img src="img/sign_in.png" alt="screenshot of Sign In page" height="500"/></a>
+
 Login to your Local Launcher using the root admin account that was created during activation.
 
 ## Launch Bubble
-You should see a "Launch Bubble" screen.
+You should see a "Launch Bubble" screen, like the one below:
 
-In the "Bubble Type" drop-down, choose "Fork Bubble"
+  <a href="img/launch_bubble.png"><img src="img/launch_bubble.png" alt="screenshot of Launch Bubble page" height="500"/></a>
 
-Choose your configuration options, then click the "Launch Your Bubble!" button kick things off.
+Click the "Launch with Advanced Settings" link below the `LAUNCH BUBBLE` button.
+You should now see the advanced launch settings screen, like the one below:
+
+  <a href="img/launch_settings.png"><img src="img/launch_settings.png" alt="screenshot of Launch Settings" height="500"/></a>
+
+In the "Bubble Type" drop-down, ensure that "Fork Bubble" is selected.
+
+Choose your other configuration options, then click the "Launch Your Bubble!" button kick things off.
 
 The screen will refresh and show a progress meter. A typical launch will take about 10 minutes.
 

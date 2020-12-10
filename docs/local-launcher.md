@@ -12,6 +12,10 @@ Once the server is running, it will try to open a browser window to continue con
 It will also print out the URL, so if the browser doesn't start correctly, you can paste this
 into your browser's location bar.
 
+If you load the Bubble webapp, you'll see a screen like this one:
+
+  <a href="img/activation.png"><img src="img/activation.png" alt="screenshot of Activation page" height="500"/></a>
+
 ## Activation
 Your Bubble is running locally in a "blank" mode. It needs an initial "root" account and some basic services configured.
 
