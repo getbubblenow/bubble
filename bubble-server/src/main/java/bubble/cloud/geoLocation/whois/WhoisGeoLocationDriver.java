@@ -9,6 +9,7 @@ import org.cobbzilla.util.system.CommandResult;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static bubble.cloud.geoLocation.GeoLocation.NULL_LOCATION;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
@@ -20,10 +21,30 @@ import static org.cobbzilla.util.system.CommandShell.execScript;
 @Slf4j
 public class WhoisGeoLocationDriver extends GeoLocateServiceDriverBase<WhoisConfig> {
 
+    // always flush once upon initialization
+    private static final AtomicBoolean flushed = new AtomicBoolean(false);
+    public boolean flush() {
+        if (!flushed.get()) {
+            synchronized (flushed) {
+                if (!flushed.get()) {
+                    getCache().flush();
+                    flushed.set(true);
+                }
+            }
+        }
+        return flushed.get();
+    }
+
     @Getter(lazy=true) private final String whois = initWhois();
     private String initWhois() {
+        flush();
         final String cmd = execScript("which whois");
-        return empty(cmd) ? die("initWhois: 'whois' command not found") : cmd;
+        return empty(cmd) ? die("initWhois: 'whois' command not found") : cmd.trim();
+    }
+
+    @Override public boolean test() {
+        flush();
+        return super.test();
     }
 
     @Override protected GeoLocation _geolocate(String ip) {

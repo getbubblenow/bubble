@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static java.util.Collections.emptyMap;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
@@ -65,10 +66,15 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
 
     @Getter(lazy=true) private final Map<String, GeoLocation> countryMap = initCountryMap();
     private Map<String, GeoLocation> initCountryMap() {
-        final String countryJson = stream2string("bubble/cloud/geoLocation/country-locations.json");
-        final GeoLocation[] countryLocations = json(countryJson, GeoLocation[].class);
-        return Arrays.stream(countryLocations)
-                .collect(Collectors.toMap(GeoLocation::getCountry, identity()));
+        try {
+            final String countryJson = stream2string("bubble/cloud/geoLocation/country-locations.json");
+            final GeoLocation[] countryLocations = json(countryJson, GeoLocation[].class);
+            return Arrays.stream(countryLocations)
+                    .collect(Collectors.toMap(GeoLocation::getCountry, identity()));
+        } catch (Exception e) {
+            log.warn("initCountryMap: "+shortError(e));
+            return emptyMap();
+        }
     }
 
     @Override public GeoLocation geolocate (String ip) {
