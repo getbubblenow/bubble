@@ -2,6 +2,10 @@ Bubble Activation
 =================
 The very first time Bubble runs it has a blank database, nothing has been defined.
 
+If you load the Bubble webapp, you'll see a screen like this one:
+
+ <a href="img/activation.png"><img src="img/activation.png" alt="screenshot of activation page" height="500"/></a>
+
 This is a Bubble that is awaiting activation.
 
 Activation defines the initial data required to run a Bubble launcher. This includes the initial admin password,
