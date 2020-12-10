@@ -44,8 +44,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.network.NetworkUtil.getFirstPublicIpv4;
-import static org.cobbzilla.util.network.NetworkUtil.getLocalhostIpv4;
+import static org.cobbzilla.util.network.NetworkUtil.*;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.model.entityconfig.ModelSetup.scrubSpecial;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -68,12 +67,17 @@ public class ActivationService {
     @Autowired private PackerService packerService;
 
     public BubbleNode bootstrapThisNode(Account account, ActivationRequest request) {
-        String ip = getFirstPublicIpv4();
-        if (ip == null) {
+        String ip4 = getFirstPublicIpv4();
+        if (ip4 == null) {
             log.warn("thisNode.ip4 will be localhost address, may not be reachable from other nodes");
-            ip = getLocalhostIpv4();
+            ip4 = getLocalhostIpv4();
         }
-        if (ip == null) die("bootstrapThisNode: no IP could be found, not even a localhost address");
+        if (ip4 == null) die("bootstrapThisNode: no IP could be found, not even a localhost address");
+        String ip6 = getFirstPublicIpv6();
+        if (ip6 == null) {
+            log.warn("thisNode.ip6 will be localhost address, may not be reachable from other nodes");
+            ip6 = IPv6_LOCALHOST;
+        }
 
         if (request.hasSshKey()) {
             final String keyJson = json(request.getSshKey());
@@ -205,8 +209,8 @@ public class ActivationService {
                 .setSizeType(ComputeNodeSizeType.local)
                 .setCloud(localCloud.getUuid())
                 .setSslPort(network.getSslPort())
-                .setIp4(ip)
-                // todo: also set ip6 if we have one
+                .setIp4(ip4)
+                .setIp6(ip6)
                 .setAdminPort(configuration.getHttp().getPort())
                 .setState(BubbleNodeState.running));
 

@@ -25,7 +25,9 @@ You should now see the advanced launch settings screen, like the one below:
 
 In the "Bubble Type" drop-down, ensure that "Fork Bubble" is selected.
 
-In the "Fork Host" field, enter the fully-qualified domain name (FQDN) that the Bubble will be known as.
+If you leave the "Fork Host" field blank, the system will assign a hostname for you.
+Or, you set the "Fork Host" to be the fully-qualified domain name (FQDN) that the Bubble will be known as.
+
 The FQDN has the form `host.net.domain`, where `host` and `net` identify the Bubble and can be whatever you
 want (at least 3 characters each), and `domain` is the domain that's been selected in the "Domain" field.
 

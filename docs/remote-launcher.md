@@ -36,7 +36,9 @@ You should now see the advanced launch settings screen, like the one below:
 
 In the "Bubble Type" drop-down box, ensure "Fork Launcher" is selected.
 
-In the "Fork Host" field, enter the fully-qualified domain name (FQDN) that the Bubble will be known as.
+If you leave the "Fork Host" field blank, the system will assign a hostname for you.
+Or, you set the "Fork Host" to be the fully-qualified domain name (FQDN) that the Bubble will be known as.
+
 The FQDN has the form `host.net.domain`, where `host` and `net` identify the Bubble and can be whatever you
 want (at least 3 characters each), and `domain` is the domain that's been selected in the "Domain" field.
 
@@ -61,7 +63,10 @@ If the image is still being built or needs to be built, that will add some time 
 The [Bubble packer documentation](packer.md) has more details on this process. 
 
 ## Next Steps
-When your Bubble finishes launching, it will show a "Connect to Bubble" button. Click this and you'll be connected
-to your Remote Launcher.
+When your Bubble finishes launching, you'll see something like the screenshot below.
+Click or tap "Connect to Bubble" to be connected to your new Bubble Launcher. You can then sign in.
+
+#### My Bubble Screen
+<a href="img/my_bubble.png"><img src="img/my_bubble.png" alt="screenshot of My Bubble screen" height="500"/></a>
 
 You are now ready to [Launch a Bubble](launch-node.md) from the Remote Launcher
