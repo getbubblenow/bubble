@@ -37,7 +37,7 @@ Vagrant.configure("2") do |config|
 
   # Forward ports
   port = ENV['BUBBLE_PORT'] || 8090
-  config.vm.network "forwarded_port", guest: port, host: port, host: '127.0.0.1'
+  config.vm.network "forwarded_port", guest: port, host: port
 
   # Update system
   config.vm.provision :shell do |s|
