@@ -78,4 +78,7 @@
 # We cannot receive notifications until nginx is running, so start bubble API as the very last step
 - name: reload supervisord
   shell: |
-    supervisorctl reload || echo "WARNING: supervisorctl reload exited with $?"
+    supervisorctl reload \
+      || echo "WARNING: supervisorctl reload exited with $?" | tee -a /var/log/bubble/ansible.log \
+      && sleep 10s && supervisorctl reload \
+        || echo "WARNING: supervisorctl reload exited AGAIN with $?" | tee -a /var/log/bubble/ansible.log
