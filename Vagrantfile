@@ -76,6 +76,9 @@ Vagrant.configure("2") do |config|
          # Add bubble bin to PATH
          echo \"export PATH=\${PATH}:${HOME}/bubble/bin\" >> ~/.bashrc
 
+         # Ensure Bubble API listens on all addresses
+         echo \"export BUBBLE_LISTEN_ALL=true\" >> ~/.bashrc
+
          # Set LETSENCRYPT_EMAIL is defined
          if [[ -n \"${LETSENCRYPT_EMAIL}\" ]] ; then
            echo \"export LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}\" >> ~/.bubble.env
