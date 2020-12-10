@@ -12,19 +12,19 @@ like the one shown below, then your Bubble still needs to be activated.
 Read about activation in the [Local Launcher Mode](local-launcher.md) instructions.
 
 #### Activation Screen
-  <a href="img/activation.png"><img src="img/activation.png" alt="screenshot of Activation page" height="500"/></a>
+  <a href="img/activation.png"><img src="img/activation.png" alt="screenshot of Activation screen" height="500"/></a>
 
 If you see a login screen (like the one shown below), you should be able to log in as the admin user using the email
 address and the password used during activation.
 
 #### Sign In Screen
-  <a href="img/sign_in.png"><img src="img/sign_in.png" alt="screenshot of Sign In page" height="500"/></a>
+  <a href="img/sign_in.png"><img src="img/sign_in.png" alt="screenshot of Sign In screen" height="500"/></a>
 
 ## Fork a Remote Launcher
 After you log in, you should see a "Launch Bubble" screen, like the one below:
 
 #### Launch Bubble Screen
-  <a href="img/launch_bubble.png"><img src="img/launch_bubble.png" alt="screenshot of Launch Bubble page" height="500"/></a>
+  <a href="img/launch_bubble.png"><img src="img/launch_bubble.png" alt="screenshot of Launch Bubble screen" height="500"/></a>
 
 If you don't see this screen, click the "My Bubble" link in the left sidebar.
 

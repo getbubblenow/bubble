@@ -15,7 +15,7 @@ into your browser's location bar.
 If you load the Bubble webapp, you'll see a screen like this one:
 
 #### Activation Screen
-  <a href="img/activation.png"><img src="img/activation.png" alt="screenshot of Activation page" height="500"/></a>
+  <a href="img/activation.png"><img src="img/activation.png" alt="screenshot of Activation screen" height="500"/></a>
 
 ## Activation
 Your Bubble is running locally in a "blank" mode. It needs an initial "root" account and some basic services configured.
