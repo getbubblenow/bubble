@@ -67,6 +67,6 @@ When your Bubble finishes launching, you'll see something like the screenshot be
 Click or tap "Connect to Bubble" to be connected to your new Bubble Launcher. You can then sign in.
 
 #### My Bubble Screen
-<a href="img/my_bubble.png"><img src="img/my_bubble.png" alt="screenshot of My Bubble screen" height="500"/></a>
+  <a href="img/my_bubble.png"><img src="img/my_bubble.png" alt="screenshot of My Bubble screen" height="500"/></a>
 
 You are now ready to [Launch a Bubble](launch-node.md) from the Remote Launcher
