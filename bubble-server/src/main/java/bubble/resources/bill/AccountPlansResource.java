@@ -172,7 +172,7 @@ public class AccountPlansResource extends AccountOwnedResource<AccountPlan, Acco
                     request.setDomain(domain.getUuid());
 
                 } else {
-                    if (!validateRegexMatches(HOST_PATTERN, forkHost)) {
+                    if (!isHostname(forkHost)) {
                         errors.addViolation("err.forkHost.invalid");
                     } else if (domain != null && !forkHost.endsWith("." + domain.getName())) {
                         final BubbleDomain foundDomain = domainDAO.findByAccount(caller.getUuid()).stream()

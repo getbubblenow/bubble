@@ -19,6 +19,7 @@ import org.cobbzilla.wizard.model.entityconfig.annotations.ECField;
 import javax.persistence.Transient;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
 @NoArgsConstructor @Accessors(chain=true) @ToString(of={"lat", "lon"}) @OpenApiSchema
 public class GeoLocation {
@@ -33,6 +34,11 @@ public class GeoLocation {
 
     public static final GeoLocation NULL_LOCATION = new GeoLocation().setLat("-1.0").setLon("-1.0");
     public static final double INVALID_LOCATION = -1.0;
+
+    public GeoLocation(String country) {
+        copy(this, NULL_LOCATION);
+        setCountry(country);
+    }
 
     @Getter @Setter private String country;
     public boolean hasCountry() { return !empty(country); }

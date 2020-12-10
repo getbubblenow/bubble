@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.cobbzilla.util.daemon.ZillaRuntime.background;
 import static org.cobbzilla.util.daemon.ZillaRuntime.getJava;
+import static org.cobbzilla.util.string.StringUtil.safeShellArg;
 
 public class RekeyDatabaseMain extends BaseMain<RekeyDatabaseOptions> {
 
@@ -93,13 +94,13 @@ public class RekeyDatabaseMain extends BaseMain<RekeyDatabaseOptions> {
         commandLine = commandLine
                 .addArgument(clazz.getName())
                 .addArgument(RekeyOptions.LONGOPT_DB)
-                .addArgument(dbName)
+                .addArgument(safeShellArg(dbName))
                 .addArgument(RekeyOptions.LONGOPT_DB_USER)
-                .addArgument(options.getDbUser())
+                .addArgument(safeShellArg(options.getDbUser()))
                 .addArgument(RekeyOptions.LONGOPT_DB_PASS)
-                .addArgument(options.getDbPass())
+                .addArgument(safeShellArg(options.getDbPass()))
                 .addArgument(RekeyOptions.LONGOPT_KEY)
-                .addArgument(key)
+                .addArgument(safeShellArg(key))
                 .addArgument(RekeyOptions.LONGOPT_PORT)
                 .addArgument("" + options.getPort());
 

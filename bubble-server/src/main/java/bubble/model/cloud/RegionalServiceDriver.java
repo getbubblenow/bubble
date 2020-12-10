@@ -16,8 +16,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static bubble.cloud.CloudRegionRelative.SORT_DISTANCE_THEN_NAME;
 import static bubble.cloud.geoLocation.GeoLocation.*;
-import static java.util.Comparator.comparingDouble;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 
 public interface RegionalServiceDriver {
@@ -51,22 +51,21 @@ public interface RegionalServiceDriver {
             }
             if (regions != null) {
                 for (CloudRegion region : regions) {
+                    if (exclude != null && exclude.contains(new CloudAndRegion(c, region))) {
+                        log.info("findClosestRegions: skipping excluded region: "+region);
+                        continue;
+                    }
                     if (!region.hasLocation() || region.getLocation() == NULL_LOCATION) {
                         // region has no location, it will always match with a distance of zero
-                        final CloudRegionRelative r = new CloudRegionRelative(region);
-                        r.setDistance(0).setCloud(c.getUuid());
-                        allRegions.add(r);
+                        addRegionWithUnknownDistance(allRegions, c, region);
                         continue;
                     }
                     if (latitude == INVALID_LOCATION && longitude == INVALID_LOCATION) {
                         // region has a location, we can never match with invalid coordinates
+                        addRegionWithUnknownDistance(allRegions, c, region);
                         continue;
                     }
                     if (footprint != null && region.hasLocation() && !footprint.isAllowedCountry(region.getLocation().getCountry())) {
-                        continue;
-                    }
-                    if (exclude != null && exclude.contains(new CloudAndRegion(c, region))) {
-                        log.info("findClosestRegions: skipping excluded region: "+region);
                         continue;
                     }
                     final CloudRegionRelative r = new CloudRegionRelative(region);
@@ -80,8 +79,17 @@ public interface RegionalServiceDriver {
                 }
             }
         }
-        allRegions.sort(comparingDouble(CloudRegionRelative::getDistance));
+        allRegions.sort(SORT_DISTANCE_THEN_NAME);
         return allRegions;
+    }
+
+    private static void addRegionWithUnknownDistance(List<CloudRegionRelative> allRegions,
+                                                     CloudService c,
+                                                     CloudRegion region) {
+        final CloudRegionRelative r = new CloudRegionRelative(region);
+        r.setDistance(0);
+        r.setCloud(c.getUuid());
+        allRegions.add(r);
     }
 
     List<CloudRegion> getRegions();

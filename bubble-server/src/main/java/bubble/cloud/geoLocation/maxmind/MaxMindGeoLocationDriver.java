@@ -16,7 +16,7 @@ import java.net.InetAddress;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 
-public class MaxMindDriver extends GeoLocateServiceDriverBase<CloudApiUrlConfig> {
+public class MaxMindGeoLocationDriver extends GeoLocateServiceDriverBase<CloudApiUrlConfig> {
 
     private DatabaseReader reader;
 

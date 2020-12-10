@@ -10,7 +10,6 @@ import bubble.server.listener.NodeInitializerListener;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.io.FileUtil;
-import org.cobbzilla.util.system.CommandShell;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerBase;
 import org.cobbzilla.wizard.server.RestServerLifecycleListener;
@@ -39,6 +38,7 @@ import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.network.NetworkUtil.IPv4_ALL_ADDRS;
 import static org.cobbzilla.util.network.NetworkUtil.IPv4_LOCALHOST;
+import static org.cobbzilla.util.system.CommandShell.loadShellExports;
 import static org.cobbzilla.util.system.OutOfMemoryErrorUncaughtExceptionHandler.EXIT_ON_OOME;
 
 @NoArgsConstructor @Slf4j
@@ -126,7 +126,7 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
             final File envFile = getEnvFile(args);
             if (envFile == null) return die("loadEnvironment: no env file found");
             if (!envFile.exists()) return die("loadEnvironment: env file does not exist: "+abs(envFile));
-            env.putAll(CommandShell.loadShellExports(envFile));
+            env.putAll(loadShellExports(envFile));
         } catch (Exception e) {
             log.warn("Error loading environment: "+e);
         }

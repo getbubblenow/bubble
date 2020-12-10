@@ -46,8 +46,7 @@ import static org.cobbzilla.util.json.JsonUtil.COMPACT_MAPPER;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.EMPTY;
 import static org.cobbzilla.util.string.StringUtil.getPackagePath;
-import static org.cobbzilla.util.string.ValidationRegexes.HOST_PATTERN;
-import static org.cobbzilla.util.string.ValidationRegexes.validateRegexMatches;
+import static org.cobbzilla.util.string.ValidationRegexes.*;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 
 @Slf4j
@@ -504,7 +503,7 @@ public class BubbleBlockRuleDriver extends TrafficAnalyticsRuleDriver
             if (data.getKey().startsWith(PREFIX_APPDATA_SHOW_STATS)) {
                 final DeviceService deviceService = configuration.getBean(DeviceService.class);
                 final String fqdn = fqdnFromKey(data.getKey());
-                if (validateRegexMatches(HOST_PATTERN, fqdn)) {
+                if (isHostname(fqdn)) {
                     if (data.deleting()) {
                         if (log.isInfoEnabled()) log.info(prefix+"unsetting fqdn: "+fqdn);
                         deviceService.unsetBlockStatsForFqdn(account, fqdn);

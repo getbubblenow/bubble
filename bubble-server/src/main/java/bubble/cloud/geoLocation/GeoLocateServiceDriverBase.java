@@ -22,14 +22,20 @@ import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.function.Function.identity;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.http.HttpSchemes.SCHEME_FILE;
+import static org.cobbzilla.util.http.HttpUtil.getHeadMetadata;
 import static org.cobbzilla.util.io.FileUtil.*;
+import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.wizard.cache.redis.RedisService.EX;
@@ -38,7 +44,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 @Slf4j
 public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBase<T> implements GeoLocateServiceDriver {
 
-    public static final long CACHE_TTL = TimeUnit.DAYS.toSeconds(20);
+    public static final long CACHE_TTL = DAYS.toSeconds(20);
     public static final long ERROR_TTL = SECONDS.toSeconds(20);
 
     private static final int MAX_FILE_RETRIES = 5;
@@ -56,6 +62,14 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
 
     @Autowired private RedisService redis;
     @Getter(lazy=true) private final RedisService cache = redis.prefixNamespace(getClass().getName()+"_cache_");
+
+    @Getter(lazy=true) private final Map<String, GeoLocation> countryMap = initCountryMap();
+    private Map<String, GeoLocation> initCountryMap() {
+        final String countryJson = stream2string("bubble/cloud/geoLocation/country-locations.json");
+        final GeoLocation[] countryLocations = json(countryJson, GeoLocation[].class);
+        return Arrays.stream(countryLocations)
+                .collect(Collectors.toMap(GeoLocation::getCountry, identity()));
+    }
 
     @Override public GeoLocation geolocate (String ip) {
         String val = getCache().get(ip);
@@ -90,7 +104,7 @@ public abstract class GeoLocateServiceDriverBase<T> extends CloudServiceDriverBa
                 final String urlWithLicense = HandlebarsUtil.apply(getHandlebars(), url, getCredentials().newContext(), '[', ']')
                         .replace("&amp;", "&");
                 final HttpRequestBean request = new HttpRequestBean(urlWithLicense).setHeaders(headers);
-                final HttpMeta meta = HttpUtil.getHeadMetadata(request);
+                final HttpMeta meta = getHeadMetadata(request);
 
                 final String uniq = hashOf(url, headers);
                 final String dbKey = "dbcache_" + uniq;

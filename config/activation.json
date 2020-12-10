@@ -169,9 +169,12 @@
     // GeoLocation
     ///////////////////////
 
-    // Required for locale and "nearest compute region" auto-detection. Currently only MaxMind is supported
+    // Required for locale and "nearest compute region" auto-detection.
+    // Currently only MaxMind and Whois are supported.
+
+    // MaxMind is free, but now requires registration and an API token.
     // Comment this out if you're not going to use it
-    "MaxMind": {
+    "MaxMindGeoLocation": {
       "config": {
         // these values work for the free GeoLite database, but you still have to specify an apiKey
         "url": "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=[[apiKey]]&suffix=tar.gz",
@@ -180,13 +183,28 @@
       "credentials": {"apiKey": "your_maxmind_api_key"}
     },
 
+    // Whois is also free, but less accurate. It's worth a try if you have nothing better.
+    "WhoisGeoLocation": {
+      "config": {
+        // Normally the default 'whois' settings are used.
+        // If you want to pass `-h` and `-p` to whois to set the host and port
+        // of another whois server to use, set the config params below
+        "host": null,
+        "port": null
+        // If you're not going to change host/port, you can reduce this
+        // config object to an empty JSON object {}
+      },
+      "credentials": {},
+      "template": true
+    },
+
     ///////////////////////
     // GeoCode
     ///////////////////////
 
     // Required for "nearest compute region" auto-detection. Currently only Google GeoCoder is supported
     // Comment this out if you're not going to use it
-    "GoogleGeoCoder": {
+    "GoogleGeoCode": {
       "credentials": {"apiKey": "your_google_api_key"}
     },
 

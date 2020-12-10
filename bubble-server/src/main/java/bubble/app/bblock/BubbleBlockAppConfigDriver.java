@@ -19,7 +19,6 @@ import bubble.server.BubbleConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.ExpirationMap;
-import org.cobbzilla.util.string.ValidationRegexes;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -36,8 +35,7 @@ import static org.cobbzilla.util.http.HttpSchemes.isHttpOrHttps;
 import static org.cobbzilla.util.http.URIUtil.getHost;
 import static org.cobbzilla.util.http.URIUtil.getPath;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.string.ValidationRegexes.HTTPS_PATTERN;
-import static org.cobbzilla.util.string.ValidationRegexes.HTTP_PATTERN;
+import static org.cobbzilla.util.string.ValidationRegexes.*;
 import static org.cobbzilla.wizard.model.BasicConstraintConstants.URL_MAXLEN;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
@@ -213,7 +211,7 @@ public class BubbleBlockAppConfigDriver extends AppConfigDriverBase {
         } catch (Exception e) {
             throw invalidEx("err.testUrl.invalid", "Test URL was not valid", shortError(e));
         }
-        if (empty(host) || !ValidationRegexes.HOST_PATTERN.matcher(host).matches()) {
+        if (empty(host) || !isHostname(host)) {
             throw invalidEx("err.testUrl.invalidHostname", "Test URL was not valid");
         }
 

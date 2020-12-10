@@ -16,10 +16,7 @@ import org.cobbzilla.util.string.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -27,6 +24,8 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.dns.DnsRecord.OPT_NS_NAME;
 import static org.cobbzilla.util.network.NetworkUtil.IPv4_ALL_ADDRS;
 import static org.cobbzilla.util.network.NetworkUtil.ipEquals;
+import static org.cobbzilla.util.string.StringUtil.safeShellArg;
+import static org.cobbzilla.util.string.ValidationRegexes.isHostname;
 import static org.cobbzilla.util.system.CommandShell.execScript;
 import static org.cobbzilla.util.system.Sleep.sleep;
 
@@ -61,11 +60,19 @@ public interface DnsServiceDriver extends CloudServiceDriver {
     static Collection<DnsRecord> dig(String host, DnsType type, String name) { return dig(host, 53, type, name); }
 
     static Collection<DnsRecord> dig(String host, int port, DnsType type, String name) {
+        if (!isHostname(host)) {
+            log.warn("dig: invalid host: "+host);
+            return Collections.emptyList();
+        }
+        if (!isHostname(name)) {
+            log.warn("dig: invalid name: "+name);
+            return Collections.emptyList();
+        }
         final String output = execScript("dig +tcp +short +nocomment "
-                + "@" + host
+                + "@" + safeShellArg(host)
                 + " -p " + port
                 + " -t " + type.name()
-                + " -q " + name);
+                + " -q " + safeShellArg(name));
         log.info("dig @"+host+" "+name+": output: "+output.trim());
         final List<DnsRecord> records = new ArrayList<>();
         for (String line : output.split("[\n]+")) {

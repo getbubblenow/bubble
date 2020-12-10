@@ -30,7 +30,10 @@ import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -164,6 +167,7 @@ public class NetworksResource extends AccountOwnedResource<BubbleNetwork, Bubble
             } catch (Exception e) {
                 return invalid("err.latlon.invalid", "lat/lon was invalid: "+e.getMessage(), lat+","+lon);
             }
+            if (latitude < 0 || longitude < 0) return invalid("err.latlon.invalid");
         } else {
             // try to figure it out from the IP
             final String remoteHost = getRemoteHost(req);

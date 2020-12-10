@@ -89,6 +89,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.string.StringUtil.safeShellArg;
 import static org.cobbzilla.util.system.CommandShell.chmod;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
@@ -304,7 +305,7 @@ public class StandardNetworkService implements NetworkService {
                     + "-o StrictHostKeyChecking=no "
                     + "-o PreferredAuthentications=publickey "
                     + "-i " + abs(sshKeyFile);
-            final String sshTarget = node.getUser() + "@" + computeDriver.getNodeIp4(node);
+            final String sshTarget = safeShellArg(node.getUser() + "@" + computeDriver.getNodeIp4(node));
 
             boolean setupOk = false;
             final String nodeUser = node.getUser();

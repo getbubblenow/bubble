@@ -8,16 +8,11 @@ import bubble.model.cloud.BubbleVersionInfo;
 import bubble.server.BubbleConfiguration;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.daemon.SimpleDaemon;
-import org.cobbzilla.util.io.Decompressors;
-import org.cobbzilla.util.io.FileUtil;
 import org.cobbzilla.util.io.TempDir;
-import org.cobbzilla.wizard.model.SemanticVersion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.util.regex.Pattern;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -26,8 +21,6 @@ import static org.cobbzilla.util.http.HttpUtil.url2file;
 import static org.cobbzilla.util.http.HttpUtil.url2string;
 import static org.cobbzilla.util.io.Decompressors.extract;
 import static org.cobbzilla.util.io.FileUtil.*;
-import static org.cobbzilla.util.system.CommandShell.execScript;
-import static org.cobbzilla.wizard.model.SemanticVersion.SEMANTIC_VERSION_RE;
 import static org.cobbzilla.wizard.model.SemanticVersion.isNewerVersion;
 
 @Service @Slf4j

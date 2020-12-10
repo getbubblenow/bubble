@@ -108,7 +108,9 @@ public class CloudServiceRegionsResource {
             if (footprint == null) return notFound(footprintId);
         }
 
-        return ok(findClosestRegions(configuration, computeClouds(), footprint, loc.getLatitude(), loc.getLongitude(), null, geoService.supportsGeoLocation()));
+        return ok(findClosestRegions(configuration, computeClouds(), footprint,
+                loc.getLatitude(), loc.getLongitude(),
+                null, geoService.supportsGeoLocation()));
     }
 
     public List<CloudRegion> findRegions(List<CloudService> clouds, BubbleFootprint footprint) {

@@ -55,7 +55,7 @@
   },
 
   {
-    "name": "GoogleGeoCoder",
+    "name": "GoogleGeoCode",
     "type": "geoCode",
     "driverClass": "bubble.cloud.geoCode.google.GoogleGeoCodeDriver",
     "credentials": { "params": [ {"name": "apiKey", "value": "{{GOOGLE_API_KEY}}"} ] },
@@ -130,15 +130,26 @@
   },
 
   {
-    "name": "MaxMind",
+    "name": "MaxMindGeoLocation",
     "type": "geoLocation",
-    "driverClass": "bubble.cloud.geoLocation.maxmind.MaxMindDriver",
+    "driverClass": "bubble.cloud.geoLocation.maxmind.MaxMindGeoLocationDriver",
     "driverConfig": {
       "url": "{{#exists MAXMIND_URL}}{{{MAXMIND_URL}}}{{else}}https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=[[apiKey]]&suffix=tar.gz{{/exists}}",
       "file": "{{#exists MAXMIND_FILE_REGEX}}{{{MAXMIND_FILE_REGEX}}}{{else}}GeoLite2-City_20[\\d]{6}/GeoLite2-City\\.mmdb{{/exists}}"
     },
     "credentials": {
       "params": [ {"name": "apiKey", "value": "{{{MAXMIND_API_KEY}}}"} ]
+    },
+    "template": true
+  },
+
+  {
+    "name": "WhoisGeoLocation",
+    "type": "geoLocation",
+    "driverClass": "bubble.cloud.geoLocation.whois.WhoisGeoLocationDriver",
+    "driverConfig": {
+      "host": null,
+      "port": null
     },
     "template": true
   },

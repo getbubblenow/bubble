@@ -28,6 +28,7 @@ import static org.cobbzilla.util.io.FileUtil.abs;
 import static org.cobbzilla.util.io.FileUtil.mkdirOrDie;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.security.ShaUtil.sha256_file;
+import static org.cobbzilla.util.string.StringUtil.safeShellArg;
 import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 import static org.cobbzilla.util.system.CommandShell.chmod;
 import static org.cobbzilla.util.system.CommandShell.execScript;
@@ -125,7 +126,7 @@ public class PackerService {
         final File privateKeyFile = new File(keyDir, PACKER_KEY_NAME);
         if (!pubKeyFile.exists() || !privateKeyFile.exists()) {
             final String comment = configuration.getShortVersion() + "_" + configuration.getJarSha();
-            execScript("ssh-keygen -t rsa -q -N '' -C '"+comment+"' -f "+abs(privateKeyFile));
+            execScript("ssh-keygen -t rsa -q -N '' -C '"+safeShellArg(comment)+"' -f "+abs(privateKeyFile));
             if (!pubKeyFile.exists() || !privateKeyFile.exists()) return die("initPackerKey: error creating packer key");
         }
         return pub ? pubKeyFile : privateKeyFile;
