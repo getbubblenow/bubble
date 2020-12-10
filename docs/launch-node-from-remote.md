@@ -32,7 +32,7 @@ You should now see the advanced launch settings screen, like the one below:
 #### Launch Settings Screen
   <a href="img/launch_settings.png"><img src="img/launch_settings.png" alt="screenshot of Launch Settings" height="500"/></a>
 
-Choose your configuration options, then click the "Launch Your Bubble!" button kick things off.
+Choose your configuration options, then click the "Launch Your Bubble!" button to kick things off.
 
 The screen will refresh and show a progress meter, as in the screenshot below.
 A typical launch will take about 10 minutes, but don't fret, there's plenty to do while you wait - read on.
