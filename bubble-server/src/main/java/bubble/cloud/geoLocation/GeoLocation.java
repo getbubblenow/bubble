@@ -32,8 +32,7 @@ public class GeoLocation {
 
     public static final GeoLocation DEFAULT_GEO_LOCATION = GEO_ATLANTA;
 
-    public static final GeoLocation NULL_LOCATION = new GeoLocation().setLat("-1.0").setLon("-1.0");
-    public static final double INVALID_LOCATION = -1.0;
+    public static final GeoLocation NULL_LOCATION = new GeoLocation();
 
     public GeoLocation(String country) {
         copy(this, NULL_LOCATION);
@@ -63,11 +62,11 @@ public class GeoLocation {
                 big(g2.getLon()).doubleValue());
     }
 
-    public double distance(double lat, double lon) {
-        if (lat < 0 || lon < 0) return INVALID_LOCATION;
+    public Double distance(double lat, double lon) {
+        if (lat < 0 || lon < 0) return null;
         double thisLat = big(getLat()).doubleValue();
         double thisLon = big(getLon()).doubleValue();
-        if (thisLat < 0 || thisLon < 0) return INVALID_LOCATION;
+        if (thisLat < 0 || thisLon < 0) return null;
         return Haversine.distance(
                 thisLat,
                 lat,
@@ -91,8 +90,7 @@ public class GeoLocation {
 
     public boolean hasLatLon() {
         try {
-            distance(0, 0);
-            return true;
+            return distance(0, 0) != null;
         } catch (Exception e) {
             return false;
         }

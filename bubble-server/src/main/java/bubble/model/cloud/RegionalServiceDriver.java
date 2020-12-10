@@ -27,16 +27,16 @@ public interface RegionalServiceDriver {
     static List<CloudRegionRelative> findClosestRegions(BubbleConfiguration configuration,
                                                         List<CloudService> clouds,
                                                         BubbleFootprint footprint,
-                                                        double latitude,
-                                                        double longitude) {
+                                                        Double latitude,
+                                                        Double longitude) {
         return findClosestRegions(configuration, clouds, footprint, latitude, longitude, null, true);
     }
 
     static List<CloudRegionRelative> findClosestRegions(BubbleConfiguration configuration,
                                                         List<CloudService> clouds,
                                                         BubbleFootprint footprint,
-                                                        double latitude,
-                                                        double longitude,
+                                                        Double latitude,
+                                                        Double longitude,
                                                         Collection<CloudAndRegion> exclude,
                                                         boolean latLonIsValid) {
 
@@ -60,7 +60,7 @@ public interface RegionalServiceDriver {
                         addRegionWithUnknownDistance(allRegions, c, region);
                         continue;
                     }
-                    if (latitude == INVALID_LOCATION && longitude == INVALID_LOCATION) {
+                    if (latitude == null || longitude == null) {
                         // region has a location, we can never match with invalid coordinates
                         addRegionWithUnknownDistance(allRegions, c, region);
                         continue;
@@ -70,7 +70,7 @@ public interface RegionalServiceDriver {
                     }
                     final CloudRegionRelative r = new CloudRegionRelative(region);
                     r.setCloud(c.getUuid());
-                    if (latLonIsValid && latitude >= 0 && longitude >= 0) {
+                    if (latLonIsValid) {
                         r.setDistance(latitude, longitude);
                     } else {
                         r.setDistance(DEFAULT_GEO_LOCATION.getLatitude(), DEFAULT_GEO_LOCATION.getLongitude());
@@ -87,7 +87,7 @@ public interface RegionalServiceDriver {
                                                      CloudService c,
                                                      CloudRegion region) {
         final CloudRegionRelative r = new CloudRegionRelative(region);
-        r.setDistance(0);
+        r.setDistance(null);
         r.setCloud(c.getUuid());
         allRegions.add(r);
     }

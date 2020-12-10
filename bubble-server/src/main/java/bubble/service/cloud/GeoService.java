@@ -189,7 +189,8 @@ public class GeoService {
                 // throw out any that are more than 50km off the average
                 final List<GeoLocation> near = new ArrayList<>();
                 for (GeoLocation loc : resolved) {
-                    if (loc.distance(averageLat, averageLon) <= LOC_MAX_DISTANCE) {
+                    final Double distance = loc.distance(averageLat, averageLon);
+                    if (distance != null && distance <= LOC_MAX_DISTANCE) {
                         near.add(loc);
                     }
                 }
