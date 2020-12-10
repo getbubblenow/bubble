@@ -18,7 +18,7 @@
     "_subst": true,
     "name": "MaxMind",
     "type": "geoLocation",
-    "driverClass": "bubble.cloud.geoLocation.maxmind.MaxMindDriver",
+    "driverClass": "bubble.cloud.geoLocation.maxmind.MaxMindGeoLocationDriver",
     "driverConfig": {
       "url": "{{{MAXMIND_URL}}}",
       "file": "{{{MAXMIND_FILE_REGEX}}}"
