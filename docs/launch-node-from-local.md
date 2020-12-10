@@ -25,6 +25,15 @@ You should now see the advanced launch settings screen, like the one below:
 
 In the "Bubble Type" drop-down, ensure that "Fork Bubble" is selected.
 
+In the "Fork Host" field, enter the fully-qualified domain name (FQDN) that the Bubble will be known as.
+The FQDN has the form `host.net.domain`, where `host` and `net` identify the Bubble and can be whatever you
+want (at least 3 characters each), and `domain` is the domain that's been selected in the "Domain" field.
+
+For example, if you selected `example.com` in the "Domain" field, you could enter
+`foo.bar.example.com` as the Fork Host.
+
+You will also need to specify an admin email login -- it must be different than your current login.
+
 Choose your other configuration options, then click the "Launch Your Bubble!" button kick things off.
 
 The screen will refresh and show a progress meter, as in the screenshot below.
@@ -46,5 +55,8 @@ While your Bubble is launching, take a moment to
 [install the Bubble Native app](https://support.getbubblenow.com/hc/en-us/articles/360050801634-Connect-a-device-to-your-Bubble)
 on each device you plan on connecting to your Bubble.
 
-When your Bubble finishes launching, it will show a "Connect to Bubble" button. Click this and you'll be connected
-to your Bubble Node.
+When your Bubble finishes launching, you'll see something like the screenshot below.
+Click or tap "Connect to Bubble" to be connected to your new Bubble Node. You can then sign in.
+
+#### My Bubble Screen
+  <a href="img/my_bubble.png"><img src="img/my_bubble.png" alt="screenshot of My Bubble screen" height="500"/></a>

@@ -53,5 +53,8 @@ While your Bubble is launching, take a moment to
 [install the Bubble Native app](https://support.getbubblenow.com/hc/en-us/articles/360050801634-Connect-a-device-to-your-Bubble)
 on each device you plan on connecting to your Bubble.
 
-When your Bubble finishes launching, it will show a "Connect to Bubble" button. Click this and you'll be connected
-to your Bubble Node.
+When your Bubble finishes launching, you'll see something like the screenshot below.
+Click or tap "Connect to Bubble" to be connected and automatically logged in to your new Bubble Node.
+
+#### My Bubble Screen
+  <a href="img/my_bubble.png"><img src="img/my_bubble.png" alt="screenshot of My Bubble screen" height="500"/></a>

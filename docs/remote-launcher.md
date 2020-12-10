@@ -37,10 +37,14 @@ You should now see the advanced launch settings screen, like the one below:
 In the "Bubble Type" drop-down box, ensure "Fork Launcher" is selected.
 
 In the "Fork Host" field, enter the fully-qualified domain name (FQDN) that the Bubble will be known as.
-This should end with whatever domain you have selected below in the "Domain" field.
+The FQDN has the form `host.net.domain`, where `host` and `net` identify the Bubble and can be whatever you
+want (at least 3 characters each), and `domain` is the domain that's been selected in the "Domain" field.
 
-In the "Plan" field, it is recommended to choose the highest-level plan. The Remote Launcher requires a decent amount
-of memory and CPU.
+For example, if you selected `example.com` in the "Domain" field, you could enter
+`foo.bar.example.com` as the Fork Host.
+
+In the "Plan" field, it is recommended to choose the highest-level plan.
+The Remote Launcher requires a decent amount of memory and CPU.
 
 In the "Domain" field, choose the domain that corresponds to the FQDN you entered in the "Fork Host" field.
 

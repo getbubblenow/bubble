@@ -96,7 +96,7 @@ releaseUrlBase: {{#exists BUBBLE_RELEASE_URL_BASE}}{{BUBBLE_RELEASE_URL_BASE}}{{
 disallowedCountries: {{DISALLOWED_COUNTRIES}}
 
 promoCodePolicy: {{#exists BUBBLE_PROMO_CODE_POLICY}}{{BUBBLE_PROMO_CODE_POLICY}}{{else}}disabled{{/exists}}
-requireSendMetrics: true
+requireSendMetrics: {{#exists BUBBLE_REQUIRE_SEND_METRICS}}{{BUBBLE_REQUIRE_SEND_METRICS}}{{else}}false{{/exists}}
 
 rateLimits:
   - { limit: 500, interval: 3s, block: 5m }
