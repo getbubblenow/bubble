@@ -50,6 +50,8 @@ public class GeoLocation {
     @JsonIgnore @Transient public double getLatitude () { return big(lat).doubleValue(); }
     @JsonIgnore @Transient public double getLongitude () { return big(lon).doubleValue(); }
 
+    public boolean hasLatLon() { return !empty(getLat()) && !empty(getLon()); }
+
     public String hashKey() { return hashOf(country, region, city, lat, lon); }
 
     @JsonIgnore @Transient @Getter @Setter private CloudService cloud;
@@ -62,11 +64,10 @@ public class GeoLocation {
                 big(g2.getLon()).doubleValue());
     }
 
-    public Double distance(double lat, double lon) {
-        if (lat < 0 || lon < 0) return null;
+    public Double distance(Double lat, Double lon) {
+        if (lat == null || lon == null || !hasLatLon()) return null;
         double thisLat = big(getLat()).doubleValue();
         double thisLon = big(getLon()).doubleValue();
-        if (thisLat < 0 || thisLon < 0) return null;
         return Haversine.distance(
                 thisLat,
                 lat,
@@ -86,14 +87,6 @@ public class GeoLocation {
             b.append(country);
         }
         return b.toString();
-    }
-
-    public boolean hasLatLon() {
-        try {
-            return distance(0, 0) != null;
-        } catch (Exception e) {
-            return false;
-        }
     }
 
     @JsonIgnore @Transient @Getter(lazy=true) private final String cacheKey = hashKey();
