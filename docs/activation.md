@@ -4,6 +4,7 @@ The very first time Bubble runs it has a blank database, nothing has been define
 
 If you load the Bubble webapp, you'll see a screen like this one:
 
+#### Activation Screen
  <a href="img/activation.png"><img src="img/activation.png" alt="screenshot of Activation page" height="500"/></a>
 
 This is a Bubble that is awaiting activation.

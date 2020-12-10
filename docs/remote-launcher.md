@@ -23,6 +23,7 @@ address and the password used during activation.
 ## Fork a Remote Launcher
 After you log in, you should see a "Launch Bubble" screen, like the one below:
 
+#### Launch Bubble Screen
   <a href="img/launch_bubble.png"><img src="img/launch_bubble.png" alt="screenshot of Launch Bubble page" height="500"/></a>
 
 If you don't see this screen, click the "My Bubble" link in the left sidebar.
@@ -30,6 +31,7 @@ If you don't see this screen, click the "My Bubble" link in the left sidebar.
 Click the "Launch with Advanced Settings" link below the `LAUNCH BUBBLE` button.
 You should now see the advanced launch settings screen, like the one below:
 
+#### Launch Settings Screen
    <a href="img/launch_settings.png"><img src="img/launch_settings.png" alt="screenshot of Launch Settings" height="500"/></a>
 
 In the "Bubble Type" drop-down box, ensure "Fork Launcher" is selected.

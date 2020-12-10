@@ -6,6 +6,7 @@ or are running the [Bubble Docker Launcher](docker-launcher.md).
 ## Login
 Open a browser window to your Local Launcher. You should see a screen like this one:
 
+#### Sign In Screen
   <a href="img/sign_in.png"><img src="img/sign_in.png" alt="screenshot of Sign In page" height="500"/></a>
 
 Login to your Local Launcher using the root admin account that was created during activation.
@@ -13,11 +14,13 @@ Login to your Local Launcher using the root admin account that was created durin
 ## Launch Bubble
 You should see a "Launch Bubble" screen, like the one below:
 
+#### Launch Bubble Screen
   <a href="img/launch_bubble.png"><img src="img/launch_bubble.png" alt="screenshot of Launch Bubble page" height="500"/></a>
 
 Click the "Launch with Advanced Settings" link below the `LAUNCH BUBBLE` button.
 You should now see the advanced launch settings screen, like the one below:
 
+#### Launch Settings Screen
   <a href="img/launch_settings.png"><img src="img/launch_settings.png" alt="screenshot of Launch Settings" height="500"/></a>
 
 In the "Bubble Type" drop-down, ensure that "Fork Bubble" is selected.
