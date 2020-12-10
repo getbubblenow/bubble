@@ -332,9 +332,10 @@ public class PackerJob implements Callable<List<PackerImage>> {
         } else {
             final List<PackerImage> finalizedImages = computeDriver.finalizeIncompletePackerRun(commandResult, installType);
             if (empty(finalizedImages)) {
-                return die("Error executing packer: exit status " + commandResult.getExitStatus());
+                log.warn("Error executing packer: exit status " + commandResult.getExitStatus());
+            } else {
+                images.addAll(finalizedImages);
             }
-            images.addAll(finalizedImages);
         }
 
         setImagesRefs();
