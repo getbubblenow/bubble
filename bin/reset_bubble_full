@@ -43,4 +43,7 @@ echo "> removed: ${BUBBLE_CLOUD_DATA_DIR}"
 
 dropdb bubble && echo "> dropped database: bubble" || echo "! error: dropping bubble database"
 
+echo "FLUSHALL" | redis-cli || echo "! error: flushing redis"
+echo "> flushed redis"
+
 echo "+++ Bubble Reset Complete"
