@@ -56,7 +56,8 @@ You must begin in this mode, where Bubble runs locally on your machine.
 You'll setup the various cloud services required to run Bubble,
 and use the Local Launcher to start a Remote Launcher or a Bubble Node.
 
-This is the mode that the [Bubble Docker Launcher](docs/docker-launcher.md) runs.
+This is the mode run by the [Bubble Docker Launcher](docs/docker-launcher.md) and [Bubble Vagrant](docs/dev_vagrant.md)
+environments.
 
 Learn more about setting up [Local Launcher Mode](docs/local-launcher.md)
 

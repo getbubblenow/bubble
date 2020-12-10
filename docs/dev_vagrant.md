@@ -3,6 +3,9 @@ Bubble Vagrant Developer Setup
 [Vagrant](https://www.vagrantup.com/) is a popular way to run pre-packaged software on virtual machines
 like VirtualBox and VMware.
 
+Bubble uses Vagrant to create a development environment where you can work on the codebase, and build,
+run and test the API server and frontend webapp.
+
 # Requirements
 Before starting a Bubble Vagrant box, you'll need install some software if you don't already have it:
 
