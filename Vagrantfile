@@ -13,6 +13,7 @@
 #   - the code is in ${HOME}/bubble
 #   - API environment file is ${HOME}/.bubble.env
 #   - start the API server (local launcher) with run.sh
+#   - access the webapp at http://127.0.0.1:${BUBBLE_PORT}/
 #
 # There are a few environment variables that determine how the box is initialized,
 # described below.
@@ -36,7 +37,7 @@ Vagrant.configure("2") do |config|
 
   # Forward ports
   port = ENV['BUBBLE_PORT'] || 8090
-  config.vm.network "forwarded_port", guest: port, host: port
+  config.vm.network "forwarded_port", guest: port, host: port, host: '127.0.0.1'
 
   # Update system
   config.vm.provision :shell do |s|
@@ -93,10 +94,11 @@ Vagrant.configure("2") do |config|
 
            vagrant ssh
 
-         Once logged in:
+         Once you are logged in:
           - the code is in ${HOME}/bubble
           - API environment file is ${HOME}/.bubble.env
           - start the API server (local launcher) with run.sh
+          - access the webapp at http://127.0.0.1:${BUBBLE_PORT}/
 
          Enjoy!
          ==================================================================

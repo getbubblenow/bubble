@@ -16,11 +16,13 @@
 #
 # Environment variables
 #
-#   BUBBLE_ENV      : env file to load, used when performing handlebars substitutions on entities marked
-#                        with `"_subst": true` JSON attribute. Default is ~/.bubble.env
-#   BUBBLE_JVM_OPTS : Java options. Defaults to either "-Xmx512m -Xms512m" when no command is set, else "-Xmx64m -Xms2m"
-#   BUBBLE_JAR      : location of bubble uberjar. Default is to assume there is exactly one bubble-server*.jar file in a
-#                       directory named "target" that is in the same directory as this script
+#   BUBBLE_LISTEN_ALL : if set to true and running a Bubble server, listen on all addresses (bind to 0.0.0.0)
+#                         if not set, server will only listen on 127.0.0.1
+#   BUBBLE_ENV        : env file to load, used when performing handlebars substitutions on entities marked
+#                         with `"_subst": true` JSON attribute. Default is ~/.bubble.env
+#   BUBBLE_JVM_OPTS   : Java options. Defaults to either "-Xmx512m -Xms512m" when no command is set, else "-Xmx64m -Xms2m"
+#   BUBBLE_JAR        : location of bubble uberjar. Default is to assume there is exactly one bubble-server*.jar file in a
+#                         directory named "target" that is in the same directory as this script
 #
 # Environment variables for API commands
 #
@@ -162,7 +164,12 @@ if [[ -z "${BUBBLE_PASS}" ]] ; then
   BUBBLE_PASS=password
 fi
 
+LISTEN_ALL=""
+if [[ -n "${BUBBLE_LISTEN_ALL}" && "${BUBBLE_LISTEN_ALL}" == "true" ]] ; then
+  LISTEN_ALL="-Dbubble.listenAll=true"
+fi
+
 # Run!
 BUBBLE_JAR="${BUBBLE_JAR}" java ${LOG_CONFIG} ${BUBBLE_JVM_OPTS} \
   -Xlog:class+load=info:/tmp/bubble_classes_$(date +%s).txt \
-  ${debug} -server -cp "${BUBBLE_CP}" ${CLASS} ${command} "${@}"
+  ${debug} -server -cp "${BUBBLE_CP}" ${LISTEN_ALL} ${CLASS} ${command} "${@}"
