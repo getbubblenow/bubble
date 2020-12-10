@@ -131,6 +131,8 @@ public class ApiConstants {
     public static final File CACERTS_DIR = new File(HOME_DIR, "cacerts");
     public static final File MITMPROXY_CERT_DIR = new File(HOME_DIR, "mitm_certs");
 
+    public static final String LOCAL = "local";
+
     public static final String META_PROP_BUBBLE_VERSION = "bubble.version";
 
     public static final String SESSION_HEADER = "X-Bubble-Session";

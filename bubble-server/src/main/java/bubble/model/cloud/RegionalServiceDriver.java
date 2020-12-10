@@ -16,8 +16,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static bubble.ApiConstants.LOCAL;
 import static bubble.cloud.CloudRegionRelative.SORT_DISTANCE_THEN_NAME;
-import static bubble.cloud.geoLocation.GeoLocation.*;
+import static bubble.cloud.geoLocation.GeoLocation.DEFAULT_GEO_LOCATION;
+import static bubble.cloud.geoLocation.GeoLocation.NULL_LOCATION;
 import static org.cobbzilla.util.daemon.ZillaRuntime.shortError;
 
 public interface RegionalServiceDriver {
@@ -87,7 +89,7 @@ public interface RegionalServiceDriver {
                                                      CloudService c,
                                                      CloudRegion region) {
         final CloudRegionRelative r = new CloudRegionRelative(region);
-        r.setDistance(null);
+        r.setDistance(LOCAL.equals(region.getInternalName()) ? 0.0 : null);
         r.setCloud(c.getUuid());
         allRegions.add(r);
     }

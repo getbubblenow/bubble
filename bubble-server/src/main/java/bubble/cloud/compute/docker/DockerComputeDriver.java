@@ -1,5 +1,6 @@
 package bubble.cloud.compute.docker;
 
+import bubble.ApiConstants;
 import bubble.cloud.CloudRegion;
 import bubble.cloud.compute.*;
 import bubble.cloud.geoLocation.GeoLocation;
@@ -46,16 +47,14 @@ import static org.cobbzilla.util.system.Sleep.sleep;
 @Slf4j
 public class DockerComputeDriver extends ComputeServiceDriverBase {
 
-    public static final String LOCAL = "local";
-
     public static final CloudRegion[] CLOUD_REGIONS_ARRAY = new CloudRegion[]{
-            new CloudRegion().setName(LOCAL).setInternalName(LOCAL).setLocation(GeoLocation.NULL_LOCATION)
+            new CloudRegion().setName(ApiConstants.LOCAL).setInternalName(ApiConstants.LOCAL).setLocation(GeoLocation.NULL_LOCATION)
     };
     public static final List<CloudRegion> CLOUD_REGIONS = Arrays.asList(CLOUD_REGIONS_ARRAY);
 
-    public static final ComputeNodeSize LOCAL_SIZE = new ComputeNodeSize().setName(LOCAL).setInternalName(LOCAL).setType(ComputeNodeSizeType.local);
+    public static final ComputeNodeSize LOCAL_SIZE = new ComputeNodeSize().setName(ApiConstants.LOCAL).setInternalName(ApiConstants.LOCAL).setType(ComputeNodeSizeType.local);
     public static final List<ComputeNodeSize> CLOUD_SIZES = singletonList(LOCAL_SIZE);
-    public static final Map<String, ComputeNodeSize> NODE_SIZE_MAP = MapBuilder.build(LOCAL, LOCAL_SIZE);
+    public static final Map<String, ComputeNodeSize> NODE_SIZE_MAP = MapBuilder.build(ApiConstants.LOCAL, LOCAL_SIZE);
 
     public static final ExposedPort[] SAGE_EXPOSED_PORTS = {new ExposedPort(22), new ExposedPort(8090)};
 
@@ -66,7 +65,7 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
     public static final String BASE_IMAGE = "phusion/baseimage:focal-1.0.0alpha1-amd64";
 
     public static final List<OsImage> CLOUD_OS_IMAGES = singletonList(
-            new OsImage().setName(BASE_IMAGE).setId(BASE_IMAGE).setRegion(LOCAL)
+            new OsImage().setName(BASE_IMAGE).setId(BASE_IMAGE).setRegion(ApiConstants.LOCAL)
     );
 
     public static final long START_TIMEOUT = SECONDS.toMillis(120);
@@ -289,7 +288,7 @@ public class DockerComputeDriver extends ComputeServiceDriverBase {
     }
 
     @Override public List<PackerImage> getPackerImagesForRegion(String region) {
-        return region == null || region.equals(LOCAL) ? getAllPackerImages() : emptyList();
+        return region == null || region.equals(ApiConstants.LOCAL) ? getAllPackerImages() : emptyList();
     }
 
     @Override public List<BubbleNode> listNodes() throws IOException {
