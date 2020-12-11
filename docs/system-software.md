@@ -31,7 +31,7 @@ Then run:
 
 On either Mac or Linux, when running first-time setup, you'll be asked for your password.
 This is required for the setup script to perform various configurations (like installing packages,
-etc), some of which require the use of `sudo`.
+etc) which require the use of `sudo`.
 
 ### Other Operating Systems
 The important things to install:
