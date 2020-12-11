@@ -14,6 +14,7 @@ Bubble needs a PostgreSQL database, Redis, and a bunch of command line tools ins
 It ensures that the appropriate packages are installed and proper databases and database users exist.
 
 You only need to install system software once, ever, on a given system.
+You may be asked for your password to install packages and restart services.
 
 ### Ubuntu
 For Ubuntu 18.04 and 20.04 systems, run:
