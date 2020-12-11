@@ -21,13 +21,17 @@ For Ubuntu 18.04 and 20.04 systems, run:
     ./bin/first_time_ubuntu.sh
 
 ### Mac OS X
-For Mac OS X systems, run:
+For Mac OS X systems, manual installation of the AdoptOpenJDK 11 is required.
+Download the [AdoptOpenJDK](https://adoptopenjdk.net/index.html?variant=openjdk11&jvmVariant=hotspot)
+and install it on your Mac.
+
+Then run:
 
     ./bin/first_time_macosx.sh
 
-When running the first-time setup script, you'll be asked for your password so that
-the setup script can perform various configurations (installing packages, etc), some
-of which require the use of `sudo`.
+On either Mac or Linux, when running a first-time setup, you'll be asked for your password.
+This is required for the setup script to perform various configurations (like installing packages,
+etc), some of which require the use of `sudo`.
 
 ### Other Operating Systems
 The important things to install:
