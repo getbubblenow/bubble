@@ -120,7 +120,7 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @Getter @Setter private String templateApp;
     public boolean hasTemplateApp() { return !empty(templateApp); }
 
-    public String getTemplateAppOrSelf() {
+    @JsonIgnore @Transient public String getTemplateAppOrSelf() {
         return hasTemplateApp() ? templateApp : template() ? getUuid() : null;
     }
 
