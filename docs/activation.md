@@ -68,7 +68,11 @@ is in the process of being built, and wait until it is ready before trying to us
 [Learn more about Packer images](packer.md).
 
 ## Sign In to Admin Account
-After performing activation, refresh the web page that opened when the server started. You should see a login page.
+After performing activation, refresh the web page that opened when the server started.
+You should see a login page, like the one below.
+
+#### Sign In Screen
+  <a href="img/sign_in.png"><img src="img/sign_in.png" alt="screenshot of Sign In screen" height="500"/></a>
 
 You can now login as the admin user using the email address and password you set during activation.
 
