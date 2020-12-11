@@ -8,7 +8,7 @@ and the [Bubble API Reference](https://app.getbubblenow.com/apidocs/)
 # Vagrant Setup
 The easiest way to get started with Bubble is to use the [Vagrant Developer Setup](dev_vagrant.md).
 
-# Manual Development Setup
+# Manual Setup
 If you'd prefer not to use Vagrant or want to build things locally, follow
 the [Bubble Manual Development Setup](dev_manual.md) instructions.
 
