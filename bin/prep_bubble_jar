@@ -46,11 +46,11 @@ if [[ -n "${BUBBLE_PRODUCTION}" || ( -n "${INSTALL_WEB}" && "${INSTALL_WEB}" == 
   mkdir -p "${CLASSES_DIR}/site"
   BUBBLE_WEB="$(cd "${SCRIPT_DIR}/../bubble-web" && pwd)"
   if [[ -n "${BUBBLE_PRODUCTION}" ]] ; then
-    WEBPACK_OPTIONS="--mode=production"
+    NPM_CMD="build"
   else
-    WEBPACK_OPTIONS=""
+    NPM_CMD="dev-build"
   fi
-  cd "${BUBBLE_WEB}" && npm install && rm -rf dist/ && webpack "${WEBPACK_OPTIONS}" || die "Error building bubble-web"
+  cd "${BUBBLE_WEB}" && npm install && rm -rf dist/ && npm run "${NPM_CMD}" || die "Error building bubble-web"
   cp -R "${BUBBLE_WEB}/dist"/* "${CLASSES_DIR}/site"/ || die "Error copying ${BUBBLE_WEB}/dist/* -> ${CLASSES_DIR}/site/"
   cd "${CLASSES_DIR}" && zip -u -r "${BUBBLE_JAR}" site || die "Error updating ${BUBBLE_JAR} with site"
   echo "Installed bubble-web to ${CLASSES_DIR}/site/"
