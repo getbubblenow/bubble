@@ -18,9 +18,9 @@ In order to activate your Local Launcher, you'll need accounts and/or API keys f
 Have these account credentials handy. Be prepared to sign up for new accounts where needed.
 
 ## Activate via Web UI
-The browser-based admin UI should be displaying an "Activate" page, like the one shown above.
+The browser-based admin UI should be displaying an "Activate" screen, like the one shown above.
 
-Review the "Activation Notes" below, then complete the information on this page and press the "Activate" button
+Review the "Activation Notes" below, then complete the information on this screen and press the "Activate" button
 to activate your Bubble Launcher. 
 
 ## Activate via command line
@@ -70,7 +70,7 @@ is in the process of being built, and wait until it is ready before trying to us
 ## Sign In to Admin Account
 After performing activation, refresh the web page that opened when the server started.
 
-You should see a login page, like the one below.
+You should see a Sign In screen, like the one below.
 
 #### Sign In Screen
   <a href="img/sign_in.png"><img src="img/sign_in.png" alt="screenshot of Sign In screen" height="500"/></a>
