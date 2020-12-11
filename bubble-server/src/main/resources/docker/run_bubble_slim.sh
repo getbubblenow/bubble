@@ -27,6 +27,12 @@ fi
 if [[ -n "${BUBBLE_SERVER_PORT}" ]] ; then
   echo "export BUBBLE_SERVER_PORT=${BUBBLE_SERVER_PORT}" >> /bubble/bubble.env
 fi
+if [[ -n "${LETSENCRYPT_EMAIL}" ]] ; then
+  echo "export LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}" >> /bubble/bubble.env
+fi
+if [[ -n "${PUBLIC_BASE_URI}" ]] ; then
+  echo "export PUBLIC_BASE_URI=${PUBLIC_BASE_URI}" >> /bubble/bubble.env
+fi
 
 exec /usr/bin/java \
   -Dfile.encoding=UTF-8 -Djava.net.preferIPv4Stack=true -Dbubble.listenAll=true \

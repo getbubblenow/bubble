@@ -45,7 +45,7 @@ SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
 
 BUBBLE_DIR="$(cd "${SCRIPT_DIR}"/.. && pwd)"
 
-MODE=${1:?no mode specified, use build or run}
+MODE=${1:?no mode specified, use: build, run, term, push or clean}
 
 META_FILE="${BUBBLE_DIR}/bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
 VERSION="${2:-$(cat "${META_FILE}" | grep bubble.version | awk -F '=' '{print $2}' | awk -F ' ' '{print $NF}' | awk '{$1=$1};1')}"
@@ -87,13 +87,18 @@ if [[ "${MODE}" == "build" ]] ; then
 elif [[ "${MODE}" == "run" ]] ; then
   # Copy existing env if found
   ENV_FILE=$(mktemp /tmp/.bubble.env.XXXXXXX)
+  if [[ -z "${BUBBLE_ENV}" ]] ; then
+    BUBBLE_ENV="${HOME}/.bubble.env"
+  fi
   if [[ -f "${BUBBLE_ENV}" ]] ; then
     cat "${BUBBLE_ENV}" > "${ENV_FILE}"
   fi
 
   # Define API port
   echo "
-export BUBBLE_SERVER_PORT=${BUBBLE_PORT}" >> "${ENV_FILE}"
+export BUBBLE_SERVER_PORT=${BUBBLE_PORT}
+export PUBLIC_BASE_URI=http://127.0.0.1:${BUBBLE_PORT}
+" >> "${ENV_FILE}"
 
   # Define LetsEncrypt email, from env var or stdin
   if [[ $(cat "${BUBBLE_ENV}" | grep -v '^#' | grep -c LETSENCRYPT_EMAIL) -eq 0 ]] ; then

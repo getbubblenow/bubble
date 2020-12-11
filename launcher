@@ -161,9 +161,10 @@ function run_launcher() {
     die "'uname -s' returned empty string!"
   fi
 
-  if [[ -z "$(which docker)" ]]; then
+  DOCKER="$(which docker)"
+  if [[ -z "${DOCKER}" ]]; then
     setup_docker
-    if [[ -z "$(which docker)" ]]; then
+    if [[ -z "${DOCKER}" ]]; then
       die "***** Error installing docker
 Install docker manually from https://docs.docker.com/engine/install/
 Then re-run this script.
@@ -182,11 +183,11 @@ Then re-run this script.
 
   # Pull bubble docker image
   if [[ "${CALLER}" == "root" ]] ; then
-    docker pull "${DOCKER_TAG}" || die "Error pulling docker image: ${DOCKER_TAG}"
+    ${DOCKER} pull "${DOCKER_TAG}" || die "Error pulling docker image: ${DOCKER_TAG}"
   else
-    docker pull "${DOCKER_TAG}" || \
-      echo "***** error running 'docker pull' as ${CALLER}, trying via sudo ..." && \
-      sudo su - "${CALLER}" -c "docker pull ${DOCKER_TAG}" || die "Error pulling docker image: ${DOCKER_TAG}"
+    ${DOCKER} pull "${DOCKER_TAG}" || \
+      echo "***** error running '${DOCKER} pull' as ${CALLER}, trying via sudo ..." && \
+      sudo su - "${CALLER}" -c "${DOCKER} pull ${DOCKER_TAG}" || die "Error pulling docker image: ${DOCKER_TAG}"
   fi
 
   # Determine email for LetsEncrypt certs
@@ -206,28 +207,25 @@ Then re-run this script.
 
   # Run bubble docker image
   if [[ "${CALLER}" == "root" ]] ; then
-    docker run ${EXPOSE} \
+    run ${EXPOSE} \
       -p ${BUBBLE_PORT}:${BUBBLE_PORT} \
       -e LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL}" \
-      -e BUBBLE_PORT=${BUBBLE_PORT} \
+      -e BUBBLE_SERVER_PORT=${BUBBLE_PORT} \
+      -e PUBLIC_BASE_URI=http://127.0.0.1:${BUBBLE_PORT} \
       -t "${DOCKER_TAG}"
   else
-    echo "docker run ${EXPOSE} \
-      -p ${BUBBLE_PORT}:${BUBBLE_PORT} \
-      -e LETSENCRYPT_EMAIL=\"${LETSENCRYPT_EMAIL}\" \
-      -e BUBBLE_PORT=${BUBBLE_PORT} \
-      -t \"${DOCKER_TAG}\"" && exit 0
-
-    docker run ${EXPOSE} \
+    ${DOCKER} run ${EXPOSE} \
       -p ${BUBBLE_PORT}:${BUBBLE_PORT} \
       -e LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL}" \
-      -e BUBBLE_PORT=${BUBBLE_PORT} \
+      -e BUBBLE_SERVER_PORT=${BUBBLE_PORT} \
+      -e PUBLIC_BASE_URI=http://127.0.0.1:${BUBBLE_PORT} \
       -t "${DOCKER_TAG}" || \
-      echo "***** error running 'docker run' as ${CALLER}, trying via sudo ..." && \
-      sudo su - "${CALLER}" -c "docker run ${EXPOSE} \
+      echo "***** error running '${DOCKER} run' as ${CALLER}, trying via sudo ..." && \
+      sudo su - "${CALLER}" -c "${DOCKER} run ${EXPOSE} \
         -p ${BUBBLE_PORT}:${BUBBLE_PORT} \
-        -e BUBBLE_PORT=${BUBBLE_PORT} \
+        -e BUBBLE_SERVER_PORT=${BUBBLE_PORT} \
         -e LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL} \
+        -e PUBLIC_BASE_URI=http://127.0.0.1:${BUBBLE_PORT} \
         -t ${DOCKER_TAG}"
   fi
 }
