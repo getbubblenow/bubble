@@ -67,5 +67,6 @@
     - 9999
 
 - name: reload supervisord
-  shell: supervisorctl reload
+  shell: |
+    supervisorctl reload || echo "[mitmproxy::main] WARNING: error reloading "
   tags: always

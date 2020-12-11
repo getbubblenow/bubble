@@ -72,7 +72,10 @@ wireguard_network_ipv6 = '${WG_IP6}'
 fi
 
 # Restart algo_refresh_users_monitor and wg_monitor_connections
-supervisorctl reload && sleep 3s && supervisorctl restart algo_refresh_users_monitor && supervisorctl restart wg_monitor_connections
+supervisorctl reload || echo "[install_algo.sh] WARNING: Error calling 'supervisorctl reload'"
+sleep 3s
+supervisorctl restart algo_refresh_users_monitor || echo "[install_algo.sh] WARNING: Error restarting algo_refresh_users_monitor"
+supervisorctl restart wg_monitor_connections || echo "[install_algo.sh] WARNING: Error restarting algo_refresh_users_monitor"
 
 # Restart dnscrypt-proxy
 service dnscrypt-proxy restart

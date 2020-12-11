@@ -12,14 +12,6 @@
   shell: su - bubble bash -c "echo -n restore > /home/bubble/first_time_marker"
   when: restore_key is defined
 
-- name: Install mitmproxy CA cert in local CA store
-  shell: install_cert.sh /home/mitmproxy/.mitmproxy/{{ cert_name }}-ca-cert.pem 600
-  when: install_type == 'node'
-
-- name: Install mitmproxy public certs in bubble dir
-  shell: /usr/local/bin/copy_certs_to_bubble.sh {{ cert_name }}
-  when: install_type == 'node'
-
 - name: Install bubble supervisor conf file
   template:
     src: "supervisor_bubble.conf.j2"
@@ -28,7 +20,7 @@
 # Save 1% of memory, every bit counts on small nodes
 - name: Disable peer manager on small nodes
   shell: |
-    supervisorctl stop bubble_peer_manager || echo 'Warning: error stopping bubble_peer_manager'
+    supervisorctl stop bubble_peer_manager || echo '[finalizer::main] WARNING: error stopping bubble_peer_manager' >> /var/log/bubble/ansible.log
     rm -f /etc/supervisor/conf.d/bubble_peer_manager.conf
   when: total_memory < 2048
 
@@ -75,10 +67,17 @@
 - name: Ensure authorized SSH keys are up-to-date
   shell: su - bubble bash -c "touch /home/bubble/.refresh_ssh_keys"
 
-# We cannot receive notifications until nginx is running, so start bubble API as the very last step
 - name: reload supervisord
   shell: |
     supervisorctl reload \
-      || echo "WARNING: supervisorctl reload exited with $?" | tee -a /var/log/bubble/ansible.log \
+      || echo "[finalizer::main] WARNING: supervisorctl reload exited with $?" | tee -a /var/log/bubble/ansible.log \
       && sleep 10s && supervisorctl reload \
-        || echo "WARNING: supervisorctl reload exited AGAIN with $?" | tee -a /var/log/bubble/ansible.log
+        || echo "[finalizer::main] WARNING: supervisorctl reload exited AGAIN with $?" | tee -a /var/log/bubble/ansible.log
+
+- name: Install mitmproxy CA cert in local CA store
+  shell: install_cert.sh /home/mitmproxy/.mitmproxy/{{ cert_name }}-ca-cert.pem 600
+  when: install_type == 'node'
+
+- name: Install mitmproxy public certs in bubble dir
+  shell: /usr/local/bin/copy_certs_to_bubble.sh {{ cert_name }}
+  when: install_type == 'node'

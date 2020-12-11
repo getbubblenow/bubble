@@ -60,6 +60,12 @@
     mode: 0755
   when: enable_nginx
 
+- name: Create server_names_hash_bucket_size nginx conf
+  copy:
+    src: server_names_hash_bucket_size.conf
+    dest: /etc/nginx/conf.d/server_names_hash_bucket_size.conf
+  when: enable_nginx
+
 - name: Install init_dhparams supervisor conf file
   copy:
     src: supervisor_init_dhparams.conf
