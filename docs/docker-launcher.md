@@ -31,6 +31,7 @@ The commands below assume:
  * the docker daemon is running
  * the current user has appropriate permissions to start docker containers
 
+### Use the Latest Bubble Version
 To pull and run the Bubble Docker Launcher, open a terminal and run: 
 
     BUBBLE_RELEASE_URL="https://jenkins.bubblev.org/public/releases/bubble/latest.txt"
@@ -39,6 +40,12 @@ To pull and run the Bubble Docker Launcher, open a terminal and run:
 
     docker pull ${BUBBLE_TAG}
     docker run -p 8090:8090 -t ${BUBBLE_TAG}
+
+### Use a Specific Bubble Version
+If you know the specific version of Bubble you want, you can just grab that and run it:
+
+    docker pull getbubble/launcher:1.5.5
+    docker run -p 8090:8090 -t getbubble/launcher:1.5.5
 
 ## Activation
 Upon a successful startup, the bubble launcher will be listening on port 8090 (or whatever
