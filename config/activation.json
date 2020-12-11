@@ -100,7 +100,8 @@
     // You must configure the AWS S3 Storage service in order to launch new Bubbles
     "S3Storage" : {
       "config": {
-        // region must be a valid value from the Regions enum: https://github.com/aws/aws-sdk-java/blob/master/aws-java-sdk-core/src/main/java/com/amazonaws/regions/Regions.java
+        // region must be a valid value from the Regions enum:
+        // https://github.com/aws/aws-sdk-java/blob/master/aws-java-sdk-core/src/main/java/com/amazonaws/regions/Regions.java
         "region": "US_EAST_1",
         "bucket": "must be a valid bucket name that the credentials can read/write/list/delete",
         "prefix": "",  // optional: all paths for S3 operations will be prefixed with this path
