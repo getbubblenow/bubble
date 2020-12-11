@@ -10,6 +10,8 @@
 #      build - build the docker images
 #      run   - run a docker image. set the BUBBLE_RUN_SLIM env var to `true` to run the slim image.
 #      push  - push images docker hub
+#      term  - open a bash terminal on a running container
+#      clean - remove containers and images related to the version
 #
 #  version : version to use, default is read from bubble-server/src/main/resources/META-INF/bubble/bubble.properties
 #
@@ -28,8 +30,14 @@
 # When using the 'run' mode, you'll be asked for an email address to associate with any LetsEncrypt
 # certificates that will be created.
 #
+# Upon successful startup, the bubble launcher will be listening on port 8090
+# If you'd prefer to use a different port, set the BUBBLE_PORT environment variable.
+#
 # If you want to run this unattended, set the LETSENCRYPT_EMAIL environment variable
 # in your ~/.bubble.env file or in your shell environment.
+#
+# By default, this does not use the docker cache. If you want to use the cache,
+# set the BUBBLE_DOCKER_CACHE environment variable to any value.
 #
 SCRIPT="${0}"
 SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
@@ -48,39 +56,92 @@ DOCKER_REPO="getbubble"
 if [[ -n "${BUBBLE_DOCKER_REPO}" ]] ; then
   DOCKER_REPO="${BUBBLE_DOCKER_REPO}"
 fi
-BUBBLE_TAG="${DOCKER_REPO}/launcher:${VERSION}"
-BUBBLE_SLIM_TAG="${DOCKER_REPO}/slim-launcher:${VERSION}"
+
+REPO_LAUNCHER="${DOCKER_REPO}/launcher"
+BUBBLE_TAG="${REPO_LAUNCHER}:${VERSION}"
+
+REPO_SLIM_LAUNCHER="${DOCKER_REPO}/slim-launcher"
+BUBBLE_SLIM_TAG="${REPO_SLIM_LAUNCHER}:${VERSION}"
 
 BUBBLE_ENV="${HOME}/.bubble.env"
+
+CACHE="--no-cache"
+if [[ -n "${BUBBLE_DOCKER_CACHE}" ]] ; then
+  CACHE=""
+fi
+
+EXPOSE=""
+if [[ -z "${BUBBLE_PORT}" ]] ; then
+  BUBBLE_PORT=8090
+else
+  EXPOSE="--expose ${BUBBLE_PORT}"
+fi
 
 if [[ "${MODE}" == "build" ]] ; then
   if [[ $(find bubble-server/target -type f -name "bubble-server-*-prod.jar" | wc -l | tr -d ' ') -eq 0 ]] ; then
     die "No bubble jar found in $(pwd)/bubble-server/target"
   fi
-  docker build --no-cache -t "${BUBBLE_TAG}" . || die "Error building docker image"
-  docker build --no-cache -f Dockerfile.slim -t "${BUBBLE_SLIM_TAG}" . || die "Error building slim docker image"
+  docker build ${CACHE} -t "${BUBBLE_TAG}" . || die "Error building docker image"
+  docker build ${CACHE} -f Dockerfile.slim -t "${BUBBLE_SLIM_TAG}" . || die "Error building slim docker image"
 
 elif [[ "${MODE}" == "run" ]] ; then
+  # Copy existing env if found
+  ENV_FILE=$(mktemp /tmp/.bubble.env.XXXXXXX)
+  if [[ -f "${BUBBLE_ENV}" ]] ; then
+    cat "${BUBBLE_ENV}" > "${ENV_FILE}"
+  fi
+
+  # Define API port
+  echo "
+export BUBBLE_SERVER_PORT=${BUBBLE_PORT}" >> "${ENV_FILE}"
+
+  # Define LetsEncrypt email, from env var or stdin
   if [[ $(cat "${BUBBLE_ENV}" | grep -v '^#' | grep -c LETSENCRYPT_EMAIL) -eq 0 ]] ; then
     if [[ -z "${LETSENCRYPT_EMAIL}" ]] ; then
       echo ; echo -n "Email address for LetsEncrypt certificates: "
       read -r LETSENCRYPT_EMAIL
     fi
     echo "
-export LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
-" >> "${BUBBLE_ENV}"
+export LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}" >> "${ENV_FILE}"
   fi
   if [[ -n "${BUBBLE_RUN_SLIM}" && "${BUBBLE_RUN_SLIM}" == "true" ]] ; then
     RUN_TAG="${BUBBLE_SLIM_TAG}"
   else
     RUN_TAG="${BUBBLE_TAG}"
   fi
-  docker run --env-file <(cat "${BUBBLE_ENV}" | sed -e 's/export //' | tr -d '"' | tr -d "'") -p 8090:8090 -t "${RUN_TAG}" || die "Error running docker container"
+
+  DOCKER_ENV_FILE=$(mktemp /tmp/.docker.env.XXXXXX)
+  cat "${ENV_FILE}" | sed -e 's/export //' | tr -d '"' | tr -d "'" > "${DOCKER_ENV_FILE}"
+  docker run ${EXPOSE} --env-file "${DOCKER_ENV_FILE}" -p ${BUBBLE_PORT}:${BUBBLE_PORT} -t "${RUN_TAG}"
+  rm -f "${ENV_FILE}" "${DOCKER_ENV_FILE}"
 
 elif [[ "${MODE}" == "push" ]] ; then
   docker push "${BUBBLE_TAG}" || die "Error pushing docker image"
   docker push "${BUBBLE_SLIM_TAG}" || die "Error pushing slim docker image"
 
+elif [[ "${MODE}" == "term" ]] ; then
+  # Expect only one container running that matches BUBBLE_TAG
+  CONTAINER_CT="$(docker container ls | grep -c "${BUBBLE_TAG}" | tr -d ' ')"
+  if [[ -z "${CONTAINER_CT}" || "${CONTAINER_CT}" == "0" ]] ; then
+    die "No docker container found with tag ${BUBBLE_TAG}"
+  fi
+  if [[ ${CONTAINER_CT} -gt 1 ]] ; then
+    die "Multiple docker containers found with tag ${BUBBLE_TAG}"
+  fi
+
+  # Run bash in that container
+  exec docker exec -it "$(docker container ls | grep "${BUBBLE_TAG}" | awk '{print $1}')" /bin/bash
+
+elif [[ "${MODE}" == "clean" ]] ; then
+  # Remove containers
+  docker container ls | grep "${BUBBLE_TAG}" | awk '{print $1}' | xargs docker container rm -f
+  docker container ls | grep "${BUBBLE_SLIM_TAG}" | awk '{print $1}' | xargs docker container rm -f
+
+  # Remove images
+  docker image ls | grep "${REPO_LAUNCHER}" | grep "${VERSION}" | awk '{print $3}' | xargs docker image rm -f
+  docker image ls | grep "${REPO_SLIM_LAUNCHER}" | grep "${VERSION}" | awk '{print $3}' | xargs docker image rm -f
+
 else
-  die "Invalid mode (expected build or run): ${MODE}"
+  die "$("${0}" --help)
+***** invalid mode: ${MODE}"
 fi

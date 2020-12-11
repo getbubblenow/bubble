@@ -197,24 +197,36 @@ Then re-run this script.
   fi
 
   # Determine port
+  EXPOSE=""
   if [[ -z "${BUBBLE_PORT}" ]] ; then
     BUBBLE_PORT=8090
+  else
+    EXPOSE="--expose ${BUBBLE_PORT}"
   fi
 
   # Run bubble docker image
   if [[ "${CALLER}" == "root" ]] ; then
-    docker run \
+    docker run ${EXPOSE} \
       -p ${BUBBLE_PORT}:${BUBBLE_PORT} \
       -e LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL}" \
+      -e BUBBLE_PORT=${BUBBLE_PORT} \
       -t "${DOCKER_TAG}"
   else
-    docker run \
+    echo "docker run ${EXPOSE} \
+      -p ${BUBBLE_PORT}:${BUBBLE_PORT} \
+      -e LETSENCRYPT_EMAIL=\"${LETSENCRYPT_EMAIL}\" \
+      -e BUBBLE_PORT=${BUBBLE_PORT} \
+      -t \"${DOCKER_TAG}\"" && exit 0
+
+    docker run ${EXPOSE} \
       -p ${BUBBLE_PORT}:${BUBBLE_PORT} \
       -e LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL}" \
+      -e BUBBLE_PORT=${BUBBLE_PORT} \
       -t "${DOCKER_TAG}" || \
       echo "***** error running 'docker run' as ${CALLER}, trying via sudo ..." && \
-      sudo su - "${CALLER}" -c "docker run \
+      sudo su - "${CALLER}" -c "docker run ${EXPOSE} \
         -p ${BUBBLE_PORT}:${BUBBLE_PORT} \
+        -e BUBBLE_PORT=${BUBBLE_PORT} \
         -e LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL} \
         -t ${DOCKER_TAG}"
   fi

@@ -1,7 +1,6 @@
 #!/bin/sh
 #
 # Copyright (c) 2020 Bubble, Inc.  All rights reserved. For personal (non-commercial) use, see license: https://getbubblenow.com/bubble-license/
-# adapted from https://stackoverflow.com/q/11092358
 #
 # This script is run by Supervisor to start PostgreSQL in foreground mode.
 #
