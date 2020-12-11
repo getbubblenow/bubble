@@ -279,6 +279,6 @@
   // If the activation.json file has no `skipPacker` property, then packer images will be created during activation,
   // if not already present.
   //
-  "skipPacker": false
+  "skipPacker": false   // set this to true to skip checking/creating packer images
 
 }
