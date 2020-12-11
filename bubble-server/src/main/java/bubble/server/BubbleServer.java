@@ -129,7 +129,6 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
 
             log.info("loadEnvironment: loading env from: "+abs(envFile));
             env.putAll(loadShellExports(envFile));
-            log.debug("loadEnvironment: loaded env="+json(env));
 
         } catch (Exception e) {
             log.warn("Error loading environment: "+e);
