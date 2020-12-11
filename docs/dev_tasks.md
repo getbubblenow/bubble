@@ -39,9 +39,9 @@ rm -f ./dist/* && npm run build
 This will remove all previous site files and have npm regenerate the HTML/CSS/JS for the
 Bubble web UI.
 
-If you look in `${HOME}/.bubble.env`, you'll see that the `BUBBLE_ASSETS_DIR` variable points
-to `${HOME}/bubble/bubble-web/dist`. Thus, when you run `npm run build` to update the files in `dist`,
-the "live" site is updated.
+If you're using the [Bubble Vagrant Setup](dev_vagrant.md), look in `${HOME}/.bubble.env` and you'll see
+that the `BUBBLE_ASSETS_DIR` variable points to `${HOME}/bubble/bubble-web/dist`.
+Thus, when you run `npm run build` to update the files in `dist`, the "live" site is updated.
 
 ## Running the API server
 To start the Bubble server:
