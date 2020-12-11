@@ -226,7 +226,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
                 for (Identifiable e : entities) {
                     final BubblePlanApp systemPlanApp = (BubblePlanApp) e;
                     final BubbleApp userApp = userApps.stream()
-                            .filter(app -> app.getTemplateApp().equals(systemPlanApp.getApp()))
+                            .filter(app -> app.getTemplateAppOrSelf().equals(systemPlanApp.getApp()))
                             .findFirst().orElse(null);
                     if (userApp == null) {
                         if (log.isInfoEnabled()) log.info("addEntities: system BubblePlanApp " + systemPlanApp.getUuid() + ": no matching BubbleApp found in userApps (not adding): " + names(userApps));
