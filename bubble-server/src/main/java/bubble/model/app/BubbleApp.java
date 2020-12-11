@@ -118,6 +118,11 @@ public class BubbleApp extends IdentifiableBaseParentEntity implements AccountTe
     @ECField(index=70)
     @Column(length=UUID_MAXLEN, updatable=false)
     @Getter @Setter private String templateApp;
+    public boolean hasTemplateApp() { return !empty(templateApp); }
+
+    public String getTemplateAppOrSelf() {
+        return hasTemplateApp() ? templateApp : template() ? getUuid() : null;
+    }
 
     @ECSearchable @ECField(index=80)
     @ECIndex @Column(nullable=false)

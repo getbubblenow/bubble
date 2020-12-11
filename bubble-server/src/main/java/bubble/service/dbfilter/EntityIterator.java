@@ -203,7 +203,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
             // only copy enabled apps, make them templates
             if (log.isDebugEnabled()) log.debug("addEntities: starting with planApps="+json(planApps.stream().map(BubblePlanApp::getApp).collect(Collectors.toList())));
             userApps = new ArrayList<>();
-            entities.stream().filter(app -> planAppEnabled(((BubbleApp) app).getTemplateApp(), planApps))
+            entities.stream().filter(app -> planAppEnabled(((BubbleApp) app).getTemplateAppOrSelf(), planApps))
                     .map(app -> ((BubbleApp) app).setTemplate(true))
                     .forEach(app -> {
                         userApps.add(app);  // save these for later, we will need them when copying BubblePlanApps below
@@ -229,7 +229,7 @@ public abstract class EntityIterator implements Iterator<Identifiable> {
                             .filter(app -> app.getTemplateApp().equals(systemPlanApp.getApp()))
                             .findFirst().orElse(null);
                     if (userApp == null) {
-                        if (log.isInfoEnabled()) log.info("addEntities: system BubblePlanApp " + systemPlanApp.getUuid() + ": no matching BubbleApp not found in userApps (not adding): " + names(userApps));
+                        if (log.isInfoEnabled()) log.info("addEntities: system BubblePlanApp " + systemPlanApp.getUuid() + ": no matching BubbleApp found in userApps (not adding): " + names(userApps));
                     } else {
                         // systemPlanApp will now be associated with "root"'s BubblePlan, but user's BubbleApp
                         if (log.isInfoEnabled()) log.info("addEntities: rewrote app for " + systemPlanApp.getUuid() + " -> " + userApp.getName() + "/" + userApp.getUuid());
