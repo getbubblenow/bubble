@@ -69,6 +69,7 @@ is in the process of being built, and wait until it is ready before trying to us
 
 ## Sign In to Admin Account
 After performing activation, refresh the web page that opened when the server started.
+
 You should see a login page, like the one below.
 
 #### Sign In Screen
