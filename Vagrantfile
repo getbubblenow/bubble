@@ -61,11 +61,8 @@ Vagrant.configure("2") do |config|
          # Initialize the system
          cd ${HOME}/bubble && ./bin/first_time_ubuntu.sh
 
-         # Clone and build all dependencies
-         SKIP_BUBBLE_BUILD=1 ./bin/first_time_setup.sh
-
-         # Build the bubble jar
-         ./bin/bbuild 2>&1 | tee /tmp/build.log
+         # Clone and build all dependencies, build the Bubble jar
+         ./bin/first_time_setup.sh
 
          # Write bubble API port
          echo \"export BUBBLE_SERVER_PORT=${BUBBLE_PORT}\" > ~/.bubble.env
