@@ -35,8 +35,8 @@
 # ### BUBBLE_VM_MEM
 # This is the number of MB of memory to allocate for the VirtualBox VM.
 # By default, this is set to 2048, thus Vagrantfile allocates 2GB of memory for the VM.
-# You can build and Bubble with less memory, but if you go as low as 1024 (1GB) you may
-# have problems building the entire codebase from scratch.
+# You can build and run Bubble with less memory, but if you go as low as 1024 (1GB) you
+# may have problems building the entire codebase from scratch.
 #
 Vagrant.configure("2") do |config|
 
