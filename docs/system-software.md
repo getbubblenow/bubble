@@ -3,7 +3,8 @@ Install Required System Software
 You only need to do this if you're [running from a binary distribution](run-binary.md)
 or [building and running from source](dev.md).
 
-If you're using the [Bubble Docker Launcher](docker-launcher.md), skip this step.
+If you're using the [Bubble Docker Launcher](docker-launcher.md) or
+[Bubble Vagrant Developer Setup](dev_vagrant.md), skip this step.
 
 ## Why Do This?
 You'll need to install some software for Bubble to work correctly.
