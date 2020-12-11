@@ -8,18 +8,23 @@ Open a browser window to your Remote Launcher. You should see a screen like this
 #### Sign In Screen
   <a href="img/sign_in.png"><img src="img/sign_in.png" alt="screenshot of Sign In screen" height="500"/></a>
 
-Click the "Sign Up" button in the header to create a new user account.
+To create a new account, click or tap the "Sign Up" button in the header, or the Sign Up link at the bottom of the screen.
 
 Note: You *could* sign in using the root account and launch a Bubble from there, but this is discouraged for security reasons.
 It is *highly recommended* to launch new Bubbles using a regular user account, and not your Remote Launcher root account.
 You should use the root account on the Remote Launcher only to manage the system itself.
+
+When you click Sign Up, you'll see a screen like the one below:
+
+#### Sign Up Screen
+  <a href="img/sign_up.png"><img src="img/sign_up.png" alt="screenshot of Sign Up screen" height="500"/></a>
 
 ## Verify user
 After you create a user, the Remote Launcher will send an email with a verification link.
 Click the link in the email to verify your new account.
 
 ## Launch Bubble
-After you click the verification link, you should see a "Launch Bubble" screen, like the one below:
+After you click the verification link in your email, you should see a "Launch Bubble" screen, like the one below:
 
 #### Launch Bubble Screen
   <a href="img/launch_bubble.png"><img src="img/launch_bubble.png" alt="screenshot of Launch Bubble screen" height="500"/></a>
