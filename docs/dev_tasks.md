@@ -30,17 +30,17 @@ the changed libraries into the Bubble jar.
 
 ## Rebuilding the Web Site
 If you change files in `bubble-web`, you don't need to run a full `bbuild`.
-Instead you can run the much faster `webpack`.
+Instead you can run the much faster web-build.
 
 Run this from the `bubble-web` directory:
 ```shell script
-rm -f ./dist/* && webpack
+rm -f ./dist/* && npm run build
 ```
-This will remove all previous site files and have webpack regenerate the HTML/CSS/JS for the
+This will remove all previous site files and have npm regenerate the HTML/CSS/JS for the
 Bubble web UI.
 
 If you look in `${HOME}/.bubble.env`, you'll see that the `BUBBLE_ASSETS_DIR` variable points
-to `${HOME}/bubble/bubble-web/dist`. Thus, when you run `webpack` to update the files in `dist`,
+to `${HOME}/bubble/bubble-web/dist`. Thus, when you run `npm run build` to update the files in `dist`,
 the "live" site is updated.
 
 ## Running the API server
