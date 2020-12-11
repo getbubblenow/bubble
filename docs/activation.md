@@ -57,7 +57,7 @@ The DNS provider for this domain must be specified.
  * For JSON-based activation, this is the `domain.publicDns` JSON element.
 
 ## Behind the Scenes
-In the background, the Bubble launcher is building packer images for the compute cloud(s) defined during activation.
+After you activate your Bubble, it will build packer images for the compute cloud(s) defined during activation.
 
 This process usually takes about 20 minutes but can take up to an hour, depending on how many compute clouds you have
 and how fast the internet is.
