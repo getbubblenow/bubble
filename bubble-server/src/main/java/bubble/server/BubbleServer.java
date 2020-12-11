@@ -126,7 +126,11 @@ public class BubbleServer extends RestServerBase<BubbleConfiguration> {
             final File envFile = getEnvFile(args);
             if (envFile == null) return die("loadEnvironment: no env file found");
             if (!envFile.exists()) return die("loadEnvironment: env file does not exist: "+abs(envFile));
+
+            log.info("loadEnvironment: loading env from: "+abs(envFile));
             env.putAll(loadShellExports(envFile));
+            log.debug("loadEnvironment: loaded env="+json(env));
+
         } catch (Exception e) {
             log.warn("Error loading environment: "+e);
         }
