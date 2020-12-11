@@ -2,8 +2,8 @@ Bubble Docker Launcher
 ======================
 The Bubble Docker Launcher makes it easy to run a Bubble launcher.
 
-## Automatic Setup
-If you're running Linux or Mac OS X, try the automatic setup script first.
+## Automatic Setup with the Launcher Script
+If you're running Linux or Mac OS X, try the launcher script first.
 This script will automatically install docker, pull the Bubble docker image and run it.
 
     /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/launcher)"
@@ -14,8 +14,8 @@ The launcher will listen on port 8090, you can change this by setting the `BUBBL
 
 There are other environment variables you can set to customize the launcher configuration.
 
-The header of the [launcher](https://git.bubblev.org/bubblev/bubble/src/branch/master/launcher) script
-describes all of the options in detail.
+The header of the [launcher script](https://git.bubblev.org/bubblev/bubble/src/branch/master/launcher)
+describes all the options in detail.
 
 ## Docker Installation
 If you're running Windows, or if the above script has problems installing Docker,
