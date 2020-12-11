@@ -14,7 +14,6 @@ Bubble needs a PostgreSQL database, Redis, and a bunch of command line tools ins
 It ensures that the appropriate packages are installed and proper databases and database users exist.
 
 You only need to install system software once, ever, on a given system.
-You may be asked for your password to install packages and restart services (done via `sudo`).
 
 ### Ubuntu
 For Ubuntu 18.04 and 20.04 systems, run:
@@ -25,6 +24,9 @@ For Ubuntu 18.04 and 20.04 systems, run:
 For Mac OS X systems, run:
 
     ./bin/first_time_macosx.sh
+
+When running the first-time setup script, you'll be asked for your password for
+various configurations (installing packages, etc) that required the use of `sudo`.
 
 ### Other Operating Systems
 The important things to install:
