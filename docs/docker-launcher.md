@@ -12,10 +12,17 @@ The launcher will listen on port 8090, you can change this by setting the `BUBBL
 
     BUBBLE_PORT=8080 /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/launcher)"
 
-There are other environment variables you can set to customize the launcher configuration.
+If you have cloned the main [Bubble git repository](https://git.bubblev.org/bubblev/bubble), you can run
+the launcher directly, without using `curl`.
+
+From the top-level directory of the Bubble source repository (usually called `bubble`), run:
+
+    BUBBLE_PORT=8080 ./launcher
+
+There are a few other environment variables you can set to customize the launcher configuration.
 
 The header of the [launcher script](https://git.bubblev.org/bubblev/bubble/src/branch/master/launcher)
-describes all the options in detail.
+describes all the launch options in detail.
 
 ## Docker Installation
 If you're running Windows, or if the above script has problems installing Docker,
