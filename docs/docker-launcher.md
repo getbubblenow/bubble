@@ -18,7 +18,7 @@ The header of the [launcher script](https://git.bubblev.org/bubblev/bubble/src/b
 describes all the launch options in detail.
 
 ### Running Launcher from Source
-If you have cloned the main [Bubble git repository](https://git.bubblev.org/bubblev/bubble), you can run
+If you have cloned the main [Bubble source repository](https://git.bubblev.org/bubblev/bubble), you can run
 the launcher directly, without using `curl`.
 
 From the top-level directory of the Bubble source repository (usually called `bubble`), run:
