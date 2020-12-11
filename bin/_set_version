@@ -45,12 +45,20 @@ function process_pom () {
   mv "${T_FILE}" "${POM}" || die "Error moving ${T_FILE} -> ${POM}"
 }
 
+# Handle pom.xml files
 cd "${SCRIPT_DIR}/.." || die "Error changing to Bubble main directory"
 process_pom "${V_NUMBER}" pom.xml
 process_pom "${V_NUMBER}" bubble-server/pom.xml
 process_pom "${V_NUMBER}" utils/pom.xml
 
+# Handle META-INF properties file
 VERSION_PROP_FILE="bubble-server/src/main/resources/META-INF/bubble/bubble.properties"
 P_TEMP=$(mktemp /tmp/bubble.properties.XXXXXXX)
 cat "${VERSION_PROP_FILE}" | sed -e "s/bubble.version=.*/bubble.version=${V_NAME} ${V_NUMBER}/" > "${P_TEMP}"
 mv "${P_TEMP}" ${VERSION_PROP_FILE} || die "Error moving ${P_TEMP} -> ${VERSION_PROP_FILE}"
+
+# Handle package.json for web ui
+PKG_JSON="bubble-web/package.json"
+PKG_TEMP=$(mktemp /tmp/package.json.XXXXXXX)
+cat "${PKG_JSON}" | sed -e "s/\"version\".*/\"version\": \"${V_NUMBER}\",/" > "${PKG_TEMP}"
+mv "${PKG_TEMP}" ${PKG_JSON} || die "Error moving ${PKG_TEMP} -> ${PKG_JSON}"
