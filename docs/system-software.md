@@ -25,8 +25,9 @@ For Mac OS X systems, run:
 
     ./bin/first_time_macosx.sh
 
-When running the first-time setup script, you'll be asked for your password for
-various configurations (installing packages, etc) that required the use of `sudo`.
+When running the first-time setup script, you'll be asked for your password so that
+the setup script can perform various configurations (installing packages, etc), some
+of which require the use of `sudo`.
 
 ### Other Operating Systems
 The important things to install:
