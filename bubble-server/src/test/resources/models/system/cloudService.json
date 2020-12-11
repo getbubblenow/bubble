@@ -30,7 +30,7 @@
 
   {
     "_subst": true,
-    "name": "GoogleGeoCoder",
+    "name": "GoogleGeoCode",
     "type": "geoCode",
     "driverClass": "bubble.cloud.geoCode.google.GoogleGeoCodeDriver",
     "credentials": { "params": [ {"name": "apiKey", "value": "{{GOOGLE_API_KEY}}"} ] },
