@@ -32,8 +32,23 @@
 # Set the `BUBBLE_PORT` environment variable to another port, and Bubble will listen on
 # that port instead.
 #
+# ### BUBBLE_VM_MEM
+# This is the number of MB of memory to allocate for the VirtualBox VM.
+# By default, this is set to 2048, thus Vagrantfile allocates 2GB of memory for the VM.
+# You can build and Bubble with less memory, but if you go as low as 1024 (1GB) you may
+# have problems building the entire codebase from scratch.
+#
 Vagrant.configure("2") do |config|
+
+  # Start with Ubuntu 20.04
   config.vm.box = "ubuntu/focal64"
+
+  # Set name and memory
+  mem = ENV['BUBBLE_VM_MEM'] || 2048
+  config.vm.provider "virtualbox" do |v|
+      v.name = 'Bubble_Vagrant'
+      v.memory = mem
+  end
 
   # Forward ports
   port = ENV['BUBBLE_PORT'] || 8090
@@ -49,10 +64,7 @@ Vagrant.configure("2") do |config|
 
   # Get dependencies and build everything
   config.vm.provision :shell do |s|
-      s.env = {
-        BUBBLE_PORT: port,
-        LETSENCRYPT_EMAIL: ENV['LETSENCRYPT_EMAIL']
-      }
+      s.env = { BUBBLE_PORT: port, LETSENCRYPT_EMAIL: ENV['LETSENCRYPT_EMAIL'] }
       s.privileged = false
       s.inline = <<-SHELL
          # Copy shared bubble dir to ${HOME}
@@ -61,13 +73,13 @@ Vagrant.configure("2") do |config|
          # Initialize the system
          cd ${HOME}/bubble && ./bin/first_time_ubuntu.sh
 
-         # Clone and build all dependencies, build the Bubble jar
+         # Clone submodules, build all dependencies, build the Bubble jar
          ./bin/first_time_setup.sh
 
          # Write bubble API port
          echo \"export BUBBLE_SERVER_PORT=${BUBBLE_PORT}\" > ~/.bubble.env
 
-         # Allow website to be loaded from disk
+         # Allow web to be loaded from disk
          echo \"export BUBBLE_ASSETS_DIR=$(pwd)/bubble-web/dist\" >> ~/.bubble.env
 
          # Add bubble bin to PATH
@@ -76,7 +88,7 @@ Vagrant.configure("2") do |config|
          # Ensure Bubble API listens on all addresses
          echo \"export BUBBLE_LISTEN_ALL=true\" >> ~/.bashrc
 
-         # Set LETSENCRYPT_EMAIL is defined
+         # Set LETSENCRYPT_EMAIL if defined
          if [[ -n \"${LETSENCRYPT_EMAIL}\" ]] ; then
            echo \"export LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}\" >> ~/.bubble.env
          fi
