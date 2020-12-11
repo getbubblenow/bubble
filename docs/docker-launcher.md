@@ -41,9 +41,11 @@ To pull and run the Bubble Docker Launcher, open a terminal and run:
     docker run -p 8090:8090 -t ${BUBBLE_TAG}
 
 ## Activation
-Upon a successful startup, the bubble launcher will be listening on port 8090
+Upon a successful startup, the bubble launcher will be listening on port 8090 (or whatever
+you set the `BUBBLE_PORT` environment variable to).
 
-Your Bubble is running locally in a "blank" mode. It needs an initial "root" account and some basic services configured.
+Your Bubble is running locally in a "blank" mode.
+It needs an initial "root" account and some basic services configured.
 
 Open http://127.0.0.1:8090/ in a web browser to continue with activation.
 
