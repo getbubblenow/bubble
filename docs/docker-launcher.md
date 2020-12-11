@@ -25,7 +25,7 @@ From the top-level directory of the Bubble source repository (usually called `bu
 
     ./launcher
 
-You can pass environment variables the same as described above.
+You can pass environment variables in the same way as described above.
 
 ## Docker Installation
 If you're running Windows, or if the above script has problems installing Docker,
