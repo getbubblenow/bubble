@@ -11,12 +11,12 @@
         <groupId>bubble</groupId>
         <artifactId>bubble</artifactId>
         <!-- @@BUBBLE_VERSION@@ this comment must remain above the version tag so that _set_version can update it -->
-        <version>1.5.4</version>
+        <version>1.5.5</version>
     </parent>
 
     <artifactId>bubble-server</artifactId>
     <!-- @@BUBBLE_VERSION@@ this comment must remain above the version tag so that _set_version can update it -->
-    <version>1.5.4</version>
+    <version>1.5.5</version>
 
     <repositories>
         <repository>
