@@ -42,6 +42,6 @@ The important things to install:
 Look at the `first_time_ubuntu.sh` script and ensure you've basically done all that it does,
 including creating PostgreSQL users/databases.
 
-If you get Bubble working on another platform and are feeling generous, please create a
+If you get Bubble bootstrapped on another platform and are feeling generous, please create a
 `./bin/first_time_some_new_os.sh` file to capture your work and submit a pull request so
 it can be shared with others.
