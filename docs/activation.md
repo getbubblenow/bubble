@@ -18,7 +18,7 @@ In order to activate your Local Launcher, you'll need accounts and/or API keys f
 Have these account credentials handy. Be prepared to sign up for new accounts where needed.
 
 ## Activate via Web UI
-The browser-based admin UI should be displaying an "Activate" page.
+The browser-based admin UI should be displaying an "Activate" page, like the one shown above.
 
 Review the "Activation Notes" below, then complete the information on this page and press the "Activate" button
 to activate your Bubble Launcher. 
