@@ -13,6 +13,7 @@ The launcher will listen on port 8090, you can change this by setting the `BUBBL
     BUBBLE_PORT=8080 /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/launcher)"
 
 There are other environment variables you can set to customize the launcher configuration.
+
 The header of the [launcher](https://git.bubblev.org/bubblev/bubble/src/branch/master/launcher) script
 describes all of the options in detail.
 
