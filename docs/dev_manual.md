@@ -17,14 +17,9 @@ required software.
 ## First-Time Dev Setup
 After running the system setup above, run:
 ```shell script
-./bin/git_https_submodules.sh
 ./bin/first_time_setup.sh
 ```
-The first line (`git_https_submodules.sh`) ensures all your git submodules are defined
-using https URLs instead of git URLs. You only need to run this once on a repository.
-
-The second line (`first_time_setup.sh`) downloads all the submodules and performs an
-initial build of all components.
+This downloads all the submodules and performs an initial build of all components.
 
 This will take a while to complete, please be patient.
 
