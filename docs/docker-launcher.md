@@ -23,7 +23,7 @@ the launcher directly, without using `curl`.
 
 From the top-level directory of the Bubble source repository (usually called `bubble`), run:
 
-    ./launcher
+    /bin/bash ./launcher
 
 You can pass environment variables in the same way as described above.
 
