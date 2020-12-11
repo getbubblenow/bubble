@@ -8,7 +8,7 @@ This script will automatically install docker, pull the Bubble docker image and 
 
     /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/launcher)"
 
-The launcher will listen on port 8090, you can change this by setting the BUBBLE_PORT environment variable:
+The launcher will listen on port 8090, you can change this by setting the `BUBBLE_PORT` environment variable:
 
     BUBBLE_PORT=8080 /bin/bash -c "$(curl -sL https://git.bubblev.org/bubblev/bubble/raw/branch/master/launcher)"
 
