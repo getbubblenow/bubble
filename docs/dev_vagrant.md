@@ -72,9 +72,21 @@ When your Vagrant box is ready, you can login to it:
 vagrant ssh
 ```
 
-## Developing
+# Build and Run
+To build the Bubble jar, run:
+```shell script
+bbuild
+```
+
+To run the Bubble API server, run:
+```shell script
+run.sh
+```
+Hit Control-C to stop the API server.
+
+# Developing
 You can develop directly on the Vagrant box by editing the source files in `${HOME}/bubble`, then
-building and running from there.
+building (via `bbuild` or manually with maven) and running from there (via `run.sh`).
 
 Alternatively, you can develop locally on the host and periodically synchronize your source
 and/or build assets to the Vagrant box, where you then (maybe build and) run the Bubble API.

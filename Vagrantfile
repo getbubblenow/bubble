@@ -65,7 +65,7 @@ Vagrant.configure("2") do |config|
          SKIP_BUBBLE_BUILD=1 ./bin/first_time_setup.sh
 
          # Build the bubble jar
-         BUBBLE_PRODUCTION=1 mvn -DskipTests=true -Dcheckstyle.skip=true -Pproduction clean package 2>&1 | tee /tmp/build.log
+         ./bin/bbuild 2>&1 | tee /tmp/build.log
 
          # Write bubble API port
          echo \"export BUBBLE_SERVER_PORT=${BUBBLE_PORT}\" > ~/.bubble.env
