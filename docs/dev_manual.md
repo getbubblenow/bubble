@@ -11,21 +11,26 @@ See below for other Linux distributions and other operating systems.
 ## One-Time System Setup
 You'll need to install some software for Bubble to work correctly.
 
-Follow the instructions in [System Software Setup](system-software.md) to install the required software.
+Follow the instructions in [System Software Setup](system-software.md) to install the
+required software.
 
 ## First-Time Dev Setup
 After running the system setup above, run:
 ```shell script
+./bin/git_https_submodules.sh
 ./bin/first_time_setup.sh
 ```
+The first line (`git_https_submodules.sh`) ensures all your git submodules are defined
+using https URLs instead of git URLs. You only need to run this once on a repository.
 
-This will grab all the submodules and perform an initial build of all components.
+The second line (`first_time_setup.sh`) downloads all the submodules and performs an
+initial build of all components.
 
 This will take a while to complete, please be patient.
 
 ## Bubble environment file
-You will need a file named `${HOME}/.bubble.env` which contains various environment variables
-required to run the server. At the least, it should contain:
+You will need a file named `${HOME}/.bubble.env` which contains various environment
+variables required to run the server. At the least, it should contain:
 ```shell script
 export LETSENCRYPT_EMAIL=user@example.com
 ```
