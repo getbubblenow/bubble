@@ -10,7 +10,7 @@ This code is available under the GNU Affero General Public License, version 3: h
     <groupId>bubble</groupId>
     <artifactId>utils</artifactId>
     <!-- @@BUBBLE_VERSION@@ this comment must remain above the version tag so that _set_version can update it -->
-    <version>1.5.6</version>
+    <version>1.5.7</version>
     <packaging>pom</packaging>
 
     <licenses>
