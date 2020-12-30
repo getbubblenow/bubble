@@ -20,7 +20,6 @@ import com.stripe.model.Token;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.client.script.SimpleApiRunnerListener;
-import org.joda.time.DateTime;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +30,6 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static org.cobbzilla.util.time.TimeUtil.parseDuration;
-import static org.joda.time.DurationFieldType.months;
 
 @Slf4j
 public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
@@ -59,21 +57,7 @@ public class BubbleApiRunnerListener extends SimpleApiRunnerListener {
         if (before == null) return;
         if (before.startsWith(FAST_FORWARD_AND_BILL)) {
             final List<String> parts = splitAndTrim(before.substring(FAST_FORWARD_AND_BILL.length()), " ");
-            final long delta;
-            if (parts.get(0).endsWith("M")) {
-                // we're fast-forwarding in months
-                final String part = parts.get(0);
-                final int direction = part.startsWith("-") ? -1 : 1;
-                final int count = Integer.parseInt(part.startsWith("-") || part.startsWith("+")
-                        ? part.substring(1, part.length()-1)
-                        : part.substring(0, part.length()-1));
-                final long now = now();
-                final DateTime start = new DateTime(now);
-                final DateTime later = new DateTime(now).withFieldAdded(months(), direction * count);
-                delta = later.getMillis() - start.getMillis();
-            } else {
-                delta = parseDuration(parts.get(0));
-            }
+            final long delta = parseDuration(parts.get(0));
             final long sleepTime = parts.size() > 1 ? parseDuration(parts.get(1)) : DEFAULT_BILLING_SLEEP;
             getStripePaymentDriver().flushCaches();
             incrementSystemTimeOffset(delta);

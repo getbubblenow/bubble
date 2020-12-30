@@ -353,8 +353,8 @@
   },
 
   {
-    "before": "fast_forward_and_bill 31d 30s",
-    "comment": "fast-forward +31 days, verify a new bill exists for first accountPlan",
+    "before": "fast_forward_and_bill 1M+1d 30s",
+    "comment": "fast-forward 1 month + 1 day, verify a new bill exists for first accountPlan",
     "request": { "uri": "me/plans/{{accountPlan.uuid}}/bills" },
     "response": {
       "check": [

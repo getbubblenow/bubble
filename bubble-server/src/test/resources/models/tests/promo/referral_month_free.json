@@ -513,8 +513,8 @@
   },
 
   {
-    "before": "fast_forward_and_bill 31d 30s",
-    "comment": "referred: fast-forward +31 days, verify a new bill exists for referred accountPlan",
+    "before": "fast_forward_and_bill 1M+1d 30s",
+    "comment": "referred: fast-forward 1 montb + 1 day, verify a new bill exists for referred accountPlan",
     "request": { "uri": "me/plans/{{referredAccountPlan.uuid}}/bills" },
     "response": {
       "check": [

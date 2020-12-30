@@ -308,8 +308,8 @@
 
   // Second Month -- referred users use their referral credit. referring user pays with card
   {
-    "before": "fast_forward_and_bill 29d 40s",
-    "comment": "root: fast-forward +29 days, verify referring user received notice about first real payment",
+    "before": "fast_forward_and_bill 1M-2d 40s",
+    "comment": "root: fast-forward 1 month less 2 days, verify referring user received notice about first real payment",
     "request": {
       "session": "rootSession",
       "uri": "debug/inbox/email/test_user_referring_multi@example.com?type=notice&action=first_payment&target=network"
@@ -438,8 +438,8 @@
 
   // Third Month -- referred users pay with card. referring user pays with 1st referral credit
   {
-    "before": "fast_forward_and_bill 29d 40s",
-    "comment": "root: second fast-forward +29 days, verify referred user 1 received notice about first real payment",
+    "before": "fast_forward_and_bill 1M-2d 40s",
+    "comment": "root: second fast-forward 1 month less 2 days, verify referred user 1 received notice about first real payment",
     "request": {
       "session": "rootSession",
       "uri": "debug/inbox/email/referred_multi_1@example.com?type=notice&action=first_payment&target=network"
@@ -567,8 +567,8 @@
 
   // Fourth Month -- referreds pay with card, referring pays with 2nd referral credit
   {
-    "before": "fast_forward_and_bill 31d 40s",
-    "comment": "referring: third fast-forward +31 days, verify a new bill exists for referring",
+    "before": "fast_forward_and_bill 1M+1d 40s",
+    "comment": "referring: third fast-forward one month + 1 day, verify a new bill exists for referring",
     "request": {
       "session": "referringUserSession",
       "uri": "me/plans/{{referringAccountPlan.uuid}}/bills"
@@ -655,8 +655,8 @@
 
   // Fifth Month -- referreds pay with card, referring pays with 3rd referral credit
   {
-    "before": "fast_forward_and_bill 31d 60s",
-    "comment": "referring: fourth fast-forward +31 days, verify a new bill exists for referring",
+    "before": "fast_forward_and_bill 1M+1d 40s",
+    "comment": "referring: fourth fast-forward 1 month + 1 day, verify a new bill exists for referring",
     "request": {
       "session": "referringUserSession",
       "uri": "me/plans/{{referringAccountPlan.uuid}}/bills"
@@ -743,8 +743,8 @@
 
   // 6th Month -- referreds pay with card, referring uses regular account credit + card
   {
-    "before": "fast_forward_and_bill 31d 40s",
-    "comment": "referring: fifth fast-forward +31 days, verify a new bill exists for referring",
+    "before": "fast_forward_and_bill 1M+1d 40s",
+    "comment": "referring: fifth fast-forward 1 month + 1 day, verify a new bill exists for referring",
     "request": {
       "session": "referringUserSession",
       "uri": "me/plans/{{referringAccountPlan.uuid}}/bills"
@@ -835,8 +835,8 @@
 
   // 7th Month -- everyone pays with credit card
   {
-    "before": "fast_forward_and_bill 31d 40s",
-    "comment": "referring: sixth fast-forward +31 days, verify a new bill exists for referring",
+    "before": "fast_forward_and_bill 1M+1d 40s",
+    "comment": "referring: sixth fast-forward 1 month + day, verify a new bill exists for referring",
     "request": {
       "session": "referringUserSession",
       "uri": "me/plans/{{referringAccountPlan.uuid}}/bills"
