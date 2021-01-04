@@ -20,19 +20,19 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 
 NO_BUILD="${1}"
 
-BASE=$(cd $(dirname $0)/.. && pwd)
-cd ${BASE}
+BASE="$(cd "$(dirname "${0}")"/.. && pwd)"
+cd "${BASE}" || die "Error changing to ${BASE} directory"
 
 if [[ -z "${NO_BUILD}" || "${NO_BUILD}" != "no-build" ]] ; then
   echo "Building bubble jar..."
-  ${BASE}/bin/git_update_bubble.sh || die "Error building bubble jar file"
+  "${BASE}"/bin/git_update_bubble.sh || die "Error building bubble jar file"
 else
   echo "Not building bubble jar: no-build was set"
 fi
 
 DIST_BASE="${BASE}/dist"
-rm -rf "${DIST_BASE}" || die "Error removing "${DIST_BASE}" directory"
-mkdir -p "${DIST_BASE}" || die "Error creating "${DIST_BASE}" directory"
+rm -rf "${DIST_BASE}" || die "Error removing ${DIST_BASE} directory"
+mkdir -p "${DIST_BASE}" || die "Error creating ${DIST_BASE} directory"
 
 JAR_DIR="${BASE}/bubble-server/target"
 FULL_JAR="$(find "${JAR_DIR}" -type f -name "bubble-server-*-full.jar" | head -1)"
@@ -80,9 +80,9 @@ if [[ -n "${BUBBLE_DIST_HOME}" ]] ; then
   if [[ ! -d "${BUBBLE_DIST_DIR}" ]] ; then
     mkdir -p ${BUBBLE_DIST_DIR}
   fi
-  cp "${ZIP}" "${BUBBLE_DIST}" && cat "${ZIP}" | sha256sum | cut -f1 -d' ' | tr -d '\n' > "${BUBBLE_DIST}.sha256" || die "Error copying bubble zip distribution ${ZIP} to dist or creating shasum"
-  cp "${JAR}" "${BUBBLE_JAR_DIST}" && cat "${JAR}" | sha256sum | cut -f1 -d' ' | tr -d '\n' > "${BUBBLE_JAR_DIST}.sha256" || die "Error copying bubble jar ${JAR} to dist or creating shasum"
-  cp "${FULL_JAR}" "${BUBBLE_FULL_JAR_DIST}" && cat "${FULL_JAR}" | sha256sum | cut -f1 -d' ' | tr -d '\n' > "${BUBBLE_FULL_JAR_DIST}.sha256" || die "Error copying full bubble jar ${FULL_JAR} to dist or creating shasum"
+  cp "${ZIP}" "${BUBBLE_DIST}" && cat "${ZIP}" | shasum -a 256 | cut -f1 -d' ' | tr -d '\n' > "${BUBBLE_DIST}.sha256" || die "Error copying bubble zip distribution ${ZIP} to dist or creating shasum"
+  cp "${JAR}" "${BUBBLE_JAR_DIST}" && cat "${JAR}" | shasum -a 256 | cut -f1 -d' ' | tr -d '\n' > "${BUBBLE_JAR_DIST}.sha256" || die "Error copying bubble jar ${JAR} to dist or creating shasum"
+  cp "${FULL_JAR}" "${BUBBLE_FULL_JAR_DIST}" && cat "${FULL_JAR}" | shasum -a 256 | cut -f1 -d' ' | tr -d '\n' > "${BUBBLE_FULL_JAR_DIST}.sha256" || die "Error copying full bubble jar ${FULL_JAR} to dist or creating shasum"
   if [[ ${IS_DEV} -eq 0 ]] ; then
     cd ${BUBBLE_DIST_TOP} && rm -f latest && ln -sf ${BUBBLE_VERSION} latest
     echo "${BUBBLE_VERSION}" > latest.txt

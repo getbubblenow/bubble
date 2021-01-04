@@ -41,7 +41,7 @@ The important things to install:
   * Redis
   * Python 3.8+
   * Packer (try `bin/install_packer.sh` first, it might work fine)
-  * Required tools: curl, jq, uuid, sha256sum, openssl, ssh, scp, rsync, npm, webpack, zip, unzip
+  * Required tools: curl, jq, uuid, shasum, openssl, ssh, scp, rsync, npm, webpack, zip, unzip
 
 Look at the `first_time_ubuntu.sh` script and ensure you've basically done all that it does,
 including creating PostgreSQL users/databases.

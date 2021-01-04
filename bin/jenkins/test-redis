@@ -15,7 +15,7 @@ function redis_port() {
   if [[ -z "${BUBBLE_REDIS_PORT}" ]] ; then
     # pick port based on hash of workspace name; there is a 1-in-4096 chance of collision
     # if you get a collision, just define BUBBLE_REDIS_PORT in jenkins to be < 6800 or > 10895 in the job's build config
-    BUBBLE_REDIS_PORT=$(expr 6800 + $(echo $((16#$(echo -n ${WORKSPACE_NAME} | sha256sum | awk '{print $1}' | tail -c 4)))))
+    BUBBLE_REDIS_PORT=$(expr 6800 + $(echo $((16#$(echo -n ${WORKSPACE_NAME} | shasum -a 256 | awk '{print $1}' | tail -c 4)))))
   fi
   echo ${BUBBLE_REDIS_PORT}
 }
