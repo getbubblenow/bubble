@@ -164,6 +164,7 @@ function run_launcher() {
   DOCKER="$(which docker)"
   if [[ -z "${DOCKER}" ]]; then
     setup_docker
+    DOCKER="$(which docker)"
     if [[ -z "${DOCKER}" ]]; then
       die "***** Error installing docker
 Install docker manually from https://docs.docker.com/engine/install/
