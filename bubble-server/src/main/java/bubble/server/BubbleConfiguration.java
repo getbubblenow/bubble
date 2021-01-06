@@ -197,7 +197,7 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                 final File[] jarFiles = jarDir.listFiles(new FilenameRegexFilter("bubble-server-\\d+\\.\\d+\\.\\d+[-\\w]*.jar"));
                 if (jarFiles == null || jarFiles.length == 0) return die("no matching jar files found in "+abs(jarDir));
                 if (jarFiles.length > 1) {
-                    bubbleJar = Arrays.stream(jarFiles).min(comparing(File::lastModified)).get();
+                    bubbleJar = Arrays.stream(jarFiles).max(comparing(File::lastModified)).get();
                     log.warn("multiple matching jar files found (using newest): "+abs(bubbleJar));
                 } else {
                     bubbleJar = jarFiles[0];
