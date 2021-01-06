@@ -64,6 +64,7 @@ import static bubble.ApiConstants.*;
 import static bubble.cloud.CloudServiceDriver.CLOUD_DRIVER_PACKAGE;
 import static bubble.model.cloud.BubbleNetwork.TAG_ALLOW_REGISTRATION;
 import static bubble.server.BubbleServer.getConfigurationSource;
+import static java.util.Comparator.comparing;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.handlebars.HandlebarsUtil.registerUtilityHelpers;
 import static org.cobbzilla.util.http.HttpSchemes.SCHEME_HTTPS;
@@ -195,8 +196,12 @@ public class BubbleConfiguration extends PgRestServerConfiguration
                 final File jarDir = jar.getParentFile();
                 final File[] jarFiles = jarDir.listFiles(new FilenameRegexFilter("bubble-server-\\d+\\.\\d+\\.\\d+[-\\w]*.jar"));
                 if (jarFiles == null || jarFiles.length == 0) return die("no matching jar files found in "+abs(jarDir));
-                if (jarFiles.length > 1) return die("multiple matching jar files found: "+ArrayUtils.toString(jarFiles)+" in "+abs(jarDir));
-                bubbleJar = jarFiles[0];
+                if (jarFiles.length > 1) {
+                    bubbleJar = Arrays.stream(jarFiles).min(comparing(File::lastModified)).get();
+                    log.warn("multiple matching jar files found (using newest): "+abs(bubbleJar));
+                } else {
+                    bubbleJar = jarFiles[0];
+                }
             } else {
                 return die("getBubbleJar: invalid/unsupported jar location detected: "+abs(jar));
             }
