@@ -36,6 +36,13 @@ If you're on Mac OS X or Linux, after installing Docker please re-run the above 
 If you're on Windows or would like to run the Bubble docker image directly, follow the instructions below in "Manual Setup".
 
 ## Manual Setup
+If automatic installation has problems, or you are already comfortable working
+with Docker, you can use the manual Bubble Docker approach.
+
+All you need to do is pull and run the appropriate image from DockerHub.
+This section explains how to determine the most recent version tag, and
+then pull and run the docker image for that tag.
+
 The commands below assume:
  * you already have docker installed
  * the docker daemon is running
