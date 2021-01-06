@@ -61,8 +61,8 @@ To pull and run the Bubble Docker Launcher, open a terminal and run:
 ### Use a Specific Bubble Version
 If you know the specific version of Bubble you want, you can just grab that and run it:
 
-    docker pull getbubble/launcher:1.5.9
-    docker run -p 8090:8090 -t getbubble/launcher:1.5.9
+    docker pull getbubble/launcher:1.5.10
+    docker run -p 8090:8090 -t getbubble/launcher:1.5.10
 
 ## Activation
 Upon a successful startup, the bubble launcher will be listening on port 8090 (or whatever
