@@ -9,11 +9,14 @@ import bubble.dao.SessionDAO;
 import bubble.dao.account.AccountDAO;
 import bubble.dao.account.AccountPolicyDAO;
 import bubble.dao.account.message.AccountMessageDAO;
+import bubble.dao.bill.BillDAO;
 import bubble.model.account.*;
 import bubble.model.account.message.AccountAction;
 import bubble.model.account.message.AccountMessage;
 import bubble.model.account.message.AccountMessageType;
 import bubble.model.account.message.ActionTarget;
+import bubble.model.bill.Bill;
+import bubble.model.bill.BillStatus;
 import bubble.model.cloud.BubbleNetwork;
 import bubble.model.device.BubbleDeviceType;
 import bubble.resources.app.AppsResource;
@@ -57,6 +60,7 @@ import static bubble.model.account.Account.*;
 import static bubble.resources.account.AuthResource.forgotPasswordMessage;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
 import static org.cobbzilla.util.http.HttpStatusCodes.*;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.API_TAG_UTILITY;
 import static org.cobbzilla.wizard.server.config.OpenApiConfiguration.SEC_API_KEY;
@@ -76,6 +80,7 @@ public class AccountsResource {
     @Autowired private StandardAuthenticatorService authenticatorService;
     @Autowired private SelfNodeService selfNodeService;
     @Autowired private SessionDAO sessionDAO;
+    @Autowired private BillDAO billDAO;
 
     @GET
     @Operation(security=@SecurityRequirement(name=SEC_API_KEY),
@@ -620,6 +625,12 @@ public class AccountsResource {
                         .setAccount(c.account.getUuid())
                         .setDeletionPolicy(AccountDeletionPolicy.full_delete));
             }
+        } else {
+            // admin is deleting an account, ensure it has no unpaid bills that
+            // would prevent deletion (err.delete.unpaidBills)
+            final List<Bill> unpaid = billDAO.findUnpaidByAccount(c.account.getUuid());
+            log.warn("rootDeleteUser: before deleting user, marking these unpaid bills as paid: "+json(unpaid));
+            for (Bill bill : unpaid) billDAO.update(bill.setStatus(BillStatus.paid));
         }
         accountDAO.delete(c.account.getUuid());
         return ok(c.account);
