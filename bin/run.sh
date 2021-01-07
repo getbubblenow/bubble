@@ -38,12 +38,51 @@ SCRIPT_DIR="$(cd "$(dirname "${SCRIPT}")" && pwd)"
 # fail on any command error
 set -e
 
-BASE=$(cd $(dirname $0) && pwd)
-if [[ $(basename ${BASE}) != "bubble-server" && -d "${BASE}/bubble-server" ]] ; then
+function print_auth_env_info () {
+  if [[ -z "${BUBBLE_QUIET_AUTH_CACHE}" || "${BUBBLE_QUIET_AUTH_CACHE}" != "true" ]] ; then
+    echo 1>&2 "Using default user ${BUBBLE_USER} from ${DEFAULT_USER_LINK}
+- Set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior
+- Set env var BUBBLE_QUIET_AUTH_CACHE=true to hide this warning
+"
+  fi
+}
+
+function read_default_user () {
+  if [[ -z "${BUBBLE_DISABLE_AUTH_CACHE}" || "${BUBBLE_DISABLE_AUTH_CACHE}" == "false" ]] ; then
+    BUBBLE_AUTH="${HOME}/.bubble_auth"
+    if [[ -n "${BUBBLE_API}" && -d "${BUBBLE_AUTH}" ]] ; then
+      API_HOST="$(echo -n "${BUBBLE_API}" | awk -F '/' '{print $3}')"
+      AUTH_DIR="${BUBBLE_AUTH}/${API_HOST}"
+      DEFAULT_USER_LINK="${AUTH_DIR}/default"
+      if [[ -L "${DEFAULT_USER_LINK}" ]] ; then
+        print_auth_env_info
+        basename "$(readlink "${DEFAULT_USER_LINK}")"
+      fi
+    fi
+  fi
+}
+
+function read_cached_pass () {
+  if [[ -z "${BUBBLE_DISABLE_AUTH_CACHE}" || "${BUBBLE_DISABLE_AUTH_CACHE}" == "false" ]] ; then
+    BUBBLE_AUTH="${HOME}/.bubble_auth"
+    if [[ -n "${BUBBLE_API}" && -d "${BUBBLE_AUTH}" ]] ; then
+      API_HOST="$(echo -n "${BUBBLE_API}" | awk -F '/' '{print $3}')"
+      AUTH_DIR="${BUBBLE_AUTH}/${API_HOST}"
+      PASS_FILE="${AUTH_DIR}/${BUBBLE_USER}"
+      if [[ -n "${BUBBLE_USER}" && -f "${PASS_FILE}" ]] ; then
+        print_auth_env_info
+        cat "${PASS_FILE}" | awk '{$1=$1}1'
+      fi
+    fi
+  fi
+}
+
+BASE="$(cd "$(dirname "${0}")" && pwd)"
+if [[ $(basename "${BASE}") != "bubble-server" && -d "${BASE}/bubble-server" ]] ; then
   BASE="${BASE}/bubble-server"
 fi
-if [[ $(basename ${BASE}) == "bin" && -d "${BASE}/../bubble-server" ]] ; then
-  BASE="$(cd ${BASE}/../bubble-server && pwd)"
+if [[ $(basename "${BASE}") == "bin" && -d "${BASE}/../bubble-server" ]] ; then
+  BASE="$(cd "${BASE}"/../bubble-server && pwd)"
 fi
 
 # save explicitly set key, if we have one
@@ -128,40 +167,30 @@ fi
 
 # Default user if none set
 if [[ -z "${BUBBLE_USER}" ]] ; then
-  if [[ -n "${REQUIRE_BUBBLE_USER}" ]] ; then
-    die "No BUBBLE_USER env var defined"
+  if [[ -n "${BUBBLE_API}" ]] ; then
+    BUBBLE_USER=$(read_default_user)
   fi
-  BUBBLE_USER=root@local.local
+  if [[ -z "${BUBBLE_USER}" ]] ; then
+    if [[ -n "${REQUIRE_BUBBLE_USER}" ]] ; then
+      die "No BUBBLE_USER env var defined"
+    fi
+    echo 1>&2 "*** Warning: BUBBLE_USER env var was not defined, using default user (probable authentication failure)"
+    BUBBLE_USER=root@local.local
+  fi
 fi
 
 # Default password if none set
 if [[ -z "${BUBBLE_PASS}" ]] ; then
-
-  # If BUBBLE_API is defined, we may have cached credentials
-  BUBBLE_AUTH="${HOME}/.bubble_auth"
-  if [[ -n "${BUBBLE_API}" && -d "${BUBBLE_AUTH}" ]] ; then
-    if [[ -z "${BUBBLE_DISABLE_AUTH_CACHE}" || "${BUBBLE_DISABLE_AUTH_CACHE}" == "false" ]] ; then
-      API_HOST="$(echo -n "${BUBBLE_API}" | awk -F '/' '{print $3}')"
-      AUTH_DIR="${BUBBLE_AUTH}/${API_HOST}"
-      PASS_FILE="${AUTH_DIR}/${BUBBLE_USER}"
-
-      if [[ -n "${BUBBLE_USER}" && -f "${PASS_FILE}" ]] ; then
-        if [[ -z "${BUBBLE_QUIET_AUTH_CACHE}" || "${BUBBLE_QUIET_AUTH_CACHE}" != "true" ]] ; then
-          echo 1>&2 "Using cached password for user ${BUBBLE_USER} from ${AUTH_DIR}/${BUBBLE_USER}
-  - Set env var BUBBLE_DISABLE_AUTH_CACHE=true to disable this behavior
-  - Set env var BUBBLE_QUIET_AUTH_CACHE=true to hide this warning
-"
-        fi
-        BUBBLE_PASS="$(cat "${PASS_FILE}" | tr -d '[:space:]')"
-      fi
+  if [[ -n "${BUBBLE_API}" ]] ; then
+    BUBBLE_PASS=$(read_cached_pass)
+  fi
+  if [[ -z "${BUBBLE_PASS}" ]] ; then
+    if [[ -n "${REQUIRE_BUBBLE_PASS}" ]] ; then
+      die "No BUBBLE_PASS env var defined"
     fi
+    echo 1>&2 "*** Warning: BUBBLE_PASS env var was not defined, using default password (probable authentication failure)"
+    BUBBLE_PASS=password
   fi
-
-  if [[ -n "${REQUIRE_BUBBLE_PASS}" ]] ; then
-    die "No BUBBLE_PASS env var defined"
-  fi
-  echo 1>&2 "*** Warning: BUBBLE_PASS env var was not defined, using default password (probable authentication failure)"
-  BUBBLE_PASS=password
 fi
 
 LISTEN_ALL=""
