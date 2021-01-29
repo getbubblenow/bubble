@@ -133,7 +133,7 @@ function setup_docker_macosx() {
   fi
   brew install docker docker-machine || die "Error installing docker and docker-machine"
   brew install --cask virtualbox || die "Error installing virtualbox (check Security Settings)"
-  docker-machine create --driver virtualbox default
+  docker-machine create --driver virtualbox default || die "Error creating docker-machine"
 }
 
 function setup_docker() {
