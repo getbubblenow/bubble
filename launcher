@@ -132,20 +132,23 @@ function setup_docker_macosx() {
     "
   fi
   brew install docker docker-machine || die "Error installing docker and docker-machine"
-  brew cask install virtualbox || die "Error installing virtualbox (check Security Settings)"
+  brew install --cask virtualbox || die "Error installing virtualbox (check Security Settings)"
   docker-machine create --driver virtualbox default
 }
 
 function setup_docker() {
   echo "Installing docker via sudo ..."
-  if [[ $(whoami) != "root" ]]; then
-    echo "Note: you may need to enter your password (for Linux user $(whoami)) to enable sudo commands"
-  fi
 
   if [[ "${PLATFORM}" == "Linux" ]]; then
+    if [[ $(whoami) != "root" ]]; then
+      echo "Note: you may need to enter your password (for Linux user $(whoami)) to enable sudo commands"
+    fi
     setup_docker_linux
 
   elif [[ "${PLATFORM}" == "Darwin" ]]; then
+    if [[ $(whoami) != "root" ]]; then
+      echo "Note: you may need to enter your password (for MacOS user $(whoami)) to enable sudo commands"
+    fi
     setup_docker_macosx
     eval "$(docker-machine env default)"
     docker-machine start default
